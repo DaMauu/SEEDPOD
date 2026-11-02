@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.3
+  Broomhilda Red v2.5.4
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4602,4 +4602,22 @@ html body .torrent_table tr.group td {
 html body #torrent_table tr.group td > *,
 html body .torrent_table tr.group td > * {
   background-color: transparent !important;
+}
+
+/* ===== v2.5.4: 标题行右侧残余空白用阴影补齐 ===== */
+#torrent_table,
+table.torrent_table {
+  overflow: hidden !important;
+  width: 100% !important;
+}
+
+html body #torrent_table tr.group > td:last-child,
+html body table.torrent_table tr.group > td:last-child {
+  box-shadow: 120px 0 0 0 var(--c--bg--quaternary) !important;
+}
+
+/* 版本条也用同样方式补齐右边缘, 避免出现白色断口 */
+html body #torrent_table tr.group_torrent td.edition_info,
+html body table.torrent_table tr.group_torrent td.edition_info {
+  box-shadow: 120px 0 0 0 var(--c--bg--tertiary) !important;
 }
