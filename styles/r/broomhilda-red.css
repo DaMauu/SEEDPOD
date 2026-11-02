@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.0
+  Broomhilda Red v2.5.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4507,4 +4507,45 @@ table.torrent_table tr.torrentdetails > td pre * {
 table.forum_index,
 table.torrent_table {
   box-shadow: 0 1px 3px rgba(16, 24, 40, .06) !important;
+}
+/* ===== v2.5.1: 正标题底色铺满 ===== */
+
+/* 浏览页专辑标题行: 强制 collapse + 行级底色, 保证连续铺满整行 */
+#torrent_table,
+table.torrent_table,
+.torrent_table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+}
+
+#torrent_table tr.group,
+.torrent_table tr.group {
+  background-color: var(--c--bg--quaternary) !important;
+}
+
+#torrent_table tr.group > td,
+#torrent_table tr.group td,
+.torrent_table tr.group > td,
+.torrent_table tr.group td {
+  background-color: transparent !important;
+}
+
+/* 种子内页顶部大标题: 同样铺满内容宽度 */
+.thin > .header > h2 {
+  background: var(--c--bg--quaternary) !important;
+  border-radius: 10px !important;
+  padding: 14px 20px !important;
+  margin: 0 0 14px !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--c--fg--primary) !important;
+}
+
+.thin > .header > h2 a {
+  color: var(--c--fg--primary) !important;
+}
+
+.thin > .header > h2 img {
+  vertical-align: middle !important;
 }
