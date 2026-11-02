@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v1.6.0 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v1.6.0](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.6.0/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v1.6.1 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v1.6.1](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.6.1/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v1.6.1 | 2026-11-03 | 浅灰底+白卡片、导航去阴影、导航全白 |
 | Broomhilda Red | v1.6.0 | 2026-11-03 | 站点原生配色，青绿互补强调，仅 logo 红色 |
 | Broomhilda Red | v1.5.0 | 2026-11-03 | 主色改红、logo 红色、菜单红底 |
 | Broomhilda Red | v1.4.7 | 2026-11-03 | 论坛索引卡片化、种子页面板阴影加深 |

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.6.0
+  Broomhilda Red v1.6.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3257,4 +3257,59 @@ table tr.colhead_dark th {
 #userinfo_stats li,
 .torrent_table td.number_column {
   font-variant-numeric: tabular-nums;
+}
+/* ===== 底色调和: 浅灰背景 + 白色卡片; 导航去掉阴影与脏色叠加, 文字符号全白 ===== */
+:root {
+  --c--bg--primary:    #f1f3f5; /* 页面底 */
+  --c--bg--secondary:  #ffffff; /* 卡片/面板 */
+  --c--bg--tertiary:   #eceef0;
+  --c--bg--quaternary: #e1e4e7;
+  --c--bg--quinary:    #c6cacf;
+}
+
+/* 导航: 悬停/当前项用提亮而不是压黑, 不产生阴影感 */
+#menu a:hover,
+#menu ul li a:hover {
+  background: rgba(255, 255, 255, .14) !important;
+  color: #fff !important;
+}
+
+#menu li.active a {
+  background: rgba(255, 255, 255, .24) !important;
+  color: #fff !important;
+}
+
+/* 导航栏内所有文字与符号统一白色, 去掉任何投影 */
+#menu,
+#menu a,
+#menu li a,
+#menu button,
+#menu i,
+#menu span,
+#menu .material-icons,
+#menu [class*="toggle"],
+#menu [class*="hamburger"] {
+  color: #fff !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+#menu [class*="toggle"],
+#menu [class*="hamburger"],
+#menu > a {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+#menu svg,
+#menu svg * {
+  fill: #fff !important;
+  stroke: #fff !important;
+}
+
+/* 头部区域不再投射阴影 */
+#header,
+#header .box,
+#searchbars {
+  box-shadow: none !important;
 }
