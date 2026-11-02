@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.1
+  Broomhilda Red v2.5.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4548,4 +4548,37 @@ table.torrent_table,
 
 .thin > .header > h2 img {
   vertical-align: middle !important;
+}
+/* ===== v2.5.2: 只保留种子列表页标题行底色铺满; 内页大标题去掉底色 ===== */
+
+/* 内页大标题还原成普通文字 */
+.thin > .header > h2 {
+  background: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 10px !important;
+  text-align: center !important;
+}
+
+/* 种子列表标题行: 逐个单元格高优先级上色, 任何来源的白底都压不住 */
+html body #torrent_table tr.group > td,
+html body #torrent_table tr.group > td.nobr,
+html body #torrent_table tr.group > td.number_column,
+html body #torrent_table tr.group > td.number_column.nobr,
+html body #torrent_table tr.group > td.center,
+html body #torrent_table tr.group > td.cats_col,
+html body #torrent_table tr.group > td.sign,
+html body #torrent_table tr.group > td.big_info,
+html body #torrent_table tr.group > td.edition_info,
+html body #torrent_table tr.group td,
+html body .torrent_table tr.group > td,
+html body .torrent_table tr.group td {
+  background-color: var(--c--bg--quaternary) !important;
+  background-image: none !important;
+  border: 0 !important;
+}
+
+html body #torrent_table tr.group > td > *,
+html body #torrent_table tr.group td > * {
+  background-color: transparent !important;
 }
