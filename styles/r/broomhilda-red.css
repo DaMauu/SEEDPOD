@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.6
+  Broomhilda Red v2.0.7
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3950,4 +3950,75 @@ table.torrent_table tr.group_torrent td.edition_info {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
+}
+/* ===== 种子列表: 恢复正副标题底色, 去掉 tag 与版本行的底色 ===== */
+/* 正标题行 (专辑标题): 灰底 */
+#torrent_table tr.group > td,
+#torrent_table tr.group > td.sign,
+#torrent_table tr.group > td.number_column,
+#torrent_table tr.group > td.big_info,
+#torrent_table tr.group td,
+.torrent_table tr.group > td,
+.torrent_table tr.group td {
+  background: var(--c--bg--quaternary) !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+/* 副标题 (版本条 – 年份 / 厂牌 / 格式): 浅一档灰底 */
+#torrent_table tr.group_torrent td.edition_info,
+table.torrent_table tr.group_torrent td.edition_info {
+  background: var(--c--bg--tertiary) !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+/* 版本行 (» FLAC / Lossless 等): 纯白, 不铺底色 */
+#torrent_table tr.group_torrent:not(.edition) > td,
+#torrent_table tr.group_torrent:not(.edition) td,
+table.torrent_table tr.torrent_row > td {
+  background: var(--c--bg--secondary) !important;
+  border: 0 !important;
+}
+
+#torrent_table tr.group_torrent:not(.edition):hover > td,
+table.torrent_table tr.torrent_row:hover > td {
+  background: #f5f6f8 !important;
+}
+
+/* tag: 去掉胶囊底色, 只保留浅灰文字 */
+.torrent_table .group_info .tags a,
+.torrent_table .tags a,
+.tags a {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 8px 0 0 !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: var(--c--fg--tertiary) !important;
+}
+
+.torrent_table .group_info .tags a:hover,
+.torrent_table .tags a:hover,
+.tags a:hover {
+  color: var(--c--ac--fg) !important;
+  background: transparent !important;
+}
+
+/* 标题行内部元素一律透明, 让底色铺满整行 */
+.torrent_table tr.group td > *,
+.torrent_table tr.group .group_info,
+.torrent_table tr.group .group_info > a,
+.torrent_table tr.group a[id^="bookmarklink_torrent_"] {
+  background-color: transparent !important;
+}
+
+/* 有底色了, 分组间距收回正常值 */
+#torrent_table tr.group > td,
+.torrent_table tr.group > td {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
