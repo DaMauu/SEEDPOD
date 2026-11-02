@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.4.0
+  Broomhilda Red v2.4.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4100,4 +4100,81 @@ table.torrent_table {
 #torrent_table tr.group > td > *,
 #torrent_table tr.group td > * {
   background-color: transparent !important;
+}
+
+/* ===== v2.4.1 修复 ===== */
+
+/* 1) 导航: 暖深棕, 不再是黑色 */
+#menu {
+  background: #3b2f26 !important;
+}
+
+/* 2) 标题带铺满整行: 底色画在 tr 上, 单元格一律透明, 不产生任何缝隙 */
+#torrent_table tr.group,
+.torrent_table tr.group {
+  background: var(--c--bg--quaternary) !important;
+}
+
+#torrent_table tr.group > td,
+#torrent_table tr.group > td.nobr,
+#torrent_table tr.group > td.number_column,
+#torrent_table tr.group > td.number_column.nobr,
+#torrent_table tr.group > td.center,
+#torrent_table tr.group > td.cats_col,
+#torrent_table tr.group > td.sign,
+#torrent_table tr.group > td.big_info,
+#torrent_table tr.group > td.edition_info,
+#torrent_table tr.group td,
+.torrent_table tr.group > td,
+.torrent_table tr.group td,
+#torrent_table tr.group td > * {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* 标题行与版本条之间不留白 */
+#torrent_table tr.group > td,
+.torrent_table tr.group > td {
+  padding-bottom: 0 !important;
+}
+
+#torrent_table tr.group_torrent td.edition_info,
+table.torrent_table tr.group_torrent td.edition_info {
+  padding-top: 6px !important;
+}
+
+/* 3) 展开区里的操作链接: 一行横排, 右对齐 */
+table.torrent_table tr.torrentdetails td,
+.torrentdetails .pad {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox {
+  display: block !important;
+  text-align: right !important;
+  margin: 8px 0 0 !important;
+  white-space: normal !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox a {
+  display: inline-block !important;
+  margin: 0 0 0 14px !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox a:first-child {
+  margin-left: 0 !important;
+}
+
+/* 日志本体仍要换行 */
+table.torrent_table tr.torrentdetails pre,
+.torrentdetails pre {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-x: hidden !important;
+  max-width: 100% !important;
 }
