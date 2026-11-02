@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.2
+  Broomhilda Red v2.0.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3792,4 +3792,41 @@ table.torrent_table tr.torrentdetails .linkbox {
   content: '';
   display: block;
   height: 4px;
+}
+/* ===== rip log / 代码块: 长行强制换行, 不再横向溢出 ===== */
+pre {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  margin: 12px 0 !important;
+  padding: 12px 14px !important;
+  background: var(--c--bg--tertiary) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  font-family: var(--ff--monospace) !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: var(--c--fg--secondary) !important;
+}
+
+/* 展开区里的 log 容器: 与上方文字同一左边界 */
+table.torrent_table tr.torrentdetails .pad,
+table.torrent_table tr.torrentdetails > td > div,
+table.torrent_table tr.torrentdetails blockquote pre {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+table.torrent_table tr.torrentdetails pre {
+  margin: 12px 0 0 !important;
+}
+
+/* log 里的链接与高亮不要撑破容器 */
+table.torrent_table tr.torrentdetails pre a,
+table.torrent_table tr.torrentdetails pre * {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
 }

@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v2.0.2 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.2](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.2/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v2.0.3 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.3](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.3/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v2.0.3 | 2026-11-03 | rip log 换行与对齐 |
 | Broomhilda Red | v2.0.2 | 2026-11-03 | 面板正文缩进与引言块样式 |
 | Broomhilda Red | v2.0.1 | 2026-11-03 | 种子内页排版修复 |
 | Broomhilda Red | v2.0.0 | 2026-11-03 | 现代风格重做：灰阶+单一强调色、浅表头、纯色导航、8pt 间距 |

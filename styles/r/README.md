@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-2.0.2-a8641b?style=flat-square" />
+<img src="https://img.shields.io/badge/version-2.0.3-a8641b?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.2/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.3/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v2.0.3 | 2026-11-03 | rip log / 代码块强制换行不再横向溢出，展开区 log 容器与正文左对齐 |
 | v2.0.2 | 2026-11-03 | 面板正文 .box > .body 统一 16px 缩进与自动换行；引言块改浅底细线卡片 |
 | v2.0.1 | 2026-11-03 | 种子内页：表格卡片化, 副标题补底色并与列头对齐, 版本行缩进 2ch + 12px, 展开内容加底色块 |
 | v2.0.0 | 2026-11-03 | 现代风格重做：中性灰阶+单一琥珀强调色、浅色发丝线表头、深色纯色导航（当前页用强调色下划线）、14px/1.6 排版与 8pt 间距、种子表改为细线分层、搜索面板恢复卡内表头 |
