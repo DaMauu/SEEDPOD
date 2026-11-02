@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.6.1
+  Broomhilda Red v1.6.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -59,9 +59,9 @@
   /* Semantic colors (Django) */
   --c--black:        #0c0c0c;
   --c--white:        #fcfcfc;
-  --c--gray-tint:    #bec6cd;
-  --c--gray:         #75828f;
-  --c--gray-shade:   #576068;
+  --c--gray-tint:    #c4c1bd;
+  --c--gray:         #7a7570;
+  --c--gray-shade:   #5a5651;
   --c--red-tint:     #f59c9c;
   --c--red:          #d33131;
   --c--red-shade:    #953030;
@@ -77,15 +77,15 @@
   --c--cyan-tint:    #9cebde;
   --c--cyan:         #10bea8;
   --c--cyan-shade:   #308a7b;
-  --c--teal-tint:    #9cdeff;
-  --c--teal:         #24a9d9;
-  --c--teal-shade:   #307ba0;
-  --c--blue-tint:    #a5c3ff;
-  --c--blue:         #4980d9;
-  --c--blue-shade:   #3b5da0;
-  --c--purple-tint:  #caafff;
-  --c--purple:       #8c5ed9;
-  --c--purple-shade: #6547a0;
+  --c--teal-tint:    #f0cf9c;
+  --c--teal:         #c8871f;
+  --c--teal-shade:   #8a5a12;
+  --c--blue-tint:    #e8c9a3;
+  --c--blue:         #b06a22;
+  --c--blue-shade:   #7d4a12;
+  --c--purple-tint:  #e3b6a8;
+  --c--purple:       #a4453a;
+  --c--purple-shade: #77302a;
   --c--pink-tint:    #ff9ccd;
   --c--pink:         #d92c8d;
   --c--pink-shade:   #a03067;
@@ -3082,7 +3082,7 @@ table.forum_index {
 }
 
 table.forum_index tr.colhead > td {
-  background: #3c4753 !important;
+  background: #3e3a35 !important;
   padding: 10px var(--sp--small) !important;
   font-size: 11px !important;
   font-weight: var(--fw--bold) !important;
@@ -3189,12 +3189,12 @@ table.forum_index tr > td:nth-child(5) {
   --c--fg--quinary:    #adb2b7;
 
   /* 强调: 青绿 (与红色标识互补, 用于链接/可点元素) */
-  --c--ac--fg--tint:   #79b6c6;
-  --c--ac--fg:         #2b788c;
-  --c--ac--fg--shade:  #1d5a6b;
-  --c--ac--bg--tint:   #2b788c;
-  --c--ac--bg:         #24677a;
-  --c--ac--bg--shade:  #1d5a6b;
+  --c--ac--fg--tint:   #d69a52;
+  --c--ac--fg:         #a8641b;
+  --c--ac--fg--shade:  #7d4a12;
+  --c--ac--bg--tint:   #a8641b;
+  --c--ac--bg:         #96570f;
+  --c--ac--bg--shade:  #7d4a12;
 }
 
 /* 表头: 深石板底白字 (面板标题 / 表格列头) */
@@ -3202,7 +3202,7 @@ table.forum_index tr > td:nth-child(5) {
 .colhead,
 .colhead_dark,
 div.head {
-  background: #3c4753 !important;
+  background: #3e3a35 !important;
   color: #fff !important;
   border-radius: 0;
 }
@@ -3217,14 +3217,14 @@ div.head {
 .head a:hover,
 .colhead a:hover,
 .colhead_dark a:hover {
-  color: #cfe6ec !important;
+  color: #f0d9bd !important;
 }
 
 table tr.colhead td,
 table tr.colhead th,
 table tr.colhead_dark td,
 table tr.colhead_dark th {
-  background: #3c4753 !important;
+  background: #3e3a35 !important;
   color: #fff !important;
 }
 
