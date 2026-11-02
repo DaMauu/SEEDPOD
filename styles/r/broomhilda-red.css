@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.2
+  Broomhilda Red v1.0.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1291,6 +1291,53 @@ table .colhead_dark th {
   Torrent 浏览表
 ----------------------------------------------------------------------------- */
 
+/* PTP 风格搜索开关: 收起 [+] SEARCH, 展开 [-] SEARCH */
+.filter_torrents .head {
+  position: relative;
+  background: transparent !important;
+  padding: var(--sp--tiny) 0 !important;
+  border: 0;
+}
+
+.filter_torrents .head strong,
+.filter_torrents .head strong span {
+  font-size: 0 !important;
+}
+
+.filter_torrents .head strong::before {
+  content: '[-]';
+  font-size: var(--fs--small);
+  font-weight: var(--fw--bold);
+  color: var(--c--fg--primary);
+}
+
+.filter_torrents .head strong::after {
+  content: ' SEARCH';
+  font-size: var(--fs--small);
+  font-weight: var(--fw--bold);
+  letter-spacing: var(--ls--more);
+  color: var(--c--fg--primary);
+}
+
+/* 收起状态: 容器被 gtoggle 加上 hidden */
+.filter_torrents:has(#ft_container.hidden) .head strong::before {
+  content: '[+]';
+}
+
+/* 整个标题行都可点击 (Hide/Show 链接铺满) */
+.filter_torrents .head > span {
+  position: absolute;
+  inset: 0;
+}
+
+.filter_torrents .head #ft_toggle {
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
 #torrent_table {
   border-collapse: collapse;
   border-bottom: var(--sp--tiny) solid transparent;
@@ -2308,6 +2355,7 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
 
 
 
