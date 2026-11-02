@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.4.1
+  Broomhilda Red v1.4.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2847,5 +2847,32 @@ select:focus {
 .filter_torrents input[type='button'] {
   float: right !important;
   margin-left: var(--sp--small) !important;
+}
+
+/* Random torrent / Random artist 做成按钮 */
+.filter_torrents a[href*="action=random"] {
+  display: inline-block !important;
+  padding: 3px 10px !important;
+  margin-right: 6px !important;
+  border: 1px solid var(--c--bg--quaternary) !important;
+  border-radius: 6px !important;
+  background: var(--c--bg--primary) !important;
+  font-size: 12px !important;
+  color: var(--c--fg--secondary) !important;
+  text-decoration: none !important;
+  transition: var(--ts--background);
+}
+
+.filter_torrents a[href*="action=random"]:hover {
+  background: var(--c--bg--secondary) !important;
+  color: var(--c--fg--primary) !important;
+}
+
+/* 结果统计行与右侧按钮垂直对齐 */
+.filter_torrents span[style*="float"],
+.filter_torrents span[style*="float: left"] {
+  line-height: 34px !important;
+  font-size: 12px !important;
+  color: var(--c--fg--tertiary) !important;
 }
 
