@@ -5,8 +5,8 @@
 来源：原 `Bluray` 仓库 `future` 分支的 `legacy/` 全量（v0.0.0.1 → v0.0.0.47），一个版本一个文件，**旧版本永不覆盖、永不删除**，回退时直接装旧号即可。
 
 ```
-pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
-pt-bluray-assistant-v0.0.0.1.user.js    最早的版本
+legacy/pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
+legacy/pt-bluray-assistant-v0.0.0.1.user.js    最早的版本
 ...
 ```
 
