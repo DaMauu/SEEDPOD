@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.1.0
+  Broomhilda Red v1.1.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -793,6 +793,7 @@ img[title^='High quality'] {
 }
 
 #userinfo_minor::before {
+  text-align: center;
   color: var(--c--fg--primary);
   font-size: var(--fs--gigantic);
   line-height: 52px;
@@ -1407,7 +1408,8 @@ table .colhead_dark th {
 }
 
 .filter_torrents:has(#ft_container.hidden) {
-  margin-top: 6px;
+  margin-top: 46px;
+  min-height: 0;
   background: transparent !important;
   box-shadow: none !important;
   border: 0 !important;
@@ -1428,8 +1430,8 @@ table .colhead_dark th {
 }
 
 .filter_torrents:has(#ft_container.hidden) .head {
-  top: -6px;
-  height: 32px;
+  top: -46px;
+  height: 46px;
 }
 
 .filter_torrents .head strong,
@@ -1540,12 +1542,13 @@ tr.group_torrent td {
 }
 
 .edition_info {
+  border-bottom: 0 !important;
   background-color: transparent !important;
-  background-image: linear-gradient(to right, transparent 0 335px, var(--c--bg--quaternary) 335px) !important;
+  background-image: linear-gradient(to right, transparent 0 225px, var(--c--bg--quaternary) 225px) !important;
   font-size: var(--fs--tiny);
   font-weight: var(--fw--bold);
   letter-spacing: var(--ls--more);
-  padding: var(--sp--small) var(--sp--medium) var(--sp--small) 335px !important;
+  padding: var(--sp--small) var(--sp--medium) var(--sp--small) 225px !important;
 }
 
 .group_image img {
@@ -2420,6 +2423,7 @@ tr.group td.center .hide_torrents {
 
 .group_image {
   float: left;
+  margin-left: -100px !important;
   margin-right: var(--sp--medium) !important;
   background: none !important;
   padding: 0 !important;
@@ -2440,7 +2444,7 @@ tr.group td.center .hide_torrents {
 /* 分组左侧栏: 封面与版本行连成一块 (左右同组) */
 #torrent_table tr.group,
 #torrent_table tr.group_torrent {
-  background-image: linear-gradient(to right, var(--c--bg--secondary) 0 335px, transparent 335px);
+  background-image: linear-gradient(to right, var(--c--bg--secondary) 0 225px, transparent 225px);
 }
 
 #torrent_table tr.group_torrent td {
@@ -2449,7 +2453,7 @@ tr.group td.center .hide_torrents {
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
-  padding-left: 340px !important;
+  padding-left: 225px !important;
   padding-right: 240px !important;
 }
 
@@ -2598,7 +2602,7 @@ select:focus {
   #menu {height: 60px !important;}
   #menu a {line-height: 60px !important; height: 60px !important;}
   #menu ul {height: 60px;}
-  #userinfo_minor::before {line-height: 60px; top: -60px; width: 60px; height: 60px; margin-top: 1160px;}
+  #userinfo_minor::before {text-align: center; line-height: 60px; top: -60px; width: 60px; height: 60px; margin-top: 1160px;}
   #userinfo_minor:hover {top: 160px;}
 }
 
