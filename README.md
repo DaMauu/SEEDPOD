@@ -4,8 +4,9 @@
 
 <h1 align="center">种荚</h1>
 
-<p align="center"><b>在所有事情上，尽你所能。</b><br/>
-SEEDPOD · 播种者的衍生库</p>
+<p align="center">SEEDPOD · 播种者的衍生库</p>
+
+<p align="center"><b>在所有事情上，尽你所能。</b></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-0.0.0.47-4d6bfe?style=flat-square" />
