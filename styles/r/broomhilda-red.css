@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.1.5
+  Broomhilda Red v1.1.6
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1543,8 +1543,7 @@ tr.group_torrent td {
 
 .edition_info {
   border-bottom: 0 !important;
-  background-color: var(--c--bg--tertiary) !important;
-  background-image: linear-gradient(to right, transparent 0 180px, var(--c--bg--tertiary) 180px) !important;
+  background: var(--c--bg--tertiary) !important;
   font-size: var(--fs--tiny);
   font-weight: var(--fw--bold) !important;
   text-transform: uppercase;
@@ -2423,13 +2422,10 @@ tr.group td.center .hide_torrents {
 }
 
 .group_image {
-  position: absolute;
-  top: 0;
-  left: 0;
+  float: left;
   width: 160px;
-  height: 230px;
-  float: none !important;
-  margin: 0 !important;
+  height: 160px;
+  margin: 0 16px 0 0 !important;
   background: none !important;
   padding: 0 !important;
   box-shadow: none !important;
@@ -2440,7 +2436,7 @@ tr.group td.center .hide_torrents {
 
 .group_image img {
   width: 160px !important;
-  height: 230px !important;
+  height: 160px !important;
   object-fit: cover;
   display: block;
   border-radius: var(--br--small);
@@ -2484,8 +2480,28 @@ tr.group_torrent td {
 }
 
 tr.group td.big_info {
-  position: relative;
-  padding-left: 72px !important;
+  padding-left: 0 !important;
+}
+
+/* 分组标题与标签字重 */
+.torrent_table .group_info,
+.torrent_table .group_info a {
+  font-size: var(--fs--medium) !important;
+  font-weight: var(--fw--bold) !important;
+  color: var(--c--fg--primary) !important;
+}
+
+.tags,
+.tags a {
+  font-size: var(--fs--tiny) !important;
+  font-weight: var(--fw--regular) !important;
+}
+
+/* 表头右侧三个图标统一尺寸 */
+#torrent_table tr.colhead td.sign img {
+  width: 14px !important;
+  height: 14px !important;
+  vertical-align: middle;
 }
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
