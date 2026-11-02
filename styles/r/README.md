@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-1.2.6-8c796a?style=flat-square" />
+<img src="https://img.shields.io/badge/version-1.2.7-8c796a?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.2.6/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.2.7/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v1.2.7 | 2026-11-03 | 分组行加深底色（标题+标签块）；上下留白拉开组间距；标题字号加大 |
 | v1.2.6 | 2026-11-03 | 版本行缩进改 2 字符；标签 11px 更细更淡；标题加深；去掉分组行底部细线 |
 | v1.2.5 | 2026-11-03 | 标签改细字重；列表面板加圆角与阴影 |
 | v1.2.4 | 2026-11-03 | 去掉封面与 .brackets 方括号；标题与 NAME 对齐；版本行缩进 4 字符 |
@@ -91,6 +92,7 @@ document.head.insertAdjacentHTML('beforeend',
 | v1.0.2 | 2026-11-03 | 分页条紧凑化，DL/FL/RP 移到名称右侧 |
 | v1.0.1 | 2026-11-03 | 头部说明整理，README 排版 |
 | v1.0.0 | 2026-11-03 | 初版 |
+
 
 
 
