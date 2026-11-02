@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.0
+  Broomhilda Red v2.0.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3668,4 +3668,89 @@ table.forum_index tr.colhead > td {
   line-height: 1 !important;
   color: var(--c--ac--fg) !important;
   display: inline-block !important;
+}
+/* ===== 种子内页 (torrents.php?id=…&torrentid=…): 卡片化 / 副标题底色 / 版本行缩进 / 展开内容兜底 ===== */
+table.torrent_table {
+  background: var(--c--bg--secondary) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: var(--bs--large) !important;
+  margin: 0 0 24px !important;
+}
+
+/* 列头与副标题同一左内边距, 保证对齐 */
+table.torrent_table tr.colhead_dark > td:first-child {
+  padding-left: 16px !important;
+}
+
+/* 副标题的首字符是图标减号, 自带约 6px 左留白, 这里补回来 */
+table.torrent_table td.edition_info {
+  padding-left: 10px !important;
+}
+
+/* 副标题 (版本条): 浅底 + 上下发丝线 */
+table.torrent_table tr.group_torrent td.edition_info {
+  background: var(--c--bg--quaternary) !important;
+  border-top: 1px solid var(--line--soft) !important;
+  border-bottom: 1px solid var(--line--soft) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+table.torrent_table td.edition_info strong,
+table.torrent_table td.edition_info a {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  color: var(--c--fg--secondary) !important;
+}
+
+/* 版本行: 缩进 2 字符 + 小字号, 数字列右对齐 */
+table.torrent_table tr.torrent_row > td:first-child {
+  padding-left: calc(16px + 2ch) !important;
+}
+
+table.torrent_table tr.torrent_row > td:not(:first-child) {
+  padding-right: 16px !important;
+  text-align: right !important;
+}
+
+table.torrent_table tr.torrent_row td,
+table.torrent_table tr.torrent_row td a {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: var(--c--fg--secondary) !important;
+}
+
+table.torrent_table tr.torrent_row td a:hover {
+  color: var(--c--ac--fg) !important;
+}
+
+table.torrent_table tr.torrent_row:hover > td {
+  background: #fafbfc !important;
+}
+
+/* 点开后展开的内容: 浅底块包裹, 与版本行区分 */
+table.torrent_table tr.torrentdetails > td {
+  background: var(--c--bg--tertiary) !important;
+  border-top: 1px solid var(--line) !important;
+  border-bottom: 1px solid var(--line) !important;
+  padding: 16px !important;
+  font-size: 13px !important;
+}
+
+table.torrent_table tr.torrentdetails blockquote {
+  background: transparent !important;
+  border: 0 !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  color: var(--c--fg--tertiary) !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox {
+  margin: 0 !important;
+  padding: 0 !important;
 }

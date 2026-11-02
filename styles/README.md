@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v2.0.0 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.0](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.0/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v2.0.1 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.1](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.1/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v2.0.1 | 2026-11-03 | 种子内页排版修复 |
 | Broomhilda Red | v2.0.0 | 2026-11-03 | 现代风格重做：灰阶+单一强调色、浅表头、纯色导航、8pt 间距 |
 | Broomhilda Red | v1.6.2 | 2026-11-03 | 清除蓝色系配色，表头暖炭灰，强调色琥珀 |
 | Broomhilda Red | v1.6.1 | 2026-11-03 | 浅灰底+白卡片、导航去阴影、导航全白 |
