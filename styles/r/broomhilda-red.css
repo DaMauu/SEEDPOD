@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.7
+  Broomhilda Red v1.2.8
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2515,7 +2515,11 @@ tr.group td {
 
 #torrent_table tr.group td {
   padding-top: 14px !important;
-  padding-bottom: 12px !important;
+  padding-bottom: 0 !important;
+}
+
+.torrent_table .group_info {
+  background: transparent !important;
 }
 
 tr.group_torrent td {
@@ -2596,7 +2600,8 @@ a.brackets::after,
 
 /* 版本条底色 (需压过 group_torrent 的透明规则) */
 #torrent_table tr.group_torrent td.edition_info {
-  background: var(--c--bg--tertiary) !important;
+  background: none !important;
+  background-image: linear-gradient(to right, transparent 0 36px, var(--c--bg--tertiary) 36px) !important;
 }
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
