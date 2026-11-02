@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.4
+  Broomhilda Red v2.0.5
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3863,4 +3863,25 @@ table.torrent_table tr.torrent_row > td:hover {
 table.torrent_table tr.group_torrent td.edition_info {
   border-top: 0 !important;
   border-bottom: 0 !important;
+}
+/* ===== rip log 容器: 无论内部用什么标签, 一律换行, 不出现横向滚动条 ===== */
+table.torrent_table tr.torrentdetails td,
+table.torrent_table tr.torrentdetails td *,
+.torrentdetails .pad,
+.torrentdetails pre,
+#torrent_details .torrentdetails pre {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+table.torrent_table tr.torrentdetails td {
+  overflow: hidden !important;
+}
+
+.torrentdetails .pad {
+  padding: 0 !important;
+  margin: 0 !important;
 }
