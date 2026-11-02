@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/JavaScript-ES2020-f7df1e?style=flat-square&logo=javascript&logoColor=black" />
   <img src="https://img.shields.io/badge/build-none%20%C2%B7%20single--file-success?style=flat-square" />
   <img src="https://img.shields.io/badge/tests-16%20suites%20passing-2ea44f?style=flat-square" />
-  <img src="https://img.shields.io/badge/branch-future-8957e5?style=flat-square" />
+  <img src="https://img.shields.io/badge/branch-main-8957e5?style=flat-square" />
 </p>
 
 ---
@@ -80,7 +80,6 @@
 ```
 scripts/bluray/pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
 scripts/bluray/                                  单文件脚本，按版本号平铺，旧版本永不覆盖
-scripts/packages/                                带构建的工程（src/ + dist/ + test/ + build.mjs）
 styles/                                          样式表
 docs/QUICKSTART.md                               快速上手
 docs/GUIDE.md                                    使用手册

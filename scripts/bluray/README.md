@@ -16,4 +16,4 @@ pt-bluray-assistant-v0.0.0.1.user.js    最早的版本
 
 - 每次改动新建下一个版本号的文件，不原地改。
 - 三个版本串必须同步：头部 `@version`、面板标题里的 `(vX)`、注入日志 `已注入 @`。
-- 与 `../packages/` 的模块化工程互不影响，那条线用自己的 `package.json` 版本号。
+- 带构建的模块化工程（src/ dist/ test/）不在本分支，保留在 `collab` 分支。
