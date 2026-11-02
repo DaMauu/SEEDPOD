@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.1.1
+  Broomhilda Red v1.1.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1404,11 +1404,11 @@ table .colhead_dark th {
 /* 标签绝对定位到面板上方的页面底色上, 与 PTP 一致 */
 .filter_torrents {
   position: relative;
-  margin-top: 40px;
+  margin-top: 52px;
 }
 
 .filter_torrents:has(#ft_container.hidden) {
-  margin-top: 46px;
+  margin-top: 56px;
   min-height: 0;
   background: transparent !important;
   box-shadow: none !important;
@@ -1417,10 +1417,10 @@ table .colhead_dark th {
 
 .filter_torrents .head {
   position: absolute;
-  top: -40px;
+  top: -52px;
   left: 0;
   right: 0;
-  height: 40px;
+  height: 52px;
   display: flex;
   align-items: center;
   background: transparent !important;
@@ -1430,8 +1430,8 @@ table .colhead_dark th {
 }
 
 .filter_torrents:has(#ft_container.hidden) .head {
-  top: -46px;
-  height: 46px;
+  top: -56px;
+  height: 56px;
 }
 
 .filter_torrents .head strong,
@@ -1544,11 +1544,11 @@ tr.group_torrent td {
 .edition_info {
   border-bottom: 0 !important;
   background-color: transparent !important;
-  background-image: linear-gradient(to right, transparent 0 225px, var(--c--bg--quaternary) 225px) !important;
+  background-image: linear-gradient(to right, transparent 0 240px, var(--c--bg--quaternary) 240px) !important;
   font-size: var(--fs--tiny);
   font-weight: var(--fw--bold);
   letter-spacing: var(--ls--more);
-  padding: var(--sp--small) var(--sp--medium) var(--sp--small) 225px !important;
+  padding: var(--sp--small) var(--sp--medium) var(--sp--small) 240px !important;
 }
 
 .group_image img {
@@ -2402,13 +2402,11 @@ table tr.colhead_dark td, table tr.colhead_dark th {
 
 /* 分组封面: PTP 尺寸, 靠左上, 去掉上方的折叠符号与左侧分类图标列 */
 tr.group > td.center {
-  width: 0 !important;
   padding: 0 !important;
   border: 0 !important;
 }
 
 tr.group > td.cats_col {
-  width: 0 !important;
   padding: 0 !important;
   border: 0 !important;
 }
@@ -2441,10 +2439,16 @@ tr.group td.center .hide_torrents {
   border-radius: var(--br--small);
 }
 
-/* 分组左侧栏: 封面与版本行连成一块 (左右同组) */
-#torrent_table tr.group,
-#torrent_table tr.group_torrent {
-  background-image: linear-gradient(to right, var(--c--bg--secondary) 0 225px, transparent 225px);
+/* 表头 Name 列与标题左对齐 */
+#torrent_table tr.colhead > td:nth-child(3) {
+  padding-left: 240px !important;
+  text-align: left !important;
+}
+
+/* 删掉 FILES 列 (表头第 4 格 + 行内第 2 格) */
+#torrent_table tr.colhead > td:nth-child(4),
+#torrent_table tr.group_torrent > td:nth-child(2) {
+  display: none !important;
 }
 
 #torrent_table tr.group_torrent td {
@@ -2453,7 +2457,7 @@ tr.group td.center .hide_torrents {
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
-  padding-left: 225px !important;
+  padding-left: 240px !important;
   padding-right: 240px !important;
 }
 
