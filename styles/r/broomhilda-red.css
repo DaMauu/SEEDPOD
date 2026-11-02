@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.8
+  Broomhilda Red v1.0.9
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1453,32 +1453,27 @@ table .colhead_dark th {
   margin-left: 6px;
 }
 
-/* 右侧齿轮 (装饰, 与 PTP 同款位置) */
-.filter_torrents .head::after {
-  content: '\e8b8';
-  font-family: var(--ff--icons);
-  font-size: 17px;
-  color: var(--c--fg--tertiary);
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
+/* 右侧齿轮由 scripts/r/browse-view.user.js 注入 (按钮 + 菜单) */
 
 /* 收起状态: 容器被 gtoggle 加上 hidden */
 .filter_torrents:has(#ft_container.hidden) .head strong::before {
   content: '[+]';
 }
 
-/* 整个标题行都可点击 (Hide/Show 链接铺满) */
+/* 只有 [+] SEARCH 文字可点, 其余区域不响应 */
 .filter_torrents .head > span {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .filter_torrents .head #ft_toggle {
+  pointer-events: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
   display: block;
-  width: 100%;
+  width: 118px;
   height: 100%;
   font-size: 0 !important;
   color: transparent !important;
@@ -2613,6 +2608,7 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
 
 
 

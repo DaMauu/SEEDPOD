@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-1.0.8-8c796a?style=flat-square" />
+<img src="https://img.shields.io/badge/version-1.0.9-8c796a?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.0.8/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.0.9/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v1.0.9 | 2026-11-03 | 搜索只有标签可点；齿轮改由脚本注入（去掉装饰齿轮） |
 | v1.0.8 | 2026-11-03 | 版本条与版本行右移到封面右侧；新增视图切换样式（配合 userscript） |
 | v1.0.7 | 2026-11-03 | SEARCH 标签绝对定位到面板外（上方面板底色），收起时面板真正消失 |
 | v1.0.6 | 2026-11-03 | 种子行距收紧，DL 组靠近名称，更接近 PTP 行节奏 |
@@ -77,6 +78,7 @@ document.head.insertAdjacentHTML('beforeend',
 | v1.0.2 | 2026-11-03 | 分页条紧凑化，DL/FL/RP 移到名称右侧 |
 | v1.0.1 | 2026-11-03 | 头部说明整理，README 排版 |
 | v1.0.0 | 2026-11-03 | 初版 |
+
 
 
 
