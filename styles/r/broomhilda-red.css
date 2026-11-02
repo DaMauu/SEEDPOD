@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.6.2
+  Broomhilda Red v2.0.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3312,4 +3312,360 @@ table tr.colhead_dark th {
 #header .box,
 #searchbars {
   box-shadow: none !important;
+}
+/* =============================================================================
+   v2.0.0 现代风格层: 中性灰阶 + 单一强调色, 浅色表头 + 发丝线, 8pt 间距
+   ============================================================================= */
+
+:root {
+  /* 间距: 8pt 栅格 */
+  --sp--tiny: 4px;
+  --sp--small: 8px;
+  --sp--medium: 16px;
+  --sp--large: 24px;
+  --sp--x-large: 32px;
+  --sp--huge: 40px;
+  --sp--gigantic: 48px;
+  --sp--enormous: 64px;
+
+  /* 圆角 */
+  --br: 10px;
+  --br--small: 6px;
+
+  /* 中性灰阶 (7 级) */
+  --c--bg--primary:    #f6f7f8;
+  --c--bg--secondary:  #ffffff;
+  --c--bg--tertiary:   #f2f3f5;
+  --c--bg--quaternary: #eceef1;
+  --c--bg--quinary:    #dfe2e6;
+
+  --c--fg--initial:    #0f1115;
+  --c--fg--primary:    #16181d;
+  --c--fg--secondary:  #4a4f57;
+  --c--fg--tertiary:   #6b717a;
+  --c--fg--quaternary: #8b9199;
+  --c--fg--quinary:    #a7adb5;
+
+  /* 单一强调色: 琥珀, 只用于可交互元素 */
+  --c--ac--fg--tint:   #c98a3c;
+  --c--ac--fg:         #9a6a1f;
+  --c--ac--fg--shade:  #7a5216;
+  --c--ac--bg--tint:   #b0791f;
+  --c--ac--bg:         #96650f;
+  --c--ac--bg--shade:  #7a5216;
+
+  /* 线条与投影: 只用发丝线和极轻阴影 */
+  --line: #e4e7ea;
+  --line--soft: #eef0f2;
+  --bs--small: 0 1px 2px rgba(16, 24, 40, .05);
+  --bs--large: 0 1px 2px rgba(16, 24, 40, .06);
+}
+
+/* 排版: 14px / 1.6, 字号阶梯 12·14·16·20·24 */
+body {
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--c--bg--primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1 { font-size: 24px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; }
+h2 { font-size: 20px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; }
+h3 { font-size: 16px !important; font-weight: 600 !important; }
+h4 { font-size: 14px !important; font-weight: 600 !important; }
+
+/* 面板: 白底 + 1px 细线 + 极轻投影 */
+.box,
+#torrent_table {
+  background: var(--c--bg--secondary) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--bs--large) !important;
+}
+
+/* 表头: 浅底、发丝线、句首大写 */
+.head,
+.colhead,
+.colhead_dark,
+div.head {
+  background: transparent !important;
+  color: var(--c--fg--secondary) !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  padding: 12px 16px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.head a,
+.colhead a,
+.colhead_dark a,
+.head strong {
+  color: var(--c--fg--primary) !important;
+  font-weight: 600 !important;
+}
+
+table tr.colhead td,
+table tr.colhead th,
+table tr.colhead_dark td,
+table tr.colhead_dark th {
+  background: transparent !important;
+  color: var(--c--fg--secondary) !important;
+  border-bottom: 1px solid var(--line) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+}
+
+/* 顶部导航: 单一深色, 当前项用强调色下划线 */
+#menu {
+  background: #191c20 !important;
+  border-radius: 10px 10px 0 0 !important;
+  box-shadow: none !important;
+}
+
+#menu a,
+#menu ul li a {
+  color: rgba(255, 255, 255, .82) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+}
+
+#menu a:hover {
+  background: rgba(255, 255, 255, .08) !important;
+  color: #fff !important;
+}
+
+#menu li.active a {
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: inset 0 -2px 0 var(--c--ac--fg--tint) !important;
+}
+
+/* 搜索栏与导航连成一体 */
+#searchbars {
+  background: var(--c--bg--secondary) !important;
+  border: 1px solid var(--line) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 10px 10px !important;
+}
+
+/* 表单控件: 36px 高, 6px 圆角, 焦点用强调色外圈 */
+input[type='text'],
+input[type='search'],
+input[type='password'],
+input[type='number'],
+input[type='email'],
+input:not([type]),
+textarea,
+select {
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  font-size: 13px !important;
+  padding: 7px 10px !important;
+}
+
+input[type='text']:focus,
+input[type='search']:focus,
+input[type='password']:focus,
+input[type='number']:focus,
+input[type='email']:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--c--ac--fg--tint) !important;
+  box-shadow: 0 0 0 3px rgba(201, 138, 60, .18) !important;
+  outline: 0 !important;
+}
+
+/* 按钮: 实心强调色 / 次要为描边 */
+input[type='submit'],
+input[type='button'],
+button {
+  border: 0 !important;
+  border-radius: 6px !important;
+  padding: 8px 14px !important;
+  background: var(--c--ac--bg) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+input[type='submit']:hover,
+input[type='button']:hover,
+button:hover {
+  background: var(--c--ac--bg--shade) !important;
+}
+
+/* 种子表: 去掉灰块堆叠, 用发丝线分层 */
+#torrent_table tr.group > td,
+#torrent_table tr.group td.sign,
+#torrent_table tr.group td.number_column,
+#torrent_table tr.group td.big_info,
+#torrent_table tr.group_torrent > td {
+  background: var(--c--bg--secondary) !important;
+  border-bottom: 1px solid var(--line--soft) !important;
+}
+
+#torrent_table tr.group_torrent:hover > td {
+  background: #fafbfc !important;
+}
+
+#torrent_table tr.group_torrent td.edition_info {
+  background: var(--c--bg--tertiary) !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid var(--line--soft) !important;
+}
+
+/* 论坛卡片 */
+table.forum_index {
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--bs--large) !important;
+}
+
+table.forum_index tr.colhead > td {
+  background: var(--c--bg--tertiary) !important;
+  color: var(--c--fg--secondary) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+/* 折叠圆点: 收紧为一个 14px 的圆点 */
+a.brackets[onclick*="gtoggle"]::before {
+  font-size: 14px !important;
+  color: var(--c--ac--fg) !important;
+}
+/* 搜索面板: 还原为卡片内的正常表头 (取消旧版浮到卡片外的 hack) */
+.filter_torrents {
+  margin-top: 0 !important;
+  background: var(--c--bg--secondary) !important;
+}
+
+.filter_torrents:has(#ft_container.hidden) {
+  margin-top: 0 !important;
+  background: var(--c--bg--secondary) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--bs--large) !important;
+}
+
+.filter_torrents .head {
+  position: static !important;
+  top: auto !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  margin: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: transparent !important;
+}
+
+.filter_torrents .head strong,
+.filter_torrents .head strong span {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--c--fg--secondary) !important;
+  letter-spacing: 0.02em !important;
+}
+
+.filter_torrents .head strong::before,
+.filter_torrents .head strong::after {
+  content: none !important;
+}
+
+.filter_torrents .head > span {
+  position: static !important;
+  inset: auto !important;
+  pointer-events: auto !important;
+}
+
+.filter_torrents .head #ft_toggle {
+  position: static !important;
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  font-size: inherit !important;
+  color: inherit !important;
+}
+
+/* 输入框: 浅填充, 与白卡片区分 */
+input[type='text'],
+input[type='search'],
+input[type='password'],
+input[type='number'],
+input[type='email'],
+input:not([type]),
+textarea,
+select {
+  background: #f8f9fb !important;
+}
+
+input[type='text']:focus,
+input[type='search']:focus,
+input[type='password']:focus,
+input[type='number']:focus,
+input[type='email']:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  background: #fff !important;
+}
+
+/* 标签勾选区: 收紧字号与行距 */
+.filter_torrents ul,
+.filter_torrents li {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.filter_torrents label {
+  font-size: 13px !important;
+  color: var(--c--fg--secondary) !important;
+}
+/* 表头族一致: 论坛列头/分类标题也改为句首大写 */
+table.forum_index tr.colhead > td {
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+  font-size: 12px !important;
+  color: var(--c--fg--secondary) !important;
+}
+
+.forum_list > h3 {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--c--fg--tertiary) !important;
+  margin: 32px 0 8px !important;
+  padding: 0 2px !important;
+}
+
+/* 搜索面板的 Hide 也做成圆点, 与其它折叠开关一致 */
+.filter_torrents .head #ft_toggle {
+  font-size: 0 !important;
+  color: transparent !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.filter_torrents .head #ft_toggle::before {
+  content: '\e061';
+  font-family: var(--ff--icons) !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  color: var(--c--ac--fg) !important;
+  display: inline-block !important;
 }

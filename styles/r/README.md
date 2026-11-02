@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-1.6.2-a8641b?style=flat-square" />
+<img src="https://img.shields.io/badge/version-2.0.0-a8641b?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.6.2/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.0/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v2.0.0 | 2026-11-03 | 现代风格重做：中性灰阶+单一琥珀强调色、浅色发丝线表头、深色纯色导航（当前页用强调色下划线）、14px/1.6 排版与 8pt 间距、种子表改为细线分层、搜索面板恢复卡内表头 |
 | v1.6.2 | 2026-11-03 | 清除全表蓝色/近蓝配色：表头改暖炭灰，强调色青绿换琥珀，语义色板 teal/blue/purple/gray 全部改暖色 |
 | v1.6.1 | 2026-11-03 | 底色改为浅灰+白卡片，导航去掉阴影改用提亮表示当前项，导航内文字符号统一白色 |
 | v1.6.0 | 2026-11-03 | 改为站点原生配色：白底灰阶、表头深石板白字、顶部菜单橙红渐变；强调色换青绿（红的互补色）；仅 logo 保留红色 |
