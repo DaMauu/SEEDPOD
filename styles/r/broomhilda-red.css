@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.4
+  Broomhilda Red v1.0.5
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2269,6 +2269,45 @@ table tr.colhead_dark td, table tr.colhead_dark th {
   background: none !important;
 }
 
+/* 分组封面: PTP 尺寸, 靠左上, 去掉上方的折叠符号与左侧分类图标列 */
+tr.group > td.center {
+  width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+tr.group > td.cats_col {
+  width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+tr.group td.cats_col > div {
+  display: none !important;
+}
+
+tr.group td.center .hide_torrents {
+  display: none !important;
+}
+
+.group_image {
+  float: left;
+  margin-right: var(--sp--medium) !important;
+}
+
+.group_image img {
+  width: 150px !important;
+  height: 150px !important;
+  object-fit: cover;
+  border-radius: var(--br--small);
+}
+
+/* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
+#torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
+  padding-left: 74px !important;
+  padding-right: 360px !important;
+}
+
 /* 种子详情: 去掉引号图标与斜体, 与 PTP 一样是普通文字块 */
 .torrent_table blockquote {
   margin: 0;
@@ -2441,6 +2480,12 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
+
+
+
+
+
 
 
 
