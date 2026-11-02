@@ -18,35 +18,17 @@
 
 ---
 
-## 本库目录
+## 目录
 
-| 目录 | 是什么 | 文档 |
-|---|---|---|
-| [`scripts/bluray/`](scripts/bluray/) | 原盘转载面板，Tampermonkey 单文件脚本 | [说明](scripts/bluray/README.md) · [快速上手](scripts/bluray/docs/QUICKSTART.md) · [使用手册](scripts/bluray/docs/GUIDE.md) |
-| [`scripts/PTScripts/`](scripts/PTScripts/) | 站点小工具合集，37 个单文件脚本 | [索引](scripts/PTScripts/README.md) |
-| [`styles/`](styles/) | 站点样式表 | [说明](styles/README.md) |
-
-以下内容介绍本库的主力脚本：原盘转载面板。
-
-## 文档导航
-
-| 文档 | 适合谁 | 内容 |
-|---|---|---|
-| [快速上手](scripts/bluray/docs/QUICKSTART.md) | 第一次安装 | 三分钟装好并跑通一轮，含最小配置表与排错速查 |
-| [使用手册](scripts/bluray/docs/GUIDE.md) | 日常使用者 | 面板逐项说明、筛选规则、词库与断点、转种全流程、设置项、FAQ |
-| [架构设计](scripts/bluray/docs/ARCHITECTURE.md) | 维护者 | 模块边界、数据模型、状态机、查重与截图算法、站点扩展方式 |
-| [开发指南](scripts/bluray/docs/DEVELOPMENT.md) | 二次开发 | 版本号规则、提交前校验、回归测试清单、发版流程 |
-| [AI 上下文](scripts/bluray/docs/AI-CONTEXT.md) | 接手的 AI | 项目定位、硬性约束、已知坑位、交付要求 |
-
----
+| 位置 | 内容 |
+|---|---|
+| [`scripts/bluray/`](scripts/bluray/) | 原盘转载面板 · [快速上手](scripts/bluray/docs/QUICKSTART.md) · [使用手册](scripts/bluray/docs/GUIDE.md) · [架构](scripts/bluray/docs/ARCHITECTURE.md) · [开发](scripts/bluray/docs/DEVELOPMENT.md) · [AI 上下文](scripts/bluray/docs/AI-CONTEXT.md) |
+| [`scripts/PTScripts/`](scripts/PTScripts/) | 37 个站点小脚本 · [索引](scripts/PTScripts/README.md) |
+| [`styles/`](styles/) | 站点样式表 · [说明](styles/README.md) |
 
 ## 概述
 
-原盘搬运最耗时的不是下载，而是重复劳动：逐条核对是不是重编码、翻目标站确认有没有人发过、把 BDInfo 重新排成表格、把截图一张张传到图床、再把字段填进上传页。这些动作规则明确、判断标准固定，适合交给脚本。
-
-本项目就是把这些环节收进一个悬挂面板：以当前登录态读取源站列表，按固定规则筛出合格原盘，向目标站发起查重，把确认可发的条目排队；需要发布时再解析详情页的 BDInfo、截图与简介，转存图床并填入上传表单。
-
-技术形态：Tampermonkey 单文件脚本，约 6300 行，无构建步骤、无外部依赖、无后端。适配 NexusPHP、UNIT3D、Gazelle、f3nix 四类架构，源站与目标站均可从已支持列表中指定。
+把原盘搬运里规则明确、判断固定的重复劳动收进一个挂起面板：按规则筛合格原盘、跨站查重、BDInfo 排版、截图转存、填单推种。Tampermonkey 单文件脚本，约 6300 行，无构建、无依赖、无后端，适配 NexusPHP / UNIT3D / Gazelle / f3nix。
 
 ## 能力概览
 
@@ -83,25 +65,6 @@
 2. 打开 [`scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js`](scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
-后续步骤见 [快速上手](scripts/bluray/docs/QUICKSTART.md)。
-
-## 目录
-
-```
-SEEDPOD/
-├── docs/
-│   └── banner.png               本库封面图
-├── scripts/
-│   ├── README.md                脚本目录说明
-│   ├── bluray/                  原盘转载面板
-│   │   ├── README.md
-│   │   ├── docs/                快速上手、使用手册、架构、开发指南、AI 上下文、封面与角色图
-│   │   └── legacy/              pt-bluray-assistant-v0.0.0.1 ~ v0.0.0.47（当前版 v0.0.0.47）
-│   └── PTScripts/               站点小工具合集（37 个脚本 + 索引）
-├── styles/                      样式表
-└── README.md                    本文件
-```
-
 ## 兼容性
 
 | 站点类型 | 支持 | 说明 |
@@ -112,6 +75,18 @@ SEEDPOD/
 | f3nix（特定站点） | 完整 | 审核、跨页拉取、点预设参数；详情靠网页穿透（BDInfo / 截图 / 简介） |
 
 浏览器：Chrome / Edge / Firefox 最新版 + Tampermonkey。
+
+## 结构
+
+```
+SEEDPOD/
+├── docs/banner.png              封面图
+├── scripts/
+│   ├── bluray/                  原盘转载面板（docs/ 文档，legacy/ 各版本脚本）
+│   └── PTScripts/               37 个单文件脚本 + 索引
+├── styles/                      站点样式表
+└── README.md
+```
 
 ---
 
