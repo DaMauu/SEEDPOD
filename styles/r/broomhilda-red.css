@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.0
+  Broomhilda Red v1.2.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1543,7 +1543,7 @@ tr.group_torrent td {
 
 .edition_info {
   border-bottom: 0 !important;
-  background: var(--c--bg--tertiary) !important;
+  background: var(--c--bg--quaternary) !important;
   font-size: var(--fs--tiny);
   font-weight: var(--fw--bold) !important;
   text-transform: uppercase;
@@ -2483,7 +2483,7 @@ tr.group_torrent td {
 
 tr.group td.big_info {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   padding-left: 0 !important;
 }
 
@@ -2506,6 +2506,11 @@ tr.group td.big_info {
   width: 14px !important;
   height: 14px !important;
   vertical-align: middle;
+}
+
+/* 版本条底色 (需压过 group_torrent 的透明规则) */
+#torrent_table tr.group_torrent td.edition_info {
+  background: var(--c--bg--tertiary) !important;
 }
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
