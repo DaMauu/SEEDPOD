@@ -73,6 +73,15 @@ document.head.insertAdjacentHTML('beforeend',
 
 三者都是在 `broomhilda-red.css` v2.0.8 之上追加的一层覆盖，功能与其它页面完全一致。
 
+
+## 三个现代化方向（D 系列，试选）
+
+| 版本 | 结构 | 直链 |
+| --- | --- | --- |
+| D1 Ink | 深色圆角外壳（导航+搜索并入一块深色区域），内容为大圆角白卡，胶囊导航/胶囊操作按钮，标题 16px | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.1.0/styles/r/broomhilda-red-d1-ink.css |
+| D2 Soft | 全浅色：白色胶囊导航、18px 圆角卡片、柔和投影、17px 标题、24px 内边距、操作按钮浅灰胶囊 | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.2.0/styles/r/broomhilda-red-d2-soft.css |
+| D3 Editorial | 杂志式：居中 1180px 容器、20px 大标题、无卡片无底色、只用细线与大留白分隔、导航下划线指示 | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.3.0/styles/r/broomhilda-red-d3-editorial.css |
+
 ## 版本
 
 - 文件头注释带版本号，每次改动递增
