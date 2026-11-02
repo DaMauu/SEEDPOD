@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.4.1
+  Broomhilda Red v2.4.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4177,4 +4177,179 @@ table.torrent_table tr.torrentdetails pre,
   word-break: break-word !important;
   overflow-x: hidden !important;
   max-width: 100% !important;
+}
+/* ===== v2.4.2: 展开区排版重置 + 导航改浅色 ===== */
+
+/* 展开块: 去掉一切继承来的边距/浮动/居中对齐 */
+table.torrent_table tr.torrentdetails > td {
+  text-align: left !important;
+  padding: 16px 20px !important;
+  background: var(--c--bg--tertiary) !important;
+  border-top: 1px solid var(--line) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+table.torrent_table tr.torrentdetails > td > div,
+table.torrent_table tr.torrentdetails > td > blockquote,
+table.torrent_table tr.torrentdetails > td > span {
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  float: none !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+table.torrent_table tr.torrentdetails > td > div[id^="release_"],
+table.torrent_table tr.torrentdetails > td > blockquote {
+  margin: 0 0 12px !important;
+  line-height: 1.7 !important;
+  font-size: 13px !important;
+  color: var(--c--fg--tertiary) !important;
+}
+
+/* 三个操作链接: 内联一行, 左对齐, 与上方文字同一左边界 */
+table.torrent_table tr.torrentdetails .linkbox {
+  display: block !important;
+  float: none !important;
+  text-align: left !important;
+  margin: 12px 0 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox a {
+  display: inline !important;
+  float: none !important;
+  width: auto !important;
+  margin: 0 18px 0 0 !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  color: var(--c--ac--fg) !important;
+}
+
+/* 频谱图/封面图: 自适应不撑破 */
+table.torrent_table tr.torrentdetails img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: inline-block !important;
+  margin: 6px 0 !important;
+}
+
+/* 文件列表表格保持原有内边距 */
+table.torrent_table tr.torrentdetails table.filelist_table td,
+table.torrent_table tr.torrentdetails table.filelist_table th {
+  padding: 6px 10px !important;
+  text-align: left !important;
+}
+
+/* 导航: 浅米色底 + 深暖字 (不再是深色) */
+#menu {
+  background: #ece8e1 !important;
+  border-radius: 10px 10px 0 0 !important;
+  box-shadow: none !important;
+}
+
+#menu a,
+#menu ul li a {
+  color: #56493d !important;
+  font-weight: 600 !important;
+}
+
+#menu a:hover {
+  background: rgba(178, 58, 46, .08) !important;
+  color: #8a2a22 !important;
+}
+
+#menu li.active a {
+  background: rgba(178, 58, 46, .10) !important;
+  color: #8a2a22 !important;
+  box-shadow: inset 0 -2px 0 var(--c--ac--fg) !important;
+}
+
+#menu svg,
+#menu svg * {
+  fill: #56493d !important;
+  stroke: #56493d !important;
+}
+
+
+/* 展开块内部: 清掉一切遗留边框/底色, 引用块取消缩进 */
+table.torrent_table tr.torrentdetails > td *:not(a) {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+table.torrent_table tr.torrentdetails blockquote,
+table.torrent_table tr.torrentdetails blockquote p {
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+  color: var(--c--fg--tertiary) !important;
+}
+
+table.torrent_table tr.torrentdetails div[id^="release_"] {
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+}
+
+table.torrent_table tr.torrentdetails > td > div:first-child {
+  margin-top: 0 !important;
+}
+
+
+/* 展开块: 最终清理 —— 所有后代去掉边框/底色/阴影/缩进 */
+table.torrent_table tr.torrentdetails,
+table.torrent_table tr.torrentdetails * {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+table.torrent_table tr.torrentdetails *:not(a):not(.number_column) {
+  background: transparent !important;
+}
+
+table.torrent_table tr.torrentdetails blockquote *,
+table.torrent_table tr.torrentdetails blockquote {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: left !important;
+}
+
+
+/* 展开块: 硬重置所有后代盒模型, 再按需加回间距 */
+table.torrent_table tr.torrentdetails * {
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  float: none !important;
+  position: static !important;
+  text-indent: 0 !important;
+  list-style: none !important;
+}
+
+table.torrent_table tr.torrentdetails > td > div,
+table.torrent_table tr.torrentdetails > td > blockquote {
+  margin-bottom: 10px !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox {
+  margin-top: 12px !important;
+}
+
+table.torrent_table tr.torrentdetails table.filelist_table td,
+table.torrent_table tr.torrentdetails table.filelist_table th {
+  padding: 6px 10px !important;
+}
+
+table.torrent_table tr.torrentdetails pre {
+  padding: 12px 14px !important;
+  margin: 8px 0 !important;
 }
