@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v2.0.7 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.7](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.7/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v2.0.8 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.8](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.8/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v2.0.8 | 2026-11-03 | 标题底色铺满 + 展开区链接竖排修复 |
 | Broomhilda Red | v2.0.7 | 2026-11-03 | 恢复正副标题底色、tag 去胶囊、版本行留白 |
 | Broomhilda Red | v2.0.6 | 2026-11-03 | 去灰带 + 搜索表头可点 |
 | Broomhilda Red | v2.0.5 | 2026-11-03 | rip log 去横向滚动条 |

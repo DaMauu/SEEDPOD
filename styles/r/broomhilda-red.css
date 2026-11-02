@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.7
+  Broomhilda Red v2.0.8
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3864,11 +3864,16 @@ table.torrent_table tr.group_torrent td.edition_info {
   border-top: 0 !important;
   border-bottom: 0 !important;
 }
-/* ===== rip log 容器: 无论内部用什么标签, 一律换行, 不出现横向滚动条 ===== */
-table.torrent_table tr.torrentdetails td,
-table.torrent_table tr.torrentdetails td *,
-.torrentdetails .pad,
+/* ===== rip log: 只让日志本体换行, 不影响其它元素排版 ===== */
+table.torrent_table tr.torrentdetails td {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  white-space: normal !important;
+}
+
 .torrentdetails pre,
+.torrentdetails .log,
+.torrentdetails .pad pre,
 #torrent_details .torrentdetails pre {
   max-width: 100% !important;
   overflow-x: hidden !important;
@@ -3877,13 +3882,30 @@ table.torrent_table tr.torrentdetails td *,
   word-break: break-word !important;
 }
 
-table.torrent_table tr.torrentdetails td {
-  overflow: hidden !important;
-}
-
 .torrentdetails .pad {
   padding: 0 !important;
   margin: 0 !important;
+  white-space: normal !important;
+}
+
+/* 展开块内的操作链接: 保持一行横排 */
+table.torrent_table tr.torrentdetails .linkbox {
+  display: block !important;
+  text-align: right !important;
+  margin-top: 8px !important;
+  white-space: normal !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox a {
+  display: inline-block !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  margin: 0 0 0 12px !important;
+}
+
+table.torrent_table tr.torrentdetails .linkbox a:first-child {
+  margin-left: 0 !important;
 }
 /* ===== 种子列表: 全部纯白, 不再有任何灰带 ===== */
 #torrent_table tr.group > td,
@@ -4021,4 +4043,26 @@ table.torrent_table tr.torrent_row:hover > td {
 .torrent_table tr.group > td {
   padding-top: 6px !important;
   padding-bottom: 6px !important;
+}
+
+/* 正标题行: 底色铺满整行 (含时间/大小/数字等所有单元格) */
+#torrent_table tr.group > td,
+#torrent_table tr.group > td.nobr,
+#torrent_table tr.group > td.number_column,
+#torrent_table tr.group > td.number_column.nobr,
+#torrent_table tr.group > td.center,
+#torrent_table tr.group > td.cats_col,
+#torrent_table tr.group > td.sign,
+#torrent_table tr.group > td.big_info,
+#torrent_table tr.group > td.edition_info,
+#torrent_table tr.group td,
+.torrent_table tr.group > td,
+.torrent_table tr.group td {
+  background-color: var(--c--bg--quaternary) !important;
+  border: 0 !important;
+}
+
+#torrent_table tr.group > td > *,
+#torrent_table tr.group td > * {
+  background-color: transparent !important;
 }
