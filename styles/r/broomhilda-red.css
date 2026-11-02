@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.1
+  Broomhilda Red v1.2.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -976,15 +976,21 @@ html[data-rview="cover"] .tags {
 
 #userinfo_stats a {
   display: inline-flex !important;
-  align-items: center;
+  align-items: center !important;
+  vertical-align: middle !important;
   margin-right: 6px;
   font-size: 0;
   line-height: 1;
 }
 
 #userinfo_stats a::before {
-  display: inline-block;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center;
+  vertical-align: middle !important;
   width: 18px;
+  height: 18px;
+  line-height: 1 !important;
   text-align: center;
   margin-right: 6px;
   font-size: 18px;
@@ -994,6 +1000,9 @@ html[data-rview="cover"] .tags {
 }
 
 #userinfo_stats span {
+  display: inline-flex !important;
+  align-items: center !important;
+  vertical-align: middle !important;
   font-size: var(--fs--medium);
   font-weight: var(--fw--bold);
   white-space: nowrap;
@@ -2433,12 +2442,13 @@ tr.group td.center .hide_torrents {
   border-radius: var(--br--small);
   overflow: hidden;
   line-height: 0;
+  min-height: 0 !important;
 }
 
 .group_image img {
   display: block;
   width: 100% !important;
-  height: 240px !important;
+  height: 80px !important;
   object-fit: cover;
   display: block;
   border-radius: var(--br--small);
