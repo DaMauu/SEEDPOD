@@ -43,6 +43,7 @@
 - **批量审核**：按介质、编码、体积、禁转标签逐条判断，可发条目自动入队。
 - **跨站查重**：IMDb → 片名 → AKA 原名 → 完整片名四段回退，命中后按 4K 属性与体积复核。
 - **断点续跑**：记录页号与已查种子，限流、掉线、关页面后都能接着跑。
+- **翻页抗限流**：前端渲染站点改为更短轮询 + 三级退避（30s/45s），批次保护每 15 页；未抓完不会误报完成。
 - **本地词库**：按目标站分区、分片存储、带有效期，支持导入导出。
 - **截图保真**：候选地址逐个测宽取原图，二进制上传，返图尺寸复核。
 - **简介图片全转存**：截图与豆瓣海报等简介内图片统一转存图床；同名文件直接复用已有图床链接，图床判重时保留原链不报错。
@@ -67,7 +68,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
-2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.36.user.js`](legacy/pt-bluray-assistant-v0.0.0.36.user.js)，点 `Raw` 确认安装。
+2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.37.user.js`](legacy/pt-bluray-assistant-v0.0.0.37.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
 后续步骤见 [快速上手](docs/QUICKSTART.md)。
@@ -75,7 +76,7 @@
 ## 目录
 
 ```
-legacy/pt-bluray-assistant-v0.0.0.36.user.js   当前版本（安装这个）
+legacy/pt-bluray-assistant-v0.0.0.37.user.js   当前版本（安装这个）
 docs/QUICKSTART.md                             快速上手
 docs/GUIDE.md                                  使用手册
 docs/ARCHITECTURE.md                           架构设计
