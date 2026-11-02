@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.4.5
+  Broomhilda Red v1.4.7
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2621,7 +2621,8 @@ a.brackets::after,
 #torrent_table {
   border-radius: 10px !important;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 8px 24px rgba(0, 0, 0, .07) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .07), 0 12px 24px rgba(0, 0, 0, .12),
+              0 32px 64px rgba(0, 0, 0, .20) !important;
 }
 
 /* 分组标题与标签字重 */
@@ -3056,3 +3057,85 @@ a.brackets[onclick*="gtoggle"]:hover::before {
   color: var(--c--ac--fg--tint) !important;
 }
 
+
+/* ===== 论坛索引: 复刻 PTP 的分类卡片 ===== */
+.forum_list > h3 {
+  margin: var(--sp--large) 0 var(--sp--small) !important;
+  padding: 0 var(--sp--tiny) !important;
+  font-size: var(--fs--medium) !important;
+  font-weight: var(--fw--bold) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: var(--c--fg--primary) !important;
+}
+
+table.forum_index {
+  width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: var(--c--bg--secondary) !important;
+  border-radius: 10px !important;
+  padding: var(--sp--small) var(--sp--medium) !important;
+  margin: 0 0 var(--sp--huge) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .07), 0 12px 26px rgba(0, 0, 0, .14) !important;
+}
+
+table.forum_index tr.colhead > td {
+  background: var(--c--bg--tertiary) !important;
+  padding: 10px var(--sp--small) !important;
+  font-size: 11px !important;
+  font-weight: var(--fw--bold) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: var(--c--fg--secondary) !important;
+  border: 0 !important;
+}
+
+table.forum_index tr.colhead > td:first-child {
+  border-radius: 5px 0 0 5px !important;
+  width: 3% !important;
+}
+
+table.forum_index tr.colhead > td:nth-child(2) {
+  width: 15% !important;
+}
+
+table.forum_index tr.colhead > td:nth-child(4),
+table.forum_index tr.colhead > td:nth-child(5) {
+  width: 7% !important;
+}
+
+table.forum_index tr.colhead > td:last-child {
+  border-radius: 0 5px 5px 0 !important;
+}
+
+table.forum_index tr.rowa > td,
+table.forum_index tr.rowb > td {
+  padding: 12px var(--sp--small) !important;
+  border: 0 !important;
+  vertical-align: middle !important;
+}
+
+table.forum_index tr.rowa:hover > td:nth-child(n+2),
+table.forum_index tr.rowb:hover > td:nth-child(n+2) {
+  background: var(--c--bg--primary) !important;
+}
+
+table.forum_index h4,
+table.forum_index h4 a {
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: var(--fw--bold) !important;
+  color: var(--c--fg--primary) !important;
+}
+
+table.forum_index h4 a:hover {
+  color: var(--c--ac--fg) !important;
+}
+
+table.forum_index tr > td:nth-child(4),
+table.forum_index tr > td:nth-child(5) {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
