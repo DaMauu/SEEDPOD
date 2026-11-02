@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-1.3.9-8c796a?style=flat-square" />
+<img src="https://img.shields.io/badge/version-1.4.0-8c796a?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.3.9/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.4.0/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v1.4.0 | 2026-11-03 | logo 放大到 56px（字距收回 1px） |
 | v1.3.9 | 2026-11-03 | logo 拉宽：字距 2.2px、字号 43px、纵向 1.08 |
 | v1.3.8 | 2026-11-03 | logo 改用 Barlow Condensed Light 300（细窄优雅），字体作用到 ::before 上才真正生效 |
 | v1.3.7 | 2026-11-03 | logo 以左上为锚点，纵向拉伸 1.34、横向加宽 1.06 |
@@ -104,6 +105,7 @@ document.head.insertAdjacentHTML('beforeend',
 | v1.0.2 | 2026-11-03 | 分页条紧凑化，DL/FL/RP 移到名称右侧 |
 | v1.0.1 | 2026-11-03 | 头部说明整理，README 排版 |
 | v1.0.0 | 2026-11-03 | 初版 |
+
 
 
 

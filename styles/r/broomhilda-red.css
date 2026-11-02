@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.3.9
+  Broomhilda Red v1.4.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -583,10 +583,10 @@ img[title^='High quality'] {
   background: none !important;
   padding: 0 !important;
   font-family: 'Barlow Condensed', var(--ff--primary) !important;
-  font-size: 43px !important;
+  font-size: 56px !important;
   font-weight: 300 !important;
-  letter-spacing: 2.2px !important;
-  transform: scale(1.01, 1.08);
+  letter-spacing: 1px !important;
+  transform: scale(1, 1.06);
   transform-origin: left top;
   display: inline-block !important;
   color: var(--c--fg--primary) !important;
@@ -597,10 +597,10 @@ img[title^='High quality'] {
 #logo a::before {
   content: 'REDACTED.SH';
   font-family: 'Barlow Condensed', var(--ff--primary) !important;
-  font-size: 43px !important;
+  font-size: 56px !important;
   font-weight: 300 !important;
-  letter-spacing: 2.2px !important;
-  transform: scale(1.01, 1.08);
+  letter-spacing: 1px !important;
+  transform: scale(1, 1.06);
   transform-origin: left top;
   display: inline-block;
   line-height: 1;
