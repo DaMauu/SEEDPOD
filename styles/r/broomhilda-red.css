@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.4.2
+  Broomhilda Red v1.4.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2874,5 +2874,68 @@ select:focus {
   line-height: 34px !important;
   font-size: 12px !important;
   color: var(--c--fg--tertiary) !important;
+}
+
+/* ===== user.php 侧栏模块: 缩进 / 换行 / 头像自适应 =====
+   red_light 用 .sidebar .box (0,2,0) 和 .sidebar .box li (0,2,1) 带 !important,
+   外链样式表注入顺序不可控, 这里统一用 (0,3,x) 压过去 */
+.sidebar .box.box_info,
+.sidebar .box.box_image {
+  padding: 0 0 var(--sp--medium) !important;
+}
+
+/* 模块内容左右缩进 (头部的缩进由 .head 自己带) */
+.sidebar .box.box_info > ul,
+.sidebar .box.box_info > ol,
+.sidebar .box.box_info > p,
+.sidebar .box.box_info > .pad,
+.sidebar .box.box_info > .body,
+.sidebar .box.box_info > div:not(.head),
+.sidebar .box.box_info > center,
+.sidebar .box.box_image > .pad,
+.sidebar .box.box_image > div:not(.head),
+.sidebar .box.box_image > center {
+  padding-left: var(--sp--medium) !important;
+  padding-right: var(--sp--medium) !important;
+}
+
+/* 统计列表: 去掉项目符号, 长行自动换行, 不再顶出模块 */
+.sidebar .box.box_info > ul,
+.sidebar .box.box_info > ol {
+  list-style: none !important;
+  padding-top: 2px !important;
+  padding-bottom: var(--sp--small) !important;
+}
+
+.sidebar .box ul.stats,
+.sidebar .box ul.stats li,
+.sidebar .box .pad,
+.sidebar .box .body {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  min-width: 0 !important;
+}
+
+.sidebar .box ul.stats li {
+  list-style: none !important;
+  margin: 3px 0 !important;
+  padding: 0 !important;
+  line-height: 1.55 !important;
+}
+
+/* 头像: 随模块宽度缩放, 上下留白, 圆角 */
+.sidebar .box.box_image > div:not(.head) > div {
+  padding: 0 !important;
+}
+
+.sidebar img.double_avatar {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 360px !important;
+  object-fit: contain !important;
+  border-radius: var(--br--small) !important;
+  margin: 0 auto !important;
 }
 

@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-1.4.2-8c796a?style=flat-square" />
+<img src="https://img.shields.io/badge/version-1.4.3-8c796a?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.4.2/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.4.3/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v1.4.3 | 2026-11-03 | 用户页侧栏模块加左右缩进、长文本自动换行不溢出；头像随模块宽度自适应 |
 | v1.4.2 | 2026-11-03 | Random torrent / Random artist 做成按钮；结果统计行与按钮垂直对齐 |
 | v1.4.1 | 2026-11-03 | FILTER TORRENTS / RESET 改为右对齐 |
 | v1.4.0 | 2026-11-03 | logo 放大到 56px（字距收回 1px） |
