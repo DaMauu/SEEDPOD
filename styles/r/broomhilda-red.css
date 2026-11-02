@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.4.4
+  Broomhilda Red v1.4.5
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2996,6 +2996,34 @@ select:focus {
 /* 首页: 子搜索栏与下方公告之间留出高度 */
 #searchbars {
   margin-bottom: var(--sp--medium) !important;
+}
+
+/* 侧栏里自带内边距的模块 (.box.pad, 如 wiki 权限表): 补回内边距并收紧列表 */
+.sidebar div.box.pad {
+  padding: var(--sp--medium) !important;
+}
+
+.sidebar div.box.pad ul,
+.sidebar div.box.pad ol {
+  margin: 0 !important;
+  padding-left: var(--sp--medium) !important;
+  list-style-position: outside !important;
+}
+
+.sidebar div.box.pad > ul,
+.sidebar div.box.pad > ol {
+  padding-left: 0 !important;
+}
+
+.sidebar div.box.pad li {
+  margin: 0 !important;
+  padding: 2px 0 !important;
+  line-height: 1.55 !important;
+}
+
+.sidebar div.box.pad li > ul,
+.sidebar div.box.pad li > ol {
+  padding-left: var(--sp--medium) !important;
 }
 
 /* Hide / Show 文字 → 圆圈图标 (沿用 PTP 样式表的 \e061) */

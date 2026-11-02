@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v1.4.4 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v1.4.4](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.4.4/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v1.4.5 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v1.4.5](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.4.5/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v1.4.5 | 2026-11-03 | 侧栏 .box.pad 模块内边距与列表行距 |
 | Broomhilda Red | v1.4.4 | 2026-11-03 | 侧栏通用缩进/自适应、设置页导航、圆圈折叠图标 |
 | Broomhilda Red | v1.4.3 | 2026-11-03 | 用户页侧栏缩进与自适应 |
 | Broomhilda Red | v1.4.2 | 2026-11-03 | 头部说明整理 |
