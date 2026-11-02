@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v1.1.3 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v1.1.3](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.1.3/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v1.1.5 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v1.1.5](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.1.5/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,8 +68,9 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v1.1.3 | 2026-11-03 | 头部说明整理 |
+| Broomhilda Red | v1.1.5 | 2026-11-03 | 头部说明整理 |
 | Broomhilda Red | v1.0.0 | 2026-11-03 | 初版 |
+
 
 
 
