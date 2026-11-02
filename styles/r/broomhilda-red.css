@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.9
+  Broomhilda Red v1.1.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1541,11 +1541,11 @@ tr.group_torrent td {
 
 .edition_info {
   background-color: transparent !important;
-  background-image: linear-gradient(to right, transparent 0 250px, var(--c--bg--quaternary) 250px) !important;
+  background-image: linear-gradient(to right, transparent 0 335px, var(--c--bg--quaternary) 335px) !important;
   font-size: var(--fs--tiny);
   font-weight: var(--fw--bold);
   letter-spacing: var(--ls--more);
-  padding: var(--sp--small) var(--sp--medium) var(--sp--small) 250px !important;
+  padding: var(--sp--small) var(--sp--medium) var(--sp--small) 335px !important;
 }
 
 .group_image img {
@@ -2421,18 +2421,35 @@ tr.group td.center .hide_torrents {
 .group_image {
   float: left;
   margin-right: var(--sp--medium) !important;
+  background: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: var(--br--small);
+  overflow: hidden;
+  line-height: 0;
 }
 
 .group_image img {
-  width: 150px !important;
-  height: 150px !important;
+  width: 230px !important;
+  height: 230px !important;
   object-fit: cover;
+  display: block;
   border-radius: var(--br--small);
+}
+
+/* 分组左侧栏: 封面与版本行连成一块 (左右同组) */
+#torrent_table tr.group,
+#torrent_table tr.group_torrent {
+  background-image: linear-gradient(to right, var(--c--bg--secondary) 0 335px, transparent 335px);
+}
+
+#torrent_table tr.group_torrent td {
+  border-bottom: 0 !important;
 }
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
-  padding-left: 250px !important;
+  padding-left: 340px !important;
   padding-right: 240px !important;
 }
 
@@ -2608,6 +2625,10 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
+
+
+
 
 
 
