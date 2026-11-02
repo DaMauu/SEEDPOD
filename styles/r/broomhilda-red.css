@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.1.6
+  Broomhilda Red v1.2.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1548,7 +1548,7 @@ tr.group_torrent td {
   font-weight: var(--fw--bold) !important;
   text-transform: uppercase;
   letter-spacing: var(--ls--more);
-  padding: 4px 32px 4px 180px !important;
+  padding: 4px var(--sp--medium) !important;
 }
 
 .group_image img {
@@ -2422,10 +2422,11 @@ tr.group td.center .hide_torrents {
 }
 
 .group_image {
-  float: left;
-  width: 160px;
-  height: 160px;
-  margin: 0 16px 0 0 !important;
+  float: none;
+  display: block;
+  width: auto !important;
+  height: auto !important;
+  margin: var(--sp--small) 0 0 !important;
   background: none !important;
   padding: 0 !important;
   box-shadow: none !important;
@@ -2435,8 +2436,9 @@ tr.group td.center .hide_torrents {
 }
 
 .group_image img {
-  width: 160px !important;
-  height: 160px !important;
+  display: block;
+  width: 100% !important;
+  height: 240px !important;
   object-fit: cover;
   display: block;
   border-radius: var(--br--small);
@@ -2465,7 +2467,7 @@ tr.group_torrent td {
 
 /* 表头 Name 列与标题左对齐 */
 #torrent_table tr.colhead > td:nth-child(3) {
-  padding-left: 180px !important;
+  padding-left: var(--sp--medium) !important;
   text-align: left !important;
 }
 
@@ -2480,6 +2482,8 @@ tr.group_torrent td {
 }
 
 tr.group td.big_info {
+  display: flex;
+  flex-direction: column-reverse;
   padding-left: 0 !important;
 }
 
@@ -2506,7 +2510,7 @@ tr.group td.big_info {
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
-  padding-left: 180px !important;
+  padding-left: var(--sp--medium) !important;
   padding-right: 240px !important;
 }
 
