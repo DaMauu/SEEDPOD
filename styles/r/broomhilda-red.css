@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.1
+  Broomhilda Red v1.0.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1266,8 +1266,8 @@ table .colhead_dark th {
 .linkbox {
   color: transparent;
   text-align: center;
-  padding: var(--sp--x-large);
-  padding-top: 0;
+  font-size: var(--fs--tiny);
+  padding: var(--sp--small) 0;
 }
 
 .linkbox:empty {
@@ -1277,16 +1277,14 @@ table .colhead_dark th {
 .linkbox a {
   background: transparent;
   margin: 0 2px;
-  padding: 2px 8px;
+  padding: 2px 6px;
+  font-size: var(--fs--tiny);
 }
 
 .linkbox strong {
-  color: var(--c--ac--fg--shade);
+  color: var(--c--fg--primary);
+  font-weight: var(--fw--bold);
   vertical-align: middle;
-}
-
-.pager_next::before {
-  content: '\e409';
 }
 
 /* -----------------------------------------------------------------------------
@@ -1399,7 +1397,12 @@ tr.group_torrent td {
   color: var(--c--ac--fg);
 }
 
-/* DL / FL / RP 小按钮 */
+/* DL / FL / RP 小按钮: 放到种子名右侧 (PTP 同款位置) */
+.torrent_action_buttons {
+  float: right;
+  margin-left: 8px;
+}
+
 .torrent_action_buttons a {
   font-size: var(--fs--tiny);
   font-weight: var(--fw--bold);
@@ -2305,6 +2308,7 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
 
 
 
