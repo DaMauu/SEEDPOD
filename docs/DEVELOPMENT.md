@@ -8,7 +8,7 @@
 
 - 四段式，从 `0.0.0.1` 起，每次更新 `+0.0.0.1`。
 - 只增不减，作废的号不回收，避免版本歧义。
-- **每次改动新建文件，旧版本永不覆盖**：`scripts/pt-bluray-assistant-vX.user.js`。
+- **每次改动新建文件，旧版本永不覆盖**：`scripts/single/pt-bluray-assistant-vX.user.js`。
 - 改版本必须同步三处，缺一不可：
 
 ```
