@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.4.3
+  Broomhilda Red v2.5.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4432,4 +4432,79 @@ table.torrent_table tr.torrentdetails > td * {
 table.torrent_table tr.torrentdetails > td pre,
 table.torrent_table tr.torrentdetails > td pre * {
   white-space: pre-wrap !important;
+}
+
+/* =============================================================================
+   v2.5.0 统一配色: 回归 RED 的红 —— 中性灰阶 + 单一红强调 + 红底导航
+   ============================================================================= */
+:root {
+  /* 中性灰阶 (不带暖调) */
+  --c--bg--primary:    #f7f7f8;
+  --c--bg--secondary:  #ffffff;
+  --c--bg--tertiary:   #f2f3f5;
+  --c--bg--quaternary: #e9ebee;
+  --c--bg--quinary:    #d8dbdf;
+
+  --c--fg--initial:    #0d0f12;
+  --c--fg--primary:    #171a1f;
+  --c--fg--secondary:  #4a5058;
+  --c--fg--tertiary:   #6f767f;
+  --c--fg--quaternary: #8f969e;
+  --c--fg--quinary:    #b0b6bd;
+
+  /* RED 红: 链接/按钮/圆点只此一色 */
+  --c--ac--fg--tint:   #e07a72;
+  --c--ac--fg:         #c0261f;
+  --c--ac--fg--shade:  #8e1b16;
+  --c--ac--bg--tint:   #c0261f;
+  --c--ac--bg:         #b3221b;
+  --c--ac--bg--shade:  #8e1b16;
+
+  /* 冷灰发丝线 */
+  --line: #e6e8eb;
+  --line--soft: #eff1f3;
+}
+
+/* 导航: RED 红底白字 (站点最熟悉的样子) */
+#menu {
+  background: #b3221b !important;
+  border-radius: 10px 10px 0 0 !important;
+  box-shadow: none !important;
+}
+
+#menu a,
+#menu ul li a {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+#menu a:hover {
+  background: rgba(0, 0, 0, .14) !important;
+  color: #fff !important;
+}
+
+#menu li.active a {
+  background: #8e1b16 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+#menu svg,
+#menu svg * {
+  fill: #fff !important;
+  stroke: #fff !important;
+}
+
+/* logo 同色 */
+#logo a,
+#logo a::before {
+  color: #c0261f !important;
+}
+
+/* 卡片投影转中性 */
+.box,
+#torrent_table,
+table.forum_index,
+table.torrent_table {
+  box-shadow: 0 1px 3px rgba(16, 24, 40, .06) !important;
 }

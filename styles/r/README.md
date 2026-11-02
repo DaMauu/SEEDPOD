@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-2.4.3-b23a2e?style=flat-square" />
+<img src="https://img.shields.io/badge/version-2.5.0-c0261f?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.4.3/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.5.0/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -67,7 +67,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 文件 | 结构 | 直链 |
 | --- | --- | --- | --- |
-| A · 专辑卡片 | `broomhilda-red-a-cards.css` | 每个专辑是一张圆角卡片，卡片之间留 20px 空隙，列头压成一条轻量说明条 | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.4.3/styles/r/broomhilda-red-a-cards.css |
+| A · 专辑卡片 | `broomhilda-red-a-cards.css` | 每个专辑是一张圆角卡片，卡片之间留 20px 空隙，列头压成一条轻量说明条 | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.5.0/styles/r/broomhilda-red-a-cards.css |
 | B · 操作胶囊 | `broomhilda-red-b-actions.css` | 版本行加高，DL/FL/RP/ED/PL 做成描边胶囊（默认半透明，悬停全显），去掉 `|` 分隔符 | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.2.0/styles/r/broomhilda-red-b-actions.css |
 | C · 排版优先 | `broomhilda-red-c-type.css` | 正文 15px/1.7、标题 17px，去掉所有灰底条，只靠留白和字号分层 | https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.3.0/styles/r/broomhilda-red-c-type.css |
 
@@ -90,7 +90,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
-| v2.1.0 / v2.2.0 / v2.3.0 | 2026-11-03 | 新增 A 卡片 / B 胶囊操作 / C 排版优先 三种风格分支文件 |`r`n| v2.4.3 | 2026-11-03 | 展开块改 flex 纵向布局，并强制 white-space:normal 消除模板缩进被渲染成空白的问题 |`r`n| v2.4.2 | 2026-11-03 | 导航改浅米底深暖字；展开区去掉残留边框/底色/浮动，操作链接横排左对齐 |`r`n| v2.4.1 | 2026-11-03 | 标题带底色画在行上铺满全宽、与版本条之间无缝；展开区操作链接恢复横排；导航改暖深棕 |`r`n| v2.4.0 | 2026-11-03 | 配色改米白纸底 + 砖红强调（与 logo 同色系），标题带铺满整行 |`r`n| v2.0.8 | 2026-11-03 | 正标题底色铺满整行；修复展开块内 View peer list 等链接被拆成竖排的问题 |
+| v2.1.0 / v2.2.0 / v2.3.0 | 2026-11-03 | 新增 A 卡片 / B 胶囊操作 / C 排版优先 三种风格分支文件 |`r`n| v2.5.0 | 2026-11-03 | 统一配色：中性灰阶 + 单一 RED 红强调 + 红底白字导航，logo 同色 |`r`n| v2.4.3 | 2026-11-03 | 展开块改 flex 纵向布局，并强制 white-space:normal 消除模板缩进被渲染成空白的问题 |`r`n| v2.4.2 | 2026-11-03 | 导航改浅米底深暖字；展开区去掉残留边框/底色/浮动，操作链接横排左对齐 |`r`n| v2.4.1 | 2026-11-03 | 标题带底色画在行上铺满全宽、与版本条之间无缝；展开区操作链接恢复横排；导航改暖深棕 |`r`n| v2.4.0 | 2026-11-03 | 配色改米白纸底 + 砖红强调（与 logo 同色系），标题带铺满整行 |`r`n| v2.0.8 | 2026-11-03 | 正标题底色铺满整行；修复展开块内 View peer list 等链接被拆成竖排的问题 |
 | v2.0.7 | 2026-11-03 | 恢复标题行灰底与副标题浅灰底并铺满整行；tag 去掉胶囊底色只留文字；版本行保持纯白 |
 | v2.0.6 | 2026-11-03 | 种子列表去掉全部灰带（标题行/版本条纯白），分组用留白分隔；搜索面板整条表头恢复可点击展开收起 |
 | v2.0.5 | 2026-11-03 | rip log 展开区所有子元素强制换行并隐藏横向溢出，彻底去掉横向滚动条 |
