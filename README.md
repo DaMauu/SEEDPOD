@@ -70,7 +70,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
-2. 打开 [`scripts/single/pt-bluray-assistant-v0.0.0.47.user.js`](scripts/single/pt-bluray-assistant-v0.0.0.47.user.js)，点 `Raw` 确认安装。
+2. 打开 [`scripts/bluray/pt-bluray-assistant-v0.0.0.47.user.js`](scripts/bluray/pt-bluray-assistant-v0.0.0.47.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
 后续步骤见 [快速上手](docs/QUICKSTART.md)。
@@ -78,8 +78,8 @@
 ## 目录
 
 ```
-scripts/single/pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
-scripts/single/                                  单文件脚本，按版本号平铺，旧版本永不覆盖
+scripts/bluray/pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
+scripts/bluray/                                  单文件脚本，按版本号平铺，旧版本永不覆盖
 scripts/packages/                                带构建的工程（src/ + dist/ + test/ + build.mjs）
 styles/                                          样式表
 docs/QUICKSTART.md                               快速上手
