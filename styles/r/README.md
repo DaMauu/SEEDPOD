@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-1.4.7-8c796a?style=flat-square" />
+<img src="https://img.shields.io/badge/version-1.5.0-8c796a?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.4.7/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v1.5.0/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v1.5.0 | 2026-11-03 | 主色整体换成 RED 红（链接/按钮/折叠圆点），logo 改红色字，顶部菜单红底白字 |
 | v1.4.7 | 2026-11-03 | 种子页大面板投影加深；论坛索引按 PTP 复刻成分类卡片（内嵌表头、固定列宽、行距） |
 | v1.4.5 | 2026-11-03 | 侧栏 .box.pad 模块（wiki 权限表等）补回内边距并收紧列表行距 |
 | v1.4.4 | 2026-11-03 | 侧栏模块通用缩进与自适应（首页/wiki/设置页）、设置页 SECTIONS 导航收紧、Hide/Show 改成圆圈图标、子搜索栏下方留白 |

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.4.7
+  Broomhilda Red v1.5.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3138,4 +3138,36 @@ table.forum_index tr > td:nth-child(4),
 table.forum_index tr > td:nth-child(5) {
   text-align: right !important;
   font-variant-numeric: tabular-nums;
+}
+/* ===== 红色主题: 主色改为 RED 红 (替换原棕色) ===== */
+:root {
+  --c--ac--fg--tint:   #d97b72; /* tint 40% */
+  --c--ac--fg:         #bf3a30;
+  --c--ac--fg--shade:  #8e2018; /* shade 30% */
+  --c--ac--bg--tint:   #bf3a30;
+  --c--ac--bg:         #a92d24; /* shade 10% */
+  --c--ac--bg--shade:  #8e2018; /* shade 20% */
+}
+
+/* logo: 红色字 */
+#logo a,
+#logo a::before {
+  color: var(--c--ac--fg) !important;
+}
+
+/* 顶部菜单: 红底白字, 悬停/当前项更深 */
+#menu {
+  background-color: var(--c--ac--bg) !important;
+  border-radius: var(--br--top);
+}
+
+#menu a,
+#menu ul li a {
+  color: #fff !important;
+}
+
+#menu a:hover,
+#menu li.active a {
+  background: var(--c--ac--bg--shade) !important;
+  color: #fff !important;
 }
