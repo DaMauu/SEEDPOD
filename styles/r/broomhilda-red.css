@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.4
+  Broomhilda Red v2.5.5
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4620,4 +4620,16 @@ html body table.torrent_table tr.group > td:last-child {
 html body #torrent_table tr.group_torrent td.edition_info,
 html body table.torrent_table tr.group_torrent td.edition_info {
   box-shadow: 120px 0 0 0 var(--c--bg--tertiary) !important;
+}
+
+/* ===== v2.5.5: 让最后一个单元格吃掉剩余宽度, 标题带/版本条真正铺到卡片边缘 ===== */
+html body #torrent_table tr.group > td:last-child,
+html body table.torrent_table tr.group > td:last-child {
+  width: 100% !important;
+  box-shadow: none !important;
+}
+
+html body #torrent_table tr.group > td.big_info,
+html body table.torrent_table tr.group > td.big_info {
+  width: auto !important;
 }
