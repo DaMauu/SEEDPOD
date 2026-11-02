@@ -1,62 +1,18 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.0 — Redacted (RED) 主题
-  ============================================
+  Broomhilda Red v1.0.1
+  浅色米棕主题 · 单文件 CSS
+
   仓库   https://github.com/DaMauu/SEEDPOD
   直链   https://raw.githubusercontent.com/DaMauu/SEEDPOD/main/styles/r/broomhilda-red.css
-  用法   浏览器 Stylus 新建样式, Applies to 正则 ^https?://redacted\.sh/
-         整份粘贴; 或站点自定义 CSS 用 @import 该直链。
-  更新   每次改动递增版本号 (v1.0.0 -> v1.1.0 ...), 直链文件名保持不变。
 
-  基于 PTP Broomhilda (jimpalompa) 移植, 已适配 RED Light 的样式冲突。
+  用法
+    - Stylus: 新建样式, 为站点添加 URL 匹配规则, 整份粘贴保存
+    - 站点自定义 CSS: @import 上述直链
+    - 字体需联网加载 (jimpalompa.github.io), 断网时回退系统字体
 
+  更新
+    版本号写在文件头与提交信息中, 直链文件名保持不变。
 ----------------------------------------------------------------------------- */
-/* -----------------------------------------------------------------------------
-
-  Broomhilda Red — PTP 的 Broomhilda 主题移植到 Redacted (RED)
-  ================================================================
-
-  来源
-    - 父主题: django.css (github.com/jimpalompa/ptp) — 视觉语言与布局骨架
-    - 子主题: broomhilda.css (github.com/jimpalompa/ptp) — 浅色米棕配色与图标
-
-  用法 (Stylus 为例)
-    1. Stylus 新建样式, 适用于 redacted.sh
-       Applies to: 正则 ^https?://redacted\.sh/
-    2. 把本文件整份粘贴保存。
-    3. RED 站内 Settings 里保持默认主题即可, 本 CSS 会整体覆盖。
-    4. 字体从 //jimpalompa.github.io 的 CDN 加载, 需要网络; 断网时回退系统字体。
-
-  PTP → RED 的结构翻译 (已做)
-    .panel / .panel__heading   →  .box / .head / .pad / .colhead*
-    .main-menu                 →  #menu
-    .site-logo__link           →  #logo (保留 RED 自己的 logo, 不替换)
-    .pagination                →  .linkbox / .pager_next
-    .forum-topic--is-*         →  td.read / td.unread_* 图标
-    .forum-post                →  table.forum_post (.colhead_dark/.avatar/.body)
-    .tabs__bar                 →  无对应 (RED 无此组件)
-    .search-bar / .search-form →  #searchbars / .search_form
-    .ratio-00..                →  .r00 - .r50
-    .user-info-bar__*          →  #userinfo_minor (经典 Gazelle 结构)
-
-  已删除的 PTP 独有部分 (RED 无对应结构)
-    - 电影星级 .star-rating*、#movie-ratings-table
-    - 电影列表 (cover/basic/huge-movie-list、top250/bottom250、last5、film-club)
-    - 截图对比 .screenshot-comparison*、#similar_movies
-    - 用户推荐 .user-recommendation*、missing-torrent-status 图片
-    - bbcode 工具栏 (RED 编辑器没有工具栏)
-    - #artist_settings / #browse_settings 齿轮 (RED 没有)
-    - PTP logo 替换图 (RED 保留自己的 logo)
-    - 'Request/Seed/Upload time' 图标 (RED 表头 Time 是文字链接)
-    - PTP 的 ::before 文字按钮 ('Jump to'/'New'/'Request subtitles' 等)
-
-  与 RED 自带样式的兼容
-    - 文件末尾有专门章节压过 RED 的 External CSS (Wood_Colored) 和内置
-      red_light 的 !important / ID 前缀规则, 已在无头 Chromium 里实测
-      (页面: 首页/浏览/论坛列表/发帖/艺人页, 无横向溢出, 关键组件全部生效)。
-    - 字体改为显式 https 加载 (jimpalompa.github.io, RED 的 CSP 不拦截)。
-
------------------------------------------------------------------------------ */
-
 /* -----------------------------------------------------------------------------
   Variables — Broomhilda 浅色覆盖 + Django 语义色
 ----------------------------------------------------------------------------- */
