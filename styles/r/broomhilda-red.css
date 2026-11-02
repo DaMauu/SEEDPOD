@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.2
+  Broomhilda Red v1.2.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2452,6 +2452,48 @@ tr.group td.center .hide_torrents {
   object-fit: cover;
   display: block;
   border-radius: var(--br--small);
+}
+
+/* 表头统计图标与数据列对齐 */
+#torrent_table tr.colhead td.sign {
+  width: 42px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+}
+
+#torrent_table tr.colhead td.sign img {
+  margin: 0 auto !important;
+}
+
+#torrent_table tr.group_torrent td.number_column,
+#torrent_table tr.group td.number_column {
+  text-align: center !important;
+}
+
+/* 标题与 NAME 表头左对齐 */
+.torrent_table .group_info {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  text-indent: 0 !important;
+}
+
+/* Bookmark 改成书签图标 */
+#torrent_table a[id^="bookmarklink_torrent_"] {
+  font-size: 0 !important;
+  text-decoration: none !important;
+}
+
+#torrent_table a[id^="bookmarklink_torrent_"]::before {
+  content: '\e866';
+  font-family: var(--ff--icons);
+  font-size: 18px;
+  color: var(--c--fg--tertiary);
+  vertical-align: middle;
+}
+
+#torrent_table a[id^="bookmarklink_torrent_"]:hover::before {
+  color: var(--c--ac--fg);
 }
 
 /* 表头前两列归零 */
