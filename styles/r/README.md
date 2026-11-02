@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-2.0.8-a8641b?style=flat-square" />
+<img src="https://img.shields.io/badge/version-2.1.0-b23a2e?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.8/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.1.0/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -90,7 +90,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
-| v2.1.0 / v2.2.0 / v2.3.0 | 2026-11-03 | 新增 A 卡片 / B 胶囊操作 / C 排版优先 三种风格分支文件 |`r`n| v2.0.8 | 2026-11-03 | 正标题底色铺满整行；修复展开块内 View peer list 等链接被拆成竖排的问题 |
+| v2.1.0 / v2.2.0 / v2.3.0 | 2026-11-03 | 新增 A 卡片 / B 胶囊操作 / C 排版优先 三种风格分支文件 |`r`n| v2.1.0 | 2026-11-03 | 配色改米白纸底 + 砖红强调（与 logo 同色系），标题带铺满整行 |`r`n| v2.0.8 | 2026-11-03 | 正标题底色铺满整行；修复展开块内 View peer list 等链接被拆成竖排的问题 |
 | v2.0.7 | 2026-11-03 | 恢复标题行灰底与副标题浅灰底并铺满整行；tag 去掉胶囊底色只留文字；版本行保持纯白 |
 | v2.0.6 | 2026-11-03 | 种子列表去掉全部灰带（标题行/版本条纯白），分组用留白分隔；搜索面板整条表头恢复可点击展开收起 |
 | v2.0.5 | 2026-11-03 | rip log 展开区所有子元素强制换行并隐藏横向溢出，彻底去掉横向滚动条 |

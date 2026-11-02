@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.8
+  Broomhilda Red v2.1.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3864,16 +3864,11 @@ table.torrent_table tr.group_torrent td.edition_info {
   border-top: 0 !important;
   border-bottom: 0 !important;
 }
-/* ===== rip log: 只让日志本体换行, 不影响其它元素排版 ===== */
-table.torrent_table tr.torrentdetails td {
-  max-width: 100% !important;
-  overflow: hidden !important;
-  white-space: normal !important;
-}
-
+/* ===== rip log 容器: 无论内部用什么标签, 一律换行, 不出现横向滚动条 ===== */
+table.torrent_table tr.torrentdetails td,
+table.torrent_table tr.torrentdetails td *,
+.torrentdetails .pad,
 .torrentdetails pre,
-.torrentdetails .log,
-.torrentdetails .pad pre,
 #torrent_details .torrentdetails pre {
   max-width: 100% !important;
   overflow-x: hidden !important;
@@ -3882,30 +3877,13 @@ table.torrent_table tr.torrentdetails td {
   word-break: break-word !important;
 }
 
+table.torrent_table tr.torrentdetails td {
+  overflow: hidden !important;
+}
+
 .torrentdetails .pad {
   padding: 0 !important;
   margin: 0 !important;
-  white-space: normal !important;
-}
-
-/* 展开块内的操作链接: 保持一行横排 */
-table.torrent_table tr.torrentdetails .linkbox {
-  display: block !important;
-  text-align: right !important;
-  margin-top: 8px !important;
-  white-space: normal !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox a {
-  display: inline-block !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-  margin: 0 0 0 12px !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox a:first-child {
-  margin-left: 0 !important;
 }
 /* ===== 种子列表: 全部纯白, 不再有任何灰带 ===== */
 #torrent_table tr.group > td,
@@ -4044,8 +4022,60 @@ table.torrent_table tr.torrent_row:hover > td {
   padding-top: 6px !important;
   padding-bottom: 6px !important;
 }
+/* ===== v2.1.0 配色: 米白纸底 + 砖红强调 (只改颜色, 结构不动) ===== */
+:root {
+  /* 暖纸基调: 页面 → 卡片 → 版本条 → 标题带 */
+  --c--bg--primary:    #f7f5f2;
+  --c--bg--secondary:  #fffdfa;
+  --c--bg--tertiary:   #f2eee8;
+  --c--bg--quaternary: #ece8e1;
+  --c--bg--quinary:    #ded8cf;
 
-/* 正标题行: 底色铺满整行 (含时间/大小/数字等所有单元格) */
+  /* 暖灰文字阶 */
+  --c--fg--initial:    #1a1613;
+  --c--fg--primary:    #2a2521;
+  --c--fg--secondary:  #5a544d;
+  --c--fg--tertiary:   #7d766d;
+  --c--fg--quaternary: #9a938a;
+  --c--fg--quinary:    #b8b1a8;
+
+  /* 砖红: 与 logo 同色系, 只用于可交互 */
+  --c--ac--fg--tint:   #cf7f74;
+  --c--ac--fg:         #b23a2e;
+  --c--ac--fg--shade:  #8a2a22;
+  --c--ac--bg--tint:   #b23a2e;
+  --c--ac--bg:         #a5352a;
+  --c--ac--bg--shade:  #8a2a22;
+
+  /* 暖色发丝线 */
+  --line: #e8e2da;
+  --line--soft: #f0ebe4;
+}
+
+/* 导航: 暖黑, 与米白底同一色温 */
+#menu {
+  background: #241f1b !important;
+}
+
+#menu li.active a {
+  box-shadow: inset 0 -2px 0 var(--c--ac--fg) !important;
+}
+
+/* logo 与强调色统一 */
+#logo a,
+#logo a::before {
+  color: var(--c--ac--fg) !important;
+}
+
+/* 卡片投影略偏暖 */
+.box,
+#torrent_table,
+table.forum_index,
+table.torrent_table {
+  box-shadow: 0 1px 2px rgba(74, 55, 40, .06) !important;
+}
+
+/* 标题带: 铺满整行 (含时间/大小/数字单元格) */
 #torrent_table tr.group > td,
 #torrent_table tr.group > td.nobr,
 #torrent_table tr.group > td.number_column,
@@ -4060,6 +4090,11 @@ table.torrent_table tr.torrent_row:hover > td {
 .torrent_table tr.group td {
   background-color: var(--c--bg--quaternary) !important;
   border: 0 !important;
+}
+
+#torrent_table tr.group,
+.torrent_table tr.group {
+  background: transparent !important;
 }
 
 #torrent_table tr.group > td > *,
