@@ -9,7 +9,7 @@ scripts/
 │   ├── README.md
 │   ├── docs/        快速上手、使用手册、架构、开发指南、AI 上下文、封面与角色图
 │   └── legacy/      pt-bluray-assistant-v0.0.0.1 ~ v0.0.0.47，一版一个文件
-└── PTScripts/       PterClub / Gazelle / GGn 等站点的小工具合集
+└── PTScripts/       站点小工具合集
     ├── README.md    索引（表格，点名字直接装）
     └── *.user.js    36 个单文件脚本 + 1 个无扩展名文件
 ```
@@ -28,5 +28,6 @@ scripts/
 从 `DaMauu/Scripts` 仓库整体搬过来的脚本合集，文件原样保留，只把合集 `README.md` 里的安装链接改指向本库路径。
 
 - 入口：`PTScripts/README.md`，表格里点脚本名即装
-- 覆盖站点：PterClub（PTC_ 系列）、Gazelle 系（PT_GzMusic 系列）、GGn、FSM 等
+- 内容：37 个单文件脚本，覆盖多个 PT 站的日常操作（上传辅助、数据自隐、徽章与公告隐藏、批量送礼、下载标记等）
+- 文档不写站点名，提交信息也别写；脚本自身的 `@match` 是功能需要，保留
 - 这些不是本项目维护的脚本，升级以上游为准；本库里只保证文件不丢
