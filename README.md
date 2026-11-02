@@ -69,7 +69,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
-2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.43.user.js`](legacy/pt-bluray-assistant-v0.0.0.43.user.js)，点 `Raw` 确认安装。
+2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.44.user.js`](legacy/pt-bluray-assistant-v0.0.0.44.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
 后续步骤见 [快速上手](docs/QUICKSTART.md)。
@@ -77,7 +77,7 @@
 ## 目录
 
 ```
-legacy/pt-bluray-assistant-v0.0.0.43.user.js   当前版本（安装这个）
+legacy/pt-bluray-assistant-v0.0.0.44.user.js   当前版本（安装这个）
 docs/QUICKSTART.md                             快速上手
 docs/GUIDE.md                                  使用手册
 docs/ARCHITECTURE.md                           架构设计
@@ -94,7 +94,7 @@ docs/mascot.png                                角色原图
 | UNIT3D | 完整 | 有 API Key 时走 API，无则网页解析 |
 | NexusPHP | 完整 | 列表与详情双解析 |
 | Gazelle | 基本 | 审核与详情可用 |
-| f3nix（特定站点） | 基本 | 同上 |
+| f3nix（特定站点） | 完整 | 审核、跨页拉取、点预设参数；详情靠网页穿透（BDInfo / 截图 / 简介） |
 
 浏览器：Chrome / Edge / Firefox 最新版 + Tampermonkey。
 
@@ -156,12 +156,17 @@ docs/mascot.png                                角色原图
 
 上传成功但返图更窄，属图床侧策略。检测到返图更小则回退原链，简介里出现的是源站原图地址。
 
+### K-13 新站点接入只审当前页 · 已修复
+
+`multiPage` 白名单只列了 unit3d / np / gz，f3nix 漏在外面，于是「拉取数据」只审屏幕上那一页就宣告结束，几百页的名单一条也没抓。修法是：白名单补 f3nix，翻页循环加 f3nix 分支（行解析、页码上限、末页原地打转检测、每 30 页歇 90 秒），断点 `lastPage` 也按站点页码校验。教训是新增站点适配时，翻页白名单和循环内解析两处必须同时补，漏一处就是静默失败、日志还显示「完成」。
+
 ### 复发规律
 
 1. 依赖地址规则的推断总会漏：后缀、链接形态、字段命名，规则补不完，应以实测宽度与内容为准。
 2. 大段替换代码容易破坏结构：优先小步编辑。
 3. 布局靠内容自适应就会变形：显式固定尺寸加溢出兜底最稳。
 4. 站点侧行为只能兜底：限流、标题回填、图床压缩，脚本只能减小影响，不能消除。
+5. 站点适配不止一个入口：`AUDIT_HANDLERS`、`PRESET_HANDLERS`、`siteUrl`、翻页循环、详情穿透，五处齐了才算「支持」。
 
 ---
 
