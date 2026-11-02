@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.3.7
+  Broomhilda Red v1.3.8
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -559,11 +559,11 @@ img[title^='High quality'] {
 
 /* logo 字体: Bebas Neue (窄高, 接近 PTP 标志观感) */
 @font-face {
-  font-family: 'Bebas Neue';
+  font-family: 'Barlow Condensed';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 300;
   font-display: swap;
-  src: url(https://cdn.jsdelivr.net/npm/@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.woff2) format('woff2');
+  src: url(https://cdn.jsdelivr.net/npm/@fontsource/barlow-condensed/files/barlow-condensed-latin-300-normal.woff2) format('woff2');
 }
 
 /* logo: 用文字 REDACTED.SH, 丢掉站点 logo 图 */
@@ -582,11 +582,11 @@ img[title^='High quality'] {
   height: auto !important;
   background: none !important;
   padding: 0 !important;
-  font-family: 'Bebas Neue', var(--ff--primary) !important;
-  font-size: 52px !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.5px !important;
-  transform: scale(1.06, 1.34);
+  font-family: 'Barlow Condensed', var(--ff--primary) !important;
+  font-size: 42px !important;
+  font-weight: 300 !important;
+  letter-spacing: 1.2px !important;
+  transform: scale(1, 1.1);
   transform-origin: left top;
   display: inline-block !important;
   color: var(--c--fg--primary) !important;
@@ -596,10 +596,13 @@ img[title^='High quality'] {
 
 #logo a::before {
   content: 'REDACTED.SH';
-  font-family: var(--ff--primary) !important;
-  font-size: 46px;
-  font-weight: 700;
-  letter-spacing: -1.5px;
+  font-family: 'Barlow Condensed', var(--ff--primary) !important;
+  font-size: 42px !important;
+  font-weight: 300 !important;
+  letter-spacing: 1.2px !important;
+  transform: scale(1, 1.1);
+  transform-origin: left top;
+  display: inline-block;
   line-height: 1;
   color: var(--c--fg--primary);
 }
