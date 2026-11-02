@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.2
+  Broomhilda Red v2.5.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4580,5 +4580,26 @@ html body .torrent_table tr.group td {
 
 html body #torrent_table tr.group > td > *,
 html body #torrent_table tr.group td > * {
+  background-color: transparent !important;
+}
+
+/* 标题行底色: 行上设色, 单元格一律继承行的底色 */
+html body #torrent_table tr.group,
+html body .torrent_table tr.group {
+  background-color: var(--c--bg--quaternary) !important;
+  background-image: none !important;
+}
+
+html body #torrent_table tr.group > td,
+html body #torrent_table tr.group td,
+html body .torrent_table tr.group > td,
+html body .torrent_table tr.group td {
+  background-color: inherit !important;
+  background-image: none !important;
+  border: 0 !important;
+}
+
+html body #torrent_table tr.group td > *,
+html body .torrent_table tr.group td > * {
   background-color: transparent !important;
 }
