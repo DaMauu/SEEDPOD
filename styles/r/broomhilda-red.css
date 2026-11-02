@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.3.2
+  Broomhilda Red v1.3.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2631,13 +2631,15 @@ a.brackets::after,
 }
 
 /* 版本行细字重 */
-#torrent_table tr.group_torrent td,
-#torrent_table tr.group_torrent td *,
-#torrent_table tr.group_torrent td a,
-#torrent_table tr.group_torrent td span,
-#torrent_table tr.group_torrent td strong,
-#torrent_table tr.group_torrent td b {
+#torrent_table tr.group_torrent:not(.edition) td,
+#torrent_table tr.group_torrent:not(.edition) td * {
   font-weight: 400 !important;
+}
+
+/* 版本条恢复加粗 */
+#torrent_table tr.group_torrent td.edition_info,
+#torrent_table tr.group_torrent td.edition_info * {
+  font-weight: var(--fw--bold) !important;
 }
 
 /* 版本条底色 (需压过 group_torrent 的透明规则) */
@@ -2649,7 +2651,7 @@ a.brackets::after,
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
   padding-left: calc(var(--sp--medium) + 2ch) !important;
-  padding-right: 240px !important;
+  padding-right: 60px !important;
 }
 
 /* 种子详情: 去掉引号图标与斜体, 与 PTP 一样是普通文字块 */
