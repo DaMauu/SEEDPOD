@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.3
+  Broomhilda Red v2.0.4
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3829,4 +3829,38 @@ table.torrent_table tr.torrentdetails pre a,
 table.torrent_table tr.torrentdetails pre * {
   overflow-wrap: anywhere !important;
   word-break: break-word !important;
+}
+/* ===== 种子列表: 去掉行间横线, 只用底色分层 ===== */
+/* 标题行: 极浅底色, 与白色版本行区分, 不加任何边框 */
+#torrent_table tr.group > td,
+#torrent_table tr.group > td.sign,
+#torrent_table tr.group > td.number_column,
+#torrent_table tr.group > td.big_info,
+#torrent_table tr.group td,
+.torrent_table tr.group > td,
+.torrent_table tr.group td {
+  background: #f7f8fa !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+/* 版本行: 白色, 无边框 */
+#torrent_table tr.group_torrent > td,
+table.torrent_table tr.group_torrent > td,
+table.torrent_table tr.torrent_row > td {
+  background: var(--c--bg--secondary) !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+#torrent_table tr.group_torrent > td:hover,
+table.torrent_table tr.torrent_row > td:hover {
+  background: #fafbfc !important;
+}
+
+/* 版本条: 保留底色, 去掉上下边框 */
+#torrent_table tr.group_torrent td.edition_info,
+table.torrent_table tr.group_torrent td.edition_info {
+  border-top: 0 !important;
+  border-bottom: 0 !important;
 }
