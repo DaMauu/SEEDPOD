@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.5.0
+  Broomhilda Red v1.6.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3082,13 +3082,13 @@ table.forum_index {
 }
 
 table.forum_index tr.colhead > td {
-  background: var(--c--bg--tertiary) !important;
+  background: #3c4753 !important;
   padding: 10px var(--sp--small) !important;
   font-size: 11px !important;
   font-weight: var(--fw--bold) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.04em !important;
-  color: var(--c--fg--secondary) !important;
+  color: #fff !important;
   border: 0 !important;
 }
 
@@ -3149,10 +3149,10 @@ table.forum_index tr > td:nth-child(5) {
   --c--ac--bg--shade:  #8e2018; /* shade 20% */
 }
 
-/* logo: 红色字 */
+/* logo: 红色字 (全站唯一红色元素) */
 #logo a,
 #logo a::before {
-  color: var(--c--ac--fg) !important;
+  color: #c0392b !important;
 }
 
 /* 顶部菜单: 红底白字, 悬停/当前项更深 */
@@ -3170,4 +3170,91 @@ table.forum_index tr > td:nth-child(5) {
 #menu li.active a {
   background: var(--c--ac--bg--shade) !important;
   color: #fff !important;
+}
+/* ===== 站点原生配色: 白底 + 深灰石板表头 + 橙红导航, 强调色用青绿 (红的互补色) ===== */
+:root {
+  /* 中性: 白 → 灰 */
+  --c--bg--primary:    #ffffff;
+  --c--bg--secondary:  #f1f2f3;
+  --c--bg--tertiary:   #e2e4e6;
+  --c--bg--quaternary: #d3d6d8;
+  --c--bg--quinary:    #b7babe;
+
+  /* 前景: 近黑 → 中灰 */
+  --c--fg--initial:    #0f1113;
+  --c--fg--primary:    #23262a;
+  --c--fg--secondary:  #4f5459;
+  --c--fg--tertiary:   #71767b;
+  --c--fg--quaternary: #8f9499;
+  --c--fg--quinary:    #adb2b7;
+
+  /* 强调: 青绿 (与红色标识互补, 用于链接/可点元素) */
+  --c--ac--fg--tint:   #79b6c6;
+  --c--ac--fg:         #2b788c;
+  --c--ac--fg--shade:  #1d5a6b;
+  --c--ac--bg--tint:   #2b788c;
+  --c--ac--bg:         #24677a;
+  --c--ac--bg--shade:  #1d5a6b;
+}
+
+/* 表头: 深石板底白字 (面板标题 / 表格列头) */
+.head,
+.colhead,
+.colhead_dark,
+div.head {
+  background: #3c4753 !important;
+  color: #fff !important;
+  border-radius: 0;
+}
+
+.head a,
+.colhead a,
+.colhead_dark a,
+.head strong {
+  color: #fff !important;
+}
+
+.head a:hover,
+.colhead a:hover,
+.colhead_dark a:hover {
+  color: #cfe6ec !important;
+}
+
+table tr.colhead td,
+table tr.colhead th,
+table tr.colhead_dark td,
+table tr.colhead_dark th {
+  background: #3c4753 !important;
+  color: #fff !important;
+}
+
+.box>.head:first-child,
+.box>.head:first-child:last-child {
+  border-radius: var(--br) var(--br) 0 0;
+}
+
+/* 顶部菜单: 橙 → 红渐变, 白字 */
+#menu {
+  background: linear-gradient(90deg, #f0902f 0%, #ec5b3c 48%, #e02b3c 100%) !important;
+}
+
+#menu a,
+#menu ul li a {
+  color: #fff !important;
+}
+
+#menu a:hover {
+  background: rgba(0, 0, 0, .16) !important;
+  color: #fff !important;
+}
+
+#menu li.active a {
+  background: rgba(0, 0, 0, .28) !important;
+  color: #fff !important;
+}
+
+/* 数值/比率: 正向用绿, 与青绿、红形成三级区分 */
+#userinfo_stats li,
+.torrent_table td.number_column {
+  font-variant-numeric: tabular-nums;
 }
