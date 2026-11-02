@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.4.2
+  Broomhilda Red v2.4.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4352,4 +4352,84 @@ table.torrent_table tr.torrentdetails table.filelist_table th {
 table.torrent_table tr.torrentdetails pre {
   padding: 12px 14px !important;
   margin: 8px 0 !important;
+}
+
+/* ===== v2.4.3: 展开块改为 flex 纵向布局, 彻底消除缩进与空隙 ===== */
+table.torrent_table tr.torrentdetails > td {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  padding: 16px 20px !important;
+  text-align: left !important;
+  background: var(--c--bg--tertiary) !important;
+  border-top: 1px solid var(--line) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+table.torrent_table tr.torrentdetails > td > * {
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  float: none !important;
+  text-align: left !important;
+}
+
+table.torrent_table tr.torrentdetails > td blockquote {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+  color: var(--c--fg--tertiary) !important;
+  text-indent: 0 !important;
+}
+
+table.torrent_table tr.torrentdetails > td .linkbox {
+  display: block !important;
+  margin: 4px 0 0 !important;
+}
+
+table.torrent_table tr.torrentdetails > td .linkbox a {
+  display: inline-block !important;
+  margin: 0 18px 0 0 !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  color: var(--c--ac--fg) !important;
+}
+
+table.torrent_table tr.torrentdetails > td .hidden {
+  display: none !important;
+}
+
+table.torrent_table tr.torrentdetails > td table.filelist_table {
+  width: 100% !important;
+}
+
+table.torrent_table tr.torrentdetails > td table.filelist_table td,
+table.torrent_table tr.torrentdetails > td table.filelist_table th {
+  padding: 6px 10px !important;
+  border-bottom: 1px solid var(--line--soft) !important;
+}
+
+table.torrent_table tr.torrentdetails > td pre {
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  overflow-x: hidden !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+/* 模板缩进产生的空白文本节点会被 pre-wrap 渲染成大片留白, 这里强制 normal */
+table.torrent_table tr.torrentdetails > td,
+table.torrent_table tr.torrentdetails > td * {
+  white-space: normal !important;
+}
+
+table.torrent_table tr.torrentdetails > td pre,
+table.torrent_table tr.torrentdetails > td pre * {
+  white-space: pre-wrap !important;
 }
