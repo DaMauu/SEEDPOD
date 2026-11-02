@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.4.0
+  Broomhilda Red v1.4.1
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2842,41 +2842,10 @@ select:focus {
   #userinfo_major {flex-basis: 192px;}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* 过滤按钮靠右 */
+.filter_torrents input[type='submit'],
+.filter_torrents input[type='button'] {
+  float: right !important;
+  margin-left: var(--sp--small) !important;
+}
 
