@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.9
+  Broomhilda Red v1.3.0
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2539,7 +2539,7 @@ tr.group td {
 }
 
 #torrent_table tr.group td {
-  padding-top: 14px !important;
+  padding-top: 4px !important;
   padding-bottom: 0 !important;
 }
 
