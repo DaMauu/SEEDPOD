@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.3
+  Broomhilda Red v1.0.4
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1295,8 +1295,9 @@ table .colhead_dark th {
 .filter_torrents .head {
   position: relative;
   background: transparent !important;
-  padding: var(--sp--tiny) 0 !important;
+  padding: 8px 0 10px !important;
   border: 0;
+  margin-bottom: 4px;
 }
 
 .filter_torrents .head strong,
@@ -1312,11 +1313,24 @@ table .colhead_dark th {
 }
 
 .filter_torrents .head strong::after {
-  content: ' SEARCH';
+  content: 'SEARCH';
   font-size: var(--fs--small);
   font-weight: var(--fw--bold);
   letter-spacing: var(--ls--more);
   color: var(--c--fg--primary);
+  margin-left: 6px;
+}
+
+/* 右侧齿轮 (装饰, 与 PTP 同款位置) */
+.filter_torrents .head::after {
+  content: '\e8b8';
+  font-family: var(--ff--icons);
+  font-size: 17px;
+  color: var(--c--fg--tertiary);
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* 收起状态: 容器被 gtoggle 加上 hidden */
@@ -1399,9 +1413,11 @@ tr.group_torrent td {
 }
 
 .edition_info {
-  background: var(--c--bg--tertiary);
+  background: var(--c--bg--quaternary);
   font-size: var(--fs--tiny);
-  padding: var(--sp--tiny) var(--sp--small) !important;
+  font-weight: var(--fw--bold);
+  letter-spacing: var(--ls--more);
+  padding: var(--sp--small) var(--sp--medium) !important;
 }
 
 .group_image img {
@@ -1444,20 +1460,49 @@ tr.group_torrent td {
   color: var(--c--ac--fg);
 }
 
-/* DL / FL / RP 小按钮: 放到种子名右侧 (PTP 同款位置) */
+/* DL / FL / RP: PTP 风格纯文字 [DL], 放在种子名右侧 */
 .torrent_action_buttons {
   float: right;
   margin-left: 8px;
+  font-size: 0;
 }
 
 .torrent_action_buttons a {
   font-size: var(--fs--tiny);
-  font-weight: var(--fw--bold);
+  font-weight: var(--fw--regular);
   text-transform: uppercase;
-  padding: 2px 6px;
-  border: 2px solid;
-  border-radius: var(--br--small);
+  padding: 0;
+  border: 0;
+  color: var(--c--fg--secondary);
   white-space: nowrap;
+}
+
+/* 方括号包住整组: [DL | FL | RP] */
+.torrent_action_buttons::before,
+.torrent_action_buttons::after {
+  content: '' !important;
+  visibility: visible !important;
+  font-family: var(--ff--primary);
+  font-size: var(--fs--tiny);
+  font-weight: var(--fw--regular);
+  color: var(--c--fg--secondary);
+}
+
+.torrent_action_buttons::before {content: '[' !important;}
+.torrent_action_buttons::after {content: ']' !important;}
+
+/* 组内分隔: [DL | FL | RP] */
+.torrent_action_buttons a + a::before {
+  content: '|';
+  display: inline-block;
+  margin: 0 4px;
+  font-family: var(--ff--primary);
+  font-size: var(--fs--tiny);
+  color: var(--c--fg--quaternary);
+}
+
+.torrent_action_buttons a:hover {
+  color: var(--c--ac--fg);
 }
 
 .button_dl {color: var(--c--green); border-color: var(--c--green);}
@@ -2143,15 +2188,21 @@ td.colhead_dark, .colhead_dark td, .colhead_dark th {
   background: transparent;
 }
 
-/* DL / FL / RP: 对方 .group_torrent span a / red_light 按钮色压灰 */
-.torrent_action_buttons .button_dl {color: var(--c--green) !important; border-color: var(--c--green) !important;}
-.torrent_action_buttons .button_dl:hover {background: var(--c--green); color: var(--c--white) !important;}
+/* DL / FL / RP: PTP 风格纯文字 */
+.torrent_action_buttons .button_dl,
+.torrent_action_buttons .button_fl,
+.torrent_action_buttons .button_rp {
+  color: var(--c--fg--secondary) !important;
+  border: 0 !important;
+  background: none !important;
+}
 
-.torrent_action_buttons .button_fl {color: var(--c--yellow-shade) !important; border-color: var(--c--yellow-shade) !important;}
-.torrent_action_buttons .button_fl:hover {background: var(--c--yellow-shade); color: var(--c--white) !important;}
-
-.torrent_action_buttons .button_rp {color: var(--c--red) !important; border-color: var(--c--red) !important;}
-.torrent_action_buttons .button_rp:hover {background: var(--c--red); color: var(--c--white) !important;}
+.torrent_action_buttons .button_dl:hover,
+.torrent_action_buttons .button_fl:hover,
+.torrent_action_buttons .button_rp:hover {
+  color: var(--c--ac--fg) !important;
+  background: none !important;
+}
 
 /* 论坛交替行 + 未读图标: 去掉对方的 ::after 角标 */
 tr.rowa {background-color: var(--c--bg--primary);}
@@ -2200,15 +2251,50 @@ table tr.colhead_dark td, table tr.colhead_dark th {
 }
 
 /* 种子行内 DL/FL/RP: 对方用 .torrent_table .group_torrent > td > span a !important
-   (0,2,3) 压成暗红, 需同深度选择器反压 */
-.torrent_table td span a.button_dl {color: var(--c--green) !important; border-color: var(--c--green) !important;}
-.torrent_table td span a.button_dl:hover {background: var(--c--green); color: var(--c--white) !important;}
+   (0,2,3) 压成暗红, 需同深度选择器反压 ; PTP 风格纯文字 */
+.torrent_table td span a.button_dl,
+.torrent_table td span a.button_fl,
+.torrent_table td span a.button_rp {
+  color: var(--c--fg--secondary) !important;
+  border: 0 !important;
+  background: none !important;
+  padding: 0 !important;
+  font-weight: var(--fw--regular) !important;
+}
 
-.torrent_table td span a.button_fl {color: var(--c--yellow-shade) !important; border-color: var(--c--yellow-shade) !important;}
-.torrent_table td span a.button_fl:hover {background: var(--c--yellow-shade); color: var(--c--white) !important;}
+.torrent_table td span a.button_dl:hover,
+.torrent_table td span a.button_fl:hover,
+.torrent_table td span a.button_rp:hover {
+  color: var(--c--ac--fg) !important;
+  background: none !important;
+}
 
-.torrent_table td span a.button_rp {color: var(--c--red) !important; border-color: var(--c--red) !important;}
-.torrent_table td span a.button_rp:hover {background: var(--c--red); color: var(--c--white) !important;}
+/* 种子详情: 去掉引号图标与斜体, 与 PTP 一样是普通文字块 */
+.torrent_table blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-style: normal;
+  font-size: var(--fs--small);
+  color: var(--c--fg--secondary);
+}
+
+.torrent_table blockquote::before,
+.torrent_table blockquote::after {
+  content: none !important;
+}
+
+/* 种子名 / 专辑名: PTP 风格深色 */
+.torrent_table tr.group_torrent > td > a,
+.torrent_table .group_info a {
+  color: var(--c--fg--primary) !important;
+}
+
+.torrent_table tr.group_torrent > td > a:hover,
+.torrent_table .group_info a:hover {
+  color: var(--c--ac--fg) !important;
+}
 
 /* 面板底色: 对方用 #staff .box 等 ID 前缀 */
 #content .box {
@@ -2355,6 +2441,12 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
+
+
+
+
+
 
 
 
