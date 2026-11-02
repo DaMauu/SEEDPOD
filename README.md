@@ -69,7 +69,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
-2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.45.user.js`](legacy/pt-bluray-assistant-v0.0.0.45.user.js)，点 `Raw` 确认安装。
+2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.46.user.js`](legacy/pt-bluray-assistant-v0.0.0.46.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
 后续步骤见 [快速上手](docs/QUICKSTART.md)。
@@ -77,7 +77,7 @@
 ## 目录
 
 ```
-legacy/pt-bluray-assistant-v0.0.0.45.user.js   当前版本（安装这个）
+legacy/pt-bluray-assistant-v0.0.0.46.user.js   当前版本（安装这个）
 docs/QUICKSTART.md                             快速上手
 docs/GUIDE.md                                  使用手册
 docs/ARCHITECTURE.md                           架构设计
@@ -159,6 +159,10 @@ docs/mascot.png                                角色原图
 ### K-13 新站点接入只审当前页 · 已修复
 
 `multiPage` 白名单只列了 unit3d / np / gz，f3nix 漏在外面，于是「拉取数据」只审屏幕上那一页就宣告结束，几百页的名单一条也没抓。修法是：白名单补 f3nix，翻页循环加 f3nix 分支（行解析、页码上限、末页原地打转检测、每 30 页歇 90 秒），断点 `lastPage` 也按站点页码校验。教训是新增站点适配时，翻页白名单和循环内解析两处必须同时补，漏一处就是静默失败、日志还显示「完成」。
+
+### K-14 后台翻页抓回同一页 · 已缓解
+
+f3nix 的行链接是 slug 不是数字 id，早期拿「数字 id 是否存在」当唯一键，结果所有行都被判成无效，日志显示「新增 0 条」，紧接着又因为前后两页签名相同停在第 2 页。现在唯一键退到详情地址，页码参数从分页器实测反推，并打印地址模板与首行诊断；一旦发现抓回来的内容和当前页或上一页完全相同，只保留断点、不再标记完成，免得把「没抓到」记成「抓完了」。
 
 ### 复发规律
 
