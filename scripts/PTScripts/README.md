@@ -13,7 +13,7 @@
 | [PT_OfficialSeedingStatistics.user.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_OfficialSeedingStatistics.user.js) | PT_官种保种统计 | audiences.me, hdsky.me | 0.16.6 |
 | [PT_ShrinkBanner.user.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_ShrinkBanner.user.js) | PT_横幅缩小 | audiences.me | 0.1 |
 | [PT_ChineseTranslationJPopsuki.user.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_ChineseTranslationJPopsuki.user.js) | PT_中文翻译jpopsuki | 通用 | 0.1.5.0 |
-| [PT_FSMHide](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_FSMHide) | PT_Fsm首页推荐隐藏 | fsm.name | 0.1 |
+| [PT_FSMHide.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_FSMHide.js) | PT_Fsm首页推荐隐藏 | fsm.name | 0.1 |
 | [PT_GGnMobygamesUploady.user.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_GGnMobygamesUploady.user.js) | PT_GGnMobygames上传 | 通用 | 0.30 |
 | [PT_GzMusicDownloadStatusFlag.user.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_GzMusicDownloadStatusFlag.user.js) | PT_Gz音乐下载状态标记 | 通用 | 3.0 |
 | [PT_GzMusicTrackerToPTPImg.user.js](https://github.com/DaMauu/SEEDPOD/raw/main/scripts/PTScripts/PT_GzMusicTrackerToPTPImg.user.js) | PT_GzMusic跟踪器到PTPImg | 通用 | 0.02 |
@@ -47,5 +47,5 @@
 ## 说明
 
 - 安装地址就是本库的 raw 链接，格式 `/raw/main/scripts/PTScripts/<文件名>`，文件名里的空格要写成 `%20`。
-- `PT_FSMHide` 没有 `.user.js` 后缀，Tampermonkey 可能不认，装的时候手动改名为 `PT_FSMHide.user.js`。
+- `PT_FSMHide.js` 沿用上游命名，不是标准 `.user.js` 后缀；Tampermonkey 装不上时把它改名为 `PT_FSMHide.user.js`。
 - 新增脚本：把文件丢进本目录，再在表格里补一行；表格按 `@name` 排序。
