@@ -4,7 +4,7 @@
 
 **浅色米棕主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-2.0.5-a8641b?style=flat-square" />
+<img src="https://img.shields.io/badge/version-2.0.6-a8641b?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.5/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.6/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v2.0.6 | 2026-11-03 | 种子列表去掉全部灰带（标题行/版本条纯白），分组用留白分隔；搜索面板整条表头恢复可点击展开收起 |
 | v2.0.5 | 2026-11-03 | rip log 展开区所有子元素强制换行并隐藏横向溢出，彻底去掉横向滚动条 |
 | v2.0.4 | 2026-11-03 | 种子列表去掉行间横线（标题行/版本行/版本条均无边框），改用浅底色分层 |
 | v2.0.3 | 2026-11-03 | rip log / 代码块强制换行不再横向溢出，展开区 log 容器与正文左对齐 |

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.5
+  Broomhilda Red v2.0.6
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3884,4 +3884,70 @@ table.torrent_table tr.torrentdetails td {
 .torrentdetails .pad {
   padding: 0 !important;
   margin: 0 !important;
+}
+/* ===== 种子列表: 全部纯白, 不再有任何灰带 ===== */
+#torrent_table tr.group > td,
+#torrent_table tr.group > td.sign,
+#torrent_table tr.group > td.number_column,
+#torrent_table tr.group > td.big_info,
+#torrent_table tr.group td,
+.torrent_table tr.group > td,
+.torrent_table tr.group td,
+#torrent_table tr.group_torrent > td,
+table.torrent_table tr.group_torrent > td,
+table.torrent_table tr.torrent_row > td {
+  background: var(--c--bg--secondary) !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+/* 版本条: 也变白, 只靠字号/字色与上下的间距区分 */
+#torrent_table tr.group_torrent td.edition_info,
+table.torrent_table tr.group_torrent td.edition_info {
+  background: var(--c--bg--secondary) !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+/* 分组之间靠留白, 不靠色块 */
+#torrent_table tr.group > td,
+.torrent_table tr.group > td {
+  padding-top: 18px !important;
+  padding-bottom: 2px !important;
+}
+
+#torrent_table tr.group_torrent td.edition_info,
+table.torrent_table tr.group_torrent td.edition_info {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* ===== 搜索面板: 整条表头都可点击展开/收起, 右侧保留圆点 ===== */
+.filter_torrents .head {
+  position: relative !important;
+  cursor: pointer;
+}
+
+.filter_torrents .head #ft_toggle {
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.filter_torrents .head::after {
+  content: '\e061';
+  font-family: var(--ff--icons) !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  color: var(--c--ac--fg) !important;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }

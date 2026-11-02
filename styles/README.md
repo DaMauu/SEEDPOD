@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v2.0.5 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.5](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.5/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v2.0.6 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.6](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.6/styles/r/broomhilda-red.css) |
 
 ## 使用
 
@@ -68,6 +68,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v2.0.6 | 2026-11-03 | 去灰带 + 搜索表头可点 |
 | Broomhilda Red | v2.0.5 | 2026-11-03 | rip log 去横向滚动条 |
 | Broomhilda Red | v2.0.4 | 2026-11-03 | 种子列表去横线 |
 | Broomhilda Red | v2.0.3 | 2026-11-03 | rip log 换行与对齐 |
