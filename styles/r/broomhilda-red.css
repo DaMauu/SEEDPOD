@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.0.1
+  Broomhilda Red v2.0.2
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -3753,4 +3753,43 @@ table.torrent_table tr.torrentdetails blockquote {
 table.torrent_table tr.torrentdetails .linkbox {
   margin: 0 !important;
   padding: 0 !important;
+}
+/* ===== 面板正文 (.box > .body): 统一缩进与自适应 ===== */
+.box > .body {
+  padding: 16px !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.box > .body > :first-child {
+  margin-top: 0 !important;
+}
+
+.box > .body > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* 引言/引用块: 浅底 + 细线, 不再是一个孤立的白色盒子 */
+.box > .body blockquote,
+.box blockquote {
+  margin: 12px 0 !important;
+  padding: 12px 16px !important;
+  background: var(--c--bg--tertiary) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+  color: var(--c--fg--tertiary) !important;
+}
+
+.box > .body blockquote a,
+.box blockquote a {
+  color: var(--c--ac--fg) !important;
+}
+
+/* 曲目列表等长行: 行距放松, 数字与标题对齐 */
+.box > .body br + br {
+  content: '';
+  display: block;
+  height: 4px;
 }
