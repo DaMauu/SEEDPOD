@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.5
+  Broomhilda Red v1.0.6
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1381,7 +1381,7 @@ table .colhead_dark th {
 
 tr.group td,
 tr.group_torrent td {
-  padding: var(--sp--tiny) var(--sp--small);
+  padding: 1px var(--sp--small);
 }
 
 .group_torrent:not(.group_torrent_header) {
@@ -2305,7 +2305,7 @@ tr.group td.center .hide_torrents {
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
   padding-left: 74px !important;
-  padding-right: 360px !important;
+  padding-right: 240px !important;
 }
 
 /* 种子详情: 去掉引号图标与斜体, 与 PTP 一样是普通文字块 */
@@ -2480,6 +2480,7 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
 
 
 
