@@ -12,7 +12,7 @@
 
 ## 1. 安装脚本
 
-打开 [`scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js`](../scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js) → 点 `Raw` → 在 Tampermonkey 安装页确认。
+打开 [`scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js`](../legacy/pt-bluray-assistant-v0.0.0.47.user.js) → 点 `Raw` → 在 Tampermonkey 安装页确认。
 
 刷新任意受支持站点，页面右上角出现「原盘转载面板」面板即安装成功；控制台应有一行 `[PT助手] v0.0.0.47 已注入 @`。
 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/banner.png" alt="原盘转载面板" width="100%" />
+  <img src="scripts/bluray/docs/banner.png" alt="原盘转载面板" width="100%" />
 </div>
 
 <h1 align="center">原盘转载面板</h1>
@@ -22,11 +22,11 @@
 
 | 文档 | 适合谁 | 内容 |
 |---|---|---|
-| [快速上手](docs/QUICKSTART.md) | 第一次安装 | 三分钟装好并跑通一轮，含最小配置表与排错速查 |
-| [使用手册](docs/GUIDE.md) | 日常使用者 | 面板逐项说明、筛选规则、词库与断点、转种全流程、设置项、FAQ |
-| [架构设计](docs/ARCHITECTURE.md) | 维护者 | 模块边界、数据模型、状态机、查重与截图算法、站点扩展方式 |
-| [开发指南](docs/DEVELOPMENT.md) | 二次开发 | 版本号规则、提交前校验、回归测试清单、发版流程 |
-| [AI 上下文](docs/AI-CONTEXT.md) | 接手的 AI | 项目定位、硬性约束、已知坑位、交付要求 |
+| [快速上手](scripts/bluray/docs/QUICKSTART.md) | 第一次安装 | 三分钟装好并跑通一轮，含最小配置表与排错速查 |
+| [使用手册](scripts/bluray/docs/GUIDE.md) | 日常使用者 | 面板逐项说明、筛选规则、词库与断点、转种全流程、设置项、FAQ |
+| [架构设计](scripts/bluray/docs/ARCHITECTURE.md) | 维护者 | 模块边界、数据模型、状态机、查重与截图算法、站点扩展方式 |
+| [开发指南](scripts/bluray/docs/DEVELOPMENT.md) | 二次开发 | 版本号规则、提交前校验、回归测试清单、发版流程 |
+| [AI 上下文](scripts/bluray/docs/AI-CONTEXT.md) | 接手的 AI | 项目定位、硬性约束、已知坑位、交付要求 |
 
 ---
 
@@ -73,21 +73,19 @@
 2. 打开 [`scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js`](scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
-后续步骤见 [快速上手](docs/QUICKSTART.md)。
+后续步骤见 [快速上手](scripts/bluray/docs/QUICKSTART.md)。
 
 ## 目录
 
 ```
-scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
-scripts/bluray/                                  原盘转载面板：README + legacy/ 全部历史版本
-styles/                                          样式表
-docs/QUICKSTART.md                               快速上手
-docs/GUIDE.md                                    使用手册
-docs/ARCHITECTURE.md                             架构设计
-docs/DEVELOPMENT.md                              开发指南
-docs/AI-CONTEXT.md                               AI 上下文
-docs/banner.png                                  封面图
-docs/mascot.png                                  角色原图
+SEEDPOD/
+├── scripts/
+│   ├── README.md                脚本目录说明
+│   └── bluray/
+│       ├── docs/                快速上手、使用手册、架构、开发指南、AI 上下文、封面与角色图
+│       └── legacy/              pt-bluray-assistant-v0.0.0.1 ~ v0.0.0.47（当前版 v0.0.0.47）
+├── styles/                      样式表
+└── README.md                    本文件
 ```
 
 ## 兼容性
