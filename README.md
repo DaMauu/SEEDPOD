@@ -23,19 +23,39 @@
 
 ## 模块
 
-| 模块 | 形态 | 做什么 | 入口 |
+| 模块 | 形态 | 规模 | 做什么 | 入口 |
+|---|---|---|---|---|
+| [`scripts/bluray/`](scripts/bluray/) | 单个 `.user.js` | 7129 行 | 原盘转载面板：批量筛选、跨站查重、BDInfo 排版、截图转存、填单推种 | [安装](scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js) |
+| [`scripts/PTScripts/`](scripts/PTScripts/) | 37 个 `.user.js` | 每个 17~1947 行 | 站点日常操作：上传辅助、数据自隐、徽章与公告隐藏、批量送礼、下载标记 | [索引](scripts/PTScripts/README.md) |
+| [`styles/r/`](styles/r/) | 单个 `.css` | 2666 行 | Broomhilda Red 浅色主题，站点外部样式表 | [挂载](styles/r/README.md) |
+
+## 技术
+
+| | bluray | PTScripts | styles/r |
 |---|---|---|---|
-| [`scripts/bluray/`](scripts/bluray/) | 用户脚本 | 原盘转载面板：批量筛选、跨站查重、BDInfo 排版、截图转存、填单推种 | [安装](scripts/bluray/legacy/pt-bluray-assistant-v0.0.0.47.user.js) |
-| [`scripts/PTScripts/`](scripts/PTScripts/) | 37 个用户脚本 | 站点日常操作：上传辅助、数据自隐、徽章与公告隐藏、批量送礼、下载标记 | [索引](scripts/PTScripts/README.md) |
-| [`styles/r/`](styles/r/) | CSS | Broomhilda Red 浅色主题，站点外挂样式 | [挂载](styles/r/README.md) |
+| 运行环境 | Tampermonkey，`@run-at document-end` | Tampermonkey | 站点「外部样式表」字段 / jsDelivr |
+| 语言 | ES2017（async/await、IIFE、无框架） | ES5/ES2017 混写 | 原生 CSS |
+| 第三方依赖 | 无 | 部分脚本 `@require` jQuery 3.6 | 无 |
+| 构建 | 无，单文件直发 | 无 | 无 |
+| 数据存储 | `GM_setValue` / `GM_getValue` 键值 | 视脚本而定 | 无 |
+| 版本方式 | `0.0.0.N` 四段递增，一版一文件 | 跟随上游 | jsDelivr tag 固定 |
 
-## 说明
+### bluray 实现要点
 
-**bluray** 是本库的主力脚本，约 6300 行，把原盘搬运的重复劳动收进一个挂起面板：按规则筛出合格原盘、向目标站查重、解析详情页排版、转存图床、填入上传表单并推送到下载器。适配 NexusPHP、UNIT3D、Gazelle、f3nix 四类站点。文档见[快速上手](scripts/bluray/docs/QUICKSTART.md)、[使用手册](scripts/bluray/docs/GUIDE.md)、[架构](scripts/bluray/docs/ARCHITECTURE.md)、[开发](scripts/bluray/docs/DEVELOPMENT.md)、[AI 上下文](scripts/bluray/docs/AI-CONTEXT.md)。
+- **权限**：`GM_xmlhttpRequest`（跨域抓取、图床上传）、`GM_setValue`/`GM_getValue`（词库、断点、设置）、`GM_addStyle`（面板样式）、`GM_setClipboard`、`GM_openInTab`、`unsafeWindow`，`@connect *`。
+- **网络**：以 `GM_xmlhttpRequest` 走跨域，`fetch` / `XMLHttpRequest` 兜底；返回的 HTML 用 `DOMParser` 解析成文档再查，不注入页面。
+- **存储**：全部走 GM 键值，按「站点 + 功能」分区；查重词库分片存储、带 30 天有效期、支持 JSON 导入导出；断点记录页号、列表地址与已查种子。
+- **状态**：断点、暂停、限流退避、配额都是显式状态，重登后按保存时间回跳，两次拉取默认间隔 10 分钟。
+- **布局**：单份 CSS 由 `GM_addStyle` 注入，网格用 `minmax(0,1fr)` + 固定行高 + `min-width:0`，避免内容把面板撑变形。
+- **图片**：候选地址逐个用 `Image` 测 `naturalWidth` 取原图，`Blob` + `FormData` 二进制上传图床，返图再测宽复核。
+- **对外集成**：qBittorrent WebUI API 推送种子并补设分类；图床直连（必要时走 PterClub 单点登录）；NexusPHP、UNIT3D、Gazelle、f3nix、M-Team 五类站点适配。
+- **代码风格**：单文件 IIFE，整体 `try/catch` 兜底，出错不打断站点自身脚本；不用箭头函数堆砌，便于直接读改。
 
-**PTScripts** 是从上游 `DaMauu/Scripts` 整体搬来的脚本合集，文件原样保留，只把安装链接改指向本库，升级以上游为准。逐个脚本的用途见[索引](scripts/PTScripts/README.md)。
+### styles/r 与 PTScripts
 
-**styles/r** 存放站点主题。挂载地址用固定 tag，内容不会漂移；改样式后打新 tag 即可。
+`styles/r` 是纯 CSS 主题：135 个自定义属性、398 处 `var()`、4 个 `@media` 断点，覆盖站点原有样式靠 `!important`（272 处），版本靠 jsDelivr 固定 tag 保证内容不漂移。
+
+`PTScripts` 是 37 个互相独立的脚本，`@grant` 多为 `none` 或 `GM_xmlhttpRequest`，部分通过 `@require` 引入 jQuery；本库只保证文件完整，升级以上游为准。
 
 ## 安装
 
@@ -46,8 +66,8 @@
 
 | 模块 | 规则 |
 |---|---|
-| bluray | `0.0.0.N` 四段递增，一版一个文件，旧版永不覆盖、永不删除；头部 `@version`、面板标题、注入日志三处同步 |
-| PTScripts | 跟随上游，本库只保证文件不丢 |
+| bluray | `0.0.0.N` 四段递增，一版一个文件，旧版永不覆盖、永不删除；头部 `@version`、面板标题、注入日志三处必须同步 |
+| PTScripts | 跟随上游 `DaMauu/Scripts`，本库只保证文件不丢 |
 | styles | 每份样式一个文件，改动递增版本号并打 tag，旧 tag 永久保留可回退 |
 
 ## 结构
