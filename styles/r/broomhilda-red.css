@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.4
+  Broomhilda Red v1.2.5
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -2550,6 +2550,20 @@ a.brackets::after,
 .torrent_table a.brackets::before,
 .torrent_table a.brackets::after {
   content: none !important;
+}
+
+/* 标签细字重 + 面板圆角阴影 */
+.torrent_table .group_info .tags a,
+.torrent_table .group_info .tags,
+.torrent_table .tags a {
+  font-weight: var(--fw--regular) !important;
+  letter-spacing: normal !important;
+}
+
+#torrent_table {
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 8px 24px rgba(0, 0, 0, .07) !important;
 }
 
 /* 分组标题与标签字重 */
