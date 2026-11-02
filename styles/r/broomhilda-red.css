@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.0.6
+  Broomhilda Red v1.0.7
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1292,12 +1292,36 @@ table .colhead_dark th {
 ----------------------------------------------------------------------------- */
 
 /* PTP 风格搜索开关: 收起 [+] SEARCH, 展开 [-] SEARCH */
-.filter_torrents .head {
+/* 标签绝对定位到面板上方的页面底色上, 与 PTP 一致 */
+.filter_torrents {
   position: relative;
+  margin-top: 40px;
+}
+
+.filter_torrents:has(#ft_container.hidden) {
+  margin-top: 6px;
   background: transparent !important;
-  padding: 8px 0 10px !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.filter_torrents .head {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  background: transparent !important;
+  padding: 0 !important;
   border: 0;
-  margin-bottom: 4px;
+  margin: 0 !important;
+}
+
+.filter_torrents:has(#ft_container.hidden) .head {
+  top: -6px;
+  height: 32px;
 }
 
 .filter_torrents .head strong,
@@ -2480,6 +2504,7 @@ select:focus {
   }
   #userinfo_major {flex-basis: 192px;}
 }
+
 
 
 
