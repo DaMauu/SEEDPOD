@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v1.2.3
+  Broomhilda Red v1.2.4
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -1557,7 +1557,7 @@ tr.group_torrent td {
   font-weight: var(--fw--bold) !important;
   text-transform: uppercase;
   letter-spacing: var(--ls--more);
-  padding: 4px var(--sp--medium) !important;
+  padding: 4px var(--sp--medium) 4px calc(var(--sp--medium) + 4ch) !important;
 }
 
 .group_image img {
@@ -2473,7 +2473,7 @@ tr.group td.center .hide_torrents {
 
 /* 标题与 NAME 表头左对齐 */
 .torrent_table .group_info {
-  padding-left: 0 !important;
+  padding-left: var(--sp--medium) !important;
   margin-left: 0 !important;
   text-indent: 0 !important;
 }
@@ -2534,9 +2534,22 @@ tr.group_torrent td {
 }
 
 tr.group td.big_info {
-  display: flex;
-  flex-direction: column;
+  display: block;
   padding-left: 0 !important;
+}
+
+/* 去掉封面 */
+#torrent_table .group_image,
+.torrent_table .group_image {
+  display: none !important;
+}
+
+/* 去掉 .brackets 的方括号 */
+a.brackets::before,
+a.brackets::after,
+.torrent_table a.brackets::before,
+.torrent_table a.brackets::after {
+  content: none !important;
 }
 
 /* 分组标题与标签字重 */
@@ -2567,7 +2580,7 @@ tr.group td.big_info {
 
 /* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
 #torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
-  padding-left: var(--sp--medium) !important;
+  padding-left: calc(var(--sp--medium) + 4ch) !important;
   padding-right: 240px !important;
 }
 
