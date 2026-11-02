@@ -81,9 +81,11 @@
 SEEDPOD/
 ├── scripts/
 │   ├── README.md                脚本目录说明
-│   └── bluray/
-│       ├── docs/                快速上手、使用手册、架构、开发指南、AI 上下文、封面与角色图
-│       └── legacy/              pt-bluray-assistant-v0.0.0.1 ~ v0.0.0.47（当前版 v0.0.0.47）
+│   ├── bluray/                  原盘转载面板
+│   │   ├── README.md
+│   │   ├── docs/                快速上手、使用手册、架构、开发指南、AI 上下文、封面与角色图
+│   │   └── legacy/              pt-bluray-assistant-v0.0.0.1 ~ v0.0.0.47（当前版 v0.0.0.47）
+│   └── PTScripts/               PterClub / Gazelle / GGn 等站点小工具合集（37 个脚本 + 索引）
 ├── styles/                      样式表
 └── README.md                    本文件
 ```
