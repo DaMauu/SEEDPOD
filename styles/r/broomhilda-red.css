@@ -1,167 +1,21 @@
-/* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.6
-  浅色米棕主题 · 单文件 CSS
+/* =============================================================================
+   Broomhilda Red v3.0.0
+   单层整洁重写 · 红底导航 + 中性灰阶 + 单一红强调
+   目标站点模板: Gazelle (red_light)
 
-  仓库   https://github.com/DaMauu/SEEDPOD
-  直链   https://raw.githubusercontent.com/DaMauu/SEEDPOD/main/styles/r/broomhilda-red.css
+   结构
+     01 字体          02 变量          03 基础
+     04 顶栏          05 面板          06 种子列表
+     07 种子内页      08 侧栏          09 论坛
+     10 搜索面板      11 表单控件      12 页脚
+   ============================================================================= */
 
-  用法
-    - Stylus: 新建样式, 为站点添加 URL 匹配规则, 整份粘贴保存
-    - 站点自定义 CSS: @import 上述直链
-    - 字体需联网加载 (jimpalompa.github.io), 断网时回退系统字体
-
-  更新
-    版本号写在文件头与提交信息中, 直链文件名保持不变。
------------------------------------------------------------------------------ */
-/* -----------------------------------------------------------------------------
-  Variables — Broomhilda 浅色覆盖 + Django 语义色
------------------------------------------------------------------------------ */
-
-:root {
-  /* Color foreground (Broomhilda) */
-  --c--fg--initial:    #000;
-  --c--fg--input:      #1a1a1a; /* between */
-  --c--fg--primary:    #353433;
-  --c--fg--secondary:  #5d5c5b; /* tint 20% */
-  --c--fg--tertiary:   #727170; /* tint 30% */
-  --c--fg--quaternary: #868584; /* tint 40% */
-  --c--fg--quinary:    #9a9998; /* tint 50% */
-
-  /* Color background (Broomhilda) */
-  --c--bg--initial:    #fff;
-  --c--bg--input:      #fafafa; /* between */
-  --c--bg--primary:    #f7f5f3;
-  --c--bg--secondary:  #ebe9e7; /* shade 5% */
-  --c--bg--tertiary:   #d2d0cf; /* shade 15% */
-  --c--bg--quaternary: #b9b8b6; /* shade 25% */
-  --c--bg--quinary:    #a19f9e; /* shade 35% */
-
-  /* Color accent foreground (Broomhilda) */
-  --c--ac--fg--tint:   #baafa6; /* tint 40% */
-  --c--ac--fg:         #8c796a;
-  --c--ac--fg--shade:  #62554a; /* shade 30% */
-
-  /* Color accent background (Broomhilda) */
-  --c--ac--bg--tint:   #8c796a;
-  --c--ac--bg:         #7e6d5f; /* shade 10% */
-  --c--ac--bg--shade:  #706155; /* shade 20% */
-
-  /* Color transparent foreground (Broomhilda) */
-  --c--tr--fg--less: rgba(0, 0, 0, .8);
-  --c--tr--fg:       rgba(0, 0, 0, .6);
-  --c--tr--fg--more: rgba(0, 0, 0, .4);
-
-  /* Color transparent background (Broomhilda) */
-  --c--tr--bg--less: rgba(255, 255, 255, .8);
-  --c--tr--bg:       rgba(255, 255, 255, .6);
-  --c--tr--bg--more: rgba(255, 255, 255, .4);
-
-  /* Semantic colors (Django) */
-  --c--black:        #0c0c0c;
-  --c--white:        #fcfcfc;
-  --c--gray-tint:    #c4c1bd;
-  --c--gray:         #7a7570;
-  --c--gray-shade:   #5a5651;
-  --c--red-tint:     #f59c9c;
-  --c--red:          #d33131;
-  --c--red-shade:    #953030;
-  --c--orange-tint:  #ffbd9c;
-  --c--orange:       #d96c1d;
-  --c--orange-shade: #a05530;
-  --c--yellow-tint:  #ffde9c;
-  --c--yellow:       #d9a400;
-  --c--yellow-shade: #a07b30;
-  --c--green-tint:   #bee19c;
-  --c--green:        #6fad18;
-  --c--green-shade:  #577e30;
-  --c--cyan-tint:    #9cebde;
-  --c--cyan:         #10bea8;
-  --c--cyan-shade:   #308a7b;
-  --c--teal-tint:    #f0cf9c;
-  --c--teal:         #c8871f;
-  --c--teal-shade:   #8a5a12;
-  --c--blue-tint:    #e8c9a3;
-  --c--blue:         #b06a22;
-  --c--blue-shade:   #7d4a12;
-  --c--purple-tint:  #e3b6a8;
-  --c--purple:       #a4453a;
-  --c--purple-shade: #77302a;
-  --c--pink-tint:    #ff9ccd;
-  --c--pink:         #d92c8d;
-  --c--pink-shade:   #a03067;
-
-  /* Font family */
-  --ff--primary: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, sans-serif;
-  --ff--monospace: ui-monospace, Menlo, Consolas, Monaco, 'Liberation Mono', 'Lucida Console', monospace;
-  --ff--icons: 'Material Icons';
-
-  /* Font size */
-  --fs--tiny: .75rem;      /* 12px */
-  --fs--small: .8125rem;   /* 13px */
-  --fs--medium: .875rem;   /* 14px */
-  --fs--large: .9375rem;   /* 15px */
-  --fs--x-large: 1rem;     /* 16px */
-  --fs--huge: 1.125rem;    /* 18px */
-  --fs--gigantic: 1.25rem; /* 20px */
-  --fs--icons: 1.5rem;     /* 24px */
-
-  /* Font weight */
-  --fw--regular: 500;
-  --fw--bold: 700;
-
-  /* Line-height */
-  --lh--body: 1.375;
-  --lh--headings: 1.25;
-
-  /* Letter-spacing */
-  --ls--less: -.5px;
-  --ls--more: .5px;
-
-  /* Spacing */
-  --sp--puny: 4px;
-  --sp--tiny: 8px;
-  --sp--small: 12px;
-  --sp--medium: 16px;
-  --sp--large: 20px;
-  --sp--x-large: 24px;
-  --sp--huge: 28px;
-  --sp--gigantic: 32px;
-  --sp--enormous: 40px;
-
-  /* Border-radius */
-  --br: 8px;
-  --br--top: 8px 8px 0 0;
-  --br--right: 0 8px 8px 0;
-  --br--bottom: 0 0 8px 8px;
-  --br--left: 8px 0 0 8px;
-  --br--small: 4px;
-  --br--small--top: 4px 4px 0 0;
-  --br--small--right: 0 4px 4px 0;
-  --br--small--bottom: 0 0 4px 4px;
-  --br--small--left: 4px 0 0 4px;
-
-  /* Box-shadow */
-  --bs--small: rgba(0, 0, 0, .15) 0 1px 3px;
-  --bs--medium: rgba(0, 0, 0, .2) 0 1px 6px;
-  --bs--large: rgba(0, 0, 0, .2) 0 4px 12px;
-
-  /* Transition */
-  --ts--all: all .1s ease-out;
-  --ts--background: background .1s ease-out;
-  --ts--color: color .1s ease-out;
-  --ts--opacity: opacity .1s ease-out;
-}
-
-/* -----------------------------------------------------------------------------
-  Web fonts
------------------------------------------------------------------------------ */
-
+/* ===== 01 · 字体 ===== */
 @font-face {
   font-family: 'Inter';
   font-style: oblique 0deg;
   font-weight: 500 700;
   font-display: swap;
-  font-stretch: normal;
   src: url(https://jimpalompa.github.io/ptp/assets/fonts/inter-variable.woff2) format('woff2');
 }
 
@@ -169,395 +23,10 @@
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
+  font-display: swap;
   src: url(https://jimpalompa.github.io/ptp/assets/fonts/material-icons.woff2) format('woff2');
 }
 
-/* -----------------------------------------------------------------------------
-  Hide elements
------------------------------------------------------------------------------ */
-
-.hidden,
-hr+br+br,
-code>br, kbd>br, pre>br, samp>br,
-blockquote br+br {
-  display: none !important;
-}
-
-/* -----------------------------------------------------------------------------
-  Defaults
------------------------------------------------------------------------------ */
-
-html {
-  font-size: 16px;
-  scroll-behavior: smooth;
-  -moz-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  background: var(--c--bg--primary);
-  color: var(--c--fg--secondary);
-  font-family: var(--ff--primary);
-  font-size: var(--fs--small);
-  font-weight: var(--fw--regular);
-  line-height: var(--lh--body);
-  box-sizing: border-box;
-}
-
-#wrapper {
-  width: 90%;
-  min-width: 1024px;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 32px;
-}
-
-*, ::after, ::before {
-  box-sizing: inherit;
-  margin: 0;
-  padding: 0;
-  word-break: break-word;
-  overflow-anchor: none;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  color: var(--c--fg--primary);
-  text-decoration: none;
-  transition: var(--ts--color);
-}
-
-a:hover {
-  color: var(--c--ac--fg);
-}
-
-a:focus {
-  color: var(--c--ac--fg--shade);
-}
-
-b, strong {
-  font-weight: var(--fw--bold);
-}
-
-em {
-  font-style: italic;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: var(--fw--bold);
-  line-height: var(--lh--headings);
-  text-transform: uppercase;
-  text-shadow: none;
-}
-
-h1 {font-size: var(--fs--huge) !important;}
-h2 {font-size: var(--fs--x-large) !important;}
-h3 {font-size: var(--fs--large) !important;}
-h4 {font-size: var(--fs--medium) !important;}
-h5 {font-size: var(--fs--small) !important;}
-h6 {font-size: var(--fs--tiny) !important;}
-
-small {
-  font-size: .9em;
-}
-
-sub, sup {
-  font-size: .75em;
-}
-
-pre, code {
-  background: var(--c--bg--primary);
-  color: var(--c--tr--fg--less);
-  font-family: var(--ff--monospace);
-  padding: var(--sp--huge);
-}
-
-code {
-  display: block;
-}
-
-ol, ul {
-  list-style-position: inside;
-}
-
-li {
-  margin: 0;
-  padding: 4px 0;
-}
-
-hr {
-  background: var(--c--bg--tertiary);
-  height: 2px;
-  border: 0;
-  margin: 1em 0;
-}
-
-input, textarea, select, option, input[type='button'], input[type='submit'], .linkbox a {
-  background: var(--c--bg--input);
-  color: var(--c--fg--input);
-  font-family: var(--ff--primary);
-  font-size: var(--fs--tiny);
-  line-height: 1.375rem;
-  text-decoration: none;
-  border: 2px solid transparent;
-  border-radius: var(--br--small);
-  outline: 0;
-  margin-bottom: 8px;
-  padding: 6px 12px;
-  transition: var(--ts--all);
-}
-
-input:hover, input:focus, textarea:hover, textarea:focus, select:hover, select:focus, option:hover, option:focus {
-  background: var(--c--bg--initial);
-}
-
-input:focus, select:focus, option:focus {
-  border-color: var(--c--ac--bg--tint);
-}
-
-input[type='button'], input[type='submit'] {
-  background: var(--c--ac--bg);
-  color: var(--c--white);
-  font-weight: var(--fw--bold);
-  text-transform: uppercase;
-  padding: 6px 12px;
-  box-shadow: var(--bs--medium);
-  cursor: pointer;
-}
-
-input[type='button']:hover, input[type='submit']:hover {
-  background: var(--c--ac--bg--tint);
-}
-
-input[type='button']:focus, input[type='submit']:focus {
-  background: var(--c--ac--bg--shade);
-  border-color: transparent;
-  box-shadow: var(--bs--small);
-}
-
-input[type='checkbox'] {
-  width: 15px;
-  height: 15px;
-  margin-right: 2px;
-  position: relative;
-  top: 2px;
-}
-
-input[type='checkbox'],
-input[type='radio'] {
-  accent-color: var(--c--ac--bg);
-}
-
-textarea {
-  width: 100%;
-  min-height: 220px;
-  resize: vertical;
-  transition: var(--ts--background);
-}
-
-select {
-  height: 38px;
-  padding-left: 8px;
-}
-
-table {
-  border: none;
-  border-collapse: collapse;
-  width: 100%;
-}
-
-td, th {
-  text-align: left;
-  border: none;
-  padding: var(--sp--puny);
-}
-
-blockquote {
-  background: var(--c--bg--primary);
-  color: var(--c--tr--fg--more);
-  font-style: italic;
-  margin: 4px 0;
-  padding: 24px 28px 28px 44px;
-  border-radius: var(--br);
-  position: relative;
-}
-
-blockquote blockquote,
-blockquote blockquote blockquote blockquote {
-  background: var(--c--bg--secondary);
-}
-
-blockquote blockquote blockquote,
-blockquote blockquote blockquote blockquote blockquote {
-  background: var(--c--bg--primary);
-}
-
-blockquote a {
-  opacity: .6;
-}
-
-blockquote::before {
-  color: rgba(0, 0, 0, .1);
-  content: '\e244';
-  font-style: italic;
-  display: inline-block;
-  position: absolute;
-  top: var(--sp--tiny);
-  left: var(--sp--small);
-  transform: rotate(180deg);
-}
-
-::before, ::after {
-  font-family: var(--ff--icons);
-  font-size: var(--fs--icons);
-  font-weight: normal;
-  font-style: normal;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  transition: var(--ts--color);
-}
-
-::placeholder {
-  color: var(--c--bg--quaternary);
-}
-
-/* -----------------------------------------------------------------------------
-  Utilities
------------------------------------------------------------------------------ */
-
-.text--left {text-align: left;}
-.text--center {text-align: center;}
-.text--right {text-align: right;}
-
-.center {text-align: center;}
-.float_left {float: left;}
-.float_right {float: right;}
-
-.nobr {
-  white-space: nowrap;
-}
-
-.spoiler {
-  background: var(--c--bg--initial) !important;
-  color: var(--c--bg--initial) !important;
-  padding: 3px 0;
-  transition: var(--ts--color);
-}
-
-.spoiler:hover, .spoiler-show {
-  color: inherit !important;
-  cursor: default;
-}
-
-[style='text-decoration: line-through'] {
-  color: var(--c--tr--fg--more);
-}
-
-.clear::after,
-.clearfix::after,
-#content::after {
-  display: block;
-  clear: both;
-  content: '';
-}
-
-/* bbcode 字号 (RED) */
-.size1 {font-size: var(--fs--tiny);}
-.size2 {font-size: var(--fs--small);}
-.size3 {font-size: var(--fs--medium);}
-.size4 {font-size: var(--fs--large);}
-.size5 {font-size: 1.1875rem;}
-.size6 {font-size: var(--fs--x-large);}
-.size7 {font-size: 1.375rem;}
-.size8 {font-size: var(--fs--huge);}
-
-.scale_image, .bbcode__image {
-  max-width: 100%;
-  cursor: zoom-in;
-}
-
-/* 比例颜色 (RED: .r00 - .r50) */
-.r00, .r01, .r02, .r03, .r04 {color: var(--c--red);}
-.r05, .r06, .r07 {color: var(--c--orange);}
-.r08, .r09 {color: var(--c--yellow);}
-.r10, .r20, .r50 {color: var(--c--green);}
-#userinfo .stat {font-weight: var(--fw--bold);}
-
-/* -----------------------------------------------------------------------------
-  Images / svg — 种子表头图标 (Broomhilda 深色版)
------------------------------------------------------------------------------ */
-
-img[title='Snatched'],
-img[title='Snatches'],
-img[title='Seeders'],
-img[title='Leechers'] {
-  background-repeat: no-repeat;
-  background-size: contain;
-  width: 16px;
-  height: 16px;
-  padding-top: 16px;
-  position: relative;
-  top: 2px;
-}
-
-img[title='Snatched'], img[title='Snatches'] {
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="%235d5c5b" stroke="%235d5c5b" stroke-width="2" height="48" width="48"%3E%3Cpath d="M9.15 42v-4.7h29.7V42ZM19 31.5 6.45 18.95 9.8 15.6l9.2 9.2L38.25 5.55l3.35 3.4Z"/%3E%3C/svg%3E');
-}
-
-img[title='Seeders'] {
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="%235d5c5b" stroke="%235d5c5b" stroke-width="2" height="48" width="48"%3E%3Cpath d="M10.25 42.4q-1.95 0-3.325-1.4-1.375-1.4-1.375-3.35v-9.4h4.7v9.4H37.7v-9.4h4.7v9.4q0 1.95-1.4 3.35-1.4 1.4-3.3 1.4Zm11.4-11.1V13.5l-5.7 5.75-3.4-3.35L24 4.45 35.45 15.9l-3.4 3.35-5.7-5.75v17.8Z"/%3E%3C/svg%3E');
-}
-
-img[title='Leechers'] {
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="%235d5c5b" stroke="%235d5c5b" stroke-width="2" height="48" width="48"%3E%3Cpath d="M10.25 42.4q-1.95 0-3.325-1.4-1.375-1.4-1.375-3.35v-9.4h4.7v9.4H37.7v-9.4h4.7v9.4q0 1.95-1.4 3.35-1.4 1.4-3.3 1.4ZM24 31.3 12.55 19.9l3.4-3.35 5.7 5.75V4.45h4.7V22.3l5.7-5.75 3.4 3.35Z"/%3E%3C/svg%3E');
-}
-
-/* 种子状态小旗 */
-img[title^='Torrent has been'],
-img[title^='Torrent has not'],
-img[title^='High quality'] {
-  background-repeat: no-repeat;
-  background-size: contain;
-  width: 12px !important;
-  height: 12px !important;
-  margin-right: 1px;
-  padding-top: 12px;
-  position: relative;
-  top: 1px;
-  opacity: .8;
-}
-
-img[title^='Torrent has been'] {
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="%236fad18" stroke="%236fad18" stroke-width="2" height="48" width="48"%3E%3Cpath d="M18.9 36.9 6.5 24.5l3.4-3.4 9 9 19.15-19.15 3.4 3.4Z"/%3E%3C/svg%3E');
-}
-
-img[title^='Torrent has not'] {
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="%23d33131" stroke="%23d33131" stroke-width="2" height="48" width="48"%3E%3Cpath d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/%3E%3C/svg%3E');
-}
-
-img[title^='High quality'] {
-  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="%23d9a400" stroke="%23d9a400" stroke-width="2" height="48" width="48"%3E%3Cpath d="m11.65 44 3.25-14.05L4 20.5l14.4-1.25L24 6l5.6 13.25L44 20.5l-10.9 9.45L36.35 44 24 36.55Z"/%3E%3C/svg%3E');
-}
-
-/* -----------------------------------------------------------------------------
-  Header
------------------------------------------------------------------------------ */
-
-#header {
-  position: relative;
-}
-
-/* logo 字体: Bebas Neue (窄高, 接近 PTP 标志观感) */
 @font-face {
   font-family: 'Barlow Condensed';
   font-style: normal;
@@ -566,2896 +35,1001 @@ img[title^='High quality'] {
   src: url(https://cdn.jsdelivr.net/npm/@fontsource/barlow-condensed/files/barlow-condensed-latin-300-normal.woff2) format('woff2');
 }
 
-/* logo: 用文字 REDACTED.SH, 丢掉站点 logo 图 */
-#logo {
-  width: auto;
-  height: auto;
-  position: absolute;
-  top: 22px;
-  left: 0;
-  z-index: 3;
+/* ===== 02 · 变量 ===== */
+:root {
+  /* 中性灰阶 */
+  --bg-page:    #f7f7f8;
+  --bg-card:    #ffffff;
+  --bg-subtle:  #f2f3f5;
+  --bg-band:    #e9ebee;
+  --bg-input:   #f8f9fb;
+
+  --fg-strong:  #171a1f;
+  --fg:         #4a5058;
+  --fg-muted:   #6f767f;
+  --fg-faint:   #8f969e;
+  --fg-ghost:   #b0b6bd;
+
+  --line:       #e6e8eb;
+  --line-soft:  #eff1f3;
+
+  /* RED 红 (唯一强调色) */
+  --red:        #c0261f;
+  --red-tint:   #e07a72;
+  --red-shade:  #8e1b16;
+  --nav-bg:     #b3221b;
+  --nav-active: #8e1b16;
+
+  /* 间距 (8pt) 与圆角 */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px;
+  --r: 10px;  --r-s: 6px;
+
+  /* 字体 */
+  --ff: 'Inter', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ff-mono: ui-monospace, Menlo, Consolas, Monaco, monospace;
+  --ff-icon: 'Material Icons';
+
+  /* 阴影 */
+  --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 2px 6px rgba(16, 24, 40, .04);
 }
 
-#logo a {
-  display: block !important;
-  width: auto !important;
-  height: auto !important;
-  background: none !important;
-  padding: 0 !important;
-  font-family: 'Barlow Condensed', var(--ff--primary) !important;
-  font-size: 56px !important;
-  font-weight: 300 !important;
-  letter-spacing: 1px !important;
-  transform: scale(1, 1.06);
-  transform-origin: left top;
-  display: inline-block !important;
-  color: var(--c--fg--primary) !important;
-  text-transform: uppercase;
-  line-height: 1;
+/* ===== 03 · 基础 ===== */
+* { box-sizing: border-box; }
+
+html {
+  background: var(--bg-page);
 }
 
-#logo a::before {
-  content: 'REDACTED.SH';
-  font-family: 'Barlow Condensed', var(--ff--primary) !important;
-  font-size: 56px !important;
-  font-weight: 300 !important;
-  letter-spacing: 1px !important;
-  transform: scale(1, 1.06);
-  transform-origin: left top;
-  display: inline-block;
-  line-height: 1;
-  color: var(--c--fg--primary);
+body {
+  background: var(--bg-page);
+  color: var(--fg);
+  font-family: var(--ff);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-#logo a:hover::before {
-  color: var(--c--ac--fg);
+a {
+  color: var(--fg-strong);
+  text-decoration: none;
+  transition: color .12s ease;
 }
 
-/* 顶部信息条: 透明底, 不遮 logo */
-#userinfo {
-  display: flex;
-  width: 100%;
-  height: 100px;
-  padding-left: 330px;
-  align-items: center;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
+a:hover { color: var(--red); }
 
-/* RED Light 在 header 里加的 210px 伪元素占位, 会把菜单挤出宽度 */
-#header:after {
-  display: none !important;
-}
+h1, h2, h3, h4 { color: var(--fg-strong); line-height: 1.3; }
+h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 16px; font-weight: 600; }
+h4 { font-size: 14px; font-weight: 600; }
 
-#userinfo ul {
-  list-style: none;
-}
+ul, ol { padding-left: 1.4em; }
+li { padding: 1px 0; }
 
-#userinfo li {
-  padding: 0;
-}
-
-/* 下拉: 用户名 (左) 与次要菜单 (右) */
-#userinfo_minor,
-#userinfo_username {
-  background: var(--c--bg--tertiary);
-  position: absolute;
-  top: -9999px;
-  z-index: 100;
-}
-
-#userinfo_minor a,
-#userinfo_username a {
-  display: block;
-  font-size: var(--fs--small);
-  line-height: 40px;
-  text-transform: uppercase;
-  width: 220px;
-  height: 40px;
-  padding: 0 16px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: none;
-}
-
-#userinfo_minor a:hover,
-#userinfo_username a:hover {
-  background: var(--c--bg--quinary);
-}
-
-#userinfo_minor::before,
-#userinfo_username::before {
-  margin-top: 9999px;
-  position: absolute;
-  top: -40px;
-  content: '\e5d4';
-}
-
-#userinfo_minor:hover,
-#userinfo_username:hover {
-  top: 0;
-}
-
-#userinfo_minor:hover::before,
-#userinfo_username:hover::before {
-  background-color: var(--c--bg--tertiary);
-  margin-top: 0;
-}
-
-#userinfo_minor {
-  right: 0 !important;
-  margin: 0 !important;
-}
-
-#userinfo_minor::before {
-  right: 0;
-}
-
-/* 下拉里隐藏的 userclass 项会渲染成一条白线 */
-#userinfo_username li#nav_userclass {
-  display: none !important;
-}
-
-/* 用户名: 显示文字触发器, 悬停展开下拉 */
-#userinfo_username {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  margin: 0 0 0 16px !important;
-  font-size: var(--fs--small) !important;
-  background: transparent !important;
-  box-shadow: none;
-  z-index: 200;
-  flex: 0 0 auto !important;
-  order: 0 !important;
-  text-align: left !important;
-  padding: 0 !important;
-}
-
-#userinfo_username::before {
-  content: none !important;
-  display: none !important;
-}
-
-#userinfo_username li {
-  display: block;
-  padding: 0;
-  margin: 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-#userinfo_username li#nav_userinfo a {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 40px !important;
-  height: 40px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  color: var(--c--fg--primary) !important;
-  font-size: 0 !important;
-  text-transform: uppercase;
-}
-
-#userinfo_username li#nav_userinfo a::before {
-  content: '\e853';
-  font-size: 32px;
-  font-family: var(--ff--icons);
-}
-
-#userinfo_username li#nav_userinfo a:hover::before {
-  color: var(--c--ac--fg);
-}
-
-#userinfo_username li:not(#nav_userinfo) {
-  display: none !important;
-  position: absolute;
-  left: 0;
-  width: 200px !important;
-  min-width: 200px;
-  background: var(--c--bg--secondary) !important;
-  z-index: 300;
-}
-
-#userinfo_username li#nav_useredit {top: 40px;}
-#userinfo_username li#nav_logout {top: 76px;}
-
-#userinfo_username:hover li:not(#nav_userinfo) {
-  display: block !important;
-}
-
-#userinfo_username li:not(#nav_userinfo) a {
-  display: block !important;
-  width: 200px !important;
-  height: 36px !important;
-  line-height: 36px !important;
-  padding: 0 16px !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  color: var(--c--fg--primary) !important;
-  font-size: var(--fs--small) !important;
-  text-transform: uppercase;
-}
-
-#userinfo_username li:not(#nav_userinfo) a:hover {
-  background: var(--c--bg--quinary) !important;
-  color: var(--c--fg--primary) !important;
-}
-
-#userinfo_username li#nav_logout a:hover {
-  background: var(--c--red-shade) !important;
-  color: var(--c--white) !important;
-}
-
-#userinfo_minor {
-  background: var(--c--bg--quaternary);
-  font-size: 0;
-  top: -1000px;
-  box-shadow: var(--bs--medium);
-  z-index: 150;
-}
-
-#userinfo_minor a {
-  font-size: var(--fs--small);
-  color: var(--c--fg--primary);
-}
-
-#userinfo_minor::before {
-  text-align: center;
-  color: var(--c--fg--primary);
-  font-size: var(--fs--gigantic);
-  line-height: 52px;
-  top: -52px;
-  width: 52px;
-  height: 52px;
-  margin-top: 1152px;
-  content: '\e5d2';
-}
-
-#userinfo_minor:hover {
-  top: 152px;
-}
-
-#userinfo_minor:hover::before {
-  background-color: var(--c--bg--quaternary);
-  border-top-right-radius: 4px;
-}
-
-/* 头部三列: 用户名图标(左) | 数据(中) | 动作图标(右) */
-#userinfo_username {order: 0 !important;}
-#userinfo_stats {
-  order: 1 !important;
-  flex-grow: 1 !important;
-}
-#userinfo_major {
-  order: 2 !important;
-  flex: 0 0 168px !important;
-}
-
-
-/* 统计区 (Up/Down/Ratio/Required/Tokens) */
-#userinfo_stats {
-  flex-grow: 1;
-  display: flex !important;
-  flex-direction: row !important;
-  justify-content: center;
-  align-items: center !important;
-  gap: 26px;
-  color: var(--c--fg--primary);
-  white-space: nowrap;
-}
-
-#userinfo_stats li {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  font-size: 0;
-  margin: 0 !important;
-  white-space: nowrap;
-}
-
-/* -----------------------------------------------------------------------------
-  浏览视图切换 (配合 scripts/r/browse-view.user.js)
-  html[data-rview] 由脚本写入: list / compact / huge / cover
------------------------------------------------------------------------------ */
-html[data-rview="compact"] #torrent_table tr.group_torrent td {
-  padding: 0 var(--sp--small) !important;
-}
-
-html[data-rview="compact"] .group_image {
-  display: none !important;
-}
-
-html[data-rview="compact"] .tags {
-  display: none !important;
-}
-
-html[data-rview="compact"] .group_info a {
-  font-size: var(--fs--small);
-}
-
-html[data-rview="huge"] #torrent_table tr.group_torrent td {
-  padding: var(--sp--small) var(--sp--medium) !important;
-}
-
-html[data-rview="huge"] .group_image img {
-  width: 200px !important;
-  height: 200px !important;
-}
-
-html[data-rview="huge"] .group_info a {
-  font-size: var(--fs--large);
-}
-
-html[data-rview="cover"] .group_image img {
-  width: 230px !important;
-  height: 230px !important;
-}
-
-html[data-rview="cover"] .tags {
-  display: none !important;
-}
-
-/* 齿轮菜单 (由脚本注入) */
-.rview-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  z-index: 50;
-  margin-left: 12px;
-}
-
-.rview-btn {
-  background: none;
+hr {
   border: 0;
-  padding: 2px;
-  cursor: pointer;
-  line-height: 1;
-  color: var(--c--fg--tertiary);
+  height: 1px;
+  background: var(--line);
+  margin: var(--s4) 0;
 }
 
-.rview-btn::before {
-  content: '\e8b8';
-  font-family: var(--ff--icons);
-  font-size: 17px;
-}
-
-.rview-btn:hover::before {
-  color: var(--c--ac--fg);
-}
-
-.rview-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 190px;
-  background: var(--c--bg--initial);
-  border: 1px solid var(--c--bg--quaternary);
-  border-radius: var(--br--small);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
-  padding: 8px 4px;
-  display: none;
-  z-index: 60;
-}
-
-.rview-menu.is-open {
-  display: block;
-}
-
-.rview-menu label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  font-size: var(--fs--small);
-  color: var(--c--fg--secondary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.rview-menu label:hover {
-  background: var(--c--bg--secondary);
-  border-radius: 4px;
-}
-
-.rview-menu input[type="radio"] {
-  accent-color: var(--c--ac--fg);
-}
-
-/* red_light 的 #userinfo ul li 会压掉上面的规则 */
-#userinfo ul#userinfo_stats li {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* RED Light 给每个统计项设了背景 SVG 图标 (Stats-*.svg), 会和伪元素图标叠成重影, 去掉 */
-#userinfo ul#userinfo_stats li,
-#userinfo_stats #stats_seeding,
-#userinfo_stats #stats_leeching,
-#userinfo_stats #stats_ratio,
-#userinfo_stats #stats_required,
-#userinfo_stats #fl_tokens {
-  background: none !important;
-}
-
-#userinfo_stats a {
-  display: inline-flex !important;
-  align-items: center !important;
-  vertical-align: middle !important;
-  margin-right: 6px;
-  font-size: 0;
-  line-height: 1;
-}
-
-#userinfo_stats a::before {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center;
-  vertical-align: middle !important;
-  width: 18px;
-  height: 18px;
-  line-height: 1 !important;
-  text-align: center;
-  margin-right: 6px;
-  font-size: 18px;
-  color: var(--c--ac--fg);
-  line-height: 1;
-  vertical-align: middle;
-}
-
-#userinfo_stats span {
-  display: inline-flex !important;
-  align-items: center !important;
-  vertical-align: middle !important;
-  font-size: var(--fs--medium);
-  font-weight: var(--fw--bold);
-  white-space: nowrap;
-  line-height: 1;
-}
-
-#stats_seeding span,
-#stats_leeching span {
-  display: none;
-}
-
-#stats_seeding a::before {
-  content: '\e2c6';
-}
-
-#stats_leeching a::before {
-  content: '\e2c4';
-}
-
-#stats_ratio::before {
-  content: '\e922';
-  color: var(--c--ac--fg);
-  font-size: 18px;
-  margin-right: 6px;
-  line-height: 1;
-}
-
-/* Required / Tokens 保留文字, 加图标 (特异性需压过 #userinfo_stats li 的 font-size:0) */
-#userinfo_stats li#stats_required,
-#userinfo_stats li#fl_tokens {
-  font-size: var(--fs--tiny);
-  font-weight: var(--fw--bold);
-}
-
-/* 冒号前不要留 margin */
-#stats_required a,
-#fl_tokens a {
-  margin-right: 0;
-}
-
-/* Required / Tokens 的链接文字要显示出来 (其余项用图标代替文字) */
-#stats_required a,
-#fl_tokens a {
-  font-size: var(--fs--medium) !important;
-}
-
-#fl_tokens > a::before {
-  content: '\e8e0';
-  margin-right: 4px;
-}
-
-/* 右上动作区 (Upload/Invite/Donate) */
-#userinfo_major {
-  display: flex;
-  flex: 0 0 168px;
-  align-items: center;
-  justify-content: space-between;
-  order: 1;
-}
-
-#nav_upload {
-  order: -2;
-}
-
-#nav_upload a::before {
-  content: '\e89c';
-}
-
-#nav_invite a::before {
-  content: '\e7fe';
-}
-
-#nav_donate a::before {
-  color: var(--c--red-shade);
-  content: '\e87d';
-}
-
-#nav_donate a:hover::before {
-  color: var(--c--red);
-}
-
-/* 主菜单 */
-#menu {
-  position: relative;
-  background-color: var(--c--bg--tertiary);
-  border-radius: var(--br--top);
-}
-
-#menu ul {
-  display: flex;
-  align-items: center;
-  height: 52px;
-  padding-right: 60px;
-  list-style: none;
-  text-align: center;
-}
-
-#menu li {
-  flex-grow: 1;
-  padding: 0;
-}
-
-#menu ul li a {
-  display: block !important;
-  width: 100% !important;
-  box-sizing: border-box;
-  text-align: center;
-  color: var(--c--fg--primary);
-  font-size: var(--fs--small);
-  font-weight: var(--fw--bold);
-  line-height: 52px;
-  height: 52px;
-  padding: 0 4px;
-  text-transform: uppercase;
-  transition: var(--ts--background);
-}
-
-#menu a:hover {
-  background: var(--c--bg--quaternary);
-}
-
-#menu li:first-of-type a {
-  border-top-left-radius: 4px;
-  padding-left: 8px;
-}
-
-#menu li.active a {
-  background: var(--c--bg--quaternary);
-}
-
-/* 搜索栏: 菜单下方的整行 (与菜单同一面板, 圆角在下方) */
-#searchbars {
-  position: static !important;
-  width: 100% !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 8px 10px !important;
-  background: var(--c--bg--secondary) !important;
-  border: 0 !important;
-  border-radius: 0 0 var(--br) var(--br);
-  z-index: 0;
-}
-
-#searchbars ul {
-  display: flex;
-  gap: 14px;
-  height: auto !important;
-  list-style: none;
-}
-
-#searchbars li {
-  flex: 1 1 0;
-  float: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-#searchbars form {
-  display: block !important;
-  width: 100% !important;
-  margin: 0 !important;
-}
-
-#searchbars input {
-  display: block !important;
-  width: 100% !important;
-  height: 30px;
-  padding: 4px 10px !important;
-  margin: 0 !important;
-}
-
-#searchbars form {
-  margin: 0;
-}
-
-/* -----------------------------------------------------------------------------
-  Content
------------------------------------------------------------------------------ */
-
-#content {
-  position: relative;
-}
-
-.main_column {
-  width: 68.75%;
-  float: left;
-  margin: 0 !important;
-}
-
-.sidebar {
-  float: right;
-  width: 31.25%;
-  padding-left: var(--sp--x-large);
-}
-
-.sidebar>h3,
-.sidebar>p {
-  position: relative;
-  font-size: var(--fs--medium);
-  font-weight: var(--fw--bold);
-  text-transform: uppercase;
-  margin-bottom: var(--sp--x-large);
-}
-
-/* 页面标题 (thin 里的 h2/h1) — 还原原主题的居中大标题 */
-.thin>h2,
-.thin>h1,
-.header h2,
-.header h1 {
-  color: var(--c--fg--secondary) !important;
-  text-align: center;
-  font-size: var(--fs--gigantic) !important;
-  font-weight: var(--fw--bold) !important;
-  letter-spacing: var(--ls--more);
-  text-transform: uppercase;
-  text-shadow: none;
-  margin: var(--sp--medium) 0 var(--sp--gigantic);
-  padding: 0 var(--sp--gigantic);
-  line-height: var(--lh--headings);
-}
-
-.thin>h2 a,
-.thin>h1 a,
-.header h2 a,
-.header h1 a {
-  color: var(--c--fg--secondary) !important;
-}
-
-.thin>h2 a:hover,
-.thin>h1 a:hover,
-.header h2 a:hover,
-.header h1 a:hover {
-  color: var(--c--ac--fg) !important;
-}
-
-/* 艺人页 .header 标题块 (h2 + 操作 linkbox) */
-.header {
-  margin-bottom: var(--sp--large);
-}
-
-.thin>p,
-#content>p {
-  width: 100%;
-  margin-bottom: var(--sp--large);
-  background: var(--c--bg--secondary);
-  padding: var(--sp--huge);
-  border-radius: var(--br);
-  box-shadow: var(--bs--large);
-}
-
-.thin>small,
-#content>small {
-  display: block;
-  position: relative;
-  font-size: var(--fs--medium);
-  font-weight: var(--fw--bold);
-  text-transform: uppercase;
-  margin-bottom: var(--sp--x-large);
-}
-
-/* -----------------------------------------------------------------------------
-  Panels — .box / .head / .pad / .colhead
------------------------------------------------------------------------------ */
-
-.box {
-  background: var(--c--bg--secondary);
-  margin-bottom: var(--sp--large);
-  padding: 0;
-  border-radius: var(--br);
-  box-shadow: var(--bs--large);
-}
-
-.box>.head,
-.box>.pad {
-  border-radius: 0;
-}
-
-.box>.head:first-child {
-  border-radius: var(--br--top);
-}
-
-.box>.pad:last-child {
-  border-radius: var(--br--bottom);
-}
-
-.box>.head:first-child:last-child {
-  border-radius: var(--br);
-}
-
-.box>.pad:first-child:last-child,
-.box.pad {
-  border-radius: var(--br);
-}
-
-.head, .colhead, .colhead_dark {
-  background: transparent;
-  color: var(--c--fg--primary);
-  font-size: var(--fs--medium);
-  font-weight: var(--fw--bold);
-  text-transform: uppercase;
-  padding: var(--sp--medium) var(--sp--large);
-}
-
-.head a, .colhead a, .colhead_dark a {
-  color: var(--c--fg--primary);
-}
-
-.head a:hover, .colhead a:hover, .colhead_dark a:hover {
-  color: var(--c--ac--fg);
-}
-
-.colhead_dark {
-  background: var(--c--bg--tertiary);
-}
-
-.box .pad,
-.box.pad {
-  padding: var(--sp--large);
-}
-
-.box.center {
-  text-align: center;
-}
-
-/* 表格型表头 (colhead 行) */
-table .colhead td,
-table .colhead th,
-table .colhead_dark td,
-table .colhead_dark th {
-  padding: var(--sp--tiny) var(--sp--small);
-  font-size: var(--fs--tiny);
-  letter-spacing: var(--ls--less);
-  white-space: nowrap;
-}
-
-/* 交替行 */
-.rowa {background: var(--c--bg--primary);}
-.rowb {background: var(--c--bg--secondary);}
-
-.rowa td, .rowb td {
-  padding: var(--sp--tiny) var(--sp--small);
-}
-
-/* 抵消 RED 默认的斑马纹, 种子表保持纯色 */
-.torrent_table tr {background: transparent;}
-
-/* 告示条 */
-.alertbar {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: var(--sp--medium);
-}
-
-.alert {
-  background: var(--c--ac--bg);
-  color: var(--c--white);
-  margin: var(--sp--medium) 0;
-  padding: var(--sp--medium);
-  text-align: center;
-  flex-grow: 1;
-  border-radius: var(--br);
-  font-weight: var(--fw--bold);
-  font-size: var(--fs--small);
-}
-
-.alert a {
-  color: var(--c--white);
-  text-decoration: underline;
-}
-
-.alert br {
-  display: none;
-}
-
-/* -----------------------------------------------------------------------------
-  Linkbox / 分页
------------------------------------------------------------------------------ */
-
-.linkbox {
-  color: transparent;
-  text-align: center;
-  font-size: var(--fs--tiny);
-  padding: var(--sp--small) 0;
-}
-
-.linkbox:empty {
-  display: none;
-}
-
-.linkbox a {
-  background: transparent;
-  margin: 0 2px;
-  padding: 2px 6px;
-  font-size: var(--fs--tiny);
-}
-
-.linkbox strong {
-  color: var(--c--fg--primary);
-  font-weight: var(--fw--bold);
-  vertical-align: middle;
-}
-
-/* -----------------------------------------------------------------------------
-  Torrent 浏览表
------------------------------------------------------------------------------ */
-
-/* PTP 风格搜索开关: 收起 [+] SEARCH, 展开 [-] SEARCH */
-/* 标签绝对定位到面板上方的页面底色上, 与 PTP 一致 */
-.filter_torrents {
-  position: relative;
-  margin-top: 64px;
-}
-
-.filter_torrents:has(#ft_container.hidden) {
-  margin-top: 68px;
-  min-height: 0;
-  background: transparent !important;
-  box-shadow: none !important;
-  border: 0 !important;
-}
-
-.filter_torrents .head {
-  position: absolute;
-  top: -64px;
-  left: 0;
-  right: 0;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  background: transparent !important;
-  padding: 0 !important;
-  border: 0;
-  margin: 0 !important;
-}
-
-.filter_torrents:has(#ft_container.hidden) .head {
-  top: -68px;
-  height: 68px;
-}
-
-.filter_torrents .head strong,
-.filter_torrents .head strong span {
-  font-size: 0 !important;
-}
-
-.filter_torrents .head strong::before {
-  content: '[-]';
-  font-size: var(--fs--small);
-  font-weight: var(--fw--bold);
-  color: var(--c--fg--primary);
-}
-
-.filter_torrents .head strong::after {
-  content: 'SEARCH';
-  font-size: var(--fs--small);
-  font-weight: var(--fw--bold);
-  letter-spacing: var(--ls--more);
-  color: var(--c--fg--primary);
-  margin-left: 6px;
-}
-
-/* 右侧齿轮由 scripts/r/browse-view.user.js 注入 (按钮 + 菜单) */
-
-/* 收起状态: 容器被 gtoggle 加上 hidden */
-.filter_torrents:has(#ft_container.hidden) .head strong::before {
-  content: '[+]';
-}
-
-/* 只有 [+] SEARCH 文字可点, 其余区域不响应 */
-.filter_torrents .head > span {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.filter_torrents .head #ft_toggle {
-  pointer-events: auto;
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: block;
-  width: 118px;
-  height: 100%;
-  font-size: 0 !important;
-  color: transparent !important;
-}
-
-#torrent_table {
-  border-collapse: collapse;
-  border-bottom: var(--sp--tiny) solid transparent;
-}
-
-#torrent_table th {
-  padding: var(--sp--medium) var(--sp--x-large) var(--sp--small);
-}
-
-.torrent_table th:nth-last-child(-n+4) {
-  text-align: right;
-  padding: var(--sp--medium) var(--sp--medium);
-  white-space: nowrap;
-}
-
-.torrent_table th:nth-child(2) {
-  padding-right: var(--sp--large);
-}
-
-.torrent_table th:last-child {
-  padding-right: var(--sp--x-large);
-}
-
-.torrent_table td {
-  vertical-align: middle;
-}
-
-tr.group td,
-tr.group_torrent td {
-  padding: 1px var(--sp--small);
-}
-
-.group_torrent:not(.group_torrent_header) {
-  border-top: var(--sp--puny) solid transparent;
-  border-bottom: var(--sp--puny) solid transparent;
-}
-
-.group_torrent_header {
-  font-size: var(--fs--tiny);
-  letter-spacing: var(--ls--less);
-}
-
-.group_torrent_header td {
-  padding: var(--sp--puny) var(--sp--tiny);
-}
-
-.group_torrent_header td:nth-child(2) span {
-  float: right !important;
-}
-
-.group_torrent_header td:nth-last-child(-n+4) {
-  text-align: right;
-  padding-right: var(--sp--large);
-  white-space: nowrap;
-}
-
-.group_torrent_header td:last-child {
-  padding-right: var(--sp--huge);
-}
-
-.edition_info {
-  border-bottom: 0 !important;
-  background: var(--c--bg--quaternary) !important;
-  font-size: var(--fs--tiny);
-  font-weight: var(--fw--bold) !important;
-  text-transform: uppercase;
-  letter-spacing: var(--ls--more);
-  padding: 4px var(--sp--medium) 4px calc(var(--sp--medium) + 2ch) !important;
-}
-
-.group_image img {
-  width: 90px;
-  height: 90px;
-  margin-right: var(--sp--small);
-  border-radius: var(--br--small);
-}
-
-.group_info {
-  font-weight: var(--fw--regular);
-}
-
-.group_info a {
-  font-weight: var(--fw--bold);
-}
-
-.time {
-  white-space: nowrap;
-  font-size: var(--fs--tiny);
-  color: var(--c--fg--tertiary);
-}
-
-.number_column {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.sign {
-  text-align: center;
-}
-
-.tags a {
-  font-size: var(--fs--tiny);
-  color: var(--c--fg--tertiary);
-  margin-right: 6px;
-}
-
-.tags a:hover {
-  color: var(--c--ac--fg);
-}
-
-/* DL / FL / RP: PTP 风格纯文字 [DL], 放在种子名右侧 */
-.torrent_action_buttons {
-  float: right;
-  margin-left: 8px;
-  font-size: 0;
-}
-
-.torrent_action_buttons a {
-  font-size: var(--fs--tiny);
-  font-weight: var(--fw--regular);
-  text-transform: uppercase;
-  padding: 0;
-  border: 0;
-  color: var(--c--fg--secondary);
-  white-space: nowrap;
-}
-
-/* 方括号包住整组: [DL | FL | RP] */
-.torrent_action_buttons::before,
-.torrent_action_buttons::after {
-  content: '' !important;
-  visibility: visible !important;
-  font-family: var(--ff--primary);
-  font-size: var(--fs--tiny);
-  font-weight: var(--fw--regular);
-  color: var(--c--fg--secondary);
-}
-
-.torrent_action_buttons::before {content: '[' !important;}
-.torrent_action_buttons::after {content: ']' !important;}
-
-/* 组内分隔: [DL | FL | RP] */
-.torrent_action_buttons a + a::before {
-  content: '|';
-  display: inline-block;
-  margin: 0 4px;
-  font-family: var(--ff--primary);
-  font-size: var(--fs--tiny);
-  color: var(--c--fg--quaternary);
-}
-
-.torrent_action_buttons a:hover {
-  color: var(--c--ac--fg);
-}
-
-.button_dl {color: var(--c--green); border-color: var(--c--green);}
-.button_dl:hover {background: var(--c--green); color: var(--c--white);}
-
-.button_fl {color: var(--c--yellow-shade); border-color: var(--c--yellow-shade);}
-.button_fl:hover {background: var(--c--yellow-shade); color: var(--c--white);}
-
-.button_rp {color: var(--c--red); border-color: var(--c--red);}
-.button_rp:hover {background: var(--c--red); color: var(--c--white);}
-
-/* 投票 */
-.votespan, .vote_album {
-  white-space: nowrap;
-}
-
-.vote_album {
-  font-weight: var(--fw--bold);
-  color: var(--c--fg--tertiary);
-}
-
-.vote_album a {
-  margin: 0 2px;
-}
-
-.vote_artist_up, .vote_artist_down {
-  font-weight: var(--fw--bold);
-}
-
-/* 种子详情页 */
-.torrent_info_row {
-  background: var(--c--bg--primary);
-}
-
-.torrent_info_row>td {
-  padding: var(--sp--x-large);
-  padding-bottom: 8px;
-  box-shadow: inset 0 0 0 8px var(--c--bg--secondary);
-  border-bottom: 16px solid var(--c--bg--primary);
-}
-
-.torrent_info_first_block {
-  position: relative;
-}
-
-.torrent_info_first_block+.linkbox {
-  text-align: center;
-  font-size: 0;
-  margin-bottom: 12px;
-}
-
-.torrent_info_first_block+.linkbox a {
-  margin: 0 4px;
-  font-size: var(--fs--small);
-}
-
-/* -----------------------------------------------------------------------------
-  Forums
------------------------------------------------------------------------------ */
-
-.forum_index {
-  background: transparent;
-}
-
-.forum_index td {
-  padding: var(--sp--tiny) var(--sp--small);
-}
-
-.forum_index .colhead td {
-  background: var(--c--bg--tertiary);
-}
-
-.forum_index td:first-child {
-  width: 24px;
-}
-
-.last_topic, .last_read {
-  float: right;
-  font-size: var(--fs--tiny);
-  color: var(--c--fg--tertiary);
-}
-
-.last_topic a, .last_read a {
-  margin-left: 4px;
-}
-
-/* 未读/置顶/锁定图标 — Django 的 8 个文档图标映射到经典类名 */
-td.read,
-td.read_sticky,
-td.read_locked,
-td.read_locked_sticky,
-td.unread,
-td.unread_sticky,
-td.unread_locked,
-td.unread_locked_sticky {
-  width: 24px;
-  height: 24px;
-  padding: 12px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 16px;
-}
-
-td.read {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAACVBMVEX///+QkJCQkJBzLNgEAAAAAnRSTlMAAHaTzTgAAAAtSURBVHhefYuhEQAwCMTetvv9Pl2CIfgpoSBwRORiguFKD4dMydeyqlZtrU8A6JMUKeHoG3AAAAAASUVORK5CYII=);
-}
-
-td.read_sticky {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAG1BMVEWQkJD///+QkJCQkJCQkJCQkJCQkJCQkJCQkJA3mkjtAAAACHRSTlMAAFFTUl5URdDB1TQAAABISURBVHhehcahEYAwEADBY0AgE4ekDCRlUAKSEp6oKxvmJwLHqqV2lBlgeOPO4V1ZbMCbsmlkRiWDrcdzzVwxRSaAv6j6Te0es5kZ6IK/EdsAAAAASUVORK5CYII=);
-}
-
-td.read_locked {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEX///+QkJCQkJCQkJCQkJAi+GD7AAAABHRSTlMAAFZXqn1YHwAAADxJREFUeF6VirERACAIxBxBmYCCERhAOPefyQc8KxtT5fLfHqxgQmyAFAT7Kj2LOZ0iwiXkMeGqyiH1uWz5Fw69ZPQ3OgAAAABJRU5ErkJggg==);
-}
-
-td.read_locked_sticky {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAIVBMVEX///+QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJBBpNmTAAAACnRSTlMAAFZRUlNXVF5FRF9ofwAAAFxJREFUeF49zLEVgCAMBNDQWhmeNlbUdI7gGo7ACI5g5wYGu5vSkPC46r+7vNBI2FgzK3DwjZdowqeNIpyAGFbAG9at49oNjyxiEPvjqLE3OSdHrG0CpJTkaDcjPwJ6HWxMBPutAAAAAElFTkSuQmCC) center no-repeat;
-}
-
-td.unread {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAACVBMVEX////g4ODg4ODBKPUMAAAAAnRSTlMAAHaTzTgAAAAtSURBVHhefYuhEQAwCMTetvv9Pl2CIfgpoSBwRORiguFKD4dMydeyqlZtrU8A6JMUKeHoG3AAAAAASUVORK5CYII=);
-}
-
-td.unread_sticky {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAG1BMVEXg4OD////g4ODg4ODg4ODg4ODg4ODg4ODg4OBQ7+XbAAAACHRSTlMAAFFTUl5URdDB1TQAAABISURBVHhehcahEYAwEADBY0AgE4ekDCRlUAKSEp6oKxvmJwLHqqV2lBlgeOPO4V1ZbMCbsmlkRiWDrcdzzVwxRSaAv6j6Te0es5kZ6IK/EdsAAAAASUVORK5CYII=);
-}
-
-td.unread_locked {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAD1BMVEX////g4ODg4ODg4ODg4OAMRpkCAAAABHRSTlMAAFZXqn1YHwAAADxJREFUeF6VirERACAIxBxBmYCCERhAOPefyQc8KxtT5fLfHqxgQmyAFAT7Kj2LOZ0iwiXkMeGqyiH1uWz5Fw69ZPQ3OgAAAABJRU5ErkJggg==);
-}
-
-td.unread_locked_sticky {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAIVBMVEX////g4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4OCDOE8QAAAACnRSTlMAAFZRUlNXVF5FRF9ofwAAAFxJREFUeF49zLEVgCAMBNDQWhmeNlbUdI7gGo7ACI5g5wYGu5vSkPC46r+7vNBI2FgzK3DwjZdowqeNIpyAGFbAG9at49oNjyxiEPvjqLE3OSdHrG0CpJTkaDcjPwJ6HWxMBPutAAAAAElFTkSuQmCC) center no-repeat;
-}
-
-/* 帖子 */
-table.forum_post {
-  background: var(--c--bg--secondary);
-  margin-bottom: var(--sp--large);
-  border-radius: var(--br);
-  box-shadow: var(--bs--large);
-  overflow: hidden;
-  table-layout: auto;
-}
-
-table.forum_post .colhead_dark td {
-  padding: var(--sp--medium) var(--sp--large);
-  font-size: var(--fs--tiny);
-}
-
-.post_id {
-  color: var(--c--fg--quaternary);
-  font-weight: var(--fw--regular);
-  margin-right: 4px;
-}
-
-table.forum_post td.avatar {
-  width: 176px;
-  padding: var(--sp--large);
-  vertical-align: top;
-}
-
-table.forum_post td.avatar img {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  border-radius: var(--br--small);
-}
-
-table.forum_post td.body {
-  padding: var(--sp--large);
-  vertical-align: top;
-}
-
-table.forum_post.unread {
-  border-top: 6px solid var(--c--ac--fg--shade);
-}
-
-.quoteheader {
-  font-size: var(--fs--tiny);
-  font-weight: var(--fw--bold);
-  text-transform: uppercase;
-  color: var(--c--fg--tertiary);
-  margin-bottom: var(--sp--tiny);
-}
-
-/* 发帖/编辑页 */
-#newthreadtext td,
-#quickpostform td {
-  padding: var(--sp--small);
-}
-
-#newthreadtext .label {
-  font-weight: var(--fw--bold);
-  text-transform: uppercase;
-  vertical-align: top;
-  width: 80px;
-}
-
-#quickreplytext {
-  min-height: 120px;
-}
-
-/* -----------------------------------------------------------------------------
-  投票 (论坛/首页)
------------------------------------------------------------------------------ */
-
-#poll_question {
-  color: var(--c--fg--primary);
-  font-size: var(--fs--x-large);
-  font-weight: var(--fw--bold);
-}
-
-#poll_answers {
-  padding: var(--sp--small) 0;
-}
-
-#poll_answers li {
-  padding: 2px 0;
-}
-
-/* -----------------------------------------------------------------------------
-  Tooltips (qtip2 + tooltipster)
------------------------------------------------------------------------------ */
-
-.qtip {
-  position: absolute;
-  left: -9999px;
-  display: none;
-}
-
-.qtip-tip,
-.qtip-tip canvas {
-  display: none !important;
-}
-
-.qtip-content,
-.tooltipster-box {
-  background: var(--c--tr--bg--less);
-  font-size: var(--fs--tiny);
-  padding: var(--sp--x-large);
-  border-radius: var(--br);
-  box-shadow: var(--bs--medium);
-  backdrop-filter: blur(16px);
-}
-
-.tooltipster-box .tooltipster-content {
-  font-size: var(--fs--tiny);
-  line-height: var(--lh--body);
-}
-
-.qtip-content label {
-  display: block;
-  padding: 4px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.qtip-content input[type='text'] {
-  background: var(--c--fg--input);
-  color: var(--c--bg--input);
-}
-
-.qtip-content br {
-  display: none;
-}
-
-/* -----------------------------------------------------------------------------
-  Lightbox
------------------------------------------------------------------------------ */
-
-.lightbox {
-  z-index: 1002;
-  position: fixed;
-  top: 5%;
-  left: 5%;
-  height: 90%;
-  width: 90%;
-  overflow: auto;
-  outline: none;
-  text-align: center;
-}
-
-.lightbox img {
-  max-height: 95%;
-  max-width: 95%;
-  padding-bottom: 48px;
-  cursor: zoom-out;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.lightbox__shroud,
-.curtain {
-  z-index: 1001;
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background: var(--c--tr--bg--less);
-}
-
-.simplemodal-overlay {
-  background: var(--c--tr--bg--less);
-  opacity: 1 !important;
-}
-
-.simplemodal-container {
-  width: auto !important;
-  left: 50% !important;
-  transform: translate(-50%, 0);
-  margin-top: 48px;
-}
-
-.simplemodal-data {
-  background: var(--c--bg--secondary);
-}
-
-.simplemodal-data h2 {
-  background: var(--c--tr--bg--more);
-}
-
-.simplemodal-data textarea {
-  margin-bottom: 12px;
-}
-
-/* -----------------------------------------------------------------------------
-  Mediainfo
------------------------------------------------------------------------------ */
-
-.mediainfo {
-  background: var(--c--bg--secondary);
-}
-
-.mediainfo--in-release-description {
-  margin: 12px 0;
-}
-
-.mediainfo>tbody>tr>td {
-  vertical-align: top;
-  padding: 0;
-  border-color: var(--c--bg--primary);
-  border-width: 0 16px 16px;
-  border-style: solid;
-}
-
-.mediainfo__section__caption {
-  background: var(--c--bg--primary);
-  padding: 8px 10px;
-  text-align: left;
-  text-transform: uppercase;
-  font-weight: var(--fw--bold);
-}
-
-.mediainfo__section tr td:not(:last-of-type) {
-  font-weight: var(--fw--regular);
-}
-
-/* -----------------------------------------------------------------------------
-  Footer
------------------------------------------------------------------------------ */
-
-#footer {
-  font-size: var(--fs--tiny);
-  text-align: center;
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 64px 32px 24px;
-}
-
-#disclaimer_container,
-.footer__disclaimer {
-  color: var(--c--red);
-  border: 1.5px dashed;
-  margin: 1.5em 0;
-  padding: var(--sp--tiny);
-}
-
-/* -----------------------------------------------------------------------------
-  杂项
------------------------------------------------------------------------------ */
-
-#vanityhouse blockquote {
-  margin-top: 12px;
-}
-
-.similar_artist_header {
-  background: var(--c--bg--tertiary);
-  padding: var(--sp--tiny) var(--sp--small);
-  text-transform: uppercase;
-  font-weight: var(--fw--bold);
-}
-
-#artist_information .head {
-  margin-bottom: 0;
-}
-
-.bvalidator_errmsg {
-  background: var(--c--red-shade);
-  padding: var(--sp--medium);
-  white-space: nowrap;
-  margin: -5px 0px 0 -5px;
-}
-
-.bvalidator_errmsg::after {
-  position: absolute;
-  bottom: -8px;
-  left: 14px;
-  border-style: solid;
-  border-width: 8px 8px 0 8px;
-  border-color: var(--c--red-shade) transparent transparent transparent;
-  content: '';
-}
-
-.bvalidator_close_icon {
-  cursor: pointer;
-  margin-left: 4px;
-  font-weight: var(--fw--bold);
-  vertical-align: middle;
-  margin-top: -2px;
-}
-
-.bvalidator_close_icon::before {
-  content: '\e14c';
-  font-size: var(--fs--small);
-}
-
-#messageformtable {
-  margin-bottom: 12px;
-}
-
-/* -----------------------------------------------------------------------------
-  与 RED 自带样式 (global.css / Wood_Colored / red_light) 的冲突修正
-  RED 的外挂主题大量使用 ID 前缀和 !important, 这里以更高优先级覆盖。
-  若日后关闭了 RED 的 External CSS, 本段依然无害。
------------------------------------------------------------------------------ */
-
-/* 链接颜色: 对方用 table tbody a / .box a 等组合选择器 */
-table a, .box a, .thin a, .main_column a, .sidebar a {
-  color: var(--c--fg--primary);
-}
-
-table a:hover, .box a:hover, .thin a:hover, .main_column a:hover, .sidebar a:hover {
-  color: var(--c--ac--fg);
-}
-
-/* 面板标题行: 对方用深色渐变 + 白字 !important; 原版是平铺在面板底色上 */
-.head, .colhead, .colhead_dark {
-  background: transparent !important;
-  color: var(--c--fg--primary) !important;
-  font-weight: var(--fw--bold) !important;
-  text-shadow: none;
-  border: 0;
-}
-
-td.colhead, .colhead td, .colhead th,
-td.colhead_dark, .colhead_dark td, .colhead_dark th {
-  background: var(--c--bg--secondary);
-}
-
-.head a, .colhead a, .colhead_dark a {
-  color: var(--c--fg--primary) !important;
-}
-
-.head a:hover, .colhead a:hover, .colhead_dark a:hover {
-  color: var(--c--ac--fg) !important;
-}
-
-.head .brackets {
-  color: var(--c--fg--tertiary) !important;
-}
-
-/* 面板头内边距: red_light 用 div.head 覆盖 */
-.box .head, div.head {
-  padding: var(--sp--medium) var(--sp--large);
-}
-
-/* 标签 */
-.tags a {color: var(--c--fg--tertiary) !important;}
-.tags a:hover {color: var(--c--ac--fg) !important;}
-
-/* RED Light 默认隐藏 Home / IRC 菜单项, 恢复成完整菜单 */
-#menu #nav_index,
-#menu #nav_irc {
-  display: block !important;
-}
-
-/* 主菜单: 对方是橙色渐变条 + 每项固定宽度 */
-#menu {height: 52px !important; width: 100% !important; padding: 0 !important;}
-
-#menu a {
-  line-height: 52px !important;
-  height: 52px !important;
-  color: var(--c--fg--primary) !important;
-}
-
-#menu li a {
-  background: transparent !important;
-  border: 0 !important;
-}
-
-#menu a:hover {
-  background: var(--c--bg--quaternary) !important;
-  color: var(--c--fg--primary) !important;
-}
-
-#menu li.active a {
-  background: var(--c--bg--quaternary) !important;
-}
-
-#menu ul {padding-right: 60px;}
-
-#menu ul li {margin: 0 !important;}
-
-/* 侧栏模块: 收紧间距, 统一内边距 */
-.sidebar .box {margin-bottom: var(--sp--small);}
-
-.sidebar .box .head {
-  padding: var(--sp--small) var(--sp--medium);
-}
-
-.sidebar .box .pad {
-  padding: var(--sp--medium);
-}
-
-.sidebar .box img {
-  display: block;
-  margin: 0 auto;
-  max-width: 100%;
-}
-
-#searchbars ul li {
-  float: none !important;
-  display: flex !important;
-  align-items: center;
-  margin: 0 !important;
-}
-
-#searchbars input {height: 30px;}
-
-/* 右上动作区: 对方是绝对定位的雪碧图按钮 */
-#userinfo_major {
-  position: static;
-  float: none;
-  margin: 0 !important;
-  white-space: normal;
-}
-
-#userinfo_major li {
-  margin: 0 0 0 8px !important;
-  background: none !important;
-}
-
-#userinfo_major li a {
-  width: 40px;
-  height: 40px;
-  padding: 0 !important;
-  margin: 0 !important;
-  font-size: 0;
-  text-indent: 0 !important;
-  color: var(--c--fg--primary);
-  background: none !important;
-}
-
-/* 图标字形要显式给颜色和行高: RED Light 的雪碧图按钮规则把文字设成了透明并 padding-top:48px */
-#userinfo_major li a::before {
-  display: block;
-  font-family: 'Material Icons';
-  font-size: 22px;
-  line-height: 40px;
-  text-align: center;
-  color: var(--c--fg--primary);
-}
-
-#nav_donate a::before {color: var(--c--red-shade) !important;}
-#nav_donate a:hover::before {color: var(--c--red) !important;}
-
-/* 统计区: 对方 float 定位 */
-#userinfo_stats {
-  float: none;
-  margin: 0 !important;
-  line-height: var(--lh--body);
-  text-shadow: none;
-}
-
-#userinfo ul li {
-  display: block;
-  margin: 0 !important;
-}
-
-#userinfo ul#userinfo_stats li {display: flex;}
-
-/* 次要菜单下拉: 对方是粉色 caret 按钮, 完全接管 */
-#userinfo_minor {
-  width: 220px !important;
-  height: auto !important;
-  border: 0 !important;
-  background: var(--c--bg--quaternary) !important;
-  line-height: normal !important;
-}
-
-#userinfo_minor:hover {
-  height: auto !important;
-  background: var(--c--bg--quaternary) !important;
-}
-
-#userinfo_minor li {
-  display: block !important;
-  visibility: visible !important;
-  height: auto !important;
-  margin: 0 !important;
-}
-
-#userinfo_minor li a {
-  display: block;
-  width: 220px !important;
-  height: 40px !important;
-  line-height: 40px !important;
-  padding: 0 16px !important;
-  margin: 0 !important;
-  background: transparent !important;
-  color: var(--c--fg--primary) !important;
-  font-size: var(--fs--small) !important;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#userinfo_minor li a:hover {
-  background: var(--c--bg--quinary) !important;
-  color: var(--c--fg--primary) !important;
-}
-
-#nav_logout a:hover {
-  background: var(--c--red-shade) !important;
-  color: var(--c--white) !important;
-}
-
-/* 用户名下拉 */
-#userinfo_username li {margin: 0 !important;}
-
-#userinfo_username li a {
-  width: 220px !important;
-  height: 40px !important;
-  line-height: 40px !important;
-  padding: 0 16px !important;
-  margin: 0 !important;
-  background: transparent !important;
-  color: var(--c--fg--primary) !important;
-  text-transform: uppercase;
-}
-
-#userinfo_username li a:hover {
-  background: var(--c--bg--quinary) !important;
-  color: var(--c--fg--primary) !important;
-}
-
-/* 种子表: RED 表头用 td 不是 th; 抵消对方的组行底色 (浏览页与艺人页 release 表) */
-#torrent_table tr.colhead td {
-  padding: var(--sp--medium) var(--sp--x-large) var(--sp--small);
-}
-
-#torrent_table tr.colhead td:nth-last-child(-n+4) {
-  text-align: right;
-  padding: var(--sp--medium) var(--sp--medium);
-  white-space: nowrap;
-}
-
-#torrent_table tr.colhead td:nth-child(2) {
-  padding-right: var(--sp--large);
-}
-
-#torrent_table tr.colhead td:last-child {
-  padding-right: var(--sp--x-large);
-}
-
-.torrent_table tr.group,
-.torrent_table tr.group_torrent {
-  background: transparent;
-}
-
-/* DL / FL / RP: PTP 风格纯文字 */
-.torrent_action_buttons .button_dl,
-.torrent_action_buttons .button_fl,
-.torrent_action_buttons .button_rp {
-  color: var(--c--fg--secondary) !important;
-  border: 0 !important;
-  background: none !important;
-}
-
-.torrent_action_buttons .button_dl:hover,
-.torrent_action_buttons .button_fl:hover,
-.torrent_action_buttons .button_rp:hover {
-  color: var(--c--ac--fg) !important;
-  background: none !important;
-}
-
-/* 论坛交替行 + 未读图标: 去掉对方的 ::after 角标 */
-tr.rowa {background-color: var(--c--bg--primary);}
-tr.rowb {background-color: var(--c--bg--secondary);}
-
-td.unread::after, td.unread_locked::after,
-td.unread_locked_sticky::after, td.read_locked_sticky::after {
-  content: none !important;
-}
-
-/* ===== RED Light 基底专用 ===== */
-
-/* RED Light 把 #content 包成白色卡片, 去掉 */
-#content {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  max-width: none;
-  width: auto;
-  padding: 0;
-}
-
-/* 侧栏盒子与论坛帖: 对方是灰底+描边 */
-.sidebar .box,
-table.forum_post,
-.inbox_message,
-.users_reports_table {
-  background-color: var(--c--bg--secondary);
-  border: 0;
-}
-
-.sidebar .box {padding: 0 !important;}
-
-/* 空白分隔条保持透明 */
-.vertical_space.box {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-
-/* 所有表头行: 对方用深灰渐变 + 暗红文字 */
-table tr.colhead td, table tr.colhead th,
-table tr.colhead_dark td, table tr.colhead_dark th {
-  background: var(--c--bg--secondary) !important;
-  color: var(--c--fg--primary) !important;
-}
-
-/* 种子行内 DL/FL/RP: 对方用 .torrent_table .group_torrent > td > span a !important
-   (0,2,3) 压成暗红, 需同深度选择器反压 ; PTP 风格纯文字 */
-.torrent_table td span a.button_dl,
-.torrent_table td span a.button_fl,
-.torrent_table td span a.button_rp {
-  color: var(--c--fg--secondary) !important;
-  border: 0 !important;
-  background: none !important;
-  padding: 0 !important;
-  font-weight: var(--fw--regular) !important;
-}
-
-.torrent_table td span a.button_dl:hover,
-.torrent_table td span a.button_fl:hover,
-.torrent_table td span a.button_rp:hover {
-  color: var(--c--ac--fg) !important;
-  background: none !important;
-}
-
-/* 分组封面: PTP 尺寸, 靠左上, 去掉上方的折叠符号与左侧分类图标列 */
-tr.group > td.center {
-  width: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-}
-
-tr.group > td.cats_col {
-  width: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-}
-
-tr.group td.cats_col > div {
-  display: none !important;
-}
-
-tr.group td.center .hide_torrents {
-  display: none !important;
-}
-
-.group_image {
-  float: none;
-  display: block;
-  width: auto !important;
-  height: auto !important;
-  margin: var(--sp--small) 0 0 !important;
-  background: none !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  border-radius: var(--br--small);
-  overflow: hidden;
-  line-height: 0;
-  min-height: 0 !important;
-}
-
-.group_image img {
-  display: block;
-  width: 100% !important;
-  height: 80px !important;
-  object-fit: cover;
-  display: block;
-  border-radius: var(--br--small);
-}
-
-/* 表头统计图标与数据列对齐 */
-#torrent_table tr.colhead td.sign {
-  width: 42px !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: center !important;
-}
-
-#torrent_table tr.colhead td.sign img {
-  margin: 0 auto !important;
-}
-
-#torrent_table tr.group_torrent td.number_column,
-#torrent_table tr.group td.number_column {
-  text-align: center !important;
-}
-
-/* 标题与 NAME 表头左对齐 */
-.torrent_table .group_info {
-  padding-left: var(--sp--medium) !important;
-  margin-left: 0 !important;
-  text-indent: 0 !important;
-}
-
-/* Bookmark 改成书签图标 */
-#torrent_table a[id^="bookmarklink_torrent_"] {
-  font-size: 0 !important;
-  text-decoration: none !important;
-}
-
-#torrent_table a[id^="bookmarklink_torrent_"]::before {
-  content: '\e866';
-  font-family: var(--ff--icons);
-  font-size: 18px;
-  color: var(--c--fg--tertiary);
-  vertical-align: middle;
-}
-
-#torrent_table a[id^="bookmarklink_torrent_"]:hover::before {
-  color: var(--c--ac--fg);
-}
-
-/* 表头前两列归零 */
-#torrent_table tr.colhead > td:nth-child(1),
-#torrent_table tr.colhead > td:nth-child(2) {
-  width: 0 !important;
-  padding: 0 !important;
-}
-
-/* 列表区: PTP 面板底色 */
-#torrent_table {
-  background: var(--c--bg--secondary) !important;
-  border-radius: var(--br--base);
-}
-
-tr.group td {
-  background: var(--c--bg--quaternary) !important;
-}
-
-/* 分组统计行 (time/size/stats) 与分组行同底色 */
-#torrent_table tr.group_torrent.group_torrent_header,
-#torrent_table tr.group_torrent_header {
-  background: var(--c--bg--quaternary) !important;
-}
-
-#torrent_table tr.group_torrent_header td {
-  background: var(--c--bg--quaternary) !important;
-  border: 0 !important;
-}
-
-/* 分组行整行同色 */
-#torrent_table tr.group {
-  background: var(--c--bg--quaternary) !important;
-}
-
-/* 分组行所有单元格统一底色 */
-#torrent_table tr.group > td,
-#torrent_table tr.group > td.sign,
-#torrent_table tr.group > td.number_column,
-#torrent_table tr.group > td.big_info {
-  background: transparent !important;
-  border: 0 !important;
-}
-
-#torrent_table tr.group td {
-  padding-top: 4px !important;
-  padding-bottom: 0 !important;
-}
-
-/* 版本条与分组底色贴合 */
-#torrent_table tr.group_torrent td.edition_info {
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  border-top: 0 !important;
-}
-
-.torrent_table .group_info {
-  background: transparent !important;
-}
-
-tr.group_torrent td {
-  background: transparent !important;
-}
-
-/* 表头 Name 列与标题左对齐 */
-#torrent_table tr.colhead > td:nth-child(3) {
-  padding-left: var(--sp--medium) !important;
-  text-align: left !important;
-}
-
-/* 删掉 FILES 列 (表头第 4 格 + 行内第 2 格) */
-#torrent_table tr.colhead > td:nth-child(4),
-#torrent_table tr.group_torrent > td:nth-child(2) {
-  display: none !important;
-}
-
-#torrent_table tr.group_torrent td {
-  border-bottom: 0 !important;
-}
-
-tr.group td.big_info {
-  display: block;
-  padding-left: 0 !important;
-}
-
-/* 去掉封面 */
-#torrent_table .group_image,
-.torrent_table .group_image {
-  display: none !important;
-}
+.hidden { display: none !important; }
 
-/* 去掉 .brackets 的方括号 */
+/* 原文里 [ ] 方括号统一去掉 */
 a.brackets::before,
-a.brackets::after,
-.torrent_table a.brackets::before,
-.torrent_table a.brackets::after {
-  content: none !important;
-}
+a.brackets::after { content: none !important; }
 
-/* 标签细字重 + 面板圆角阴影 */
-.torrent_table .group_info .tags a,
-.torrent_table .group_info .tags,
-.torrent_table .tags a {
-  font-weight: var(--fw--regular) !important;
-  font-size: 11px !important;
-  letter-spacing: normal !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-#torrent_table {
-  border-radius: 10px !important;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .07), 0 12px 24px rgba(0, 0, 0, .12),
-              0 32px 64px rgba(0, 0, 0, .20) !important;
-}
-
-/* 分组标题与标签字重 */
-.torrent_table .group_info,
-.torrent_table .group_info > a {
-  font-size: var(--fs--large) !important;
-  font-weight: var(--fw--bold) !important;
-  color: #0d0d0d !important;
-}
-
-.tags,
-.tags a {
-  font-size: var(--fs--tiny) !important;
-  font-weight: var(--fw--regular) !important;
-}
-
-/* 表头右侧三个图标统一尺寸 */
-#torrent_table tr.colhead td.sign img {
-  width: 14px !important;
-  height: 14px !important;
-  vertical-align: middle;
-}
-
-/* 版本行细字重 */
-#torrent_table tr.group_torrent:not(.edition) td,
-#torrent_table tr.group_torrent:not(.edition) td * {
-  font-weight: 400 !important;
-  font-size: 12px !important;
-}
-
-/* 版本条恢复加粗 */
-#torrent_table tr.group_torrent td.edition_info,
-#torrent_table tr.group_torrent td.edition_info * {
-  font-weight: var(--fw--bold) !important;
-}
-
-/* 版本条底色 (需压过 group_torrent 的透明规则) */
-#torrent_table tr.group_torrent td.edition_info {
-  background: var(--c--bg--tertiary) !important;
-}
-
-/* 版本行: 左边缘对齐封面, 名称后紧跟按钮 (PTP 布局) */
-#torrent_table tr.group_torrent > td:first-child:has(.torrent_action_buttons) {
-  padding-left: calc(var(--sp--medium) + 2ch) !important;
-  padding-right: 60px !important;
-}
-
-/* 种子详情: 去掉引号图标与斜体, 与 PTP 一样是普通文字块 */
-.torrent_table blockquote {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-style: normal;
-  font-size: var(--fs--small);
-  color: var(--c--fg--secondary);
-}
-
-.torrent_table blockquote::before,
-.torrent_table blockquote::after {
-  content: none !important;
-}
-
-/* 种子名 / 专辑名: PTP 风格深色 */
-.torrent_table tr.group_torrent > td > a,
-.torrent_table .group_info a {
-  color: var(--c--fg--primary) !important;
-}
-
-.torrent_table tr.group_torrent > td > a:hover,
-.torrent_table .group_info a:hover {
-  color: var(--c--ac--fg) !important;
-}
-
-/* 面板底色: 对方用 #staff .box 等 ID 前缀 */
-#content .box {
-  background-color: var(--c--bg--secondary);
-}
-
-/* 组页标题链接 (red_light .header h2 a 是大红 #d00d0d) */
-.header h2 a {color: var(--c--fg--primary) !important;}
-.header h2 a:hover {color: var(--c--ac--fg) !important;}
-
-/* 论坛"最后发表"链接 (red_light 是亮红 #dc5356) */
-.forum_index .last_poster a,
-.forum_index .last_read a {
-  color: var(--c--fg--tertiary);
-}
-
-.forum_index .last_poster a:hover,
-.forum_index .last_read a:hover {
-  color: var(--c--ac--fg);
-}
-
-/* ===== 表单控件统一: 压过 red_light 的细边框原生样式 ===== */
-input[type='text'],
-input[type='search'],
-input[type='password'],
-input[type='number'],
-input[type='email'],
-input:not([type]),
-textarea,
-select {
-  background: var(--c--bg--input) !important;
-  color: var(--c--fg--input) !important;
-  border: 2px solid transparent !important;
-  border-radius: var(--br--small) !important;
-  box-shadow: none !important;
-  font-family: var(--ff--primary) !important;
-  font-size: var(--fs--tiny) !important;
-  padding: 5px 10px !important;
-}
-
-input[type='text']:hover,
-input[type='search']:hover,
-input[type='password']:hover,
-input[type='number']:hover,
-input[type='email']:hover,
-input:not([type]):hover,
-textarea:hover,
-select:hover {
-  background: var(--c--bg--initial) !important;
-}
-
-input[type='text']:focus,
-input[type='search']:focus,
-input[type='password']:focus,
-input[type='number']:focus,
-input[type='email']:focus,
-input:not([type]):focus,
-textarea:focus,
-select:focus {
-  background: var(--c--bg--initial) !important;
-  border-color: var(--c--ac--bg--tint) !important;
-  outline: 0 !important;
-}
-
-#searchbars input {
-  padding: 3px 8px !important;
-  height: 30px;
-}
-
-/* ===== 表格行分隔 ===== */
-#torrent_table tr.group td,
-.torrent_table tr.group td {
-  border-bottom: 0 !important;
-}
-
-#torrent_table tr.group_torrent td,
-.torrent_table tr.group_torrent td {
-  border-bottom: 0;
-}
-
-/* -----------------------------------------------------------------------------
-  Breakpoints
------------------------------------------------------------------------------ */
-
-@media screen and (min-width: 1280px) {
-  #stats_seeding span, #stats_leeching span {display: block;}
-  #menu li:first-of-type a {padding: 0;}
-}
-
-@media screen and (min-width: 1360px) {
-  #logo {width: auto;}
-  #userinfo {padding-left: 330px;}
-}
-
-@media screen and (min-width: 1536px) {
-  :root {
-    /* Font size */
-    --fs--tiny: .8125rem;     /* 13px */
-    --fs--small: .875rem;     /* 14px */
-    --fs--medium: .9375rem;   /* 15px */
-    --fs--large: 1rem;        /* 16px */
-    --fs--x-large: 1.125rem;  /* 18px */
-    --fs--huge: 1.25rem;      /* 20px */
-    --fs--gigantic: 1.375rem; /* 22px */
-    --fs--icons: 1.625rem;    /* 26px */
-    /* Spacing */
-    --sp--puny: 6px;
-    --sp--tiny: 10px;
-    --sp--small: 14px;
-    --sp--medium: 18px;
-    --sp--large: 22px;
-    --sp--x-large: 26px;
-    --sp--huge: 30px;
-    --sp--gigantic: 34px;
-    --sp--enormous: 44px;
-  }
-  #menu {height: 60px !important;}
-  #menu a {line-height: 60px !important; height: 60px !important;}
-  #menu ul {height: 60px;}
-  #userinfo_minor::before {text-align: center; line-height: 60px; top: -60px; width: 60px; height: 60px; margin-top: 1160px;}
-  #userinfo_minor:hover {top: 160px;}
-}
-
-@media screen and (min-width: 1920px) {
-  :root {    /* Font size */
-    --fs--tiny: .875rem;    /* 14px */
-    --fs--small: .9375rem;  /* 15px */
-    --fs--medium: 1rem;     /* 16px */
-    --fs--large: 1.125rem;  /* 18px */
-    --fs--x-large: 1.25rem; /* 20px */
-    --fs--huge: 1.375rem;   /* 22px */
-    --fs--gigantic: 1.5rem; /* 24px */
-    --fs--icons: 1.75rem;   /* 28px */
-    /* Spacing */
-    --sp--puny: 8px;
-    --sp--tiny: 12px;
-    --sp--small: 16px;
-    --sp--medium: 20px;
-    --sp--large: 24px;
-    --sp--x-large: 28px;
-    --sp--huge: 32px;
-    --sp--gigantic: 36px;
-    --sp--enormous: 48px;
-  }
-  #userinfo_major {flex-basis: 192px;}
-}
-
-/* 过滤按钮靠右 */
-.filter_torrents input[type='submit'],
-.filter_torrents input[type='button'] {
-  float: right !important;
-  margin-left: var(--sp--small) !important;
-}
-
-/* Random torrent / Random artist 做成按钮 */
-.filter_torrents a[href*="action=random"] {
-  display: inline-block !important;
-  padding: 3px 10px !important;
-  margin-right: 6px !important;
-  border: 1px solid var(--c--bg--quaternary) !important;
-  border-radius: 6px !important;
-  background: var(--c--bg--primary) !important;
-  font-size: 12px !important;
-  color: var(--c--fg--secondary) !important;
-  text-decoration: none !important;
-  transition: var(--ts--background);
-}
-
-.filter_torrents a[href*="action=random"]:hover {
-  background: var(--c--bg--secondary) !important;
-  color: var(--c--fg--primary) !important;
-}
-
-/* 结果统计行与右侧按钮垂直对齐 */
-.filter_torrents span[style*="float"],
-.filter_torrents span[style*="float: left"] {
-  line-height: 34px !important;
-  font-size: 12px !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-/* ===== 侧栏模块 (user.php / 首页 / wiki / 设置页): 缩进 · 换行 · 自适应 =====
-   red_light 用 .sidebar .box (0,2,0) 带 !important, 外链样式表注入顺序不可控,
-   这里统一用 div.box (0,2,1) 起步 + !important 压过去 */
-.sidebar div.box:not(.pad) {
-  padding: 0 0 var(--sp--medium) !important;
-}
-
-/* 模块内容左右缩进 (头部缩进由 .head 自己带) */
-.sidebar div.box:not(.pad) > ul,
-.sidebar div.box:not(.pad) > ol,
-.sidebar div.box:not(.pad) > p,
-.sidebar div.box:not(.pad) > table,
-.sidebar div.box:not(.pad) > .pad,
-.sidebar div.box:not(.pad) > .body,
-.sidebar div.box:not(.pad) > center,
-.sidebar div.box:not(.pad) > div:not(.head) {
-  padding-left: var(--sp--medium) !important;
-  padding-right: var(--sp--medium) !important;
-}
-
-/* 侧栏正文一律允许断行, 不再顶出模块边框 */
-.sidebar div.box,
-.sidebar div.box ul,
-.sidebar div.box ol,
-.sidebar div.box li,
-.sidebar div.box p,
-.sidebar div.box .pad,
-.sidebar div.box .body {
-  overflow-wrap: anywhere !important;
-  word-break: break-word !important;
-}
-
-/* 无序列表: 去掉项目符号, 收紧行距 */
-.sidebar div.box:not(.pad) > ul {
-  list-style: none !important;
-  padding-top: 2px !important;
-  padding-bottom: var(--sp--small) !important;
-}
-
-.sidebar div.box:not(.pad) > ul > li {
-  list-style: none !important;
-  margin: 3px 0 !important;
-  padding: 0 !important;
-  line-height: 1.55 !important;
-}
-
-/* 有序列表 (wiki 目录): 序号外置, 行距放松, 层级缩进 */
-.sidebar div.box ol {
-  list-style-position: outside !important;
-  margin: 0 !important;
-  padding-left: var(--sp--large) !important;
-}
-
-.sidebar div.box ol li {
-  margin: 1px 0 !important;
-  padding: 0 !important;
-  line-height: 1.65 !important;
-}
-
-.sidebar div.box ol ol {
-  padding-left: var(--sp--medium) !important;
-}
-
-/* 头像: 随模块宽度缩放, 上下留白, 圆角 */
-.sidebar div.box_image > div:not(.head) > div {
-  padding: 0 !important;
-}
-
-.sidebar img.double_avatar {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: auto !important;
-  max-height: 360px !important;
-  object-fit: contain !important;
-  border-radius: var(--br--small) !important;
-  margin: 0 auto !important;
-}
-
-/* 设置页左侧 SECTIONS 导航: 压掉 h2 大字与项目符号 */
-#settings_sections {
-  padding: 0 0 var(--sp--small) !important;
-}
-
-#settings_sections > ul {
-  list-style: none !important;
-  margin: 0 !important;
-  padding: var(--sp--tiny) var(--sp--small) 0 !important;
-}
-
-#settings_sections li {
-  list-style: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-#settings_sections h2 {
-  margin: 0 !important;
-  font-size: var(--fs--tiny) !important;
-  line-height: 1.3 !important;
-  letter-spacing: 0.02em !important;
-}
-
-#settings_sections a {
-  display: block !important;
-  padding: 6px var(--sp--small) !important;
-  border-radius: var(--br--small) !important;
-  font-size: var(--fs--tiny) !important;
-  font-weight: var(--fw--bold) !important;
-  text-transform: uppercase !important;
-  overflow-wrap: anywhere !important;
-}
-
-#settings_sections a:hover {
-  background: var(--c--bg--tertiary) !important;
-}
-
-/* 首页: 子搜索栏与下方公告之间留出高度 */
-#searchbars {
-  margin-bottom: var(--sp--medium) !important;
-}
-
-/* 侧栏里自带内边距的模块 (.box.pad, 如 wiki 权限表): 补回内边距并收紧列表 */
-.sidebar div.box.pad {
-  padding: var(--sp--medium) !important;
-}
-
-.sidebar div.box.pad ul,
-.sidebar div.box.pad ol {
-  margin: 0 !important;
-  padding-left: var(--sp--medium) !important;
-  list-style-position: outside !important;
-}
-
-.sidebar div.box.pad > ul,
-.sidebar div.box.pad > ol {
-  padding-left: 0 !important;
-}
-
-.sidebar div.box.pad li {
-  margin: 0 !important;
-  padding: 2px 0 !important;
-  line-height: 1.55 !important;
-}
-
-.sidebar div.box.pad li > ul,
-.sidebar div.box.pad li > ol {
-  padding-left: var(--sp--medium) !important;
-}
-
-/* Hide / Show 文字 → 圆圈图标 (沿用 PTP 样式表的 \e061) */
+/* 折叠开关 (Hide/Show): 圆点 */
 a.brackets[onclick*="gtoggle"] {
-  display: inline-flex !important;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
+  font-size: 0;
   vertical-align: middle;
-  transition: var(--ts--color);
 }
 
 a.brackets[onclick*="gtoggle"]::before {
-  content: '\e061' !important;
-  font-family: var(--ff--icons) !important;
-  font-size: 16px !important;
-  line-height: 1 !important;
-  color: var(--c--ac--fg) !important;
-  visibility: visible !important;
-  text-indent: 0 !important;
-  display: inline-block !important;
+  content: '\e061';
+  font-family: var(--ff-icon);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--red);
+}
+
+a.brackets[onclick*="gtoggle"]:hover::before { color: var(--red-shade); }
+
+/* ===== 04 · 顶栏 ===== */
+#header {
+  position: relative;
+  padding: var(--s5) 0 var(--s3);
+}
+
+/* logo: Barlow 细体红字 */
+#header #logo {
+  position: absolute;
+  left: 0;
+  top: 14px;
+}
+
+#header #logo a {
+  display: block;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: none;
+  color: var(--red);
+}
+
+#header #logo a::before {
+  content: 'REDACTED.SH';
+  font-family: 'Barlow Condensed', var(--ff);
+  font-size: 56px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--red);
+  display: inline-block;
+  transform: scale(1, 1.06);
+  transform-origin: left top;
+}
+
+/* 右侧用户区: 三行右对齐 */
+#header #userinfo {
+  position: relative;
+  min-height: 64px;
+  text-align: right;
+  font-size: 12px;
+}
+
+#header #userinfo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#header #userinfo li {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+
+/* 用户名 + Settings / Logout */
+#header #userinfo_username { margin-bottom: 2px; }
+
+#header #userinfo_username li { margin-left: 10px; }
+
+#header #userinfo_username li:first-child { margin-left: 0; }
+
+#header #userinfo_username li#nav_userclass { display: none; }
+
+#header #userinfo_username a.username {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-strong);
+}
+
+/* 动作按钮 Upload / Invite / Donate: 轻量胶囊 */
+#header #userinfo_major { margin-bottom: 4px; }
+
+#header #userinfo_major li { margin-left: 6px; }
+
+#header #userinfo_major a {
+  display: inline-block;
+  padding: 1px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+#header #userinfo_major a:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* 统计行 Up/Down/Ratio/Required/Tokens */
+#header #userinfo_stats {
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+#header #userinfo_stats li { margin-left: 14px; }
+#header #userinfo_stats li:first-child { margin-left: 0; }
+
+#header #userinfo_stats a { color: var(--fg-muted); }
+#header #userinfo_stats a:hover { color: var(--red); }
+
+#header #userinfo_stats .stat {
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+
+/* 次级菜单: 默认隐藏, 悬停显示 */
+#header #userinfo_minor {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  display: none;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+#header #userinfo:hover #userinfo_minor { display: block; }
+
+#header #userinfo_minor li { display: block; margin: 0; }
+
+#header #userinfo_minor a {
+  display: block;
+  padding: 4px 10px;
+  border-radius: var(--r-s);
+  color: var(--fg);
+  font-size: 12px;
+}
+
+#header #userinfo_minor a:hover {
+  background: var(--bg-subtle);
+  color: var(--fg-strong);
+}
+
+/* 导航: 红底白字 */
+#header #menu {
+  background: var(--nav-bg);
+  border-radius: var(--r) var(--r) 0 0;
+}
+
+#header #menu ul {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  margin: 0;
+  padding: 0 8px;
+  list-style: none;
+}
+
+#header #menu li { flex: 1; }
+
+#header #menu a {
+  display: block;
+  height: 46px;
+  line-height: 46px;
+  padding: 0 10px;
+  text-align: center;
+  color: rgba(255, 255, 255, .9);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  transition: background .12s ease, color .12s ease;
+}
+
+#header #menu a:hover {
+  background: rgba(0, 0, 0, .14);
+  color: #fff;
+}
+
+#header #menu li.active a {
+  background: var(--nav-active);
+  color: #fff;
+}
+
+/* 快捷搜索: 白底圆角与导航连成一体 */
+#header #searchbars {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 var(--r) var(--r);
+  padding: var(--s3);
+  margin-bottom: var(--s6);
+}
+
+#header #searchbars ul {
+  display: flex;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#header #searchbars li { flex: 1; }
+
+#header #searchbars form { margin: 0; }
+
+#header #searchbars input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--bg-input);
+  color: var(--fg-strong);
+  font-size: 13px;
+}
+
+#header #searchbars input:focus {
+  outline: 0;
+  border-color: var(--red-tint);
+  box-shadow: 0 0 0 3px rgba(192, 38, 31, .12);
+  background: #fff;
+}
+
+/* ===== 05 · 面板 ===== */
+#content { position: relative; }
+
+.thin:after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.main_column {
+  width: calc(100% - 314px);
+  float: left;
+}
+
+.sidebar {
+  float: right;
+  width: 290px;
+  padding-left: var(--s6);
+}
+
+.box {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--s5);
+}
+
+.head,
+.colhead,
+.colhead_dark {
+  background: transparent !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--fg-muted) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em;
+  padding: var(--s3) var(--s4) !important;
+}
+
+.box > .head:first-child { border-radius: var(--r) var(--r) 0 0; }
+
+.head a { color: var(--fg-strong) !important; font-weight: 600; }
+.head a:hover { color: var(--red) !important; }
+
+.pad,
+.box .pad,
+.box.pad { padding: var(--s4); }
+
+.body,
+.box > .body {
+  padding: var(--s4);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.box > .body > :first-child { margin-top: 0; }
+.box > .body > :last-child { margin-bottom: 0; }
+
+.box > .body blockquote,
+.box blockquote {
+  margin: var(--s3) 0;
+  padding: var(--s3) var(--s4);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+table tr.colhead td,
+table tr.colhead th,
+table tr.colhead_dark td,
+table tr.colhead_dark th {
+  background: transparent !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--fg-muted) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: var(--s3) var(--s4);
+}
+
+.linkbox {
+  margin: var(--s3) 0;
+  font-size: 13px;
+}
+
+.linkbox a { color: var(--fg-muted); }
+.linkbox a:hover { color: var(--red); }
+
+.center { text-align: center; }
+.float_left { float: left; }
+.float_right { float: right; }
+
+/* 比率/数值列 */
+.number_column,
+.nobr { font-variant-numeric: tabular-nums; }
+
+/* ===== 06 · 种子列表 (torrents.php 浏览页) ===== */
+table.torrent_table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--s5);
+  overflow: visible;
+}
+
+/* 列头 */
+#torrent_table tr.colhead > td {
+  padding: var(--s2) var(--s3);
+  white-space: nowrap;
+}
+
+#torrent_table tr.colhead > td:first-child { padding-left: var(--s4); }
+#torrent_table tr.colhead > td:last-child { padding-right: var(--s4); }
+
+#torrent_table tr.colhead > td:nth-child(3) { text-align: left; }
+#torrent_table tr.colhead > td:nth-child(4),
+#torrent_table tr.colhead > td:nth-child(5),
+#torrent_table tr.colhead > td:nth-child(6) { text-align: right; }
+
+#torrent_table td.sign {
+  width: 42px;
+  padding: var(--s2) 0;
+  text-align: center;
+}
+
+#torrent_table td.sign img {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+/* 标题行 (专辑): 整行底色带 —— 底色画在 tr 上, 单元格全部透明 */
+#torrent_table tr.group {
+  background-color: var(--bg-band) !important;
+}
+
+#torrent_table tr.group > td,
+#torrent_table tr.group td {
+  background: none !important;
+  border: 0 !important;
+  padding-top: var(--s2);
+  padding-bottom: var(--s2);
+}
+
+#torrent_table tr.group > td:first-child { padding-left: var(--s4); }
+#torrent_table tr.group > td:last-child { padding-right: var(--s4); }
+
+#torrent_table tr.group td > * {
+  background-color: transparent !important;
+}
+
+/* 封面图隐藏 (列表不显示封面) */
+#torrent_table .group_image,
+.torrent_table .group_image { display: none; }
+
+#torrent_table .group_info,
+#torrent_table .group_info > a {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg-strong);
+}
+
+#torrent_table .group_info > a:hover { color: var(--red); }
+
+/* tag: 纯文字 */
+#torrent_table .tags,
+#torrent_table .tags a {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--fg-faint);
+}
+
+#torrent_table .tags { margin-top: 2px; }
+
+#torrent_table .tags a { margin-right: 8px; }
+#torrent_table .tags a:hover { color: var(--red); }
+
+/* 书签星标 */
+#torrent_table a[id^="bookmarklink_torrent_"] {
+  font-size: 0;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+#torrent_table a[id^="bookmarklink_torrent_"]::before {
+  content: '\e866';
+  font-family: var(--ff-icon);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--fg-faint);
+}
+
+#torrent_table a[id^="bookmarklink_torrent_"]:hover::before { color: var(--red); }
+
+/* 时间与大小 */
+#torrent_table tr.group td.nobr {
+  font-size: 12px;
+  color: var(--fg-muted);
+  text-align: right;
+}
+
+/* 版本条 (副标题 – 年份/厂牌/格式): 浅灰带 */
+#torrent_table tr.group_torrent td.edition_info {
+  background: var(--bg-subtle) !important;
+  border: 0 !important;
+  padding: var(--s1) var(--s4) 6px !important;
+}
+
+#torrent_table tr.group_torrent td.edition_info strong,
+#torrent_table tr.group_torrent td.edition_info a {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  color: var(--fg-muted);
+}
+
+#torrent_table tr.group_torrent td.edition_info a:hover { color: var(--red); }
+
+/* 版本行: 纯白, 无分隔线 */
+#torrent_table tr.group_torrent:not(.edition) > td {
+  background: var(--bg-card);
+  border: 0;
+  padding-top: var(--s2);
+  padding-bottom: var(--s2);
+  vertical-align: middle;
+}
+
+#torrent_table tr.group_torrent:not(.edition) > td:first-child {
+  padding-left: calc(var(--s4) + 2ch);
+}
+
+#torrent_table tr.group_torrent:not(.edition) > td:last-child {
+  padding-right: var(--s4);
+}
+
+#torrent_table tr.group_torrent:not(.edition):hover > td {
+  background: #fafbfc;
+}
+
+#torrent_table tr.group_torrent:not(.edition) td,
+#torrent_table tr.group_torrent:not(.edition) td a {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--fg);
+}
+
+#torrent_table tr.group_torrent:not(.edition) td a:hover { color: var(--red); }
+
+#torrent_table tr.group_torrent:not(.edition) td.nobr,
+#torrent_table tr.group_torrent:not(.edition) td.number_column {
+  text-align: right;
+  color: var(--fg-muted);
+}
+
+/* 操作按钮 DL | FL | RP: 小号文字链接, 无方括号 */
+#torrent_table .torrent_action_buttons::before,
+#torrent_table .torrent_action_buttons::after {
+  content: none;
+}
+
+.torrent_table .torrent_action_buttons a {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-faint);
+}
+
+.torrent_table .torrent_action_buttons a:hover { color: var(--red); }
+
+.torrent_table .torrent_action_buttons a + a::before { content: none; }
+
+/* 单行种子 (无分组, 如漫画) */
+#torrent_table tr.torrent > td {
+  background: var(--bg-card);
+  border: 0;
+  padding-top: var(--s2);
+  padding-bottom: var(--s2);
+  font-size: 12px;
+}
+
+#torrent_table tr.torrent > td:first-child { padding-left: var(--s4); }
+
+/* ===== 07 · 种子内页 (torrents.php?id=) ===== */
+table.torrent_table.details#torrent_details {
+  width: 100%;
+}
+
+#torrent_details tr.colhead_dark > td {
+  padding: var(--s2) var(--s3);
+}
+
+#torrent_details tr.colhead_dark > td:first-child { padding-left: var(--s4); }
+
+#torrent_details td.edition_info {
+  padding-left: calc(var(--s4) - 6px); /* 图标减号自带约 6px 留白 */
+}
+
+/* 版本行 */
+#torrent_details tr.torrent_row > td {
+  padding-top: var(--s2);
+  padding-bottom: var(--s2);
+  font-size: 12px;
+}
+
+#torrent_details tr.torrent_row > td:first-child {
+  padding-left: calc(var(--s4) + 2ch);
+}
+
+#torrent_details tr.torrent_row > td:last-child { padding-right: var(--s4); }
+
+#torrent_details tr.torrent_row td.number_column,
+#torrent_details tr.torrent_row td.nobr {
+  text-align: right;
+}
+
+/* 展开详情: 浅灰块, 三段式 (上传者 / 操作链接 / 更多信息) */
+table.torrent_table tr.torrentdetails > td {
+  background: var(--bg-subtle) !important;
+  border-top: 1px solid var(--line) !important;
+  border-bottom: 1px solid var(--line) !important;
+  padding: var(--s4) var(--s5) !important;
+  text-align: left;
+  white-space: normal;              /* 模板缩进产生的空白文本节点必须折叠 */
+}
+
+table.torrent_table tr.torrentdetails > td div,
+table.torrent_table tr.torrentdetails > td p,
+table.torrent_table tr.torrentdetails > td span,
+table.torrent_table tr.torrentdetails > td blockquote {
+  text-align: left !important;
+  float: none !important;
+  width: auto;
+  max-width: 100%;
   margin: 0 !important;
+  padding: 0 !important;
 }
 
-a.brackets[onclick*="gtoggle"]:hover::before {
-  color: var(--c--ac--fg--tint) !important;
+table.torrent_table tr.torrentdetails > td > div[id^="release_"] {
+  margin-bottom: var(--s3);
 }
 
+table.torrent_table tr.torrentdetails blockquote {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  border: 0 !important;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 0;
+}
 
-/* ===== 论坛索引: 复刻 PTP 的分类卡片 ===== */
+/* 操作链接一行排开 */
+table.torrent_table tr.torrentdetails .linkbox {
+  margin: var(--s2) 0 0;
+}
+
+table.torrent_table tr.torrentdetails .linkbox a {
+  display: inline;
+  margin-right: 18px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--red);
+}
+
+table.torrent_table tr.torrentdetails .linkbox a:hover { color: var(--red-shade); }
+
+/* 日志/代码块: 换行, 不横向滚动 */
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
+  max-width: 100%;
+  margin: var(--s3) 0;
+  padding: var(--s3);
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+table.torrent_table tr.torrentdetails pre { margin: var(--s3) 0 0; }
+
+table.torrent_table tr.torrentdetails img {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  margin: 6px 0;
+}
+
+table.torrent_table tr.torrentdetails table.filelist_table td,
+table.torrent_table tr.torrentdetails table.filelist_table th {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* ===== 08 · 侧栏 (user.php / 首页 / wiki / 设置页) ===== */
+.sidebar .box {
+  margin-bottom: var(--s3) !important;
+  padding: 0 !important;
+}
+
+.sidebar .box.pad {
+  padding: var(--s4) !important;
+}
+
+.sidebar .box .head {
+  padding: var(--s2) var(--s4) !important;
+}
+
+.sidebar .box > ul,
+.sidebar .box > ol,
+.sidebar .box > .pad,
+.sidebar .box > .body,
+.sidebar .box > p {
+  padding: var(--s2) var(--s4) var(--s3) !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sidebar .box ul,
+.sidebar .box ol {
+  margin: 0 !important;
+  list-style-position: outside;
+}
+
+.sidebar .box li {
+  margin: 0 !important;
+  padding: 2px 0 !important;
+  line-height: 1.55;
+}
+
+.sidebar .box ul > li { list-style: none !important; }
+
+.sidebar .box ol > li { padding-left: 2px; }
+
+.sidebar .box ol ol { padding-left: var(--s4) !important; }
+
+/* 统计列表 */
+.sidebar .box ul.stats li {
+  margin: 3px 0 !important;
+  padding: 0 !important;
+}
+
+/* 头像 */
+.sidebar img.double_avatar {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: var(--r-s);
+}
+
+.sidebar .box_image > div[align="center"] { padding: var(--s4) !important; }
+
+/* 设置页 SECTIONS 导航 */
+#settings_sections > ul {
+  padding: var(--s2) var(--s2) var(--s3);
+}
+
+#settings_sections h2 {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+#settings_sections a {
+  display: block;
+  padding: 6px var(--s3);
+  border-radius: var(--r-s);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: var(--fg);
+}
+
+#settings_sections a:hover {
+  background: var(--bg-subtle);
+  color: var(--red);
+}
+
+/* ===== 09 · 论坛索引 ===== */
 .forum_list > h3 {
-  margin: var(--sp--large) 0 var(--sp--small) !important;
-  padding: 0 var(--sp--tiny) !important;
-  font-size: var(--fs--medium) !important;
-  font-weight: var(--fw--bold) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  color: var(--c--fg--primary) !important;
+  margin: var(--s8) 0 var(--s2);
+  padding: 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
 }
 
 table.forum_index {
-  width: 100% !important;
-  table-layout: fixed !important;
-  border-collapse: separate !important;
-  border-spacing: 0 !important;
-  background: var(--c--bg--secondary) !important;
-  border-radius: 10px !important;
-  padding: var(--sp--small) var(--sp--medium) !important;
-  margin: 0 0 var(--sp--huge) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .07), 0 12px 26px rgba(0, 0, 0, .14) !important;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--s8);
 }
 
 table.forum_index tr.colhead > td {
-  background: #3e3a35 !important;
-  padding: 10px var(--sp--small) !important;
-  font-size: 11px !important;
-  font-weight: var(--fw--bold) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  color: #fff !important;
-  border: 0 !important;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--line);
+  padding: var(--s2) var(--s3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
 }
 
-table.forum_index tr.colhead > td:first-child {
-  border-radius: 5px 0 0 5px !important;
-  width: 3% !important;
-}
-
-table.forum_index tr.colhead > td:nth-child(2) {
-  width: 15% !important;
-}
-
+table.forum_index tr.colhead > td:first-child { width: 3% !important; }
+table.forum_index tr.colhead > td:nth-child(2) { width: 15% !important; }
 table.forum_index tr.colhead > td:nth-child(4),
-table.forum_index tr.colhead > td:nth-child(5) {
-  width: 7% !important;
-}
-
-table.forum_index tr.colhead > td:last-child {
-  border-radius: 0 5px 5px 0 !important;
-}
+table.forum_index tr.colhead > td:nth-child(5) { width: 7% !important; }
 
 table.forum_index tr.rowa > td,
 table.forum_index tr.rowb > td {
-  padding: 12px var(--sp--small) !important;
-  border: 0 !important;
-  vertical-align: middle !important;
+  padding: var(--s3);
+  border: 0;
+  vertical-align: middle;
 }
 
-table.forum_index tr.rowa:hover > td:nth-child(n+2),
-table.forum_index tr.rowb:hover > td:nth-child(n+2) {
-  background: var(--c--bg--primary) !important;
+table.forum_index tr.rowa:hover > td,
+table.forum_index tr.rowb:hover > td {
+  background: #fafbfc;
 }
 
-table.forum_index h4,
-table.forum_index h4 a {
-  margin: 0 !important;
-  font-size: 14px !important;
-  font-weight: var(--fw--bold) !important;
-  color: var(--c--fg--primary) !important;
+table.forum_index h4 {
+  margin: 0;
+  font-size: 14px;
 }
 
-table.forum_index h4 a:hover {
-  color: var(--c--ac--fg) !important;
-}
+table.forum_index h4 a { color: var(--fg-strong); font-weight: 600; }
+table.forum_index h4 a:hover { color: var(--red); }
 
+table.forum_index td:last-child,
 table.forum_index tr > td:nth-child(4),
 table.forum_index tr > td:nth-child(5) {
-  text-align: right !important;
+  text-align: right;
   font-variant-numeric: tabular-nums;
 }
-/* ===== 红色主题: 主色改为 RED 红 (替换原棕色) ===== */
-:root {
-  --c--ac--fg--tint:   #d97b72; /* tint 40% */
-  --c--ac--fg:         #bf3a30;
-  --c--ac--fg--shade:  #8e2018; /* shade 30% */
-  --c--ac--bg--tint:   #bf3a30;
-  --c--ac--bg:         #a92d24; /* shade 10% */
-  --c--ac--bg--shade:  #8e2018; /* shade 20% */
+
+table.forum_index .last_topic,
+table.forum_index .last_read { font-size: 12px; color: var(--fg-muted); }
+
+table.forum_index .last_poster,
+table.forum_index .last_read { text-align: right; font-size: 12px; color: var(--fg-faint); }
+
+/* ===== 10 · 搜索面板 (浏览页) ===== */
+.filter_torrents .head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
 }
 
-/* logo: 红色字 (全站唯一红色元素) */
-#logo a,
-#logo a::before {
-  color: #c0392b !important;
+.filter_torrents .head strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  letter-spacing: .02em;
 }
 
-/* 顶部菜单: 红底白字, 悬停/当前项更深 */
-#menu {
-  background-color: var(--c--ac--bg) !important;
-  border-radius: var(--br--top);
+.filter_torrents .head strong a { color: var(--fg-muted); }
+.filter_torrents .head strong a:hover { color: var(--red); }
+
+/* 整条表头可点击, 右侧红点提示 */
+.filter_torrents .head > span {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
-#menu a,
-#menu ul li a {
-  color: #fff !important;
+.filter_torrents .head #ft_toggle {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  font-size: 0;
+  color: transparent;
+  pointer-events: auto;
 }
 
-#menu a:hover,
-#menu li.active a {
-  background: var(--c--ac--bg--shade) !important;
-  color: #fff !important;
-}
-/* ===== 站点原生配色: 白底 + 深灰石板表头 + 橙红导航, 强调色用青绿 (红的互补色) ===== */
-:root {
-  /* 中性: 白 → 灰 */
-  --c--bg--primary:    #ffffff;
-  --c--bg--secondary:  #f1f2f3;
-  --c--bg--tertiary:   #e2e4e6;
-  --c--bg--quaternary: #d3d6d8;
-  --c--bg--quinary:    #b7babe;
-
-  /* 前景: 近黑 → 中灰 */
-  --c--fg--initial:    #0f1113;
-  --c--fg--primary:    #23262a;
-  --c--fg--secondary:  #4f5459;
-  --c--fg--tertiary:   #71767b;
-  --c--fg--quaternary: #8f9499;
-  --c--fg--quinary:    #adb2b7;
-
-  /* 强调: 青绿 (与红色标识互补, 用于链接/可点元素) */
-  --c--ac--fg--tint:   #d69a52;
-  --c--ac--fg:         #a8641b;
-  --c--ac--fg--shade:  #7d4a12;
-  --c--ac--bg--tint:   #a8641b;
-  --c--ac--bg:         #96570f;
-  --c--ac--bg--shade:  #7d4a12;
+.filter_torrents .head::after {
+  content: '\e061';
+  font-family: var(--ff-icon);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--red);
+  pointer-events: none;
 }
 
-/* 表头: 深石板底白字 (面板标题 / 表格列头) */
-.head,
-.colhead,
-.colhead_dark,
-div.head {
-  background: #3e3a35 !important;
-  color: #fff !important;
-  border-radius: 0;
+.filter_torrents .pad {
+  padding: var(--s4);
 }
 
-.head a,
-.colhead a,
-.colhead_dark a,
-.head strong {
-  color: #fff !important;
+.filter_torrents table.layout td {
+  padding: 3px 6px;
+  vertical-align: middle;
 }
 
-.head a:hover,
-.colhead a:hover,
-.colhead_dark a:hover {
-  color: #f0d9bd !important;
+.filter_torrents .label {
+  color: var(--fg-muted);
+  font-size: 13px;
 }
 
-table tr.colhead td,
-table tr.colhead th,
-table tr.colhead_dark td,
-table tr.colhead_dark th {
-  background: #3e3a35 !important;
-  color: #fff !important;
+.filter_torrents input[type='checkbox'],
+.filter_torrents input[type='radio'] {
+  vertical-align: middle;
+  accent-color: var(--red);
 }
 
-.box>.head:first-child,
-.box>.head:first-child:last-child {
-  border-radius: var(--br) var(--br) 0 0;
+.filter_torrents .submit {
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line-soft);
 }
 
-/* 顶部菜单: 橙 → 红渐变, 白字 */
-#menu {
-  background: linear-gradient(90deg, #f0902f 0%, #ec5b3c 48%, #e02b3c 100%) !important;
+.filter_torrents .submit input[type='submit'],
+.filter_torrents .submit input[type='button'] {
+  float: right;
+  margin-left: var(--s2);
 }
 
-#menu a,
-#menu ul li a {
-  color: #fff !important;
+.filter_torrents .submit span[style*="float"] {
+  float: left;
+  line-height: 32px;
+  font-size: 12px;
+  color: var(--fg-muted);
 }
 
-#menu a:hover {
-  background: rgba(0, 0, 0, .16) !important;
-  color: #fff !important;
+/* Random torrent / Random artist: 描边胶囊 */
+.filter_torrents a[href*="action=random"] {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 3px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--fg-muted);
+  font-size: 12px;
 }
 
-#menu li.active a {
-  background: rgba(0, 0, 0, .28) !important;
-  color: #fff !important;
+.filter_torrents a[href*="action=random"]:hover {
+  border-color: var(--red);
+  color: var(--red);
 }
 
-/* 数值/比率: 正向用绿, 与青绿、红形成三级区分 */
-#userinfo_stats li,
-.torrent_table td.number_column {
-  font-variant-numeric: tabular-nums;
-}
-/* ===== 底色调和: 浅灰背景 + 白色卡片; 导航去掉阴影与脏色叠加, 文字符号全白 ===== */
-:root {
-  --c--bg--primary:    #f1f3f5; /* 页面底 */
-  --c--bg--secondary:  #ffffff; /* 卡片/面板 */
-  --c--bg--tertiary:   #eceef0;
-  --c--bg--quaternary: #e1e4e7;
-  --c--bg--quinary:    #c6cacf;
-}
-
-/* 导航: 悬停/当前项用提亮而不是压黑, 不产生阴影感 */
-#menu a:hover,
-#menu ul li a:hover {
-  background: rgba(255, 255, 255, .14) !important;
-  color: #fff !important;
-}
-
-#menu li.active a {
-  background: rgba(255, 255, 255, .24) !important;
-  color: #fff !important;
-}
-
-/* 导航栏内所有文字与符号统一白色, 去掉任何投影 */
-#menu,
-#menu a,
-#menu li a,
-#menu button,
-#menu i,
-#menu span,
-#menu .material-icons,
-#menu [class*="toggle"],
-#menu [class*="hamburger"] {
-  color: #fff !important;
-  text-shadow: none !important;
-  box-shadow: none !important;
-}
-
-#menu [class*="toggle"],
-#menu [class*="hamburger"],
-#menu > a {
-  background: transparent !important;
-  border: 0 !important;
-}
-
-#menu svg,
-#menu svg * {
-  fill: #fff !important;
-  stroke: #fff !important;
-}
-
-/* 头部区域不再投射阴影 */
-#header,
-#header .box,
-#searchbars {
-  box-shadow: none !important;
-}
-/* =============================================================================
-   v2.0.0 现代风格层: 中性灰阶 + 单一强调色, 浅色表头 + 发丝线, 8pt 间距
-   ============================================================================= */
-
-:root {
-  /* 间距: 8pt 栅格 */
-  --sp--tiny: 4px;
-  --sp--small: 8px;
-  --sp--medium: 16px;
-  --sp--large: 24px;
-  --sp--x-large: 32px;
-  --sp--huge: 40px;
-  --sp--gigantic: 48px;
-  --sp--enormous: 64px;
-
-  /* 圆角 */
-  --br: 10px;
-  --br--small: 6px;
-
-  /* 中性灰阶 (7 级) */
-  --c--bg--primary:    #f6f7f8;
-  --c--bg--secondary:  #ffffff;
-  --c--bg--tertiary:   #f2f3f5;
-  --c--bg--quaternary: #eceef1;
-  --c--bg--quinary:    #dfe2e6;
-
-  --c--fg--initial:    #0f1115;
-  --c--fg--primary:    #16181d;
-  --c--fg--secondary:  #4a4f57;
-  --c--fg--tertiary:   #6b717a;
-  --c--fg--quaternary: #8b9199;
-  --c--fg--quinary:    #a7adb5;
-
-  /* 单一强调色: 琥珀, 只用于可交互元素 */
-  --c--ac--fg--tint:   #c98a3c;
-  --c--ac--fg:         #9a6a1f;
-  --c--ac--fg--shade:  #7a5216;
-  --c--ac--bg--tint:   #b0791f;
-  --c--ac--bg:         #96650f;
-  --c--ac--bg--shade:  #7a5216;
-
-  /* 线条与投影: 只用发丝线和极轻阴影 */
-  --line: #e4e7ea;
-  --line--soft: #eef0f2;
-  --bs--small: 0 1px 2px rgba(16, 24, 40, .05);
-  --bs--large: 0 1px 2px rgba(16, 24, 40, .06);
-}
-
-/* 排版: 14px / 1.6, 字号阶梯 12·14·16·20·24 */
-body {
-  font-size: 14px;
-  line-height: 1.6;
-  background: var(--c--bg--primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-h1 { font-size: 24px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; }
-h2 { font-size: 20px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; }
-h3 { font-size: 16px !important; font-weight: 600 !important; }
-h4 { font-size: 14px !important; font-weight: 600 !important; }
-
-/* 面板: 白底 + 1px 细线 + 极轻投影 */
-.box,
-#torrent_table {
-  background: var(--c--bg--secondary) !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 10px !important;
-  box-shadow: var(--bs--large) !important;
-}
-
-/* 表头: 浅底、发丝线、句首大写 */
-.head,
-.colhead,
-.colhead_dark,
-div.head {
-  background: transparent !important;
-  color: var(--c--fg--secondary) !important;
-  border-bottom: 1px solid var(--line) !important;
-  border-radius: 0 !important;
-  padding: 12px 16px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.02em !important;
-  text-transform: none !important;
-}
-
-.head a,
-.colhead a,
-.colhead_dark a,
-.head strong {
-  color: var(--c--fg--primary) !important;
-  font-weight: 600 !important;
-}
-
-table tr.colhead td,
-table tr.colhead th,
-table tr.colhead_dark td,
-table tr.colhead_dark th {
-  background: transparent !important;
-  color: var(--c--fg--secondary) !important;
-  border-bottom: 1px solid var(--line) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.01em !important;
-  text-transform: none !important;
-}
-
-/* 顶部导航: 单一深色, 当前项用强调色下划线 */
-#menu {
-  background: #191c20 !important;
-  border-radius: 10px 10px 0 0 !important;
-  box-shadow: none !important;
-}
-
-#menu a,
-#menu ul li a {
-  color: rgba(255, 255, 255, .82) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.03em !important;
-}
-
-#menu a:hover {
-  background: rgba(255, 255, 255, .08) !important;
-  color: #fff !important;
-}
-
-#menu li.active a {
-  background: transparent !important;
-  color: #fff !important;
-  box-shadow: inset 0 -2px 0 var(--c--ac--fg--tint) !important;
-}
-
-/* 搜索栏与导航连成一体 */
-#searchbars {
-  background: var(--c--bg--secondary) !important;
-  border: 1px solid var(--line) !important;
-  border-top: 0 !important;
-  border-radius: 0 0 10px 10px !important;
-}
-
-/* 表单控件: 36px 高, 6px 圆角, 焦点用强调色外圈 */
+/* ===== 11 · 表单控件 ===== */
 input[type='text'],
 input[type='search'],
 input[type='password'],
@@ -3464,1210 +1038,70 @@ input[type='email'],
 input:not([type]),
 textarea,
 select {
-  border: 1px solid var(--line) !important;
-  border-radius: 6px !important;
-  background: #fff !important;
-  font-size: 13px !important;
   padding: 7px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-s) !important;
+  background: var(--bg-input) !important;
+  color: var(--fg-strong) !important;
+  font-family: var(--ff) !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
 }
 
-input[type='text']:focus,
-input[type='search']:focus,
-input[type='password']:focus,
-input[type='number']:focus,
-input[type='email']:focus,
-input:not([type]):focus,
+input:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--c--ac--fg--tint) !important;
-  box-shadow: 0 0 0 3px rgba(201, 138, 60, .18) !important;
   outline: 0 !important;
+  border-color: var(--red-tint) !important;
+  box-shadow: 0 0 0 3px rgba(192, 38, 31, .12) !important;
+  background: #fff !important;
 }
 
-/* 按钮: 实心强调色 / 次要为描边 */
 input[type='submit'],
 input[type='button'],
 button {
+  padding: 8px 16px !important;
   border: 0 !important;
-  border-radius: 6px !important;
-  padding: 8px 14px !important;
-  background: var(--c--ac--bg) !important;
+  border-radius: var(--r-s) !important;
+  background: var(--nav-bg) !important;
   color: #fff !important;
+  font-family: var(--ff) !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.02em !important;
-  box-shadow: none !important;
+  letter-spacing: .02em;
   cursor: pointer;
+  transition: background .12s ease;
 }
 
 input[type='submit']:hover,
 input[type='button']:hover,
 button:hover {
-  background: var(--c--ac--bg--shade) !important;
+  background: var(--red-shade) !important;
 }
 
-/* 种子表: 去掉灰块堆叠, 用发丝线分层 */
-#torrent_table tr.group > td,
-#torrent_table tr.group td.sign,
-#torrent_table tr.group td.number_column,
-#torrent_table tr.group td.big_info,
-#torrent_table tr.group_torrent > td {
-  background: var(--c--bg--secondary) !important;
-  border-bottom: 1px solid var(--line--soft) !important;
-}
-
-#torrent_table tr.group_torrent:hover > td {
-  background: #fafbfc !important;
-}
-
-#torrent_table tr.group_torrent td.edition_info {
-  background: var(--c--bg--tertiary) !important;
-  border-top: 0 !important;
-  border-bottom: 1px solid var(--line--soft) !important;
-}
-
-/* 论坛卡片 */
-table.forum_index {
+input[type='button'][value='Reset'] {
+  background: transparent !important;
   border: 1px solid var(--line) !important;
-  border-radius: 10px !important;
-  box-shadow: var(--bs--large) !important;
+  color: var(--fg-muted) !important;
 }
 
-table.forum_index tr.colhead > td {
-  background: var(--c--bg--tertiary) !important;
-  color: var(--c--fg--secondary) !important;
-  border-bottom: 1px solid var(--line) !important;
-}
-
-/* 折叠圆点: 收紧为一个 14px 的圆点 */
-a.brackets[onclick*="gtoggle"]::before {
-  font-size: 14px !important;
-  color: var(--c--ac--fg) !important;
-}
-/* 搜索面板: 还原为卡片内的正常表头 (取消旧版浮到卡片外的 hack) */
-.filter_torrents {
-  margin-top: 0 !important;
-  background: var(--c--bg--secondary) !important;
-}
-
-.filter_torrents:has(#ft_container.hidden) {
-  margin-top: 0 !important;
-  background: var(--c--bg--secondary) !important;
-  border: 1px solid var(--line) !important;
-  box-shadow: var(--bs--large) !important;
-}
-
-.filter_torrents .head {
-  position: static !important;
-  top: auto !important;
-  height: auto !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 12px 16px !important;
-  margin: 0 !important;
-  border-bottom: 1px solid var(--line) !important;
+input[type='button'][value='Reset']:hover {
+  border-color: var(--red) !important;
+  color: var(--red) !important;
   background: transparent !important;
 }
 
-.filter_torrents .head strong,
-.filter_torrents .head strong span {
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--c--fg--secondary) !important;
-  letter-spacing: 0.02em !important;
-}
-
-.filter_torrents .head strong::before,
-.filter_torrents .head strong::after {
-  content: none !important;
-}
-
-.filter_torrents .head > span {
-  position: static !important;
-  inset: auto !important;
-  pointer-events: auto !important;
-}
-
-.filter_torrents .head #ft_toggle {
-  position: static !important;
-  display: inline-block !important;
-  width: auto !important;
-  height: auto !important;
-  font-size: inherit !important;
-  color: inherit !important;
-}
-
-/* 输入框: 浅填充, 与白卡片区分 */
-input[type='text'],
-input[type='search'],
-input[type='password'],
-input[type='number'],
-input[type='email'],
-input:not([type]),
-textarea,
-select {
-  background: #f8f9fb !important;
-}
-
-input[type='text']:focus,
-input[type='search']:focus,
-input[type='password']:focus,
-input[type='number']:focus,
-input[type='email']:focus,
-input:not([type]):focus,
-textarea:focus,
-select:focus {
-  background: #fff !important;
-}
-
-/* 标签勾选区: 收紧字号与行距 */
-.filter_torrents ul,
-.filter_torrents li {
-  font-size: 13px !important;
-  line-height: 1.5 !important;
-}
-
-.filter_torrents label {
-  font-size: 13px !important;
-  color: var(--c--fg--secondary) !important;
-}
-/* 表头族一致: 论坛列头/分类标题也改为句首大写 */
-table.forum_index tr.colhead > td {
-  text-transform: none !important;
-  letter-spacing: 0.01em !important;
-  font-size: 12px !important;
-  color: var(--c--fg--secondary) !important;
-}
-
-.forum_list > h3 {
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: var(--c--fg--tertiary) !important;
-  margin: 32px 0 8px !important;
-  padding: 0 2px !important;
-}
-
-/* 搜索面板的 Hide 也做成圆点, 与其它折叠开关一致 */
-.filter_torrents .head #ft_toggle {
-  font-size: 0 !important;
-  color: transparent !important;
-  width: 20px !important;
-  height: 20px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.filter_torrents .head #ft_toggle::before {
-  content: '\e061';
-  font-family: var(--ff--icons) !important;
-  font-size: 14px !important;
-  line-height: 1 !important;
-  color: var(--c--ac--fg) !important;
-  display: inline-block !important;
-}
-/* ===== 种子内页 (torrents.php?id=…&torrentid=…): 卡片化 / 副标题底色 / 版本行缩进 / 展开内容兜底 ===== */
-table.torrent_table {
-  background: var(--c--bg--secondary) !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 10px !important;
-  overflow: hidden;
-  box-shadow: var(--bs--large) !important;
-  margin: 0 0 24px !important;
-}
-
-/* 列头与副标题同一左内边距, 保证对齐 */
-table.torrent_table tr.colhead_dark > td:first-child {
-  padding-left: 16px !important;
-}
-
-/* 副标题的首字符是图标减号, 自带约 6px 左留白, 这里补回来 */
-table.torrent_table td.edition_info {
-  padding-left: 10px !important;
-}
-
-/* 副标题 (版本条): 浅底 + 上下发丝线 */
-table.torrent_table tr.group_torrent td.edition_info {
-  background: var(--c--bg--quaternary) !important;
-  border-top: 1px solid var(--line--soft) !important;
-  border-bottom: 1px solid var(--line--soft) !important;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
-
-table.torrent_table td.edition_info strong,
-table.torrent_table td.edition_info a {
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.02em !important;
-  color: var(--c--fg--secondary) !important;
-}
-
-/* 版本行: 缩进 2 字符 + 小字号, 数字列右对齐 */
-table.torrent_table tr.torrent_row > td:first-child {
-  padding-left: calc(16px + 2ch) !important;
-}
-
-table.torrent_table tr.torrent_row > td:not(:first-child) {
-  padding-right: 16px !important;
-  text-align: right !important;
-}
-
-table.torrent_table tr.torrent_row td,
-table.torrent_table tr.torrent_row td a {
-  font-size: 12px !important;
-  font-weight: 400 !important;
-  color: var(--c--fg--secondary) !important;
-}
-
-table.torrent_table tr.torrent_row td a:hover {
-  color: var(--c--ac--fg) !important;
-}
-
-table.torrent_table tr.torrent_row:hover > td {
-  background: #fafbfc !important;
-}
-
-/* 点开后展开的内容: 浅底块包裹, 与版本行区分 */
-table.torrent_table tr.torrentdetails > td {
-  background: var(--c--bg--tertiary) !important;
-  border-top: 1px solid var(--line) !important;
-  border-bottom: 1px solid var(--line) !important;
-  padding: 16px !important;
-  font-size: 13px !important;
-}
-
-table.torrent_table tr.torrentdetails blockquote {
-  background: transparent !important;
-  border: 0 !important;
-  margin: 0 0 8px !important;
-  padding: 0 !important;
-  font-size: 13px !important;
-  line-height: 1.6 !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-/* ===== 面板正文 (.box > .body): 统一缩进与自适应 ===== */
-.box > .body {
-  padding: 16px !important;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.box > .body > :first-child {
-  margin-top: 0 !important;
-}
-
-.box > .body > :last-child {
-  margin-bottom: 0 !important;
-}
-
-/* 引言/引用块: 浅底 + 细线, 不再是一个孤立的白色盒子 */
-.box > .body blockquote,
-.box blockquote {
-  margin: 12px 0 !important;
-  padding: 12px 16px !important;
-  background: var(--c--bg--tertiary) !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 8px !important;
-  font-size: 13px !important;
-  line-height: 1.7 !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-.box > .body blockquote a,
-.box blockquote a {
-  color: var(--c--ac--fg) !important;
-}
-
-/* 曲目列表等长行: 行距放松, 数字与标题对齐 */
-.box > .body br + br {
-  content: '';
-  display: block;
-  height: 4px;
-}
-/* ===== rip log / 代码块: 长行强制换行, 不再横向溢出 ===== */
-pre {
-  white-space: pre-wrap !important;
-  word-break: break-word !important;
-  overflow-wrap: anywhere !important;
-  overflow-x: auto !important;
-  max-width: 100% !important;
-  margin: 12px 0 !important;
-  padding: 12px 14px !important;
-  background: var(--c--bg--tertiary) !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 8px !important;
-  font-family: var(--ff--monospace) !important;
-  font-size: 12px !important;
-  line-height: 1.55 !important;
-  color: var(--c--fg--secondary) !important;
-}
-
-/* 展开区里的 log 容器: 与上方文字同一左边界 */
-table.torrent_table tr.torrentdetails .pad,
-table.torrent_table tr.torrentdetails > td > div,
-table.torrent_table tr.torrentdetails blockquote pre {
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: 100% !important;
-}
-
-table.torrent_table tr.torrentdetails pre {
-  margin: 12px 0 0 !important;
-}
-
-/* log 里的链接与高亮不要撑破容器 */
-table.torrent_table tr.torrentdetails pre a,
-table.torrent_table tr.torrentdetails pre * {
-  overflow-wrap: anywhere !important;
-  word-break: break-word !important;
-}
-/* ===== 种子列表: 去掉行间横线, 只用底色分层 ===== */
-/* 标题行: 极浅底色, 与白色版本行区分, 不加任何边框 */
-#torrent_table tr.group > td,
-#torrent_table tr.group > td.sign,
-#torrent_table tr.group > td.number_column,
-#torrent_table tr.group > td.big_info,
-#torrent_table tr.group td,
-.torrent_table tr.group > td,
-.torrent_table tr.group td {
-  background: #f7f8fa !important;
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-
-/* 版本行: 白色, 无边框 */
-#torrent_table tr.group_torrent > td,
-table.torrent_table tr.group_torrent > td,
-table.torrent_table tr.torrent_row > td {
-  background: var(--c--bg--secondary) !important;
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-
-#torrent_table tr.group_torrent > td:hover,
-table.torrent_table tr.torrent_row > td:hover {
-  background: #fafbfc !important;
-}
-
-/* 版本条: 保留底色, 去掉上下边框 */
-#torrent_table tr.group_torrent td.edition_info,
-table.torrent_table tr.group_torrent td.edition_info {
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-/* ===== rip log 容器: 无论内部用什么标签, 一律换行, 不出现横向滚动条 ===== */
-table.torrent_table tr.torrentdetails td,
-table.torrent_table tr.torrentdetails td *,
-.torrentdetails .pad,
-.torrentdetails pre,
-#torrent_details .torrentdetails pre {
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  white-space: pre-wrap !important;
-  overflow-wrap: anywhere !important;
-  word-break: break-word !important;
-}
-
-table.torrent_table tr.torrentdetails td {
-  overflow: hidden !important;
-}
-
-.torrentdetails .pad {
-  padding: 0 !important;
-  margin: 0 !important;
-}
-/* ===== 种子列表: 全部纯白, 不再有任何灰带 ===== */
-#torrent_table tr.group > td,
-#torrent_table tr.group > td.sign,
-#torrent_table tr.group > td.number_column,
-#torrent_table tr.group > td.big_info,
-#torrent_table tr.group td,
-.torrent_table tr.group > td,
-.torrent_table tr.group td,
-#torrent_table tr.group_torrent > td,
-table.torrent_table tr.group_torrent > td,
-table.torrent_table tr.torrent_row > td {
-  background: var(--c--bg--secondary) !important;
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-
-/* 版本条: 也变白, 只靠字号/字色与上下的间距区分 */
-#torrent_table tr.group_torrent td.edition_info,
-table.torrent_table tr.group_torrent td.edition_info {
-  background: var(--c--bg--secondary) !important;
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-
-/* 分组之间靠留白, 不靠色块 */
-#torrent_table tr.group > td,
-.torrent_table tr.group > td {
-  padding-top: 18px !important;
-  padding-bottom: 2px !important;
-}
-
-#torrent_table tr.group_torrent td.edition_info,
-table.torrent_table tr.group_torrent td.edition_info {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-}
-
-/* ===== 搜索面板: 整条表头都可点击展开/收起, 右侧保留圆点 ===== */
-.filter_torrents .head {
-  position: relative !important;
-  cursor: pointer;
-}
-
-.filter_torrents .head #ft_toggle {
-  position: absolute !important;
-  inset: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  font-size: 0 !important;
-  color: transparent !important;
-  z-index: 2;
-  cursor: pointer;
-}
-
-.filter_torrents .head::after {
-  content: '\e061';
-  font-family: var(--ff--icons) !important;
-  font-size: 14px !important;
-  line-height: 1 !important;
-  color: var(--c--ac--fg) !important;
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-/* ===== 种子列表: 恢复正副标题底色, 去掉 tag 与版本行的底色 ===== */
-/* 正标题行 (专辑标题): 灰底 */
-#torrent_table tr.group > td,
-#torrent_table tr.group > td.sign,
-#torrent_table tr.group > td.number_column,
-#torrent_table tr.group > td.big_info,
-#torrent_table tr.group td,
-.torrent_table tr.group > td,
-.torrent_table tr.group td {
-  background: var(--c--bg--quaternary) !important;
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-
-/* 副标题 (版本条 – 年份 / 厂牌 / 格式): 浅一档灰底 */
-#torrent_table tr.group_torrent td.edition_info,
-table.torrent_table tr.group_torrent td.edition_info {
-  background: var(--c--bg--tertiary) !important;
-  border-top: 0 !important;
-  border-bottom: 0 !important;
-}
-
-/* 版本行 (» FLAC / Lossless 等): 纯白, 不铺底色 */
-#torrent_table tr.group_torrent:not(.edition) > td,
-#torrent_table tr.group_torrent:not(.edition) td,
-table.torrent_table tr.torrent_row > td {
-  background: var(--c--bg--secondary) !important;
-  border: 0 !important;
-}
-
-#torrent_table tr.group_torrent:not(.edition):hover > td,
-table.torrent_table tr.torrent_row:hover > td {
-  background: #f5f6f8 !important;
-}
-
-/* tag: 去掉胶囊底色, 只保留浅灰文字 */
-.torrent_table .group_info .tags a,
-.torrent_table .tags a,
-.tags a {
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  margin: 0 8px 0 0 !important;
-  font-size: 11px !important;
-  font-weight: 400 !important;
-  line-height: 1.6 !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-.torrent_table .group_info .tags a:hover,
-.torrent_table .tags a:hover,
-.tags a:hover {
-  color: var(--c--ac--fg) !important;
-  background: transparent !important;
-}
-
-/* 标题行内部元素一律透明, 让底色铺满整行 */
-.torrent_table tr.group td > *,
-.torrent_table tr.group .group_info,
-.torrent_table tr.group .group_info > a,
-.torrent_table tr.group a[id^="bookmarklink_torrent_"] {
-  background-color: transparent !important;
-}
-
-/* 有底色了, 分组间距收回正常值 */
-#torrent_table tr.group > td,
-.torrent_table tr.group > td {
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
-}
-/* ===== v2.1.0 配色: 米白纸底 + 砖红强调 (只改颜色, 结构不动) ===== */
-:root {
-  /* 暖纸基调: 页面 → 卡片 → 版本条 → 标题带 */
-  --c--bg--primary:    #f7f5f2;
-  --c--bg--secondary:  #fffdfa;
-  --c--bg--tertiary:   #f2eee8;
-  --c--bg--quaternary: #ece8e1;
-  --c--bg--quinary:    #ded8cf;
-
-  /* 暖灰文字阶 */
-  --c--fg--initial:    #1a1613;
-  --c--fg--primary:    #2a2521;
-  --c--fg--secondary:  #5a544d;
-  --c--fg--tertiary:   #7d766d;
-  --c--fg--quaternary: #9a938a;
-  --c--fg--quinary:    #b8b1a8;
-
-  /* 砖红: 与 logo 同色系, 只用于可交互 */
-  --c--ac--fg--tint:   #cf7f74;
-  --c--ac--fg:         #b23a2e;
-  --c--ac--fg--shade:  #8a2a22;
-  --c--ac--bg--tint:   #b23a2e;
-  --c--ac--bg:         #a5352a;
-  --c--ac--bg--shade:  #8a2a22;
-
-  /* 暖色发丝线 */
-  --line: #e8e2da;
-  --line--soft: #f0ebe4;
-}
-
-/* 导航: 暖黑, 与米白底同一色温 */
-#menu {
-  background: #241f1b !important;
-}
-
-#menu li.active a {
-  box-shadow: inset 0 -2px 0 var(--c--ac--fg) !important;
-}
-
-/* logo 与强调色统一 */
-#logo a,
-#logo a::before {
-  color: var(--c--ac--fg) !important;
-}
-
-/* 卡片投影略偏暖 */
-.box,
-#torrent_table,
-table.forum_index,
-table.torrent_table {
-  box-shadow: 0 1px 2px rgba(74, 55, 40, .06) !important;
-}
-
-/* 标题带: 铺满整行 (含时间/大小/数字单元格) */
-#torrent_table tr.group > td,
-#torrent_table tr.group > td.nobr,
-#torrent_table tr.group > td.number_column,
-#torrent_table tr.group > td.number_column.nobr,
-#torrent_table tr.group > td.center,
-#torrent_table tr.group > td.cats_col,
-#torrent_table tr.group > td.sign,
-#torrent_table tr.group > td.big_info,
-#torrent_table tr.group > td.edition_info,
-#torrent_table tr.group td,
-.torrent_table tr.group > td,
-.torrent_table tr.group td {
-  background-color: var(--c--bg--quaternary) !important;
-  border: 0 !important;
-}
-
-#torrent_table tr.group,
-.torrent_table tr.group {
-  background: transparent !important;
-}
-
-#torrent_table tr.group > td > *,
-#torrent_table tr.group td > * {
-  background-color: transparent !important;
-}
-
-/* ===== v2.4.1 修复 ===== */
-
-/* 1) 导航: 暖深棕, 不再是黑色 */
-#menu {
-  background: #3b2f26 !important;
-}
-
-/* 2) 标题带铺满整行: 底色画在 tr 上, 单元格一律透明, 不产生任何缝隙 */
-#torrent_table tr.group,
-.torrent_table tr.group {
-  background: var(--c--bg--quaternary) !important;
-}
-
-#torrent_table tr.group > td,
-#torrent_table tr.group > td.nobr,
-#torrent_table tr.group > td.number_column,
-#torrent_table tr.group > td.number_column.nobr,
-#torrent_table tr.group > td.center,
-#torrent_table tr.group > td.cats_col,
-#torrent_table tr.group > td.sign,
-#torrent_table tr.group > td.big_info,
-#torrent_table tr.group > td.edition_info,
-#torrent_table tr.group td,
-.torrent_table tr.group > td,
-.torrent_table tr.group td,
-#torrent_table tr.group td > * {
-  background: transparent !important;
-  border: 0 !important;
-}
-
-/* 标题行与版本条之间不留白 */
-#torrent_table tr.group > td,
-.torrent_table tr.group > td {
-  padding-bottom: 0 !important;
-}
-
-#torrent_table tr.group_torrent td.edition_info,
-table.torrent_table tr.group_torrent td.edition_info {
-  padding-top: 6px !important;
-}
-
-/* 3) 展开区里的操作链接: 一行横排, 右对齐 */
-table.torrent_table tr.torrentdetails td,
-.torrentdetails .pad {
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox {
-  display: block !important;
-  text-align: right !important;
-  margin: 8px 0 0 !important;
-  white-space: normal !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox a {
-  display: inline-block !important;
-  margin: 0 0 0 14px !important;
-  font-size: 13px !important;
-  white-space: nowrap !important;
-  word-break: keep-all !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox a:first-child {
-  margin-left: 0 !important;
-}
-
-/* 日志本体仍要换行 */
-table.torrent_table tr.torrentdetails pre,
-.torrentdetails pre {
-  white-space: pre-wrap !important;
-  word-break: break-word !important;
-  overflow-x: hidden !important;
-  max-width: 100% !important;
-}
-/* ===== v2.4.2: 展开区排版重置 + 导航改浅色 ===== */
-
-/* 展开块: 去掉一切继承来的边距/浮动/居中对齐 */
-table.torrent_table tr.torrentdetails > td {
-  text-align: left !important;
-  padding: 16px 20px !important;
-  background: var(--c--bg--tertiary) !important;
-  border-top: 1px solid var(--line) !important;
-  border-bottom: 1px solid var(--line) !important;
-}
-
-table.torrent_table tr.torrentdetails > td > div,
-table.torrent_table tr.torrentdetails > td > blockquote,
-table.torrent_table tr.torrentdetails > td > span {
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: left !important;
-  float: none !important;
-  width: auto !important;
-  max-width: 100% !important;
-}
-
-table.torrent_table tr.torrentdetails > td > div[id^="release_"],
-table.torrent_table tr.torrentdetails > td > blockquote {
-  margin: 0 0 12px !important;
-  line-height: 1.7 !important;
-  font-size: 13px !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-/* 三个操作链接: 内联一行, 左对齐, 与上方文字同一左边界 */
-table.torrent_table tr.torrentdetails .linkbox {
-  display: block !important;
-  float: none !important;
-  text-align: left !important;
-  margin: 12px 0 0 !important;
-  padding: 0 !important;
-  height: auto !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox a {
-  display: inline !important;
-  float: none !important;
-  width: auto !important;
-  margin: 0 18px 0 0 !important;
-  padding: 0 !important;
-  font-size: 13px !important;
-  line-height: 1.6 !important;
-  white-space: nowrap !important;
-  word-break: keep-all !important;
-  color: var(--c--ac--fg) !important;
-}
-
-/* 频谱图/封面图: 自适应不撑破 */
-table.torrent_table tr.torrentdetails img {
-  max-width: 100% !important;
-  height: auto !important;
-  display: inline-block !important;
-  margin: 6px 0 !important;
-}
-
-/* 文件列表表格保持原有内边距 */
-table.torrent_table tr.torrentdetails table.filelist_table td,
-table.torrent_table tr.torrentdetails table.filelist_table th {
-  padding: 6px 10px !important;
-  text-align: left !important;
-}
-
-/* 导航: 浅米色底 + 深暖字 (不再是深色) */
-#menu {
-  background: #ece8e1 !important;
-  border-radius: 10px 10px 0 0 !important;
-  box-shadow: none !important;
-}
-
-#menu a,
-#menu ul li a {
-  color: #56493d !important;
-  font-weight: 600 !important;
-}
-
-#menu a:hover {
-  background: rgba(178, 58, 46, .08) !important;
-  color: #8a2a22 !important;
-}
-
-#menu li.active a {
-  background: rgba(178, 58, 46, .10) !important;
-  color: #8a2a22 !important;
-  box-shadow: inset 0 -2px 0 var(--c--ac--fg) !important;
-}
-
-#menu svg,
-#menu svg * {
-  fill: #56493d !important;
-  stroke: #56493d !important;
-}
-
-
-/* 展开块内部: 清掉一切遗留边框/底色, 引用块取消缩进 */
-table.torrent_table tr.torrentdetails > td *:not(a) {
-  border: 0 !important;
-  background: transparent !important;
-}
-
-table.torrent_table tr.torrentdetails blockquote,
-table.torrent_table tr.torrentdetails blockquote p {
-  margin: 0 !important;
-  padding: 0 !important;
-  text-indent: 0 !important;
-  font-size: 13px !important;
-  line-height: 1.7 !important;
-  color: var(--c--fg--tertiary) !important;
-}
-
-table.torrent_table tr.torrentdetails div[id^="release_"] {
-  margin: 0 0 12px !important;
-  padding: 0 !important;
-}
-
-table.torrent_table tr.torrentdetails > td > div:first-child {
-  margin-top: 0 !important;
-}
-
-
-/* 展开块: 最终清理 —— 所有后代去掉边框/底色/阴影/缩进 */
-table.torrent_table tr.torrentdetails,
-table.torrent_table tr.torrentdetails * {
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-table.torrent_table tr.torrentdetails *:not(a):not(.number_column) {
-  background: transparent !important;
-}
-
-table.torrent_table tr.torrentdetails blockquote *,
-table.torrent_table tr.torrentdetails blockquote {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: left !important;
-}
-
-
-/* 展开块: 硬重置所有后代盒模型, 再按需加回间距 */
-table.torrent_table tr.torrentdetails * {
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: left !important;
-  float: none !important;
-  position: static !important;
-  text-indent: 0 !important;
-  list-style: none !important;
-}
-
-table.torrent_table tr.torrentdetails > td > div,
-table.torrent_table tr.torrentdetails > td > blockquote {
-  margin-bottom: 10px !important;
-}
-
-table.torrent_table tr.torrentdetails .linkbox {
-  margin-top: 12px !important;
-}
-
-table.torrent_table tr.torrentdetails table.filelist_table td,
-table.torrent_table tr.torrentdetails table.filelist_table th {
-  padding: 6px 10px !important;
-}
-
-table.torrent_table tr.torrentdetails pre {
-  padding: 12px 14px !important;
-  margin: 8px 0 !important;
-}
-
-/* ===== v2.4.3: 展开块改为 flex 纵向布局, 彻底消除缩进与空隙 ===== */
-table.torrent_table tr.torrentdetails > td {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 10px !important;
-  padding: 16px 20px !important;
-  text-align: left !important;
-  background: var(--c--bg--tertiary) !important;
-  border-top: 1px solid var(--line) !important;
-  border-bottom: 1px solid var(--line) !important;
-}
-
-table.torrent_table tr.torrentdetails > td > * {
-  width: auto !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  float: none !important;
-  text-align: left !important;
-}
-
-table.torrent_table tr.torrentdetails > td blockquote {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  font-size: 13px !important;
-  line-height: 1.7 !important;
-  color: var(--c--fg--tertiary) !important;
-  text-indent: 0 !important;
-}
-
-table.torrent_table tr.torrentdetails > td .linkbox {
-  display: block !important;
-  margin: 4px 0 0 !important;
-}
-
-table.torrent_table tr.torrentdetails > td .linkbox a {
-  display: inline-block !important;
-  margin: 0 18px 0 0 !important;
-  padding: 0 !important;
-  font-size: 13px !important;
-  white-space: nowrap !important;
-  color: var(--c--ac--fg) !important;
-}
-
-table.torrent_table tr.torrentdetails > td .hidden {
-  display: none !important;
-}
-
-table.torrent_table tr.torrentdetails > td table.filelist_table {
-  width: 100% !important;
-}
-
-table.torrent_table tr.torrentdetails > td table.filelist_table td,
-table.torrent_table tr.torrentdetails > td table.filelist_table th {
-  padding: 6px 10px !important;
-  border-bottom: 1px solid var(--line--soft) !important;
-}
-
-table.torrent_table tr.torrentdetails > td pre {
-  margin: 0 !important;
-  padding: 12px 14px !important;
-  overflow-x: hidden !important;
-  white-space: pre-wrap !important;
-  word-break: break-word !important;
-}
-
-/* 模板缩进产生的空白文本节点会被 pre-wrap 渲染成大片留白, 这里强制 normal */
-table.torrent_table tr.torrentdetails > td,
-table.torrent_table tr.torrentdetails > td * {
-  white-space: normal !important;
-}
-
-table.torrent_table tr.torrentdetails > td pre,
-table.torrent_table tr.torrentdetails > td pre * {
-  white-space: pre-wrap !important;
-}
-
-/* =============================================================================
-   v2.5.0 统一配色: 回归 RED 的红 —— 中性灰阶 + 单一红强调 + 红底导航
-   ============================================================================= */
-:root {
-  /* 中性灰阶 (不带暖调) */
-  --c--bg--primary:    #f7f7f8;
-  --c--bg--secondary:  #ffffff;
-  --c--bg--tertiary:   #f2f3f5;
-  --c--bg--quaternary: #e9ebee;
-  --c--bg--quinary:    #d8dbdf;
-
-  --c--fg--initial:    #0d0f12;
-  --c--fg--primary:    #171a1f;
-  --c--fg--secondary:  #4a5058;
-  --c--fg--tertiary:   #6f767f;
-  --c--fg--quaternary: #8f969e;
-  --c--fg--quinary:    #b0b6bd;
-
-  /* RED 红: 链接/按钮/圆点只此一色 */
-  --c--ac--fg--tint:   #e07a72;
-  --c--ac--fg:         #c0261f;
-  --c--ac--fg--shade:  #8e1b16;
-  --c--ac--bg--tint:   #c0261f;
-  --c--ac--bg:         #b3221b;
-  --c--ac--bg--shade:  #8e1b16;
-
-  /* 冷灰发丝线 */
-  --line: #e6e8eb;
-  --line--soft: #eff1f3;
-}
-
-/* 导航: RED 红底白字 (站点最熟悉的样子) */
-#menu {
-  background: #b3221b !important;
-  border-radius: 10px 10px 0 0 !important;
-  box-shadow: none !important;
-}
-
-#menu a,
-#menu ul li a {
-  color: #fff !important;
-  font-weight: 600 !important;
-}
-
-#menu a:hover {
-  background: rgba(0, 0, 0, .14) !important;
-  color: #fff !important;
-}
-
-#menu li.active a {
-  background: #8e1b16 !important;
-  color: #fff !important;
-  box-shadow: none !important;
-}
-
-#menu svg,
-#menu svg * {
-  fill: #fff !important;
-  stroke: #fff !important;
-}
-
-/* logo 同色 */
-#logo a,
-#logo a::before {
-  color: #c0261f !important;
-}
-
-/* 卡片投影转中性 */
-.box,
-#torrent_table,
-table.forum_index,
-table.torrent_table {
-  box-shadow: 0 1px 3px rgba(16, 24, 40, .06) !important;
-}
-/* ===== v2.5.1: 正标题底色铺满 ===== */
-
-/* 浏览页专辑标题行: 强制 collapse + 行级底色, 保证连续铺满整行 */
-#torrent_table,
-table.torrent_table,
-.torrent_table {
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
-}
-
-#torrent_table tr.group,
-.torrent_table tr.group {
-  background-color: var(--c--bg--quaternary) !important;
-}
-
-#torrent_table tr.group > td,
-#torrent_table tr.group td,
-.torrent_table tr.group > td,
-.torrent_table tr.group td {
-  background-color: transparent !important;
-}
-
-/* 种子内页顶部大标题: 同样铺满内容宽度 */
-.thin > .header > h2 {
-  background: var(--c--bg--quaternary) !important;
-  border-radius: 10px !important;
-  padding: 14px 20px !important;
-  margin: 0 0 14px !important;
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.01em !important;
-  color: var(--c--fg--primary) !important;
-}
-
-.thin > .header > h2 a {
-  color: var(--c--fg--primary) !important;
-}
-
-.thin > .header > h2 img {
-  vertical-align: middle !important;
-}
-/* ===== v2.5.2: 只保留种子列表页标题行底色铺满; 内页大标题去掉底色 ===== */
-
-/* 内页大标题还原成普通文字 */
-.thin > .header > h2 {
-  background: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  margin: 0 0 10px !important;
-  text-align: center !important;
-}
-
-/* 种子列表标题行: 逐个单元格高优先级上色, 任何来源的白底都压不住 */
-html body #torrent_table tr.group > td,
-html body #torrent_table tr.group > td.nobr,
-html body #torrent_table tr.group > td.number_column,
-html body #torrent_table tr.group > td.number_column.nobr,
-html body #torrent_table tr.group > td.center,
-html body #torrent_table tr.group > td.cats_col,
-html body #torrent_table tr.group > td.sign,
-html body #torrent_table tr.group > td.big_info,
-html body #torrent_table tr.group > td.edition_info,
-html body #torrent_table tr.group td,
-html body .torrent_table tr.group > td,
-html body .torrent_table tr.group td {
-  background-color: var(--c--bg--quaternary) !important;
-  background-image: none !important;
-  border: 0 !important;
-}
-
-html body #torrent_table tr.group > td > *,
-html body #torrent_table tr.group td > * {
-  background-color: transparent !important;
-}
-
-/* 标题行底色: 行上设色, 单元格一律继承行的底色 */
-html body #torrent_table tr.group,
-html body .torrent_table tr.group {
-  background-color: var(--c--bg--quaternary) !important;
-  background-image: none !important;
-}
-
-html body #torrent_table tr.group > td,
-html body #torrent_table tr.group td,
-html body .torrent_table tr.group > td,
-html body .torrent_table tr.group td {
-  background-color: inherit !important;
-  background-image: none !important;
-  border: 0 !important;
-}
-
-html body #torrent_table tr.group td > *,
-html body .torrent_table tr.group td > * {
-  background-color: transparent !important;
-}
-
-/* ===== v2.5.4: 标题行右侧残余空白用阴影补齐 ===== */
-#torrent_table,
-table.torrent_table {
-  overflow: hidden !important;
-  width: 100% !important;
-}
-
-html body #torrent_table tr.group > td:last-child,
-html body table.torrent_table tr.group > td:last-child {
-  box-shadow: 120px 0 0 0 var(--c--bg--quaternary) !important;
-}
-
-/* 版本条也用同样方式补齐右边缘, 避免出现白色断口 */
-html body #torrent_table tr.group_torrent td.edition_info,
-html body table.torrent_table tr.group_torrent td.edition_info {
-  box-shadow: 120px 0 0 0 var(--c--bg--tertiary) !important;
-}
-
-/* ===== v2.5.5: 让最后一个单元格吃掉剩余宽度, 标题带/版本条真正铺到卡片边缘 ===== */
-html body #torrent_table tr.group > td:last-child,
-html body table.torrent_table tr.group > td:last-child {
-  width: 100% !important;
-  box-shadow: none !important;
-}
-
-html body #torrent_table tr.group > td.big_info,
-html body table.torrent_table tr.group > td.big_info {
-  width: auto !important;
-}
-
-/* ===== v2.5.6: 撤销裁剪与强行撑宽, 让表格自然铺满卡片 ===== */
-#torrent_table,
-table.torrent_table,
-.torrent_table {
-  width: 100% !important;
-  table-layout: auto !important;
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
-  overflow: visible !important;
-  border-radius: 10px !important;
-  padding: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
-/* 最后一格不再强撑 100%, 也不再用阴影补位 */
-html body #torrent_table tr.group > td:last-child,
-html body table.torrent_table tr.group > td:last-child {
-  width: auto !important;
-  box-shadow: none !important;
-}
-
-html body #torrent_table tr.group_torrent td.edition_info,
-html body table.torrent_table tr.group_torrent td.edition_info {
-  box-shadow: none !important;
-}
-
-/* 圆角交给首尾行, 不再靠裁剪 */
-#torrent_table tr:first-child > td:first-child,
-table.torrent_table tr:first-child > td:first-child {
-  border-top-left-radius: 10px !important;
-}
-
-#torrent_table tr:first-child > td:last-child,
-table.torrent_table tr:first-child > td:last-child {
-  border-top-right-radius: 10px !important;
-}
+/* ===== 12 · 页脚 ===== */
+#footer {
+  margin-top: var(--s8);
+  padding: var(--s4) 0 var(--s8);
+  border-top: 1px solid var(--line);
+  color: var(--fg-faint);
+  font-size: 12px;
+  text-align: center;
+}
+
+#footer a { color: var(--fg-muted); }
+#footer a:hover { color: var(--red); }
+
+#footer p { margin: 2px 0; }
