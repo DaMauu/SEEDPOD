@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v2.5.5
+  Broomhilda Red v2.5.6
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -4632,4 +4632,42 @@ html body table.torrent_table tr.group > td:last-child {
 html body #torrent_table tr.group > td.big_info,
 html body table.torrent_table tr.group > td.big_info {
   width: auto !important;
+}
+
+/* ===== v2.5.6: 撤销裁剪与强行撑宽, 让表格自然铺满卡片 ===== */
+#torrent_table,
+table.torrent_table,
+.torrent_table {
+  width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  overflow: visible !important;
+  border-radius: 10px !important;
+  padding: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* 最后一格不再强撑 100%, 也不再用阴影补位 */
+html body #torrent_table tr.group > td:last-child,
+html body table.torrent_table tr.group > td:last-child {
+  width: auto !important;
+  box-shadow: none !important;
+}
+
+html body #torrent_table tr.group_torrent td.edition_info,
+html body table.torrent_table tr.group_torrent td.edition_info {
+  box-shadow: none !important;
+}
+
+/* 圆角交给首尾行, 不再靠裁剪 */
+#torrent_table tr:first-child > td:first-child,
+table.torrent_table tr:first-child > td:first-child {
+  border-top-left-radius: 10px !important;
+}
+
+#torrent_table tr:first-child > td:last-child,
+table.torrent_table tr:first-child > td:last-child {
+  border-top-right-radius: 10px !important;
 }
