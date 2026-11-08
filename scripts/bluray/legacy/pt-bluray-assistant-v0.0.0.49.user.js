@@ -3475,7 +3475,8 @@
       var kwInput = $('input[name="search"], #searchinput');
       var form = kwInput && kwInput.closest("form") || $('form[name="searchbox"], form#searchbox, form[action*="torrents.php"]');
       if (!form) {
-        log("⚠️ HDWinG 预设：没找到搜索表单，当前页可能不是 torrents.php。", "WARN");
+        log("⚠️ HDWinG 预设：没找到搜索表单，退回参数地址 cat20=1&medium11=1。", "WARN");
+        location.href = location.origin + "/torrents.php?cat20=1&medium11=1&spstate=2";
         return;
       }
       if (kwInput) kwInput.value = "";
