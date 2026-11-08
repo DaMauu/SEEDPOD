@@ -1114,7 +1114,15 @@
       var def = BADGE_DICT[code] || BADGE_DICT.NON_DISC;
       if (row) row.setAttribute("data-pt-tag", def.tag);
       var txt = def.text + (extraText ? " (" + extraText + ")" : "");
-      anchor.parentNode.insertBefore(el("span", "pt-audit-badge " + def.cls, txt, "margin-right:6px;"), anchor);
+      var badge = el("span", "pt-audit-badge " + def.cls, txt, "margin-right:6px;");
+      var host = anchor.parentNode;
+      var before = anchor;
+      while (host && /^(H1|H2|H3|H4|H5|H6|A|SPAN|B|FONT|EM|I)$/i.test(host.tagName)) {
+        before = host;
+        host = host.parentElement;
+      }
+      if (host) host.insertBefore(badge, before);
+      else anchor.parentNode.insertBefore(badge, anchor);
     }
     function createInlineToolbar(itemData, targetRow, parentContainer, anchorElement) {
       stampRowDataset(targetRow, itemData);
@@ -1133,7 +1141,13 @@
         btn._ptRow = targetRow;
         toolbar.appendChild(btn);
       });
-      parentContainer.insertBefore(toolbar, anchorElement);
+      var insertBeforeNode = anchorElement;
+      while (parentContainer && /^(H1|H2|H3|H4|H5|H6|A|SPAN|B|FONT|EM|I)$/i.test(parentContainer.tagName)) {
+        insertBeforeNode = parentContainer;
+        parentContainer = parentContainer.parentElement;
+      }
+      if (!parentContainer) return;
+      parentContainer.insertBefore(toolbar, insertBeforeNode);
     }
     function renderDupeBadge(node, sourceItem, result, fromLibrary) {
       if (!node) return;
