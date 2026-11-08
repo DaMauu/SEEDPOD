@@ -4823,7 +4823,8 @@
           var catImg = $('a[href*="cat="] img, td.t_cat img, td:first-child img', row);
           var catAlt = catImg ? (catImg.getAttribute("alt") || "") + " " + (catImg.getAttribute("title") || "") : "";
           var isNotMovie = RE.NON_MOVIE.test(catAlt) || RE.EPISODE.test(mainTitle);
-          var isForbidden = RE.FORBIDDEN.test(cellText) || !!$('img[alt*="禁转"], img[title*="禁止转载"], img[src*="share_rule_1"], .chs_tag-excl', row);
+          var forbidText = cellText.replace(/WCL\s*Exclusive\s*#?\d+/gi, " ").replace(/Exclusive\s*#?\d+/gi, " ");
+          var isForbidden = RE.FORBIDDEN.test(forbidText) || !!$('img[alt*="禁转"], img[title*="禁止转载"], img[src*="share_rule_1"], .chs_tag-excl', row);
           var isLimited = RE.LIMITED.test(cellText) || !!$('img[alt*="限转"], img[title*="限转"]', row);
           var isDiy = RE.DIY.test(cellText) || !!$(".chs_tag-diy", row);
           var ageInfo = parseNexusPhpRowAgeDays(row);
