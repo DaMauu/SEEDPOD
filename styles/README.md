@@ -15,7 +15,9 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v2.0.8 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v2.0.8](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v2.0.8/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v3.0.2 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v3.0.2](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.0.2/styles/r/broomhilda-red.css) |
+
+完整版本记录与设计说明见 [styles/r/README.md](r/README.md)。
 
 ## 使用
 
@@ -68,59 +70,9 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v2.0.8 | 2026-11-03 | 标题底色铺满 + 展开区链接竖排修复 |
-| Broomhilda Red | v2.0.7 | 2026-11-03 | 恢复正副标题底色、tag 去胶囊、版本行留白 |
-| Broomhilda Red | v2.0.6 | 2026-11-03 | 去灰带 + 搜索表头可点 |
-| Broomhilda Red | v2.0.5 | 2026-11-03 | rip log 去横向滚动条 |
-| Broomhilda Red | v2.0.4 | 2026-11-03 | 种子列表去横线 |
-| Broomhilda Red | v2.0.3 | 2026-11-03 | rip log 换行与对齐 |
-| Broomhilda Red | v2.0.2 | 2026-11-03 | 面板正文缩进与引言块样式 |
-| Broomhilda Red | v2.0.1 | 2026-11-03 | 种子内页排版修复 |
-| Broomhilda Red | v2.0.0 | 2026-11-03 | 现代风格重做：灰阶+单一强调色、浅表头、纯色导航、8pt 间距 |
-| Broomhilda Red | v1.6.2 | 2026-11-03 | 清除蓝色系配色，表头暖炭灰，强调色琥珀 |
-| Broomhilda Red | v1.6.1 | 2026-11-03 | 浅灰底+白卡片、导航去阴影、导航全白 |
-| Broomhilda Red | v1.6.0 | 2026-11-03 | 站点原生配色，青绿互补强调，仅 logo 红色 |
-| Broomhilda Red | v1.5.0 | 2026-11-03 | 主色改红、logo 红色、菜单红底 |
-| Broomhilda Red | v1.4.7 | 2026-11-03 | 论坛索引卡片化、种子页面板阴影加深 |
-| Broomhilda Red | v1.4.5 | 2026-11-03 | 侧栏 .box.pad 模块内边距与列表行距 |
-| Broomhilda Red | v1.4.4 | 2026-11-03 | 侧栏通用缩进/自适应、设置页导航、圆圈折叠图标 |
-| Broomhilda Red | v1.4.3 | 2026-11-03 | 用户页侧栏缩进与自适应 |
-| Broomhilda Red | v1.4.2 | 2026-11-03 | 头部说明整理 |
+| Broomhilda Red | v3.0.2 | 2026-11-09 | 仓库整理：删除废弃的风格分支 CSS，样式本体无改动 |
+| Broomhilda Red | v3.0.1 | 2026-11-09 | 回退到 v2.5.6 的成熟外观 |
+| Broomhilda Red | v2.5.6 | 2026-11-04 | 表格自然铺满卡片，标题带直达右边缘 |
+| Broomhilda Red | v2.5.0 | 2026-11-03 | 统一配色：中性灰阶 + RED 红强调 + 红底导航 |
+| Broomhilda Red | v2.0.0 | 2026-11-03 | 现代风格重做：灰阶 + 单一强调色、浅表头、8pt 间距 |
 | Broomhilda Red | v1.0.0 | 2026-11-03 | 初版 |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
