@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>总览 · PT 转载台</title>
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body data-page="dashboard">
+<div class="layout">
+<main class="main">
+    <div class="topbar">
+      <h1 id="page-title">总览</h1>
+      <span class="sub" id="page-sub">A 机控制面</span>
+      <div class="topbar-right">
+        <div class="pills-row" id="page-pills">
+          <span class="pill"><span class="dot ok"></span>服务运行中</span>
+          <span class="pill"><span class="dot warn"></span>2 个站登录失效</span>
+          <span class="pill"><span class="dot ok"></span>节点 4 / 5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 总览 ===== -->
+    <section class="view" data-view="dashboard">
+      <div class="bento-top">
+        <div class="card stat-card">
+          <div class="panel-head"><h2>统计</h2><span class="zone-sub">今日 / 本月 / 累计</span></div>
+          <div class="stat-grid">
+            <div class="stat-hero">
+              <span>今日已发</span>
+              <b id="hero-num">3</b>
+              <i id="hero-delta">较昨日 +1</i>
+            </div>
+            <div class="stat-list">
+              <div class="hstat"><span>本月已发</span><b id="stat-month">84</b><i>目标 120</i></div>
+              <div class="hstat"><span>总发布数</span><b id="stat-total">1,240</b><i>历史累计</i></div>
+              <div class="hstat"><span>抓取总数</span><b id="stat-db">128,406</b><i>今日 +87</i></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="panel-head"><h2>实时日志</h2><span class="live"><i></i>实时</span><a href="#logs">全部</a></div>
+          <div class="list" id="dash-logs"></div>
+        </div>
+      </div>
+
+      <div class="bento-bottom">
+        <div class="card status-card">
+          <div class="panel-head"><h2>系统状态</h2><a href="#crawl">详情</a></div>
+          <div class="health-row" id="health-strip"></div>
+          <p class="health-note">只看需要留意的：登录失效、分享率不足、节点离线、磁盘余量。</p>
+        </div>
+        <div class="card">
+          <div class="panel-head"><h2>最近发布</h2><a href="#queue">队列</a></div>
+          <div class="list" id="dash-published"></div>
+        </div>
+        <div class="card">
+          <div class="panel-head"><h2>待审核</h2><a href="#queue">全部 12</a></div>
+          <div class="list" id="dash-pending"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 站点 ===== -->
+    <section class="view" data-view="sites" hidden>
+      <div class="sites-wrap">
+        <div class="sites-bar">
+          <label class="sites-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="site-q" placeholder="搜索站点 / 域名">
+          </label>
+          <div class="seg-tabs" id="site-status">
+            <button type="button" data-status="all" class="active">全部<i>0</i></button>
+            <button type="button" data-status="on">启用<i>0</i></button>
+            <button type="button" data-status="off">停用<i>0</i></button>
+          </div>
+          <div class="spacer"></div>
+          <select class="select slim" id="site-arch">
+            <option value="all">全部架构</option>
+            <option value="NP">NexusPHP</option>
+            <option value="UNIT3D">UNIT3D</option>
+            <option value="GZ">Gazelle</option>
+            <option value="OTHER">其它</option>
+            <option value="?">未确认</option>
+          </select>
+          <select class="select slim" id="site-login">
+            <option value="all">全部登录</option>
+            <option value="ok">登录正常</option>
+            <option value="fail">登录失效</option>
+            <option value="none">未登录</option>
+          </select>
+          <button class="btn primary slim" data-act="new-site">添加源站</button>
+        </div>
+
+        <div class="sites-split">
+          <aside class="sites-list">
+            <div class="sites-bulk" id="sites-bulk" hidden>
+              <span>已选 <b id="bulk-n">0</b></span>
+              <button class="link-btn" id="bulk-all">全选当前</button>
+              <button class="link-btn" id="bulk-none">清空</button>
+              <div class="spacer"></div>
+              <button class="btn primary slim" id="bulk-open">批量设置</button>
+            </div>
+            <div class="sites-scroll" id="sites-list"></div>
+            <div class="sites-list-foot"><span>共 <b id="sites-count">0</b> 个</span><span class="sites-pager" id="sites-pager"></span></div>
+          </aside>
+          <div class="site-detail" id="site-detail"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 流程 ===== -->
+    <section class="view" data-view="crawl" hidden>
+      <div class="drawers">
+<div id="crawl-panel"></div>
+        <section class="drawer" data-i="nodes">
+          <button class="drawer-head">
+            <div class="drawer-t">
+              <div class="drawer-title">下载器</div>
+              <div class="drawer-desc">A 控制，B~F 下载与做种</div>
+            </div>
+            <span class="drawer-meta" id="nodes-drawer-meta"></span>
+            <svg class="drawer-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="drawer-body drawer-body-flush">
+            <div class="nodes-inner">
+      <div class="nodes-bar">
+        <span class="nodes-bar-title">机器</span>
+        <span class="nodes-bar-sub" id="nodes-bar-sub"></span>
+        <div class="spacer"></div>
+        <button class="btn primary slim" id="node-add">新增下载器</button>
+      </div>
+      <div class="nodes-sum" id="nodes-sum"></div>
+      <div class="nodes-grid" id="nodes-grid"></div>
+
+      <p class="note" style="margin-top:14px">跨机器不能硬链接，每个节点各存一份数据；A 只存索引、队列和发布记录，通过 qB Web API 下发。</p>
+
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </section>
+
+    <!-- ===== 待审核 ===== -->
+    <section class="view" data-view="queue" hidden>
+      <div class="queue-bar">
+        <div class="seg-tabs" id="queue-tabs">
+          <button type="button" data-qtab="all" class="active">全部</button>
+          <button type="button" data-qtab="pending">待确认</button>
+          <button type="button" data-qtab="approved">已通过</button>
+          <button type="button" data-qtab="failed">失败</button>
+        </div>
+        <input class="input slim" id="queue-q" placeholder="搜标题 / 中文名" style="width:220px">
+        <div class="spacer"></div>
+        <span class="t-sub" id="queue-count"></span>
+        <button class="btn ghost slim" id="q-bulkcheck">批量查重</button>
+      </div>
+
+      <div class="queue-split">
+        <aside class="queue-list">
+          <div class="queue-items" id="queue-items"></div>
+        </aside>
+        <div class="queue-detail" id="queue-detail"></div>
+      </div>
+    </section>
+
+    <!-- ===== 收录 ===== -->
+    <section class="view" data-view="sources" hidden>
+      <div class="toolbar">
+        <input class="input" placeholder="搜标题 / IMDb" style="width:260px">
+        <select class="select"><option>全部源站</option><option>源站 A</option><option>源站 B</option></select>
+        <select class="select"><option>全部类型</option><option>原盘</option><option>4K UHD</option><option>Blu-ray</option></select>
+        <div class="spacer"></div>
+        <button class="btn">增量抓取</button>
+        <button class="btn">导出 JSON</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th style="width:80px">类型</th>
+              <th style="width:74px">分辨率</th>
+              <th style="width:96px">大小</th>
+              <th style="width:100px">入库</th>
+              <th style="width:100px">查重</th>
+              <th style="width:90px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="sources-body"></tbody>
+        </table>
+      </div>
+
+      <p class="note" style="margin-top:12px">这里只显示已入库的条目；点转种会进待发队列，不会立刻发布。</p>
+    </section>
+
+    <!-- ===== 日志 ===== -->
+    <section class="view" data-view="logs" hidden>
+      <div class="toolbar">
+        <div class="seg">
+          <a href="#logs" class="active">全部</a>
+          <a href="#logs">INFO</a>
+          <a href="#logs">WARN</a>
+          <a href="#logs">ERROR</a>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn">下载 log</button>
+        <button class="btn ghost">清屏</button>
+      </div>
+
+      <div class="card">
+        <div class="logs" id="log-lines"></div>
+      </div>
+    </section>
+
+    <!-- ===== 设置 ===== -->
+    <section class="view" data-view="settings" hidden>
+      <div class="set-panel" id="set-panel"></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-mask" id="site-modal" hidden>
+  <div class="modal">
+    <div class="modal-head"><h2>添加源站</h2><button class="btn ghost slim" id="site-modal-x">关闭</button></div>
+    <label class="field"><span>站点地址</span>
+      <input class="input" id="ns-url" placeholder="https://example.com/index.php" autocomplete="off"></label>
+    <label class="field"><span>架构</span>
+      <select class="select" id="ns-arch">
+        <option value="auto">自动判断</option>
+        <option value="NP">NexusPHP</option>
+        <option value="UNIT3D">UNIT3D</option>
+        <option value="GZ">Gazelle</option>
+        <option value="OTHER">其它</option>
+        <option value="?">未确认</option>
+      </select></label>
+    <label class="field"><span>备注（可选）</span>
+      <input class="input" id="ns-note" placeholder="比如：需要邀请、只收原盘"></label>
+    <div class="modal-foot">
+      <button class="btn ghost slim" id="site-modal-cancel">取消</button>
+      <button class="btn primary slim" id="site-modal-ok">添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="bulk-modal" hidden>
+  <div class="modal wide">
+    <div class="modal-head"><h2>批量设置</h2><button class="btn ghost slim" id="bulk-x">关闭</button></div>
+    <p class="modal-sub">将覆盖已选的 <b id="bulk-count">0</b> 个站点；只应用勾选的分组。</p>
+    <div class="bulk-groups">
+      <label><input type="checkbox" id="bg-scope" checked>抓取范围</label>
+      <label><input type="checkbox" id="bg-mode" checked>抓取方式</label>
+      <label><input type="checkbox" id="bg-time" checked>抓取时间</label>
+      <label><input type="checkbox" id="bg-freq" checked>抓取频率</label>
+    </div>
+    <div class="modal-scroll">
+      <div class="cat-label">抓取分类</div>
+      <div class="cat-row" id="bm-cats"></div>
+      <div class="sd-field"><span>只收原盘</span><button class="switch on" id="bm-full"><i></i></button></div>
+      <div class="sd-field"><span>分辨率下限</span><select class="select" id="bm-res">
+        <option value="any">不限</option><option value="720p">720p 及以上</option>
+        <option value="1080p" selected>1080p 及以上</option><option value="2160p">2160p 及以上</option></select></div>
+      <div class="sd-field"><span>最小体积（GB）</span><input class="input" id="bm-size" value="5"></div>
+      <div class="sd-field"><span>抓取方式</span><select class="select" id="bm-mode">
+        <option value="incr">增量（只抓新页）</option><option value="full">全量</option><option value="mixed">增量 + 定期全量</option></select></div>
+      <div class="sd-field"><span>抓取时间</span><select class="select" id="bm-trigger">
+        <option value="interval">按间隔自动跑</option><option value="daily">每天定点跑</option><option value="manual">手动</option></select></div>
+      <div class="sd-field"><span>每隔多少分钟</span><input class="input" id="bm-every" value="60"></div>
+      <div class="sd-field"><span>每页间隔（秒）</span><input class="input" id="bm-interval" value="3.0"></div>
+      <div class="sd-field"><span>每轮最多翻几页</span><input class="input" id="bm-pages" value="2"></div>
+      <div class="sd-field"><span>并发</span><input class="input" id="bm-concurrency" value="1"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost slim" id="bulk-cancel">取消</button>
+      <button class="btn primary slim" id="bulk-ok">应用到所选</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="confirm-modal" hidden>
+  <div class="modal" style="width:390px">
+    <div class="modal-head"><h2 id="confirm-title">确认操作</h2></div>
+    <p class="modal-sub" id="confirm-text"></p>
+    <div class="modal-foot">
+      <button class="btn ghost slim" id="confirm-no">取消</button>
+      <button class="btn primary slim" id="confirm-yes">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="target-modal" hidden>
+  <div class="modal wide">
+    <div class="modal-head"><h2>选择目标站</h2><button class="btn ghost slim" id="target-x">关闭</button></div>
+    <p class="modal-sub">发布前会先查这个站有没有同样的资源。</p>
+    <input class="input" id="target-q" placeholder="搜索站点名 / 域名" autocomplete="off">
+    <div class="target-list" id="target-list"></div>
+  </div>
+</div>
+
+<div class="modal-mask" id="node-modal" hidden>
+  <div class="modal">
+    <div class="modal-head"><h2 id="node-modal-title">下载器设置</h2></div>
+    <label class="field"><span>名称</span><input class="input" id="nd-name" placeholder="下载节点 F"></label>
+    <label class="field"><span>地址</span><input class="input" id="nd-host" placeholder="10.0.0.15"></label>
+    <label class="field"><span>qB Web API</span><input class="input" id="nd-qb" placeholder="http://10.0.0.15:8080"></label>
+    <div class="modal-two">
+      <label class="field"><span>qB 用户名</span><input class="input" id="nd-user" placeholder="admin"></label>
+      <label class="field"><span>qB 密码</span><input class="input" type="password" id="nd-pass" placeholder="留空表示不设置" autocomplete="new-password"></label>
+    </div>
+    <div class="modal-two">
+      <label class="field"><span>同时下载</span><input class="input" id="nd-down" value="3"></label>
+      <label class="field"><span>做种上限</span><input class="input" id="nd-seed" value="500"></label>
+    </div>
+    <div class="nd-cats">
+      <div class="nd-cats-head">
+        <span>分类</span>
+        <span class="nd-cats-status" id="nd-cat-status">未拉取</span>
+        <div class="spacer"></div>
+        <button class="btn ghost slim" id="nd-fetch">拉取分类</button>
+      </div>
+      <div class="nd-cats-list" id="nd-cat-list"></div>
+      <p class="nd-cats-hint">从这台 qB 里读出来的分类，新任务默认用选中的那个。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost slim danger" id="node-del">删除</button>
+      <div class="spacer"></div>
+      <button class="btn ghost slim" id="node-cancel">关闭</button>
+      <button class="btn primary slim" id="node-ok">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="rule-modal" hidden>
+  <div class="modal">
+    <div class="modal-head"><h2 id="rule-title">规则</h2></div>
+    <div class="modal-scroll" id="rule-body"></div>
+    <div class="modal-foot">
+      <button class="btn ghost slim" id="rule-close">关闭</button>
+      <button class="btn primary slim" id="rule-ok">保存</button>
+    </div>
+  </div>
+</div>
+<div id="dock-root"></div>
+<script src="assets/sites-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
