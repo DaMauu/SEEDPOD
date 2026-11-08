@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------------------
-  Broomhilda Red v3.0.2
+  Broomhilda Red v3.0.3
   浅色米棕主题 · 单文件 CSS
 
   仓库   https://github.com/DaMauu/SEEDPOD
@@ -860,114 +860,6 @@ img[title^='High quality'] {
   font-size: 0;
   margin: 0 !important;
   white-space: nowrap;
-}
-
-/* -----------------------------------------------------------------------------
-  浏览视图切换 (配合 scripts/r/browse-view.user.js)
-  html[data-rview] 由脚本写入: list / compact / huge / cover
------------------------------------------------------------------------------ */
-html[data-rview="compact"] #torrent_table tr.group_torrent td {
-  padding: 0 var(--sp--small) !important;
-}
-
-html[data-rview="compact"] .group_image {
-  display: none !important;
-}
-
-html[data-rview="compact"] .tags {
-  display: none !important;
-}
-
-html[data-rview="compact"] .group_info a {
-  font-size: var(--fs--small);
-}
-
-html[data-rview="huge"] #torrent_table tr.group_torrent td {
-  padding: var(--sp--small) var(--sp--medium) !important;
-}
-
-html[data-rview="huge"] .group_image img {
-  width: 200px !important;
-  height: 200px !important;
-}
-
-html[data-rview="huge"] .group_info a {
-  font-size: var(--fs--large);
-}
-
-html[data-rview="cover"] .group_image img {
-  width: 230px !important;
-  height: 230px !important;
-}
-
-html[data-rview="cover"] .tags {
-  display: none !important;
-}
-
-/* 齿轮菜单 (由脚本注入) */
-.rview-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  z-index: 50;
-  margin-left: 12px;
-}
-
-.rview-btn {
-  background: none;
-  border: 0;
-  padding: 2px;
-  cursor: pointer;
-  line-height: 1;
-  color: var(--c--fg--tertiary);
-}
-
-.rview-btn::before {
-  content: '\e8b8';
-  font-family: var(--ff--icons);
-  font-size: 17px;
-}
-
-.rview-btn:hover::before {
-  color: var(--c--ac--fg);
-}
-
-.rview-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 190px;
-  background: var(--c--bg--initial);
-  border: 1px solid var(--c--bg--quaternary);
-  border-radius: var(--br--small);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
-  padding: 8px 4px;
-  display: none;
-  z-index: 60;
-}
-
-.rview-menu.is-open {
-  display: block;
-}
-
-.rview-menu label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  font-size: var(--fs--small);
-  color: var(--c--fg--secondary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.rview-menu label:hover {
-  background: var(--c--bg--secondary);
-  border-radius: 4px;
-}
-
-.rview-menu input[type="radio"] {
-  accent-color: var(--c--ac--fg);
 }
 
 /* red_light 的 #userinfo ul li 会压掉上面的规则 */

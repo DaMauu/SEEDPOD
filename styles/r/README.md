@@ -4,7 +4,7 @@
 
 **Gazelle 站点浅色主题 · 单文件 CSS · 无构建无依赖**
 
-<img src="https://img.shields.io/badge/version-3.0.2-c0261f?style=flat-square" />
+<img src="https://img.shields.io/badge/version-3.0.3-c0261f?style=flat-square" />
 <img src="https://img.shields.io/badge/format-CSS-2965f1?style=flat-square" />
 <img src="https://img.shields.io/badge/dependencies-none-2ea44f?style=flat-square" />
 
@@ -24,7 +24,7 @@
 ### 正式挂载（版本固定）
 
 ```
-https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.0.2/styles/r/broomhilda-red.css
+https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.0.3/styles/r/broomhilda-red.css
 ```
 
 站点设置里的外部样式表字段填这个地址即可全局生效。版本 tag 固定，内容不会变。
@@ -55,11 +55,6 @@ document.head.insertAdjacentHTML('beforeend',
 - jsDelivr 的 `@main` 分支快照缓存较久，不要用于测试
 - 测试请用 `@<commit>`，正式用 `@vX.Y.Z` tag
 
-## 视图切换（可选）
-
-浏览页的齿轮视图切换需要配合用户脚本 `scripts/r/browse-view.user.js`（Tampermonkey 新建脚本粘贴安装）。
-安装后浏览页 SEARCH 行右侧出现齿轮，可选 Cover / Huge / List / Compact list 四种视图，脚本通过 `html[data-rview]` 驱动主题样式，选择会记忆在本地。
-
 ## 版本
 
 - 文件头注释带版本号，每次改动递增
@@ -68,6 +63,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
+| v3.0.3 | 2026-11-09 | 删除视图切换用户脚本与对应 `.rview` 样式（手机端无法安装脚本），主题其余不变 |
 | v3.0.2 | 2026-11-09 | 仓库整理：删除 6 个废弃的风格分支 CSS 与相关说明，样式本体无改动 |
 | v3.0.1 | 2026-11-09 | 回退到 v2.5.6 的成熟外观（保留原布局与视觉），在其基础上继续迭代 |
 | v3.0.0 | 2026-11-04 | 单层重写：4673 行/988 处 !important 收敛为 ~1100 行单层样式，标题带等关键规则统一出处，修复右端白缝与数字被裁 |

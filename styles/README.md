@@ -15,7 +15,7 @@
 
 | 样式 | 版本 | 文件 | 挂载直链 |
 | --- | --- | --- | --- |
-| Broomhilda Red | v3.0.2 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v3.0.2](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.0.2/styles/r/broomhilda-red.css) |
+| Broomhilda Red | v3.0.3 | [broomhilda-red.css](https://github.com/DaMauu/SEEDPOD/blob/main/styles/r/broomhilda-red.css) | [jsDelivr @v3.0.2](https://cdn.jsdelivr.net/gh/DaMauu/SEEDPOD@v3.0.3/styles/r/broomhilda-red.css) |
 
 完整版本记录与设计说明见 [styles/r/README.md](r/README.md)。
 
@@ -70,6 +70,7 @@ document.head.insertAdjacentHTML('beforeend',
 
 | 样式 | 版本 | 日期 | 说明 |
 | --- | --- | --- | --- |
+| Broomhilda Red | v3.0.3 | 2026-11-09 | 删除视图切换脚本与 .rview 样式 |
 | Broomhilda Red | v3.0.2 | 2026-11-09 | 仓库整理：删除废弃的风格分支 CSS，样式本体无改动 |
 | Broomhilda Red | v3.0.1 | 2026-11-09 | 回退到 v2.5.6 的成熟外观 |
 | Broomhilda Red | v2.5.6 | 2026-11-04 | 表格自然铺满卡片，标题带直达右边缘 |
