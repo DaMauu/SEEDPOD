@@ -20,7 +20,7 @@
 ## 二、提交前校验
 
 ```powershell
-node --check scripts\bluray\legacy\pt-bluray-assistant-v0.0.0.47.user.js
+node --check scripts\bluray\legacy\pt-bluray-assistant-v0.0.0.48.user.js
 ```
 
 语法通过不等于功能正确。涉及以下改动时，必须补对应回归：

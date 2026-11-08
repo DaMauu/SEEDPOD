@@ -8,7 +8,7 @@
 筛选 · 查重 · 排版 · 填单 · 推种，在一悬浮面板内完成</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.0.0.47-4d6bfe?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-0.0.0.48-4d6bfe?style=flat-square" />
   <img src="https://img.shields.io/badge/Tampermonkey-userscript-000000?style=flat-square&logo=tampermonkey" />
   <img src="https://img.shields.io/badge/JavaScript-ES2020-f7df1e?style=flat-square&logo=javascript&logoColor=black" />
   <img src="https://img.shields.io/badge/build-none%20%C2%B7%20single--file-success?style=flat-square" />
@@ -70,7 +70,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
-2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.47.user.js`](legacy/pt-bluray-assistant-v0.0.0.47.user.js)，点 `Raw` 确认安装。
+2. 打开 [`legacy/pt-bluray-assistant-v0.0.0.48.user.js`](legacy/pt-bluray-assistant-v0.0.0.48.user.js)，点 `Raw` 确认安装。
 3. 刷新站点，右上角出现「原盘转载面板」即成功。
 
 后续步骤见 [快速上手](docs/QUICKSTART.md)。
@@ -78,7 +78,7 @@
 ## 目录
 
 ```
-legacy/pt-bluray-assistant-v0.0.0.47.user.js   当前版本（安装这个）
+legacy/pt-bluray-assistant-v0.0.0.48.user.js   当前版本（安装这个）
 docs/QUICKSTART.md                             快速上手
 docs/GUIDE.md                                  使用手册
 docs/ARCHITECTURE.md                           架构设计
