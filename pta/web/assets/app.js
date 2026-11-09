@@ -1542,7 +1542,7 @@
         : s.login === "fail" ? ["登录失效", "bad"]
         : (k >>> 20) % 10 === 0 ? ["部分失败", "warn"] : ["成功", "ok"];
       var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量 + 定期全量" : "增量";
-      var recs = [0, 1, 2].map(function (i) { return MOCK.sources[(k + i * 3) % MOCK.sources.length]; });
+      var recs = [0, 1, 2, 3, 4, 5].map(function (i) { return MOCK.sources[(k + i * 3) % MOCK.sources.length]; });
       var acts = [0, 1, 2].map(function (i) { return MOCK.logs[(k + i) % MOCK.logs.length]; });
       var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
       var methodTxt = s.loginMethod === "cookie" ? "Cookie" : "账号密码" + (s.tfa ? " + 2FA" : "");
