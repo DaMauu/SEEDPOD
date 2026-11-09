@@ -1430,3 +1430,65 @@ html, body { overflow-x: hidden; }
 .rule-item .rule-row { padding: 7px 4px; }
 .sec-actions { padding: 2px 4px 0; margin-top: 0; }
 .drawer-body { padding-bottom: 8px; }
+/* ===== 流程页最终版式：统一间距与密度 ===== */
+.view[data-view="crawl"] .drawers { gap: 12px; }
+.view[data-view="crawl"] .drawer {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+  background: #fff;
+  overflow: hidden;
+}
+.view[data-view="crawl"] .drawer-head { padding: 14px 22px; gap: 16px; }
+.view[data-view="crawl"] .drawer-t { display: block; }
+.view[data-view="crawl"] .drawer-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; }
+.view[data-view="crawl"] .drawer-desc { margin-top: 3px; font-size: 11.5px; color: var(--muted-2); white-space: normal; }
+.view[data-view="crawl"] .drawer-meta { font-size: 11.5px; color: var(--muted); }
+.view[data-view="crawl"] .drawer-body { padding: 2px 22px 10px; }
+
+.view[data-view="crawl"] .rule-item { border-bottom: 1px solid var(--line); }
+.view[data-view="crawl"] .rule-item:last-child { border-bottom: 0; }
+.view[data-view="crawl"] .rule-item .rule-row { padding: 11px 4px; grid-template-columns: 148px 1fr 16px; gap: 16px; }
+.view[data-view="crawl"] .rule-name { font-size: 12.5px; font-weight: 500; }
+.view[data-view="crawl"] .rule-sum { font-size: 11.5px; color: var(--muted); }
+.view[data-view="crawl"] .rule-chev { width: 14px; height: 14px; }
+.view[data-view="crawl"] .rule-item.open .rule-row { background: #fcfcfd; }
+
+.view[data-view="crawl"] .rule-body { padding: 2px 4px 8px; }
+.view[data-view="crawl"] .rule-body .set-fields { display: block; max-width: 980px; }
+.view[data-view="crawl"] .rule-body .set-field {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  gap: 20px; min-height: 46px; padding: 8px 0; border-bottom: 1px solid #f4f5f7;
+}
+.view[data-view="crawl"] .rule-body .set-field:last-child { border-bottom: 0; }
+.view[data-view="crawl"] .rule-body .set-field .lbl { flex: 1; min-width: 0; padding-top: 0; }
+.view[data-view="crawl"] .rule-body .set-field .lbl span { font-size: 12.5px; color: var(--ink); }
+.view[data-view="crawl"] .rule-body .set-field .lbl i { display: block; margin-top: 2px; font-size: 11px; color: var(--muted-2); line-height: 1.5; max-width: none; }
+.view[data-view="crawl"] .rule-body .set-field .ctl { flex: 0 0 auto; width: 230px; justify-content: flex-end; align-items: center; }
+.view[data-view="crawl"] .rule-body .set-field .ctl .input,
+.view[data-view="crawl"] .rule-body .set-field .ctl .select { width: 100%; height: 30px; font-size: 12px; }
+.view[data-view="crawl"] .rule-body .set-field .ctl .btn { height: 30px; font-size: 12px; }
+
+/* 多选按钮行：标签固定宽，选项一行铺开 */
+.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) { flex-direction: row; align-items: flex-start; min-height: 0; padding: 10px 0; }
+.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) .lbl { flex: 0 0 72px; padding-top: 4px; }
+.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) .lbl i { display: none; }
+.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) .ctl { width: auto; flex: 1 1 auto; min-width: 0; justify-content: flex-start; }
+.view[data-view="crawl"] .rule-body .set-field .pick-row {
+  display: flex; flex-wrap: nowrap; gap: 6px; max-width: none; overflow-x: auto;
+  justify-content: flex-start; padding-bottom: 2px;
+}
+.view[data-view="crawl"] .rule-body .set-field .cat-chip { flex: 0 0 auto; font-size: 11px; padding: 3px 9px; border-radius: 8px; }
+
+/* 模板/文本块占整行 */
+.view[data-view="crawl"] .rule-body .set-field:has(.tpl-wrap),
+.view[data-view="crawl"] .rule-body .set-field:has(.target-pick),
+.view[data-view="crawl"] .rule-body .set-field:has(textarea) { flex-direction: column; align-items: stretch; gap: 8px; }
+.view[data-view="crawl"] .rule-body .set-field:has(.tpl-wrap) .ctl,
+.view[data-view="crawl"] .rule-body .set-field:has(.target-pick) .ctl,
+.view[data-view="crawl"] .rule-body .set-field:has(textarea) .ctl { width: 100%; justify-content: flex-start; }
+
+.view[data-view="crawl"] .sec-actions { display: flex; justify-content: flex-end; padding: 10px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+.view[data-view="crawl"] .sec-actions .btn { height: 30px; font-size: 12px; }
+.view[data-view="crawl"] .rule-body .set-fields { max-width: none; }
+.view[data-view="crawl"] .rule-body .set-fields:has(.pick-row) { max-width: 980px; }
