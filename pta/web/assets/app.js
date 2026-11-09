@@ -1056,6 +1056,13 @@
       { t: "连续失败几次暂停该站", type: "text", v: "5" },
       { t: "失败时推送通知", type: "switch", on: true }
     ] }
+,
+{ name: "下载条件", sum: "做种 5 起 · 免费优先", rows: [
+      { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下到一半就断" },
+      { t: "免费/优惠", type: "select", v: "免费优先", opts: ["不限制", "免费优先", "只要 FREE", "FREE 或 2x"], hint: "免费期再下，省下载量" },
+      { t: "单站同时下载", type: "text", v: "2", hint: "同一个站并行任务数，别把站刷爆" },
+      { t: "只在此机器下载", type: "select", v: "自动挑磁盘最多的", opts: ["自动挑磁盘最多的", "固定 B", "固定 C", "固定 D", "固定 E"] }
+    ] }
   ];
 
   var DEDUPE_RULES = [
@@ -1068,18 +1075,11 @@
     ] },
   ];
 
-  var DL_RULES = [
-    { name: "下载条件", sum: "做种 5 起 · 免费优先", rows: [
-      { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下到一半就断" },
-      { t: "免费/优惠", type: "select", v: "免费优先", opts: ["不限制", "免费优先", "只要 FREE", "FREE 或 2x"], hint: "免费期再下，省下载量" },
-      { t: "单站同时下载", type: "text", v: "2", hint: "同一个站并行任务数，别把站刷爆" },
-      { t: "只在此机器下载", type: "select", v: "自动挑磁盘最多的", opts: ["自动挑磁盘最多的", "固定 B", "固定 C", "固定 D", "固定 E"] }
-    ] }
-  ];
 
-  var RULE_SETS = { fetch: FETCH_RULES, dedupe: DEDUPE_RULES, pub: PUB_RULES, dl: DL_RULES };
 
-  var FLOW_KEY = "pta.flow4";
+  var RULE_SETS = { fetch: FETCH_RULES, dedupe: DEDUPE_RULES, pub: PUB_RULES };
+
+  var FLOW_KEY = "pta.flow5";
   function saveFlowState() {
     var data = {};
     Object.keys(RULE_SETS).forEach(function (k) {
@@ -1151,8 +1151,7 @@
     host.innerHTML =
       sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "电影 · 原盘 · 逐行判定", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "本地词库 + 目标站", rules: DEDUPE_RULES }, 1, "dedupe") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub") +
-      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 3, "dl");
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub");
 
     renderTpl();
 
@@ -1260,7 +1259,7 @@
           });
         });
         saveFlowState();
-        var label = { fetch: "抓取", dedupe: "查重", pub: "发布", dl: "下载" }[sKey] || sKey;
+        var label = { fetch: "抓取", dedupe: "查重", pub: "发布" }[sKey] || sKey;
         toast(label + "设置已保存");
       }
     });
