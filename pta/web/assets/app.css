@@ -2047,3 +2047,9 @@ body::after {
   100% { opacity: .38; transform: scale(1); }
 }
 .view[data-view="dashboard"] { justify-content: flex-start; }
+/* 心跳光晕改到右下角 */
+body::after {
+  background:
+    radial-gradient(46% 42% at 88% 94%, rgba(79, 70, 229, .20), rgba(79, 70, 229, 0) 70%),
+    radial-gradient(34% 30% at 72% 102%, rgba(79, 70, 229, .10), rgba(79, 70, 229, 0) 72%);
+}
