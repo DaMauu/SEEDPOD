@@ -2110,3 +2110,7 @@ body::after {
 .view[data-view="queue"] .qd-desc-card { display: flex; flex-direction: column; }
 .view[data-view="queue"] .qd-desc-card textarea { flex: 1; height: auto; min-height: 84px; }
 .view[data-view="queue"] .qd-shots { display: flex; flex-direction: column; justify-content: flex-start; height: auto; }
+/* 待审核：左右两栏等高 */
+.view[data-view="queue"] .queue-split { align-items: stretch; }
+.view[data-view="queue"] .queue-detail { align-self: stretch; display: flex; flex-direction: column; }
+.view[data-view="queue"] .qd-actions { margin-top: auto; }
