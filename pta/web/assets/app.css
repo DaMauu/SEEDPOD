@@ -2009,3 +2009,41 @@ html, body { overflow-x: hidden; }
 /* 最近收录与左侧两卡总高度齐平 */
 .site-expand .sd-compact { align-items: stretch; }
 .site-expand .sd-recent-wrap { height: 100%; display: flex; flex-direction: column; }
+/* 背景心跳：轻微明暗 + 极小幅缩放，模拟心跳两拍 */
+body::after {
+  content: ""; position: fixed; inset: -6%; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(52% 42% at 50% 0%, rgba(79, 70, 229, .12), rgba(79, 70, 229, 0) 72%),
+    radial-gradient(40% 34% at 82% 12%, rgba(79, 70, 229, .08), rgba(79, 70, 229, 0) 74%);
+  opacity: .35;
+  animation: bg-heartbeat 2.6s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+.layout { position: relative; z-index: 1; }
+@keyframes bg-heartbeat {
+  0%   { opacity: .30; transform: scale(1); }
+  7%   { opacity: .78; transform: scale(1.014); }
+  14%  { opacity: .34; transform: scale(1); }
+  22%  { opacity: .62; transform: scale(1.008); }
+  34%  { opacity: .30; transform: scale(1); }
+  100% { opacity: .30; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; opacity: .42; }
+}
+/* 心跳背景：稍微明显一点 */
+body::after {
+  background:
+    radial-gradient(54% 44% at 50% 0%, rgba(79, 70, 229, .18), rgba(79, 70, 229, 0) 72%),
+    radial-gradient(42% 36% at 84% 14%, rgba(79, 70, 229, .11), rgba(79, 70, 229, 0) 74%);
+  opacity: .45;
+}
+@keyframes bg-heartbeat {
+  0%   { opacity: .38; transform: scale(1); }
+  7%   { opacity: .92; transform: scale(1.02); }
+  15%  { opacity: .42; transform: scale(1); }
+  23%  { opacity: .74; transform: scale(1.012); }
+  36%  { opacity: .38; transform: scale(1); }
+  100% { opacity: .38; transform: scale(1); }
+}
+.view[data-view="dashboard"] { justify-content: flex-start; }
