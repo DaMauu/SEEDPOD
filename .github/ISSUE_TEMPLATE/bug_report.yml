@@ -1,0 +1,103 @@
+name: 问题反馈
+description: 脚本报错、面板异常、功能不生效
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请确认：已升级到最新版本文件，并重启过 Tampermonkey。
+        **贴日志和截图前删掉 Cookie、passkey、Tracker 密钥、下载器口令和站点用户名。**
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 哪个模块
+      options:
+        - bluray（原盘转载面板）
+        - PTScripts（站点小工具）
+        - styles/r（主题样式）
+        - pta（站点架构页）
+        - 不确定
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 版本号
+      description: bluray 看文件名或头部 @version，例如 0.0.0.47
+      placeholder: 0.0.0.47
+    validations:
+      required: true
+
+  - type: dropdown
+    id: site-type
+    attributes:
+      label: 站点类型
+      multiple: true
+      options:
+        - NexusPHP
+        - UNIT3D
+        - Gazelle
+        - f3nix
+        - 其他 / 不确定
+    validations:
+      required: true
+
+  - type: input
+    id: site
+    attributes:
+      label: 站点名
+      description: 方便复现就写；不便公开可写「私聊提供」
+      placeholder: 例如 HDSky
+
+  - type: input
+    id: env
+    attributes:
+      label: 浏览器与 Tampermonkey 版本
+      placeholder: Chrome 141 / Tampermonkey 5.3.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开某站的发布页
+        2. 点面板的「跨站查重」
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 控制台报错（已脱敏）
+      description: F12 控制台里与本脚本相关的红色报错
+      render: shell
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 已检查最新版本仍然存在
+          required: true
+        - label: 已删除日志和截图里的 Cookie、passkey、密钥与个人信息
+          required: true
