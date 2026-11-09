@@ -983,13 +983,6 @@
       { t: "排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "标题命中直接跳" },
       { t: "白名单关键词", type: "text", v: "", ph: "只收含这些词的（留空不限）" }
     ] },
-    { name: "查重", sum: "本地词库 + 目标站", rows: [
-      { t: "查本地词库", type: "switch", on: true, hint: "以前查过的结果缓存起来，避免重复请求" },
-      { t: "词库有效期", type: "select", v: "7 天", opts: ["1 天", "7 天", "30 天", "永久"] },
-      { t: "目标站已有原盘", type: "select", v: "跳过不收", opts: ["跳过不收", "标重复后仍收"] },
-      { t: "目标站只有 DIY", type: "select", v: "可发（标复核）", opts: ["可发（标复核）", "跳过"] },
-      { t: "请求失败", type: "select", v: "重试 2 次后标失败", opts: ["重试 2 次后标失败", "直接跳过"] }
-    ] },
     { name: "站点分类映射", sum: "各站分类 → 库内分类", rows: [
       { t: "站点分类", type: "button", v: "配置映射", hint: "把每个站自己的分类（如 Movies/Blu-ray）对到库内类型" },
       { t: "映射不到时", type: "select", v: "按标题猜", opts: ["按标题猜", "跳过不抓", "落到其他"] }
@@ -1065,6 +1058,16 @@
     ] }
   ];
 
+  var DEDUPE_RULES = [
+    { name: "查重规则", sum: "本地词库 7 天 · 目标站已有原盘跳过", rows: [
+      { t: "查本地词库", type: "switch", on: true, hint: "以前查过的结果缓存起来，避免重复请求" },
+      { t: "词库有效期", type: "select", v: "7 天", opts: ["1 天", "7 天", "30 天", "永久"] },
+      { t: "目标站已有原盘", type: "select", v: "跳过不收", opts: ["跳过不收", "标重复后仍收"] },
+      { t: "目标站只有 DIY", type: "select", v: "可发（标复核）", opts: ["可发（标复核）", "跳过"] },
+      { t: "请求失败", type: "select", v: "重试 2 次后标失败", opts: ["重试 2 次后标失败", "直接跳过"] }
+    ] },
+  ];
+
   var DL_RULES = [
     { name: "下载条件", sum: "做种 5 起 · 免费优先", rows: [
       { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下到一半就断" },
@@ -1074,9 +1077,9 @@
     ] }
   ];
 
-  var RULE_SETS = { fetch: FETCH_RULES, pub: PUB_RULES, dl: DL_RULES };
+  var RULE_SETS = { fetch: FETCH_RULES, dedupe: DEDUPE_RULES, pub: PUB_RULES, dl: DL_RULES };
 
-  var FLOW_KEY = "pta.flow3";
+  var FLOW_KEY = "pta.flow4";
   function saveFlowState() {
     var data = {};
     Object.keys(RULE_SETS).forEach(function (k) {
@@ -1146,9 +1149,10 @@
 
     loadFlowState();
     host.innerHTML =
-      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 原盘 · 逐行判定 · 查重", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 1, "pub") +
-      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 2, "dl");
+      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 原盘 · 逐行判定", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "本地词库 + 目标站", rules: DEDUPE_RULES }, 1, "dedupe") +
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub") +
+      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 3, "dl");
 
     renderTpl();
 
