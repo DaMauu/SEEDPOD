@@ -1381,3 +1381,10 @@ html, body { overflow-x: hidden; }
 .rule-body .set-fields { max-width: none; }
 .rule-body .set-field .ctl { width: 220px; }
 .sec-actions { display: flex; justify-content: flex-end; padding: 10px 4px 2px; border-top: 1px solid var(--line); margin-top: 6px; }
+
+/* 搜索预设：标签与选项同一行，按钮区、输入区分开成块 */
+.rule-body .set-field:has(.pick-row) { flex-direction: row; align-items: flex-start; gap: 14px; padding: 9px 0; }
+.rule-body .set-field:has(.pick-row) .lbl { flex: 0 0 84px; padding-top: 5px; }
+.rule-body .set-field:has(.pick-row) .lbl i { display: none; }
+.rule-body .set-field:has(.pick-row) .ctl { width: auto; flex: 1 1 auto; justify-content: flex-start; }
+.rule-body .set-field:has(.pick-row) .pick-row { flex-wrap: wrap; justify-content: flex-start; row-gap: 6px; }
