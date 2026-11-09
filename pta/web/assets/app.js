@@ -1463,7 +1463,6 @@
     var list = $("#sites-list");
     if (!list) return;
     var detail = $("#site-detail");
-    var sheetMask = $("#site-sheet-mask");
     var state = { q: "", status: "all", arch: "all", login: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false, closed: {} };
     var PER_PAGE = 11;
     var ACH = {
@@ -1654,14 +1653,8 @@
     function paintDetail() {
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!detail) return;
-      if (!s) {
-        detail.classList.remove("open");
-        if (sheetMask) sheetMask.hidden = true;
-        detail.innerHTML = "";
-        return;
-      }
-      detail.classList.toggle("open", !!state.open);
-      if (sheetMask) sheetMask.hidden = !state.open;
+      if (!s || !state.open) { detail.hidden = true; detail.innerHTML = ""; return; }
+      detail.hidden = false;
       detail.innerHTML = headHtml(s) +
         (state.tab === "settings"
           ? '<div class="sd-scroll">' + settingsHtml(s) + "</div>" + actionsHtml()
@@ -1708,6 +1701,14 @@
       var hint = $("#sites-hint");
       if (hint) hint.textContent = rows.length === MOCK.sitesList.length ? "全部" : "匹配 " + rows.length + " 个";
       renderStats();
+      if (state.open && state.sel) {
+        var row = list.querySelector('.site-item[data-host="' + String(state.sel).replace(/"/g, '\\"') + '"]');
+        if (row) { row.insertAdjacentElement("afterend", detail); detail.hidden = false; }
+        else { state.open = false; list.appendChild(detail); detail.hidden = true; }
+      } else {
+        list.appendChild(detail);
+        detail.hidden = true;
+      }
       paintDetail();
     }
 
@@ -1730,34 +1731,26 @@
       window.__ptaStore.save();
     }
 
-    if (sheetMask) sheetMask.addEventListener("click", function () {
-      state.open = false;
-      detail.classList.remove("open");
-      sheetMask.hidden = true;
-    });
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape" || !state.open) return;
       state.open = false;
-      detail.classList.remove("open");
-      if (sheetMask) sheetMask.hidden = true;
+      paint();
     });
 
     /* ---- 列表交互 ---- */
     list.addEventListener("click", function (e) {
-      var gh = e.target.closest(".st-ghead");
-      if (gh) {
-        var gk = gh.getAttribute("data-gk");
-        state.closed[gk] = !state.closed[gk];
-        gh.parentElement.classList.toggle("closed", !!state.closed[gk]);
-        return;
-      }
       if (e.target.classList && e.target.classList.contains("site-pick")) return;
       var it = e.target.closest(".site-item");
       if (!it) return;
-      state.sel = it.getAttribute("data-host");
+      var host = it.getAttribute("data-host");
+      if (state.open && state.sel === host) {
+        state.open = false;
+        paint();
+        return;
+      }
+      state.sel = host;
       state.open = true;
-      $$(".site-item", list).forEach(function (x) { x.classList.toggle("on", x === it); });
-      paintDetail();
+      paint();
     });
 
     var q = $("#site-q");
@@ -1789,8 +1782,7 @@
     if (detail) detail.addEventListener("click", function (e) {
       if (e.target.closest('[data-act="close-sheet"]')) {
         state.open = false;
-        detail.classList.remove("open");
-        if (sheetMask) sheetMask.hidden = true;
+        paint();
         return;
       }
       var stab = e.target.closest("button[data-settab]");

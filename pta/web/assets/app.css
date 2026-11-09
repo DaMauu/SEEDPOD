@@ -1865,3 +1865,24 @@ html, body { overflow-x: hidden; }
   border: 5px solid transparent; border-left-color: #111827;
 }
 .dock { overflow: visible; }
+/* 站点详情：行内展开，不再用侧边抽屉 */
+.site-expand { display: block; padding: 16px 22px 14px; background: #f8f9fc; border-bottom: 1px solid var(--line); }
+.site-expand[hidden] { display: none; }
+.site-expand .sd-top { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 8px 10px; align-items: start; padding-right: 34px; }
+.site-expand .sd-top .ava.lg { grid-row: 1 / span 2; }
+.site-expand .sd-id { grid-column: 2; }
+.site-expand .sd-id h2 { font-size: 16px; margin-bottom: 2px; }
+.site-expand .sd-chips { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; margin-left: 0; justify-content: flex-start; }
+.site-expand .sd-actions { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; }
+.site-expand .sd-actions .btn { height: 26px; padding: 0 10px; font-size: 11.5px; }
+.site-expand .sheet-x { position: absolute; top: 0; right: 0; }
+.site-expand .sd-scroll { overflow: visible; }
+.site-expand .sd-metrics { margin-top: 12px; }
+.site-expand .sd-cols { margin-top: 10px; }
+.site-expand .sd-top { grid-template-columns: minmax(0, 1fr) auto; }
+.site-expand .sd-top .ava.lg { display: none; }
+.site-expand .sd-id h2 { font-size: 15px; }
+.site-expand .sd-url { font-size: 11px; }
+.site-expand .sd-id, .site-expand .sd-chips, .site-expand .sd-actions { grid-column: 1; }
+.site-expand .sd-top { gap: 6px 0; }
