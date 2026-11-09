@@ -964,11 +964,38 @@
     if (r.type === "textarea") {
       return '<textarea class="input sd-note"' + k + ">" + escapeHtml(r.v || "") + "</textarea>";
     }
+    if (r.type === "num") {
+      return '<input class="input num"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' +
+        (r.range ? ' data-min="' + r.range[0] + '" data-max="' + r.range[1] + '"' : "") +
+        ' inputmode="numeric" placeholder="' + escapeHtml(r.ph || "") + '"><em class="num-warn"></em>';
+    }
+    if (r.type === "fixed") {
+      return '<span class="fixed-val' + (r.noTag ? " ref" : "") + '">' + escapeHtml(r.v || "系统锁定") + (r.noTag ? "" : "<i>系统固定</i>") + "</span>";
+    }
     if (r.type === "custom") return r.html || "";
     if (r.type === "button") {
       return '<button class="btn ghost slim" data-btn="' + escapeHtml(r.t) + '">' + escapeHtml(r.v) + "</button>";
     }
     return '<input class="input"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' + (r.disabled ? " disabled" : "") + ' placeholder="' + escapeHtml(r.ph || "") + '">';
+  }
+
+  /* 请求层参数只在安全区间内允许，越界直接拦下，不做静默钳制 */
+  function checkNums(scope) {
+    var bad = null;
+    [].forEach.call(scope.querySelectorAll("input.num"), function (el) {
+      var w = el.parentNode.querySelector(".num-warn");
+      var lo = el.getAttribute("data-min"), hi = el.getAttribute("data-max");
+      var v = (el.value || "").trim();
+      var n = Number(v);
+      var msg = "";
+      if (v !== "" && !/^\d+$/.test(v)) msg = "只能填整数";
+      else if (v !== "" && lo && n < Number(lo)) msg = "低于下限 " + lo + "，不允许保存，也不会执行";
+      else if (v !== "" && hi && n > Number(hi)) msg = "超过上限 " + hi + "，不允许保存";
+      if (w) w.textContent = msg;
+      el.classList.toggle("is-bad", !!msg);
+      if (msg && !bad) bad = el;
+    });
+    return bad;
   }
 
   function setRowsHtml(rows) {
@@ -988,16 +1015,16 @@
       { t: "优惠", type: "custom", chips: ["免费", "2x", "2x 免费", "50%", "2x 50%", "30%", "普通", "置顶精选"], sel: [], hint: "按站点优惠状态筛，BHD 这类站点没有免费选项时会自动跳过" }
     ] },
     { name: "拉取", sum: "逐页翻 · 断点续抓", rows: [
-      { t: "每页间隔", type: "text", v: "3.0 秒" },
-      { t: "并发", type: "select", v: "1", opts: ["1", "2", "3"] },
-      { t: "每轮最多翻页", type: "text", v: "2" },
+      { t: "请求间隔", type: "fixed", v: "跟随设置", noTag: true, hint: "只可在「设置 › 抓取节奏」里调，区间 8–120 秒" },
+      { t: "并发", type: "fixed", v: "1", hint: "固定单线程，程序写死" },
+      { t: "每轮最多翻页", type: "num", k: "maxPage", range: [1, 20], ph: "1–20" },
       { t: "抓取方式", type: "select", v: "增量（只抓新页）", opts: ["增量（只抓新页）", "全量（扫全部页）", "增量 + 定期全量"] },
       { t: "断点续抓", type: "switch", on: true, hint: "记到第几页、哪些种子已处理，停了下轮接着来" },
       { t: "抓详情页", type: "switch", on: true, hint: "BDInfo、截图、简介都要进详情页" },
-      { t: "失败重试", type: "text", v: "3 次，退避 30 秒" },
-      { t: "连续失败自动停", type: "text", v: "5" },
-      { t: "单站每日最多抓", type: "text", v: "100" },
-      { t: "全站每日最多抓", type: "text", v: "800" }
+      { t: "失败重试", type: "fixed", v: "3 次 · 退避 30 秒起" },
+      { t: "连续失败自动停", type: "fixed", v: "5 次" },
+      { t: "单站每日最多抓", type: "fixed", v: "跟随设置", noTag: true, hint: "程序按站规再压一次，最多到站规的 1/3" },
+      { t: "全站每日最多抓", type: "fixed", v: "跟随设置", noTag: true }
     ] },
     { name: "判定", sum: "非电影/非原盘/DIY/禁转 全跳过", rows: [
       { t: "非电影跳过", type: "switch", on: true, hint: "剧集、综艺、动漫、音乐都算非电影" },
@@ -1042,6 +1069,13 @@
       { t: "豆瓣抓取间隔（秒）", type: "text", v: "3", hint: "太快会出验证码" },
       { t: "主演最多几个", type: "text", v: "3" },
       { t: "缺字段时", type: "select", v: "省略该段", opts: ["省略该段", "写「未知」", "转待确认"] }
+    ] },
+    { name: "标题规则", sum: "标题正则匹配", rows: [
+      { t: "匹配范围", type: "select", v: "", opts: ["标题", "标题 + 副标题", "标题 + 简介首段"], hint: "只读这段文本，不改任何字段" },
+      { t: "排除匹配", type: "custom", html: '<input class="input" id="rx-deny" placeholder="命中就不转载，例：DVDRip|枪版|CAM">', hint: "支持正则，限 200 字；只决定转不转，不影响请求" },
+      { t: "白名单匹配", type: "custom", html: '<input class="input" id="rx-allow" placeholder="留空不限，命中才转载">', hint: "和排除同时命中时，排除优先" },
+      { t: "写错时", type: "select", v: "", opts: ["回退成纯文本匹配", "整条跳过等人工"], hint: "语法错、超时、超长都走这条" },
+      { t: "测试匹配", type: "custom", html: '<div class="rx-test"><input class="input" id="rx-sample" placeholder="粘贴一条标题试一下"><button class="btn ghost slim" id="rx-run" type="button">测试</button><em id="rx-out">未测试</em></div>' }
     ] },
     { name: "发布前检查", sum: "分辨率 · 体积 · 简介 · BDInfo · 截图 3 张", rows: [
       { t: "分辨率要求", type: "select", v: "1080p 及以上", opts: ["不限", "1080p 及以上", "2160p 及以上"], hint: "抓的时候全抓，发之前按这个卡" },
@@ -1274,6 +1308,34 @@
       return parts.length ? parts.slice(0, 3).join(" · ") + (parts.length > 3 ? " 等" : "") : "未设置";
     }
 
+    /* 标题正则只在发布侧生效：限 200 字，语法错就退成纯文本 */
+    function rxCompile(src, label) {
+      src = (src || "").trim();
+      if (!src) return { re: null };
+      if (src.length > 200) return { re: null, err: label + "超过 200 字，按纯文本处理" };
+      try { return { re: new RegExp(src, "i") }; } catch (err) { return { re: null, err: label + "正则写错，按纯文本处理" }; }
+    }
+    function rxHit(src, text) {
+      var c = rxCompile(src, "");
+      if (c.re) return c.re.test(text);
+      var pat = (src || "").trim();
+      return pat ? text.toLowerCase().indexOf(pat.toLowerCase()) >= 0 : false;
+    }
+    function runRx() {
+      var out = $("#rx-out");
+      if (!out) return;
+      var sample = (($("#rx-sample") || {}).value || "").trim();
+      if (!sample) { out.textContent = "先填一条标题"; out.className = "rx-warn"; return; }
+      var denySrc = (($("#rx-deny") || {}).value || "");
+      var allowSrc = (($("#rx-allow") || {}).value || "");
+      var d = rxCompile(denySrc, "排除"), al = rxCompile(allowSrc, "白名单");
+      var deny = rxHit(denySrc, sample), allow = rxHit(allowSrc, sample);
+      var msg = deny ? "排除命中，不转载" : (allowSrc.trim() && !allow ? "白名单未命中，不转载" : "通过，可以转载");
+      var warn = d.err || al.err;
+      out.textContent = msg + (warn ? "（" + warn + "）" : "");
+      out.className = deny || (allowSrc.trim() && !allow) ? "rx-warn" : "rx-ok";
+    }
+
     function refreshSums() {
       host.querySelectorAll(".rule-item").forEach(function (item) {
         if (item.getAttribute("data-set") === "pub" && item.getAttribute("data-idx") === "0") return;
@@ -1302,6 +1364,8 @@
         setTimeout(function () { tq2.focus(); }, 30);
         return;
       }
+      var rxBtn = e.target.closest("#rx-run");
+      if (rxBtn) { runRx(); return; }
       var pick = e.target.closest(".pick-row .cat-chip");
       if (pick) { pick.classList.toggle("on"); refreshSums(); return; }
       var sw = e.target.closest("button[data-switch]");
@@ -1335,6 +1399,8 @@
             if (ctl) r.v = ctl.value;
           });
         });
+        var bad = checkNums(save.closest(".drawer") || host);
+        if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
         saveFlowState();
         var label = { fetch: "抓取", dedupe: "查重", pub: "发布" }[sKey] || sKey;
         toast(label + "设置已保存");
@@ -1343,6 +1409,8 @@
 
     host.addEventListener("input", function (e) {
       if (e.target && e.target.id === "sub-tpl") renderTpl();
+      var scope = e.target.closest && e.target.closest(".rule-item");
+      if (scope) checkNums(scope);
       refreshSums();
     });
     host.addEventListener("change", refreshSums);
@@ -1365,6 +1433,8 @@
           if (ctl) r.v = ctl.value;
         });
       });
+      var bad2 = checkNums(host);
+      if (bad2) { toast("超出安全范围，已拦下不保存"); bad2.focus(); return; }
       saveFlowState();
       toast("流程设置已保存");
     });
@@ -1374,6 +1444,16 @@
     var panel = $("#set-panel");
     if (!panel) return;
     var GROUPS = [
+      { name: "抓取节奏", desc: "请求层由程序固定，只有速度在安全区间里可调；越界只提醒，不会保存也不会执行。", rows: [
+        { t: "请求间隔", type: "num", k: "paceSec", v: "30", range: [8, 120], ph: "8–120", hint: "低于 8 秒会被拦下，最高 120 秒" },
+        { t: "并发", type: "fixed", v: "1", hint: "固定单线程，不开放调整" },
+        { t: "单站每日上限", type: "num", k: "dailySite", v: "100", range: [1, 300], hint: "程序按站规再压一次，最多到站规的 1/3" },
+        { t: "全站每日上限", type: "num", k: "dailyAll", v: "800", range: [50, 2000] },
+        { t: "最小间隔", type: "fixed", v: "8 秒", hint: "低于这个值一律不执行" },
+        { t: "失败重试", type: "fixed", v: "3 次 · 退避 30 秒起" },
+        { t: "连续失败熔断", type: "fixed", v: "3 次 4xx 暂停 15 分钟", hint: "429/403 直接停，遵守 Retry-After" },
+        { t: "请求审计", type: "fixed", v: "全量记日志", hint: "每次请求可追溯到时间、站点、路径" }
+      ] },
       { name: "面板账号", desc: "登录这个面板用的账号，和站点账号无关。", rows: [
         { t: "面板用户名", type: "text", v: "admin" },
         { t: "面板密码", type: "password", k: "panelPass", ph: "留空表示不修改", hint: "保存时会再确认一次，避免误改" },
@@ -1422,7 +1502,7 @@
     });
     (function restoreSettings() {
       var data = null;
-      try { data = JSON.parse(localStorage.getItem("pta.settings") || "null"); } catch (e) {}
+      try { data = JSON.parse(localStorage.getItem("pta.settings2") || "null"); } catch (e) {}
       if (!data) return;
       var fields = panel.querySelectorAll(".set-field");
       [].forEach.call(fields, function (f, i) {
@@ -1434,8 +1514,14 @@
       });
     })();
 
+    panel.addEventListener("input", function (e) {
+      if (e.target && e.target.classList.contains("num")) checkNums(e.target.closest(".set-card"));
+    });
+
     document.addEventListener("click", function (e) {
       if (!e.target.closest || !e.target.closest(".set-save")) return;
+      var bad = checkNums(e.target.closest(".set-card") || panel);
+      if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
       var vals = [];
       panel.querySelectorAll(".set-field").forEach(function (f) {
         var sw = f.querySelector("[data-switch]");
@@ -1443,7 +1529,7 @@
         var ctl = f.querySelector(".input, .select");
         vals.push(ctl ? ctl.value : "");
       });
-      try { localStorage.setItem("pta.settings", JSON.stringify(vals)); } catch (err) {}
+      try { localStorage.setItem("pta.settings2", JSON.stringify(vals)); } catch (err) {}
       var pw = panel.querySelector('[data-k="panelPass"]');
       var val = pw ? pw.value : "";
       if (val) {

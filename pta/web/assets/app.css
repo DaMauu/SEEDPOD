@@ -2114,3 +2114,33 @@ body::after {
 .view[data-view="queue"] .queue-split { align-items: stretch; }
 .view[data-view="queue"] .queue-detail { align-self: stretch; display: flex; flex-direction: column; }
 .view[data-view="queue"] .qd-actions { margin-top: auto; }
+
+/* ---------- 请求层：锁定值 / 区间提示 / 正则测试 ---------- */
+.set-field .ctl { display: flex; align-items: center; gap: 8px; }
+.set-field .ctl .input.num { width: 116px; }
+.set-field .ctl .input.num.is-bad { border-color: #d9534f; background: #fff7f6; color: #b3352f; }
+.set-field .ctl .num-warn { font-style: normal; font-size: 11.5px; color: #c0453c; max-width: 320px; }
+.set-field .ctl .fixed-val {
+  display: inline-flex; align-items: center; height: 34px; padding: 0 11px;
+  border-radius: 8px; background: #f6f7fa; border: 1px solid #e8eaf1;
+  color: #4a4f5c; font-size: 12.5px; white-space: nowrap;
+}
+.set-field .ctl .fixed-val i {
+  font-style: normal; margin-left: 9px; padding-left: 9px;
+  border-left: 1px solid #e2e5ee; font-size: 11px; color: #9aa0b0;
+}
+.rx-test { display: flex; align-items: center; gap: 8px; }
+.rx-test .input { width: 260px; }
+.rx-test em { font-style: normal; font-size: 11.5px; color: #9aa0b0; }
+.rx-test em.rx-ok { color: #1f8a5a; }
+.rx-test em.rx-warn { color: #c0453c; }
+.set-field .ctl:has(.num-warn) { flex-direction: column; align-items: flex-end; gap: 4px; }
+.set-field .ctl .num-warn { max-width: 300px; line-height: 1.45; text-align: right; }
+.set-field .ctl:has(.rx-test) { flex: 0 1 auto; min-width: 0; justify-content: flex-end; }
+.rx-test { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.rx-test .input { flex: 0 1 240px; width: 240px; min-width: 0; }
+.rx-test .btn { flex: 0 0 auto; white-space: nowrap; }
+.rx-test em { flex: 0 0 auto; white-space: nowrap; }
+.set-field .ctl:has(.rx-test) { flex: 0 0 auto; }
+.rx-test .input { flex: 0 0 240px; width: 240px; }
+.set-field .ctl .fixed-val.ref { background: transparent; border-color: transparent; padding: 0 2px; color: #5f6674; }
