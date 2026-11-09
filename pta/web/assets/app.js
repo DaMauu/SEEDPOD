@@ -1452,7 +1452,7 @@
     if (!list) return;
     var detail = $("#site-detail");
     var sheetMask = $("#site-sheet-mask");
-    var state = { q: "", status: "all", arch: "all", login: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false };
+    var state = { q: "", status: "all", arch: "all", login: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false, closed: {} };
     var PER_PAGE = 11;
     var ACH = {
       NP: ["np", "NexusPHP"], UNIT3D: ["u3d", "UNIT3D"], GZ: ["gz", "Gazelle"],
@@ -1491,7 +1491,6 @@
       return '<div class="site-item' + (state.sel === s.name ? " on" : "") + '" data-host="' + escapeHtml(s.name) + '">' +
         '<input type="checkbox" class="site-pick" data-host="' + escapeHtml(s.name) + '"' + (picked ? " checked" : "") + ">" +
         '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
-        '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
         '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
         '<span class="si-mode">' + modeTxt + "</span>" +
         '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
@@ -1656,15 +1655,60 @@
           : '<div class="sd-scroll">' + overviewHtml(s) + "</div>");
     }
 
+    function renderStats() {
+      var host = $("#sites-stats");
+      if (!host) return;
+      var st = siteStats(MOCK.sitesList);
+      var order = ["NP", "UNIT3D", "GZ", "OTHER", "?"];
+      var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
+      var count = { NP: st.np, UNIT3D: st.unit3d, GZ: st.gz, OTHER: st.oth, "?": st.unk };
+      var total = st.total || 1;
+      var segs = order.filter(function (k) { return count[k]; }).map(function (k) {
+        return '<i class="seg ' + ACH[k][0] + '" style="width:' + (count[k] / total * 100).toFixed(2) + '%"></i>';
+      }).join("");
+      var legend = order.filter(function (k) { return count[k]; }).map(function (k) {
+        return '<span><i class="dot ' + ACH[k][0] + '"></i>' + names[k] + " " + count[k] + "</span>";
+      }).join("");
+      host.innerHTML =
+        '<div class="ss-nums">' +
+          '<div><span>总站点</span><b>' + st.total + "</b></div>" +
+          '<div><span>启用</span><b>' + st.enabled + "</b></div>" +
+          '<div><span>登录失效</span><b class="warn">' + st.loginFail + "</b></div>" +
+          '<div><span>分享率不足</span><b class="bad">' + st.lowRatio + "</b></div>" +
+        "</div>" +
+        '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
+          '<div class="ss-legend">' + legend + "</div></div>";
+    }
+
     function paint() {
       var rows = filtered();
-      list.innerHTML = rows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
+      var order = ["NP", "UNIT3D", "GZ", "OTHER", "?"];
+      var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
+      var groups = {};
+      rows.forEach(function (s) {
+        var k = ACH[s.arch] ? s.arch : "?";
+        (groups[k] = groups[k] || []).push(s);
+      });
+      list.innerHTML = order.filter(function (k) { return groups[k]; }).map(function (k) {
+        var g = groups[k];
+        var fails = g.filter(function (s) { return s.login === "fail"; }).length;
+        return '<section class="st-group' + (state.closed[k] ? " closed" : "") + '">' +
+          '<button class="st-ghead" type="button" data-gk="' + k + '">' +
+            '<em class="chip ' + ACH[k][0] + '">' + names[k] + "</em>" +
+            '<span class="g-n">' + g.length + " 个</span>" +
+            (fails ? '<span class="g-fail">失效 ' + fails + "</span>" : "") +
+            '<svg class="g-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
+          "</button>" +
+          '<div class="g-rows">' + g.map(itemHtml).join("") + "</div>" +
+        "</section>";
+      }).join("") || '<div class="sites-empty">没有匹配的站点</div>';
       var pager = $("#sites-pager");
       if (pager) pager.innerHTML = "";
       var cnt = $("#sites-count");
       if (cnt) cnt.textContent = MOCK.sitesList.length;
       var hint = $("#sites-hint");
       if (hint) hint.textContent = rows.length === MOCK.sitesList.length ? "全部" : "匹配 " + rows.length + " 个";
+      renderStats();
       paintDetail();
     }
 
@@ -1689,6 +1733,13 @@
 
     /* ---- 列表交互 ---- */
     list.addEventListener("click", function (e) {
+      var gh = e.target.closest(".st-ghead");
+      if (gh) {
+        var gk = gh.getAttribute("data-gk");
+        state.closed[gk] = !state.closed[gk];
+        gh.parentElement.classList.toggle("closed", !!state.closed[gk]);
+        return;
+      }
       if (e.target.classList && e.target.classList.contains("site-pick")) return;
       var it = e.target.closest(".site-item");
       if (!it) return;

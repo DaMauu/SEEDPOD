@@ -1788,3 +1788,36 @@ html, body { overflow-x: hidden; }
 .view[data-view="sites"] .sites-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .view[data-view="sites"] .sites-rows { flex: 1; max-height: none; min-height: 0; overflow-y: auto; }
 .view[data-view="sites"] .st-foot { flex: 0 0 auto; }
+/* 站点页：顶部状态带 */
+.view[data-view="sites"] .sites-stats { flex: 0 0 auto; display: flex; align-items: center; gap: 27px;
+  background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 13px 20px; margin-bottom: 12px; }
+.ss-nums { display: flex; gap: 26px; }
+.ss-nums span { display: block; font-size: 10.5px; color: var(--muted-2); }
+.ss-nums b { font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
+.ss-nums b.warn { color: var(--amber); }
+.ss-nums b.bad { color: var(--red); }
+.ss-arch { flex: 1; min-width: 0; }
+.ss-bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
+.ss-bar .seg { display: block; height: 100%; }
+.ss-bar .seg.np { background: #8b7cf6; }
+.ss-bar .seg.u3d { background: #34c4a0; }
+.ss-bar .seg.gz { background: #4aa3f5; }
+.ss-bar .seg.oth { background: #f0a93b; }
+.ss-bar .seg.unk { background: #c6cbd6; }
+.ss-legend { display: flex; gap: 14px; margin-top: 7px; font-size: 10.5px; color: var(--muted); }
+.ss-legend .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
+.ss-legend .dot.np { background: #8b7cf6; } .ss-legend .dot.u3d { background: #34c4a0; }
+.ss-legend .dot.gz { background: #4aa3f5; } .ss-legend .dot.oth { background: #f0a93b; }
+.ss-legend .dot.unk { background: #c6cbd6; }
+
+/* 站点页：按架构分组 */
+.st-group + .st-group { border-top: 1px solid var(--line); }
+.st-ghead { display: flex; align-items: center; gap: 10px; width: 100%; height: 34px;
+  padding: 0 18px; border: 0; background: #fafbfd; cursor: pointer; font: inherit; text-align: left; }
+.st-ghead:hover { background: #f5f7fb; }
+.st-ghead .g-n { font-size: 11px; color: var(--muted); }
+.st-ghead .g-fail { font-size: 11px; color: var(--red); }
+.st-ghead .g-chev { width: 14px; height: 14px; margin-left: auto; color: var(--muted-2); transition: transform .18s; }
+.st-group.closed .g-chev { transform: rotate(-90deg); }
+.st-group.closed .g-rows { display: none; }
+.st-head, .site-item { grid-template-columns: 26px minmax(0, 1fr) 86px 92px 116px 40px; }
