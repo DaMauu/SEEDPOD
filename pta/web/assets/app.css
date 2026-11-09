@@ -1398,3 +1398,16 @@ html, body { overflow-x: hidden; }
 .rule-body .set-field .ctl .pick-row { max-width: none; }
 .rule-body .set-fields:has(.pick-row) { max-width: 960px; }
 .rule-body .set-field:has(.pick-row) .cat-chip { padding: 3px 7px; }
+/* 更紧凑：搜索预设与整体表单密度 */
+.rule-body .set-field:has(.pick-row) { padding: 3px 0; gap: 10px; }
+.rule-body .set-field:has(.pick-row) .lbl { flex: 0 0 64px; padding-top: 3px; }
+.rule-body .set-field:has(.pick-row) .lbl span { font-size: 11.5px; }
+.rule-body .set-field:has(.pick-row) .cat-chip { font-size: 10px; padding: 2px 6px; }
+.rule-body .set-field:has(.pick-row) .pick-row { gap: 4px; }
+.rule-body .set-field .ctl .input,
+.rule-body .set-field .ctl .select { height: 26px; font-size: 11px; }
+.rule-body .set-field { padding: 5px 0; }
+.rule-body .set-field .lbl span { font-size: 11.5px; }
+.rule-body .set-field .lbl i { font-size: 10.5px; }
+.rule-body .set-fields:has(.pick-row) { max-width: 900px; }
+.sec-actions { padding: 6px 4px 0; }
