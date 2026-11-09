@@ -2082,3 +2082,31 @@ body::after {
 .view[data-view="queue"] .qd-shots { justify-content: flex-start; }
 .view[data-view="sources"] .dl-panel { height: auto; max-height: 620px; }
 .view[data-view="sources"] .dl-body { flex: 0 0 auto; }
+.view[data-view="queue"] .qd-main { height: 100%; }
+.view[data-view="queue"] .qd-shots { height: auto; flex: 1 1 auto; justify-content: center; }
+.view[data-view="queue"] .qd-side { height: 100%; }
+.view[data-view="queue"] .qd-side .sd-card { height: auto; flex: 1 1 auto; display: flex; flex-direction: column; }
+.view[data-view="queue"] .qd-side .sd-card:first-child { flex: 1 1 auto; }
+.view[data-view="queue"] .qd-side textarea { flex: 1; height: auto; }
+.view[data-view="queue"] .qd-grid { grid-template-rows: 1fr; }
+/* 待审核：右列简介与截图等分高度 */
+.view[data-view="queue"] .qd-side { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.view[data-view="queue"] .qd-side .sd-card { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.view[data-view="queue"] .qd-side textarea { flex: 1; height: auto; }
+.view[data-view="queue"] .qd-main { height: 100%; }
+.view[data-view="queue"] .qd-main .sd-card { flex: 0 0 auto; }
+.view[data-view="queue"] .qd-grid { grid-template-rows: minmax(0, 1fr); }
+/* 总览内容垂直居中 */
+.view[data-view="dashboard"] { justify-content: center; }
+.view[data-view="queue"] .qd-side .sd-card:first-child { flex: 1 1 0; height: auto; }
+.view[data-view="queue"] .qd-side { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.view[data-view="queue"] .qd-side .sd-card,
+.view[data-view="queue"] .qd-side .qd-shots { flex: 0 0 calc(50% - 5px); height: auto; min-height: 0; }
+.view[data-view="queue"] .qd-side textarea { flex: 1 1 auto; height: auto; min-height: 0; }
+/* 待审核：发布信息独占一行，简介与截图并排等高 */
+.view[data-view="queue"] .qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px; align-items: stretch; height: auto; }
+.view[data-view="queue"] .qd-pubinfo { grid-column: 1 / -1; }
+.view[data-view="queue"] .qd-desc-card { display: flex; flex-direction: column; }
+.view[data-view="queue"] .qd-desc-card textarea { flex: 1; height: auto; min-height: 84px; }
+.view[data-view="queue"] .qd-shots { display: flex; flex-direction: column; justify-content: flex-start; height: auto; }

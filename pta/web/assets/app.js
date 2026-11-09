@@ -562,23 +562,20 @@
           "</div>" +
         "</div>" +
         '<div class="qd-grid">' +
-          '<div class="qd-main">' +
-            '<section class="sd-card"><h3>发布信息</h3>' +
-              '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
-              '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(subTitle(it)) + '"></div>' +
-              '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
-            "</section>" +
-            '<section class="sd-card qd-shots"><h3>截图</h3>' +
-              '<div class="shots">' + shotHtml(1) + shotHtml(2) + shotHtml(3) +
-                '<button class="shot add" id="qd-addshot">上传</button></div>' +
-            "</section>" +
-          "</div>" +
-          '<div class="qd-side">' +
-            '<section class="sd-card"><h3>简介</h3>' +
-              '<textarea class="input sd-note" id="qd-desc" rows="3">' +
-                escapeHtml(introText(it)) + "</textarea>" +
-            "</section>" +
-          "</div>" +
+          '<section class="sd-card qd-pubinfo"><h3>发布信息</h3>' +
+            '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
+            '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(subTitle(it)) + '"></div>' +
+            '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
+          "</section>" +
+          '<section class="sd-card qd-desc-card"><h3>简介</h3>' +
+            '<textarea class="input sd-note" id="qd-desc" rows="3">' +
+              escapeHtml(introText(it)) + "</textarea>" +
+          "</section>" +
+          '<section class="sd-card qd-shots"><h3>截图</h3>' +
+            '<div class="shots">' + shotHtml(1) + shotHtml(2) + shotHtml(3) +
+              '<button class="shot add" id="qd-addshot">上传</button></div>' +
+          "</section>" +
+        "</div>" +
         "</div>" +
         (it.status === "publishing"
           ? '<div class="qd-status warn">正在发布到主站…</div>'
