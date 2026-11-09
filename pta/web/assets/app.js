@@ -1148,11 +1148,12 @@
         '<div class="drawer-head">' +
           '<div class="drawer-t"><div class="drawer-title">' + g.name + "</div>" +
           '<div class="drawer-desc">' + g.desc + "</div></div>" +
-          '<span class="drawer-meta">' + g.sum + "</span>" +
+          '<div class="drawer-head-right">' +
+            '<span class="drawer-meta">' + g.sum + "</span>" +
+            '<button class="btn primary slim sec-save" data-set="' + setKey + '">保存</button>' +
+          "</div>" +
         "</div>" +
-        '<div class="drawer-body">' + ruleListHtml(g.rules, setKey) +
-          '<div class="sec-actions"><button class="btn primary slim sec-save" data-set="' + setKey + '">保存</button></div>' +
-        "</div>" +
+        '<div class="drawer-body">' + ruleListHtml(g.rules, setKey) + "</div>" +
       "</section>";
     }
 
