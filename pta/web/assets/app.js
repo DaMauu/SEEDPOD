@@ -1554,6 +1554,7 @@
           "<span>下次<b>" + escapeHtml(next) + "</b></span>" +
         "</div>" +
         '<div class="sd-compact">' +
+          '<div class="sd-col">' +
           '<div class="sd-block"><h4>登录</h4>' +
             '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
             '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
@@ -1565,6 +1566,7 @@
             '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
             '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
             '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
+          "</div>" +
           "</div>" +
           '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
             recs.map(function (r) {

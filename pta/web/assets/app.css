@@ -1987,3 +1987,11 @@ html, body { overflow-x: hidden; }
 .site-expand .sd-form .set-field .ctl .select { width: 100%; }
 .site-expand .sd-form .set-field:has(textarea) { display: block; grid-column: 1 / -1; }
 .site-expand .sd-form .set-field:has(textarea) .lbl { margin-bottom: 6px; }
+/* 概览：左侧登录/抓取上下，右侧最近收录定宽 */
+.site-expand .sd-compact { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 0 40px; align-items: start; }
+.site-expand .sd-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.site-expand .sd-recent-wrap { width: 460px; max-width: 100%; justify-self: end; }
+.site-expand .sd-compact { grid-template-columns: 300px 460px; justify-content: start; }
+.site-expand .sd-recent-wrap { justify-self: start; }
+.site-expand .sd-compact { grid-template-columns: 300px minmax(0, 1fr); justify-content: stretch; }
+.site-expand .sd-recent-wrap { justify-self: end; }
