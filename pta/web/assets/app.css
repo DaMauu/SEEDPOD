@@ -1318,3 +1318,17 @@ html, body { overflow-x: hidden; }
 .rule-body .set-field:has(.pick-row) .ctl { width: 100%; }
 .rule-body .set-field:has(.pick-row) .pick-row { gap: 6px; }
 .rule-body .set-field:has(.pick-row) .cat-chip { font-size: 11px; padding: 4px 10px; }
+
+/* 站点设置：与流程一致的双列紧凑排布 */
+.sd-form .set-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 34px; }
+.sd-form .set-field { flex-direction: row; align-items: center; gap: 16px; padding: 11px 0; }
+.sd-form .set-field .lbl { flex: 1; min-width: 0; }
+.sd-form .set-field .lbl i { display: block; margin-top: 2px; }
+.sd-form .set-field .ctl { flex: 0 0 auto; width: 230px; display: flex; justify-content: flex-end; }
+.sd-form .set-field .ctl .input,
+.sd-form .set-field .ctl .select { width: 100%; height: 32px; font-size: 12px; }
+.sd-form .set-field:has(textarea),
+.sd-form .set-field:has(.pick-row) { grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: 8px; }
+.sd-form .set-field:has(textarea) .ctl,
+.sd-form .set-field:has(.pick-row) .ctl { width: 100%; }
+.sd-form .set-field .ctl textarea { width: 100%; min-height: 68px; }
