@@ -928,9 +928,10 @@
       return '<button class="switch' + ((r.on || r.v) ? " on" : "") + '" data-switch="' + (r.k || "") + '"><i></i></button>';
     }
     if (r.type === "select") {
-      var opts = (r.opts || []).map(function (o) {
+      var cur = r.v || "";
+      var opts = (cur === "" ? '<option value="" selected>未选择</option>' : "") + (r.opts || []).map(function (o) {
         var label = r.labels && r.labels[o] !== undefined ? r.labels[o] : o;
-        return '<option value="' + o + '"' + (o === r.v ? " selected" : "") + ">" + label + "</option>";
+        return '<option value="' + o + '"' + (o === cur ? " selected" : "") + ">" + label + "</option>";
       }).join("");
       return '<select class="select"' + k + ">" + opts + "</select>";
     }
@@ -954,11 +955,11 @@
   }
 
   var FETCH_RULES = [
-    { name: "搜索预设", sum: "电影 · 原盘 · 1080p+ · 免费", rows: [
-      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录片", "音乐", "体育", "演唱会", "MV", "有声书", "电子书", "软件", "游戏", "其他"], sel: ["电影"], hint: "对应站点搜索的类别，决定列表里会出现什么" },
-      { t: "媒介", type: "custom", chips: ["原盘(Full Disc)", "UHD 原盘", "3D 原盘", "Remux", "Encode", "Blu-ray", "HDDVD", "DVD", "HDTV", "WEB-DL", "WEBRip", "TVRip", "VHS", "其他"], sel: ["原盘(Full Disc)"], hint: "锁到站点的 medium / type 字段" },
-      { t: "分辨率", type: "custom", chips: ["480p", "576p", "720p", "1080i", "1080p", "2160p", "4320p/8K"], sel: ["1080i", "1080p", "2160p", "4320p/8K"] },
-      { t: "优惠", type: "custom", chips: ["免费", "2x", "2x 免费", "50%", "2x 50%", "30%", "普通", "置顶精选"], sel: ["免费", "2x 免费"], hint: "按站点优惠状态筛，BHD 这类站点没有免费选项时会自动跳过" }
+    { name: "搜索预设", sum: "未设置", rows: [
+      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录片", "音乐", "体育", "演唱会", "MV", "有声书", "电子书", "软件", "游戏", "其他"], sel: [], hint: "对应站点搜索的类别，决定列表里会出现什么" },
+      { t: "媒介", type: "custom", chips: ["原盘(Full Disc)", "UHD 原盘", "3D 原盘", "Remux", "Encode", "Blu-ray", "HDDVD", "DVD", "HDTV", "WEB-DL", "WEBRip", "TVRip", "VHS", "其他"], sel: [], hint: "锁到站点的 medium / type 字段" },
+      { t: "分辨率", type: "custom", chips: ["480p", "576p", "720p", "1080i", "1080p", "2160p", "4320p/8K"], sel: [] },
+      { t: "优惠", type: "custom", chips: ["免费", "2x", "2x 免费", "50%", "2x 50%", "30%", "普通", "置顶精选"], sel: [], hint: "按站点优惠状态筛，BHD 这类站点没有免费选项时会自动跳过" }
     ] },
     { name: "拉取", sum: "逐页翻 · 断点续抓", rows: [
       { t: "每页间隔", type: "text", v: "3.0 秒" },
@@ -1000,7 +1001,7 @@
     ] },
     { name: "副标题与简介", sum: "按模板自动生成", rows: [
       { t: "发布标题", type: "custom", html: '<span class="tpl-fixed">直接用站点标题，原样发布，不改字</span>', hint: "标题不做模板，源站怎么写就怎么发" },
-      { t: "中文副标题模板", type: "custom", hint: "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符", html: '<div class="tpl-wrap"><input class="input" id="sub-tpl" value="{电影名} | {地区}原盘 | 导演:{导演} | 主演:{主演1}/{主演2}/{主演3} | [{音轨}] [{字幕}]"><div class="tpl-eg" id="sub-eg"></div></div>' },
+      { t: "中文副标题模板", type: "custom", hint: "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符", html: '<div class="tpl-wrap"><input class="input" id="sub-tpl" placeholder="例：{电影名} | {地区}原盘 | 导演:{导演}"><div class="tpl-eg" id="sub-eg"></div></div>' },
       { t: "副标题语言", type: "select", v: "中文", opts: ["中文", "中英双语", "只用英文"] },
       { t: "简介图片", type: "select", v: "转存到图床", opts: ["转存到图床", "保留外链", "不保留图片"], hint: "外链会失效，转存最稳" }
     ] },
@@ -1079,7 +1080,19 @@
 
   var RULE_SETS = { fetch: FETCH_RULES, dedupe: DEDUPE_RULES, pub: PUB_RULES };
 
-  var FLOW_KEY = "pta.flow5";
+  /* 默认全部留空：不预选、不开启，避免看起来像已经配好了 */
+  Object.keys(RULE_SETS).forEach(function (k) {
+    RULE_SETS[k].forEach(function (g) {
+      g.sum = "未设置";
+      (g.rows || []).forEach(function (r) {
+        if (r.chips) r.sel = [];
+        if (r.type === "switch") r.on = false;
+        if (r.type === "select" || r.type === "text" || r.type === "textarea" || r.type === "password") r.v = "";
+      });
+    });
+  });
+
+  var FLOW_KEY = "pta.flow6";
   function saveFlowState() {
     var data = {};
     Object.keys(RULE_SETS).forEach(function (k) {
@@ -1149,9 +1162,9 @@
 
     loadFlowState();
     host.innerHTML =
-      sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "电影 · 原盘 · 逐行判定", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "本地词库 + 目标站", rules: DEDUPE_RULES }, 1, "dedupe") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub");
+      sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "未设置", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "未设置", rules: DEDUPE_RULES }, 1, "dedupe") +
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "未设置", rules: PUB_RULES }, 2, "pub");
 
     renderTpl();
 
@@ -1159,10 +1172,7 @@
     var TKEY = "pta.target";
     var target = null;
     try { target = localStorage.getItem(TKEY); } catch (e) {}
-    if (!target || !MOCK.sitesList.some(function (x) { return x.name === target; })) {
-      var first = MOCK.sitesList.filter(function (x) { return x.login === "ok" && x.enabled; })[0] || MOCK.sitesList[0];
-      target = first ? first.name : "";
-    }
+    if (!target || !MOCK.sitesList.some(function (x) { return x.name === target; })) target = "";
     function siteOf(h) { return MOCK.sitesList.filter(function (x) { return x.name === h; })[0]; }
     function paintTarget() {
       var t = siteOf(target);
@@ -1175,9 +1185,8 @@
         av.textContent = m ? m[0].slice(0, 2).toUpperCase() : label.slice(0, 1);
       }
       var pr = document.querySelector('.rule-item[data-set="pub"][data-idx="0"] .rule-sum');
-      if (pr) pr.textContent = "发到 " + (t ? (t.title || t.name) : "—") + " · 站内图床";
-      var meta = document.querySelector('.drawer[data-name="发布"] .drawer-meta');
-      if (meta) meta.textContent = "半自动 · 相似度 0.85 · 发到 " + (t ? (t.title || t.name) : "—");
+      if (pr) pr.textContent = t ? "发到 " + (t.title || t.name) + " · 站内图床" : "未设置";
+      refreshSums();
     }
     paintTarget();
 
@@ -1215,6 +1224,47 @@
     }
 
     /* clicks */
+    function domSum(item) {
+      var setKey = item.getAttribute("data-set"), idx = Number(item.getAttribute("data-idx"));
+      var rows = ((RULE_SETS[setKey] || [])[idx] || {}).rows || [];
+      var parts = [];
+      [].forEach.call(item.querySelectorAll(".set-field"), function (f, m) {
+        var r = rows[m];
+        if (!r) return;
+        if (r.chips) {
+          var on = [].map.call(f.querySelectorAll(".cat-chip.on"), function (c) { return c.textContent; });
+          if (on.length) parts.push(on.join("/"));
+          return;
+        }
+        if (r.type === "switch") {
+          if (f.querySelector(".switch.on")) parts.push(r.t);
+          return;
+        }
+        if (r.type === "custom" || r.type === "button") return;
+        var ctl = f.querySelector(".input, .select");
+        if (ctl && ctl.value) parts.push(ctl.value);
+      });
+      return parts.length ? parts.slice(0, 3).join(" · ") + (parts.length > 3 ? " 等" : "") : "未设置";
+    }
+
+    function refreshSums() {
+      host.querySelectorAll(".rule-item").forEach(function (item) {
+        if (item.getAttribute("data-set") === "pub" && item.getAttribute("data-idx") === "0") return;
+        var el = item.querySelector(".rule-sum");
+        if (el) el.textContent = domSum(item);
+      });
+      host.querySelectorAll(".drawer").forEach(function (sec) {
+        var meta = sec.querySelector(".drawer-meta");
+        if (!meta) return;
+        var first = "";
+        [].forEach.call(sec.querySelectorAll(".rule-item .rule-sum"), function (s) {
+          if (!first && s.textContent && s.textContent !== "未设置") first = s.textContent;
+        });
+        meta.textContent = first || "未设置";
+      });
+    }
+    refreshSums();
+
     host.addEventListener("click", function (e) {
       var change = e.target.closest("#tp-change");
       if (change) {
@@ -1226,9 +1276,9 @@
         return;
       }
       var pick = e.target.closest(".pick-row .cat-chip");
-      if (pick) { pick.classList.toggle("on"); return; }
+      if (pick) { pick.classList.toggle("on"); refreshSums(); return; }
       var sw = e.target.closest("button[data-switch]");
-      if (sw) { sw.classList.toggle("on"); return; }
+      if (sw) { sw.classList.toggle("on"); refreshSums(); return; }
       var btn = e.target.closest("button[data-btn]");
       if (btn) { toast(btn.getAttribute("data-btn") + "（假数据）"); return; }
       var row = e.target.closest(".rule-row");
@@ -1266,7 +1316,9 @@
 
     host.addEventListener("input", function (e) {
       if (e.target && e.target.id === "sub-tpl") renderTpl();
+      refreshSums();
     });
+    host.addEventListener("change", refreshSums);
 
     document.addEventListener("click", function (e) {
       if (!e.target.closest || !e.target.closest("#save-crawl")) return;
