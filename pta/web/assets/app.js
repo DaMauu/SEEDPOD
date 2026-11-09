@@ -1129,9 +1129,7 @@
             '<span class="rule-sum">' + r.sum + "</span>" +
             '<svg class="rule-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
           "</button>" +
-          '<div class="rule-body"><div class="set-fields">' + setRowsHtml(r.rows) + "</div>" +
-            '<div class="rule-actions"><button class="btn primary slim rule-save" data-set="' + setKey + '" data-idx="' + i + '">保存</button></div>' +
-          "</div>" +
+          '<div class="rule-body"><div class="set-fields">' + setRowsHtml(r.rows) + "</div></div>" +
         "</div>";
       }).join("") + "</div>";
     }
@@ -1143,7 +1141,9 @@
           '<div class="drawer-desc">' + g.desc + "</div></div>" +
           '<span class="drawer-meta">' + g.sum + "</span>" +
         "</div>" +
-        '<div class="drawer-body">' + ruleListHtml(g.rules, setKey) + "</div>" +
+        '<div class="drawer-body">' + ruleListHtml(g.rules, setKey) +
+          '<div class="sec-actions"><button class="btn primary slim sec-save" data-set="' + setKey + '">保存</button></div>' +
+        "</div>" +
       "</section>";
     }
 
@@ -1240,25 +1240,28 @@
         if (!wasOpen) { item.classList.add("open"); renderTpl(); }
         return;
       }
-      var save = e.target.closest(".rule-save");
+      var save = e.target.closest(".sec-save");
       if (save) {
-        var setKey = save.getAttribute("data-set");
-        var idx = Number(save.getAttribute("data-idx"));
-        var set = RULE_SETS[setKey];
-        var body = save.closest(".rule-body");
-        [].forEach.call(body.querySelectorAll(".set-field"), function (f, m) {
-          var r = set[idx].rows[m];
-          if (!r) return;
-          var s2 = f.querySelector("[data-switch]");
-          if (s2) { r.on = s2.classList.contains("on"); return; }
-          var pk = f.querySelector(".pick-row");
-          if (pk) { r.sel = [].map.call(pk.querySelectorAll(".cat-chip.on"), function (c) { return c.textContent; }); return; }
-          var ctl = f.querySelector(".input, .select");
-          if (ctl) r.v = ctl.value;
+        var sKey = save.getAttribute("data-set");
+        host.querySelectorAll('.rule-item[data-set="' + sKey + '"]').forEach(function (item) {
+          var setKey = item.getAttribute("data-set");
+          var idx = Number(item.getAttribute("data-idx"));
+          var set = RULE_SETS[setKey];
+          var body = item.querySelector(".rule-body");
+          [].forEach.call(body.querySelectorAll(".set-field"), function (f, m) {
+            var r = set[idx].rows[m];
+            if (!r) return;
+            var s2 = f.querySelector("[data-switch]");
+            if (s2) { r.on = s2.classList.contains("on"); return; }
+            var pk = f.querySelector(".pick-row");
+            if (pk) { r.sel = [].map.call(pk.querySelectorAll(".cat-chip.on"), function (c) { return c.textContent; }); return; }
+            var ctl = f.querySelector(".input, .select");
+            if (ctl) r.v = ctl.value;
+          });
         });
         saveFlowState();
-        save.closest(".rule-item").classList.remove("open");
-        toast("已保存：" + set[idx].name);
+        var label = { fetch: "抓取", dedupe: "查重", pub: "发布", dl: "下载" }[sKey] || sKey;
+        toast(label + "设置已保存");
       }
     });
 
