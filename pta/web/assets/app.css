@@ -1527,4 +1527,15 @@ html, body { overflow-x: hidden; }
 .view[data-view="crawl"] .drawer[data-name="下载器"] .node-row {
   grid-template-columns: 200px 118px 1fr 60px 44px; padding: 5.5px 27px; margin: 0 -23px; }
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-set { justify-self: end; }
-.nodes-foot .btn { height: 30px; font-size: 12px; }
+.nodes-foot .btn { height: 30px; font-size: 12px; }/* 开关型行压紧：说明改成同一行的浅色小字 */
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) {
+  min-height: 30px; padding: 3px 0; }
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl {
+  flex-direction: row; align-items: center; gap: 10px; min-width: 0; margin-right: 16px; }
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl i {
+  margin: 0; font-size: 10.5px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) .ctl { width: auto; }
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl i {
+  display: inline-block; margin-left: 8px; vertical-align: middle; }
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl span { display: inline-block; vertical-align: middle; }
+.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl { line-height: 18px; }
