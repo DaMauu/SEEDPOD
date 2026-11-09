@@ -1821,3 +1821,17 @@ html, body { overflow-x: hidden; }
 .st-group.closed .g-chev { transform: rotate(-90deg); }
 .st-group.closed .g-rows { display: none; }
 .st-head, .site-item { grid-template-columns: 26px minmax(0, 1fr) 86px 92px 116px 40px; }
+/* 站点表：加大左侧留白与列间距 */
+.st-head, .site-item { grid-template-columns: 28px minmax(0, 1fr) 86px 92px 116px 40px; gap: 16px; padding: 0 22px; }
+.sites-bulk { padding: 0 22px; }
+.st-ghead { padding: 0 22px; gap: 12px; }
+.st-foot { padding: 0 22px; }
+.sites-bulk .bulk-n { font-size: 11.5px; color: var(--muted); }
+.sites-bulk .bulk-n b { color: var(--ink); font-weight: 600; }
+.sites-bulk { display: flex; align-items: center; gap: 10px; }
+.ss-bar { display: flex; gap: 2px; height: 8px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
+.ss-bar .seg { display: block; height: 100%; }
+.sites-bulk .spacer { flex: 1; }
+.view[data-view="sites"] .st-head,
+.view[data-view="sites"] .site-item { padding: 0 22px; }
+.view[data-view="sites"] .site-item .site-pick { margin-right: 2px; }

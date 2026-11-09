@@ -1663,17 +1663,12 @@
       var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
       var count = { NP: st.np, UNIT3D: st.unit3d, GZ: st.gz, OTHER: st.oth, "?": st.unk };
       var total = st.total || 1;
-      var colors = { NP: "#8b7cf6", UNIT3D: "#34c4a0", GZ: "#4aa3f5", OTHER: "#f0a93b", "?": "#c6cbd6" };
-      var acc = 0, stops = [];
-      order.filter(function (k) { return count[k]; }).forEach(function (k) {
-        var w = count[k] / total * 100, a = acc, b = acc + w;
-        stops.push(colors[k] + " " + a.toFixed(2) + "%");
-        stops.push(colors[k] + " " + Math.max(a, b - 0.9).toFixed(2) + "%");
-        acc = b;
-      });
-      var barStyle = "background: linear-gradient(90deg," + stops.join(",") + ")";
+      var colors = { NP: "#4f46e5", UNIT3D: "#7a72ec", GZ: "#a29cef", OTHER: "#c7c3f5", "?": "#d5d8e0" };
+      var segs = order.filter(function (k) { return count[k]; }).map(function (k) {
+        return '<i class="seg" style="width:' + (count[k] / total * 100).toFixed(2) + '%;background:' + colors[k] + '"></i>';
+      }).join("");
       var legend = order.filter(function (k) { return count[k]; }).map(function (k) {
-        return '<span><i class="dot ' + ACH[k][0] + '"></i>' + names[k] + " " + count[k] + "</span>";
+        return '<span><i class="dot" style="background:' + colors[k] + '"></i>' + names[k] + " " + count[k] + "</span>";
       }).join("");
       host.innerHTML =
         '<div class="ss-nums">' +
@@ -1682,7 +1677,7 @@
           '<div><span>登录失效</span><b class="warn">' + st.loginFail + "</b></div>" +
           '<div><span>分享率不足</span><b class="bad">' + st.lowRatio + "</b></div>" +
         "</div>" +
-        '<div class="ss-arch"><div class="ss-bar" style="' + barStyle + '"></div>' +
+        '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
           '<div class="ss-legend">' + legend + "</div></div>";
     }
 
@@ -1850,6 +1845,11 @@
       var bar = $("#sites-bulk"), n = $("#bulk-n");
       if (n) n.textContent = state.picks.length;
       if (bar) bar.hidden = false;
+      var rows = filtered();
+      var allPicked = rows.length > 0 && rows.every(function (x) { return state.picks.indexOf(x.name) >= 0; });
+      var tg = $("#bulk-toggle"), total = $("#bulk-total");
+      if (tg) tg.textContent = allPicked ? "取消全选" : "全选";
+      if (total) total.textContent = rows.length;
       var openBtn = $("#bulk-open");
       if (openBtn) openBtn.disabled = state.picks.length === 0;
     }
@@ -1870,15 +1870,15 @@
       paint();
     });
 
-    var bAll = $("#bulk-all"), bAllAll = $("#bulk-allall"), bNone = $("#bulk-none"), bOpen = $("#bulk-open");
-    if (bAll) bAll.addEventListener("click", function () {
-      filtered().forEach(function (x) { if (state.picks.indexOf(x.name) < 0) state.picks.push(x.name); });
+    var bToggle = $("#bulk-toggle"), bOpen = $("#bulk-open"), bAll = null, bNone = null;
+    if (bToggle) bToggle.addEventListener("click", function () {
+      var rows = filtered();
+      var allPicked = rows.length > 0 && rows.every(function (x) { return state.picks.indexOf(x.name) >= 0; });
+      if (allPicked) state.picks = state.picks.filter(function (n) { return !rows.some(function (x) { return x.name === n; }); });
+      else rows.forEach(function (x) { if (state.picks.indexOf(x.name) < 0) state.picks.push(x.name); });
       refreshBulk(); paint();
     });
-    if (bAllAll) bAllAll.addEventListener("click", function () {
-      state.picks = MOCK.sitesList.map(function (x) { return x.name; });
-      refreshBulk(); paint();
-    });
+    if (bAll) bAll.addEventListener("click", function () {});
     if (bNone) bNone.addEventListener("click", function () { state.picks = []; refreshBulk(); paint(); });
 
     function initBulkModal() {
