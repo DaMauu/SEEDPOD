@@ -1293,3 +1293,28 @@ html, body { overflow-x: hidden; }
 .log-src { color: var(--muted); font-size: 11.5px; }
 .log-msg { color: var(--ink); }
 .log-row.error .log-msg { color: var(--red); }
+
+/* 手风琴内表单：双列紧凑排布，控件靠右定宽 */
+.rule-body .set-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 34px; }
+.rule-body .set-field { flex-direction: row; align-items: center; gap: 16px; padding: 9px 0; border-bottom: 0; }
+.rule-body .set-field .lbl { min-width: 0; flex: 1; }
+.rule-body .set-field .lbl span { font-size: 12.5px; }
+.rule-body .set-field .lbl i { display: block; margin-top: 2px; line-height: 1.5; }
+.rule-body .set-field .ctl { flex: 0 0 auto; width: 216px; display: flex; justify-content: flex-end; }
+.rule-body .set-field .ctl .input,
+.rule-body .set-field .ctl .select { width: 100%; height: 30px; font-size: 12px; }
+.rule-body .set-field .ctl .switch { margin: 0; }
+.rule-body .set-field:has(.pick-row),
+.rule-body .set-field:has(.tpl-wrap),
+.rule-body .set-field:has(.target-pick),
+.rule-body .set-field:has(textarea) { grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 0; }
+.rule-body .set-field:has(.pick-row) .ctl,
+.rule-body .set-field:has(.tpl-wrap) .ctl,
+.rule-body .set-field:has(.target-pick) .ctl,
+.rule-body .set-field:has(textarea) .ctl { width: 100%; justify-content: flex-start; }
+.rule-body .set-field:has(.pick-row) .ctl .pick-row { justify-content: flex-start; }
+.rule-body .set-field .ctl .btn { min-width: 0; }
+.rule-body .set-field:has(.pick-row) { grid-column: auto; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 0; }
+.rule-body .set-field:has(.pick-row) .ctl { width: 100%; }
+.rule-body .set-field:has(.pick-row) .pick-row { gap: 6px; }
+.rule-body .set-field:has(.pick-row) .cat-chip { font-size: 11px; padding: 4px 10px; }

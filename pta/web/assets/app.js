@@ -964,7 +964,7 @@
       { t: "必须带中字", type: "switch", on: true, hint: "没中文字幕的不要" },
       { t: "只要免费/优惠", type: "select", v: "不限制", opts: ["不限制", "只要 FREE", "FREE 或 2x", "FREE 或 2x 或 50%"], hint: "控制下载计费，免费期再下" },
       { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
-      { t: "白名单关键词", type: "text", v: "", ph: "逗号分隔，只抓含这些词的（留空不限）" },
+      { t: "白名单关键词", type: "text", v: "", ph: "只抓含这些词的，留空不限" },
       { t: "排除 DIY 原盘", type: "switch", on: true, hint: "带 DIY / 修改 / 加长 标记的不要" },
       { t: "排除限制分发", type: "switch", on: true },
       { t: "排除独占", type: "switch", on: true },
@@ -1154,6 +1154,8 @@
       }
       var pr = document.querySelector('.rule-item[data-set="pub"][data-idx="0"] .rule-sum');
       if (pr) pr.textContent = "发到 " + (t ? (t.title || t.name) : "—") + " · 站内图床";
+      var meta = document.querySelector('.drawer[data-i="1"] .drawer-meta');
+      if (meta) meta.textContent = "半自动 · 相似度 0.85 · 发到 " + (t ? (t.title || t.name) : "—");
     }
     paintTarget();
 
