@@ -703,10 +703,10 @@
       var total = workers.reduce(function (a, n) { return a + n.total; }, 0);
 
       var sub = $("#nodes-bar-sub");
-      if (sub) sub.textContent = "共 " + nodes.length + " 台 · " + onlineAll + " 在线 · 做种 " +
-        totalSeed.toLocaleString() + " · 磁盘余量 " + (total - used).toFixed(1) + " TB";
+      if (sub) sub.textContent = "共 " + nodes.length + " 台";
       var meta = $("#nodes-drawer-meta");
-      if (meta) meta.textContent = onlineAll + " / " + nodes.length + " 在线";
+      if (meta) meta.textContent = onlineAll + " / " + nodes.length + " 在线 · 做种 " +
+        totalSeed.toLocaleString() + " · 余量 " + (total - used).toFixed(1) + " TB";
 
       host.innerHTML = nodes.map(function (nd, i) {
         var isCtrl = nd.role && nd.role.indexOf("编排") === 0;

@@ -1508,3 +1508,9 @@ html, body { overflow-x: hidden; }
 .view[data-view="crawl"] .drawer-title { font-size: 14px; }
 .view[data-view="crawl"] .rule-item .rule-row { padding: 10px 4px; }
 .view[data-view="crawl"] .sec-actions { padding: 8px 4px 0; }
+/* 下载器栏目与其它栏目统一 */
+.view[data-view="crawl"] .drawer[data-name="下载器"] .drawer-body-flush { padding: 0 22px 10px; }
+.nodes-inner { border-top: 1px solid var(--line); }
+.nodes-bar { padding: 10px 0 0; }
+.nodes-bar-title { font-size: 11.5px; color: var(--muted-2); font-weight: 500; }
+.nodes-bar-sub { font-size: 11.5px; color: var(--muted); }
