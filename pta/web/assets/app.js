@@ -1378,8 +1378,11 @@
     ];
     panel.innerHTML = '<div class="set-stack">' + GROUPS.map(function (g, i) {
       return '<section class="set-card' + (i === 0 ? " first" : "") + '">' +
-        '<h2 class="set-h2">' + g.name + "</h2>" +
-        '<p class="set-desc">' + g.desc + "</p>" +
+        '<div class="set-card-head">' +
+          '<div class="set-card-t"><h2 class="set-h2">' + g.name + "</h2>" +
+          '<p class="set-desc">' + g.desc + "</p></div>" +
+          '<button type="button" class="btn primary slim set-save">保存</button>' +
+        "</div>" +
         '<div class="set-fields">' + setRowsHtml(g.rows) + "</div></section>";
     }).join("") + "</div>";
     panel.addEventListener("click", function (e) {
@@ -1403,7 +1406,7 @@
     })();
 
     document.addEventListener("click", function (e) {
-      if (!e.target.closest || !e.target.closest("#save-settings")) return;
+      if (!e.target.closest || !e.target.closest(".set-save")) return;
       var vals = [];
       panel.querySelectorAll(".set-field").forEach(function (f) {
         var sw = f.querySelector("[data-switch]");
@@ -1908,7 +1911,7 @@
     },
     settings: {
       title: "设置", sub: "面板账号、通知与系统",
-      pills: '<button class="btn primary" id="save-settings">保存</button>'
+      pills: ""
     }
   };
   var current = VIEW_META[PAGE] ? PAGE : "dashboard";

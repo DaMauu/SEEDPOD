@@ -1670,3 +1670,14 @@ html, body { overflow-x: hidden; }
 .dev-progress .dp-bar { width: 78px; height: 5px; border-radius: 99px; background: #e3e6ef; overflow: hidden; }
 .dev-progress .dp-bar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
 .dev-progress .dp-num { font-size: 10.5px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* 设置页：按钮与输入框同宽，右列成一条直线 */
+#set-panel .set-field .ctl .btn { width: 100%; height: 28px; justify-content: center; }
+#set-panel .set-field .switch { margin-left: auto; }
+/* 设置页：保存改为每栏右上角 */
+#set-panel .set-card-head { display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: 16px 22px 14px; border-bottom: 1px solid var(--line); }
+#set-panel .set-card-t { min-width: 0; }
+#set-panel .set-card-head .set-h2 { margin: 0 0 4px; }
+#set-panel .set-card-head .set-desc { margin: 0; border: 0; padding: 0; }
+#set-panel .set-card-head .set-save { height: 28px; padding: 0 14px; font-size: 11.5px; border-radius: 8px; flex: 0 0 auto; }
+#set-panel .set-card > .set-h2, #set-panel .set-card > .set-desc { display: none; }
