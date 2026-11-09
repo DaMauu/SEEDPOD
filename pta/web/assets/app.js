@@ -285,6 +285,18 @@
   }
 
   function initNav() {
+    var hoverTimer = null;
+    document.addEventListener("mouseover", function (e) {
+      var a = e.target.closest ? e.target.closest(".dock-item") : null;
+      if (!a || a.classList.contains("active")) return;
+      var key = a.getAttribute("data-view");
+      if (!key || !VIEW_META[key]) return;
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(function () { go(key, { replace: true }); }, 160);
+    });
+    document.addEventListener("mouseout", function (e) {
+      if (e.target.closest && e.target.closest(".dock-item")) clearTimeout(hoverTimer);
+    });
     $$(".nav-item").forEach(function (a) {
       var key = a.getAttribute("data-nav");
       if (key === PAGE) a.classList.add("active");
@@ -2038,7 +2050,10 @@
     current = key;
     setActive(key);
     if (key === "dashboard" && typeof renderDashboard === "function") renderDashboard();
-    if (!opts.pop) history.pushState({ view: key }, "", "#" + key);
+    if (!opts.pop) {
+      if (opts.replace) history.replaceState({ view: key }, "", "#" + key);
+      else history.pushState({ view: key }, "", "#" + key);
+    }
     window.scrollTo(0, 0);
     var m = $("#menu"); if (m) m.classList.remove("open");
   }
