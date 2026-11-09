@@ -2053,3 +2053,15 @@ body::after {
     radial-gradient(46% 42% at 88% 94%, rgba(79, 70, 229, .20), rgba(79, 70, 229, 0) 70%),
     radial-gradient(34% 30% at 72% 102%, rgba(79, 70, 229, .10), rgba(79, 70, 229, 0) 72%);
 }
+/* 呼吸灯：光晕铺到半屏，缓慢明暗起伏 */
+body::after {
+  background:
+    radial-gradient(46% 54% at 92% 90%, rgba(79, 70, 229, .26), rgba(79, 70, 229, 0) 72%),
+    radial-gradient(34% 42% at 58% 104%, rgba(79, 70, 229, .14), rgba(79, 70, 229, 0) 76%);
+  animation: bg-breathe 3.4s ease-in-out infinite;
+  opacity: .3;
+}
+@keyframes bg-breathe {
+  0%, 100% { opacity: .26; transform: scale(1); }
+  50%      { opacity: .92; transform: scale(1.05); }
+}
