@@ -2006,3 +2006,6 @@ html, body { overflow-x: hidden; }
 .site-expand .sd-block .sd-row + .sd-row { border-top: 1px solid #f2f4f8; }
 .view[data-view="sites"] .st-all { display: flex; align-items: center; }
 .view[data-view="sites"] .st-all input { width: 14px; height: 14px; accent-color: var(--accent); }
+/* 最近收录与左侧两卡总高度齐平 */
+.site-expand .sd-compact { align-items: stretch; }
+.site-expand .sd-recent-wrap { height: 100%; display: flex; flex-direction: column; }
