@@ -1886,3 +1886,53 @@ html, body { overflow-x: hidden; }
 .site-expand .sd-url { font-size: 11px; }
 .site-expand .sd-id, .site-expand .sd-chips, .site-expand .sd-actions { grid-column: 1; }
 .site-expand .sd-top { gap: 6px 0; }
+/* 详情头部：操作按钮排在叉号左侧 */
+.site-expand .sd-top { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto;
+  align-items: center; gap: 8px 12px; padding-right: 0; }
+.site-expand .sd-id { grid-column: 1; grid-row: 1; }
+.site-expand .sd-actions { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; }
+.site-expand .sheet-x { position: static; grid-column: 3; grid-row: 1; align-self: center; }
+.site-expand .sd-chips { grid-column: 1 / span 2; grid-row: 2; }
+/* 站点详情里的设置行：与全局设置同密度 */
+.site-expand .sd-form .set-fields { margin-top: 6px; }
+.site-expand .sd-form .set-field { min-height: 38px; padding: 5px 0; gap: 16px; }
+.site-expand .sd-form .set-field .lbl { min-width: 0; white-space: nowrap; overflow: hidden; }
+.site-expand .sd-form .set-field .lbl span { display: inline-block; vertical-align: middle; font-size: 12px; }
+.site-expand .sd-form .set-field .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle;
+  font-size: 10.5px; line-height: 14px; overflow: hidden; text-overflow: ellipsis; max-width: 520px; }
+.site-expand .sd-form .set-field .ctl { display: flex; align-items: center; justify-content: flex-end; width: 220px; }
+.site-expand .sd-form .set-field .ctl .input,
+.site-expand .sd-form .set-field .ctl .select { width: 100%; height: 28px; font-size: 11.5px; }
+.site-expand .sd-form .set-field .ctl .btn { height: 28px; font-size: 11.5px; }
+.site-expand .sd-form .set-field textarea { width: 100%; min-height: 72px; }
+.site-expand .sd-form .set-field:has(textarea) { flex-direction: column; align-items: stretch; }
+.site-expand .sd-form .set-field:has(textarea) .ctl { width: 100%; }
+.site-expand .sd-form { max-width: 760px; }
+.site-expand .sd-form .set-fields { display: block; }
+.site-expand .sd-form .set-field { display: flex; justify-content: space-between; align-items: center; }
+.site-expand .sd-form .set-field + .set-field { border-top: 1px solid #f1f3f7; }
+.site-expand .sd-form .set-field:has(textarea) { display: block; }
+.site-expand .sd-form .set-field:has(textarea) .lbl { margin-bottom: 6px; }
+/* 选中行去掉圆角 */
+.view[data-view="sites"] .site-item,
+.view[data-view="sites"] .site-item.on { border-radius: 0; }
+/* 站点设置行：标签与控件靠近，别拉太开 */
+.site-expand .sd-form { max-width: none; }
+.site-expand .sd-form .set-field { justify-content: flex-start; gap: 20px; }
+.site-expand .sd-form .set-field .lbl { flex: 0 0 180px; }
+.site-expand .sd-form .set-field .ctl { width: 280px; }
+.site-expand .sd-form .set-field:has(textarea) .ctl { width: 100%; }
+.site-expand .sd-form .set-fields.is-off { opacity: .45; pointer-events: none; }
+/* 站点概览：一行摘要 + 两列明细，去掉卡片 */
+.site-expand .sd-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px;
+  margin-top: 10px; font-size: 11px; color: var(--muted-2); }
+.site-expand .sd-strip b { margin-left: 5px; font-size: 12.5px; font-weight: 600; color: var(--ink);
+  font-variant-numeric: tabular-nums; }
+.site-expand .sd-compact { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; margin-top: 12px; }
+.site-expand .sd-compact h4, .site-expand .sd-recent-wrap h4 {
+  margin: 0 0 4px; font-size: 10px; font-weight: 600; letter-spacing: .6px; color: var(--muted-2); }
+.site-expand .sd-compact .sd-row { padding: 4px 0; font-size: 11.5px; border-top: 1px solid #f1f3f7; }
+.site-expand .sd-compact > div > .sd-row:first-of-type { border-top: 0; }
+.site-expand .sd-recent-wrap { margin-top: 14px; }
+.site-expand .sd-recent-wrap .sd-recent { padding: 4px 0; font-size: 11.5px; border-top: 1px solid #f1f3f7; }
+.site-expand .sd-recent-wrap .sd-recent:first-of-type { border-top: 0; }

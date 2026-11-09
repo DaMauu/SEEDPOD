@@ -1519,9 +1519,12 @@
           '<div class="sd-chips"><em class="chip ' + a[0] + '">' + a[1] + "</em>" +
             '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span></div>" +
           '<div class="sd-actions">' +
-            '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
             '<button class="btn slim" data-act="crawl">抓取测试</button>' +
-            '<button class="btn ghost slim tabbtn' + (state.tab === "settings" ? " active" : "") + '" data-tab="settings">设置</button>' +
+            '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
+            SET_TABS.map(function (t) {
+              var on = state.tab === "settings" && state.setTab === t[0];
+              return '<button class="btn slim tabbtn' + (on ? " active" : "") + '" data-settab="' + t[0] + '">' + t[1] + "</button>";
+            }).join("") +
           "</div>" +
           '<button class="sheet-x" data-act="close-sheet" aria-label="关闭">✕</button>' +
         "</div>";
@@ -1544,32 +1547,32 @@
       var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
       var methodTxt = s.loginMethod === "cookie" ? "Cookie" : "账号密码" + (s.tfa ? " + 2FA" : "");
       var catTxt = (s.cats || []).length + " 个分类" + (s.fullDiscOnly ? " · 只收原盘" : "");
-      return '<div class="sd-metrics">' +
-          "<div><span>已收录</span><b>" + (s.items ? s.items.toLocaleString() : "—") + "</b></div>" +
-          "<div><span>今日新增</span><b>" + todayNew + "</b></div>" +
-          "<div><span>上次抓取</span><b class=\"sm\">" + escapeHtml(s.last) + "</b></div>" +
-          "<div><span>下次抓取</span><b class=\"sm\">" + escapeHtml(next) + "</b></div>" +
+      return '<div class="sd-strip">' +
+          "<span>已收录<b>" + (s.items ? s.items.toLocaleString() : "—") + "</b></span>" +
+          "<span>今日<b>+" + todayNew + "</b></span>" +
+          "<span>上次<b>" + escapeHtml(s.last) + "</b></span>" +
+          "<span>下次<b>" + escapeHtml(next) + "</b></span>" +
         "</div>" +
-        '<div class="sd-cols">' +
-          '<section class="sd-card"><h3>抓取</h3>' +
+        '<div class="sd-compact">' +
+          '<div><h4>抓取</h4>' +
             '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
             '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
-            '<div class="sd-row"><span>抓取方式</span><b>' + modeTxt + "</b></div>" +
+            '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
             '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
-          "</section>" +
-          '<section class="sd-card"><h3>登录</h3>' +
+          "</div>" +
+          '<div><h4>登录</h4>' +
             '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
             '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
             '<div class="sd-row"><span>cookie 剩余</span><b>' + (s.loginMethod === "cookie" ? "—" : s.cookieDays + " 天") + "</b></div>" +
             '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
-          "</section>" +
-          '<section class="sd-card wide"><h3>最近收录</h3>' +
-            recs.map(function (r) {
-              return '<div class="sd-recent"><span class="t-main">' + escapeHtml(r.title) + "</span>" +
-                '<span class="soft">' + escapeHtml(r.size) + "</span>" +
-                '<span class="soft">' + escapeHtml(r.time) + "</span></div>";
-            }).join("") +
-          "</section>" +
+          "</div>" +
+        "</div>" +
+        '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
+          recs.map(function (r) {
+            return '<div class="sd-recent"><span class="t-main">' + escapeHtml(r.title) + "</span>" +
+              '<span class="soft">' + escapeHtml(r.size) + "</span>" +
+              '<span class="soft">' + escapeHtml(r.time) + "</span></div>";
+          }).join("") +
         "</div>";
     }
 
@@ -1597,15 +1600,15 @@
         ]) + "</div>";
       } else if (tab === "override") {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "覆盖全局抓取设置", type: "switch", k: "override", on: s.override, hint: "关掉时这个站完全跟随流程页里的抓取设置" }
+          { t: "单独设置本站", type: "switch", k: "override", on: s.override, hint: s.override ? "只影响这个站" : "关闭即跟随流程页" }
         ]) + "</div>" +
-        (s.override ? '<div class="set-fields">' + setRowsHtml([
+        '<div class="set-fields' + (s.override ? "" : " is-off") + '">' + setRowsHtml([
           { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"] },
-          { t: "单站每日上限", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值" },
+          { t: "每日上限", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值" },
           { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail },
-          { t: "站点优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } },
-          { t: "本站分类映射", type: "button", v: "配置映射" }
-        ]) + "</div>" : "");
+          { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } },
+          { t: "分类映射", type: "button", v: "配置映射" }
+        ]) + "</div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码（含 2FA）", cookie: "Cookie" } }
@@ -1621,9 +1624,7 @@
             ]) + "</div>");
       }
 
-      return '<div class="sd-subnav">' + SET_TABS.map(function (t) {
-        return '<button type="button" class="subnav-btn' + (tab === t[0] ? " active" : "") + '" data-settab="' + t[0] + '">' + t[1] + "</button>";
-      }).join("") + "</div>" + '<div class="sd-form">' + body + "</div>";
+      return '<div class="sd-form">' + body + "</div>";
     }
 
     function collect(s) {
@@ -1789,6 +1790,7 @@
       if (stab) {
         var cur0 = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
         if (cur0) collect(cur0);
+        state.tab = "settings";
         state.setTab = stab.getAttribute("data-settab");
         paintDetail();
         return;
