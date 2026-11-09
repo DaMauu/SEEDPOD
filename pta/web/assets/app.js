@@ -2018,6 +2018,15 @@
       pills: ""
     }
   };
+  function statusPills() {
+    var on = MOCK.nodes.filter(function (n) { return n.online; }).length;
+    var fail = MOCK.sites.loginFail || 0;
+    return '<span class="pill"><span class="dot ok"></span>服务运行中</span>' +
+      '<span class="pill"><span class="dot warn"></span>' + fail + ' 个站登录失效</span>' +
+      '<span class="pill"><span class="dot ok"></span>节点 ' + on + " / " + MOCK.nodes.length + "</span>";
+  }
+  Object.keys(VIEW_META).forEach(function (k) { VIEW_META[k].pills = statusPills; });
+
   var current = VIEW_META[PAGE] ? PAGE : "dashboard";
   window.__ptaSetActive = function (k) { setActive(k); };
 
