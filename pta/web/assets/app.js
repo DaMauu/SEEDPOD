@@ -1451,7 +1451,8 @@
     var list = $("#sites-list");
     if (!list) return;
     var detail = $("#site-detail");
-    var state = { q: "", status: "all", arch: "all", login: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic" };
+    var sheetMask = $("#site-sheet-mask");
+    var state = { q: "", status: "all", arch: "all", login: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false };
     var PER_PAGE = 11;
     var ACH = {
       NP: ["np", "NexusPHP"], UNIT3D: ["u3d", "UNIT3D"], GZ: ["gz", "Gazelle"],
@@ -1485,10 +1486,15 @@
     function itemHtml(s) {
       var a = archOf(s);
       var picked = state.picks.indexOf(s.name) >= 0;
+      var loginTxt = s.login === "ok" ? "正常" : s.login === "fail" ? "失效" : "未登录";
+      var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量+定期" : "增量";
       return '<div class="site-item' + (state.sel === s.name ? " on" : "") + '" data-host="' + escapeHtml(s.name) + '">' +
         '<input type="checkbox" class="site-pick" data-host="' + escapeHtml(s.name) + '"' + (picked ? " checked" : "") + ">" +
-        '<em class="ava ' + a[0] + '">' + escapeHtml(initials(s)) + "</em>" +
-        '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b><span>" + escapeHtml(s.name) + "</span></span>" +
+        '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
+        '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
+        '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
+        '<span class="si-mode">' + modeTxt + "</span>" +
+        '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
         '<span class="st ' + dotCls(s) + '"><i></i></span>' +
       "</div>";
     }
@@ -1506,6 +1512,7 @@
             '<button class="btn slim" data-act="crawl">抓取测试</button>' +
             '<button class="btn ghost slim tabbtn' + (state.tab === "settings" ? " active" : "") + '" data-tab="settings">设置</button>' +
           "</div>" +
+          '<button class="sheet-x" data-act="close-sheet" aria-label="关闭">✕</button>' +
         "</div>";
     }
 
@@ -1635,7 +1642,14 @@
     function paintDetail() {
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!detail) return;
-      if (!s) { detail.innerHTML = '<div class="sites-empty">选一个站点看详情</div>'; return; }
+      if (!s) {
+        detail.classList.remove("open");
+        if (sheetMask) sheetMask.hidden = true;
+        detail.innerHTML = "";
+        return;
+      }
+      detail.classList.toggle("open", !!state.open);
+      if (sheetMask) sheetMask.hidden = !state.open;
       detail.innerHTML = headHtml(s) +
         (state.tab === "settings"
           ? '<div class="sd-scroll">' + settingsHtml(s) + "</div>" + actionsHtml()
@@ -1644,19 +1658,9 @@
 
     function paint() {
       var rows = filtered();
-      var pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
-      if (state.page > pages) state.page = pages;
-      var pageRows = rows.slice((state.page - 1) * PER_PAGE, state.page * PER_PAGE);
-      if (!pageRows.some(function (s) { return s.name === state.sel; })) {
-        state.sel = pageRows.length ? pageRows[0].name : null;
-      }
-      list.innerHTML = pageRows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
+      list.innerHTML = rows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
       var pager = $("#sites-pager");
-      if (pager) {
-        pager.innerHTML = '<button class="pg-btn" data-pg="-1"' + (state.page <= 1 ? " disabled" : "") + '>‹</button>' +
-          "<span>" + state.page + " / " + pages + "</span>" +
-          '<button class="pg-btn" data-pg="1"' + (state.page >= pages ? " disabled" : "") + ">›</button>";
-      }
+      if (pager) pager.innerHTML = "";
       var cnt = $("#sites-count");
       if (cnt) cnt.textContent = MOCK.sitesList.length;
       var hint = $("#sites-hint");
@@ -1689,6 +1693,7 @@
       var it = e.target.closest(".site-item");
       if (!it) return;
       state.sel = it.getAttribute("data-host");
+      state.open = true;
       $$(".site-item", list).forEach(function (x) { x.classList.toggle("on", x === it); });
       paintDetail();
     });
@@ -1720,6 +1725,12 @@
       }
     });
     if (detail) detail.addEventListener("click", function (e) {
+      if (e.target.closest('[data-act="close-sheet"]')) {
+        state.open = false;
+        detail.classList.remove("open");
+        if (sheetMask) sheetMask.hidden = true;
+        return;
+      }
       var stab = e.target.closest("button[data-settab]");
       if (stab) {
         var cur0 = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];

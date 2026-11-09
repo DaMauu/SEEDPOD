@@ -105,20 +105,22 @@
           <button class="btn primary slim" data-act="new-site">添加站点</button>
         </div>
 
-        <div class="sites-split">
-          <aside class="sites-list">
-            <div class="sites-bulk" id="sites-bulk" hidden>
-              <span>已选 <b id="bulk-n">0</b></span>
-              <button class="link-btn" id="bulk-all">全选当前</button>
-              <button class="link-btn" id="bulk-none">清空</button>
-              <div class="spacer"></div>
-              <button class="btn primary slim" id="bulk-open">批量设置</button>
-            </div>
-            <div class="sites-scroll" id="sites-list"></div>
-            <div class="sites-list-foot"><span>共 <b id="sites-count">0</b> 个</span><span class="sites-pager" id="sites-pager"></span></div>
-          </aside>
-          <div class="site-detail" id="site-detail"></div>
+        <div class="sites-panel">
+          <div class="st-head">
+            <span></span><span>站点</span><span>架构</span><span>登录</span><span>抓取</span><span>上次抓取</span><span>状态</span>
+          </div>
+          <div class="sites-bulk" id="sites-bulk" hidden>
+            <span>已选 <b id="bulk-n">0</b></span>
+            <button class="link-btn" id="bulk-all">全选当前</button>
+            <button class="link-btn" id="bulk-none">清空</button>
+            <div class="spacer"></div>
+            <button class="btn primary slim" id="bulk-open">批量设置</button>
+          </div>
+          <div class="sites-rows" id="sites-list"></div>
+          <div class="st-foot"><span>共 <b id="sites-count">0</b> 个</span><span class="sites-pager" id="sites-pager"></span></div>
         </div>
+        <div class="site-sheet" id="site-detail"></div>
+        <div class="sheet-mask" id="site-sheet-mask" hidden></div>
       </div>
     </section>
 
