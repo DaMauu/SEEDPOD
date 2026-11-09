@@ -28,6 +28,13 @@ pta/web/assets/app.css  样式（大量分层的覆盖块，后写的覆盖先�
 - 请求层参数固定：设置页新增「抓取节奏」（速度 8–120 秒可调，越界提示并拒绝保存；并发/间隔下限/退避/熔断/审计只读），流程页拉取改为只读「跟随设置」
 - 发布新增「标题规则」：排除/白名单支持正则（限 200 字，写错回退纯文本），带就地测试匹配
 
+## 自动开发基础设施
+
+- `TASKS.md`：任务清单与完成标准，自动循环每轮从这里取活
+- `pta/checks/smoke.js`：14 条回归（7 个路由、站点映射、越界拦截、规则卡、上传/查重、归档/导出、日志下载、无脚本错误）
+- `pta/checks/run.cmd`：Windows 一键入口，可用 PTA_NODE / PTA_PW 指定 node 和 playwright-core
+- 验证方式：临时改坏 `#cm-ok` 后跑出 12/14 并退出非零，恢复后回到 14/14
+
 ## 本地与远端
 
 - 仓库 C:\Users\wiii\Desktop\SEEDPOD，分支 main，远端 https://github.com/DaMauu/SEEDPOD.git
