@@ -1521,5 +1521,10 @@ html, body { overflow-x: hidden; }
 /* 下载器：底部操作行与其它栏目保存按钮同规格 */
 .view[data-view="crawl"] .drawer[data-name="下载器"] .drawer-body-flush { padding-bottom: 8px; }
 .nodes-foot { display: flex; justify-content: flex-end; align-items: center;
-  margin: 6px -20px 0; padding: 8px 4px 0; border-top: 1px solid var(--line); }
+  margin: 6px 0 0; padding: 8px 4px 0; border-top: 1px solid var(--line); }
+/* 行与栏目标题左边缘对齐，右侧统一收在 1276 */
+.view[data-view="crawl"] .drawer[data-name="下载器"] .nodes-inner { padding-left: 0; padding-right: 0; }
+.view[data-view="crawl"] .drawer[data-name="下载器"] .node-row {
+  grid-template-columns: 200px 118px 1fr 60px 44px; padding: 5.5px 27px; margin: 0 -23px; }
+.view[data-view="crawl"] .drawer[data-name="下载器"] .nr-set { justify-self: end; }
 .nodes-foot .btn { height: 30px; font-size: 12px; }
