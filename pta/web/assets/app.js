@@ -960,9 +960,6 @@
       { t: "分辨率下限", type: "select", v: "1080p", opts: ["不限", "720p", "1080p", "2160p"] },
       { t: "最小体积", type: "select", v: "5 GB", opts: ["不限", "3 GB", "5 GB", "10 GB", "20 GB"], hint: "小于这个体积的不抓" },
       { t: "最大体积", type: "select", v: "不限", opts: ["不限", "50 GB", "80 GB", "120 GB"], hint: "超过这个体积的不抓" },
-      { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下不动，直接跳过" },
-      { t: "必须带中字", type: "switch", on: true, hint: "没中文字幕的不要" },
-      { t: "只要免费/优惠", type: "select", v: "不限制", opts: ["不限制", "只要 FREE", "FREE 或 2x", "FREE 或 2x 或 50%"], hint: "控制下载计费，免费期再下" },
       { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
       { t: "白名单关键词", type: "text", v: "", ph: "逗号分隔，只抓含这些词的（留空不限）" },
       { t: "排除 DIY 原盘", type: "switch", on: true, hint: "带 DIY / 修改 / 加长 标记的不要" },
@@ -1021,6 +1018,7 @@
     { name: "发布前检查", sum: "地区版本 · 简介 · BDInfo · 截图 3 张", rows: [
       { t: "地区版本", type: "switch", on: true, hint: "识别出 US/HKG/TWN 这类版本，写进副标题的地区段" },
       { t: "必须有简介", type: "switch", on: true, hint: "抓不到中文简介就不自动发" },
+        { t: "必须带中字", type: "switch", on: true, hint: "成品没有中文字幕就不发" },
       { t: "BDInfo", type: "select", v: "必须存在且校验通过", opts: ["必须存在且校验通过", "有就行，不校验", "不要求"] },
       { t: "截图至少几张", type: "text", v: "3", hint: "不够就不自动发" },
       { t: "下载完成再发布", type: "switch", on: true, hint: "种子还没下完就发，容易被删" },
@@ -1056,7 +1054,16 @@
     ] }
   ];
 
-  var RULE_SETS = { fetch: FETCH_RULES, pub: PUB_RULES };
+  var DL_RULES = [
+    { name: "下载条件", sum: "做种 5 起 · 免费优先", rows: [
+      { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下到一半就断" },
+      { t: "免费/优惠", type: "select", v: "免费优先", opts: ["不限制", "免费优先", "只要 FREE", "FREE 或 2x"], hint: "免费期再下，省下载量" },
+      { t: "单站同时下载", type: "text", v: "2", hint: "同一个站并行任务数，别把站刷爆" },
+      { t: "只在此机器下载", type: "select", v: "自动挑磁盘最多的", opts: ["自动挑磁盘最多的", "固定 B", "固定 C", "固定 D", "固定 E"] }
+    ] }
+  ];
+
+  var RULE_SETS = { fetch: FETCH_RULES, pub: PUB_RULES, dl: DL_RULES };
 
   var FLOW_KEY = "pta.flow2";
   function saveFlowState() {
@@ -1129,7 +1136,8 @@
     loadFlowState();
     host.innerHTML =
       sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 增量", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85 · 发到 目标站 A", rules: PUB_RULES }, 1, "pub");
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 1, "pub") +
+      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 2, "dl");
 
     renderTpl();
 
