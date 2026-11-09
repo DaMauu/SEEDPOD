@@ -1396,3 +1396,5 @@ html, body { overflow-x: hidden; }
 .rule-body .set-field:has(.pick-row) .pick-row { flex: 1 1 auto; }
 .set-field .ctl .pick-row { max-width: none; }
 .rule-body .set-field .ctl .pick-row { max-width: none; }
+.rule-body .set-fields:has(.pick-row) { max-width: 960px; }
+.rule-body .set-field:has(.pick-row) .cat-chip { padding: 3px 7px; }
