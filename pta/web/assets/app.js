@@ -331,7 +331,7 @@
     var lg = $("#dash-logs");
     if (lg) {
       lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
-        return '<div class="list-item"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
+        return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
       }).join("");
     }
     return { pending: pending, pub: pub, fail: fail };
@@ -893,6 +893,8 @@
           '<span class="log-msg">' + escapeHtml(l.msg) + "</span>" +
         "</div>";
       }).join("") || '<div class="sites-empty">没有匹配的日志</div>';
+      host.insertAdjacentHTML("beforeend", '<div class="log-prompt"><b>$</b><i></i></div>');
+      host.scrollTop = host.scrollHeight;
     }
 
     var tabs = $("#log-tabs");

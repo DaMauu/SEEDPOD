@@ -1595,3 +1595,44 @@ html, body { overflow-x: hidden; }
 /* 下载器：容量文字固定宽度，进度条起点对齐 */
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-cap { flex: 0 0 148px; }
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-pct { flex: 0 0 34px; }
+/* 日志：SSH 终端黑绿 */
+.view[data-view="logs"] .log-panel {
+  background: #0b100e; border: 1px solid #16241b; border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(8, 24, 14, .18); padding: 16px 16px 14px;
+  color: #8ef0a8; font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+}
+.view[data-view="logs"] .log-row {
+  display: grid; grid-template-columns: 76px 56px 96px minmax(0, 1fr); gap: 12px;
+  align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(126, 231, 135, .07);
+  font-size: 11.5px; color: #a8e6bb;
+}
+.view[data-view="logs"] .log-row:last-child { border-bottom: 0; }
+.view[data-view="logs"] .log-ts { color: #47765a; }
+.view[data-view="logs"] .log-tag { color: #63b783; letter-spacing: .06em; }
+.view[data-view="logs"] .log-src { color: #4f9d70; }
+.view[data-view="logs"] .log-msg { color: #c8f7d6; }
+.view[data-view="logs"] .log-row.warn .log-tag,
+.view[data-view="logs"] .log-row.warn .log-msg { color: #e3b341; }
+.view[data-view="logs"] .log-row.error .log-tag,
+.view[data-view="logs"] .log-row.error .log-msg { color: #ff7b72; }
+
+#dash-logs { background: #0b100e; border: 1px solid #16241b; border-radius: 10px; padding: 8px 12px; margin-top: 2px; }
+#dash-logs .list-item {
+  display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  border-bottom: 1px solid rgba(126, 231, 135, .07);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace; font-size: 11px;
+}
+#dash-logs .list-item:last-child { border-bottom: 0; }
+#dash-logs .time { color: #47765a; min-width: 56px; }
+#dash-logs .msg { color: #c8f7d6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#dash-logs .list-item.warn .msg { color: #e3b341; }
+#dash-logs .list-item.error .msg { color: #ff7b72; }
+.view[data-view="logs"] .log-panel { display: flex; flex-direction: column; justify-content: flex-end; }
+.view[data-view="logs"] .log-prompt {
+  display: flex; align-items: center; gap: 8px; padding: 8px 0 2px; color: #47765a; font-size: 11.5px;
+}
+.view[data-view="logs"] .log-prompt b { color: #63b783; font-weight: 500; }
+.view[data-view="logs"] .log-prompt i {
+  width: 7px; height: 13px; background: #8ef0a8; border-radius: 1px; animation: term-blink 1.1s steps(2) infinite;
+}
+@keyframes term-blink { 50% { opacity: 0; } }
