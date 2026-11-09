@@ -224,6 +224,93 @@
   }
   window.PTA = { toast: toast, MOCK: MOCK };
 
+  /* ---------- 站点/目标站 分类映射 ---------- */
+  var CATMAP_KEY = "pta.catmap";
+  var LIB_CATS = ["电影", "剧集", "综艺", "动漫", "纪录片", "音乐", "体育", "其他"];
+  function loadCatMap() {
+    try { return JSON.parse(localStorage.getItem(CATMAP_KEY) || "{}") || {}; } catch (e) { return {}; }
+  }
+  function saveCatMap(m) {
+    try { localStorage.setItem(CATMAP_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+  function guessLibCat(name) {
+    var n = String(name).toLowerCase();
+    if (/tv|series|剧|show|episode/.test(n)) return "剧集";
+    if (/综艺|variety/.test(n)) return "综艺";
+    if (/anime|动漫/.test(n)) return "动漫";
+    if (/doc|纪录/.test(n)) return "纪录片";
+    if (/music|音乐|audio|concert|mv|演唱/.test(n)) return "音乐";
+    if (/sport|体育/.test(n)) return "体育";
+    if (/movie|film|电影|blu|uhd|remux|原盘|disc/.test(n)) return "电影";
+    return "其他";
+  }
+  var ARCH_CATS = {
+    NP: ["电影", "剧集", "综艺", "动漫", "纪录片", "音乐", "体育", "MV / 演唱会"],
+    UNIT3D: ["Movies", "TV Shows", "Documentaries", "Music", "Sports", "Other"],
+    GZ: ["Movies", "Concerts", "Music Videos"],
+    OTHER: ["Movies", "TV", "Other"],
+    "?": ["Movies", "TV", "Other"]
+  };
+  function siteCatNames(s) {
+    var arch = (s && s.arch) || "?";
+    return ARCH_CATS[arch] || ARCH_CATS["?"];
+  }
+  function catMapCount(host) { return Object.keys(loadCatMap()[host] || {}).length; }
+
+  function openCatMap(opts) {
+    var mask = $("#catmap-modal");
+    if (!mask) {
+      mask = el("div", "modal-mask");
+      mask.id = "catmap-modal";
+      mask.hidden = true;
+      mask.innerHTML = '<div class="modal wide">' +
+        '<div class="modal-head"><h2 id="cm-title">分类映射</h2><button class="btn ghost slim" id="cm-x">关闭</button></div>' +
+        '<p class="modal-sub" id="cm-sub"></p>' +
+        '<div class="cm-list" id="cm-list"></div>' +
+        '<div class="modal-foot"><button class="btn ghost slim" id="cm-guess">按名字自动猜</button>' +
+          '<div class="spacer"></div>' +
+          '<button class="btn ghost slim" id="cm-cancel">取消</button>' +
+          '<button class="btn primary slim" id="cm-ok">保存映射</button></div></div>';
+      document.body.appendChild(mask);
+      mask.addEventListener("click", function (e) { if (e.target === mask) mask.hidden = true; });
+      $("#cm-x", mask).addEventListener("click", function () { mask.hidden = true; });
+      $("#cm-cancel", mask).addEventListener("click", function () { mask.hidden = true; });
+      $("#cm-guess", mask).addEventListener("click", function () {
+        $$("#cm-list select", mask).forEach(function (sel) { sel.value = guessLibCat(sel.getAttribute("data-src")); });
+      });
+      $("#cm-ok", mask).addEventListener("click", function () {
+        var m = loadCatMap();
+        var map = {};
+        $$("#cm-list select", mask).forEach(function (sel) {
+          var src = sel.getAttribute("data-src");
+          if (sel.value) map[src] = sel.value;
+        });
+        m[mask._host] = map;
+        saveCatMap(m);
+        mask.hidden = true;
+        toast("已保存 " + Object.keys(map).length + " 条映射");
+        if (mask._after) mask._after(map);
+      });
+    }
+    var host = opts.host || "__target__";
+    var saved = loadCatMap()[host] || {};
+    var names = opts.cats && opts.cats.length ? opts.cats : siteCatNames(null);
+    mask._host = host;
+    mask._after = opts.after || null;
+    $("#cm-title", mask).textContent = "分类映射 · " + (opts.label || host);
+    $("#cm-sub", mask).textContent = opts.sub || "站点自己的分类对到库里的分类，没对上的会跳过；只影响收录和发布，不影响请求。";
+    $("#cm-list", mask).innerHTML = names.map(function (n) {
+      var pick = saved[n] || "";
+      var inner = ['<option value="">忽略</option>'].concat(LIB_CATS.map(function (c) {
+        return '<option value="' + c + '"' + (c === pick ? " selected" : "") + ">" + c + "</option>";
+      })).join("");
+      return '<div class="cm-row"><span class="cm-src">' + escapeHtml(n) + "</span>" +
+        '<select class="select" data-src="' + escapeHtml(n) + '">' + inner + "</select></div>";
+    }).join("");
+    mask.hidden = false;
+  }
+  window.PTA.openCatMap = openCatMap;
+
   function statusBadge(status) {
     var map = {
       pending: ["待确认", "amber"],
@@ -522,7 +609,9 @@
       "</button>";
     }
 
-    function shotHtml(n) {
+    function shotHtml(it, n) {
+      var shot = it && it.shots ? it.shots[n - 1] : null;
+      if (shot) return '<div class="shot has"><img src="' + shot.url + '" alt=""><span>' + n + "</span></div>";
       return '<div class="shot"><span>' + n + "</span></div>";
     }
 
@@ -572,7 +661,7 @@
               escapeHtml(introText(it)) + "</textarea>" +
           "</section>" +
           '<section class="sd-card qd-shots"><h3>截图</h3>' +
-            '<div class="shots">' + shotHtml(1) + shotHtml(2) + shotHtml(3) +
+            '<div class="shots">' + shotHtml(it, 1) + shotHtml(it, 2) + shotHtml(it, 3) +
               '<button class="shot add" id="qd-addshot">上传</button></div>' +
           "</section>" +
         "</div>" +
@@ -624,11 +713,54 @@
     var q = $("#queue-q");
     if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
 
+    var filePick = el("input");
+    filePick.type = "file"; filePick.accept = "image/*"; filePick.multiple = true; filePick.style.display = "none";
+    document.body.appendChild(filePick);
+    filePick.addEventListener("change", function () {
+      var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
+      var files = [].slice.call(filePick.files || []);
+      if (!it || !files.length) return;
+      it.shots = it.shots || [];
+      var left = files.length;
+      files.slice(0, 3).forEach(function (f) {
+        var rd = new FileReader();
+        rd.onload = function () {
+          it.shots.push({ name: f.name, url: String(rd.result) });
+          if (--left <= 0) { paint(); toast("已加入 " + it.shots.length + " 张截图"); }
+        };
+        rd.readAsDataURL(f);
+      });
+      filePick.value = "";
+    });
+
     var bulk = $("#q-bulkcheck");
-    if (bulk) bulk.addEventListener("click", function () { toast("批量查重：" + rows().length + " 条（假数据）"); });
+    if (bulk) bulk.addEventListener("click", function () {
+      var list = rows().filter(function (x) { return x.status === "pending" || x.status === "approved"; });
+      if (!list.length) { toast("当前列表没有可查重的条目"); return; }
+      bulk.disabled = true;
+      bulk.textContent = "查重中 0/" + list.length;
+      var i = 0, dup = 0;
+      var timer = setInterval(function () {
+        var it = list[i++];
+        if (it) {
+          var hit = (it.id + i) % 3 === 0;
+          it.check = hit ? "已有同片 · 目标站" : "无重复";
+          it.checkCls = hit ? "amber" : "green";
+          if (hit) dup++;
+          bulk.textContent = "查重中 " + i + "/" + list.length;
+          paint();
+        }
+        if (i >= list.length) {
+          clearInterval(timer);
+          bulk.disabled = false;
+          bulk.textContent = "批量查重";
+          toast("查重完成：" + list.length + " 条，重复 " + dup + " 条");
+        }
+      }, 240);
+    });
 
     if (detail) detail.addEventListener("click", function (e) {
-      if (e.target.closest("#qd-addshot")) { toast("上传截图（假数据）"); return; }
+      if (e.target.closest("#qd-addshot")) { filePick.click(); return; }
       var b = e.target.closest("button[data-qact]");
       if (!b) return;
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
@@ -652,6 +784,8 @@
       } else if (act === "reject") {
         var r = $("#qd-reason") ? $("#qd-reason").value.trim() : "";
         it.status = "failed";
+        it.rejectReason = r;
+        it.pubMsg = "已驳回" + (r ? "：" + r : "（未填理由）");
         toast("已驳回" + (r ? "：" + r : ""));
         var n2 = rows().filter(function (x) { return x.status === "pending"; })[0];
         state.sel = n2 ? n2.id : it.id;
@@ -694,12 +828,32 @@
     var q = $("#dl-q");
     if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
     body.addEventListener("click", function (e) {
-      if (e.target.closest("button[data-archive]")) toast("已加入归档队列（假数据）");
+      var arc = e.target.closest("button[data-archive]");
+      if (!arc) return;
+      var row = arc.closest(".dl-row");
+      var title = row ? row.querySelector(".dl-title b").textContent : "";
+      var it = MOCK.sources.filter(function (x) { return x.title === title; })[0];
+      if (it) it.archived = true;
+      if (row) {
+        row.classList.add("is-archived");
+        arc.textContent = "已归档";
+        arc.disabled = true;
+      }
+      toast("已归档：" + title);
     });
     var crawl = $("#dl-crawl");
     if (crawl) crawl.addEventListener("click", function () { toast("开始增量抓取（假数据）"); });
     var ex = $("#dl-export");
-    if (ex) ex.addEventListener("click", function () { toast("已导出 JSON（假数据）"); });
+    if (ex) ex.addEventListener("click", function () {
+      var data = JSON.stringify(MOCK.sources, null, 2);
+      var url = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "pta-sources.json";
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      toast("已导出 " + MOCK.sources.length + " 条");
+    });
     paint();
   }
 
@@ -934,7 +1088,16 @@
       paint();
     });
     var dl = $("#log-dl");
-    if (dl) dl.addEventListener("click", function () { toast("下载 log（假数据）"); });
+    if (dl) dl.addEventListener("click", function () {
+      var txt = MOCK.logs.map(function (l) { return l.t + " [" + l.lvl + "] " + l.tag + " " + l.msg; }).join("\n");
+      var url = URL.createObjectURL(new Blob([txt], { type: "text/plain" }));
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "pta.log";
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      toast("已下载 " + MOCK.logs.length + " 行");
+    });
     var clr = $("#log-clear");
     if (clr) clr.addEventListener("click", function () { host.innerHTML = ""; toast("已清屏（假数据）"); });
     paint();
@@ -1049,7 +1212,7 @@
       { t: "多目标站", type: "switch", on: false, hint: "同一部片同时发到 2–3 个站，需要各站分类都映射好" },
       { t: "图床", type: "select", v: "站内图床（浏览器上传）", opts: ["站内图床（浏览器上传）", "外链图床 API"] },
       { t: "截图来源", type: "select", v: "从 BDInfo 自动截取", opts: ["从 BDInfo 自动截取", "抓目标站官方截图", "手动上传"] },
-      { t: "目标站分类映射", type: "button", v: "配置映射", hint: "把库内分类对到目标站的真实分类 ID" },
+      { t: "目标站分类映射", type: "button", v: "配置映射", hint: "把目标站分类对到库内分类，发种时据此选分类" },
       { t: "发布后校验", type: "switch", on: true, hint: "发完回站里查一遍，确认真的出现并记下种子 ID" }
     ] },
     { name: "副标题与简介", sum: "按模板自动生成", rows: [
@@ -1371,7 +1534,26 @@
       var sw = e.target.closest("button[data-switch]");
       if (sw) { sw.classList.toggle("on"); refreshSums(); return; }
       var btn = e.target.closest("button[data-btn]");
-      if (btn) { toast(btn.getAttribute("data-btn") + "（假数据）"); return; }
+      if (btn) {
+        var bname = btn.getAttribute("data-btn") || "";
+        if (bname.indexOf("目标站") >= 0) {
+          var tgt = target ? siteOf(target) : null;
+          openCatMap({
+            host: target || "__target__",
+            label: tgt ? (tgt.title || tgt.name) : "还没选目标站",
+            cats: tgt ? siteCatNames(tgt) : null,
+            sub: "目标站自己的分类对到库内分类，发种时按这张表选分类。"
+          });
+          return;
+        }
+        if (bname.indexOf("站点分类") >= 0) {
+          toast("分类映射是逐站配的，去站点页点开某一站配置");
+          location.hash = "#sites";
+          return;
+        }
+        toast(bname + "（假数据）");
+        return;
+      }
       var row = e.target.closest(".rule-row");
       if (row) {
         var item = row.closest(".rule-item");
@@ -1498,7 +1680,26 @@
       var sw = e.target.closest("button[data-switch]");
       if (sw) { sw.classList.toggle("on"); return; }
       var btn = e.target.closest("button[data-btn]");
-      if (btn) toast(btn.getAttribute("data-btn") + "（假数据）");
+      if (btn) {
+        var lbl = btn.getAttribute("data-btn");
+        if (lbl === "清空本地缓存") {
+          ptaConfirm("清空本地缓存", "会清掉浏览器里存的站点设置、流程设置和分类映射，服务器数据不动。确定？", function () {
+            try { localStorage.clear(); } catch (err) {}
+            toast("本地缓存已清空，正在刷新");
+            setTimeout(function () { location.reload(); }, 700);
+          });
+          return;
+        }
+        if (lbl === "API 令牌") {
+          var buf = new Uint8Array(16);
+          (window.crypto || window.msCrypto).getRandomValues(buf);
+          var tk = [].map.call(buf, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+          toast("新令牌：" + tk.slice(0, 8) + "…（只显示一次）");
+          console.log("[PTA] api token", tk);
+          return;
+        }
+        toast(lbl + "（假数据）");
+      }
     });
     (function restoreSettings() {
       var data = null;
@@ -1692,8 +1893,10 @@
           { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"] },
           { t: "每日上限", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值" },
           { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail },
-          { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } },
-          { t: "分类映射", type: "button", v: "配置映射" }
+          { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } }
+        ]) + "</div>" +
+        '<div class="set-fields">' + setRowsHtml([
+          { t: "分类映射", type: "button", cls: "map-row", v: (catMapCount(s.name) ? "已配 " + catMapCount(s.name) + " 条" : "配置映射"), hint: "站点自己的分类对到库内分类，不受上面的开关影响" }
         ]) + "</div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
@@ -1888,6 +2091,18 @@
       var cat = e.target.closest(".cat-chip");
       if (cat) { cat.classList.toggle("on"); return; }
 
+      var mapBtn = e.target.closest("button[data-btn]");
+      if (mapBtn) {
+        var cs2 = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
+        openCatMap({
+          host: state.sel,
+          label: (cs2 && (cs2.title || cs2.name)) || state.sel,
+          cats: siteCatNames(cs2),
+          after: function () { paintDetail(); }
+        });
+        return;
+      }
+
       var sw = e.target.closest("button[data-switch]");
       if (sw) {
         sw.classList.toggle("on");
@@ -1905,7 +2120,19 @@
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!s) return;
 
-      if (act === "crawl") { toast("抓取测试：" + (s.title || s.name) + "（假数据）"); return; }
+      if (act === "crawl") {
+        if (btn.disabled) return;
+        var oldTxt = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "测试中…";
+        setTimeout(function () {
+          btn.disabled = false;
+          btn.textContent = oldTxt;
+          var ok = s.login === "ok" && s.enabled;
+          toast(ok ? "测试通过：登录、列表、详情都正常（假数据）" : "测试未通过：" + (!s.enabled ? "站点已停用" : "登录失效") + "（假数据）");
+        }, 900);
+        return;
+      }
       if (act === "login") { toast("重新登录：" + (s.title || s.name) + "（假数据）"); return; }
 
       if (act === "save") {
