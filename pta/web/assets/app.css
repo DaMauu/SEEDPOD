@@ -1835,3 +1835,12 @@ html, body { overflow-x: hidden; }
 .view[data-view="sites"] .st-head,
 .view[data-view="sites"] .site-item { padding: 0 22px; }
 .view[data-view="sites"] .site-item .site-pick { margin-right: 2px; }
+/* 站点表恢复架构列，扁平列表 */
+.st-head, .site-item { grid-template-columns: 28px minmax(0, 1fr) 104px 86px 92px 116px 40px; }
+.view[data-view="sites"] .st-head,
+.view[data-view="sites"] .site-item { padding: 0 22px; }
+/* 架构比例条：段与段直接相接，交界不做圆角 */
+.ss-bar { gap: 0; border-radius: 3px; }
+.ss-bar .seg { height: 100%; border-radius: 0; }
+.ss-bar .seg:first-child { border-radius: 3px 0 0 3px; }
+.ss-bar .seg:last-child { border-radius: 0 3px 3px 0; }

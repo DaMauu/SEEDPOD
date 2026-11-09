@@ -1491,6 +1491,7 @@
       return '<div class="site-item' + (state.sel === s.name ? " on" : "") + '" data-host="' + escapeHtml(s.name) + '">' +
         '<input type="checkbox" class="site-pick" data-host="' + escapeHtml(s.name) + '"' + (picked ? " checked" : "") + ">" +
         '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
+        '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
         '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
         '<span class="si-mode">' + modeTxt + "</span>" +
         '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
@@ -1663,7 +1664,7 @@
       var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
       var count = { NP: st.np, UNIT3D: st.unit3d, GZ: st.gz, OTHER: st.oth, "?": st.unk };
       var total = st.total || 1;
-      var colors = { NP: "#4f46e5", UNIT3D: "#7a72ec", GZ: "#a29cef", OTHER: "#c7c3f5", "?": "#d5d8e0" };
+      var colors = { NP: "#4f46e5", UNIT3D: "#6b62e8", GZ: "#8b84ee", OTHER: "#b3adf3", "?": "#c9cedb" };
       var segs = order.filter(function (k) { return count[k]; }).map(function (k) {
         return '<i class="seg" style="width:' + (count[k] / total * 100).toFixed(2) + '%;background:' + colors[k] + '"></i>';
       }).join("");
@@ -1686,23 +1687,8 @@
       var order = ["NP", "UNIT3D", "GZ", "OTHER", "?"];
       var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
       var groups = {};
-      rows.forEach(function (s) {
-        var k = ACH[s.arch] ? s.arch : "?";
-        (groups[k] = groups[k] || []).push(s);
-      });
-      list.innerHTML = order.filter(function (k) { return groups[k]; }).map(function (k) {
-        var g = groups[k];
-        var fails = g.filter(function (s) { return s.login === "fail"; }).length;
-        return '<section class="st-group' + (state.closed[k] ? " closed" : "") + '">' +
-          '<button class="st-ghead" type="button" data-gk="' + k + '">' +
-            '<em class="chip ' + ACH[k][0] + '">' + names[k] + "</em>" +
-            '<span class="g-n">' + g.length + " 个</span>" +
-            (fails ? '<span class="g-fail">失效 ' + fails + "</span>" : "") +
-            '<svg class="g-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
-          "</button>" +
-          '<div class="g-rows">' + g.map(itemHtml).join("") + "</div>" +
-        "</section>";
-      }).join("") || '<div class="sites-empty">没有匹配的站点</div>';
+      rows.forEach(function (s) { groups[s.name] = s; });
+      list.innerHTML = rows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
       var pager = $("#sites-pager");
       if (pager) pager.innerHTML = "";
       var cnt = $("#sites-count");
