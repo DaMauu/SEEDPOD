@@ -54,11 +54,11 @@
       { title: "Interview with the Vampire 1994 2160p UHD Blu-ray DV HEVC TrueHD 7.1", type: "原盘", res: "2160p", size: "22.12 GB", time: "4 小时前", check: "无重复", checkCls: "green" }
     ],
     nodes: [
-      { name: "A · 控制节点", role: "编排 / 数据库 / 发布", host: "10.0.0.10", online: true, disk: "系统盘 64 / 128 GB", used: 0, total: 0, qb: "—", seeding: "—", path: "/srv/pta" },
-      { name: "B · 下载节点", role: "下载 / 做种", host: "10.0.0.11", online: true, disk: "12.3 / 16 TB", used: 12.3, total: 16, qb: "5.0.3", seeding: "1,240", path: "/data/pt" },
-      { name: "C · 下载节点", role: "下载 / 做种", host: "10.0.0.12", online: true, disk: "8.7 / 12 TB", used: 8.7, total: 12, qb: "5.0.3", seeding: "862", path: "/data/pt" },
-      { name: "D · 下载节点", role: "下载 / 做种", host: "10.0.0.13", online: true, disk: "14.1 / 18 TB", used: 14.1, total: 18, qb: "4.6.7", seeding: "1,905", path: "/data/pt" },
-      { name: "E · 下载节点", role: "下载 / 做种", host: "10.0.0.14", online: false, disk: "3.2 / 8 TB", used: 3.2, total: 8, qb: "离线", seeding: "—", path: "/data/pt" }
+      { name: "A · 控制节点", role: "编排 / 数据库 / 发布", host: "192.0.2.10", online: true, disk: "系统盘 64 / 128 GB", used: 0, total: 0, qb: "—", seeding: "—", path: "/srv/pta" },
+      { name: "B · 下载节点", role: "下载 / 做种", host: "192.0.2.11", online: true, disk: "12.3 / 16 TB", used: 12.3, total: 16, qb: "5.0.3", seeding: "1,240", path: "/data/pt" },
+      { name: "C · 下载节点", role: "下载 / 做种", host: "192.0.2.12", online: true, disk: "8.7 / 12 TB", used: 8.7, total: 12, qb: "5.0.3", seeding: "862", path: "/data/pt" },
+      { name: "D · 下载节点", role: "下载 / 做种", host: "192.0.2.13", online: true, disk: "14.1 / 18 TB", used: 14.1, total: 18, qb: "4.6.7", seeding: "1,905", path: "/data/pt" },
+      { name: "E · 下载节点", role: "下载 / 做种", host: "192.0.2.14", online: false, disk: "3.2 / 8 TB", used: 3.2, total: 8, qb: "离线", seeding: "—", path: "/data/pt" }
     ],
     sitesList: [],    logs: [
       { t: "12:40:02", lvl: "ok", tag: "抓取", msg: "站点 A 第 231 页完成，累计 23,186 条，新增 87 条。" },
@@ -802,7 +802,7 @@
         var data = {
           name: name,
           role: editing >= 0 ? (MOCK.nodes[editing].role || "下载 / 做种") : "下载 / 做种",
-          host: $("#nd-host").value.trim() || "10.0.0.0",
+          host: $("#nd-host").value.trim() || "192.0.2.0",
           path: editing >= 0 ? MOCK.nodes[editing].path : "/data/pt",
           qb: "5.0.3",
           qbUser: $("#nd-user").value.trim(),
@@ -992,7 +992,7 @@
   ];
 
   var PUB_RULES = [
-    { name: "目标站", sum: "发到 52PT · 站内图床", rows: [
+    { name: "目标站", sum: "发到 目标站 A · 站内图床", rows: [
       { t: "发布到", type: "custom", html: '<div class="target-pick"><em class="tp-ava" id="tp-ava"></em><div class="tp-info"><b id="tp-name">—</b><span id="tp-host"></span></div><button class="btn ghost slim" id="tp-change">更换</button></div>', hint: "所有库内资源都归到这个站" },
       { t: "多目标站", type: "switch", on: false, hint: "同一部片同时发到 2–3 个站，需要各站分类都映射好" },
       { t: "图床", type: "select", v: "站内图床（浏览器上传）", opts: ["站内图床（浏览器上传）", "外链图床 API"] },
@@ -1129,7 +1129,7 @@
     loadFlowState();
     host.innerHTML =
       sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 增量", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85 · 发到 52PT", rules: PUB_RULES }, 1, "pub");
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85 · 发到 目标站 A", rules: PUB_RULES }, 1, "pub");
 
     renderTpl();
 
@@ -1275,7 +1275,7 @@
         { t: "登录保持", type: "select", v: "7 天", opts: ["7 天", "30 天", "关闭浏览器失效"] },
         { t: "面板地址", type: "text", v: "https://pta.example/", hint: "在 DNS 那边解析到 A 机" },
         { t: "只允许局域网访问", type: "switch", v: true, hint: "关掉后外网也能打开，需要配合防火墙" },
-        { t: "已登录设备", type: "text", v: "Windows · 192.168.1.23", disabled: true },
+        { t: "已登录设备", type: "text", v: "Windows · 192.0.2.23", disabled: true },
         { t: "退出所有设备", type: "button", v: "全部退出" }
       ] },
       { name: "通知", desc: "哪些事需要主动推送给你。", rows: [

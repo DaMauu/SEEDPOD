@@ -1,1 +1,4 @@
 node_modules/
+# 本地真实站点数据（不提交）
+pta/web/assets/sites-data.local.js
+pta/data/site-arch.local.csv
