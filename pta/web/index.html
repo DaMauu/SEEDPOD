@@ -239,29 +239,17 @@
 <div class="modal-mask" id="bulk-modal" hidden>
   <div class="modal wide">
     <div class="modal-head"><h2>批量设置</h2><button class="btn ghost slim" id="bulk-x">关闭</button></div>
-    <p class="modal-sub">将覆盖已选的 <b id="bulk-count">0</b> 个站点；只应用勾选的分组。</p>
-    <div class="bulk-groups">
-      <label><input type="checkbox" id="bg-scope" checked>抓取范围</label>
-      <label><input type="checkbox" id="bg-mode" checked>抓取方式</label>
-      <label><input type="checkbox" id="bg-time" checked>抓取时间</label>
-      <label><input type="checkbox" id="bg-freq" checked>抓取频率</label>
-    </div>
+    <p class="modal-sub">只改你选过的项，其余保持原样；应用到已选的 <b id="bulk-count">0</b> 个站点。</p>
     <div class="modal-scroll">
-      <div class="cat-label">抓取分类</div>
-      <div class="cat-row" id="bm-cats"></div>
-      <div class="sd-field"><span>只收原盘</span><button class="switch on" id="bm-full"><i></i></button></div>
-      <div class="sd-field"><span>分辨率下限</span><select class="select" id="bm-res">
-        <option value="any">不限</option><option value="720p">720p 及以上</option>
-        <option value="1080p" selected>1080p 及以上</option><option value="2160p">2160p 及以上</option></select></div>
-      <div class="sd-field"><span>最小体积（GB）</span><input class="input" id="bm-size" value="5"></div>
-      <div class="sd-field"><span>抓取方式</span><select class="select" id="bm-mode">
-        <option value="incr">增量（只抓新页）</option><option value="full">全量</option><option value="mixed">增量 + 定期全量</option></select></div>
-      <div class="sd-field"><span>抓取时间</span><select class="select" id="bm-trigger">
-        <option value="interval">按间隔自动跑</option><option value="daily">每天定点跑</option><option value="manual">手动</option></select></div>
-      <div class="sd-field"><span>每隔多少分钟</span><input class="input" id="bm-every" value="60"></div>
-      <div class="sd-field"><span>每页间隔（秒）</span><input class="input" id="bm-interval" value="3.0"></div>
-      <div class="sd-field"><span>每轮最多翻几页</span><input class="input" id="bm-pages" value="2"></div>
-      <div class="sd-field"><span>并发</span><input class="input" id="bm-concurrency" value="1"></div>
+      <div class="sd-field"><span>覆盖全局抓取</span><select class="select" id="bm-ovr">
+        <option value="keep">不改</option><option value="on">开启</option><option value="off">关闭</option></select></div>
+      <div class="sd-field"><span>抓取间隔</span><select class="select" id="bm-iv">
+        <option value="keep">不改</option><option>跟随全局</option><option>1 分钟</option><option>5 分钟</option><option>15 分钟</option><option>1 小时</option></select></div>
+      <div class="sd-field"><span>单站每日上限</span><input class="input" id="bm-daily" placeholder="留空＝不改"></div>
+      <div class="sd-field"><span>抓详情页</span><select class="select" id="bm-det">
+        <option value="keep">不改</option><option value="on">开启</option><option value="off">关闭</option></select></div>
+      <div class="sd-field"><span>站点优先级</span><select class="select" id="bm-prio">
+        <option value="keep">不改</option><option value="high">高（先抓）</option><option value="normal">普通</option><option value="low">低（最后抓）</option></select></div>
     </div>
     <div class="modal-foot">
       <button class="btn ghost slim" id="bulk-cancel">取消</button>

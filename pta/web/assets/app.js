@@ -1787,13 +1787,6 @@
     function initBulkModal() {
       var mask = $("#bulk-modal");
       if (!mask) return;
-      var cats = $("#bm-cats");
-      if (cats && !cats.children.length) {
-        cats.innerHTML = CATS.map(function (c) {
-          var on = ["movie", "tv", "doc", "music"].indexOf(c[0]) >= 0;
-          return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-cat="' + c[0] + '">' + c[1] + "</button>";
-        }).join("");
-      }
       if (bOpen) bOpen.addEventListener("click", function () {
         $("#bulk-count").textContent = state.picks.length;
         mask.hidden = false;
@@ -1801,25 +1794,16 @@
       $("#bulk-x").addEventListener("click", function () { mask.hidden = true; });
       $("#bulk-cancel").addEventListener("click", function () { mask.hidden = true; });
       mask.addEventListener("click", function (e) { if (e.target === mask) mask.hidden = true; });
-      $("#bm-full").addEventListener("click", function (e) { e.currentTarget.classList.toggle("on"); });
-      cats.addEventListener("click", function (e) {
-        var ch = e.target.closest(".cat-chip");
-        if (ch) ch.classList.toggle("on");
-      });
       $("#bulk-ok").addEventListener("click", function () {
-        var gScope = $("#bg-scope").checked, gMode = $("#bg-mode").checked;
-        var gTime = $("#bg-time").checked, gFreq = $("#bg-freq").checked;
-        var catList = [].map.call(cats.querySelectorAll(".cat-chip.on"), function (c) { return c.getAttribute("data-cat"); });
-        var res = $("#bm-res").value, size = $("#bm-size").value.trim();
-        var full = $("#bm-full").classList.contains("on");
-        var mode = $("#bm-mode").value, trig = $("#bm-trigger").value, every = $("#bm-every").value.trim();
-        var iv = $("#bm-interval").value.trim(), pg = $("#bm-pages").value.trim(), cc = $("#bm-concurrency").value.trim();
+        var ovr = $("#bm-ovr").value, iv = $("#bm-iv").value;
+        var daily = $("#bm-daily").value.trim(), det = $("#bm-det").value, prio = $("#bm-prio").value;
         var list2 = pickedSites();
         list2.forEach(function (x) {
-          if (gScope) { x.cats = catList.slice(); x.minRes = res; x.minSize = size; x.fullDiscOnly = full; }
-          if (gMode) { x.mode = mode; }
-          if (gTime) { x.trigger = trig; x.everyMin = every; }
-          if (gFreq) { x.interval = iv; x.pages = pg; x.concurrency = cc; }
+          if (ovr !== "keep") x.override = ovr === "on";
+          if (iv !== "keep") x.ovInterval = iv;
+          if (daily) x.ovDaily = daily;
+          if (det !== "keep") x.ovDetail = det === "on";
+          if (prio !== "keep") x.priority = prio;
           window.__ptaStore.set(x.name, x);
         });
         window.__ptaStore.save();
