@@ -1332,3 +1332,28 @@ html, body { overflow-x: hidden; }
 .sd-form .set-field:has(textarea) .ctl,
 .sd-form .set-field:has(.pick-row) .ctl { width: 100%; }
 .sd-form .set-field .ctl textarea { width: 100%; min-height: 68px; }
+
+/* 手风琴内表单：更紧凑、左右对齐 */
+.rule-body { padding: 0 4px 10px; }
+.rule-body .set-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; max-width: 920px; }
+.rule-body .set-field { align-items: flex-start; gap: 14px; padding: 7px 0; min-height: 0; }
+.rule-body .set-field .lbl { padding-top: 3px; }
+.rule-body .set-field .lbl span { font-size: 12px; line-height: 1.5; }
+.rule-body .set-field .lbl i { font-size: 11px; color: var(--muted-2); margin-top: 1px; line-height: 1.35; }
+.rule-body .set-field .ctl { width: 186px; align-items: flex-start; }
+.rule-body .set-field .ctl .input,
+.rule-body .set-field .ctl .select { height: 28px; font-size: 11.5px; padding: 0 10px; }
+.rule-body .set-field .ctl .switch { margin-top: 1px; }
+.rule-body .set-field .ctl .btn { height: 28px; font-size: 11.5px; }
+.rule-body .set-field:has(.pick-row),
+.rule-body .set-field:has(.tpl-wrap),
+.rule-body .set-field:has(.target-pick),
+.rule-body .set-field:has(textarea) { padding: 9px 0; gap: 6px; }
+.rule-body .set-field .pick-row { gap: 5px; }
+.rule-body .set-field .cat-chip { font-size: 11px; padding: 3px 9px; }
+.rule-body .rule-actions { padding-top: 6px; }
+.rule-body .set-field .ctl { justify-content: flex-end; align-items: flex-start; }
+.rule-body .set-fields { max-width: 880px; column-gap: 36px; }
+.rule-body .set-field .ctl { width: 176px; }
+.rule-body .set-field { padding: 6px 0; }
+.rule-body .set-field .lbl i { max-width: 240px; }
