@@ -1,6 +1,6 @@
 # 安全策略 / Security Policy
 
-[中文](#中文) · [English](#english)
+[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/SECURITY.zh-TW.md) · [日本語](docs/i18n/SECURITY.ja.md) · [한국어](docs/i18n/SECURITY.ko.md) · [Русский](docs/i18n/SECURITY.ru.md) · [Deutsch](docs/i18n/SECURITY.de.md) · [Français](docs/i18n/SECURITY.fr.md) · [Español](docs/i18n/SECURITY.es.md) · [Português](docs/i18n/SECURITY.pt.md)
 
 ---
 
@@ -10,7 +10,7 @@
 
 请**不要**通过公开 Issue 报告安全问题。用仓库的私密渠道：
 
-1. 打开 [Security](../../security/advisories) 标签页，点「Report a vulnerability」；
+1. 打开 [Security](security/advisories) 标签页，点「Report a vulnerability」；
 2. 或直接联系维护者，说明复现步骤与影响范围。
 
 我们会在 7 天内首次回复，确认后再协商修复与公开时间。
@@ -43,7 +43,7 @@
 
 Please **do not** report security issues through public Issues. Use the repository's private channel:
 
-1. Open the [Security](../../security/advisories) tab and click "Report a vulnerability";
+1. Open the [Security](security/advisories) tab and click "Report a vulnerability";
 2. Or contact the maintainer directly with reproduction steps and impact.
 
 We aim to respond within 7 days, and will agree on fix and disclosure timing with you.

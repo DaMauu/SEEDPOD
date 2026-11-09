@@ -17,6 +17,18 @@
   <img src="https://img.shields.io/badge/branch-main-8957e5?style=flat-square" />
 </p>
 
+<p align="center">
+  <a href="README.md">简体中文</a> ·
+  <a href="docs/i18n/README.zh-TW.md">繁體中文</a> ·
+  <a href="docs/i18n/README.ja.md">日本語</a> ·
+  <a href="docs/i18n/README.ko.md">한국어</a> ·
+  <a href="docs/i18n/README.ru.md">Русский</a> ·
+  <a href="docs/i18n/README.de.md">Deutsch</a> ·
+  <a href="docs/i18n/README.fr.md">Français</a> ·
+  <a href="docs/i18n/README.es.md">Español</a> ·
+  <a href="docs/i18n/README.pt.md">Português</a>
+</p>
+
 ---
 
 种荚收集直接挂进站点的单文件外挂：Tampermonkey 脚本与外部样式表。一个文件装进去就生效，没有构建步骤、没有依赖、没有后端。

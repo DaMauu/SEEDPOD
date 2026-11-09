@@ -1,6 +1,6 @@
 # 行为守则 / Code of Conduct
 
-[中文](#中文) · [English](#english)
+[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/CODE_OF_CONDUCT.zh-TW.md) · [日本語](docs/i18n/CODE_OF_CONDUCT.ja.md) · [한국어](docs/i18n/CODE_OF_CONDUCT.ko.md) · [Русский](docs/i18n/CODE_OF_CONDUCT.ru.md) · [Deutsch](docs/i18n/CODE_OF_CONDUCT.de.md) · [Français](docs/i18n/CODE_OF_CONDUCT.fr.md) · [Español](docs/i18n/CODE_OF_CONDUCT.es.md) · [Português](docs/i18n/CODE_OF_CONDUCT.pt.md)
 
 ---
 

@@ -1,6 +1,6 @@
 # 贡献指南 / Contributing
 
-[中文](#中文) · [English](#english)
+[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/CONTRIBUTING.zh-TW.md) · [日本語](docs/i18n/CONTRIBUTING.ja.md) · [한국어](docs/i18n/CONTRIBUTING.ko.md) · [Русский](docs/i18n/CONTRIBUTING.ru.md) · [Deutsch](docs/i18n/CONTRIBUTING.de.md) · [Français](docs/i18n/CONTRIBUTING.fr.md) · [Español](docs/i18n/CONTRIBUTING.es.md) · [Português](docs/i18n/CONTRIBUTING.pt.md)
 
 ---
 
