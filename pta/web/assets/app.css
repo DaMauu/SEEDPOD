@@ -1388,3 +1388,11 @@ html, body { overflow-x: hidden; }
 .rule-body .set-field:has(.pick-row) .lbl i { display: none; }
 .rule-body .set-field:has(.pick-row) .ctl { width: auto; flex: 1 1 auto; justify-content: flex-start; }
 .rule-body .set-field:has(.pick-row) .pick-row { flex-wrap: wrap; justify-content: flex-start; row-gap: 6px; }
+.rule-body .set-field:has(.pick-row) .pick-row { flex-wrap: nowrap; overflow-x: auto; row-gap: 0; padding-bottom: 2px; }
+.rule-body .set-field:has(.pick-row) .cat-chip { font-size: 10.5px; padding: 3px 8px; flex: 0 0 auto; }
+.rule-body .set-field:has(.pick-row) { padding: 8px 0; }
+.rule-body .set-fields:has(.pick-row) { max-width: none; }
+.rule-body .set-field:has(.pick-row) .ctl { min-width: 0; }
+.rule-body .set-field:has(.pick-row) .pick-row { flex: 1 1 auto; }
+.set-field .ctl .pick-row { max-width: none; }
+.rule-body .set-field .ctl .pick-row { max-width: none; }
