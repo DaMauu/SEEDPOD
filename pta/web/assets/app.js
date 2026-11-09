@@ -514,6 +514,26 @@
       return '<div class="shot"><span>' + n + "</span></div>";
     }
 
+    function subParts(it) {
+      var t = it.title || "";
+      var regions = { HKG: "港版", AUS: "澳版", USA: "美版", JPN: "日版", KOR: "韩版",
+        FRA: "法版", GER: "德版", ITA: "意版", ESP: "西版", TWN: "台版", CHN: "国版", UK: "英版" };
+      var mR = t.match(/\b(HKG|AUS|USA|JPN|KOR|FRA|GER|ITA|ESP|TWN|CHN|UK)\b/);
+      var mA = t.match(/(TrueHD|DTS-HD MA|DTS|LPCM|AC3|FLAC|EAC3)\s*([\d.]+)?/);
+      return { region: mR ? regions[mR[1]] : "", audio: mA ? (mA[1] + (mA[2] ? " " + mA[2] : "")) : "" };
+    }
+
+    function subTitle(it) {
+      var p2 = subParts(it);
+      return [p2.region ? p2.region + "原盘" : "原盘", p2.audio, "中文字幕"].filter(Boolean).join(" | ");
+    }
+
+    function introText(it) {
+      var p2 = subParts(it);
+      var tail = [p2.audio, "中文字幕"].filter(Boolean).join("，");
+      return (it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘，" + tail + "。";
+    }
+
     function detailHtml(it) {
       if (!it) return '<div class="sites-empty">选一条看发布预览</div>';
       var st = STATUS[it.status] || ["未知", "gray"];
@@ -533,7 +553,7 @@
           '<div class="qd-main">' +
             '<section class="sd-card"><h3>发布信息</h3>' +
               '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
-              '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(it.res + " · " + it.size + " · " + it.site) + '"></div>' +
+              '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(subTitle(it)) + '"></div>' +
               '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
             "</section>" +
             '<section class="sd-card qd-shots"><h3>截图</h3>' +
@@ -544,8 +564,7 @@
           '<div class="qd-side">' +
             '<section class="sd-card"><h3>简介</h3>' +
               '<textarea class="input sd-note" id="qd-desc" rows="3">' +
-                escapeHtml((it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘整理，来源 " + it.site + "。" +
-                  "规格：" + it.title.replace(/^.*?\\d{4}\\s*/, "") + "。") + "</textarea>" +
+                escapeHtml(introText(it)) + "</textarea>" +
             "</section>" +
           "</div>" +
         "</div>" +
