@@ -282,10 +282,6 @@
           "</div>" +
         "</div>");
     }
-    var h = $(".topbar h1");
-    if (h && !$(".top-logo")) {
-      h.insertAdjacentHTML("beforebegin", '<img class="top-logo" src="assets/whale.png" alt="">');
-    }
   }
 
   function initNav() {
@@ -885,7 +881,7 @@
     var state = { lvl: "all" };
 
     function paint() {
-      var rows = MOCK.logs.concat(MOCK.logs).filter(function (l) {
+      var rows = MOCK.logs.filter(function (l) {
         return state.lvl === "all" || l.lvl === state.lvl;
       });
       host.innerHTML = rows.map(function (l) {
