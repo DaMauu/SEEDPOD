@@ -519,35 +519,35 @@
       var st = STATUS[it.status] || ["未知", "gray"];
       var titleTpl = (it.cn ? it.cn + " " : "") + it.title.replace(/\s+/g, " ").trim();
       return '<div class="qd-head">' +
-          '<div class="qd-id"><h2>' + escapeHtml(it.cn || it.title) + "</h2>" +
+          '<div class="qd-id"><div class="qd-title-row"><h2>' + escapeHtml(it.cn || it.title) + "</h2>" +
+            '<span class="badge ' + st[1] + '">' + st[0] + "</span></div>" +
             '<span class="sd-url">' + escapeHtml(it.title) + "</span></div>" +
-          '<span class="badge ' + st[1] + '">' + st[0] + "</span>" +
+          '<div class="qd-meta">' +
+            "<span>站点<b>" + escapeHtml(it.site) + "</b></span>" +
+            "<span>分辨率<b>" + escapeHtml(it.res) + "</b></span>" +
+            "<span>大小<b>" + escapeHtml(it.size) + "</b></span>" +
+            "<span>年份<b>" + it.year + " · " + escapeHtml(it.imdb) + "</b></span>" +
+          "</div>" +
         "</div>" +
-        '<div class="qd-cols">' +
-          '<section class="sd-card"><h3>发布信息</h3>' +
-            '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
-            '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(it.res + " · " + it.size + " · " + it.site) + '"></div>' +
-            '<div class="qd-field"><span>主站分类</span><select class="select" id="qd-cat">' +
-              ["原盘", "Remux", "1080p", "2160p", "剧集"].map(function (c) {
-                return "<option>" + c + "</option>";
-              }).join("") + "</select></div>" +
-            '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
-          "</section>" +
-          '<section class="sd-card"><h3>来源</h3>' +
-            '<div class="sd-row"><span>站点</span><b>' + escapeHtml(it.site) + "</b></div>" +
-            '<div class="sd-row"><span>年份 / IMDb</span><b>' + it.year + " · " + escapeHtml(it.imdb) + "</b></div>" +
-            '<div class="sd-row"><span>分辨率</span><b>' + escapeHtml(it.res) + "</b></div>" +
-            '<div class="sd-row"><span>大小</span><b>' + escapeHtml(it.size) + "</b></div>" +
-          "</section>" +
-          '<section class="sd-card wide"><h3>简介</h3>' +
-            '<textarea class="input sd-note" id="qd-desc" rows="4">' +
-              escapeHtml((it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘整理，来源 " + it.site + "。" +
-                "规格：" + it.title.replace(/^.*?\\d{4}\\s*/, "") + "。") + "</textarea>" +
-          "</section>" +
-          '<section class="sd-card wide"><h3>截图</h3>' +
-            '<div class="shots">' + shotHtml(1) + shotHtml(2) + shotHtml(3) +
-              '<button class="shot add" id="qd-addshot">上传</button></div>' +
-          "</section>" +
+        '<div class="qd-grid">' +
+          '<div class="qd-main">' +
+            '<section class="sd-card"><h3>发布信息</h3>' +
+              '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
+              '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(it.res + " · " + it.size + " · " + it.site) + '"></div>' +
+              '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
+            "</section>" +
+            '<section class="sd-card qd-shots"><h3>截图</h3>' +
+              '<div class="shots">' + shotHtml(1) + shotHtml(2) + shotHtml(3) +
+                '<button class="shot add" id="qd-addshot">上传</button></div>' +
+            "</section>" +
+          "</div>" +
+          '<div class="qd-side">' +
+            '<section class="sd-card"><h3>简介</h3>' +
+              '<textarea class="input sd-note" id="qd-desc" rows="3">' +
+                escapeHtml((it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘整理，来源 " + it.site + "。" +
+                  "规格：" + it.title.replace(/^.*?\\d{4}\\s*/, "") + "。") + "</textarea>" +
+            "</section>" +
+          "</div>" +
         "</div>" +
         (it.status === "publishing"
           ? '<div class="qd-status warn">正在发布到主站…</div>'
