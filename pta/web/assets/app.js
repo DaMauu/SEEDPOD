@@ -924,6 +924,7 @@
       host.scrollTop = host.scrollHeight;
     }
 
+    window.__ptaRepaintLogs = paint;
     var tabs = $("#log-tabs");
     if (tabs) tabs.addEventListener("click", function (e) {
       var b = e.target.closest("button[data-lvl]");
@@ -2016,11 +2017,14 @@
     }
   };
   function statusPills() {
-    var on = MOCK.nodes.filter(function (n) { return n.online; }).length;
-    var fail = MOCK.sites.loginFail || 0;
-    return '<span class="pill"><span class="dot ok"></span>服务运行中</span>' +
+    var h = (typeof API !== "undefined" && API && API.mode === "live" && API.health) || null;
+    var on = h && h.nodesOnline != null ? h.nodesOnline : MOCK.nodes.filter(function (n) { return n.online; }).length;
+    var totalNodes = h && h.nodesTotal != null ? h.nodesTotal : MOCK.nodes.length;
+    var fail = h && h.loginFail != null ? h.loginFail : (MOCK.sites.loginFail || 0);
+    var live = !!h;
+    return '<span class="pill"><span class="dot ' + (live ? "ok" : "idle") + '"></span>' + (live ? "服务运行中" : "本地演示") + '</span>' +
       '<span class="pill"><span class="dot warn"></span>' + fail + ' 个站登录失效</span>' +
-      '<span class="pill"><span class="dot ok"></span>节点 ' + on + " / " + MOCK.nodes.length + "</span>";
+      '<span class="pill"><span class="dot ok"></span>节点 ' + on + " / " + totalNodes + "</span>";
   }
   Object.keys(VIEW_META).forEach(function (k) { VIEW_META[k].pills = statusPills; });
 
@@ -2082,6 +2086,131 @@
     go(VIEW_META[start] ? start : current, { force: true, pop: true });
   }
 
+/* ---------- 运行时：开发进度 / 后端连接 / 实时日志 ---------- */
+
+  /* 开发进度按模块加权，改这里即可自动重算 */
+  var PROGRESS_ITEMS = [
+    { name: "面板界面", weight: 22, done: 0.90 },
+    { name: "流程配置", weight: 10, done: 0.85 },
+    { name: "站点管理", weight: 8, done: 0.80 },
+    { name: "待审核台", weight: 6, done: 0.70 },
+    { name: "后端接口", weight: 15, done: 0 },
+    { name: "真实抓取", weight: 14, done: 0 },
+    { name: "真实发布", weight: 10, done: 0 },
+    { name: "部署与鉴权", weight: 8, done: 0 },
+    { name: "测试与文档", weight: 7, done: 0.10 }
+  ];
+
+  function progressPercent() {
+    var total = 0, got = 0;
+    PROGRESS_ITEMS.forEach(function (it) { total += it.weight; got += it.weight * it.done; });
+    return Math.round(got / (total || 1) * 100);
+  }
+
+  function renderProgress() {
+    var pct = progressPercent();
+    var bar = document.querySelector(".dev-progress .dp-bar i");
+    var num = document.querySelector(".dev-progress .dp-num");
+    var box = document.querySelector(".dev-progress");
+    if (bar) bar.style.width = pct + "%";
+    if (num) num.textContent = pct + "%";
+    if (box) {
+      var lines = PROGRESS_ITEMS.map(function (it) {
+        return it.name + " " + Math.round(it.done * 100) + "% × 权重 " + it.weight;
+      });
+      box.title = "按模块加权：" + pct + "%\n" + lines.join("\n");
+    }
+  }
+
+  /* 后端连接：有 /api/health 就切到实时，没有就留在本地演示 */
+  var API = {
+    mode: "mock",
+    health: null,
+    connectedAt: 0,
+    probe: function () {
+      var ctrl = window.AbortController ? new AbortController() : null;
+      var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 1500) : null;
+      var opts = { cache: "no-store" };
+      if (ctrl) opts.signal = ctrl.signal;
+      return fetch("api/health", opts).then(function (r) {
+        if (!r.ok) throw new Error("bad status " + r.status);
+        return r.json();
+      }).then(function (j) {
+        API.mode = "live";
+        API.health = j || {};
+        API.connectedAt = Date.now();
+      }).catch(function () {
+        API.mode = "mock";
+        API.health = null;
+      }).then(function () {
+        if (timer) clearTimeout(timer);
+        renderProgress();
+        refreshPills();
+      });
+    }
+  };
+
+  function refreshPills() {
+    if (window.__ptaSetActive) window.__ptaSetActive(current);
+    var pills = document.querySelector("#page-pills");
+    if (!pills) return;
+    var live = API.mode === "live";
+    pills.title = live ? "已连接后端，数据实时" : "未检测到后端，当前为本地演示数据";
+    var first = pills.querySelector(".pill");
+    if (first) {
+      var dot = first.querySelector(".dot");
+      if (dot) { dot.className = "dot " + (live ? "ok" : "idle"); }
+      first.lastChild.nodeValue = live ? "服务运行中" : "本地演示";
+    }
+  }
+
+  /* 实时日志：本地演示按节奏追加，接后端后可换成 SSE/轮询 */
+  var LOG_STREAM = {
+    timer: null,
+    templates: [
+      { lvl: "info", tag: "抓取", msg: "站点 A 第 232 页完成，新增 6 条。" },
+      { lvl: "info", tag: "查重", msg: "主站索引命中 18 条，跳过 5 条重复。" },
+      { lvl: "warn", tag: "图床", msg: "站内图床上传较慢（6.2s），已重试一次。" },
+      { lvl: "info", tag: "发布", msg: "《乱》发布成功，种子 #8842199。" },
+      { lvl: "info", tag: "调度", msg: "下一轮抓取 15 分钟后开始。" },
+      { lvl: "error", tag: "详情", msg: "《修女艾达》详情页 403，转入失败队列。" }
+    ],
+    now: function () {
+      var d = new Date();
+      var p = function (n) { return (n < 10 ? "0" : "") + n; };
+      return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+    },
+    push: function (item) {
+      var t = item || this.templates[Math.floor(Math.random() * this.templates.length)];
+      var line = { t: this.now(), lvl: t.lvl, tag: t.tag, msg: t.msg };
+      MOCK.logs.unshift(line);
+      if (MOCK.logs.length > 80) MOCK.logs.length = 80;
+      if (window.__ptaRepaintLogs) window.__ptaRepaintLogs();
+      var dash = document.querySelector("#dash-logs");
+      if (dash && typeof renderDashboard === "function" && !document.querySelector('.view[data-view="logs"].active')) {
+        var lg = document.querySelector("#dash-logs");
+        if (lg) {
+          lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
+            return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
+          }).join("");
+        }
+      }
+    },
+    start: function () {
+      var self = this;
+      if (this.timer) return;
+      this.timer = setInterval(function () { self.push(); }, 6500);
+    },
+    stop: function () { clearInterval(this.timer); this.timer = null; }
+  };
+
+  function initRuntime() {
+    renderProgress();
+    API.probe();
+    setInterval(function () { API.probe(); }, 30000);
+    LOG_STREAM.start();
+    refreshPills();
+  }
   document.addEventListener("DOMContentLoaded", function () {
     initChrome();
     initNav();
@@ -2096,5 +2225,6 @@
     initSiteModal();
     initRouter();
     renderDashboard();
+    initRuntime();
   });
 })();
