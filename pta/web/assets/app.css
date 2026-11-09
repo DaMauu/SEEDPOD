@@ -1995,3 +1995,12 @@ html, body { overflow-x: hidden; }
 .site-expand .sd-recent-wrap { justify-self: start; }
 .site-expand .sd-compact { grid-template-columns: 300px minmax(0, 1fr); justify-content: stretch; }
 .site-expand .sd-recent-wrap { justify-self: end; }
+/* 概览：左右各成一张卡片，填满宽度 */
+.site-expand .sd-compact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px; align-items: start; margin-top: 12px; }
+.site-expand .sd-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.site-expand .sd-block, .site-expand .sd-recent-wrap {
+  background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+  width: auto; max-width: none; justify-self: stretch; }
+.site-expand .sd-block .sd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.site-expand .sd-block .sd-row + .sd-row { border-top: 1px solid #f2f4f8; }
