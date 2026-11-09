@@ -1378,3 +1378,5 @@ html, body { overflow-x: hidden; }
 .rule-body .set-fields { max-width: 640px; }
 .rule-body .set-field .ctl { width: 200px; }
 .rule-body .set-field { padding: 8px 0; }
+.rule-body .set-fields { max-width: none; }
+.rule-body .set-field .ctl { width: 220px; }
