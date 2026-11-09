@@ -1554,25 +1554,27 @@
           "<span>下次<b>" + escapeHtml(next) + "</b></span>" +
         "</div>" +
         '<div class="sd-compact">' +
-          '<div><h4>抓取</h4>' +
-            '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
-            '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
-            '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
-            '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
+          '<div class="sd-col">' +
+            '<div class="sd-block"><h4>登录</h4>' +
+              '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
+              '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
+              '<div class="sd-row"><span>cookie 剩余</span><b>' + (s.loginMethod === "cookie" ? "—" : s.cookieDays + " 天") + "</b></div>" +
+              '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
+            "</div>" +
+            '<div class="sd-block"><h4>抓取</h4>' +
+              '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
+              '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
+              '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
+              '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
+            "</div>" +
           "</div>" +
-          '<div><h4>登录</h4>' +
-            '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
-            '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
-            '<div class="sd-row"><span>cookie 剩余</span><b>' + (s.loginMethod === "cookie" ? "—" : s.cookieDays + " 天") + "</b></div>" +
-            '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
+          '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
+            recs.map(function (r) {
+              return '<div class="sd-recent"><span class="t-main">' + escapeHtml(r.title) + "</span>" +
+                '<span class="soft">' + escapeHtml(r.size) + "</span>" +
+                '<span class="soft">' + escapeHtml(r.time) + "</span></div>";
+            }).join("") +
           "</div>" +
-        "</div>" +
-        '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
-          recs.map(function (r) {
-            return '<div class="sd-recent"><span class="t-main">' + escapeHtml(r.title) + "</span>" +
-              '<span class="soft">' + escapeHtml(r.size) + "</span>" +
-              '<span class="soft">' + escapeHtml(r.time) + "</span></div>";
-          }).join("") +
         "</div>";
     }
 
