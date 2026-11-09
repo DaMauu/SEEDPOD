@@ -1718,6 +1718,18 @@
       window.__ptaStore.save();
     }
 
+    if (sheetMask) sheetMask.addEventListener("click", function () {
+      state.open = false;
+      detail.classList.remove("open");
+      sheetMask.hidden = true;
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape" || !state.open) return;
+      state.open = false;
+      detail.classList.remove("open");
+      if (sheetMask) sheetMask.hidden = true;
+    });
+
     /* ---- 列表交互 ---- */
     list.addEventListener("click", function (e) {
       var gh = e.target.closest(".st-ghead");
