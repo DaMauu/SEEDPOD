@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>总览 · PT 转载台</title>
+<title>总览 · 媒体资料库</title>
 <link rel="icon" href="assets/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -94,7 +94,7 @@
             <option value="fail">登录失效</option>
             <option value="none">未登录</option>
           </select>
-          <button class="btn primary slim" data-act="new-site">添加源站</button>
+          <button class="btn primary slim" data-act="new-site">添加站点</button>
         </div>
 
         <div class="sites-split">
@@ -118,16 +118,8 @@
     <section class="view" data-view="crawl" hidden>
       <div class="drawers">
 <div id="crawl-panel"></div>
-        <section class="drawer" data-i="nodes">
-          <button class="drawer-head">
-            <div class="drawer-t">
-              <div class="drawer-title">下载器</div>
-              <div class="drawer-desc">A 控制，B~F 下载与做种</div>
-            </div>
-            <span class="drawer-meta" id="nodes-drawer-meta"></span>
-            <svg class="drawer-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="drawer-body drawer-body-flush">
+        <section class="drawer open" data-i="nodes">
+                    <div class="drawer-body drawer-body-flush">
             <div class="nodes-inner">
       <div class="nodes-bar">
         <span class="nodes-bar-title">机器</span>
@@ -170,53 +162,42 @@
       </div>
     </section>
 
-    <!-- ===== 收录 ===== -->
+    <!-- ===== 数据清单 ===== -->
     <section class="view" data-view="sources" hidden>
-      <div class="toolbar">
-        <input class="input" placeholder="搜标题 / IMDb" style="width:260px">
-        <select class="select"><option>全部源站</option><option>源站 A</option><option>源站 B</option></select>
-        <select class="select"><option>全部类型</option><option>原盘</option><option>4K UHD</option><option>Blu-ray</option></select>
-        <div class="spacer"></div>
-        <button class="btn">增量抓取</button>
-        <button class="btn">导出 JSON</button>
+      <div class="dl-wrap">
+        <div class="dl-bar">
+          <input class="input" id="dl-q" placeholder="搜标题 / IMDb" style="width:240px">
+          <select class="select slim" id="dl-site"><option>全部站点</option><option>站点 A</option><option>站点 B</option></select>
+          <select class="select slim" id="dl-type"><option>全部类型</option><option>原盘</option><option>UHD</option><option>Blu-ray</option></select>
+          <div class="spacer"></div>
+          <button class="btn ghost slim" id="dl-crawl">增量抓取</button>
+          <button class="btn ghost slim" id="dl-export">导出 JSON</button>
+        </div>
+        <div class="dl-panel">
+          <div class="dl-head">
+            <span>标题</span><span>类型</span><span>分辨率</span><span>大小</span><span>入库</span><span>查重</span><span class="ta-r">操作</span>
+          </div>
+          <div id="dl-body"></div>
+          <div class="dl-foot"><span>共 <b id="dl-count">0</b> 条</span><div class="spacer"></div><span class="soft" id="dl-page">第 1 页</span></div>
+        </div>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>标题</th>
-              <th style="width:80px">类型</th>
-              <th style="width:74px">分辨率</th>
-              <th style="width:96px">大小</th>
-              <th style="width:100px">入库</th>
-              <th style="width:100px">查重</th>
-              <th style="width:90px">操作</th>
-            </tr>
-          </thead>
-          <tbody id="sources-body"></tbody>
-        </table>
-      </div>
-
-      <p class="note" style="margin-top:12px">这里只显示已入库的条目；点转种会进待发队列，不会立刻发布。</p>
     </section>
 
     <!-- ===== 日志 ===== -->
     <section class="view" data-view="logs" hidden>
-      <div class="toolbar">
-        <div class="seg">
-          <a href="#logs" class="active">全部</a>
-          <a href="#logs">INFO</a>
-          <a href="#logs">WARN</a>
-          <a href="#logs">ERROR</a>
+      <div class="log-wrap">
+        <div class="log-bar">
+          <div class="seg-tabs" id="log-tabs">
+            <button type="button" data-lvl="all" class="active">全部</button>
+            <button type="button" data-lvl="info">INFO</button>
+            <button type="button" data-lvl="warn">WARN</button>
+            <button type="button" data-lvl="error">ERROR</button>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn ghost slim" id="log-dl">下载 log</button>
+          <button class="btn ghost slim" id="log-clear">清屏</button>
         </div>
-        <div class="spacer"></div>
-        <button class="btn">下载 log</button>
-        <button class="btn ghost">清屏</button>
-      </div>
-
-      <div class="card">
-        <div class="logs" id="log-lines"></div>
+        <div class="log-panel" id="log-lines"></div>
       </div>
     </section>
 
@@ -229,7 +210,7 @@
 
 <div class="modal-mask" id="site-modal" hidden>
   <div class="modal">
-    <div class="modal-head"><h2>添加源站</h2><button class="btn ghost slim" id="site-modal-x">关闭</button></div>
+    <div class="modal-head"><h2>添加站点</h2><button class="btn ghost slim" id="site-modal-x">关闭</button></div>
     <label class="field"><span>站点地址</span>
       <input class="input" id="ns-url" placeholder="https://example.com/index.php" autocomplete="off"></label>
     <label class="field"><span>架构</span>
@@ -297,7 +278,7 @@
 
 <div class="modal-mask" id="target-modal" hidden>
   <div class="modal wide">
-    <div class="modal-head"><h2>选择目标站</h2><button class="btn ghost slim" id="target-x">关闭</button></div>
+    <div class="modal-head"><h2>选择主站</h2><button class="btn ghost slim" id="target-x">关闭</button></div>
     <p class="modal-sub">发布前会先查这个站有没有同样的资源。</p>
     <input class="input" id="target-q" placeholder="搜索站点名 / 域名" autocomplete="off">
     <div class="target-list" id="target-list"></div>
@@ -317,6 +298,18 @@
     <div class="modal-two">
       <label class="field"><span>同时下载</span><input class="input" id="nd-down" value="3"></label>
       <label class="field"><span>做种上限</span><input class="input" id="nd-seed" value="500"></label>
+    </div>
+    <div class="modal-two">
+      <label class="field"><span>下载限速</span><input class="input" id="nd-dllimit" value="不限" placeholder="如 50 MB/s"></label>
+      <label class="field"><span>上传限速</span><input class="input" id="nd-ullimit" value="不限" placeholder="如 20 MB/s"></label>
+    </div>
+    <div class="modal-two">
+      <label class="field"><span>分享率达标删种</span><input class="input" id="nd-ratio" value="2.0"></label>
+      <label class="field"><span>保种天数</span><input class="input" id="nd-days" value="30"></label>
+    </div>
+    <div class="modal-two">
+      <label class="field"><span>下载路径</span><input class="input" id="nd-path" value="/data/pt"></label>
+      <label class="field"><span>磁盘低水位</span><input class="input" id="nd-lowdisk" value="50 GB"></label>
     </div>
     <div class="nd-cats">
       <div class="nd-cats-head">

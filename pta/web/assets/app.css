@@ -1230,3 +1230,66 @@ html, body { overflow-x: hidden; }
 #rule-body .tpl-wrap { align-items: stretch; }
 #rule-body .tpl-wrap .input { width: 100%; }
 #rule-body .tpl-eg { text-align: left; }
+/* 流程页：去掉手风琴，全部常驻展开 */
+.view[data-view="crawl"] { height: auto; min-height: calc(100vh - 150px); }
+.drawers .drawer { flex: 0 0 auto; }
+.drawers .drawer-body { display: block; overflow: visible; }
+.drawer-chev { display: none; }
+.drawer-head { cursor: default; }
+.drawer-head:hover { background: none; }
+.drawer.open .drawer-head { background: #fcfcfd; }
+#rule-body .tpl-wrap .input, #rule-body .tpl-try .input { width: 100%; }
+#rule-body .tpl-wrap { align-items: stretch; }
+#rule-body .tpl-eg { text-align: left; }
+/* 规则行内手风琴 */
+.rule-item { border-bottom: 1px solid var(--line); }
+.rule-item:last-child { border-bottom: 0; }
+.rule-item .rule-row { display: grid; grid-template-columns: 140px 1fr 18px; align-items: center; gap: 14px; width: 100%; text-align: left; border: 0; background: none; padding: 12px 4px; cursor: pointer; font: inherit; }
+.rule-item .rule-row:hover { background: #fafbfd; }
+.rule-chev { width: 15px; height: 15px; color: var(--muted-2); transition: transform .16s ease; }
+.rule-item.open .rule-chev { transform: rotate(180deg); }
+.rule-body { display: none; padding: 2px 4px 14px; }
+.rule-item.open .rule-body { display: block; }
+.rule-body .set-fields { border-top: 1px solid var(--line); padding-top: 6px; }
+.rule-body .set-field { flex-direction: column; align-items: stretch; gap: 7px; padding: 10px 0; }
+.rule-body .set-field .ctl .input, .rule-body .set-field .ctl .select { width: 100%; height: 32px; font-size: 12px; }
+.rule-body .set-field .ctl .pick-row { justify-content: flex-start; }
+.rule-body .tpl-wrap { align-items: stretch; }
+.rule-body .tpl-wrap .input { width: 100%; }
+.rule-body .tpl-eg { text-align: left; }
+.rule-actions { display: flex; justify-content: flex-end; padding-top: 10px; }
+.tpl-fixed { font-size: 12.5px; color: var(--muted); }
+
+/* ============ 数据清单 ============ */
+.view[data-view="sources"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
+.view[data-view="sources"][hidden] { display: none !important; }
+.dl-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.dl-bar { display: flex; align-items: center; gap: 10px; }
+.dl-bar .spacer { flex: 1; }
+.dl-panel { flex: 1; min-height: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
+.dl-head, .dl-row { display: grid; grid-template-columns: minmax(0,1fr) 96px 90px 96px 96px 92px 74px; align-items: center; gap: 14px; padding: 0 22px; }
+.dl-head { height: 40px; background: #fcfcfd; border-bottom: 1px solid var(--line); font-size: 11px; color: var(--muted-2); }
+#dl-body { flex: 1; overflow-y: auto; }
+.dl-row { min-height: 58px; border-bottom: 1px solid var(--line); }
+.dl-row:last-child { border-bottom: 0; }
+.dl-row:hover { background: #fafbfd; }
+.dl-title b { font-size: 12.5px; font-weight: 500; color: var(--ink); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-foot { display: flex; align-items: center; gap: 8px; padding: 10px 22px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.dl-foot .spacer { flex: 1; }
+
+/* ============ 日志 ============ */
+.view[data-view="logs"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
+.view[data-view="logs"][hidden] { display: none !important; }
+.log-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.log-bar { display: flex; align-items: center; gap: 10px; }
+.log-bar .spacer { flex: 1; }
+.log-panel { flex: 1; min-height: 0; overflow-y: auto; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 8px 20px; }
+.log-row { display: grid; grid-template-columns: 76px 56px 110px minmax(0,1fr); gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.log-row:last-child { border-bottom: 0; }
+.log-ts { color: var(--muted-2); font-family: var(--mono, ui-monospace, monospace); font-size: 11px; }
+.log-tag { font-size: 10px; letter-spacing: .4px; color: var(--muted); }
+.log-row.warn .log-tag { color: var(--amber); }
+.log-row.error .log-tag { color: var(--red); }
+.log-src { color: var(--muted); font-size: 11.5px; }
+.log-msg { color: var(--ink); }
+.log-row.error .log-msg { color: var(--red); }

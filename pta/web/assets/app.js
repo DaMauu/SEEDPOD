@@ -1,4 +1,4 @@
-/* PT 转载台 · 静态原型假数据与渲染逻辑 */
+/* 媒体资料库 · 静态原型假数据与渲染逻辑 */
 (function () {
   var PAGE = document.body.getAttribute("data-page") || "dashboard";
 
@@ -21,25 +21,25 @@
     },
     todos: [
       { level: "warn", title: "12 部待发等你确认", desc: "最早一条已等 2 小时", action: "去确认", href: "#queue" },
-      { level: "bad", title: "2 个站登录失效", desc: "源站 A、源站 C 需要重新登录", action: "去登录", href: "#settings" },
+      { level: "bad", title: "2 个站登录失效", desc: "站点 A、站点 C 需要重新登录", action: "去登录", href: "#settings" },
       { level: "warn", title: "节点 E 离线 37 分钟", desc: "还有 214 个种子未同步", action: "查看", href: "#nodes" },
       { level: "", title: "抓取任务运行正常", desc: "下一轮 18:00 自动增量", action: "看日志", href: "#logs" }
     ],
     published: [
-      { title: "The Golden Lotus", cn: "金瓶双艳", site: "目标站 B", time: "12:39", size: "30.67 GB" },
-      { title: "Perfect Blue", cn: "未麻的部屋", site: "目标站 B", time: "11:52", size: "44.14 GB" },
-      { title: "Ran", cn: "乱", site: "目标站 B", time: "10:18", size: "87.77 GB" },
-      { title: "Green Snake", cn: "青蛇劫起", site: "目标站 B", time: "昨天 22:41", size: "43.67 GB" }
+      { title: "The Golden Lotus", cn: "金瓶双艳", site: "主站 B", time: "12:39", size: "30.67 GB" },
+      { title: "Perfect Blue", cn: "未麻的部屋", site: "主站 B", time: "11:52", size: "44.14 GB" },
+      { title: "Ran", cn: "乱", site: "主站 B", time: "10:18", size: "87.77 GB" },
+      { title: "Green Snake", cn: "青蛇劫起", site: "主站 B", time: "昨天 22:41", size: "43.67 GB" }
     ],
     queue: [
-      { id: 101, title: "Follow Me 2020 1080p HKG Blu-ray AVC TrueHD 7.1", cn: "极限网红", year: 2020, res: "1080p", size: "22.10 GB", imdb: "5.4", site: "源站 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 102, title: "Perfect Blue 1997 1080p HKG Blu-ray AVC DTS-HD MA 5.1", cn: "未麻的部屋", year: 1997, res: "1080p", size: "44.14 GB", imdb: "8.0", site: "源站 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 103, title: "Ran 1985 2160p UHD Blu-ray DoVi HDR10 HEVC DTS-HD MA 5.1", cn: "乱", year: 1985, res: "2160p", size: "87.77 GB", imdb: "8.2", site: "源站 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 104, title: "The Golden Lotus 1974 1080p AUS Blu-ray AVC LPCM 2.0", cn: "金瓶双艳", year: 1974, res: "1080p", size: "30.67 GB", imdb: "5.7", site: "源站 A", status: "approved", check: "无重复", checkCls: "green" },
-      { id: 105, title: "Crouching Tiger Hidden Dragon 2000 2160p USA UHD Blu-ray HEVC TrueHD 7.1", cn: "卧虎藏龙", year: 2000, res: "2160p", size: "89.12 GB", imdb: "7.9", site: "源站 B", status: "dupe", check: "已有 89.1G", checkCls: "amber" },
-      { id: 106, title: "Ida 2013 1080p AUS BluRay AVC DTS-HD MA 5.1", cn: "修女艾达", year: 2013, res: "1080p", size: "27.86 GB", imdb: "7.4", site: "源站 B", status: "failed", check: "详情页 403", checkCls: "red" },
-      { id: 107, title: "Green Snake 2021 CHN Blu-ray 1080p AVC Atmos TrueHD 7.1", cn: "青蛇劫起", year: 2021, res: "1080p", size: "43.67 GB", imdb: "6.8", site: "源站 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 108, title: "Blades of the Guardians 2026 1080p HKG Blu-ray AVC TrueHD 7.1 Atmos", cn: "镖人：风起大漠", year: 2026, res: "1080p", size: "39.45 GB", imdb: "—", site: "源站 A", status: "pending", check: "未查", checkCls: "gray" }
+      { id: 101, title: "Follow Me 2020 1080p HKG Blu-ray AVC TrueHD 7.1", cn: "极限网红", year: 2020, res: "1080p", size: "22.10 GB", imdb: "5.4", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
+      { id: 102, title: "Perfect Blue 1997 1080p HKG Blu-ray AVC DTS-HD MA 5.1", cn: "未麻的部屋", year: 1997, res: "1080p", size: "44.14 GB", imdb: "8.0", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
+      { id: 103, title: "Ran 1985 2160p UHD Blu-ray DoVi HDR10 HEVC DTS-HD MA 5.1", cn: "乱", year: 1985, res: "2160p", size: "87.77 GB", imdb: "8.2", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
+      { id: 104, title: "The Golden Lotus 1974 1080p AUS Blu-ray AVC LPCM 2.0", cn: "金瓶双艳", year: 1974, res: "1080p", size: "30.67 GB", imdb: "5.7", site: "站点 A", status: "approved", check: "无重复", checkCls: "green" },
+      { id: 105, title: "Crouching Tiger Hidden Dragon 2000 2160p USA UHD Blu-ray HEVC TrueHD 7.1", cn: "卧虎藏龙", year: 2000, res: "2160p", size: "89.12 GB", imdb: "7.9", site: "站点 B", status: "dupe", check: "已有 89.1G", checkCls: "amber" },
+      { id: 106, title: "Ida 2013 1080p AUS BluRay AVC DTS-HD MA 5.1", cn: "修女艾达", year: 2013, res: "1080p", size: "27.86 GB", imdb: "7.4", site: "站点 B", status: "failed", check: "详情页 403", checkCls: "red" },
+      { id: 107, title: "Green Snake 2021 CHN Blu-ray 1080p AVC Atmos TrueHD 7.1", cn: "青蛇劫起", year: 2021, res: "1080p", size: "43.67 GB", imdb: "6.8", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
+      { id: 108, title: "Blades of the Guardians 2026 1080p HKG Blu-ray AVC TrueHD 7.1 Atmos", cn: "镖人：风起大漠", year: 2026, res: "1080p", size: "39.45 GB", imdb: "—", site: "站点 A", status: "pending", check: "未查", checkCls: "gray" }
     ],
     sources: [
       { title: "Follow Me 2020 1080p HKG Blu-ray AVC TrueHD 7.1", type: "原盘", res: "1080p", size: "22.10 GB", time: "8 分钟前", check: "无重复", checkCls: "green" },
@@ -50,7 +50,7 @@
       { title: "Illicit Desire 1973 1080p AUS Blu-ray AVC LPCM 2.0", type: "原盘", res: "1080p", size: "36.48 GB", time: "9 分钟前", check: "已收录", checkCls: "amber" },
       { title: "Tai Chi Zero 2012 1080p AUS Blu-ray AVC DTS-HD MA 5.1", type: "原盘", res: "1080p", size: "28.79 GB", time: "9 分钟前", check: "无重复", checkCls: "green" },
       { title: "Perfect Blue 1997 1080p HKG Blu-ray AVC DTS-HD MA 5.1", type: "原盘", res: "1080p", size: "44.14 GB", time: "23 小时前", check: "无重复", checkCls: "green" },
-      { title: "Kite 2014 1080p HKG Blu-ray AVC TrueHD 5.1", type: "原盘", res: "1080p", size: "21.88 GB", time: "1 天前", check: "禁转", checkCls: "red" },
+      { title: "Kite 2014 1080p HKG Blu-ray AVC TrueHD 5.1", type: "原盘", res: "1080p", size: "21.88 GB", time: "1 天前", check: "限制分发", checkCls: "red" },
       { title: "Interview with the Vampire 1994 2160p UHD Blu-ray DV HEVC TrueHD 7.1", type: "原盘", res: "2160p", size: "22.12 GB", time: "4 小时前", check: "无重复", checkCls: "green" }
     ],
     nodes: [
@@ -61,8 +61,8 @@
       { name: "E · 下载节点", role: "下载 / 做种", host: "10.0.0.14", online: false, disk: "3.2 / 8 TB", used: 3.2, total: 8, qb: "离线", seeding: "—", path: "/data/pt" }
     ],
     sitesList: [],    logs: [
-      { t: "12:40:02", lvl: "ok", tag: "抓取", msg: "源站 A 第 231 页完成，累计 23,186 条，新增 87 条。" },
-      { t: "12:39:58", lvl: "", tag: "查重", msg: "目标站索引命中 214 条，跳过 127 条重复。" },
+      { t: "12:40:02", lvl: "ok", tag: "抓取", msg: "站点 A 第 231 页完成，累计 23,186 条，新增 87 条。" },
+      { t: "12:39:58", lvl: "", tag: "查重", msg: "主站索引命中 214 条，跳过 127 条重复。" },
       { t: "12:39:40", lvl: "", tag: "发布", msg: "《金瓶双艳》发布成功，种子 #8842103。" },
       { t: "12:38:12", lvl: "warn", tag: "图床", msg: "站内图床上传较慢（8.4s），已重试一次成功。" },
       { t: "12:36:55", lvl: "error", tag: "详情", msg: "《修女艾达》详情页 403，任务转入失败队列。" },
@@ -301,36 +301,44 @@
   }
 
   function renderDashboard() {
-    var s = MOCK.stats;
-    var host = $("#dash-stats");
-    if (host) {
-      host.innerHTML = [
-        kpi("今日已发", String(s.today.posted), "较昨日 +1", "up"),
-        kpi("本月已发", String(s.today.monthPosted), "月度目标 120", "up"),
-        kpi("总发布数", s.today.totalPosted.toLocaleString(), "历史累计", ""),
-        kpi("抓取总数", s.today.dbTotal.toLocaleString(), "今日 +" + s.today.fresh, "")
-      ].join("");
-    }
-    renderHero();
-    renderPending();
-    renderPublished();
-    renderHealth();
+    var pub = MOCK.queue.filter(function (x) { return x.status === "published"; }).length;
+    var fail = MOCK.queue.filter(function (x) { return x.status === "failed"; }).length;
+    var pending = MOCK.queue.filter(function (x) { return x.status === "pending"; }).length;
+    var todayPosted = 2 + pub;
+    var monthPosted = 81 + todayPosted;
+    var totalPosted = 1240 + pub;
+    var dbTotal = 23186;
+    var fresh = 87;
+
+    function set(id, v) { var el = $(id); if (el) el.textContent = v; }
+    set("#hero-num", String(todayPosted));
+    set("#hero-delta", "较昨日 +1");
+    set("#stat-month", String(monthPosted));
+    set("#stat-total", totalPosted.toLocaleString());
+    set("#stat-db", dbTotal.toLocaleString());
+
     var t = $("#today-stats");
     if (t) {
       t.innerHTML = [
-        "抓取 <b>" + s.today.scanned.toLocaleString() + "</b>",
-        "判重 <b>" + s.today.checked + "</b>",
-        "新收录 <b>" + s.today.fresh + "</b>",
-        "已发布 <b>" + s.today.posted + "</b>",
-        "失败 <b>" + s.today.failed + "</b>"
+        "抓取 <b>" + dbTotal.toLocaleString() + "</b>",
+        "判重 <b>214</b>",
+        "新收录 <b>" + fresh + "</b>",
+        "已发布 <b>" + todayPosted + "</b>",
+        "失败 <b>" + fail + "</b>"
       ].join("　·　");
     }
+
+    renderPending();
+    renderPublished();
+    renderHealth();
+
     var lg = $("#dash-logs");
     if (lg) {
       lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
         return '<div class="list-item"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
       }).join("");
     }
+    return { pending: pending, pub: pub, fail: fail };
   }
 
   function kpi(label, value, delta, cls) {
@@ -439,16 +447,6 @@
       '<div class="progress" style="margin-top:8px"><i style="width:' + pct + '%"></i></div>';
   }
 
-  function renderHero() {
-    var s = MOCK.stats;
-    var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-    set("hero-num", String(s.today.posted));
-    set("hero-delta", "较昨日 +1");
-    set("stat-month", String(s.today.monthPosted));
-    set("stat-total", s.today.totalPosted.toLocaleString());
-    set("stat-db", s.today.dbTotal.toLocaleString());
-  }
-
   function renderRecentSources() {
     var host = $("#dash-recent");
     if (!host) return;
@@ -533,21 +531,21 @@
           '<section class="sd-card"><h3>发布信息</h3>' +
             '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
             '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(it.res + " · " + it.size + " · " + it.site) + '"></div>' +
-            '<div class="qd-field"><span>目标站分类</span><select class="select" id="qd-cat">' +
+            '<div class="qd-field"><span>主站分类</span><select class="select" id="qd-cat">' +
               ["原盘", "Remux", "1080p", "2160p", "剧集"].map(function (c) {
                 return "<option>" + c + "</option>";
               }).join("") + "</select></div>" +
             '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
           "</section>" +
           '<section class="sd-card"><h3>来源</h3>' +
-            '<div class="sd-row"><span>源站</span><b>' + escapeHtml(it.site) + "</b></div>" +
+            '<div class="sd-row"><span>站点</span><b>' + escapeHtml(it.site) + "</b></div>" +
             '<div class="sd-row"><span>年份 / IMDb</span><b>' + it.year + " · " + escapeHtml(it.imdb) + "</b></div>" +
             '<div class="sd-row"><span>分辨率</span><b>' + escapeHtml(it.res) + "</b></div>" +
             '<div class="sd-row"><span>大小</span><b>' + escapeHtml(it.size) + "</b></div>" +
           "</section>" +
           '<section class="sd-card wide"><h3>简介</h3>' +
             '<textarea class="input sd-note" id="qd-desc" rows="4">' +
-              escapeHtml((it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘转载，来源 " + it.site + "。" +
+              escapeHtml((it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘整理，来源 " + it.site + "。" +
                 "规格：" + it.title.replace(/^.*?\\d{4}\\s*/, "") + "。") + "</textarea>" +
           "</section>" +
           '<section class="sd-card wide"><h3>截图</h3>' +
@@ -555,8 +553,15 @@
               '<button class="shot add" id="qd-addshot">上传</button></div>' +
           "</section>" +
         "</div>" +
+        (it.status === "publishing"
+          ? '<div class="qd-status warn">正在发布到主站…</div>'
+          : it.pubMsg
+            ? '<div class="qd-status ' + (it.status === "failed" ? "bad" : "ok") + '">' + escapeHtml(it.pubMsg) + "</div>"
+            : "") +
         '<div class="qd-actions">' +
-          '<button class="btn primary slim" data-qact="publish">通过并发布</button>' +
+          (it.status === "failed"
+            ? '<button class="btn primary slim" data-qact="retry">重试发布</button>'
+            : '<button class="btn primary slim" data-qact="publish">通过并发布</button>') +
           '<button class="btn ghost slim" data-qact="reject">驳回</button>' +
           '<div class="spacer"></div>' +
           '<input class="input slim" id="qd-reason" placeholder="驳回理由（可留空）" style="width:200px">' +
@@ -605,11 +610,21 @@
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (!it) return;
       var act = b.getAttribute("data-qact");
-      if (act === "publish") {
-        it.status = "published";
-        toast("已发布到目标站：" + (it.cn || it.title));
-        var next = rows().filter(function (x) { return x.status === "pending"; })[0];
-        state.sel = next ? next.id : it.id;
+      if (act === "publish" || act === "retry") {
+        it.status = "publishing";
+        it.pubMsg = "";
+        paint();
+        setTimeout(function () {
+          var fail = it.id === 106 || it.id === 103;
+          it.status = fail ? "failed" : "published";
+          it.pubMsg = fail ? "主站返回 502，自动重试 2 次仍失败" : "已发布 · 种子 #8842" + (it.id % 100);
+          toast(fail ? "发布失败：" + (it.cn || it.title) : "已发布：" + (it.cn || it.title));
+          if (!fail) {
+            var next = MOCK.queue.filter(function (x) { return x.status === "pending"; })[0];
+            if (next) state.sel = next.id;
+          }
+          paint();
+        }, 1100);
       } else if (act === "reject") {
         var r = $("#qd-reason") ? $("#qd-reason").value.trim() : "";
         it.status = "failed";
@@ -628,23 +643,40 @@
   }
 
   function initSources() {
-    var tbody = $("#sources-body");
-    if (!tbody) return;
-    tbody.innerHTML = MOCK.sources.map(function (it) {
-      return "<tr>" +
-        '<td><div class="t-main">' + escapeHtml(it.title) + "</div></td>" +
-        '<td><span class="badge blue">' + escapeHtml(it.type) + "</span></td>" +
-        '<td>' + escapeHtml(it.res) + "</td>" +
-        '<td class="mono">' + escapeHtml(it.size) + "</td>" +
-        '<td class="mono">' + escapeHtml(it.time) + "</td>" +
-        '<td><span class="badge ' + it.checkCls + '">' + escapeHtml(it.check) + "</span></td>" +
-        '<td><div class="row-actions"><button class="btn sm" data-act="transfer">转种</button></div></td>' +
-        "</tr>";
-    }).join("");
-    tbody.addEventListener("click", function (e) {
-      var btn = e.target.closest("button[data-act]");
-      if (btn) toast("转种（假数据）：" + btn.closest("tr").querySelector(".t-main").textContent);
+    var body = $("#dl-body");
+    if (!body) return;
+    var state = { q: "" };
+
+    function paint() {
+      var rows = MOCK.sources.filter(function (it) {
+        if (state.q && (it.title + " " + it.res).toLowerCase().indexOf(state.q) === -1) return false;
+        return true;
+      });
+      body.innerHTML = rows.map(function (it) {
+        return '<div class="dl-row">' +
+          '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b></span>" +
+          '<span><em class="chip np">' + escapeHtml(it.type) + "</em></span>" +
+          '<span class="soft">' + escapeHtml(it.res) + "</span>" +
+          '<span class="soft">' + escapeHtml(it.size) + "</span>" +
+          '<span class="soft">' + escapeHtml(it.time) + "</span>" +
+          '<span><span class="badge ' + (it.checkCls === "green" ? "green" : it.checkCls === "red" ? "red" : "amber") + '">' + escapeHtml(it.check) + "</span></span>" +
+          '<span class="ta-r"><button class="link-btn" data-archive="1">归档</button></span>' +
+        "</div>";
+      }).join("") || '<div class="sites-empty">没有匹配的条目</div>';
+      var c = $("#dl-count");
+      if (c) c.textContent = rows.length;
+    }
+
+    var q = $("#dl-q");
+    if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
+    body.addEventListener("click", function (e) {
+      if (e.target.closest("button[data-archive]")) toast("已加入归档队列（假数据）");
     });
+    var crawl = $("#dl-crawl");
+    if (crawl) crawl.addEventListener("click", function () { toast("开始增量抓取（假数据）"); });
+    var ex = $("#dl-export");
+    if (ex) ex.addEventListener("click", function () { toast("已导出 JSON（假数据）"); });
+    paint();
   }
 
   function initNodes() {
@@ -744,6 +776,12 @@
       $("#nd-pass").value = nd && nd.qbPass ? nd.qbPass : "";
       $("#nd-down").value = nd && nd.maxDown ? nd.maxDown : "3";
       $("#nd-seed").value = nd && nd.seedLimit ? nd.seedLimit : "500";
+      $("#nd-dllimit").value = nd && nd.dlLimit ? nd.dlLimit : "不限";
+      $("#nd-ullimit").value = nd && nd.ulLimit ? nd.ulLimit : "不限";
+      $("#nd-ratio").value = nd && nd.ratioDel ? nd.ratioDel : "2.0";
+      $("#nd-days").value = nd && nd.seedDays ? nd.seedDays : "30";
+      $("#nd-path").value = nd && nd.dlPath ? nd.dlPath : "/data/pt";
+      $("#nd-lowdisk").value = nd && nd.lowDisk ? nd.lowDisk : "50 GB";
       curCats = nd && nd.cats ? nd.cats : [];
       curCat = nd && nd.cat ? nd.cat : "";
       renderCats();
@@ -770,13 +808,21 @@
           qbUser: $("#nd-user").value.trim(),
           qbPass: $("#nd-pass").value,
           maxDown: $("#nd-down").value.trim(),
-          seedLimit: $("#nd-seed").value.trim()
+          seedLimit: $("#nd-seed").value.trim(),
+          dlLimit: $("#nd-dllimit").value.trim(),
+          ulLimit: $("#nd-ullimit").value.trim(),
+          ratioDel: $("#nd-ratio").value.trim(),
+          seedDays: $("#nd-days").value.trim(),
+          dlPath: $("#nd-path").value.trim(),
+          lowDisk: $("#nd-lowdisk").value.trim()
         };
         if (editing >= 0) {
           var nd = MOCK.nodes[editing];
           nd.name = data.name; nd.role = data.role; nd.host = data.host;
           nd.maxDown = data.maxDown; nd.seedLimit = data.seedLimit;
           nd.qbUser = data.qbUser; nd.qbPass = data.qbPass;
+          nd.dlLimit = data.dlLimit; nd.ulLimit = data.ulLimit; nd.ratioDel = data.ratioDel;
+          nd.seedDays = data.seedDays; nd.dlPath = data.dlPath; nd.lowDisk = data.lowDisk;
           nd.cats = curCats; nd.cat = curCat;
         } else {
           MOCK.nodes.push({
@@ -836,12 +882,44 @@
   function initLogs() {
     var host = $("#log-lines");
     if (!host) return;
-    host.innerHTML = MOCK.logs.concat(MOCK.logs).map(function (l) {
-      return '<div class="log-line ' + l.lvl + '">' +
-        '<span class="ts">' + l.t + '</span>' +
-        '<span class="tag">[' + (l.lvl === "error" ? "ERROR" : l.lvl === "warn" ? "WARN" : "INFO") + "]</span>" +
-        '<span class="txt">[' + escapeHtml(l.tag) + "] " + escapeHtml(l.msg) + "</span></div>";
-    }).join("");
+    var state = { lvl: "all" };
+
+    function paint() {
+      var rows = MOCK.logs.concat(MOCK.logs).filter(function (l) {
+        return state.lvl === "all" || l.lvl === state.lvl;
+      });
+      host.innerHTML = rows.map(function (l) {
+        var tag = l.lvl === "error" ? "ERROR" : l.lvl === "warn" ? "WARN" : "INFO";
+        return '<div class="log-row ' + l.lvl + '">' +
+          '<span class="log-ts">' + escapeHtml(l.t) + "</span>" +
+          '<span class="log-tag">' + tag + "</span>" +
+          '<span class="log-src">' + escapeHtml(l.tag) + "</span>" +
+          '<span class="log-msg">' + escapeHtml(l.msg) + "</span>" +
+        "</div>";
+      }).join("") || '<div class="sites-empty">没有匹配的日志</div>';
+    }
+
+    var tabs = $("#log-tabs");
+    if (tabs) tabs.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-lvl]");
+      if (!b) return;
+      state.lvl = b.getAttribute("data-lvl");
+      $$("button", tabs).forEach(function (x) { x.classList.toggle("active", x === b); });
+      paint();
+    });
+    var dl = $("#log-dl");
+    if (dl) dl.addEventListener("click", function () { toast("下载 log（假数据）"); });
+    var clr = $("#log-clear");
+    if (clr) clr.addEventListener("click", function () { host.innerHTML = ""; toast("已清屏（假数据）"); });
+    paint();
+  }
+
+  /* ---------- 流程页：抓取 / 发布 ---------- */
+  function chipRow(items, active) {
+    return '<div class="cat-row pick-row">' + items.map(function (c) {
+      var on = (active || []).indexOf(c) >= 0;
+      return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '">' + c + "</button>";
+    }).join("") + "</div>";
   }
 
   function setControl(r) {
@@ -857,242 +935,250 @@
       return '<select class="select"' + k + ">" + opts + "</select>";
     }
     if (r.type === "textarea") {
-      return '<textarea class="input sd-note"' + k + ' rows="3" placeholder="' + escapeHtml(r.ph || "") + '">' + escapeHtml(r.v || "") + "</textarea>";
+      return '<textarea class="input sd-note"' + k + ">" + escapeHtml(r.v || "") + "</textarea>";
     }
-    if (r.type === "time") {
-      return '<input class="input" type="time"' + k + ' value="' + escapeHtml(r.v || "") + '">';
-    }
-    if (r.type === "password") {
-      return '<input class="input" type="password"' + k + ' value="' + escapeHtml(r.v || "") + '" placeholder="' + escapeHtml(r.ph || "") + '" autocomplete="new-password">';
-    }
+    if (r.type === "custom") return r.html || "";
     if (r.type === "button") {
       return '<button class="btn ghost slim" data-btn="' + escapeHtml(r.t) + '">' + escapeHtml(r.v) + "</button>";
-    }
-    if (r.type === "custom") {
-      return r.html || "";
     }
     return '<input class="input"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' + (r.disabled ? " disabled" : "") + ' placeholder="' + escapeHtml(r.ph || "") + '">';
   }
 
   function setRowsHtml(rows) {
     return rows.map(function (r) {
-      var head = r.g
-        ? '<div class="set-group">' + r.g + "</div>" + (r.gd ? '<p class="set-group-desc">' + r.gd + "</p>" : "")
-        : "";
-      return head + '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
+      return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
         '<div class="lbl"><span>' + r.t + "</span>" + (r.hint ? "<i>" + r.hint + "</i>" : "") + "</div>" +
-        '<div class="ctl">' + setControl(r) + "</div>" +
+        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel) : setControl(r)) + "</div>" +
       "</div>";
     }).join("");
   }
 
-  function chipRow(items, active) {
-    return '<div class="cat-row pick-row">' + items.map(function (c) {
-      var on = active.indexOf(c) >= 0;
-      return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '">' + c + "</button>";
-    }).join("") + "</div>";
+  var FETCH_RULES = [
+    { name: "筛选", sum: "电影 · 蓝光原盘 · 排除 DIY/限制/独占", rows: [
+      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "只抓勾选的类型" },
+      { t: "媒介", type: "custom", chips: ["蓝光原盘", "Remux", "Blu-ray 压制", "UHD", "DVD", "WEB-DL", "HDTV"], sel: ["蓝光原盘"] },
+      { t: "分辨率下限", type: "select", v: "1080p", opts: ["不限", "720p", "1080p", "2160p"] },
+      { t: "最小体积", type: "select", v: "5 GB", opts: ["不限", "3 GB", "5 GB", "10 GB", "20 GB"], hint: "小于这个体积的不抓" },
+      { t: "最大体积", type: "select", v: "不限", opts: ["不限", "50 GB", "80 GB", "120 GB"], hint: "超过这个体积的不抓" },
+      { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下不动，直接跳过" },
+      { t: "必须带中字", type: "switch", on: true, hint: "没中文字幕的不要" },
+      { t: "只要免费/优惠", type: "select", v: "不限制", opts: ["不限制", "只要 FREE", "FREE 或 2x", "FREE 或 2x 或 50%"], hint: "控制下载计费，免费期再下" },
+      { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
+      { t: "白名单关键词", type: "text", v: "", ph: "逗号分隔，只抓含这些词的（留空不限）" },
+      { t: "排除 DIY 原盘", type: "switch", on: true, hint: "带 DIY / 修改 / 加长 标记的不要" },
+      { t: "排除限制分发", type: "switch", on: true },
+      { t: "排除独占", type: "switch", on: true },
+      { t: "跳过已归档过的", type: "switch", on: true, hint: "库里已有同片就不再抓详情" }
+    ] },
+    { name: "节奏与限额", sum: "间隔 3.0 秒 · 每站每天 100 · 失败 5 次停", rows: [
+      { t: "每页间隔", type: "text", v: "3.0 秒" },
+      { t: "单站抓取间隔", type: "select", v: "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"], hint: "两个站之间至少隔多久" },
+      { t: "并发", type: "select", v: "1", opts: ["1", "2", "3"] },
+      { t: "每轮最多翻页", type: "text", v: "2" },
+      { t: "单站每日最多抓", type: "text", v: "100", hint: "超过就停这个站，第二天再继续" },
+      { t: "全站每日最多抓", type: "text", v: "800", hint: "所有站加起来的上限，防跑飞" },
+      { t: "抓取时段", type: "select", v: "全天", opts: ["全天", "00:00–08:00", "20:00–08:00"] },
+      { t: "抓取方式", type: "select", v: "增量（只抓新页）", opts: ["增量（只抓新页）", "全量（扫全部页）", "增量 + 定期全量"] },
+      { t: "抓详情页", type: "switch", on: true, hint: "BDInfo、截图、简介都要进详情页；关掉只抓列表，快很多" },
+      { t: "连续失败自动停", type: "text", v: "5", hint: "连续失败几次就停这个站，并标为需要人工处理" },
+      { t: "失败重试", type: "text", v: "3 次，退避 30 秒", hint: "403 / 502 / 超时按这个重试" },
+      { t: "全局排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "逗号分隔，标题命中就不抓" },
+      { t: "抓取字段", type: "custom", chips: ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "限制标记", "独占标记"], sel: ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "限制标记", "独占标记"] }
+    ] },
+    { name: "站点分类映射", sum: "各站分类 → 库内分类", rows: [
+      { t: "站点分类", type: "button", v: "配置映射", hint: "把每个站自己的分类（如 Movies/Blu-ray）对到库内类型" },
+      { t: "映射不到时", type: "select", v: "按标题猜", opts: ["按标题猜", "跳过不抓", "落到其他"] }
+    ] }
+  ];
+
+  var PUB_RULES = [
+    { name: "目标站", sum: "发到 52PT · 站内图床", rows: [
+      { t: "发布到", type: "custom", html: '<div class="target-pick"><em class="tp-ava" id="tp-ava"></em><div class="tp-info"><b id="tp-name">—</b><span id="tp-host"></span></div><button class="btn ghost slim" id="tp-change">更换</button></div>', hint: "所有库内资源都归到这个站" },
+      { t: "多目标站", type: "switch", on: false, hint: "同一部片同时发到 2–3 个站，需要各站分类都映射好" },
+      { t: "图床", type: "select", v: "站内图床（浏览器上传）", opts: ["站内图床（浏览器上传）", "外链图床 API"] },
+      { t: "截图来源", type: "select", v: "从 BDInfo 自动截取", opts: ["从 BDInfo 自动截取", "抓目标站官方截图", "手动上传"] },
+      { t: "目标站分类映射", type: "button", v: "配置映射", hint: "把库内分类对到目标站的真实分类 ID" },
+      { t: "发布后校验", type: "switch", on: true, hint: "发完回站里查一遍，确认真的出现并记下种子 ID" }
+    ] },
+    { name: "副标题与简介", sum: "按模板自动生成", rows: [
+      { t: "发布标题", type: "custom", html: '<span class="tpl-fixed">直接用站点标题，原样发布，不改字</span>', hint: "标题不做模板，源站怎么写就怎么发" },
+      { t: "中文副标题模板", type: "custom", hint: "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符", html: '<div class="tpl-wrap"><input class="input" id="sub-tpl" value="{电影名} | {地区}原盘 | 导演:{导演} | 主演:{主演1}/{主演2}/{主演3} | [{音轨}] [{字幕}]"><div class="tpl-eg" id="sub-eg"></div></div>' },
+      { t: "副标题语言", type: "select", v: "中文", opts: ["中文", "中英双语", "只用英文"] },
+      { t: "简介图片", type: "select", v: "转存到图床", opts: ["转存到图床", "保留外链", "不保留图片"], hint: "外链会失效，转存最稳" }
+    ] },
+    { name: "简介", sum: "豆影网页 → 豆瓣 → TMDB", rows: [
+      { t: "片名相似度阈值", type: "text", v: "0.85", hint: "低于这个值不猜，直接转人工" },
+      { t: "年份必须一致", type: "switch", on: true },
+      { t: "匹配来源顺序", type: "select", v: "TMDB → 豆瓣 → 站点标题", opts: ["TMDB → 豆瓣 → 站点标题", "豆瓣 → TMDB → 站点标题", "只用站点标题"] },
+      { t: "中文副标题来源", type: "select", v: "种子自带 → 豆影网页 → TMDB", opts: ["种子自带 → 豆影网页 → TMDB", "豆影网页 → 豆瓣 → TMDB", "只用种子自带，没有就用英文"] },
+      { t: "简介来源顺序", type: "select", v: "豆影网页 → 豆瓣 → TMDB", opts: ["豆影网页 → 豆瓣 → TMDB", "豆瓣 → 豆影网页 → TMDB", "只用 TMDB（zh-CN）"] },
+      { t: "TMDB 接口", type: "text", v: "", ph: "填 API Key 才能自动查导演和主演" },
+      { t: "豆影 API Key", type: "text", v: "", ph: "免费每天 10 次，用完走网页版" },
+      { t: "豆瓣抓取间隔（秒）", type: "text", v: "3", hint: "太快会出验证码" },
+      { t: "主演最多几个", type: "text", v: "3" },
+      { t: "缺字段时", type: "select", v: "省略该段", opts: ["省略该段", "写「未知」", "转待确认"] }
+    ] },
+    { name: "发布前检查", sum: "地区版本 · 简介 · BDInfo · 截图 3 张", rows: [
+      { t: "地区版本", type: "switch", on: true, hint: "识别出 US/HKG/TWN 这类版本，写进副标题的地区段" },
+      { t: "必须有简介", type: "switch", on: true, hint: "抓不到中文简介就不自动发" },
+      { t: "BDInfo", type: "select", v: "必须存在且校验通过", opts: ["必须存在且校验通过", "有就行，不校验", "不要求"] },
+      { t: "截图至少几张", type: "text", v: "3", hint: "不够就不自动发" },
+      { t: "下载完成再发布", type: "switch", on: true, hint: "种子还没下完就发，容易被删" },
+      { t: "种子完整性校验", type: "switch", on: true, hint: "qB 校验通过才算完成" },
+      { t: "不满足时", type: "select", v: "转待确认", opts: ["转待确认", "直接跳过"] }
+    ] },
+    { name: "发种字段", sum: "制作组 / 来源 / 编码 / 音轨 / 字幕", rows: [
+      { t: "制作组", type: "text", v: "", ph: "留空按目标站默认" },
+      { t: "来源", type: "select", v: "Blu-ray", opts: ["Blu-ray", "HDTV", "WEB-DL", "DVD", "其他"] },
+      { t: "媒介", type: "select", v: "Blu-ray", opts: ["Blu-ray", "Encode", "Remux", "UHD Blu-ray", "DVD", "其他"] },
+      { t: "编码", type: "select", v: "AVC", opts: ["AVC", "HEVC", "VC-1", "MPEG-2", "其他"] },
+      { t: "音轨", type: "text", v: "", ph: "留空按源种自动填" },
+      { t: "字幕类型", type: "select", v: "中文字幕", opts: ["中文字幕", "中英字幕", "英文字幕", "无字幕"] }
+    ] },
+    { name: "自动发布", sum: "半自动 · 间隔 60 秒 · 每天 20 条", rows: [
+      { t: "发布模式", type: "select", v: "半自动（先转待审核）", opts: ["全自动（过了就直接发）", "半自动（先转待审核）", "仅准备（不碰目标站）"] },
+      { t: "发布前必须人工点通过", type: "switch", on: true },
+      { t: "自动发布总开关", type: "switch", on: true, hint: "关掉只抓不发，全部留给人" },
+      { t: "两条之间间隔（秒）", type: "text", v: "60", hint: "别把目标站刷爆" },
+      { t: "每天最多自动发几条", type: "text", v: "20" },
+      { t: "单站每天最多发几条", type: "text", v: "10" },
+      { t: "发布顺序", type: "select", v: "先小后大", opts: ["先小后大", "先新后旧", "按类型分组"] },
+      { t: "只在时段内发布", type: "select", v: "全天", opts: ["全天", "00:00–08:00", "08:00–24:00"] },
+      { t: "免审直接发的分类", type: "text", v: "", ph: "留空＝都要审，例：原盘, Remux" }
+    ] },
+    { name: "失败与兜底", sum: "重复转审核 · 限制分发丢弃", rows: [
+      { t: "主站已有同片", type: "select", v: "转待审核（标重复）", opts: ["转待审核（标重复）", "直接丢弃"] },
+      { t: "站点标限制分发", type: "select", v: "直接丢弃", opts: ["直接丢弃", "只收录不发布"] },
+      { t: "图片上传重试", type: "text", v: "2 次" },
+      { t: "发布失败重试", type: "text", v: "2 次，间隔 5 分钟" },
+      { t: "连续失败几次暂停该站", type: "text", v: "5" },
+      { t: "失败时推送通知", type: "switch", on: true }
+    ] }
+  ];
+
+  var RULE_SETS = { fetch: FETCH_RULES, pub: PUB_RULES };
+
+  var FLOW_KEY = "pta.flow";
+  function saveFlowState() {
+    var data = {};
+    Object.keys(RULE_SETS).forEach(function (k) {
+      data[k] = RULE_SETS[k].map(function (g) {
+        return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; });
+      });
+    });
+    try { localStorage.setItem(FLOW_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+  function loadFlowState() {
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem(FLOW_KEY) || "null"); } catch (e) {}
+    if (!data) return;
+    Object.keys(RULE_SETS).forEach(function (k) {
+      (data[k] || []).forEach(function (grp, gi) {
+        var g = RULE_SETS[k][gi];
+        if (!g) return;
+        (grp || []).forEach(function (vals, ri) {
+          var r = g.rows[ri];
+          if (!r || !vals) return;
+          if (vals.v !== undefined && vals.v !== null) r.v = vals.v;
+          if (vals.on !== undefined) r.on = vals.on;
+          if (vals.sel) r.sel = vals.sel;
+        });
+      });
+    });
   }
 
   function initCrawlSettings() {
     var host = $("#crawl-panel");
     if (!host) return;
-    var RULES = [
-      { name: "发布模式", sum: "半自动 · 需人工点通过", rows: [
-        { t: "自动发布模式", type: "select", v: "半自动（补齐后转待审核）", opts: ["全自动（质检全过直接发）", "半自动（补齐后转待审核）", "仅准备（不碰目标站）"] },
-        { t: "发布前必须人工点通过", type: "switch", on: true, hint: "半自动模式下固定开启" }
-      ] },
-      { name: "匹配", sum: "相似度 0.85 · 年份必须一致", rows: [
-        { t: "片名相似度阈值", type: "text", v: "0.85", hint: "低于这个值不猜，直接转人工" },
-        { t: "年份必须一致", type: "switch", on: true },
-        { t: "匹配来源顺序", type: "select", v: "TMDB → 豆瓣 → 源站标题", opts: ["TMDB → 豆瓣 → 源站标题", "豆瓣 → TMDB → 源站标题", "只用源站标题"] },
-        { t: "分类映射不到时", type: "select", v: "转人工处理", opts: ["转人工处理", "落到该站默认分类"] }
-      ] },
-      { name: "识别与质检", sum: "电影 · 蓝光原盘 · 排除 DIY/禁转/独占", rows: [
-        { t: "类型", type: "custom", html: chipRow(["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], ["电影"]), hint: "只收勾选的类型，其它直接跳过" },
-        { t: "媒介", type: "custom", html: chipRow(["蓝光原盘", "Remux", "Blu-ray 压制", "UHD", "DVD", "WEB-DL", "HDTV"], ["蓝光原盘"]) },
-        { t: "排除 DIY 原盘", type: "switch", on: true, hint: "标题或说明带 DIY / 修改 / 加长 标记的直接跳过" },
-        { t: "排除禁转", type: "switch", on: true, hint: "源站标了禁转的一律不要" },
-        { t: "排除独占", type: "switch", on: true, hint: "独占资源不能转，直接跳过" },
-        { t: "地区版本", type: "switch", on: true, hint: "识别出 US/HKG/TWN 这类版本，写进中文副标题" },
-        { t: "电影简介", type: "switch", on: true },
-        { t: "BDInfo", type: "select", v: "必须存在且校验通过", opts: ["必须存在且校验通过", "有就行，不校验", "不要求"] },
-        { t: "截图至少几张", type: "text", v: "3", hint: "不够就不自动发" },
-        { t: "不满足时", type: "select", v: "转待审核", opts: ["转待审核", "直接跳过"] }
-      ] },
-      { name: "副标题生成", sum: "种子自带 → 豆影网页 → TMDB", rows: [
-        { t: "中文副标题模板", type: "custom", hint: "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符", html: '<div class="tpl-wrap"><input class="input" id="sub-tpl" value="{电影名} | {地区}原盘 | 导演:{导演} | 主演:{主演1}/{主演2}/{主演3} | [{音轨}] [{字幕}]"><div class="tpl-eg" id="sub-eg"></div></div>' },
-        { t: "中文副标题来源", type: "select", v: "种子自带 → 豆影网页 → TMDB", opts: ["种子自带 → 豆影网页 → TMDB", "豆影网页 → 豆瓣 → TMDB", "只用种子自带，没有就用英文"] },
-        { t: "TMDB 接口", type: "text", v: "", ph: "填 API Key 才能自动查导演和主演" },
-        { t: "简介来源顺序", type: "select", v: "豆影网页 → 豆瓣 → TMDB", opts: ["豆影网页 → 豆瓣 → TMDB", "豆瓣 → 豆影网页 → TMDB", "只用 TMDB（zh-CN）"] },
-        { t: "豆影 API Key", type: "text", v: "", ph: "免费每天 10 次，用完走网页版" },
-        { t: "豆瓣抓取间隔（秒）", type: "text", v: "3", hint: "太快会出验证码" },
-        { t: "主演最多几个", type: "text", v: "3" },
-        { t: "缺字段时", type: "select", v: "省略该段", opts: ["省略该段", "写「未知」", "转待审核"] }
-      ] },
-      { name: "发布节流", sum: "间隔 60 秒 · 每天 20 条", rows: [
-        { t: "自动转种总开关", type: "switch", on: true, hint: "关掉只抓不发，全部留给人" },
-        { t: "两条之间间隔（秒）", type: "text", v: "60", hint: "别把目标站刷爆" },
-        { t: "每天最多自动发几条", type: "text", v: "20" },
-        { t: "只在时段内发布", type: "select", v: "全天", opts: ["全天", "00:00–08:00", "08:00–24:00"] },
-        { t: "免审直接发的分类", type: "text", v: "", ph: "留空＝都要审，例：原盘, Remux" }
-      ] },
-      { name: "失败与兜底", sum: "重复转审核 · 禁转丢弃", rows: [
-        { t: "目标站已有同片", type: "select", v: "转待审核（标重复）", opts: ["转待审核（标重复）", "直接丢弃"] },
-        { t: "源站标禁转", type: "select", v: "直接丢弃", opts: ["直接丢弃", "只收录不发布"] },
-        { t: "连续失败几次暂停该站", type: "text", v: "5" },
-        { t: "失败时推送通知", type: "switch", on: true }
-      ] }
-    ];
-    var GROUPS = [
-      { name: "抓取与发布", cols: true, desc: "新站点默认怎么抓、抓到以后发到哪。", sum: '<span id="drawer-pub-sum">增量 · 发到 —</span>', rows: [
-        { g: "抓取", t: "每页间隔", type: "text", v: "3.0 秒" },
-        { t: "并发", type: "select", v: "1", opts: ["1", "2", "3"] },
-        { t: "每轮最多翻页", type: "text", v: "2" },
-        { t: "抓取方式", type: "select", v: "增量（只抓新页）", opts: ["增量（只抓新页）", "全量", "增量 + 定期全量"] },
-        { t: "全局排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "逗号分隔，标题命中就不抓" },
-        { t: "抓取字段", cls: "stack", type: "custom", html: chipRow(["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "禁转标记", "独占标记"], ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "禁转标记", "独占标记"]), hint: "NP 站多数带中文副标题；UNIT3D 多为英文，只能靠外部查询补" },
-        { g: "发布", t: "发布到", type: "custom", html: '<div class="target-pick"><em class="tp-ava" id="tp-ava"></em><div class="tp-info"><b id="tp-name">—</b><span id="tp-host"></span></div><button class="btn ghost slim" id="tp-change">更换</button></div>', hint: "所有源站抓到的资源都发到这个站" },
-        { t: "图床", type: "select", v: "站内图床（浏览器上传）", opts: ["站内图床（浏览器上传）", "外链图床 API"] },
-        { t: "自动提交", type: "switch", v: false, hint: "默认关闭，最后一步永远留给人确认" },
-        { t: "发布标题模板", type: "text", v: "{中文名} {英文名} {年份} {规格}" },
-        { t: "发布后自动做种", type: "switch", v: true }
-      ] },
-      { name: "自动转种", rules: RULES, desc: "匹配、补齐、质检都过了才自动发，不然转待审核。", sum: "半自动 · 相似度 0.85 · 截图 3 张" }
-    ];
-    var OPEN = {};
-    function splitCols(rows) {
-      var idx = 0;
-      rows.forEach(function (r, i) { if (r.g === "发布") idx = i; });
-      if (!idx) return '<div class="set-fields">' + setRowsHtml(rows) + "</div>";
-      return '<div class="drawer-cols"><div class="set-fields">' + setRowsHtml(rows.slice(0, idx)) +
-        '</div><div class="set-fields">' + setRowsHtml(rows.slice(idx)) + "</div></div>";
-    }
-    function ruleListHtml(rules) {
-      return '<div class="rule-list">' + rules.map(function (r, i) {
-        return '<div class="rule-row"><span class="rule-name">' + r.name + "</span>" +
-          '<span class="rule-sum">' + r.sum + "</span>" +
-          '<button class="link-btn rule-set" data-rule="' + i + '">设置</button></div>';
-      }).join("") + "</div>";
-    }
-    function drawerHtml(g, i) {
-      return '<section class="drawer' + (OPEN[i] ? " open" : "") + '" data-i="' + i + '">' +
-        '<button class="drawer-head" data-drawer="' + i + '">' +
-          '<div class="drawer-t">' +
-            '<div class="drawer-title">' + g.name + "</div>" +
-            '<div class="drawer-desc">' + g.desc + "</div>" +
-          "</div>" +
-          '<span class="drawer-meta">' + g.sum + "</span>" +
-          '<svg class="drawer-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
-        "</button>" +
-        '<div class="drawer-body">' + (g.rules ? ruleListHtml(g.rules) : g.cols ? splitCols(g.rows) : '<div class="set-fields">' + setRowsHtml(g.rows) + "</div>") + "</div>" +
-      "</section>";
-    }
-    host.innerHTML = GROUPS.map(drawerHtml).join("");
 
-    var DEMO_DB = {
-      "golden lotus": { cn: "金瓶双艳", region: "澳版", director: "李翰祥", cast: ["胡锦", "恬妮", "陈萍"], audio: "国语 2.0", subs: "中文字幕" },
-      "perfect blue": { cn: "未麻的部屋", region: "港版", director: "今敏", cast: ["岩男润子", "松本梨香", "辻亲八"], audio: "日语 5.1", subs: "中文字幕" },
-      "ran": { cn: "乱", region: "日版", director: "黑泽明", cast: ["仲代达矢", "寺尾聪", "根津甚八"], audio: "日语 5.1", subs: "中文字幕" }
-    };
-    var TPL_DEMO = {
-      电影名: "金瓶双艳", 地区: "港版", 导演: "李翰祥",
-      主演1: "胡锦", 主演2: "恬妮", 主演3: "陈萍",
-      音轨: "国语 2.0", 字幕: "中文字幕"
-    };
+    var TPL_DEMO = { 电影名: "金瓶双艳", 地区: "港版", 导演: "李翰祥", 主演1: "胡锦", 主演2: "恬妮", 主演3: "陈萍", 音轨: "国语 2.0", 字幕: "中文字幕" };
     function renderTpl() {
       var inp = $("#sub-tpl"), eg = $("#sub-eg");
       if (!inp || !eg) return;
       var t = inp.value || "";
-      Object.keys(TPL_DEMO).forEach(function (k) {
-        t = t.split("{" + k + "}").join(TPL_DEMO[k]);
-      });
+      Object.keys(TPL_DEMO).forEach(function (k) { t = t.split("{" + k + "}").join(TPL_DEMO[k]); });
       eg.textContent = t;
     }
-    if (host.addEventListener) {
-      host.addEventListener("input", function (e) {
-        if (e.target && e.target.id === "sub-tpl") renderTpl();
-      });
+
+    function ruleListHtml(rules, setKey) {
+      return '<div class="rule-list">' + rules.map(function (r, i) {
+        return '<div class="rule-item" data-set="' + setKey + '" data-idx="' + i + '">' +
+          '<button class="rule-row" data-rule="' + i + '" data-ruleset="' + setKey + '">' +
+            '<span class="rule-name">' + r.name + "</span>" +
+            '<span class="rule-sum">' + r.sum + "</span>" +
+            '<svg class="rule-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
+          "</button>" +
+          '<div class="rule-body"><div class="set-fields">' + setRowsHtml(r.rows) + "</div>" +
+            '<div class="rule-actions"><button class="btn primary slim rule-save" data-set="' + setKey + '" data-idx="' + i + '">保存</button></div>' +
+          "</div>" +
+        "</div>";
+      }).join("") + "</div>";
     }
 
-    var rmask = $("#rule-modal");
-    var curRule = -1;
-    function openRule(i) {
-      curRule = i;
-      var r = RULES[i];
-      $("#rule-title").textContent = r.name;
-      $("#rule-body").innerHTML = '<div class="set-fields">' + setRowsHtml(r.rows) + "</div>";
-      rmask.hidden = false;
-      renderTpl();
-    }
-    if (rmask) {
-      $("#rule-close").addEventListener("click", function () { rmask.hidden = true; });
-      $("#rule-ok").addEventListener("click", function () { rmask.hidden = true; toast("已保存：" + RULES[curRule].name); });
-      rmask.addEventListener("click", function (e) { if (e.target === rmask) rmask.hidden = true; });
-      rmask.addEventListener("click", function (e) {
-        var sw = e.target.closest("button[data-switch]");
-        if (sw) { sw.classList.toggle("on"); return; }
-        var pick = e.target.closest(".pick-row .cat-chip");
-        if (pick) pick.classList.toggle("on");
-      });
-      host.addEventListener("click", function (e) {
-        var b = e.target.closest("button[data-rule]");
-        if (b) openRule(Number(b.getAttribute("data-rule")));
-      });
+    function sectionHtml(g, i, setKey) {
+      return '<section class="drawer open" data-i="' + i + '">' +
+        '<div class="drawer-head">' +
+          '<div class="drawer-t"><div class="drawer-title">' + g.name + "</div>" +
+          '<div class="drawer-desc">' + g.desc + "</div></div>" +
+          '<span class="drawer-meta">' + g.sum + "</span>" +
+        "</div>" +
+        '<div class="drawer-body">' + ruleListHtml(g.rules, setKey) + "</div>" +
+      "</section>";
     }
 
+    loadFlowState();
+    host.innerHTML =
+      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 增量", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85 · 发到 52PT", rules: PUB_RULES }, 1, "pub");
+
+    renderTpl();
+
+    /* 目标站 */
     var TKEY = "pta.target";
     var target = null;
     try { target = localStorage.getItem(TKEY); } catch (e) {}
     if (!target || !MOCK.sitesList.some(function (x) { return x.name === target; })) {
-      target = (MOCK.sitesList.filter(function (x) { return x.login === "ok" && x.enabled; })[0] || MOCK.sitesList[0]).name;
+      var first = MOCK.sitesList.filter(function (x) { return x.login === "ok" && x.enabled; })[0] || MOCK.sitesList[0];
+      target = first ? first.name : "";
     }
     function siteOf(h) { return MOCK.sitesList.filter(function (x) { return x.name === h; })[0]; }
     function paintTarget() {
       var t = siteOf(target);
-      var n = $("#tp-name"), h = $("#tp-host");
+      var n = $("#tp-name"), h2 = $("#tp-host"), av = $("#tp-ava");
       if (n) n.textContent = t ? (t.title || t.name) : "未选择";
-      if (h) h.textContent = t ? t.name : "";
-      var ps = $("#drawer-pub-sum");
-      if (ps) ps.textContent = "增量 · 发到 " + (t ? (t.title || t.name) : "—");
-      var av = $("#tp-ava");
+      if (h2) h2.textContent = t ? t.name : "";
       if (av) {
         var label = t ? (t.title || t.name) : "?";
         var m = label.match(/^[A-Za-z0-9]+/);
         av.textContent = m ? m[0].slice(0, 2).toUpperCase() : label.slice(0, 1);
-        av.className = "tp-ava " + (t && t.arch === "NP" ? "np" : t && t.arch === "GZ" ? "gz" : t && t.arch === "UNIT3D" ? "u3d" : "oth");
       }
+      var pr = document.querySelector('.rule-item[data-set="pub"][data-idx="0"] .rule-sum');
+      if (pr) pr.textContent = "发到 " + (t ? (t.title || t.name) : "—") + " · 站内图床";
     }
     paintTarget();
 
     var mask = $("#target-modal");
-    function renderTargetList(q) {
+    function renderTargetList(qv) {
       var box = $("#target-list");
+      if (!box) return;
       var rows = MOCK.sitesList.filter(function (x) {
         if (!x.enabled || x.login !== "ok") return false;
-        if (q && ((x.title || "") + " " + x.name).toLowerCase().indexOf(q) === -1) return false;
+        if (qv && ((x.title || "") + " " + x.name).toLowerCase().indexOf(qv) === -1) return false;
         return true;
       }).slice(0, 60);
       box.innerHTML = rows.map(function (x) {
         return '<button class="target-item' + (x.name === target ? " on" : "") + '" data-host="' + escapeHtml(x.name) + '">' +
           '<span class="ti-name">' + escapeHtml(x.title || x.name) + "</span>" +
           '<span class="ti-host">' + escapeHtml(x.name) + "</span>" +
-          '<span class="chip ' + (x.arch === "NP" ? "np" : x.arch === "GZ" ? "gz" : x.arch === "UNIT3D" ? "u3d" : "oth") + '">' + escapeHtml(x.arch === "GZ" ? "Gazelle" : x.arch === "OTHER" ? "其它" : x.arch === "?" ? "未确认" : x.arch) + "</span>" +
         "</button>";
       }).join("") || '<div class="sites-empty">没有匹配的站点</div>';
     }
+
     if (mask) {
-      var q = $("#target-q");
-      $("#tp-change") && host.addEventListener("click", function (e) {
-        if (e.target.closest("#tp-change")) {
-          q.value = "";
-          renderTargetList("");
-          mask.hidden = false;
-          setTimeout(function () { q.focus(); }, 30);
-        }
-      });
-      q.addEventListener("input", function () { renderTargetList(q.value.trim().toLowerCase()); });
+      var tq = $("#target-q");
       $("#target-x").addEventListener("click", function () { mask.hidden = true; });
       mask.addEventListener("click", function (e) { if (e.target === mask) mask.hidden = true; });
+      tq.addEventListener("input", function () { renderTargetList(tq.value.trim().toLowerCase()); });
       $("#target-list").addEventListener("click", function (e) {
         var b = e.target.closest(".target-item");
         if (!b) return;
@@ -1104,77 +1190,85 @@
       });
     }
 
-    renderTpl();
-
-    function tryGenerate() {
-      var t = $("#try-title"), out = $("#try-out");
-      if (!t || !out) return;
-      var title = t.value;
-      var key = Object.keys(DEMO_DB).filter(function (k) { return title.toLowerCase().indexOf(k) >= 0; })[0];
-      if (!key) {
-        out.textContent = "没匹配到这部片（示例数据只有金瓶双艳 / 未麻的部屋 / 乱）";
+    /* clicks */
+    host.addEventListener("click", function (e) {
+      var change = e.target.closest("#tp-change");
+      if (change) {
+        var tq2 = $("#target-q");
+        tq2.value = "";
+        renderTargetList("");
+        mask.hidden = false;
+        setTimeout(function () { tq2.focus(); }, 30);
         return;
       }
-      var d = DEMO_DB[key];
-      var tpl = ($("#sub-tpl") && $("#sub-tpl").value) || "";
-      var map = {
-        电影名: d.cn, 地区: d.region, 导演: d.director,
-        主演1: d.cast[0], 主演2: d.cast[1], 主演3: d.cast[2],
-        音轨: d.audio, 字幕: d.subs
-      };
-      Object.keys(map).forEach(function (k) { tpl = tpl.split("{" + k + "}").join(map[k]); });
-      out.textContent = tpl;
-    }
-    if (host.addEventListener) {
-      host.addEventListener("click", function (e) {
-        if (e.target && e.target.id === "try-btn") tryGenerate();
-      });
-    }
-
-    document.addEventListener("click", function (e) {
       var pick = e.target.closest(".pick-row .cat-chip");
       if (pick) { pick.classList.toggle("on"); return; }
-      var dh = e.target.closest(".drawer-head");
-      if (!dh) return;
-      var d = dh.closest(".drawer");
-      var wasOpen = d.classList.contains("open");
-      $$(".drawer.open").forEach(function (x) { x.classList.remove("open"); });
-      if (!wasOpen) d.classList.add("open");
-    });
-
-    host.addEventListener("click", function (e) {
       var sw = e.target.closest("button[data-switch]");
-      if (sw) sw.classList.toggle("on");
+      if (sw) { sw.classList.toggle("on"); return; }
       var btn = e.target.closest("button[data-btn]");
-      if (btn) toast(btn.getAttribute("data-btn") + "（假数据）");
+      if (btn) { toast(btn.getAttribute("data-btn") + "（假数据）"); return; }
+      var row = e.target.closest(".rule-row");
+      if (row) {
+        var item = row.closest(".rule-item");
+        var wasOpen = item.classList.contains("open");
+        host.querySelectorAll(".rule-item.open").forEach(function (x) { x.classList.remove("open"); });
+        if (!wasOpen) { item.classList.add("open"); renderTpl(); }
+        return;
+      }
+      var save = e.target.closest(".rule-save");
+      if (save) {
+        var setKey = save.getAttribute("data-set");
+        var idx = Number(save.getAttribute("data-idx"));
+        var set = RULE_SETS[setKey];
+        var body = save.closest(".rule-body");
+        [].forEach.call(body.querySelectorAll(".set-field"), function (f, m) {
+          var r = set[idx].rows[m];
+          if (!r) return;
+          var s2 = f.querySelector("[data-switch]");
+          if (s2) { r.on = s2.classList.contains("on"); return; }
+          var pk = f.querySelector(".pick-row");
+          if (pk) { r.sel = [].map.call(pk.querySelectorAll(".cat-chip.on"), function (c) { return c.textContent; }); return; }
+          var ctl = f.querySelector(".input, .select");
+          if (ctl) r.v = ctl.value;
+        });
+        saveFlowState();
+        save.closest(".rule-item").classList.remove("open");
+        toast("已保存：" + set[idx].name);
+      }
     });
-    document.addEventListener("click", function (e) {
-      if (e.target.closest && e.target.closest("#save-crawl")) toast("抓取设置已保存（假数据）");
-    });
-  }
 
-  function ptaConfirm(title, text, ok) {
-    var mask = $("#confirm-modal");
-    if (!mask) { if (window.confirm(title + "\n\n" + text)) ok(); return; }
-    $("#confirm-title").textContent = title;
-    $("#confirm-text").textContent = text;
-    mask.hidden = false;
-    function cleanup() {
-      mask.hidden = true;
-      $("#confirm-yes").removeEventListener("click", yes);
-      $("#confirm-no").removeEventListener("click", no);
-    }
-    function yes() { cleanup(); ok(); }
-    function no() { cleanup(); }
-    $("#confirm-yes").addEventListener("click", yes);
-    $("#confirm-no").addEventListener("click", no);
+    host.addEventListener("input", function (e) {
+      if (e.target && e.target.id === "sub-tpl") renderTpl();
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest || !e.target.closest("#save-crawl")) return;
+      host.querySelectorAll(".rule-item").forEach(function (item) {
+        var setKey = item.getAttribute("data-set");
+        var idx = Number(item.getAttribute("data-idx"));
+        var set = RULE_SETS[setKey];
+        var body = item.querySelector(".rule-body");
+        [].forEach.call(body.querySelectorAll(".set-field"), function (f, m) {
+          var r = set[idx].rows[m];
+          if (!r) return;
+          var s2 = f.querySelector("[data-switch]");
+          if (s2) { r.on = s2.classList.contains("on"); return; }
+          var pk = f.querySelector(".pick-row");
+          if (pk) { r.sel = [].map.call(pk.querySelectorAll(".cat-chip.on"), function (c) { return c.textContent; }); return; }
+          var ctl = f.querySelector(".input, .select");
+          if (ctl) r.v = ctl.value;
+        });
+      });
+      saveFlowState();
+      toast("流程设置已保存");
+    });
   }
 
   function initSettings() {
     var panel = $("#set-panel");
     if (!panel) return;
     var GROUPS = [
-      { name: "面板账号", desc: "登录这个面板用的账号，和源站账号无关。", rows: [
+      { name: "面板账号", desc: "登录这个面板用的账号，和站点账号无关。", rows: [
         { t: "面板用户名", type: "text", v: "admin" },
         { t: "面板密码", type: "password", k: "panelPass", ph: "留空表示不修改", hint: "保存时会再确认一次，避免误改" },
         { t: "两步验证", type: "switch", v: true, hint: "登录面板时需要输入一次 TOTP" },
@@ -1188,12 +1282,21 @@
         { t: "Telegram bot", type: "text", v: "@pta_bot", disabled: true },
         { t: "每日汇总", type: "switch", v: true, hint: "每天 22:00 发一条" },
         { t: "失败立即推送", type: "switch", v: true },
-        { t: "登录失效提醒", type: "switch", v: true }
+        { t: "登录失效提醒", type: "switch", v: true },
+        { t: "Webhook 地址", type: "text", v: "", ph: "POST JSON 到自己的服务" },
+        { t: "邮件通知", type: "text", v: "", ph: "收件邮箱（SMTP 在配置里）" },
+        { t: "静默时段", type: "select", v: "不静默", opts: ["不静默", "22:00–08:00", "00:00–08:00"], hint: "这段时间只记录不推送" }
       ] },
       { name: "系统", desc: "版本、备份和这台浏览器里的数据。", rows: [
         { t: "当前版本", type: "text", v: "0.3.2 原型", disabled: true },
         { t: "立即备份", type: "button", v: "开始备份" },
-        { t: "清空本地缓存", type: "button", v: "清空", hint: "只会清掉浏览器里的设置，不动服务器数据" }
+        { t: "清空本地缓存", type: "button", v: "清空", hint: "只会清掉浏览器里的设置，不动服务器数据" },
+        { t: "数据保留", type: "select", v: "90 天", opts: ["30 天", "90 天", "180 天", "永久"], hint: "数据清单里过期的记录自动清" },
+        { t: "日志保留", type: "select", v: "30 天", opts: ["7 天", "30 天", "90 天"] },
+        { t: "自动备份", type: "select", v: "每天 03:00", opts: ["每天 03:00", "每周一次", "关闭"], hint: "备份站点、流程、通知这几组设置" },
+        { t: "磁盘低水位", type: "select", v: "50 GB", opts: ["20 GB", "50 GB", "100 GB"], hint: "低于这个值停止新下载" },
+        { t: "时区", type: "select", v: "Asia/Shanghai", opts: ["Asia/Shanghai", "UTC"], hint: "抓取时段和汇总都按这个时区" },
+        { t: "API 令牌", type: "button", v: "重新生成" }
       ] }
     ];
     panel.innerHTML = '<div class="set-stack">' + GROUPS.map(function (g, i) {
@@ -1208,8 +1311,30 @@
       var btn = e.target.closest("button[data-btn]");
       if (btn) toast(btn.getAttribute("data-btn") + "（假数据）");
     });
+    (function restoreSettings() {
+      var data = null;
+      try { data = JSON.parse(localStorage.getItem("pta.settings") || "null"); } catch (e) {}
+      if (!data) return;
+      var fields = panel.querySelectorAll(".set-field");
+      [].forEach.call(fields, function (f, i) {
+        if (data[i] === undefined) return;
+        var sw = f.querySelector("[data-switch]");
+        if (sw) { if (data[i]) sw.classList.add("on"); else sw.classList.remove("on"); return; }
+        var ctl = f.querySelector(".input, .select");
+        if (ctl && typeof data[i] === "string") ctl.value = data[i];
+      });
+    })();
+
     document.addEventListener("click", function (e) {
       if (!e.target.closest || !e.target.closest("#save-settings")) return;
+      var vals = [];
+      panel.querySelectorAll(".set-field").forEach(function (f) {
+        var sw = f.querySelector("[data-switch]");
+        if (sw) { vals.push(sw.classList.contains("on")); return; }
+        var ctl = f.querySelector(".input, .select");
+        vals.push(ctl ? ctl.value : "");
+      });
+      try { localStorage.setItem("pta.settings", JSON.stringify(vals)); } catch (err) {}
       var pw = panel.querySelector('[data-k="panelPass"]');
       var val = pw ? pw.value : "";
       if (val) {
@@ -1219,7 +1344,7 @@
         });
         return;
       }
-      toast("设置已保存（假数据）");
+      toast("设置已保存");
     });
   }
 
@@ -1335,10 +1460,7 @@
       ["doc", "纪录"], ["music", "音乐"], ["sport", "体育"], ["other", "其他"]];
     var RES = [["any", "不限"], ["720p", "720p 及以上"], ["1080p", "1080p 及以上"], ["2160p", "2160p 及以上"]];
 
-    var SET_TABS = [
-      ["basic", "基本信息"], ["login", "登录"], ["scope", "抓取范围"],
-      ["mode", "抓取方式"], ["time", "抓取时间"], ["freq", "抓取频率"]
-    ];
+    var SET_TABS = [["basic", "基本信息"], ["login", "登录"], ["override", "站点覆盖"]];
 
     function settingsHtml(s) {
       var opts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
@@ -1351,69 +1473,35 @@
 
       if (tab === "basic") {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "启用抓取", type: "switch", on: s.enabled, k: "enabled" },
+          { t: "启用抓取", type: "switch", k: "enabled", on: s.enabled },
           { t: "站点地址", type: "text", k: "url", v: s.url },
           { t: "架构", type: "select", k: "arch", v: s.arch || "?", opts: ["NP", "UNIT3D", "GZ", "OTHER", "?"], labels: { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" } },
-          { t: "备注", type: "textarea", k: "note", v: s.note || "", ph: "比如：只在周末抓、只收原盘" }
+          { t: "备注", type: "textarea", k: "note", v: s.note || "" }
         ]) + "</div>";
-      } else if (tab === "login") {
+      } else if (tab === "override") {
+        body = '<div class="set-fields">' + setRowsHtml([
+          { t: "覆盖全局抓取设置", type: "switch", k: "override", on: s.override, hint: "关掉时这个站完全跟随流程页里的抓取设置" }
+        ]) + "</div>" +
+        (s.override ? '<div class="set-fields">' + setRowsHtml([
+          { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"] },
+          { t: "单站每日上限", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值" },
+          { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail },
+          { t: "站点优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } },
+          { t: "本站分类映射", type: "button", v: "配置映射" }
+        ]) + "</div>" : "");
+      } else {
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码（含 2FA）", cookie: "Cookie" } }
-        ]) + (method === "cookie"
+        ]) + "</div>" + (method === "cookie"
           ? '<div class="set-fields">' + setRowsHtml([
-              { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "", ph: "从浏览器复制整段 cookie 粘进来" }
+              { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "" }
             ]) + "</div>"
           : '<div class="set-fields">' + setRowsHtml([
               { t: "用户名", type: "text", k: "username", v: s.username || "" },
               { t: "密码", type: "password", k: "password", v: s.password || "", ph: "留空表示不修改" },
               { t: "两步验证", type: "switch", k: "tfa", on: s.tfa },
               { t: "TOTP 密钥", type: "text", k: "totp", v: s.totp || "", ph: "绑定 2FA 时填，登录自动算码" }
-            ]) + "</div>") + "</div>";
-      } else if (tab === "scope") {
-        body = '<div class="cat-label">抓取分类</div><div class="cat-row">' + CATS.map(function (c) {
-          var on = (s.cats || []).indexOf(c[0]) >= 0;
-          return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-cat="' + c[0] + '">' + c[1] + "</button>";
-        }).join("") + "</div>" +
-        '<div class="set-fields">' + setRowsHtml([
-          { t: "只收原盘（整盘 ISO/BDMV）", type: "switch", k: "fullDiscOnly", on: s.fullDiscOnly },
-          { t: "分辨率下限", type: "select", k: "minRes", v: s.minRes, opts: ["any", "720p", "1080p", "2160p"], labels: { any: "不限", "720p": "720p 及以上", "1080p": "1080p 及以上", "2160p": "2160p 及以上" } },
-          { t: "最小体积（GB）", type: "text", k: "minSize", v: s.minSize || "" },
-          { t: "排除关键词", type: "text", k: "exclude", v: s.exclude || "", ph: "逗号分隔，标题命中就不抓" },
-          { t: "抓到的资源", type: "select", k: "queueMode", v: s.queueMode, opts: ["queue", "collect"], labels: { queue: "自动进待发队列", collect: "只收录，不发布" } }
-        ]) + "</div>";
-      } else if (tab === "mode") {
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "模式", type: "select", k: "mode", v: mode, opts: ["incr", "full", "mixed"], labels: { incr: "增量（只抓新页）", full: "全量（扫全部页）", mixed: "增量 + 定期全量" } }
-        ]) + "</div>" + (mode === "full" ? "" : '<div class="set-fields">' + setRowsHtml([
-          { t: "遇到已收录的种子就停", type: "switch", k: "stopAtKnown", on: s.stopAtKnown }
-        ]) + "</div>") + (mode === "incr" ? "" : '<div class="set-fields">' + setRowsHtml([
-          { t: "全量周期", type: "select", k: "fullCycle", v: s.fullCycle, opts: ["weekly", "monthly", "manual"], labels: { weekly: "每周一次", monthly: "每月一次", manual: "手动" } }
-        ]) + "</div>") + '<div class="set-fields">' + setRowsHtml([
-          { t: "每轮最多翻几页", type: "text", k: "pages", v: s.pages }
-        ]) + "</div>";
-      } else if (tab === "time") {
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "触发方式", type: "select", k: "trigger", v: s.trigger, opts: ["interval", "daily", "manual"], labels: { interval: "按间隔自动跑", daily: "每天定点跑", manual: "手动" } }
-        ]) + "</div>" + (s.trigger === "daily"
-          ? '<div class="set-fields">' + setRowsHtml([{ t: "每天几点", type: "time", k: "dailyAt", v: s.dailyAt || "18:00" }]) + "</div>"
-          : s.trigger === "manual" ? ""
-          : '<div class="set-fields">' + setRowsHtml([{ t: "每隔多少分钟", type: "text", k: "everyMin", v: s.everyMin || "60" }]) + "</div>") +
-        '<div class="set-fields">' + setRowsHtml([
-          { t: "只在特定时段抓", type: "switch", k: "timeWindow", on: s.timeWindow }
-        ]) + "</div>" + (s.timeWindow
-          ? '<div class="set-fields">' + setRowsHtml([
-              { t: "开始时间", type: "time", k: "winStart", v: s.winStart || "00:00" },
-              { t: "结束时间", type: "time", k: "winEnd", v: s.winEnd || "08:00" }
-            ]) + "</div>"
-          : "") + '<div class="set-fields">' + setRowsHtml([
-          { t: "站点之间随机错开（± 分钟）", type: "text", k: "jitter", v: s.jitter || "5" }
-        ]) + "</div>";
-      } else {
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "每页间隔（秒）", type: "text", k: "interval", v: s.interval },
-          { t: "并发", type: "text", k: "concurrency", v: s.concurrency },
-          { t: "发布前查重", type: "switch", k: "dupeCheck", on: s.dupeCheck }
-        ]) + "</div>";
+            ]) + "</div>");
       }
 
       return '<div class="sd-subnav">' + SET_TABS.map(function (t) {
@@ -1550,7 +1638,8 @@
       var sw = e.target.closest("button[data-switch]");
       if (sw) {
         sw.classList.toggle("on");
-        if (sw.getAttribute("data-switch") === "timeWindow") {
+        var sk = sw.getAttribute("data-switch");
+        if (sk === "override" || sk === "timeWindow") {
           var cs = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
           if (cs) { collect(cs); paintDetail(); }
         }
@@ -1721,9 +1810,13 @@
   var VIEW_META = {
     dashboard: {
       title: "总览", sub: "A 机控制面",
-      pills: '<span class="pill"><span class="dot ok"></span>服务运行中</span>' +
-             '<span class="pill"><span class="dot warn"></span>2 个站登录失效</span>' +
-             '<span class="pill"><span class="dot ok"></span>节点 4 / 5</span>'
+      pills: function () {
+        var on = MOCK.nodes.filter(function (n) { return n.online; }).length;
+        var fail = MOCK.sites.loginFail || 0;
+        return '<span class="pill"><span class="dot ok"></span>服务运行中</span>' +
+          '<span class="pill"><span class="dot warn"></span>' + fail + " 个站登录失效</span>" +
+          '<span class="pill"><span class="dot ok"></span>节点 ' + on + " / " + MOCK.nodes.length + "</span>";
+      }
     },
     sites: {
       title: "站点",
@@ -1740,11 +1833,11 @@
       pills: '<button class="btn primary slim" id="save-crawl">保存</button>'
     },
     queue: {
-      title: "待审核", sub: "确认后才会发到目标站",
-      pills: '<span class="pill"><span class="dot ok"></span>目标站登录正常</span>'
+      title: "待审核", sub: "确认后才会发到主站",
+      pills: '<span class="pill"><span class="dot ok"></span>主站登录正常</span>'
     },
     sources: {
-      title: "数据清单", sub: "源站抓到的原盘都在这",
+      title: "数据清单", sub: "站点抓到的原盘都在这",
       pills: '<span class="pill"><span class="dot ok"></span>上次抓取 12:40</span>' +
              '<span class="pill">共 23,186 条</span>'
     },
@@ -1772,7 +1865,7 @@
     var t = $("#page-title"); if (t) t.textContent = title;
     var sb = $("#page-sub"); if (sb) sb.textContent = sub || "";
     var p = $("#page-pills"); if (p) p.innerHTML = pills || "";
-    document.title = title + " · PT 转载台";
+    document.title = title + " · 媒体资料库";
   }
 
   function go(key, opts) {
@@ -1789,6 +1882,7 @@
     });
     current = key;
     setActive(key);
+    if (key === "dashboard" && typeof renderDashboard === "function") renderDashboard();
     if (!opts.pop) history.pushState({ view: key }, "", "#" + key);
     window.scrollTo(0, 0);
     var m = $("#menu"); if (m) m.classList.remove("open");
@@ -1815,7 +1909,6 @@
     initChrome();
     initNav();
     initMenu();
-    renderDashboard();
     initQueue();
     initSources();
     initNodes();
@@ -1825,5 +1918,6 @@
     initSites();
     initSiteModal();
     initRouter();
+    renderDashboard();
   });
 })();
