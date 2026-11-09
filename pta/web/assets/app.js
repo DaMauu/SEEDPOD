@@ -1995,12 +1995,7 @@
     sites: {
       title: "站点",
       sub: function () { return MOCK.sites.total + " 个站点 · 抓取和登录都在这配"; },
-      pills: function () {
-        var st = MOCK.sites;
-        return '<span class="pill"><span class="dot ok"></span>启用 ' + st.enabled + "</span>" +
-               '<span class="pill"><span class="dot warn"></span>登录失效 ' + st.loginFail + "</span>" +
-               '<span class="pill"><span class="dot bad"></span>分享率不足 ' + st.lowRatio + "</span>";
-      }
+      pills: ""
     },
     crawl: {
       title: "流程", sub: "抓取、查重、发布与下载器",
@@ -2008,16 +2003,15 @@
     },
     queue: {
       title: "待审核", sub: "确认后才会发到主站",
-      pills: '<span class="pill"><span class="dot ok"></span>主站登录正常</span>'
+      pills: ""
     },
     sources: {
       title: "数据清单", sub: "站点抓到的原盘都在这",
-      pills: '<span class="pill"><span class="dot ok"></span>上次抓取 12:40</span>' +
-             '<span class="pill">共 23,186 条</span>'
+      pills: ""
     },
     logs: {
       title: "日志", sub: "最近 200 行",
-      pills: '<span class="pill"><span class="dot ok"></span>心跳正常</span>'
+      pills: ""
     },
     settings: {
       title: "设置", sub: "面板账号、通知与系统",
