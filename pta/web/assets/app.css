@@ -1641,5 +1641,5 @@ html, body { overflow-x: hidden; }
 /* 总览实时日志：黑色区域铺满卡片宽度 */
 #dash-logs { margin: 2px -20px -20px; padding: 10px 20px 12px; border-radius: 0 0 12px 12px; }
 .card:has(#dash-logs) { display: flex; flex-direction: column; }
-.card:has(#dash-logs) .list { display: flex; flex-direction: column; flex: 1; padding: 0; }
-#dash-logs { flex: 1; margin: 2px -20px -20px; }
+.card:has(#dash-logs) .list { display: flex; flex-direction: column; flex: 1; }
+#dash-logs { flex: 1; margin: 2px -20px -20px; padding: 10px 20px 12px; }

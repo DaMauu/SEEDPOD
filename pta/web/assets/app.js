@@ -893,7 +893,6 @@
           '<span class="log-msg">' + escapeHtml(l.msg) + "</span>" +
         "</div>";
       }).join("") || '<div class="sites-empty">没有匹配的日志</div>';
-      host.insertAdjacentHTML("beforeend", '<div class="log-prompt"><b>$</b><i></i></div>');
       host.scrollTop = host.scrollHeight;
     }
 
