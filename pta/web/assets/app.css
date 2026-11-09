@@ -2004,3 +2004,5 @@ html, body { overflow-x: hidden; }
   width: auto; max-width: none; justify-self: stretch; }
 .site-expand .sd-block .sd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .site-expand .sd-block .sd-row + .sd-row { border-top: 1px solid #f2f4f8; }
+.view[data-view="sites"] .st-all { display: flex; align-items: center; }
+.view[data-view="sites"] .st-all input { width: 14px; height: 14px; accent-color: var(--accent); }

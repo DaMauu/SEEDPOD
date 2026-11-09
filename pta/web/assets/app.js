@@ -1713,6 +1713,7 @@
         detail.hidden = true;
       }
       paintDetail();
+      refreshBulk();
     }
 
     function refreshStats() {
@@ -1848,17 +1849,27 @@
       return MOCK.sitesList.filter(function (s) { return state.picks.indexOf(s.name) >= 0; });
     }
     function refreshBulk() {
-      var bar = $("#sites-bulk"), n = $("#bulk-n");
-      if (n) n.textContent = state.picks.length;
-      if (bar) bar.hidden = false;
       var rows = filtered();
-      var allPicked = rows.length > 0 && rows.every(function (x) { return state.picks.indexOf(x.name) >= 0; });
-      var tg = $("#bulk-toggle"), total = $("#bulk-total");
-      if (tg) tg.textContent = allPicked ? "取消全选" : "全选";
-      if (total) total.textContent = rows.length;
+      var picked = rows.filter(function (x) { return state.picks.indexOf(x.name) >= 0; }).length;
+      var head = $("#site-all");
+      if (head) {
+        head.checked = rows.length > 0 && picked === rows.length;
+        head.indeterminate = picked > 0 && picked < rows.length;
+      }
       var openBtn = $("#bulk-open");
-      if (openBtn) openBtn.disabled = state.picks.length === 0;
+      if (openBtn) {
+        openBtn.disabled = state.picks.length === 0;
+        openBtn.textContent = state.picks.length ? "批量设置（" + state.picks.length + "）" : "批量设置";
+      }
     }
+
+    var headAll = $("#site-all");
+    if (headAll) headAll.addEventListener("change", function () {
+      var rows = filtered();
+      if (headAll.checked) rows.forEach(function (x) { if (state.picks.indexOf(x.name) < 0) state.picks.push(x.name); });
+      else state.picks = state.picks.filter(function (n) { return !rows.some(function (x) { return x.name === n; }); });
+      paint();
+    });
 
     list.addEventListener("change", function (e) {
       if (!e.target.classList || !e.target.classList.contains("site-pick")) return;
