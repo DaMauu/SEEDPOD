@@ -954,15 +954,9 @@
   }
 
   var FETCH_RULES = [
-    { name: "筛选", sum: "电影 · 蓝光原盘 · 全尺寸", rows: [
-      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "只抓勾选的类型" },
-      { t: "媒介", type: "custom", chips: ["蓝光原盘", "Remux", "Blu-ray 压制", "UHD", "DVD", "WEB-DL", "HDTV"], sel: ["蓝光原盘"] },
-      { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
-      { t: "白名单关键词", type: "text", v: "", ph: "逗号分隔，只抓含这些词的（留空不限）" },
-      { t: "排除 DIY 原盘", type: "switch", on: true, hint: "带 DIY / 修改 / 加长 标记的不要" },
-      { t: "排除限制分发", type: "switch", on: true },
-      { t: "排除独占", type: "switch", on: true },
-      { t: "跳过已归档过的", type: "switch", on: true, hint: "库里已有同片就不再抓详情" }
+    { name: "范围", sum: "电影 · 蓝光原盘", rows: [
+      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "只看勾选的类型，收不收后面再定" },
+      { t: "媒介", type: "custom", chips: ["蓝光原盘", "Remux", "Blu-ray 压制", "UHD", "DVD", "WEB-DL", "HDTV"], sel: ["蓝光原盘"] }
     ] },
     { name: "节奏与限额", sum: "间隔 3.0 秒 · 每站每天 100 · 失败 5 次停", rows: [
       { t: "每页间隔", type: "text", v: "3.0 秒" },
@@ -976,7 +970,6 @@
       { t: "抓详情页", type: "switch", on: true, hint: "BDInfo、截图、简介都要进详情页；关掉只抓列表，快很多" },
       { t: "连续失败自动停", type: "text", v: "5", hint: "连续失败几次就停这个站，并标为需要人工处理" },
       { t: "失败重试", type: "text", v: "3 次，退避 30 秒", hint: "403 / 502 / 超时按这个重试" },
-      { t: "全局排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "逗号分隔，标题命中就不抓" },
       { t: "抓取字段", type: "custom", chips: ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "限制标记", "独占标记"], sel: ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "限制标记", "独占标记"] }
     ] },
     { name: "站点分类映射", sum: "各站分类 → 库内分类", rows: [
@@ -1054,6 +1047,18 @@
     ] }
   ];
 
+  var FILTER_RULES = [
+    { name: "收录条件", sum: "跳过置顶 · 排除 DIY/独占/限制", rows: [
+      { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
+      { t: "排除 DIY", type: "switch", on: true, hint: "标题或说明带 DIY / 修改 / 加长 的不要" },
+      { t: "排除独占", type: "switch", on: true },
+      { t: "排除限制分发", type: "switch", on: true, hint: "禁转直接跳过；限转满 7 天可以放行" },
+      { t: "排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "标题命中就不收" },
+      { t: "白名单关键词", type: "text", v: "", ph: "只收含这些词的（留空不限）" },
+      { t: "跳过已收录过的", type: "switch", on: true, hint: "库里已有同片就不重复收" }
+    ] }
+  ];
+
   var DL_RULES = [
     { name: "下载条件", sum: "做种 5 起 · 免费优先", rows: [
       { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下到一半就断" },
@@ -1063,7 +1068,7 @@
     ] }
   ];
 
-  var RULE_SETS = { fetch: FETCH_RULES, pub: PUB_RULES, dl: DL_RULES };
+  var RULE_SETS = { fetch: FETCH_RULES, filter: FILTER_RULES, pub: PUB_RULES, dl: DL_RULES };
 
   var FLOW_KEY = "pta.flow2";
   function saveFlowState() {
@@ -1123,7 +1128,7 @@
     }
 
     function sectionHtml(g, i, setKey) {
-      return '<section class="drawer open" data-i="' + i + '">' +
+      return '<section class="drawer open" data-i="' + i + '" data-name="' + g.name + '">' +
         '<div class="drawer-head">' +
           '<div class="drawer-t"><div class="drawer-title">' + g.name + "</div>" +
           '<div class="drawer-desc">' + g.desc + "</div></div>" +
@@ -1136,8 +1141,9 @@
     loadFlowState();
     host.innerHTML =
       sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 全尺寸 · 增量", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 1, "pub") +
-      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 2, "dl");
+      sectionHtml({ name: "筛选", desc: "抓到以后，哪些值得收。", sum: "跳过置顶 · 排除 DIY/独占/限制", rules: FILTER_RULES }, 1, "filter") +
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub") +
+      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 3, "dl");
 
     renderTpl();
 
@@ -1162,7 +1168,7 @@
       }
       var pr = document.querySelector('.rule-item[data-set="pub"][data-idx="0"] .rule-sum');
       if (pr) pr.textContent = "发到 " + (t ? (t.title || t.name) : "—") + " · 站内图床";
-      var meta = document.querySelector('.drawer[data-i="1"] .drawer-meta');
+      var meta = document.querySelector('.drawer[data-name="发布"] .drawer-meta');
       if (meta) meta.textContent = "半自动 · 相似度 0.85 · 发到 " + (t ? (t.title || t.name) : "—");
     }
     paintTarget();
