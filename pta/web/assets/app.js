@@ -1514,10 +1514,10 @@
       var a = archOf(s);
       return '<div class="sd-top">' +
           '<em class="ava lg ' + a[0] + '">' + escapeHtml(initials(s)) + "</em>" +
-          '<div class="sd-id"><h2>' + escapeHtml(s.title || s.name) + "</h2>" +
-            '<span class="sd-url">' + escapeHtml(s.url) + "</span></div>" +
-          '<div class="sd-chips"><em class="chip ' + a[0] + '">' + a[1] + "</em>" +
+          '<div class="sd-id"><div class="sd-title-row"><h2>' + escapeHtml(s.title || s.name) + "</h2>" +
+            '<em class="chip ' + a[0] + '">' + a[1] + "</em>" +
             '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span></div>" +
+            '<span class="sd-url">' + escapeHtml(s.url) + "</span></div>" +
           '<div class="sd-actions">' +
             '<button class="btn slim" data-act="crawl">抓取测试</button>' +
             '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
