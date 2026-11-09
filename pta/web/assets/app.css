@@ -1783,3 +1783,8 @@ html, body { overflow-x: hidden; }
 .site-sheet .sd-id h2 { margin-bottom: 2px; }
 .site-sheet .sd-chips { margin-left: 0; }
 .site-sheet .sd-top { padding-bottom: 2px; }
+/* 站点页铺满一屏，底部总数不被裁掉 */
+.view[data-view="sites"] .sites-wrap { display: flex; flex-direction: column; height: calc(100vh - 150px); }
+.view[data-view="sites"] .sites-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.view[data-view="sites"] .sites-rows { flex: 1; max-height: none; min-height: 0; overflow-y: auto; }
+.view[data-view="sites"] .st-foot { flex: 0 0 auto; }
