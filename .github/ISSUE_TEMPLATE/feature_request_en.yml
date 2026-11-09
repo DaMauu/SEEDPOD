@@ -1,0 +1,53 @@
+name: Feature request (English)
+description: A new panel, tracker support, or style
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      multiple: true
+      options:
+        - bluray (disc upload panel)
+        - PTScripts (tracker utilities)
+        - styles/r (theme styles)
+        - pta (tracker architecture page)
+        - New module
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: How you do this by hand today
+      description: Describe the current workflow and its pain — far more useful than "add a button"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: Where the panel entry lives, how it triggers, which fields it needs
+
+  - type: input
+    id: sites
+    attributes:
+      label: Applicable trackers
+      description: Tracker types and names, to judge whether it needs a new adapter
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you tried
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This is achievable in a single-file userscript (no backend, no new dependency)
+          required: true
+        - label: I searched existing issues and found no duplicate
+          required: true

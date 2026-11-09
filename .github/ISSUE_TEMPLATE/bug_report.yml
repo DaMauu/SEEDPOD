@@ -1,5 +1,5 @@
-name: 问题反馈
-description: 脚本报错、面板异常、功能不生效
+name: 问题反馈（中文）
+description: 脚本报错、面板异常、功能不生效 · Chinese bug report
 title: "[Bug] "
 labels: ["bug"]
 body:

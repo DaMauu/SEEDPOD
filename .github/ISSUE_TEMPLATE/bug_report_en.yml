@@ -1,0 +1,103 @@
+name: Bug report (English)
+description: Script errors, broken panel behavior, features not working
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: update to the newest version file and reload Tampermonkey.
+        **Remove cookies, passkeys, tracker keys, downloader credentials, and site usernames from logs and screenshots.**
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - bluray (disc upload panel)
+        - PTScripts (tracker utilities)
+        - styles/r (theme styles)
+        - pta (tracker architecture page)
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: From the filename or the `@version` header, e.g. 0.0.0.47
+      placeholder: 0.0.0.47
+    validations:
+      required: true
+
+  - type: dropdown
+    id: site-type
+    attributes:
+      label: Tracker type
+      multiple: true
+      options:
+        - NexusPHP
+        - UNIT3D
+        - Gazelle
+        - f3nix
+        - Other / Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: site
+    attributes:
+      label: Site name
+      description: Optional; write "can share privately" if you would rather not post it
+      placeholder: e.g. HDSky
+
+  - type: input
+    id: env
+    attributes:
+      label: Browser and Tampermonkey version
+      placeholder: Chrome 141 / Tampermonkey 5.3.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open an upload page on the tracker
+        2. Click "cross-site dedupe" in the panel
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors (redacted)
+      description: Related red errors from the F12 console
+      render: shell
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: Reproduced on the newest version
+          required: true
+        - label: Removed cookies, passkeys, keys, and personal data from logs and screenshots
+          required: true
