@@ -1492,3 +1492,19 @@ html, body { overflow-x: hidden; }
 .view[data-view="crawl"] .sec-actions .btn { height: 30px; font-size: 12px; }
 .view[data-view="crawl"] .rule-body .set-fields { max-width: none; }
 .view[data-view="crawl"] .rule-body .set-fields:has(.pick-row) { max-width: 980px; }
+/* 展开后的设置项更紧凑，栏目标题保持舒展 */
+.view[data-view="crawl"] .rule-body .set-field { min-height: 38px; padding: 5px 0; gap: 16px; }
+.view[data-view="crawl"] .rule-body .set-field .lbl span { font-size: 12px; }
+.view[data-view="crawl"] .rule-body .set-field .lbl i { font-size: 10.5px; margin-top: 1px; }
+.view[data-view="crawl"] .rule-body .set-field .ctl { width: 220px; }
+.view[data-view="crawl"] .rule-body .set-field .ctl .input,
+.view[data-view="crawl"] .rule-body .set-field .ctl .select { height: 28px; font-size: 11.5px; }
+.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) { padding: 6px 0; }
+.view[data-view="crawl"] .rule-body .set-field .cat-chip { font-size: 10.5px; padding: 2px 8px; }
+.view[data-view="crawl"] .rule-body { padding-bottom: 4px; }
+
+/* 栏目本身微调 */
+.view[data-view="crawl"] .drawer-head { padding: 13px 22px; }
+.view[data-view="crawl"] .drawer-title { font-size: 14px; }
+.view[data-view="crawl"] .rule-item .rule-row { padding: 10px 4px; }
+.view[data-view="crawl"] .sec-actions { padding: 8px 4px 0; }
