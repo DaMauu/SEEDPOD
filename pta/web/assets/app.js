@@ -1554,19 +1554,17 @@
           "<span>下次<b>" + escapeHtml(next) + "</b></span>" +
         "</div>" +
         '<div class="sd-compact">' +
-          '<div class="sd-col">' +
-            '<div class="sd-block"><h4>登录</h4>' +
-              '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
-              '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
-              '<div class="sd-row"><span>cookie 剩余</span><b>' + (s.loginMethod === "cookie" ? "—" : s.cookieDays + " 天") + "</b></div>" +
-              '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
-            "</div>" +
-            '<div class="sd-block"><h4>抓取</h4>' +
-              '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
-              '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
-              '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
-              '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
-            "</div>" +
+          '<div class="sd-block"><h4>登录</h4>' +
+            '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
+            '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
+            '<div class="sd-row"><span>cookie 剩余</span><b>' + (s.loginMethod === "cookie" ? "—" : s.cookieDays + " 天") + "</b></div>" +
+            '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
+          "</div>" +
+          '<div class="sd-block"><h4>抓取</h4>' +
+            '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
+            '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
+            '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
+            '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
           "</div>" +
           '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
             recs.map(function (r) {
@@ -1613,7 +1611,7 @@
         ]) + "</div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码 + 2FA", cookie: "Cookie" } }
+          { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码", cookie: "Cookie" } }
         ]) + "</div>" + (method === "cookie"
           ? '<div class="set-fields">' + setRowsHtml([
               { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "" }

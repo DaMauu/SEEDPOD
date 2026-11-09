@@ -1968,3 +1968,22 @@ html, body { overflow-x: hidden; }
 .site-expand .sd-block .sd-row { padding: 3px 0; font-size: 11.5px; }
 .site-expand .sd-block .sd-row + .sd-row { border-top: 1px solid #eef0f5; }
 .site-expand .sd-recent-wrap { margin-top: 0; }
+/* 站点设置：所有控件左对齐同一条线，宽度统一 */
+.site-expand .sd-form .set-field { gap: 16px; }
+.site-expand .sd-form .set-field .lbl { flex: 0 0 120px; }
+.site-expand .sd-form .set-field .ctl { width: 320px; justify-content: flex-start; }
+.site-expand .sd-form .set-field .ctl .input,
+.site-expand .sd-form .set-field .ctl .select { width: 320px; padding-right: 8px; }
+.site-expand .sd-form .set-field .ctl .select { padding-right: 26px; }
+.site-expand .sd-form .set-field .ctl .btn { width: auto; }
+.site-expand .sd-form .set-field .switch { margin-left: 0; }
+/* 站点设置：两列平铺，去掉行分隔线 */
+.site-expand .sd-form .set-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 36px; }
+.site-expand .sd-form .set-field { display: grid; grid-template-columns: 110px minmax(0, 1fr);
+  align-items: center; gap: 12px; min-height: 34px; padding: 4px 0; border-top: 0 !important; }
+.site-expand .sd-form .set-field .lbl { flex: none; width: auto; }
+.site-expand .sd-form .set-field .ctl { width: 100%; justify-content: flex-start; }
+.site-expand .sd-form .set-field .ctl .input,
+.site-expand .sd-form .set-field .ctl .select { width: 100%; }
+.site-expand .sd-form .set-field:has(textarea) { display: block; grid-column: 1 / -1; }
+.site-expand .sd-form .set-field:has(textarea) .lbl { margin-bottom: 6px; }
