@@ -1663,9 +1663,15 @@
       var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
       var count = { NP: st.np, UNIT3D: st.unit3d, GZ: st.gz, OTHER: st.oth, "?": st.unk };
       var total = st.total || 1;
-      var segs = order.filter(function (k) { return count[k]; }).map(function (k) {
-        return '<i class="seg ' + ACH[k][0] + '" style="width:' + (count[k] / total * 100).toFixed(2) + '%"></i>';
-      }).join("");
+      var colors = { NP: "#8b7cf6", UNIT3D: "#34c4a0", GZ: "#4aa3f5", OTHER: "#f0a93b", "?": "#c6cbd6" };
+      var acc = 0, stops = [];
+      order.filter(function (k) { return count[k]; }).forEach(function (k) {
+        var w = count[k] / total * 100, a = acc, b = acc + w;
+        stops.push(colors[k] + " " + a.toFixed(2) + "%");
+        stops.push(colors[k] + " " + Math.max(a, b - 0.9).toFixed(2) + "%");
+        acc = b;
+      });
+      var barStyle = "background: linear-gradient(90deg," + stops.join(",") + ")";
       var legend = order.filter(function (k) { return count[k]; }).map(function (k) {
         return '<span><i class="dot ' + ACH[k][0] + '"></i>' + names[k] + " " + count[k] + "</span>";
       }).join("");
@@ -1676,7 +1682,7 @@
           '<div><span>登录失效</span><b class="warn">' + st.loginFail + "</b></div>" +
           '<div><span>分享率不足</span><b class="bad">' + st.lowRatio + "</b></div>" +
         "</div>" +
-        '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
+        '<div class="ss-arch"><div class="ss-bar" style="' + barStyle + '"></div>' +
           '<div class="ss-legend">' + legend + "</div></div>";
     }
 
@@ -1843,7 +1849,9 @@
     function refreshBulk() {
       var bar = $("#sites-bulk"), n = $("#bulk-n");
       if (n) n.textContent = state.picks.length;
-      if (bar) bar.hidden = state.picks.length === 0;
+      if (bar) bar.hidden = false;
+      var openBtn = $("#bulk-open");
+      if (openBtn) openBtn.disabled = state.picks.length === 0;
     }
 
     list.addEventListener("change", function (e) {
@@ -1862,9 +1870,13 @@
       paint();
     });
 
-    var bAll = $("#bulk-all"), bNone = $("#bulk-none"), bOpen = $("#bulk-open");
+    var bAll = $("#bulk-all"), bAllAll = $("#bulk-allall"), bNone = $("#bulk-none"), bOpen = $("#bulk-open");
     if (bAll) bAll.addEventListener("click", function () {
       filtered().forEach(function (x) { if (state.picks.indexOf(x.name) < 0) state.picks.push(x.name); });
+      refreshBulk(); paint();
+    });
+    if (bAllAll) bAllAll.addEventListener("click", function () {
+      state.picks = MOCK.sitesList.map(function (x) { return x.name; });
       refreshBulk(); paint();
     });
     if (bNone) bNone.addEventListener("click", function () { state.picks = []; refreshBulk(); paint(); });
