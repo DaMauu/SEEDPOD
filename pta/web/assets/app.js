@@ -1856,8 +1856,8 @@
       }
     },
     crawl: {
-      title: "流程", sub: "抓取、发布与下载器",
-      pills: '<button class="btn primary slim" id="save-crawl">保存</button>'
+      title: "流程", sub: "抓取、查重、发布与下载器",
+      pills: ""
     },
     queue: {
       title: "待审核", sub: "确认后才会发到主站",
