@@ -1611,7 +1611,7 @@
         ]) + "</div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码（含 2FA）", cookie: "Cookie" } }
+          { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码 + 2FA", cookie: "Cookie" } }
         ]) + "</div>" + (method === "cookie"
           ? '<div class="set-fields">' + setRowsHtml([
               { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "" }

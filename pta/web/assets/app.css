@@ -1943,3 +1943,21 @@ html, body { overflow-x: hidden; }
 .site-expand .sd-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .site-expand .sd-title-row h2 { margin: 0; font-size: 15px; }
 .site-expand .sd-id .sd-url { display: block; margin-top: 2px; }
+/* 全选条内容靠右 */
+.sites-bulk { justify-content: flex-end; }
+/* 站点设置：标签列收窄，控件列加宽 */
+.site-expand .sd-form .set-field .lbl { flex: 0 0 132px; }
+.site-expand .sd-form .set-field .ctl { width: 300px; }
+/* 详情层级：标题、区块标题、选中态都拉开对比 */
+.site-expand { background: #f6f7fb; }
+.site-expand .sd-title-row h2 { font-size: 15.5px; font-weight: 650; letter-spacing: -.01em; }
+.site-expand .sd-strip b { font-size: 13px; font-weight: 650; }
+.site-expand .sd-compact h4, .site-expand .sd-recent-wrap h4 { display: flex; align-items: center; color: #6b7280; }
+.site-expand .sd-compact h4::before, .site-expand .sd-recent-wrap h4::before {
+  content: ""; width: 3px; height: 9px; border-radius: 2px; background: var(--accent); margin-right: 6px; }
+.site-expand .sd-form .set-field .lbl span { color: #3d4453; }
+.site-expand .tabbtn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.site-expand .sd-form .set-field { min-height: 34px; padding: 3px 0; }
+.site-expand .sd-form .set-fields + .set-fields { margin-top: 0; }
+.site-expand .sd-form .set-field + .set-field { border-top: 1px solid #eef0f5; }
+.site-expand .sd-form { margin-top: 12px; }
