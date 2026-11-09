@@ -1411,3 +1411,22 @@ html, body { overflow-x: hidden; }
 .rule-body .set-field .lbl i { font-size: 10.5px; }
 .rule-body .set-fields:has(.pick-row) { max-width: 900px; }
 .sec-actions { padding: 6px 4px 0; }
+/* 整体再压一档 */
+.drawers { gap: 10px; }
+.drawer-head { padding: 12px 22px; }
+.drawer-title { font-size: 14px; }
+.drawer-desc { margin-top: 2px; font-size: 11px; }
+.drawer-body { padding: 0 22px 10px; }
+.rule-item .rule-row { padding: 9px 4px; }
+.rule-name { font-size: 12px; }
+.rule-sum { font-size: 11px; }
+.sec-actions { padding: 4px 4px 0; margin-top: 2px; }
+.rule-body .set-field { padding: 4px 0; }
+/* 分区头压成一行，行高再收 */
+.drawers { gap: 8px; }
+.drawer-head { padding: 10px 22px; }
+.drawer-t { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.drawer-desc { margin: 0; font-size: 10.5px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rule-item .rule-row { padding: 7px 4px; }
+.sec-actions { padding: 2px 4px 0; margin-top: 0; }
+.drawer-body { padding-bottom: 8px; }
