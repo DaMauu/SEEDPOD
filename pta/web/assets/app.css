@@ -1518,8 +1518,8 @@ html, body { overflow-x: hidden; }
 .nodes-inner .nodes-grid { background: transparent; border: 0; border-radius: 0; }
 .node-row { padding: 9px 2px; }
 .nodes-bar { padding: 8px 0 4px; margin-bottom: 0; }
-/* 下载器：新增按钮做成列表末行 */
-.node-add-row { display: block; width: 100%; padding: 11px 2px; border: 0; background: none;
-  text-align: left; font: inherit; font-size: 12.5px; color: var(--muted); cursor: pointer; }
-.node-add-row:hover { color: var(--accent); background: #fafbff; }
-.nodes-inner .nodes-grid .node-row:last-child { border-bottom: 0; }
+/* 下载器：底部操作行与其它栏目保存按钮同规格 */
+.view[data-view="crawl"] .drawer[data-name="下载器"] .drawer-body-flush { padding-bottom: 8px; }
+.nodes-foot { display: flex; justify-content: flex-end; align-items: center;
+  margin: 6px -20px 0; padding: 8px 4px 0; border-top: 1px solid var(--line); }
+.nodes-foot .btn { height: 30px; font-size: 12px; }

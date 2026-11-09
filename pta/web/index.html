@@ -122,7 +122,6 @@
           <div class="drawer-head">
             <div class="drawer-t">
               <div class="drawer-title">下载器</div>
-              <div class="drawer-desc">A 机编排，其余机器负责下载与做种。</div>
             </div>
             <span class="drawer-meta" id="nodes-drawer-meta"></span>
           </div>
@@ -130,9 +129,9 @@
             <div class="nodes-inner">
       <div class="nodes-sum" id="nodes-sum"></div>
       <div class="nodes-grid" id="nodes-grid"></div>
-      <button type="button" class="node-add-row" id="node-add">+ 新增下载器</button>
-
-      <p class="note" style="margin-top:14px">跨机器不能硬链接，每个节点各存一份数据；A 只存索引、队列和发布记录，通过 qB Web API 下发。</p>
+      <div class="nodes-foot">
+        <button type="button" class="btn primary slim" id="node-add">新增下载器</button>
+      </div>
 
             </div>
           </div>
