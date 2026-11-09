@@ -954,11 +954,11 @@
   }
 
   var FETCH_RULES = [
-    { name: "检索预设", sum: "电影 · 原盘 · 1080p+ · 免费", rows: [
-      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "对应站点搜索的类别，决定了列表里会出现什么" },
-      { t: "规格", type: "custom", chips: ["原盘(Full Disc)", "Remux", "Encode", "UHD", "DVD"], sel: ["原盘(Full Disc)"], hint: "直接锁到站点的 medium / type 字段" },
-      { t: "分辨率", type: "select", v: "1080p 及以上", opts: ["不限", "1080p 及以上", "2160p 及以上"] },
-      { t: "优惠", type: "select", v: "只要免费", opts: ["不限", "只要免费", "免费或 2x"], hint: "BHD 这类站不开免费，会在站点里单独排除" }
+    { name: "搜索预设", sum: "电影 · 原盘 · 1080p+ · 免费", rows: [
+      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录片", "音乐", "体育", "演唱会", "MV", "有声书", "电子书", "软件", "游戏", "其他"], sel: ["电影"], hint: "对应站点搜索的类别，决定列表里会出现什么" },
+      { t: "媒介", type: "custom", chips: ["原盘(Full Disc)", "UHD 原盘", "3D 原盘", "Remux", "Encode", "Blu-ray", "HDDVD", "DVD", "HDTV", "WEB-DL", "WEBRip", "TVRip", "VHS", "其他"], sel: ["原盘(Full Disc)"], hint: "锁到站点的 medium / type 字段" },
+      { t: "分辨率", type: "custom", chips: ["480p", "576p", "720p", "1080i", "1080p", "2160p", "4320p/8K"], sel: ["1080i", "1080p", "2160p", "4320p/8K"] },
+      { t: "优惠", type: "select", v: "只要免费", opts: ["不限", "只要免费", "免费或 2x", "免费或 2x 或 50%"], hint: "BHD 这类站不开免费，会在站点里单独排除" }
     ] },
     { name: "拉取", sum: "逐页翻 · 断点续抓", rows: [
       { t: "每页间隔", type: "text", v: "3.0 秒" },
@@ -1149,7 +1149,7 @@
 
     loadFlowState();
     host.innerHTML =
-      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 原盘 · 逐行判定", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "电影 · 原盘 · 逐行判定", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "本地词库 + 目标站", rules: DEDUPE_RULES }, 1, "dedupe") +
       sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub") +
       sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 3, "dl");
