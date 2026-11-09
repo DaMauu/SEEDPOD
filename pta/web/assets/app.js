@@ -954,23 +954,41 @@
   }
 
   var FETCH_RULES = [
-    { name: "范围", sum: "电影 · 蓝光原盘", rows: [
-      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "只看勾选的类型，收不收后面再定" },
-      { t: "媒介", type: "custom", chips: ["蓝光原盘", "Remux", "Blu-ray 压制", "UHD", "DVD", "WEB-DL", "HDTV"], sel: ["蓝光原盘"] }
+    { name: "检索预设", sum: "电影 · 原盘 · 1080p+ · 免费", rows: [
+      { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "对应站点搜索的类别，决定了列表里会出现什么" },
+      { t: "规格", type: "custom", chips: ["原盘(Full Disc)", "Remux", "Encode", "UHD", "DVD"], sel: ["原盘(Full Disc)"], hint: "直接锁到站点的 medium / type 字段" },
+      { t: "分辨率", type: "select", v: "1080p 及以上", opts: ["不限", "1080p 及以上", "2160p 及以上"] },
+      { t: "优惠", type: "select", v: "只要免费", opts: ["不限", "只要免费", "免费或 2x"], hint: "BHD 这类站不开免费，会在站点里单独排除" }
     ] },
-    { name: "节奏与限额", sum: "间隔 3.0 秒 · 每站每天 100 · 失败 5 次停", rows: [
+    { name: "拉取", sum: "逐页翻 · 断点续抓", rows: [
       { t: "每页间隔", type: "text", v: "3.0 秒" },
-      { t: "单站抓取间隔", type: "select", v: "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"], hint: "两个站之间至少隔多久" },
       { t: "并发", type: "select", v: "1", opts: ["1", "2", "3"] },
       { t: "每轮最多翻页", type: "text", v: "2" },
-      { t: "单站每日最多抓", type: "text", v: "100", hint: "超过就停这个站，第二天再继续" },
-      { t: "全站每日最多抓", type: "text", v: "800", hint: "所有站加起来的上限，防跑飞" },
-      { t: "抓取时段", type: "select", v: "全天", opts: ["全天", "00:00–08:00", "20:00–08:00"] },
       { t: "抓取方式", type: "select", v: "增量（只抓新页）", opts: ["增量（只抓新页）", "全量（扫全部页）", "增量 + 定期全量"] },
-      { t: "抓详情页", type: "switch", on: true, hint: "BDInfo、截图、简介都要进详情页；关掉只抓列表，快很多" },
-      { t: "连续失败自动停", type: "text", v: "5", hint: "连续失败几次就停这个站，并标为需要人工处理" },
-      { t: "失败重试", type: "text", v: "3 次，退避 30 秒", hint: "403 / 502 / 超时按这个重试" },
-      { t: "抓取字段", type: "custom", chips: ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "限制标记", "独占标记"], sel: ["标题", "中文副标题", "简介", "地区版本", "音轨", "字幕", "截图", "BDInfo", "限制标记", "独占标记"] }
+      { t: "断点续抓", type: "switch", on: true, hint: "记到第几页、哪些种子已处理，停了下轮接着来" },
+      { t: "抓详情页", type: "switch", on: true, hint: "BDInfo、截图、简介都要进详情页" },
+      { t: "失败重试", type: "text", v: "3 次，退避 30 秒" },
+      { t: "连续失败自动停", type: "text", v: "5" },
+      { t: "单站每日最多抓", type: "text", v: "100" },
+      { t: "全站每日最多抓", type: "text", v: "800" }
+    ] },
+    { name: "判定", sum: "非电影/非原盘/DIY/禁转 全跳过", rows: [
+      { t: "非电影跳过", type: "switch", on: true, hint: "剧集、综艺、动漫、音乐都算非电影" },
+      { t: "非纯原盘跳过", type: "switch", on: true, hint: "标题里没有原盘特征、或者带 Remux/编码的，一律跳" },
+      { t: "DIY 跳过", type: "switch", on: true },
+      { t: "禁转跳过", type: "switch", on: true },
+      { t: "独占跳过", type: "switch", on: true },
+      { t: "限转未满 7 天跳过", type: "switch", on: true, hint: "满 7 天的限转放行，并在行上标出来" },
+      { t: "仅 DIY 时标可发", type: "switch", on: true, hint: "B 站只有 DIY 版时，可以发纯原盘，标「复核」" },
+      { t: "排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "标题命中直接跳" },
+      { t: "白名单关键词", type: "text", v: "", ph: "只收含这些词的（留空不限）" }
+    ] },
+    { name: "查重", sum: "本地词库 + 目标站", rows: [
+      { t: "查本地词库", type: "switch", on: true, hint: "以前查过的结果缓存起来，避免重复请求" },
+      { t: "词库有效期", type: "select", v: "7 天", opts: ["1 天", "7 天", "30 天", "永久"] },
+      { t: "目标站已有原盘", type: "select", v: "跳过不收", opts: ["跳过不收", "标重复后仍收"] },
+      { t: "目标站只有 DIY", type: "select", v: "可发（标复核）", opts: ["可发（标复核）", "跳过"] },
+      { t: "请求失败", type: "select", v: "重试 2 次后标失败", opts: ["重试 2 次后标失败", "直接跳过"] }
     ] },
     { name: "站点分类映射", sum: "各站分类 → 库内分类", rows: [
       { t: "站点分类", type: "button", v: "配置映射", hint: "把每个站自己的分类（如 Movies/Blu-ray）对到库内类型" },
@@ -1047,18 +1065,6 @@
     ] }
   ];
 
-  var FILTER_RULES = [
-    { name: "收录条件", sum: "跳过置顶 · 排除 DIY/独占/限制", rows: [
-      { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
-      { t: "排除 DIY", type: "switch", on: true, hint: "标题或说明带 DIY / 修改 / 加长 的不要" },
-      { t: "排除独占", type: "switch", on: true },
-      { t: "排除限制分发", type: "switch", on: true, hint: "禁转直接跳过；限转满 7 天可以放行" },
-      { t: "排除关键词", type: "text", v: "DVDRip, 枪版, TS", hint: "标题命中就不收" },
-      { t: "白名单关键词", type: "text", v: "", ph: "只收含这些词的（留空不限）" },
-      { t: "跳过已收录过的", type: "switch", on: true, hint: "库里已有同片就不重复收" }
-    ] }
-  ];
-
   var DL_RULES = [
     { name: "下载条件", sum: "做种 5 起 · 免费优先", rows: [
       { t: "做种数至少", type: "select", v: "5", opts: ["不限", "1", "3", "5", "10", "20"], hint: "做种太少的下到一半就断" },
@@ -1068,9 +1074,9 @@
     ] }
   ];
 
-  var RULE_SETS = { fetch: FETCH_RULES, filter: FILTER_RULES, pub: PUB_RULES, dl: DL_RULES };
+  var RULE_SETS = { fetch: FETCH_RULES, pub: PUB_RULES, dl: DL_RULES };
 
-  var FLOW_KEY = "pta.flow2";
+  var FLOW_KEY = "pta.flow3";
   function saveFlowState() {
     var data = {};
     Object.keys(RULE_SETS).forEach(function (k) {
@@ -1140,10 +1146,9 @@
 
     loadFlowState();
     host.innerHTML =
-      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 全尺寸 · 增量", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "筛选", desc: "抓到以后，哪些值得收。", sum: "跳过置顶 · 排除 DIY/独占/限制", rules: FILTER_RULES }, 1, "filter") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 2, "pub") +
-      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 3, "dl");
+      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 原盘 · 逐行判定 · 查重", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 1, "pub") +
+      sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 2, "dl");
 
     renderTpl();
 
