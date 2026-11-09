@@ -954,12 +954,9 @@
   }
 
   var FETCH_RULES = [
-    { name: "筛选", sum: "电影 · 蓝光原盘 · 排除 DIY/限制/独占", rows: [
+    { name: "筛选", sum: "电影 · 蓝光原盘 · 全尺寸", rows: [
       { t: "类型", type: "custom", chips: ["电影", "剧集", "综艺", "动漫", "纪录", "音乐", "体育", "其他"], sel: ["电影"], hint: "只抓勾选的类型" },
       { t: "媒介", type: "custom", chips: ["蓝光原盘", "Remux", "Blu-ray 压制", "UHD", "DVD", "WEB-DL", "HDTV"], sel: ["蓝光原盘"] },
-      { t: "分辨率下限", type: "select", v: "1080p", opts: ["不限", "720p", "1080p", "2160p"] },
-      { t: "最小体积", type: "select", v: "5 GB", opts: ["不限", "3 GB", "5 GB", "10 GB", "20 GB"], hint: "小于这个体积的不抓" },
-      { t: "最大体积", type: "select", v: "不限", opts: ["不限", "50 GB", "80 GB", "120 GB"], hint: "超过这个体积的不抓" },
       { t: "跳过置顶帖", type: "switch", on: false, hint: "置顶多为公告或老种" },
       { t: "白名单关键词", type: "text", v: "", ph: "逗号分隔，只抓含这些词的（留空不限）" },
       { t: "排除 DIY 原盘", type: "switch", on: true, hint: "带 DIY / 修改 / 加长 标记的不要" },
@@ -1015,7 +1012,10 @@
       { t: "主演最多几个", type: "text", v: "3" },
       { t: "缺字段时", type: "select", v: "省略该段", opts: ["省略该段", "写「未知」", "转待确认"] }
     ] },
-    { name: "发布前检查", sum: "地区版本 · 简介 · BDInfo · 截图 3 张", rows: [
+    { name: "发布前检查", sum: "分辨率 · 体积 · 简介 · BDInfo · 截图 3 张", rows: [
+      { t: "分辨率要求", type: "select", v: "1080p 及以上", opts: ["不限", "1080p 及以上", "2160p 及以上"], hint: "抓的时候全抓，发之前按这个卡" },
+      { t: "体积范围", type: "select", v: "5 GB 起", opts: ["不限", "5 GB 起", "10 GB 起", "20 GB 起"] },
+      { t: "最大体积", type: "select", v: "不限", opts: ["不限", "50 GB", "80 GB", "120 GB"] },
       { t: "地区版本", type: "switch", on: true, hint: "识别出 US/HKG/TWN 这类版本，写进副标题的地区段" },
       { t: "必须有简介", type: "switch", on: true, hint: "抓不到中文简介就不自动发" },
         { t: "必须带中字", type: "switch", on: true, hint: "成品没有中文字幕就不发" },
@@ -1135,7 +1135,7 @@
 
     loadFlowState();
     host.innerHTML =
-      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 增量", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "抓取", desc: "抓什么、多久抓一次。", sum: "电影 · 蓝光原盘 · 全尺寸 · 增量", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "半自动 · 相似度 0.85", rules: PUB_RULES }, 1, "pub") +
       sectionHtml({ name: "下载", desc: "拿到种子以后下到哪、什么时候下。", sum: "做种 5 起 · 免费优先", rules: DL_RULES }, 2, "dl");
 
