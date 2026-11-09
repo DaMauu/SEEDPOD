@@ -2065,3 +2065,20 @@ body::after {
   0%, 100% { opacity: .26; transform: scale(1); }
   50%      { opacity: .92; transform: scale(1.05); }
 }
+/* 待审核 / 数据清单 / 日志：内容定高并垂直居中 */
+.view[data-view="queue"], .view[data-view="sources"], .view[data-view="logs"] { justify-content: center; }
+.view[data-view="queue"] .queue-split { height: auto; flex: 0 0 auto; align-items: flex-start; }
+.view[data-view="queue"] .queue-list { max-height: none; }
+.view[data-view="sources"] .dl-wrap { height: auto; flex: 0 0 auto; width: 100%; }
+.view[data-view="sources"] .dl-panel { height: 620px; }
+.view[data-view="logs"] .log-wrap { height: auto; flex: 0 0 auto; width: 100%; }
+.view[data-view="logs"] .log-panel { height: 560px; }
+/* 简介与截图卡片等高 */
+.view[data-view="queue"] .qd-side .sd-card,
+.view[data-view="queue"] .qd-shots { height: 152px; display: flex; flex-direction: column; }
+.view[data-view="queue"] .qd-side textarea { flex: 1; height: auto; min-height: 0; }
+.view[data-view="logs"] .log-panel { flex: 0 0 auto; height: 560px; }
+.view[data-view="sources"] .dl-panel { flex: 0 0 auto; height: 620px; }
+.view[data-view="queue"] .qd-shots { justify-content: flex-start; }
+.view[data-view="sources"] .dl-panel { height: auto; max-height: 620px; }
+.view[data-view="sources"] .dl-body { flex: 0 0 auto; }
