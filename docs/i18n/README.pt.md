@@ -31,7 +31,15 @@
   <a href="README.de.md">Deutsch</a> ·
   <a href="README.fr.md">Français</a> ·
   <a href="README.es.md">Español</a> ·
-  <a href="README.pt.md">Português</a>
+  <a href="README.pt.md">Português</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
+  <a href="README.vi.md">Tiếng Việt</a> ·
+  <a href="README.th.md">ไทย</a> ·
+  <a href="README.id.md">Bahasa Indonesia</a> ·
+  <a href="README.ar.md">العربية</a>
 </p>
 
 ---

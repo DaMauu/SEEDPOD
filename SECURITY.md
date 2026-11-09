@@ -1,6 +1,6 @@
 # 安全策略 / Security Policy
 
-[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/SECURITY.zh-TW.md) · [日本語](docs/i18n/SECURITY.ja.md) · [한국어](docs/i18n/SECURITY.ko.md) · [Русский](docs/i18n/SECURITY.ru.md) · [Deutsch](docs/i18n/SECURITY.de.md) · [Français](docs/i18n/SECURITY.fr.md) · [Español](docs/i18n/SECURITY.es.md) · [Português](docs/i18n/SECURITY.pt.md)
+[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/SECURITY.zh-TW.md) · [日本語](docs/i18n/SECURITY.ja.md) · [한국어](docs/i18n/SECURITY.ko.md) · [Русский](docs/i18n/SECURITY.ru.md) · [Deutsch](docs/i18n/SECURITY.de.md) · [Français](docs/i18n/SECURITY.fr.md) · [Español](docs/i18n/SECURITY.es.md) · [Português](docs/i18n/SECURITY.pt.md) · [Italiano](docs/i18n/SECURITY.it.md) · [Nederlands](docs/i18n/SECURITY.nl.md) · [Polski](docs/i18n/SECURITY.pl.md) · [Türkçe](docs/i18n/SECURITY.tr.md) · [Tiếng Việt](docs/i18n/SECURITY.vi.md) · [ไทย](docs/i18n/SECURITY.th.md) · [Bahasa Indonesia](docs/i18n/SECURITY.id.md) · [العربية](docs/i18n/SECURITY.ar.md)
 
 ---
 

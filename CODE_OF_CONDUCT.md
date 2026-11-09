@@ -1,6 +1,6 @@
 # 行为守则 / Code of Conduct
 
-[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/CODE_OF_CONDUCT.zh-TW.md) · [日本語](docs/i18n/CODE_OF_CONDUCT.ja.md) · [한국어](docs/i18n/CODE_OF_CONDUCT.ko.md) · [Русский](docs/i18n/CODE_OF_CONDUCT.ru.md) · [Deutsch](docs/i18n/CODE_OF_CONDUCT.de.md) · [Français](docs/i18n/CODE_OF_CONDUCT.fr.md) · [Español](docs/i18n/CODE_OF_CONDUCT.es.md) · [Português](docs/i18n/CODE_OF_CONDUCT.pt.md)
+[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/CODE_OF_CONDUCT.zh-TW.md) · [日本語](docs/i18n/CODE_OF_CONDUCT.ja.md) · [한국어](docs/i18n/CODE_OF_CONDUCT.ko.md) · [Русский](docs/i18n/CODE_OF_CONDUCT.ru.md) · [Deutsch](docs/i18n/CODE_OF_CONDUCT.de.md) · [Français](docs/i18n/CODE_OF_CONDUCT.fr.md) · [Español](docs/i18n/CODE_OF_CONDUCT.es.md) · [Português](docs/i18n/CODE_OF_CONDUCT.pt.md) · [Italiano](docs/i18n/CODE_OF_CONDUCT.it.md) · [Nederlands](docs/i18n/CODE_OF_CONDUCT.nl.md) · [Polski](docs/i18n/CODE_OF_CONDUCT.pl.md) · [Türkçe](docs/i18n/CODE_OF_CONDUCT.tr.md) · [Tiếng Việt](docs/i18n/CODE_OF_CONDUCT.vi.md) · [ไทย](docs/i18n/CODE_OF_CONDUCT.th.md) · [Bahasa Indonesia](docs/i18n/CODE_OF_CONDUCT.id.md) · [العربية](docs/i18n/CODE_OF_CONDUCT.ar.md)
 
 ---
 

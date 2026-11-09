@@ -1,6 +1,6 @@
 # 贡献指南 / Contributing
 
-[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/CONTRIBUTING.zh-TW.md) · [日本語](docs/i18n/CONTRIBUTING.ja.md) · [한국어](docs/i18n/CONTRIBUTING.ko.md) · [Русский](docs/i18n/CONTRIBUTING.ru.md) · [Deutsch](docs/i18n/CONTRIBUTING.de.md) · [Français](docs/i18n/CONTRIBUTING.fr.md) · [Español](docs/i18n/CONTRIBUTING.es.md) · [Português](docs/i18n/CONTRIBUTING.pt.md)
+[中文](#中文) · [English](#english) · [繁體中文](docs/i18n/CONTRIBUTING.zh-TW.md) · [日本語](docs/i18n/CONTRIBUTING.ja.md) · [한국어](docs/i18n/CONTRIBUTING.ko.md) · [Русский](docs/i18n/CONTRIBUTING.ru.md) · [Deutsch](docs/i18n/CONTRIBUTING.de.md) · [Français](docs/i18n/CONTRIBUTING.fr.md) · [Español](docs/i18n/CONTRIBUTING.es.md) · [Português](docs/i18n/CONTRIBUTING.pt.md) · [Italiano](docs/i18n/CONTRIBUTING.it.md) · [Nederlands](docs/i18n/CONTRIBUTING.nl.md) · [Polski](docs/i18n/CONTRIBUTING.pl.md) · [Türkçe](docs/i18n/CONTRIBUTING.tr.md) · [Tiếng Việt](docs/i18n/CONTRIBUTING.vi.md) · [ไทย](docs/i18n/CONTRIBUTING.th.md) · [Bahasa Indonesia](docs/i18n/CONTRIBUTING.id.md) · [العربية](docs/i18n/CONTRIBUTING.ar.md)
 
 ---
 
