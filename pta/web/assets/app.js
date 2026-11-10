@@ -2740,6 +2740,12 @@
             if (!c || !c.at) return "还没抓过";
             var when = new Date(c.at).toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
             return "上次 " + when + " · 今日 " + (c.count || 0) + " 次 · 分类 " + ((c.catIdx || 0) + 1) + " · 下一页 " + ((c.page || 0) + 1);
+          })() },
+          { t: "词条库", type: "fixed", noTag: true, v: (function () {
+            var c = s.defCatalog;
+            if (!c || !c.total) return "这个站还没有词条";
+            var b = c.byStatus || {};
+            return "共 " + c.total + " 条 · 待筛选 " + (b.new || 0) + " · 已送审 " + (b.selected || 0) + " · 已发 " + (b.published || 0);
           })() }
         ]) + "</div>" +
         '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +
@@ -2825,6 +2831,8 @@
           .then(function (j) {
             if (!j || !j.ok || !j.data) return;
             s.defCrawl = j.data.crawl || null;
+            s.defCatalog = j.data.catalog || null;
+            if (state.sel === s.name) paint();
             if (state.sel === s.name) paint();
           })
           .catch(function () {});

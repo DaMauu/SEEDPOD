@@ -1350,9 +1350,11 @@ const server = http.createServer(async (req, res) => {
       const def = readSiteDef(host);
       if (!def) return fail(res, 404, 'NO_DEF', '这个站还没有站点定义');
       const rec = readCrawlState()[host] || null;
+      const cat = catalogStore.list({ site: host, limit: 1 });
       return send(res, 200, { ok: true, data: Object.assign({}, def, {
         crawl: rec ? { at: rec.lastAt || 0, count: rec.count || 0, page: rec.page || 0,
-          catIdx: rec.catIdx || 0, catId: rec.catId || '', day: rec.day || '' } : null
+          catIdx: rec.catIdx || 0, catId: rec.catId || '', day: rec.day || '' } : null,
+        catalog: { total: cat.total, byStatus: cat.byStatus }
       }) });
     }
     if (p.startsWith('/api/sites/') && /\/search\/?$/.test(p)) {

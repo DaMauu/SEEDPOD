@@ -735,6 +735,14 @@ async function main() {
     need(q.data.items.some(x => x.catalogId && x.note && /词条库/.test(x.note)), '入选的词条没进待审核');
     const cat = await (await fetchA(BASE + '/api/catalog?status=selected')).json();
     need(cat.data.items.some(x => x.site === 'screen.example'), '入选后词条状态没变成 selected');
+
+    /* 站点定义里带该站的词条统计 */
+    fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
+    fs.writeFileSync(path.join(DATA, 'site-defs', 'screen.example.json'), JSON.stringify({
+      host: 'screen.example', engine: 'nexusphp', base: 'https://screen.example'
+    }));
+    const sd = await (await fetchA(BASE + '/api/site-def/screen.example')).json();
+    need(sd.ok && sd.data.catalog && sd.data.catalog.total >= 3, '站点定义没带词条统计：' + JSON.stringify(sd.data && sd.data.catalog));
   });
 
   await check('词条库导入、去重与状态流转', async () => {

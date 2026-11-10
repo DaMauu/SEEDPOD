@@ -61,14 +61,16 @@ function createStore(file) {
     const store = read();
     const q = String((opts && opts.q) || '').toLowerCase();
     const status = String((opts && opts.status) || '');
+    const site = String((opts && opts.site) || '').trim().toLowerCase();
     let items = store.items.filter(function (x) {
       if (status && x.status !== status) return false;
+      if (site && String(x.site || '').toLowerCase() !== site) return false;
       if (q && String(x.title || '').toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
     const byStatus = {};
     STATUSES.forEach(function (s) { byStatus[s] = 0; });
-    store.items.forEach(function (x) { byStatus[x.status] = (byStatus[x.status] || 0) + 1; });
+    store.items.forEach(function (x) { if (!site || String(x.site || '').toLowerCase() === site) byStatus[x.status] = (byStatus[x.status] || 0) + 1; });
     const limit = Math.max(1, Math.min(500, Number((opts && opts.limit) || 50)));
     const offset = Math.max(0, Number((opts && opts.offset) || 0));
     return { total: store.items.length, byStatus: byStatus,
