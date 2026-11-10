@@ -1029,6 +1029,18 @@ function buildDryPlan(host) {
     }
   }
 
+  /* 上次抓到哪了：给干跑计划显示「下一次会抓哪个分类的第几页」 */
+  const cr = readCrawlState()[host] || null;
+  const catList = Object.keys(cats).reduce(function (a, k) { return a.concat(cats[k] || []); }, []);
+  const nextCatIdx = Math.min(Math.max(0, (cr && cr.catIdx != null ? cr.catIdx + 1 : 0)), Math.max(0, catList.length - 1));
+  const nextCrawl = {
+    at: cr ? (cr.lastAt || 0) : 0,
+    page: Math.max(1, (cr && cr.page ? cr.page : 0) + 1),
+    categoryId: catList.length ? catList[nextCatIdx] : '',
+    catIdx: nextCatIdx,
+    runsToday: cr && cr.day === new Date().toISOString().slice(0, 10) ? (cr.count || 0) : 0
+  };
+
   return {
     siteHost: host,
     runMode: cfg.runMode,
@@ -1041,6 +1053,7 @@ function buildDryPlan(host) {
     estimatedQueries: (ids || groups.length) * pages,
     knownCats: groups,
     searchUrls: searchUrls,
+    nextCrawl: nextCrawl,
     inList: inList,
     enabled: site.enabled !== false,
     warnings: warnings
