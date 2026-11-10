@@ -56,7 +56,18 @@ function fileFor(host) { return path.join(OUT, host.replace(/[^a-z0-9.-]/gi, '_'
   fs.mkdirSync(OUT, { recursive: true });
   const state = readJson(STATE, {});
   const all = loadTargets();
-  const targets = (LIMIT > 0 ? all.slice(OFFSET, OFFSET + LIMIT) : all.slice(OFFSET));
+  let only = null;
+  /* PTA_SAMPLE_ONLY 指向一个每行一个域名（或 JSON 数组）的文件：只补这些站 */
+  if (process.env.PTA_SAMPLE_ONLY) {
+    try {
+      const raw = fs.readFileSync(path.resolve(process.env.PTA_SAMPLE_ONLY), 'utf8').trim();
+      const list = raw.charAt(0) === '[' ? JSON.parse(raw) : raw.split(/\r?\n/);
+      only = {};
+      list.forEach(function (h) { const k = String(h || '').trim().toLowerCase(); if (k) only[k] = 1; });
+    } catch (e) { console.log('PTA_SAMPLE_ONLY 读不了：' + e.message); }
+  }
+  const targets = (LIMIT > 0 ? all.slice(OFFSET, OFFSET + LIMIT) : all.slice(OFFSET))
+    .filter(function (t) { return !only || only[t.host.toLowerCase()]; });
   const browser = await chromium.connectOverCDP('http://127.0.0.1:' + PORT);
   const ctx = browser.contexts()[0];
   if (!ctx) throw new Error('no browser context on ' + PORT);

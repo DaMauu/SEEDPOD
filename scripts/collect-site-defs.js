@@ -114,7 +114,6 @@ Object.keys(analysis).sort().forEach(function (host) {
   /* 搜索预设：只补自动生成的，人工确认过的（source 不是 auto）保持不动 */
   const cur = presets.sites[host];
   if (cur && cur.source && cur.source !== 'auto') return;
-  if (!catMap.length && !a.params) return;                 /* 没分类也没参数，补了也没用 */
   presets.sites[host] = {
     engine: a.engine,
     searchPath: def.searchPath,
@@ -125,7 +124,9 @@ Object.keys(analysis).sort().forEach(function (host) {
     source: 'auto',
     confirmed: false,
     updatedAt: now,
-    note: '自动生成：' + (a.rows || 0) + ' 行样本，' + catMap.length + ' 个分类'
+    note: catMap.length
+      ? '自动生成：' + (a.rows || 0) + ' 行样本，' + catMap.length + ' 个分类'
+      : '自动生成：解析出引擎，但还没认出分类 id'
   };
   presetsAdded++;
 });
