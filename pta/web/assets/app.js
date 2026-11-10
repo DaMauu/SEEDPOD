@@ -1885,7 +1885,12 @@
         '<div class="drawer-head"><div class="drawer-t">' +
           '<div class="drawer-title">词条库</div>' +
           '<div class="drawer-desc">第一步抓回来的词条都在这里，按状态分：new 待筛选 / selected 已送审 / published 已发 / skipped 跳过 / archived 归档。</div>' +
-        '</div><div class="drawer-head-right"><span class="drawer-meta" id="catalog-meta">—</span>' +
+        '</div><div class="drawer-head-right"><select class="input slim" id="catalog-status">' +
+          [["", "全部"], ["new", "待筛选"], ["selected", "已送审"], ["published", "已发布"], ["skipped", "跳过"], ["archived", "归档"]].map(function (o) {
+            return '<option value="' + o[0] + '">' + o[1] + "</option>";
+          }).join("") +
+        '</select><span class="drawer-meta" id="catalog-meta">—</span>' +
+        '<button class="btn ghost slim" id="catalog-bulk">归档已跳过</button>' +
         '<button class="btn slim" id="catalog-refresh">刷新</button></div></div>' +
         '<div class="drawer-body" id="catalog-body"><div class="empty">正在读词条库…</div></div>' +
       '</section>';
@@ -1968,7 +1973,7 @@
         body.innerHTML = '<div class="empty">本地预览没有后端，读不到词条库</div>';
         return;
       }
-      fetch("/api/catalog?limit=30", { credentials: "same-origin" })
+      fetch("/api/catalog?limit=30" + (($("#catalog-status") && $("#catalog-status").value) ? "&status=" + encodeURIComponent($("#catalog-status").value) : ""), { credentials: "same-origin" })
         .then(function (r) { return r.json(); })
         .then(function (j) {
           if (!j || !j.ok) { body.innerHTML = '<div class="empty">词条库读取失败</div>'; return; }
@@ -2010,6 +2015,19 @@
     }
     var catRefresh = $("#catalog-refresh");
     if (catRefresh) catRefresh.addEventListener("click", function () { toast("已刷新词条库"); loadCatalog(); });
+    var catStatus = $("#catalog-status");
+    if (catStatus) catStatus.addEventListener("change", loadCatalog);
+    var catBulk = $("#catalog-bulk");
+    if (catBulk) catBulk.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
+      fetch("/api/catalog/bulk", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ fromStatus: "skipped", status: "archived" })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        toast(j && j.ok ? ("已归档 " + j.data.changed + " 条跳过项") : ((j && j.error && j.error.message) || "批量归档失败"));
+        loadCatalog();
+      }).catch(function () { toast("批量归档请求发不出去"); });
+    });
     loadCatalog();
 
     /* 干跑区不是空的：进来就显示上一次干跑的结果，没跑过才显示「还没跑过」 */

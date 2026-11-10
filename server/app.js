@@ -1597,6 +1597,24 @@ const server = http.createServer(async (req, res) => {
       if (draft.err) return fail(res, draft.err.code === 'NOT_FOUND' ? 404 : 400, draft.err.code, draft.err.message);
       return send(res, 200, { ok: true, data: draft });
     }
+    if (p === '/api/catalog/bulk' && req.method === 'POST') {
+      const body = await readBody(req);
+      const status = String((body && body.status) || '');
+      if (catalog.STATUSES.indexOf(status) < 0) return fail(res, 400, 'BAD_REQUEST', 'status 只能是 ' + catalog.STATUSES.join(' / '));
+      const ids = Array.isArray(body && body.ids) ? body.ids.map(String) : [];
+      const from = String((body && body.fromStatus) || '');
+      const host = String((body && body.host) || '').trim().toLowerCase();
+      if (!ids.length && !from) return fail(res, 400, 'BAD_REQUEST', '要么给 ids，要么给 fromStatus');
+      const all = catalogStore.list({ status: from || '', limit: 5000 }).items;
+      const want = ids.length ? ids : all.filter(function (x) { return !host || x.site === host; }).map(function (x) { return x.id; });
+      let changed = 0;
+      want.slice(0, 1000).forEach(function (id) {
+        const r = catalogStore.setStatus(id, status);
+        if (!r.err) changed++;
+      });
+      logEvent('info', '词条库', '批量改为 ' + status + ' · ' + changed + ' 条');
+      return send(res, 200, { ok: true, data: { changed: changed, status: status } });
+    }
     if (p === '/api/catalog/screen' && req.method === 'POST') {
       const body = await readBody(req);
       const out = screenCatalog(body || {});

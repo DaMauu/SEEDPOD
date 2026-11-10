@@ -775,6 +775,15 @@ async function main() {
 
     const del = await fetchA(BASE + '/api/catalog/' + id, { method: 'DELETE' });
     need(del.ok, '删除词条失败');
+
+    /* 批量：把 skipped 的全部归档 */
+    const bulk = await (await fetchA(BASE + '/api/catalog/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fromStatus: 'new', status: 'archived' })
+    })).json();
+    need(bulk.ok && bulk.data.changed >= 1, '批量归档没生效：' + JSON.stringify(bulk).slice(0, 140));
+    const after = await (await fetchA(BASE + '/api/catalog?status=archived')).json();
+    need(after.data.total >= 1, '批量归档后查不到 archived：' + after.data.total);
   });
 
   await check('待审核队列校验与鉴权', async () => {    const empty = await fetchA(BASE + '/api/queue', {
