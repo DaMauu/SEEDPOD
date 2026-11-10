@@ -1180,13 +1180,14 @@
   function initSources() {
     var body = $("#dl-body");
     if (!body) return;
-    var state = { q: "", site: "", type: "", status: "" };
+    var state = { q: "", site: "", type: "", status: "", page: 0 };
+    var PAGE = 100, LOAD_MAX = 500;
     var MK = { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" };
 
     /* 这一页就是数据清单：抓回来的词条都从 /api/catalog 读，筛选、标记、归档都在这里做 */
     function loadCatalog() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { paint(); return; }
-      fetch("/api/catalog?limit=200" + (state.status ? "&status=" + encodeURIComponent(state.status) : ""), { credentials: "same-origin" })
+      fetch("/api/catalog?limit=" + LOAD_MAX + (state.status ? "&status=" + encodeURIComponent(state.status) : ""), { credentials: "same-origin" })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) {
           if (!j || !j.ok) return paint();
@@ -1263,7 +1264,10 @@
         if (state.type && it.type !== state.type) return false;
         return true;
       });
-      body.innerHTML = rows.map(function (it) {
+      var pages0 = Math.max(1, Math.ceil(rows.length / PAGE));
+      if (state.page > pages0 - 1) state.page = pages0 - 1;
+      var pageRows = rows.slice(state.page * PAGE, state.page * PAGE + PAGE);
+      body.innerHTML = pageRows.map(function (it) {
         var toggles = Object.keys(MK).map(function (k) {
           var on = !!(it.marks && it.marks[k]);
           return '<button class="mark-btn' + (on ? " on" : "") + '" data-mark="' + k + '" data-cid="' + it.id +
@@ -1291,21 +1295,33 @@
         "</div>";
       }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "词条库还是空的，去流程页点「抓一页」") + "</div>";
       var c = $("#dl-count");
-      if (c) c.textContent = rows.length + (window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
+      if (c) c.textContent = rows.length + (window.__ptaSourcesTotal && rows.length !== window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
+      var pages = Math.max(1, Math.ceil(rows.length / PAGE));
+      if (state.page > pages - 1) { state.page = pages - 1; }
       var pg = $("#dl-page");
-      if (pg) pg.textContent = rows.length !== all.length ? "筛选后 " + rows.length + " 条" : "";
+      if (pg) pg.textContent = "第 " + (state.page + 1) + " / " + pages + " 页";
+      var prev = $("#dl-prev"), next = $("#dl-next");
+      if (prev) prev.disabled = state.page <= 0;
+      if (next) next.disabled = state.page >= pages - 1;
+      if (window.__ptaSourcesTotal > LOAD_MAX) {
+        if (c) c.textContent += "（只读了前 " + LOAD_MAX + " 条）";
+      }
     }
 
     window.__ptaRepaintSources = paint;
     window.__ptaLoadSources = loadCatalog;
     var q = $("#dl-q");
-    if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
+    if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); state.page = 0; paint(); });
     var siteSel = $("#dl-site");
-    if (siteSel) siteSel.addEventListener("change", function (e) { state.site = e.target.value; paint(); });
+    if (siteSel) siteSel.addEventListener("change", function (e) { state.site = e.target.value; state.page = 0; paint(); });
     var typeSel = $("#dl-type");
-    if (typeSel) typeSel.addEventListener("change", function (e) { state.type = e.target.value; paint(); });
+    if (typeSel) typeSel.addEventListener("change", function (e) { state.type = e.target.value; state.page = 0; paint(); });
     var statusSel = $("#dl-status");
-    if (statusSel) statusSel.addEventListener("change", function (e) { state.status = e.target.value; loadCatalog(); });
+    if (statusSel) statusSel.addEventListener("change", function (e) { state.status = e.target.value; state.page = 0; loadCatalog(); });
+    var prevBtn = $("#dl-prev");
+    if (prevBtn) prevBtn.addEventListener("click", function () { if (state.page > 0) { state.page--; paint(); } });
+    var nextBtn = $("#dl-next");
+    if (nextBtn) nextBtn.addEventListener("click", function () { state.page++; paint(); });
     body.addEventListener("click", function (e) {
       var mb = e.target.closest("button[data-mark]");
       if (mb) {
