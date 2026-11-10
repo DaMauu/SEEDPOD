@@ -1376,14 +1376,15 @@
     }
     var ex = $("#dl-export");
     if (ex) ex.addEventListener("click", function () {
-      var data = JSON.stringify(MOCK.sources, null, 2);
+      var rows = window.__ptaSources || [];
+      var data = JSON.stringify(rows, null, 2);
       var url = URL.createObjectURL(new Blob([data], { type: "application/json" }));
       var a = document.createElement("a");
       a.href = url;
-      a.download = "pta-sources.json";
+      a.download = "pta-catalog.json";
       a.click();
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      toast("已导出 " + MOCK.sources.length + " 条");
+      toast(rows.length ? ("已导出 " + rows.length + " 条词条") : "词条库还是空的，没有可导出的");
     });
     paint();
   }
