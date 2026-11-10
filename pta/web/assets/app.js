@@ -2616,8 +2616,10 @@
       if (!d.crawled) return "未抓取";
       var t = d.crawlAt ? new Date(d.crawlAt) : null;
       function p2(n) { return String(n).padStart(2, "0"); }
-      var when = t && !isNaN(t.getTime()) ? p2(t.getMonth() + 1) + "-" + p2(t.getDate()) + " " + p2(t.getHours()) + ":" + p2(t.getMinutes()) : "抓过";
-      return when + (d.crawlCount ? " · 今日 " + d.crawlCount : "");
+      if (!t || isNaN(t.getTime())) return "抓过";
+      var now = new Date();
+      var sameDay = t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth() && t.getDate() === now.getDate();
+      return (sameDay ? "今日 " : p2(t.getMonth() + 1) + "-" + p2(t.getDate()) + " ") + p2(t.getHours()) + ":" + p2(t.getMinutes());
     }
 
     function itemHtml(s) {

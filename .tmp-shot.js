@@ -14,7 +14,7 @@ const name = process.env.PTA_NAME || 'shot';
     httpCredentials: { username: process.env.PTA_U, password: process.env.PTA_P }
   });
   const page = await ctx.newPage();
-  await page.goto(process.env.PTA_URL + '/?v=20261116d#' + route, { waitUntil: 'domcontentloaded' });
+  await page.goto(process.env.PTA_URL + '/?v=20261116e#' + route, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
   if (await page.locator('#login-form').count()) {
     await page.fill('#login-user', process.env.PTA_U);
