@@ -2239,3 +2239,6 @@ body::after {
 
 /* 顶栏：状态条与页面 token 分两组显示 */
 .topbar-right .pills-row + .pills-row{margin-left:6px}
+
+.sd-preset-url{display:block;font-size:11px;color:var(--accent);word-break:break-all;margin:5px 0;text-decoration:none}
+.sd-preset-url:hover{text-decoration:underline}

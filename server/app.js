@@ -1065,7 +1065,28 @@ const server = http.createServer(async (req, res) => {
       }
       const sites = readSearchPresets();
       if (req.method === 'GET') {
-        return send(res, 200, { ok: true, data: { host: host, preset: sites[host] || null, engines: SEARCH_ENGINES } });
+        /* 顺手拼几条真实搜索链接，方便在浏览器里点开核对预设；不在这里发任何请求 */
+        const preset = sites[host] || null;
+        const def = readSiteDef(host);
+        const qs = String((new URL(req.url, 'http://local')).searchParams.get('q') || '{q}').slice(0, 120);
+        const urls = [];
+        if (def && def.base && preset) {
+          const cats = (preset.cats && typeof preset.cats === 'object') ? preset.cats : {};
+          const merged = Object.assign({}, def, {
+            params: preset.params || def.params,
+            catMode: preset.catMode || def.catMode,
+            catSlot: preset.catSlot || def.catSlot
+          });
+          Object.keys(cats).forEach(function (g) {
+            const ids = Array.isArray(cats[g]) ? cats[g] : [];
+            (ids.length ? ids.slice(0, 3) : [null]).forEach(function (id) {
+              if (urls.length >= 8) return;
+              urls.push({ group: g, catId: id, url: adapters.buildSearchUrl(merged, qs, id ? [id] : []) });
+            });
+          });
+          if (!urls.length) urls.push({ group: '', catId: null, url: adapters.buildSearchUrl(merged, qs, []) });
+        }
+        return send(res, 200, { ok: true, data: { host: host, preset: preset, engines: SEARCH_ENGINES, urls: urls } });
       }
       if (req.method === 'PUT' || req.method === 'POST') {
         const body = await readBody(req);

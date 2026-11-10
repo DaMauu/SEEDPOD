@@ -185,6 +185,20 @@ async function main() {
     need(pj.data.preset.engine === 'nexusphp', 'engine 没写进去');
     const back = await (await fetchA(BASE + '/api/sites/' + host + '/search')).json();
     need(back.data.preset && back.data.preset.cats.movie[0] === '401', '写进去的 cats 读不回来');
+
+    /* 带 q 的读取要顺手给出真实搜索链接（见 on-site 核对用），但这里只拼字符串、不发请求 */
+    const defDir0 = path.join(DATA, 'site-defs');
+    fs.mkdirSync(defDir0, { recursive: true });
+    fs.writeFileSync(path.join(defDir0, host + '.json'), JSON.stringify({
+      host: host, base: 'https://' + host, engine: 'nexusphp', searchPath: '/torrents.php',
+      params: { search: '{q}', cat: '{cats}' }, catMode: 'single', cats: { movie: ['401'] }
+    }));
+    const withUrls = await (await fetchA(BASE + '/api/sites/' + host + '/search?q=%E6%B5%8B%E8%AF%95')).json();
+    need(Array.isArray(withUrls.data.urls) && withUrls.data.urls.length >= 2, '没有返回搜索链接预览：' + JSON.stringify(withUrls.data).slice(0, 160));
+    const u0 = withUrls.data.urls[0].url;
+    need(u0.indexOf('https://' + host + '/torrents.php?') === 0, '预览链接前缀不对：' + u0);
+    need(/search=%E6%B5%8B%E8%AF%95/.test(u0), '预览链接没带搜索词：' + u0);
+    need(/cat=401/.test(withUrls.data.urls.map(x => x.url).join(' ')), '预览链接没带分类：' + JSON.stringify(withUrls.data.urls).slice(0, 200));
     const bad = await fetchA(BASE + '/api/sites/' + host + '/search', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ engine: 'lol' })
     });

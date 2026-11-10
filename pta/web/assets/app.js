@@ -2500,6 +2500,17 @@
         '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +
           (catLines || '<div class="sd-row"><span>状态</span><b>还没有分类映射</b></div>') +
         "</div></div>" +
+        (function () {
+          var urls = s.presetUrls || [];
+          if (!urls.length) return "";
+          return '<div class="set-fields"><div class="sd-block"><h4>搜索链接预览</h4>' +
+            urls.slice(0, 6).map(function (u) {
+              var tag = (u.group || "全部") + (u.catId ? " · " + u.catId : "");
+              return '<a class="sd-preset-url" href="' + escapeHtml(u.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(tag) + " → " + escapeHtml(u.url.replace(/^https?:\/\//, "")) + "</a>";
+            }).join("") +
+            '<div class="sd-row"><span>说明</span><b>点开就是该站真实搜索页，确认分类对不对</b></div>' +
+          "</div></div>";
+        })() +
         '<div class="sd-cookie-bar">' +
           (pdetail && pdetail.confirmed ? "" : '<button class="btn ghost slim" id="sd-preset-confirm">确认这个预设</button>') +
           '<span class="sd-cookie-res" id="sd-preset-res">' +
@@ -2559,6 +2570,7 @@
           .then(function (j) {
             if (!j || !j.ok) return;
             s.presetDetail = (j.data && j.data.preset) || null;
+            s.presetUrls = (j.data && Array.isArray(j.data.urls)) ? j.data.urls : [];
             if (state.sel === s.name) paint();
           })
           .catch(function () { s.presetLoaded = false; });
