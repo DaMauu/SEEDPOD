@@ -102,14 +102,15 @@ pta\checks\run.cmd
 
 | 文件 | 站数 | 含义 | 怎么补 |
 | --- | --- | --- | --- |
-| blocked-login-wall.txt | 21 | 浏览器里没登录，页面只有登录框 | 人工登录后 `node scripts/collect-now.js` |
+| blocked-login-wall.txt | 8 | 浏览器里没登录，页面只有登录框 | 人工登录后 `node scripts/collect-now.js` |
 | blocked-net-error.txt | 42 | DNS/连接被拒 | 挂代理后同样命令 |
 | blocked-cloudflare.txt | 12 | Cloudflare 挑战页 | 人工过一下挑战再补采 |
-| blocked-http-404.txt | 57 | 路径 404 或站点改版 | 需要人工确认正确路径 |
+| blocked-http-404.txt | 57 | 路径 404 或站点改版 | 跑 discover-paths.js 自动找入口 |
 | blocked-error-panel.txt | 16 | 拿到的是错误页 | 补采一次即可 |
 | blocked-no-sample.txt | 42 | 之前失败过、还没补采 | 直接补采 |
-| blocked-thin.txt | 20 | JS 渲染的空壳页 | 需要等渲染或换入口 |
-| blocked-unknown.txt | 11 | 有页面认不出引擎 | 看页面结构再补适配器 |
+| blocked-degraded.txt | 8 | 引擎认出来了但一行都解析不出（降级页） | 等下一轮补采 |
+| blocked-thin.txt | 16 | JS 渲染的空壳页 | 需要等渲染或换入口 |
+| blocked-unknown.txt | 6 | 有页面认不出引擎 | 看页面结构再补适配器 |
 
 补采入口：`node scripts/collect-now.js --dry` 先看会打哪些站，去掉 `--dry` 真跑；
 `--cookies` 会顺手把 cookie 导出到 `pta/data/cookies.tmp.json`（0600，不入库）。

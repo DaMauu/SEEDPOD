@@ -53,6 +53,7 @@ for (const f of files) {
   /* 没识别出引擎的，记清是哪种原因，后面做覆盖率与时才能解释清楚 */
   let status = engine ? 'ok' : 'unknown';
   if (shellEngine) status = 'shell';
+
   if (!engine) {
     if (/ERR_[A-Z_]{4,}|diagnoseErrors|This site can.t be reached/i.test(html)) status = 'unreachable';
     else if (/Just a moment|cf-browser-verification|challenge-platform/i.test(html)) status = 'challenge';
@@ -60,7 +61,10 @@ for (const f of files) {
     else if (/<input[^>]+type=["']password["']/i.test(html)) status = 'login-wall';
     else if (/domain.{0,20}(for sale|正在出售)|sedoparking|hugedomains|afternic/i.test(html)) status = 'parked';
     else if (html.length < 20000) status = 'thin';
+    
   }
+  /* 引擎认得出来、却一行都解析不出，且不是登录页：多半拿到的是降级页，需要重采 */
+  if (status === 'ok' && rows.length === 0 && !/<input[^>]+type=["']password["']/i.test(html) && (html.match(/details\.php\?id=\d+/g) || []).length < 5) status = 'degraded';
   const declared = um.arch || arch[host] || '?';
   const engineArch = { nexusphp: 'NP', unit3d: 'UNIT3D', gazelle: 'GZ', custom: 'OTHER' }[engine] || '';
   result[host] = {

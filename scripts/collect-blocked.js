@@ -24,6 +24,7 @@ const groups = {
   'http-404': '路径 404：首页路径猜错或站点改版',
   'error-panel': '页面被脚本顶掉：拿到的是错误页，不是真实列表',
   'no-sample': '没有样本：之前失败过，还没补采',
+  'degraded': '降级页：引擎认出来了但一行都解析不出，需要重采一次',
   'thin': '页面太小：像是 JS 渲染的空壳',
   'unknown': '有页面但认不出引擎'
 };
@@ -34,7 +35,7 @@ Object.keys(groups).forEach(function (k) { buckets[k] = []; });
 Object.keys(state).forEach(function (host) {
   const st = state[host] || {};
   const a = analysis[host] || {};
-  if (a.engine) return;                       /* 已经识别出引擎的不算采不到 */
+  if (a.engine && a.verdict !== 'degraded') return;   /* 引擎已识别且能解析的不算采不到；降级页要单独列 */
   const note = st.note || '';
   let key = '';
   if (note === 'login-wall' || a.verdict === 'login-wall') key = 'login-wall';
@@ -42,6 +43,7 @@ Object.keys(state).forEach(function (host) {
   else if (note === 'cloudflare' || a.verdict === 'challenge') key = 'cloudflare';
   else if (note === 'http-404' || a.verdict === 'not-found') key = 'http-404';
   else if (note === 'error-panel' || a.verdict === 'blocked') key = 'error-panel';
+  else if (a.verdict === 'degraded') key = 'degraded';
   else if (!a.rawMissing && a.verdict === 'thin') key = 'thin';
   else if (!a.rawMissing && a.verdict === 'unknown') key = 'unknown';
   else if (note === 'no-sample' || !note) key = 'no-sample';
