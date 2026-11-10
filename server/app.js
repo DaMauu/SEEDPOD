@@ -373,20 +373,27 @@ function marksOf(title) {
   return m;
 }
 
-function crawlPlan(host) {
+function crawlPlan(host, opts) {
   const def = readSiteDef(host);
   if (!def) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
   if (!def.engine) return { err: { code: 'NO_ENGINE', message: '这个站还没识别出引擎' } };
   const all = readCreds();
   if (!all[host] || !all[host].cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
-  const first = (def.catMap || []).slice(0, 1).map(function (x) { return x.id; });
+  const cats = (def.catMap || []).map(function (x) { return x.id; });
+  const idx = Math.max(0, Math.min(Math.max(0, cats.length - 1), Number((opts && opts.catIdx) || 0)));
+  const first = cats.length ? [cats[idx]] : [];
   const url = adapters.buildSearchUrl(def, '', first);
-  return { host: host, engine: def.engine, url: url, categories: (def.catMap || []).length,
+  return { host: host, engine: def.engine, url: url, categories: cats.length, categoryId: first[0] || '',
+    catIdx: idx,
     requestDelay: (def.limits && def.limits.requestDelay) || 3, minGapMs: CRAWL_MIN_GAP_MS, dailyMax: CRAWL_DAILY_MAX };
 }
 
 async function crawlOnce(host, opts) {
-  const plan = crawlPlan(host);
+  const state0 = readCrawlState();
+  const rec0 = state0[host] || {};
+  /* 类目轮转：每抓一次换下一个分类，一轮下来把预设里的类目都覆盖到 */
+  const catIdx = Number((opts && opts.catIdx) >= 0 ? opts.catIdx : ((rec0.catIdx || 0) + 1));
+  const plan = crawlPlan(host, { catIdx: catIdx });
   if (plan.err) return { err: plan.err };
   const state = readCrawlState();
   const now = Date.now();
@@ -441,11 +448,14 @@ async function crawlOnce(host, opts) {
   rec.count = (rec.count || 0) + 1;
   rec.page = rows.length ? page : 0;      /* 这一页有东西就记住页码，到底了就归零 */
   rec.lastRows = rows.length;
+  rec.catIdx = plan.catIdx;
+  rec.catId = plan.categoryId;
   state[host] = rec;
   writeCrawlState(state);
-  logEvent('info', '抓取', host + ' 第 ' + page + ' 页 · 抓回 ' + rows.length + ' 行 · 入库 ' + out.added + ' 新增 / ' + out.updated + ' 更新');
+  logEvent('info', '抓取', host + ' 分类 ' + (plan.categoryId || '全部') + ' 第 ' + page + ' 页 · 抓回 ' + rows.length + ' 行 · 入库 ' + out.added + ' 新增 / ' + out.updated + ' 更新');
   return {
     host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length,
+    categoryId: plan.categoryId, categories: plan.categories,
     added: out.added, updated: out.updated, skipped: out.skipped, nextPage: rows.length ? page + 1 : 1,
     daily: { day: rec.day, count: rec.count, max: CRAWL_DAILY_MAX }, nextAllowedMs: CRAWL_MIN_GAP_MS
   };
@@ -1547,7 +1557,7 @@ const server = http.createServer(async (req, res) => {
       const now = Date.now();
       return send(res, 200, { ok: true, data: {
         host: host, lastAt: rec.lastAt || 0, day: rec.day || '', count: rec.count || 0,
-        page: rec.page || 0, lastRows: rec.lastRows || 0,
+        page: rec.page || 0, lastRows: rec.lastRows || 0, catIdx: rec.catIdx || 0, catId: rec.catId || '',
         dailyMax: CRAWL_DAILY_MAX, minGapMs: CRAWL_MIN_GAP_MS,
         waitMs: Math.max(0, CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0))),
         leftToday: Math.max(0, CRAWL_DAILY_MAX - (rec.day === new Date().toISOString().slice(0, 10) ? (rec.count || 0) : 0))

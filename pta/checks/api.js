@@ -668,6 +668,7 @@ async function main() {
       const st = await (await fetchA(BASE + '/api/crawl/status?host=' + chost)).json();
       need(st.ok && st.data.count === 1 && st.data.page === 1, '抓取状态没记住：' + JSON.stringify(st.data).slice(0, 160));
       need(st.data.nextPage === undefined && st.data.waitMs > 0, '冷却剩余时间不对：' + JSON.stringify(st.data).slice(0, 120));
+      need(st.data.catIdx === 0 && /401/.test(String(st.data.catId || '')), '类目索引没记住：' + JSON.stringify(st.data).slice(0, 120));
       const list = await (await fetchA(BASE + '/api/catalog?q=&limit=5')).json();
       need(list.data.total > 0, '词条库里没有抓回来的数据');
     } finally {
