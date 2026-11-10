@@ -2198,7 +2198,7 @@ body::after {
 .dash-log-empty { padding: 18px 4px; font-size: 12px; color: var(--muted-2); }
 
 /* ---- 干跑任务面板（数据清单页） ---- */
-.dl-dry{margin:10px 0 14px;padding:12px 14px;border:1px solid #d8dbe6;border-radius:12px;background:#f8f9fc}
+.dl-dry{margin:16px auto 18px;padding:18px 22px;max-width:920px;border:1px solid #d8dbe6;border-radius:12px;background:#f8f9fc}
 .dl-dry-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2b2f3a}
 .dl-dry-head b{font-weight:600}
 .dl-dry-p{margin-left:auto;font-variant-numeric:tabular-nums;color:#5b6172}
