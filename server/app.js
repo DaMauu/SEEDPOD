@@ -932,6 +932,33 @@ const server = http.createServer(async (req, res) => {
       const list = Object.keys(all).map(function (h) { return publicCred(Object.assign({ host: h }, all[h])); });
       return send(res, 200, { ok: true, data: list });
     }
+    if (p === '/api/credentials/import' && req.method === 'POST') {
+      /* 批量导入 cookie：{ cookies: { host: "a=1; b=2" } }，逐条校验，只存合法的 */
+      const body = await readBody(req);
+      const map = body && body.cookies && typeof body.cookies === 'object' ? body.cookies : null;
+      if (!map || Array.isArray(map)) return fail(res, 400, 'BAD_REQUEST', '需要 { cookies: { host: "cookie 字符串" } }');
+      const hosts = Object.keys(map);
+      if (!hosts.length) return fail(res, 400, 'BAD_REQUEST', 'cookies 是空的');
+      if (hosts.length > 500) return fail(res, 400, 'BAD_REQUEST', '一次最多导入 500 个站点');
+      const all = readCreds();
+      const saved = [], skipped = [];
+      for (const host of hosts) {
+        const cookie = typeof map[host] === 'string' ? map[host].trim() : '';
+        if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) { skipped.push(host + ':域名不合法'); continue; }
+        if (!cookie) { skipped.push(host + ':cookie 为空'); continue; }
+        if (cookie.length > 4096) { skipped.push(host + ':cookie 太长'); continue; }
+        if (!/=/.test(cookie)) { skipped.push(host + ':cookie 里没有等号'); continue; }
+        const cur = all[host] || { host: host };
+        cur.cookie = secretbox.encrypt(cookie, KEYRING.key);
+        cur.updatedAt = new Date().toISOString();
+        all[host] = cur;
+        saved.push(host);
+      }
+      if (!saved.length) return fail(res, 400, 'BAD_REQUEST', '没有可保存的 cookie：' + skipped.slice(0, 3).join('；'));
+      try { writeCreds(all); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+      logEvent('info', '站点', '批量导入 cookie · 成功 ' + saved.length + ' 站 · 跳过 ' + skipped.length);
+      return send(res, 200, { ok: true, data: { saved: saved.length, skipped: skipped.length, hosts: saved.slice(0, 50), reasons: skipped.slice(0, 20) } });
+    }
     if (p.startsWith('/api/credentials/')) {
       const host = decodeURIComponent(p.slice('/api/credentials/'.length).replace(/\/+$/, ''));
       if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');

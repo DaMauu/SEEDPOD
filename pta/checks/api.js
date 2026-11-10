@@ -482,6 +482,33 @@ async function main() {
     }
   });
 
+  await check('批量导入 cookie', async () => {
+    const r = await fetchA(BASE + '/api/credentials/import', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cookies: { 'bulk1.example': 'uid=a; pass=b', 'bulk2.example': 'uid=c', 'bad host!': 'x=1', 'bulk3.example': '' } })
+    });
+    const j = await r.json();
+    need(r.ok, '批量导入失败 ' + JSON.stringify(j).slice(0, 140));
+    need(j.data.saved === 2, '保存数量不对：' + j.data.saved);
+    need(j.data.skipped === 2, '跳过数量不对：' + j.data.skipped);
+    const raw = fs.readFileSync(path.join(DATA, 'credentials.json'), 'utf8');
+    need(raw.indexOf('uid=a') < 0 && raw.indexOf('uid=c') < 0, '磁盘上出现明文 cookie');
+    const list = await (await fetchA(BASE + '/api/credentials')).json();
+    const hosts = (list.data || []).map(x => x.host);
+    need(hosts.indexOf('bulk1.example') >= 0 && hosts.indexOf('bulk2.example') >= 0, '导入后列表里没有');
+    const one = await (await fetchA(BASE + '/api/credentials')).json();
+    const hit = (one.data || []).filter(x => x.host === 'bulk1.example')[0];
+    need(hit && hit.hasCookie === true && JSON.stringify(hit).indexOf('uid=a') < 0, '回包里带出了 cookie 值');
+    const empty = await fetchA(BASE + '/api/credentials/import', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookies: {} })
+    });
+    need(empty.status === 400, '空导入应 400：' + empty.status);
+    const anon = await fetch(BASE + '/api/credentials/import', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookies: { 'x.example': 'a=1' } })
+    });
+    need(anon.status === 401, '未登录能批量导入：' + anon.status);
+  });
+
   await check('本地查重（不联网）', async () => {
     const add = await fetchA(BASE + '/api/library', {
       method: 'POST', headers: { 'content-type': 'application/json' },
