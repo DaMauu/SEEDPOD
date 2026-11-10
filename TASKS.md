@@ -87,6 +87,8 @@ pta\checks\run.cmd
 | done | 下载器连通性探测（后端） | 只连自己填的地址，8 秒超时，401 时用账号密码登录一次再重试，失败给原因 |
 | done | 下载器页前端接探测接口 | 弹窗里点测试：先临时建记录再探，显示 steps 与版本号，探完自动清理 |
 | done | 下载器保存走服务端 | 新增走 POST、改走 PUT、删除走 DELETE，刷新页面从服务端还原，密码只写不读 |
+| done | 发布级查重 | `server/match.js`：infohash 优先，其次标题归一/年份/分辨率/体积容差/发布组；命中带理由 |
+| done | 种子文件解析 | `server/adapters/torrent.js`：bencode 解码 + `SHA1(bencode(info))` 算 infohash、体积、文件名 |
 | done | 发布前前置校验 | 缺标题、缺该站搜索预设、没有下载器时 409 PUBLISH_BLOCKED 并列出缺什么 |
 | done | 站点页「抓取测试」改名「连接自检（干跑）」 | 详情头部显示上次自检时间与结论，走干跑任务，不访问真实站点 |
 
