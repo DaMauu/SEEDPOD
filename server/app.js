@@ -1342,11 +1342,21 @@ const server = http.createServer(async (req, res) => {
       (q.items || []).forEach(function (x) { counts[x.status] = (counts[x.status] || 0) + 1; });
       let active = 0;
       TASKS.forEach(function (t) { if (t && (t.state === 'queued' || t.state === 'running')) active++; });
+      /* 今日抓取次数：从 crawl-state 汇总，面板上直接看配额用了多少 */
+      const cs = readCrawlState();
+      const today = new Date().toISOString().slice(0, 10);
+      let runsToday = 0, hostsToday = 0, lastCrawlAt = 0;
+      Object.keys(cs).forEach(function (h) {
+        const r = cs[h] || {};
+        if (r.day === today) { runsToday += Number(r.count) || 0; hostsToday++; }
+        if ((r.lastAt || 0) > lastCrawlAt) lastCrawlAt = r.lastAt || 0;
+      });
       return send(res, 200, {
         ok: true,
         data: {
           sites: { total: sites.length, enabled: enabled, loginOk: loginOk, loginFail: loginFail, loginUnknown: loginUnknown, checked: checked },
           downloaders: { total: dls.length, online: online, offline: dls.length - online, freeSpace: freeSpace, version: version, lastAt: lastAt || null },
+          crawl: { runsToday: runsToday, hostsToday: hostsToday, lastAt: lastCrawlAt || null, dailyMax: CRAWL_DAILY_MAX },
           queue: { total: (q.items || []).length, counts: counts },
           library: { total: readLibrary().length },
           catalog: catalogStore.summary(),

@@ -669,6 +669,8 @@ async function main() {
       need(st.ok && st.data.count === 1 && st.data.page === 1, '抓取状态没记住：' + JSON.stringify(st.data).slice(0, 160));
       need(st.data.nextPage === undefined && st.data.waitMs > 0, '冷却剩余时间不对：' + JSON.stringify(st.data).slice(0, 120));
       need(st.data.catIdx === 0 && /401/.test(String(st.data.catId || '')), '类目索引没记住：' + JSON.stringify(st.data).slice(0, 120));
+      const ov2 = await (await fetchA(BASE + '/api/stats/overview')).json();
+      need(ov2.data.crawl && ov2.data.crawl.runsToday >= 1, '系统状态没统计今日抓取次数：' + JSON.stringify(ov2.data.crawl));
 
       /* 同一站并发抓取：第二个必须被拦（409 BUSY），不能绕过 6 秒间隔打两发 */
       const chost2 = 'crawlbusy.example';
