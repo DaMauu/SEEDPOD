@@ -33,13 +33,7 @@
     ],
     queue: [],
     sources: [],
-    nodes: [
-      { name: "A · 控制节点", role: "编排 / 数据库 / 发布", host: "192.0.2.10", online: true, disk: "系统盘 64 / 128 GB", used: 0, total: 0, qb: "—", seeding: "—", path: "/srv/pta" },
-      { name: "B · 下载节点", role: "下载 / 做种", host: "192.0.2.11", online: true, disk: "12.3 / 16 TB", used: 12.3, total: 16, qb: "5.0.3", seeding: "1,240", path: "/data/pt" },
-      { name: "C · 下载节点", role: "下载 / 做种", host: "192.0.2.12", online: true, disk: "8.7 / 12 TB", used: 8.7, total: 12, qb: "5.0.3", seeding: "862", path: "/data/pt" },
-      { name: "D · 下载节点", role: "下载 / 做种", host: "192.0.2.13", online: true, disk: "14.1 / 18 TB", used: 14.1, total: 18, qb: "4.6.7", seeding: "1,905", path: "/data/pt" },
-      { name: "E · 下载节点", role: "下载 / 做种", host: "192.0.2.14", online: false, disk: "3.2 / 8 TB", used: 3.2, total: 8, qb: "离线", seeding: "—", path: "/data/pt" }
-    ],
+    nodes: [],
     sitesList: [],    logs: []
   };
 
@@ -1299,10 +1293,9 @@
     if (!host) return;
 
     function storage() {
-      try {
-        var raw = localStorage.getItem("pta.nodes");
-        if (raw) MOCK.nodes = JSON.parse(raw);
-      } catch (e) {}
+      /* 本地假节点已经废弃：下载器一律以服务端为准，旧的 localStorage 直接清掉 */
+      try { localStorage.removeItem("pta.nodes"); } catch (e) {}
+      MOCK.nodes = [];
     }
     function save() {
       try { localStorage.setItem("pta.nodes", JSON.stringify(MOCK.nodes)); } catch (e) {}
@@ -1313,12 +1306,18 @@
     function loadServer() {
       return window.__ptaDl.req("").then(function (res) {
         if (!res || !res.j || !res.j.ok || !Array.isArray(res.j.data)) return false;
+        var ids = {};
+        res.j.data.forEach(function (d) { ids[d.id] = 1; });
+        /* 服务端删掉的下载器，本地列表也要清掉，不留假节点 */
+        MOCK.nodes = MOCK.nodes.filter(function (x) { return x.serverId && ids[x.serverId]; });
         res.j.data.forEach(function (d) {
           var h = String(d.url || "").replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
+          var lp = d.lastProbe || null;
+          var free = lp && lp.freeSpace ? lp.freeSpace : 0;
           var nd = MOCK.nodes.filter(function (x) { return x.serverId === d.id || x.name === d.name; })[0];
           if (!nd) {
             nd = { name: d.name || h, role: "下载 / 做种", host: h, online: false,
-              disk: "— / —", used: 0, total: 0, qb: "—", seeding: "0", path: "/data/pt" };
+              disk: "—", used: 0, total: 0, qb: "—", seeding: "—", path: lp && lp.savePath ? lp.savePath : "/data/pt" };
             MOCK.nodes.push(nd);
           }
           nd.serverId = d.id;
@@ -1327,6 +1326,12 @@
           nd.qbUser = d.user || "";
           nd.hasPass = !!d.hasPass;
           nd.disableAuth = !!d.disableAuth;
+          nd.online = !!(lp && lp.pass);
+          nd.qb = (lp && lp.version) || "—";
+          nd.freeSpace = free;
+          nd.disk = free ? fmtBytes(free) + " 剩余" : "—";
+          nd.probedAt = lp && lp.at ? lp.at : "";
+          if (lp && lp.savePath) nd.path = lp.savePath;
         });
         save();
         paint();
@@ -1364,18 +1369,21 @@
 
     function paint() {
       var nodes = MOCK.nodes;
-      var workers = nodes.slice(1);
+      var workers = nodes.slice(0);
       var onlineAll = nodes.filter(function (n) { return n.online; }).length;
-      var totalSeed = workers.reduce(function (a, n) { return a + (parseInt(String(n.seeding).replace(/,/g, ""), 10) || 0); }, 0);
-      var used = workers.reduce(function (a, n) { return a + n.used; }, 0);
-      var total = workers.reduce(function (a, n) { return a + n.total; }, 0);
+      var freeAll = workers.reduce(function (a, n) { return a + (Number(n.freeSpace) || 0); }, 0);
 
       var sub = $("#nodes-bar-sub");
-      if (sub) sub.textContent = "共 " + nodes.length + " 台";
+      if (sub) sub.textContent = nodes.length ? "共 " + nodes.length + " 台" : "还没接下载器";
       var meta = $("#nodes-drawer-meta");
-      if (meta) meta.textContent = onlineAll + " / " + nodes.length + " 在线 · 做种 " +
-        totalSeed.toLocaleString() + " · 余量 " + (total - used).toFixed(1) + " TB";
+      if (meta) meta.textContent = nodes.length
+        ? (onlineAll + " / " + nodes.length + " 在线" + (freeAll ? " · 余量 " + fmtBytes(freeAll) : ""))
+        : "还没有下载器";
 
+      if (!nodes.length) {
+        host.innerHTML = '<div class="empty">还没有下载器，点右上角「添加下载器」，填 qBittorrent 的地址和账号密码。</div>';
+        return;
+      }
       host.innerHTML = nodes.map(function (nd, i) {
         var isCtrl = nd.role && nd.role.indexOf("编排") === 0;
         var pct = 0;

@@ -234,6 +234,11 @@ async function main() {
     const http = require('http');
     const mock = http.createServer((rq, rs) => {
       if (rq.url === '/api/v2/app/version') { rs.writeHead(200, { 'content-type': 'text/plain' }); rs.end('v5.0.3'); return; }
+      if (rq.url === '/api/v2/sync/maindata') {
+        rs.writeHead(200, { 'content-type': 'application/json' });
+        rs.end(JSON.stringify({ server_state: { free_space_on_disk: 123456789012, save_path: '/data' } }));
+        return;
+      }
       rs.writeHead(404); rs.end('nope');
     });
     await new Promise(r => mock.listen(0, '127.0.0.1', r));
@@ -251,6 +256,11 @@ async function main() {
       need(tj.data.pass === true, '探测没通过：' + JSON.stringify(tj.data).slice(0, 200));
       need(tj.data.version === 'v5.0.3', '版本号不对：' + tj.data.version);
       need(Array.isArray(tj.data.steps) && tj.data.steps[0].status === 200, 'steps 结构不对');
+      need(tj.data.freeSpace === 123456789012, '磁盘余量没读到：' + tj.data.freeSpace);
+      const ov = await (await fetchA(BASE + '/api/stats/overview')).json();
+      need(ov.ok && ov.data.downloaders.online >= 1, '系统状态没统计到在线下载器');
+      need(ov.data.downloaders.freeSpace === 123456789012, '系统状态里的磁盘余量不对：' + ov.data.downloaders.freeSpace);
+      need(ov.data.downloaders.version === 'v5.0.3', '系统状态里没带版本：' + ov.data.downloaders.version);
       await fetchA(BASE + '/api/downloaders/' + aj.data.id, { method: 'DELETE' });
     } finally {
       mock.close();
