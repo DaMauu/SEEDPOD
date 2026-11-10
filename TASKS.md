@@ -93,6 +93,28 @@ pta\checks\run.cmd
 
 - `scripts/PTScripts/*.user.js` 内含真实站点域名，仓库公开；是否脱敏/移出仓库没定，先不动。
 
+## 五点六、站点全量适配现状（2026-11-10）
+
+清单 307 站，全部有站点定义与搜索预设；其中真实采样确认 84 站，其余 223 站按清单架构推断
+（定义 `source.kind=arch`，面板上标「按清单架构推断」，可与已确认的区分）。
+
+采不到的 221 站按原因分文件（都在 `pta/data/`，已被 gitignore，不入库）：
+
+| 文件 | 站数 | 含义 | 怎么补 |
+| --- | --- | --- | --- |
+| blocked-login-wall.txt | 21 | 浏览器里没登录，页面只有登录框 | 人工登录后 `node scripts/collect-now.js` |
+| blocked-net-error.txt | 42 | DNS/连接被拒 | 挂代理后同样命令 |
+| blocked-cloudflare.txt | 12 | Cloudflare 挑战页 | 人工过一下挑战再补采 |
+| blocked-http-404.txt | 57 | 路径 404 或站点改版 | 需要人工确认正确路径 |
+| blocked-error-panel.txt | 16 | 拿到的是错误页 | 补采一次即可 |
+| blocked-no-sample.txt | 42 | 之前失败过、还没补采 | 直接补采 |
+| blocked-thin.txt | 20 | JS 渲染的空壳页 | 需要等渲染或换入口 |
+| blocked-unknown.txt | 11 | 有页面认不出引擎 | 看页面结构再补适配器 |
+
+补采入口：`node scripts/collect-now.js --dry` 先看会打哪些站，去掉 `--dry` 真跑；
+`--cookies` 会顺手把 cookie 导出到 `pta/data/cookies.tmp.json`（0600，不入库）。
+命令内部的采样仍是每站一次 GET、站间 4-6 秒，清单里的站会清掉 12 小时冷却标记。
+
 ## 六、已知隐患
 
 - `app.js` 约 2400 行，状态、假数据、渲染、交互混在一起。

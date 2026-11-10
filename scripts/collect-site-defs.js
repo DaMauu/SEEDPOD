@@ -106,6 +106,7 @@ Object.keys(analysis).sort().forEach(function (host) {
     catMap: catMap,
     rate: { minGapMs: 1200, jitterMs: 900, maxPerRun: 20 },
     source: { kind: 'sample', analyzedAt: a.analyzedAt || now, rows: a.rows, sizeRows: a.rowsWithSize, cats: catMap.length },
+    list: a.list || { anchor: '', sizeStrategy: 'none', rows: 0, sizeRows: 0, dlRows: 0 },
     note: a.rows ? ('采样解析：' + a.rows + ' 行，' + catMap.length + ' 个分类') : '采样页没有解析出列表，只有分类'
   };
   if (!dry) fs.writeFileSync(path.join(OUT, host + '.json'), JSON.stringify(def, null, 1), 'utf8');
@@ -155,6 +156,12 @@ listed.forEach(function (t) {
     catMap: [],
     rate: { minGapMs: 1500, jitterMs: 1000, maxPerRun: 10 },
     source: { kind: 'arch', analyzedAt: null, rows: 0, sizeRows: 0, cats: 0 },
+    list: {
+      anchor: engine === 'unit3d' ? 'a[href*="/torrents/"]'
+        : engine === 'gazelle' ? 'a[href*="action=download"]'
+          : engine === 'nexusphp' ? 'a[href*="details.php?id="]' : 'a[href*="details.php?id="]',
+      sizeStrategy: 'unknown', rows: 0, sizeRows: 0, dlRows: 0
+    },
     note: prev
       ? '采样到了但没解析出引擎（可能是登录墙 / 挑战页 / 域名失效），引擎按清单架构（' + t.arch + '）推断'
       : '还没采样：引擎按清单架构（' + t.arch + '）推断，参数用该引擎默认值，分类待确认'

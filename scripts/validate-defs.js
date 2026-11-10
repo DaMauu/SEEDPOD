@@ -62,6 +62,18 @@ files.forEach(function (f) {
   }
 
   if (!(d.rate && d.rate.minGapMs >= 500)) warn('请求间隔偏小或缺失');
+
+  /* 列表行选择器与大小字段策略：请求层要靠它定位行 */
+  const SIZE_STRATEGY = ['td_size', 'row-window-br-flatten', 'row-window-inline', 'missing', 'none', 'unknown'];
+  if (!d.list || typeof d.list !== 'object') bad('缺 list（行选择器与大小策略）');
+  else {
+    if (!d.list.anchor) {
+      if (d.source && d.source.kind === 'sample') bad('采样过的站却没有 list.anchor');
+      else warn('list.anchor 为空');
+    }
+    if (SIZE_STRATEGY.indexOf(d.list.sizeStrategy) < 0) bad('sizeStrategy 非法：' + d.list.sizeStrategy);
+    if (d.list.rows && d.list.sizeRows === 0 && d.list.sizeStrategy === 'missing') warn('解析出行但没有大小，策略是 missing');
+  }
   if (!errors.some(function (e) { return e.indexOf(host + '：') === 0; })) ok++;
 });
 

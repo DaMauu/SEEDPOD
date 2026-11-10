@@ -75,6 +75,20 @@ for (const f of files) {
     rowsWithSize: withSize,
     rowsWithDl: withDl,
     rowsWithCat: withCat,
+    /* 列表行选择器与大小字段策略：给请求层/详情页解析用的提示，由引擎决定 */
+    list: (function () {
+      const anchor = engine === 'unit3d' ? 'a[href*="/torrents/"]'
+        : engine === 'gazelle' ? 'a[href*="action=download"]'
+          : engine === 'nexusphp' ? 'a[href*="details.php?id="]'
+            : engine === 'custom' ? 'a[href*="details.php?id="],a[href*="/torrent/"],a[href*="viewtopic.php?t="]'
+              : '';
+      const sizeStrategy = !rows.length ? 'none'
+        : withSize === 0 ? 'missing'
+          : engine === 'gazelle' ? 'td_size'
+            : engine === 'nexusphp' ? 'row-window-br-flatten'
+              : 'row-window-inline';
+      return { anchor: anchor, sizeStrategy: sizeStrategy, rows: rows.length, sizeRows: withSize, dlRows: withDl };
+    })(),
     cats: cats.length,
     catList: cats,
     searchPath: (function () { const u = um.url || ''; const m = /^https?:\/\/[^\/]+(\/[^?#]*)/.exec(u); return m ? m[1] : ''; })(),
@@ -93,6 +107,21 @@ Object.keys(result).forEach(function (h) {
   const f = path.join(OUT, h.replace(/[^a-z0-9.-]/gi, '_') + '.html.gz');
   result[h].rawMissing = !fs.existsSync(f);
 });
+/* 老条目没有 list 字段的，按引擎补一份，保证每份定义都有行选择器与大小策略 */
+Object.keys(result).forEach(function (h) {
+  const r = result[h];
+  if (r.list && r.list.anchor) return;
+  const e = r.engine;
+  const anchor = e === 'unit3d' ? 'a[href*="/torrents/"]'
+    : e === 'gazelle' ? 'a[href*="action=download"]'
+      : e === 'nexusphp' ? 'a[href*="details.php?id="]'
+        : e === 'custom' ? 'a[href*="details.php?id="],a[href*="/torrent/"],a[href*="viewtopic.php?t="]' : '';
+  const sizeStrategy = !r.rows ? 'none'
+    : !r.rowsWithSize ? 'missing'
+      : e === 'gazelle' ? 'td_size' : e === 'nexusphp' ? 'row-window-br-flatten' : 'row-window-inline';
+  r.list = { anchor: anchor, sizeStrategy: sizeStrategy, rows: r.rows || 0, sizeRows: r.rowsWithSize || 0, dlRows: r.rowsWithDl || 0 };
+});
+
 fs.writeFileSync(path.join(DATA, 'analysis.json'), JSON.stringify(result, null, 1), 'utf8');
 
 const hosts = Object.keys(result);
