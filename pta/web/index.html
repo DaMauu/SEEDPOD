@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261114a">
+<link rel="stylesheet" href="assets/app.css?v=20261114b">
 </head>
 <body data-page="dashboard">
 <div class="layout">
@@ -103,6 +103,12 @@
             <option value="pending">预设待确认</option>
             <option value="confirmed">预设已确认</option>
             <option value="nocats">没有分类 id</option>
+          </select>
+          <select class="select slim" id="site-crawl">
+            <option value="all">全部抓取</option>
+            <option value="crawled">抓过的</option>
+            <option value="today">今日抓过</option>
+            <option value="never">还没抓过</option>
           </select>
           <button class="btn ghost slim" id="bulk-open" disabled>批量设置</button>
           <button class="btn primary slim" data-act="new-site">添加站点</button>
@@ -345,7 +351,7 @@
 <div id="dock-root"></div>
 <script src="assets/sites-data.js"></script>
 <script src="assets/sites-data.local.js" onerror="void 0"></script>
-<script src="assets/data.js?v=20261114a"></script>
-<script src="assets/app.js?v=20261114a"></script>
+<script src="assets/data.js?v=20261114b"></script>
+<script src="assets/app.js?v=20261114b"></script>
 </body>
 </html>

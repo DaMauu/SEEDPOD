@@ -2655,6 +2655,13 @@
           if (state.preset === "pending" && !(pr && !pr.confirmed)) return false;
           if (state.preset === "nocats" && !(pr && !pr.ids)) return false;
         }
+        if (state.crawl && state.crawl !== "all") {
+          var df = (window.__ptaDefs || {})[s.name] || null;
+          var crawled = !!(df && df.crawled);
+          if (state.crawl === "crawled" && !crawled) return false;
+          if (state.crawl === "never" && crawled) return false;
+          if (state.crawl === "today" && !(df && df.crawlCount > 0)) return false;
+        }
         if (state.q && ((s.title || "") + " " + s.name + " " + s.url).toLowerCase().indexOf(state.q) === -1) return false;
         return true;
       });
@@ -3083,6 +3090,8 @@
     if (loginSel) loginSel.addEventListener("change", function (e) { state.login = e.target.value; state.page = 1; paint(); });
     var presetSel = $("#site-preset");
     if (presetSel) presetSel.addEventListener("change", function (e) { state.preset = e.target.value; state.page = 1; paint(); });
+    var crawlSel = $("#site-crawl");
+    if (crawlSel) crawlSel.addEventListener("change", function (e) { state.crawl = e.target.value; state.page = 1; paint(); });
 
     /* ---- 详情交互 ---- */
     if (detail) detail.addEventListener("change", function (e) {
