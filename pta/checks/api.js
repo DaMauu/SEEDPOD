@@ -371,7 +371,7 @@ async function main() {
   await check('待审核队列状态机', async () => {
     const add = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Check Fixture Movie 2020 1080p Blu-ray AVC', cn: '检查用', res: '1080p', size: '22.10 GB', site: 'example.org' })
+      body: JSON.stringify({ title: 'Check Fixture Movie 2020 1080p Blu-ray AVC', cn: '检查用', res: '1080p', size: '22.10 GB', site: 'source.example', targetSite: 'example.org' })
     });
     const aj = await add.json();
     need(add.ok, '新增条目失败 ' + JSON.stringify(aj).slice(0, 160));

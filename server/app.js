@@ -732,9 +732,13 @@ function queueAction(id, body) {
   if (action === 'reject' && !reason.trim()) return { err: { code: 'BAD_REQUEST', message: '驳回必须写理由' } };
   if (action === 'publish') {
     const blockers = [];
-    const site = String(item.targetSite || item.site || '').trim();
+    const targetSite = String(item.targetSite || '').trim();
+    const site = targetSite || String(item.site || '').trim();
+    const looksDomain = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(site);
     if (!item.title || !String(item.title).trim()) blockers.push('条目缺标题');
-    if (/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(site)) {
+    /* 来源站像真站点时，必须显式选目标站，免得把来源站当成发布目标 */
+    if (!targetSite && looksDomain) blockers.push('没选目标站');
+    else if (looksDomain) {
       const preset = (readSearchPresets() || {})[site];
       if (!preset || !preset.engine) blockers.push('目标站 ' + site + ' 还没有搜索预设');
     }
