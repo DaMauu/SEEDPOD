@@ -106,17 +106,33 @@
 
 `/api/logs/stream` 返回 `text/event-stream`，每行 `data: {...}`，断线由前端 3 秒重连。
 
-## POST /api/tasks（规划，未实现）
+## POST /api/tasks
 
-请求 `{ "type": "crawl" | "check" | "publish", "siteHost": "...", "dryRun": false }`。
-同一站点同时只允许一个任务，重复提交返回 409 `{ "code": "BUSY" }`。
+请求 `{ "type": "crawl" | "check" | "publish", "siteHost": "example.org", "dryRun": true }`。
 
-## GET /api/tasks/:id（规划，未实现）
+只支持干跑：`dryRun` 省略或为 `true` 都按干跑执行，显式 `false` 返回 501 `DRY_RUN_ONLY`。
+干跑会在服务端按 5 个步骤（准备 / 读取配置 / 分析待处理清单 / 查重 / 汇总）推进，**不访问任何外部站点**。
+同一站点同时只允许一个任务，重复提交返回 409 `{ "code": "BUSY", "id": "t_0001" }`。
+任务表在内存里，最多保留最近 50 条，进程重启即清空。
+
+## GET /api/tasks
+
+返回最近 50 条，倒序。`?state=active` 只返回排队与运行中的任务。
+
+## GET /api/tasks/:id
 
 ```
-{ "ok": true, "data": { "id": "t_01", "type": "crawl", "state": "running", "progress": 42,
-  "startedAt": "...", "steps": [ { "name": "list", "state": "done" } ] } }
+{ "ok": true, "data": { "id": "t_0001", "type": "crawl", "siteHost": "example.org", "dryRun": true,
+  "state": "done", "progress": 100, "steps": [ { "name": "准备", "state": "done" } ],
+  "createdAt": "...", "startedAt": "...", "finishedAt": "...",
+  "result": { "dryRun": true, "steps": 5, "note": "干跑：没有访问任何站点" } } }
 ```
+
+`state` 取值：queued / running / done / canceled / failed。任务不存在返回 404。
+
+## POST /api/tasks/:id/cancel
+
+把排队或运行中的任务置为 `canceled`；已结束的任务原样返回。
 
 ## 错误码
 
@@ -124,6 +140,8 @@
 | --- | --- |
 | BAD_REQUEST | 参数缺失或类型错 |
 | OUT_OF_RANGE | 数值越界，见 limits |
+| BAD_HOST | 站点域名不合法 |
+| DRY_RUN_ONLY | 真抓取未接入，只接受干跑 |
 | UNAUTHORIZED | 令牌缺失或过期 |
 | NOT_FOUND | 资源不存在 |
 | BUSY | 同站点已有任务在跑 |

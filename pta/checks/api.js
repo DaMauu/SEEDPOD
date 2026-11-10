@@ -35,6 +35,16 @@ async function waitUp() {
   throw new Error('服务 6 秒内没有起来');
 }
 
+async function waitTask(id, ms) {
+  const end = Date.now() + (ms || 6000);
+  while (Date.now() < end) {
+    const j = await (await fetchA(BASE + '/api/tasks/' + id)).json();
+    if (j.ok && ['done', 'failed', 'canceled'].indexOf(j.data.state) >= 0) return j.data;
+    await new Promise(r => setTimeout(r, 120));
+  }
+  throw new Error('任务没在 ' + ms + 'ms 内结束');
+}
+
 async function main() {
   const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'app.js')], {
     cwd: ROOT,
@@ -159,6 +169,51 @@ async function main() {
   await check('站点配置需要登录', async () => {
     const r = await fetch(BASE + '/api/site-config');
     need(r.status === 401, '未登录能读站点配置：' + r.status);
+  });
+
+  await check('干跑任务能提交并跑完', async () => {
+    const r = await fetchA(BASE + '/api/tasks', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'crawl', siteHost: 'task.example', dryRun: true })
+    });
+    const j = await r.json();
+    need(r.ok, '提交失败 ' + JSON.stringify(j));
+    need(/^t_/.test(j.data.id), '任务 id 不合法：' + j.data.id);
+    need(j.data.dryRun === true, '任务没有被标成干跑');
+    need(Array.isArray(j.data.steps) && j.data.steps.length >= 3, 'steps 结构不对');
+    const done = await waitTask(j.data.id, 6000);
+    need(done.state === 'done', '任务最终状态是 ' + done.state);
+    need(done.progress === 100, '完成时进度是 ' + done.progress);
+    need(done.steps.every(s => s.state === 'done'), '还有没走完的步骤');
+    need(done.result && done.result.dryRun === true, '没有标注干跑结果');
+    const list = await (await fetchA(BASE + '/api/tasks')).json();
+    need(Array.isArray(list.data) && list.data.some(t => t.id === j.data.id), '任务列表里找不到刚提交的任务');
+  });
+
+  await check('同站点并发任务返回 409', async () => {
+    const body = JSON.stringify({ type: 'crawl', siteHost: 'busy.example', dryRun: true });
+    const first = await fetchA(BASE + '/api/tasks', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+    need(first.ok, '第一个任务就失败了 ' + first.status);
+    const second = await fetchA(BASE + '/api/tasks', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+    need(second.status === 409, '并发提交状态码是 ' + second.status);
+    const j = await second.json();
+    need(j.error && j.error.code === 'BUSY', '错误码不对：' + JSON.stringify(j));
+    const id = (await first.json()).data.id;
+    const cancel = await fetchA(BASE + '/api/tasks/' + id + '/cancel', { method: 'POST' });
+    const cj = await cancel.json();
+    need(cancel.ok && cj.data.state === 'canceled', '取消没有生效：' + JSON.stringify(cj));
+  });
+
+  await check('非干跑任务被拒绝', async () => {
+    const r = await fetchA(BASE + '/api/tasks', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'crawl', siteHost: 'real.example', dryRun: false })
+    });
+    need(r.status === 501, '状态码是 ' + r.status);
+    const j = await r.json();
+    need(j.error && j.error.code === 'DRY_RUN_ONLY', '错误码不对：' + JSON.stringify(j));
+    const bad = await fetchA(BASE + '/api/tasks/t_9999', { method: 'GET' });
+    need(bad.status === 404, '不存在的任务返回 ' + bad.status);
   });
 
   await check('登录失败返回 401', async () => {

@@ -138,6 +138,80 @@ function sanitizeSitePatch(body) {
   return { patch: patch, dropped: dropped };
 }
 
+/* ---------- 任务：干跑队列（只走本地步骤，不访问任何外部站点） ---------- */
+const TASKS = new Map();
+const TASK_TYPES = ['crawl', 'check', 'publish'];
+const TASK_STEPS = ['准备', '读取配置', '分析待处理清单', '查重', '汇总'];
+const TASK_KEEP = 50;
+let taskSeq = 0;
+
+function taskPublic(t) {
+  return {
+    id: t.id, type: t.type, siteHost: t.siteHost, dryRun: t.dryRun, state: t.state,
+    progress: t.progress, steps: t.steps, createdAt: t.createdAt,
+    startedAt: t.startedAt, finishedAt: t.finishedAt, error: t.error, result: t.result
+  };
+}
+function activeTaskFor(host) {
+  let found = null;
+  TASKS.forEach(function (t) {
+    if (t.siteHost === host && (t.state === 'queued' || t.state === 'running')) found = t;
+  });
+  return found;
+}
+function trimTasks() {
+  if (TASKS.size <= TASK_KEEP) return;
+  const done = Array.from(TASKS.values())
+    .filter(function (t) { return t.state !== 'queued' && t.state !== 'running'; })
+    .sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+  while (TASKS.size > TASK_KEEP && done.length) TASKS.delete(done.shift().id);
+}
+function runDryTask(t) {
+  t.state = 'running';
+  t.startedAt = new Date().toISOString();
+  let i = 0;
+  const tick = setInterval(function () {
+    if (t.state === 'canceled' || t.state === 'failed') { clearInterval(tick); return; }
+    t.steps[i].state = 'done';
+    i++;
+    t.progress = Math.round(i / t.steps.length * 100);
+    if (i >= t.steps.length) {
+      clearInterval(tick);
+      t.state = 'done';
+      t.progress = 100;
+      t.finishedAt = new Date().toISOString();
+      t.result = { dryRun: true, steps: t.steps.length, note: '干跑：没有访问任何站点' };
+      logEvent('info', '任务', '干跑完成 · ' + t.siteHost + ' · ' + t.steps.length + ' 步');
+    }
+  }, 260);
+  if (tick.unref) tick.unref();
+  t.timer = tick;
+}
+function createTask(body) {
+  const type = String(body.type || 'crawl');
+  if (TASK_TYPES.indexOf(type) < 0) return { err: { code: 'BAD_REQUEST', message: 'type 只能是 ' + TASK_TYPES.join(' / ') } };
+  const host = body.siteHost == null ? '' : String(body.siteHost).trim();
+  if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) {
+    return { err: { code: 'BAD_HOST', message: 'siteHost 不合法' } };
+  }
+  if (body.dryRun === false) {
+    return { err: { code: 'DRY_RUN_ONLY', message: '真抓取还没接入，目前只支持干跑（dryRun: true）' } };
+  }
+  const busy = activeTaskFor(host);
+  if (busy) return { err: { code: 'BUSY', message: '这个站点已经有任务在跑', extra: { id: busy.id, state: busy.state } } };
+  const t = {
+    id: 't_' + String(++taskSeq).padStart(4, '0'),
+    type: type, siteHost: host, dryRun: true, state: 'queued', progress: 0,
+    steps: TASK_STEPS.map(function (n) { return { name: n, state: 'wait' }; }),
+    createdAt: new Date().toISOString(), startedAt: null, finishedAt: null, error: null, result: null
+  };
+  TASKS.set(t.id, t);
+  trimTasks();
+  logEvent('info', '任务', '新建干跑任务 · ' + type + ' · ' + host + ' · ' + t.id);
+  runDryTask(t);
+  return { task: t };
+}
+
 function clientIp(req) {
   return (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0].trim();
 }
@@ -385,6 +459,41 @@ const server = http.createServer(async (req, res) => {
       }
       if (changes.length) logEvent('info', '设置', '修改配置 · ' + changes.join(' · '));
       return send(res, 200, { ok: true, data: next });
+    }
+    if (p === '/api/tasks' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const r = createTask(body);
+      if (r.err) return fail(res, r.err.code === 'BUSY' ? 409 : r.err.code === 'DRY_RUN_ONLY' ? 501 : 400, r.err.code, r.err.message, r.err.extra);
+      return send(res, 200, { ok: true, data: taskPublic(r.task) });
+    }
+    if (p === '/api/tasks' && req.method === 'GET') {
+      const active = u.searchParams.get('state') === 'active';
+      const list = Array.from(TASKS.values())
+        .filter(function (t) { return !active || t.state === 'queued' || t.state === 'running'; })
+        .sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; })
+        .slice(0, 50)
+        .map(taskPublic);
+      return send(res, 200, { ok: true, data: list });
+    }
+    if (p.startsWith('/api/tasks/')) {
+      const rest = p.slice('/api/tasks/'.length).replace(/\/+$/, '');
+      const cancel = /\/cancel$/.test(rest);
+      const id = decodeURIComponent(cancel ? rest.replace(/\/cancel$/, '') : rest);
+      const t = TASKS.get(id);
+      if (!t) return fail(res, 404, 'NOT_FOUND', '任务不存在');
+      if (cancel) {
+        if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+        if (t.state === 'queued' || t.state === 'running') {
+          if (t.timer) clearInterval(t.timer);
+          t.state = 'canceled';
+          t.finishedAt = new Date().toISOString();
+          logEvent('warn', '任务', '手动取消 · ' + t.siteHost + ' · ' + t.id);
+        }
+        return send(res, 200, { ok: true, data: taskPublic(t) });
+      }
+      if (req.method !== 'GET') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET');
+      return send(res, 200, { ok: true, data: taskPublic(t) });
     }
     if (p === '/api/logs' && req.method === 'GET') {
       const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);

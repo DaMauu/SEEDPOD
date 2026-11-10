@@ -21,10 +21,18 @@
 | GET /api/config | 系统硬底线 + 用户配置 + 双模式区间 |
 | PATCH /api/config/user | 改速率，越界 400 |
 | GET /api/sites | 305 个站点（host/url/arch）与架构统计 |
+| GET /api/site-config | 服务端保存的站点配置（白名单字段） |
+| PUT /api/site-config/:host | 合并写站点配置，密码/cookie/totp 拒收 |
+| DELETE /api/site-config/:host | 删掉站点配置并恢复默认 |
+| POST /api/tasks | 提交干跑任务（只接 dryRun，不访问外部站点） |
+| GET /api/tasks | 最近 50 条任务，`?state=active` 只看在跑的 |
+| GET /api/tasks/:id | 单条任务与步骤进度 |
+| POST /api/tasks/:id/cancel | 取消排队/运行中的任务 |
 | GET /api/logs | 最近事件 |
 | GET /api/logs/stream | SSE，断线按 id 补历史 |
 
-事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置。
+事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、干跑任务新建与完成、任务取消。
+站点配置落在 `data/site-config.json`（0600），密码类字段一律不落盘。
 
 ## 检查
 
@@ -34,16 +42,18 @@ pta\checks\run.cmd
 
 - smoke.js 18 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮
-- api.js 11 条：健康、配置区间、落盘、站点清单结构、登录与 401
+- api.js 16 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
 
 改完必须全绿再提交。
 
 ## 下一步
 
-1. 前端站点页改成从 `/api/sites` 取数（现在仍读 assets/sites-data.local.js）
-2. 站点详情「抓取测试」改成服务端真探测（需要一个不带账号的 GET，注意别被站点当异常请求）
-3. 站点配置从 localStorage 迁到服务端持久化
-4. 之后才碰抓取执行器与 qB 连接
+1. 前端流程页接 `/api/tasks`：点「开始」提交干跑任务，显示步骤与进度
+2. 待审核台接服务端 `/api/queue`，替换前端假数据
+3. 下载器「连通性测试」只连用户自己填的地址，默认关闭
+4. 站点页「抓取测试」改名「连接自检（干跑）」，界面标明未接真站
+
+真抓取、真实站点登录一律不做：按用户要求不碰真实站点，不许自己找 cookie，也不做探测或压测。
 
 ## 注意
 
