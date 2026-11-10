@@ -1,0 +1,11 @@
+.git
+.gitignore
+data
+node_modules
+npm-debug.log
+pta/checks
+pta/web/assets/sites-data.local.js
+pta/data/site-arch.local.csv
+docs
+*.md
+.*.swp

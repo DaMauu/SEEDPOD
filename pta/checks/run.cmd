@@ -16,9 +16,15 @@ echo ==== audit (every clickable element) ====
 set AUDIT=%errorlevel%
 
 echo.
-if %SMOKE%==0 if %AUDIT%==0 (
+echo ==== api (backend contract) ====
+if not defined PTA_NODE set PTA_NODE=node
+"%PTA_NODE%" pta\checks\api.js
+set APIC=%errorlevel%
+
+echo.
+if %SMOKE%==0 if %AUDIT%==0 if %APIC%==0 (
   echo ALL CHECKS PASSED
   exit /b 0
 )
-echo FAILED: smoke=%SMOKE% audit=%AUDIT%
+echo FAILED: smoke=%SMOKE% audit=%AUDIT% api=%APIC%
 exit /b 1

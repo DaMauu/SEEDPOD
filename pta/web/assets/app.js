@@ -2485,8 +2485,9 @@
         if (!r.ok) throw new Error("bad status " + r.status);
         return r.json();
       }).then(function (j) {
+        if (j && j.ok === false) throw new Error("health reported failure");
         API.mode = "live";
-        API.health = j || {};
+        API.health = j && j.data ? j.data : (j || {});
         API.connectedAt = Date.now();
       }).catch(function () {
         API.mode = "mock";
