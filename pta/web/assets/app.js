@@ -319,6 +319,7 @@
         j.data.forEach(function (d) { if (d && d.host) map[d.host] = d; });
         window.__ptaDefs = map;
         if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
+        if (typeof window.__ptaRepaintSources === "function") window.__ptaRepaintSources();
         return true;
       })
       .catch(function () { return false; });
@@ -1265,7 +1266,7 @@
             return {
               id: it.id, title: it.title, site: it.site || "", res: it.res || matchResOf(it.title),
               size: it.size || "", time: it.createdAt ? String(it.createdAt).slice(5, 16).replace("T", " ") : "",
-              status: it.status, marks: it.marks || {}, type: it.catName || ""
+              status: it.status, marks: it.marks || {}, type: it.catName || "", cat: it.cat || ""
             };
           });
           window.__ptaSourcesTotal = j.data.total;
@@ -1279,6 +1280,18 @@
       return m ? m[1] : "";
     }
     var ST_TXT = { new: "待筛选", selected: "已送审", published: "已发布", skipped: "跳过", archived: "归档" };
+    /* 老词条里只有分类 id：用站点定义的分类映射反查出中文名，别显示裸 401 */
+    var CAT_CN = { movie: "电影", tv: "剧集", show: "综艺", anime: "动漫", doc: "纪录", music: "音乐", sport: "体育", other: "其他" };
+    function catNameFromDef(site, catId) {
+      var d = (window.__ptaDefs || {})[site];
+      if (!d || !d.cats || !catId) return "";
+      var hit = "";
+      Object.keys(d.cats).forEach(function (g) {
+        if (hit) return;
+        if ((d.cats[g] || []).map(String).indexOf(String(catId)) >= 0) hit = CAT_CN[g] || g;
+      });
+      return hit;
+    }
 
     /* 站点 / 类型两个下拉都用真实数据填，没数据的选项不编造 */
     function fillOptions() {
@@ -1317,7 +1330,10 @@
         return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
           '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" +
           '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") + toggles + "</span></span>" +
-          '<span>' + (it.type ? '<em class="chip np">' + escapeHtml(it.type) + "</em>" : '<span class="soft">—</span>') + "</span>" +
+          '<span>' + (function () {
+            var t = it.type || catNameFromDef(it.site, it.cat);
+            return t ? '<em class="chip np">' + escapeHtml(t) + "</em>" : '<span class="soft">—</span>';
+          })() + "</span>" +
           '<span class="soft">' + escapeHtml(it.res) + "</span>" +
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +
           '<span class="soft">' + escapeHtml(it.time) + "</span>" +
@@ -1328,7 +1344,7 @@
       var c = $("#dl-count");
       if (c) c.textContent = rows.length + (window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
       var pg = $("#dl-page");
-      if (pg) pg.textContent = rows.length ? "筛选后 " + rows.length + " 条" : "";
+      if (pg) pg.textContent = rows.length !== all.length ? "筛选后 " + rows.length + " 条" : "";
     }
 
     window.__ptaRepaintSources = paint;
