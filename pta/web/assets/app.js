@@ -2599,6 +2599,17 @@
           : '<div class="sd-scroll">' + overviewHtml(s) + "</div>");
     }
 
+    function presetStats() {
+      var p = window.__ptaPresets || {};
+      var hosts = Object.keys(p), confirmed = 0, withCats = 0;
+      hosts.forEach(function (h) {
+        var x = p[h] || {};
+        if (x.confirmed) confirmed++;
+        if (x.ids) withCats++;
+      });
+      return { total: hosts.length, confirmed: confirmed, withCats: withCats };
+    }
+
     function coverageStats() {
       var defs = window.__ptaDefs || {};
       var hosts = Object.keys(defs);
@@ -2640,7 +2651,12 @@
           if (!cov.total) return "";
           return '<div class="ss-cov">已适配 ' + cov.total + ' 站 · 采样成功 ' + cov.verified +
             ' 站（NP ' + (cov.eng.nexusphp || 0) + ' · U3D ' + (cov.eng.unit3d || 0) +
-            ' · GZ ' + (cov.eng.gazelle || 0) + ' · 兜底 ' + (cov.eng.custom || 0) + '）</div>';
+            ' · GZ ' + (cov.eng.gazelle || 0) + ' · 兜底 ' + (cov.eng.custom || 0) + '）' +
+            (function () {
+              var ps = presetStats();
+              if (!ps.total) return "";
+              return ' · 预设：已确认 ' + ps.confirmed + ' · 有分类 ' + ps.withCats + ' · 待补 ' + (ps.total - ps.withCats);
+            })() + "</div>";
         })();
     }
 
