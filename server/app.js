@@ -627,12 +627,13 @@ function appendPublished(rec) {
 
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
-const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
+const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published', skip: 'skipped' };
 const QUEUE_FLOW = {
-  pending: ['approved', 'rejected'],
-  approved: ['published', 'rejected'],
+  pending: ['approved', 'rejected', 'skipped'],
+  approved: ['published', 'rejected', 'skipped'],
   rejected: [],
-  published: []
+  published: [],
+  skipped: []
 };
 const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note', 'category', 'imageHost', 'catalogId'];
 

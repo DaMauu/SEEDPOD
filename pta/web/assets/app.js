@@ -858,7 +858,8 @@
       dupe: ["重复", "amber"],
       failed: ["失败", "red"],
       publishing: ["发布中", "blue"],
-      published: ["已发布", "green"]
+      published: ["已发布", "green"],
+      skipped: ["已跳过", "gray"]
     };
 
     function rows() {
@@ -1119,10 +1120,12 @@
       }
       if (it.server) {
         if (act === "skip") {
-          toast("已跳过：" + (it.cn || it.title));
-          var ns = rows().filter(function (x) { return x.status === "pending" && x.id !== it.id; })[0];
-          state.sel = ns ? ns.id : it.id;
-          paint();
+          window.__ptaQueue.req("/" + encodeURIComponent(it.id) + "/action", "POST", { action: "skip" })
+            .then(function (res) {
+              toast(res && res.j && res.j.ok ? "已跳过：" + (it.cn || it.title)
+                : (res && res.j && res.j.error && res.j.error.message) || "跳过失败");
+              return loadServer();
+            });
           return;
         }
         if (act === "reject") {
@@ -1160,36 +1163,8 @@
         });
         return;
       }
-      if (act === "publish" || act === "retry") {
-        it.status = "publishing";
-        it.pubMsg = "";
-        paint();
-        setTimeout(function () {
-          var fail = it.id === 106 || it.id === 103;
-          it.status = fail ? "failed" : "published";
-          it.pubMsg = fail ? "主站返回 502，自动重试 2 次仍失败" : "已发布 · 种子 #8842" + (it.id % 100);
-          toast(fail ? "发布失败：" + (it.cn || it.title) : "已发布：" + (it.cn || it.title));
-          if (!fail) {
-            var next = MOCK.queue.filter(function (x) { return x.status === "pending"; })[0];
-            if (next) state.sel = next.id;
-          }
-          paint();
-        }, 1100);
-      } else if (act === "reject") {
-        var r = $("#qd-reason") ? $("#qd-reason").value.trim() : "";
-        it.status = "failed";
-        it.rejectReason = r;
-        it.pubMsg = "已驳回" + (r ? "：" + r : "（未填理由）");
-        toast("已驳回" + (r ? "：" + r : ""));
-        var n2 = rows().filter(function (x) { return x.status === "pending"; })[0];
-        state.sel = n2 ? n2.id : it.id;
-      } else if (act === "skip") {
-        toast("已跳过：" + (it.cn || it.title));
-        var n3 = rows().filter(function (x) { return x.status === "pending" && x.id !== it.id; })[0];
-        state.sel = n3 ? n3.id : it.id;
-      }
-      paint();
     });
+
 
     function loadServer() {
       return window.__ptaQueue.req("?limit=200").then(function (res) {
