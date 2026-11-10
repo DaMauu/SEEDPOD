@@ -688,6 +688,21 @@ async function main() {
       const codes = two.map(r => r.status).sort();
       need(codes.indexOf(409) >= 0, '并发抓取没被拦住：' + codes.join('/'));
       try { fs.unlinkSync(path.join(DATA, 'site-defs', chost2 + '.json')); } catch (e) {}
+
+      /* 登录失效也要记时间戳：立刻重试应该被 6 秒间隔挡住，而不是再打一次站点 */
+      const chost3 = 'crawl401.example';
+      fs.writeFileSync(path.join(DATA, 'site-defs', chost3 + '.json'), JSON.stringify({
+        host: chost3, base: 'http://127.0.0.1:' + port, engine: 'nexusphp', searchPath: '/torrents.php',
+        params: { search: 'search' }, catMode: 'single', catSlot: 1, catMap: [{ id: '401', label: '电影', purpose: 'movie' }]
+      }));
+      await fetchA(BASE + '/api/credentials/' + chost3, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'wrong=1' })
+      });
+      const r1 = await fetchA(BASE + '/api/crawl/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost3 }) });
+      need(r1.status === 409, 'cookie 失效应返回 409，实际 ' + r1.status);
+      const r2 = await fetchA(BASE + '/api/crawl/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost3 }) });
+      need(r2.status === 429, '失败后立刻重试没被间隔挡住：' + r2.status);
+      try { fs.unlinkSync(path.join(DATA, 'site-defs', chost3 + '.json')); } catch (e) {}
       const list = await (await fetchA(BASE + '/api/catalog?q=&limit=5')).json();
       need(list.data.total > 0, '词条库里没有抓回来的数据');
     } finally {

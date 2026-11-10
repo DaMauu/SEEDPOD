@@ -438,11 +438,20 @@ async function crawlOnceInner(host, opts) {
     return { err: { code: 'CRAWL_FAILED', message: e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 160) } };
   }
   const loggedOut = status === 302 || /takelogin\.php|请先登录/i.test(html);
+  /* 失败也要记一次时间戳：否则 cookie 失效时用户能连续点，等于对站点反复请求 */
+  function markAttempt(errCode) {
+    rec.lastAt = now;
+    rec.lastError = errCode;
+    state[host] = rec;
+    writeCrawlState(state);
+  }
   if (loggedOut) {
     logEvent('warn', '抓取', host + ' cookie 已失效，抓取中止');
+    markAttempt('LOGIN_REQUIRED');
     return { err: { code: 'LOGIN_REQUIRED', message: 'cookie 已失效，先做一次会话自检' } };
   }
   if (status !== 200) {
+    markAttempt('CRAWL_HTTP_' + status);
     return { err: { code: 'CRAWL_HTTP_' + status, message: '站点返回 ' + status } };
   }
   try { rows = adapters.parseList(html, def.engine) || []; } catch (e) { rows = []; }
