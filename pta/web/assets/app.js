@@ -71,22 +71,26 @@
     for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
     return h;
   }
-  function buildSites(urls) {
+  /* 记录可以是字符串（旧格式）或 {url, host, arch, title}（/api/sites 返回的格式） */
+  function buildSites(records) {
     var LAST = ["今天 12:40", "今天 11:58", "今天 09:12", "昨天 23:10", "昨天 18:44", "2 天前"];
     var seen = {}, out = [];
-    (urls || []).forEach(function (url) {
-      var host = url.replace(/^https?:\/\//, "").split("/")[0].replace(/^www\./, "");
+    (records || []).forEach(function (rec) {
+      var url = typeof rec === "string" ? rec : (rec && (rec.url || rec.host)) || "";
+      if (url && !/^https?:\/\//.test(url)) url = "https://" + url;
+      var host = (typeof rec === "object" && rec && rec.host) ||
+        url.replace(/^https?:\/\//, "").split("/")[0].replace(/^www\./, "");
       if (!host || seen[host]) return;
       seen[host] = 1;
       var r = hashStr(host);
       var enabled = r % 100 < 62;
       var login = !enabled ? "none" : ((r >>> 7) % 100 < 92 ? "ok" : "fail");
       var ratioNum = 0.55 + ((r >>> 11) % 430) / 100;
-      var measured = (window.PT_ARCH || {})[host];
+      var measured = (typeof rec === "object" && rec && rec.arch) || (window.PT_ARCH || {})[host];
       var arch = measured || "?";
       out.push({
         name: host,
-        title: (window.PT_NAMES || {})[host] || host,
+        title: (typeof rec === "object" && rec && rec.title) || (window.PT_NAMES || {})[host] || host,
         brand: host.replace(/^www\./, "").replace(/^pt\./, "").replace(/[^a-z0-9]/gi, "").slice(0, 2),
         path: (function () {
           var t = url.replace(/^https?:\/\/[^/]+/, "").replace(/^\/$/, "");
@@ -176,22 +180,59 @@
       }
     };
   }
-  window.PTA_SITES = buildSites(window.SITE_URLS || []);
-  MOCK.sitesList = window.PTA_SITES;
+  /* 站点清单来源：优先 /api/sites（服务端真实清单），file:// 或无后端时回退本地 assets 里的清单 */
   window.__ptaStore = createStore();
   window.__ptaDefaults = {};
-  window.__ptaStore.data.added.forEach(function (a) { MOCK.sitesList.push(makeSite(a)); });
-  Object.keys(window.__ptaStore.data.overrides).forEach(function (h) {
-    var site = MOCK.sitesList.filter(function (x) { return x.name === h; })[0];
-    if (!site) return;
-    var o = window.__ptaStore.data.overrides[h];
-    for (var k in o) site[k] = o[k];
-  });
-  MOCK.sitesList = MOCK.sitesList.filter(function (x) { return window.__ptaStore.data.hidden.indexOf(x.name) < 0; });
-  MOCK.sitesList.forEach(function (x) {
-    window.__ptaDefaults[x.name] = JSON.parse(JSON.stringify(x));
-  });
-  MOCK.sites = siteStats(MOCK.sitesList);
+  window.__ptaSiteSource = "local";
+
+  function siteRecordsFromLocal() {
+    var arch = window.PT_ARCH || {}, names = window.PT_NAMES || {};
+    return (window.SITE_URLS || []).map(function (u) {
+      var host = String(u).replace(/^https?:\/\//, "").split("/")[0].replace(/^www\./, "");
+      return { url: u, host: host, arch: arch[host] || "?", title: names[host] };
+    });
+  }
+
+  function applySites(records, source) {
+    var list = buildSites(records);
+    var store = window.__ptaStore;
+    store.data.added.forEach(function (a) { list.push(makeSite(a)); });
+    Object.keys(store.data.overrides).forEach(function (h) {
+      var site = list.filter(function (x) { return x.name === h; })[0];
+      if (!site) return;
+      var o = store.data.overrides[h];
+      for (var k in o) site[k] = o[k];
+    });
+    list = list.filter(function (x) { return store.data.hidden.indexOf(x.name) < 0; });
+    var defs = {};
+    list.forEach(function (x) { defs[x.name] = JSON.parse(JSON.stringify(x)); });
+    window.__ptaDefaults = defs;
+    window.PTA_SITES = list;
+    MOCK.sitesList = list;
+    MOCK.sites = siteStats(list);
+    if (source) window.__ptaSiteSource = source;
+    if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
+    if (current === "dashboard" && typeof renderDashboard === "function") renderDashboard();
+    return list.length;
+  }
+  window.__ptaApplySites = applySites;
+
+  /* 拉服务端清单；失败（file://、未登录、离线）就保持本地数据，不打断页面 */
+  function loadSitesFromApi() {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+    return fetch("/api/sites", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !j.data || !Array.isArray(j.data.sites) || !j.data.sites.length) return false;
+        window.__ptaSiteCounts = j.data.counts || null;
+        applySites(j.data.sites, "api");
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  window.__ptaLoadSites = loadSitesFromApi;
+
+  applySites(siteRecordsFromLocal());
 
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
@@ -2333,6 +2374,15 @@
       refreshStats();
       paint();
     };
+    /* 站点清单被替换（服务端拉取/新增/移除）后外部重绘入口 */
+    window.__ptaRepaintSites = function () {
+      if (!MOCK.sitesList.some(function (x) { return x.name === state.sel; })) { state.sel = null; state.open = false; }
+      state.picks = state.picks.filter(function (h) {
+        return MOCK.sitesList.some(function (x) { return x.name === h; });
+      });
+      refreshStats();
+      paint();
+    };
 
     initBulkModal();
     refreshBulk();
@@ -2773,6 +2823,7 @@
     initRouter();
     renderDashboard();
     initRuntime();
+    if (typeof loadSitesFromApi === "function") loadSitesFromApi();
   }
 
   document.addEventListener("DOMContentLoaded", function () {
