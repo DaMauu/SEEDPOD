@@ -94,6 +94,8 @@ pta\checks\run.cmd
 | done | 词条库面板 | 抓取页底部最新 30 条，状态徽标 + 禁转/独占/DIY/限转标记，可归档；站点设置页显示抓取进度 |
 | done | 第二步筛选 | `/api/catalog/screen` 按分辨率/体积/中字/已有判重挑词条：入选进待审核并标 selected，其余标 skipped 并记原因 |
 | done | 第三步草稿 | `/api/publish/preview` 组装标题/副标题/简介/标签（来源/媒介/编码/音轨/中字），缺项给提醒；待审核页「草稿预览」回填表单 |
+| done | 发布记账 | 发布成功把词条标 published、写 `published.json` 记录（含匿名/图床），`/api/published` 可查；首页已发布列表读它 |
+| done | 词条库批量 | `/api/catalog/bulk` 按状态批量改；词条库面板有状态筛选与「归档已跳过」；数据清单页改成读词条库并支持归档 |
 | done | 词条库 | `POST /api/catalog` 导入（按站内 id / infohash 去重）、`/status` 流转 new→selected→published/skipped/archived |
 | done | 面板去假数据 | 系统状态、首页数字、节点页全部来自 `/api/stats/overview` 与下载器探测；没接下载器就显示空状态 |
 | done | 下载器探测落盘 | 探测时顺带取磁盘余量（qB `sync/maindata`），结果存 `lastProbe`，系统状态与节点页复用 |
