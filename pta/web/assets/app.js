@@ -2412,6 +2412,8 @@
       var engRaw = (pres && pres.engine) || (dres && dres.engine) || "";
       var engTxt = engRaw ? engCode(engRaw) + " · " + engRaw : "未识别";
       var sampleTxt = dres ? (dres.rows || 0) + " 行 · " + (dres.groups || 0) + " 组分类" : "还没采样";
+      var KIND_TXT = { sample: "采样确认", shell: "引擎按页面特征确认，分类待补", arch: "按清单架构推断，还没采样" };
+      var kindTxt = !dres ? "没有定义" : (KIND_TXT[dres.kind] || (dres.engine ? "引擎已确认，分类待补" : "按清单架构推断，还没采样"));
       return '<div class="sd-strip">' +
           "<span>已收录<b>" + (s.items ? s.items.toLocaleString() : "—") + "</b></span>" +
           "<span>今日<b>+" + todayNew + "</b></span>" +
@@ -2426,6 +2428,7 @@
             '<div class="sd-row"><span>登录凭据</span><b>' + (s.cookieSaved ? "已保存" : "未保存") + "</b></div>" +
             '<div class="sd-row"><span>引擎</span><b>' + escapeHtml(engTxt) + "</b></div>" +
             '<div class="sd-row"><span>采样</span><b>' + escapeHtml(sampleTxt) + "</b></div>" +
+            '<div class="sd-row"><span>来源</span><b>' + escapeHtml(kindTxt) + "</b></div>" +
             '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
           "</div>" +
           '<div class="sd-block"><h4>抓取</h4>' +
@@ -2483,6 +2486,7 @@
       } else if (tab === "search") {
         var pdetail = s.presetDetail;
         var psum = presetOf(s.name) || {};
+        var dfn = defOf(s.name);
         var sEng = (pdetail && pdetail.engine) || psum.engine || "";
         var catGroups = pdetail && pdetail.cats ? pdetail.cats : null;
         var catLines = catGroups ? Object.keys(catGroups).map(function (g) {
@@ -2500,6 +2504,13 @@
           (pdetail && pdetail.confirmed ? "" : '<button class="btn ghost slim" id="sd-preset-confirm">确认这个预设</button>') +
           '<span class="sd-cookie-res" id="sd-preset-res">' +
           (pdetail ? (pdetail.confirmed ? "已人工确认 · " : "更新于 ") + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
+        "</span></div>" +
+        '<div class="sd-cookie-bar"><span class="sd-cookie-res">' +
+          (!pdetail || !pdetail.cats || !Object.keys(pdetail.cats).length
+            ? (dfn && dfn.kind === "shell"
+              ? "这个站的列表由脚本渲染，源码里没有分类：在浏览器登录后把种子页存到 pta/data/manual 再跑 ingest-manual"
+              : "还没采到分类 id：登录后存种子页到 pta/data/manual，或等下次补采")
+            : "分类来自采样，对照站点没问题就点确认，来源会改成手动") +
         "</span></div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([

@@ -331,6 +331,7 @@ async function main() {
     need(row.engine === 'unit3d', 'engine 不对：' + row.engine);
     need(row.groups === 2 && row.ids === 3, '分类统计不对：' + row.groups + '/' + row.ids);
     need(row.rows === 24 && row.sizeRows === 23, '采样行数没带出来：' + row.rows + '/' + row.sizeRows);
+    need(row.kind === 'sample', '定义来源 kind 没带出来：' + row.kind);
     need((list.engines || []).join(',') === 'unit3d,gazelle,nexusphp,custom', '引擎清单不对：' + (list.engines || []).join(','));
     const one = await (await fetchA(BASE + '/api/site-def/' + host)).json();
     need(one.ok && one.data.engine === 'unit3d' && one.data.catMode === 'multi', '单站定义内容不对');

@@ -1043,6 +1043,7 @@ const server = http.createServer(async (req, res) => {
             host: d.host || f.replace(/\.json$/, ''), engine: d.engine || '',
             groups: Object.keys(cats).length, ids: ids,
             rows: (d.source && d.source.rows) || 0, sizeRows: (d.source && d.source.sizeRows) || 0,
+            kind: (d.source && d.source.kind) || '',
             updatedAt: (d.source && d.source.analyzedAt) || null
           });
         } catch (e) {}
