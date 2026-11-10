@@ -285,6 +285,20 @@
   }
   window.__ptaQueue = { req: queueRequest, map: mapServerQueue };
 
+  /* 下载器：配置存服务端，密码只写不读 */
+  function dlRequest(path, method, body) {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(null);
+    return fetch("/api/downloaders" + path, {
+      method: method || "GET", credentials: "same-origin",
+      headers: body ? { "content-type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, j: j }; },
+        function () { return { status: r.status, j: null }; });
+    }).catch(function () { return null; });
+  }
+  window.__ptaDl = { req: dlRequest };
+
   /* 拉服务端清单；失败（file://、未登录、离线）就保持本地数据，不打断页面 */
   function loadSitesFromApi() {
     if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
@@ -1157,6 +1171,57 @@
     }
     storage();
 
+    /* 服务端已有的下载器合并进列表（密码只回 hasPass） */
+    function loadServer() {
+      return window.__ptaDl.req("").then(function (res) {
+        if (!res || !res.j || !res.j.ok || !Array.isArray(res.j.data)) return false;
+        res.j.data.forEach(function (d) {
+          var h = String(d.url || "").replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
+          var nd = MOCK.nodes.filter(function (x) { return x.serverId === d.id || x.name === d.name; })[0];
+          if (!nd) {
+            nd = { name: d.name || h, role: "下载 / 做种", host: h, online: false,
+              disk: "— / —", used: 0, total: 0, qb: "—", seeding: "0", path: "/data/pt" };
+            MOCK.nodes.push(nd);
+          }
+          nd.serverId = d.id;
+          nd.qbUrl = d.url;
+          nd.host = h;
+          nd.qbUser = d.user || "";
+          nd.hasPass = !!d.hasPass;
+          nd.disableAuth = !!d.disableAuth;
+        });
+        save();
+        paint();
+        return true;
+      });
+    }
+    window.__ptaLoadDownloaders = loadServer;
+
+    function pushNode(nd) {
+      if (!nd || !window.__ptaDl || !/^https?:$/.test(location.protocol)) return;
+      var body = {
+        name: nd.name,
+        url: nd.qbUrl || ("http://" + nd.host + ":8080"),
+        user: nd.qbUser || "",
+        disableAuth: !!nd.disableAuth
+      };
+      if (nd.qbPass) body.pass = nd.qbPass;
+      var p = nd.serverId
+        ? window.__ptaDl.req("/" + encodeURIComponent(nd.serverId), "PUT", body)
+        : window.__ptaDl.req("", "POST", body);
+      p.then(function (res) {
+        if (res && res.j && res.j.ok) {
+          nd.serverId = res.j.data.id;
+          nd.qbUrl = res.j.data.url;
+          nd.hasPass = !!res.j.data.hasPass;
+          save();
+          toast("已保存到服务端：" + nd.name);
+        } else {
+          toast((res && res.j && res.j.error && res.j.error.message) || "服务端没写进去，已存在本地");
+        }
+      });
+    }
+
     function paint() {
       var nodes = MOCK.nodes;
       var workers = nodes.slice(1);
@@ -1234,7 +1299,7 @@
       $("#node-modal-title").textContent = nd ? "下载器设置" : "新增下载器";
       $("#nd-name").value = nd ? nd.name : "";
       $("#nd-host").value = nd ? nd.host : "";
-      $("#nd-qb").value = nd ? ("http://" + nd.host + ":8080") : "";
+      $("#nd-qb").value = nd ? (nd.qbUrl || ("http://" + nd.host + ":8080")) : "";
       $("#nd-user").value = nd && nd.qbUser ? nd.qbUser : "";
       $("#nd-pass").value = nd && nd.qbPass ? nd.qbPass : "";
       $("#nd-down").value = nd && nd.maxDown ? nd.maxDown : "3";
@@ -1279,24 +1344,30 @@
           dlPath: $("#nd-path").value.trim(),
           lowDisk: $("#nd-lowdisk").value.trim()
         };
+        var target = null;
         if (editing >= 0) {
           var nd = MOCK.nodes[editing];
           nd.name = data.name; nd.role = data.role; nd.host = data.host;
           nd.maxDown = data.maxDown; nd.seedLimit = data.seedLimit;
           nd.qbUser = data.qbUser; nd.qbPass = data.qbPass;
+          nd.qbUrl = ($("#nd-qb").value || "").trim() || nd.qbUrl || ("http://" + data.host + ":8080");
           nd.dlLimit = data.dlLimit; nd.ulLimit = data.ulLimit; nd.ratioDel = data.ratioDel;
           nd.seedDays = data.seedDays; nd.dlPath = data.dlPath; nd.lowDisk = data.lowDisk;
           nd.cats = curCats; nd.cat = curCat;
+          target = nd;
         } else {
-          MOCK.nodes.push({
+          target = {
             name: data.name, role: data.role, host: data.host, online: true,
             disk: "0 / 16 TB", used: 0, total: 16, qb: data.qb,
             seeding: "0", path: data.path, maxDown: data.maxDown, seedLimit: data.seedLimit,
-            cats: curCats, cat: curCat, qbUser: data.qbUser, qbPass: data.qbPass
-          });
+            cats: curCats, cat: curCat, qbUser: data.qbUser, qbPass: data.qbPass,
+            qbUrl: ($("#nd-qb").value || "").trim() || ("http://" + data.host + ":8080")
+          };
+          MOCK.nodes.push(target);
         }
         save(); paint(); closeModal();
         toast(editing >= 0 ? "已保存：" + data.name : "已新增：" + data.name);
+        pushNode(target);
       });
 
       var testBtn = $("#nd-test");
@@ -1376,10 +1447,12 @@
         if (editing < 0) return;
         var idx = editing;
         var nm = MOCK.nodes[idx].name;
+        var sid = MOCK.nodes[idx].serverId;
         ptaConfirm("删除下载器", "确定删除「" + nm + "」吗？这台机器上的做种记录会从列表里移除。", function () {
           MOCK.nodes.splice(idx, 1);
           save(); paint(); closeModal();
           toast("已删除：" + nm);
+          if (sid) window.__ptaDl.req("/" + encodeURIComponent(sid), "DELETE");
         });
       });
     }
@@ -1391,6 +1464,7 @@
     });
 
     paint();
+    loadServer();
   }
 
   function initLogs() {
