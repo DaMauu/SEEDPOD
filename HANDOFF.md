@@ -52,7 +52,7 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/queue | 待审核条目与各状态计数 |
 | POST /api/queue | 新增待审核条目（title 必填） |
 | GET /api/queue/:id | 单条详情 |
-| POST /api/queue/:id/action | approve / reject / publish，带状态机校验 |
+| POST /api/queue/:id/action | approve / reject / publish，带状态机校验与发布前置校验（缺标题/预设/下载器时 409 PUBLISH_BLOCKED） |
 | DELETE /api/queue/:id | 删除条目 |
 | POST /api/tasks | 提交干跑任务（只接 dryRun，不访问外部站点）；带 plan：页数/并发/分类组/预估查询数/警告 |
 | GET /api/tasks | 最近 50 条任务，`?state=active` 只看在跑的 |

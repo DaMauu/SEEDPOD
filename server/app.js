@@ -302,6 +302,19 @@ function queueAction(id, body) {
   }
   const reason = body.reason == null ? '' : String(body.reason).slice(0, 500);
   if (action === 'reject' && !reason.trim()) return { err: { code: 'BAD_REQUEST', message: '驳回必须写理由' } };
+  if (action === 'publish') {
+    const blockers = [];
+    const site = String(item.site || '').trim();
+    if (!item.title || !String(item.title).trim()) blockers.push('条目缺标题');
+    if (/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(site)) {
+      const preset = (readSearchPresets() || {})[site];
+      if (!preset || !preset.engine) blockers.push('目标站 ' + site + ' 还没有搜索预设');
+    }
+    if (!readDl().items.length) blockers.push('还没有配置任何下载器');
+    if (blockers.length) {
+      return { err: { code: 'PUBLISH_BLOCKED', message: '还不能发布：' + blockers.join('；'), extra: { blockers: blockers } } };
+    }
+  }
   item.status = target;
   item.updatedAt = new Date().toISOString();
   if (reason) item.reason = reason;
@@ -879,7 +892,7 @@ const server = http.createServer(async (req, res) => {
         if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
         const body = await readBody(req);
         const r = queueAction(id, body);
-        if (r.err) return fail(res, r.err.code === 'NOT_FOUND' ? 404 : r.err.code === 'BAD_STATE' ? 409 : 400, r.err.code, r.err.message, r.err.extra);
+        if (r.err) return fail(res, r.err.code === 'NOT_FOUND' ? 404 : (r.err.code === 'BAD_STATE' || r.err.code === 'PUBLISH_BLOCKED') ? 409 : 400, r.err.code, r.err.message, r.err.extra);
         return send(res, 200, { ok: true, data: r.item });
       }
       if (req.method === 'DELETE') {

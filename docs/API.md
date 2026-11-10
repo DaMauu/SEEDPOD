@@ -184,6 +184,12 @@
 状态机：`pending → approved / rejected`，`approved → published / rejected`，`rejected`、`published` 是终态。
 越级（例如 pending 直接 publish）返回 409 `BAD_STATE`，附带当前状态与允许的目标；驳回必须写 reason，空理由 400。
 
+发布前还有前置校验，缺任何一项都返回 409 `PUBLISH_BLOCKED`，`error.blockers` 列出缺什么：
+
+- 条目缺标题
+- 条目 `site` 是域名但该站还没有搜索预设（`engine` 为空）
+- 服务端还没有配置任何下载器
+
 ## DELETE /api/queue/:id
 
 删掉条目并写事件日志。
@@ -243,6 +249,7 @@
 | NOT_FOUND | 资源不存在 |
 | BUSY | 同站点已有任务在跑 |
 | BAD_STATE | 待审核条目当前状态不允许这个操作 |
+| PUBLISH_BLOCKED | 发布前置条件不满足（缺标题 / 缺搜索预设 / 没有下载器） |
 | SITE_FAILED | 站点返回 4xx/5xx，已按策略重试 |
 | RATE_LIMITED | 触发熔断，附带 retryAfter 秒 |
 | INTERNAL | 未预期错误，附带 traceId |

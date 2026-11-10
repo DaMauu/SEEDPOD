@@ -301,6 +301,26 @@ async function main() {
     });
     const oj = await ok.json();
     need(ok.ok && oj.data.status === 'approved', '通过失败：' + JSON.stringify(oj).slice(0, 120));
+
+    /* 已通过但缺下载器与预设时，发布要被拦住并说明缺什么 */
+    const blocked = await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish' })
+    });
+    need(blocked.status === 409, '缺前置条件却能发布：' + blocked.status);
+    const bj = await blocked.json();
+    need(bj.error && bj.error.code === 'PUBLISH_BLOCKED', '错误码不对：' + JSON.stringify(bj).slice(0, 140));
+    need(Array.isArray(bj.error.blockers) && bj.error.blockers.length >= 2, '没有列出缺什么：' + JSON.stringify(bj.error).slice(0, 160));
+
+    /* 补上下载器和该站搜索预设，发布才通过 */
+    const dlAdd = await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'publish-check', url: 'http://127.0.0.1:1' })
+    });
+    const dlId = (await dlAdd.json()).data.id;
+    await fetchA(BASE + '/api/sites/example.org/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', cats: { movie: ['401'] } })
+    });
     const pub = await fetchA(BASE + '/api/queue/' + id + '/action', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish' })
     });
@@ -311,6 +331,8 @@ async function main() {
     });
     need(twice.status === 409, '已发布还能驳回到 ' + twice.status);
 
+    await fetchA(BASE + '/api/downloaders/' + dlId, { method: 'DELETE' });
+    await fetchA(BASE + '/api/sites/example.org/search', { method: 'DELETE' });
     const del = await fetchA(BASE + '/api/queue/' + id, { method: 'DELETE' });
     need(del.ok, '删除条目失败');
     const gone = await fetchA(BASE + '/api/queue/' + id);
