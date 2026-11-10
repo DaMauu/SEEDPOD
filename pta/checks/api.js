@@ -669,6 +669,23 @@ async function main() {
       need(st.ok && st.data.count === 1 && st.data.page === 1, '抓取状态没记住：' + JSON.stringify(st.data).slice(0, 160));
       need(st.data.nextPage === undefined && st.data.waitMs > 0, '冷却剩余时间不对：' + JSON.stringify(st.data).slice(0, 120));
       need(st.data.catIdx === 0 && /401/.test(String(st.data.catId || '')), '类目索引没记住：' + JSON.stringify(st.data).slice(0, 120));
+
+      /* 同一站并发抓取：第二个必须被拦（409 BUSY），不能绕过 6 秒间隔打两发 */
+      const chost2 = 'crawlbusy.example';
+      fs.writeFileSync(path.join(DATA, 'site-defs', chost2 + '.json'), JSON.stringify({
+        host: chost2, base: 'http://127.0.0.1:' + port, engine: 'nexusphp', searchPath: '/torrents.php',
+        params: { search: 'search' }, catMode: 'single', catSlot: 1, catMap: [{ id: '401', label: '电影', purpose: 'movie' }]
+      }));
+      await fetchA(BASE + '/api/credentials/' + chost2, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'c_secure_uid=good' })
+      });
+      const two = await Promise.all([
+        fetchA(BASE + '/api/crawl/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost2 }) }),
+        fetchA(BASE + '/api/crawl/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost2 }) })
+      ]);
+      const codes = two.map(r => r.status).sort();
+      need(codes.indexOf(409) >= 0, '并发抓取没被拦住：' + codes.join('/'));
+      try { fs.unlinkSync(path.join(DATA, 'site-defs', chost2 + '.json')); } catch (e) {}
       const list = await (await fetchA(BASE + '/api/catalog?q=&limit=5')).json();
       need(list.data.total > 0, '词条库里没有抓回来的数据');
     } finally {

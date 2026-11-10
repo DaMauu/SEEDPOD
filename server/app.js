@@ -388,7 +388,19 @@ function crawlPlan(host, opts) {
     requestDelay: (def.limits && def.limits.requestDelay) || 3, minGapMs: CRAWL_MIN_GAP_MS, dailyMax: CRAWL_DAILY_MAX };
 }
 
+const CRAWL_BUSY = new Set();          /* 同一个站同一时间只允许一次抓取 */
+
 async function crawlOnce(host, opts) {
+  if (CRAWL_BUSY.has(host)) return { err: { code: 'BUSY', message: '这个站正在抓，等这次结束' } };
+  CRAWL_BUSY.add(host);
+  try {
+    return await crawlOnceInner(host, opts);
+  } finally {
+    CRAWL_BUSY.delete(host);
+  }
+}
+
+async function crawlOnceInner(host, opts) {
   const state0 = readCrawlState();
   const rec0 = state0[host] || {};
   /* 类目轮转：每抓一次换下一个分类，一轮下来把预设里的类目都覆盖到 */
@@ -1586,7 +1598,7 @@ const server = http.createServer(async (req, res) => {
       const out = await crawlOnce(host, { page: body && body.page });
       if (out.err) {
         const code = out.err.code;
-        const status = code === 'TOO_SOON' || code === 'DAILY_LIMIT' ? 429 : (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED') ? 409 : 400;
+        const status = code === 'TOO_SOON' || code === 'DAILY_LIMIT' ? 429 : (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED' || code === 'BUSY') ? 409 : 400;
         return fail(res, status, code, out.err.message, out.err.extra);
       }
       return send(res, 200, { ok: true, data: out });
