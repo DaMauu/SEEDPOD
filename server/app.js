@@ -75,6 +75,69 @@ function loadSiteList() {
   }
 }
 
+/* ---------- 站点配置：服务端持久化（密码 / cookie / totp 一律不落盘） ---------- */
+const SITE_CFG_FILE = path.join(DATA_DIR, 'site-config.json');
+const SITE_FIELDS = [
+  'enabled', 'url', 'arch', 'tfa', 'interval', 'pages', 'concurrency', 'dupeCheck', 'note',
+  'cats', 'fullDiscOnly', 'minRes', 'minSize', 'exclude', 'queueMode', 'window',
+  'mode', 'stopAtKnown', 'fullCycle', 'trigger', 'dailyAt', 'everyMin',
+  'timeWindow', 'winStart', 'winEnd', 'jitter', 'loginMethod', 'username'
+];
+const SITE_RANGES = { interval: [1, 1440], pages: [1, 20], concurrency: [1, 8], everyMin: [5, 1440], jitter: [0, 120] };
+const SITE_SECRETS = ['password', 'cookie', 'totp'];
+
+function readSiteCfg() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(SITE_CFG_FILE, 'utf8'));
+    return {
+      sites: raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : {},
+      hidden: raw && Array.isArray(raw.hidden) ? raw.hidden : []
+    };
+  } catch (e) {
+    return { sites: {}, hidden: [] };
+  }
+}
+function writeSiteCfg(cfg) {
+  try {
+    fs.writeFileSync(SITE_CFG_FILE, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入站点配置失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+/* 只收白名单字段；秘密字段记录为 dropped，不返回内容也不写盘 */
+function sanitizeSitePatch(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return { err: { code: 'BAD_REQUEST', message: '请求体不是合法 JSON 对象' } };
+  }
+  const patch = {}, dropped = [];
+  SITE_SECRETS.forEach(function (k) {
+    if (body[k] !== undefined && body[k] !== '' && body[k] !== null) dropped.push(k);
+  });
+  for (const k of SITE_FIELDS) {
+    if (body[k] === undefined) continue;
+    const v = body[k];
+    if (SITE_RANGES[k]) {
+      const n = Number(v);
+      if (!Number.isInteger(n)) return { err: { code: 'BAD_REQUEST', message: k + ' 必须是整数' } };
+      const lo = SITE_RANGES[k][0], hi = SITE_RANGES[k][1];
+      if (n < lo || n > hi) return { err: { code: 'OUT_OF_RANGE', message: k + ' 必须在 ' + lo + '–' + hi + ' 之间' } };
+      patch[k] = n;
+    } else if (typeof v === 'boolean' || typeof v === 'number') {
+      patch[k] = v;
+    } else if (Array.isArray(v)) {
+      patch[k] = v.slice(0, 32).map(function (x) { return String(x).slice(0, 32); });
+    } else if (typeof v === 'string') {
+      if (v.length > 500) return { err: { code: 'BAD_REQUEST', message: k + ' 太长' } };
+      patch[k] = v;
+    } else {
+      return { err: { code: 'BAD_REQUEST', message: k + ' 类型不对' } };
+    }
+  }
+  return { patch: patch, dropped: dropped };
+}
+
 function clientIp(req) {
   return (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0].trim();
 }
@@ -259,6 +322,43 @@ const server = http.createServer(async (req, res) => {
         else counts.unknown++;
       });
       return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
+    }
+    if (p === '/api/site-config' && req.method === 'GET') {
+      const cfg = readSiteCfg();
+      return send(res, 200, { ok: true, data: { sites: cfg.sites, hidden: cfg.hidden, fields: SITE_FIELDS } });
+    }
+    if (p.startsWith('/api/site-config/')) {
+      const host = decodeURIComponent(p.slice('/api/site-config/'.length)).replace(/^\/+|\/+$/g, '');
+      if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) {
+        return fail(res, 400, 'BAD_HOST', '站点域名不合法');
+      }
+      const cfg = readSiteCfg();
+      if (req.method === 'PUT' || req.method === 'POST') {
+        const body = await readBody(req);
+        const s = sanitizeSitePatch(body);
+        if (s.err) return fail(res, 400, s.err.code, s.err.message);
+        const prev = cfg.sites[host] || {};
+        const next = Object.assign({}, prev, s.patch);
+        const changed = Object.keys(s.patch).filter(function (k) {
+          return JSON.stringify(prev[k]) !== JSON.stringify(next[k]);
+        });
+        cfg.sites[host] = next;
+        cfg.hidden = cfg.hidden.filter(function (h) { return h !== host; });
+        try { writeSiteCfg(cfg); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        if (changed.length) {
+          logEvent('info', '站点', '更新站点配置 · ' + host + ' · ' + changed.slice(0, 6).join('/') +
+            (changed.length > 6 ? ' 等 ' + changed.length + ' 项' : ''));
+        }
+        return send(res, 200, { ok: true, data: { host: host, config: next, changed: changed, dropped: s.dropped } });
+      }
+      if (req.method === 'DELETE') {
+        delete cfg.sites[host];
+        cfg.hidden = cfg.hidden.filter(function (h) { return h !== host; });
+        try { writeSiteCfg(cfg); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '站点', '恢复默认站点配置 · ' + host);
+        return send(res, 200, { ok: true, data: { host: host } });
+      }
+      return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 PUT 与 DELETE');
     }
     if (p === '/api/config' && req.method === 'GET') {
       return send(res, 200, { ok: true, data: { sys: {

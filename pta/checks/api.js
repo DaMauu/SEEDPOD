@@ -128,6 +128,39 @@ async function main() {
     });
   });
 
+  await check('站点配置读写与秘密不落盘', async () => {
+    const host = 'demo.example';
+    const empty = await (await fetchA(BASE + '/api/site-config')).json();
+    need(empty.ok, '读站点配置失败');
+    need(empty.data.sites && typeof empty.data.sites === 'object', 'sites 不是对象');
+    need(Array.isArray(empty.data.hidden), 'hidden 不是数组');
+    const w = await fetchA(BASE + '/api/site-config/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ interval: 45, pages: 3, concurrency: 2, note: 'check', password: 'x', cookie: 'y' })
+    });
+    const j = await w.json();
+    need(w.ok, '写入失败 ' + JSON.stringify(j));
+    need(j.data.config.interval === 45, 'interval 没写进去');
+    need(j.data.dropped.indexOf('password') >= 0, '密码字段应当被拒绝落盘');
+    need(j.data.config.password === undefined, '密码被存下来了');
+    const back = await (await fetchA(BASE + '/api/site-config')).json();
+    need(back.data.sites[host] && back.data.sites[host].password === undefined, 'GET 里出现了密码');
+    const bad = await fetchA(BASE + '/api/site-config/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ interval: 9999 })
+    });
+    need(bad.status === 400, '越界 interval 没被拦截：' + bad.status);
+    const del = await fetchA(BASE + '/api/site-config/' + host, { method: 'DELETE' });
+    need(del.ok, '删除失败');
+    const after = await (await fetchA(BASE + '/api/site-config')).json();
+    need(!after.data.sites[host], '删除后仍存在');
+  });
+
+  await check('站点配置需要登录', async () => {
+    const r = await fetch(BASE + '/api/site-config');
+    need(r.status === 401, '未登录能读站点配置：' + r.status);
+  });
+
   await check('登录失败返回 401', async () => {
     const r = await fetch(BASE + '/api/login', {
       method: 'POST', headers: { 'content-type': 'application/json' },

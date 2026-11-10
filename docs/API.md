@@ -37,31 +37,63 @@
 ## GET /api/sites
 
 ```
-{ "ok": true, "data": [
-  { "host": "example.org", "name": "示例站", "arch": "NexusPHP", "enabled": true,
-    "login": "ok", "ratio": 2.31, "lastRun": "2026-11-10T12:40:00+08:00",
-    "cats": ["Movies", "TV"], "mapped": 2 }
-] }
+{ "ok": true, "data": {
+  "counts": { "total": 305, "np": 83, "unit3d": 46, "gz": 29, "other": 31, "unknown": 116 },
+  "sites": [ { "host": "example.org", "url": "https://example.org", "arch": "NP" } ]
+} }
 ```
 
-## PATCH /api/sites/:host
+`arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自 `pta/web/assets/sites-data.local.js`，缺失则为空数组。
+
+## GET /api/site-config
+
+```
+{ "ok": true, "data": { "sites": { "example.org": { "interval": 45, "pages": 3 } },
+  "hidden": [], "fields": ["enabled", "url", "..."] } }
+```
+
+只返回服务端已保存的字段，未保存的站点不出现在 `sites` 里。
+
+## PUT /api/site-config/:host
+
+请求体是字段子集，按白名单合并（不认识的字段忽略）：
+
+| 字段 | 约束 |
+| --- | --- |
+| interval | 整数 1–1440 分钟 |
+| pages | 整数 1–20 |
+| concurrency | 整数 1–8 |
+| everyMin | 整数 5–1440 |
+| jitter | 整数 0–120 |
+| cats | 字符串数组，最多 32 项 |
+| 其它白名单字段 | 布尔/数字/字符串，字符串不超过 500 字 |
+
+`password`、`cookie`、`totp` 一律不落盘，回包 `data.dropped` 里列出被丢弃的字段名。
+成功回 `{ "host": "...", "config": {...}, "changed": ["interval"], "dropped": ["password"] }`；
+数值越界 400 `OUT_OF_RANGE`，域名不合法 400 `BAD_HOST`。
+
+## DELETE /api/site-config/:host
+
+删掉该站点的服务端配置并恢复默认，同时把它从 `hidden` 里移除。
+
+## PATCH /api/sites/:host（规划，未实现）
 
 可改字段：enabled、interval、dailyCap、note、loginMethod、username。密码字段只写不读，回包永远不带明文。
 
-## POST /api/sites/:host/test-login
+## POST /api/sites/:host/test-login（规划，未实现）
 
 ```
 { "ok": true, "data": { "pass": true, "steps": [ { "step": "login", "status": 200, "ms": 812 } ] } }
 ```
 
-## GET /api/queue?tab=pending
+## GET /api/queue?tab=pending（规划，未实现）
 
 ```
 { "ok": true, "data": [ { "id": 101, "title": "...", "cn": "...", "year": 2020, "res": "1080p",
   "size": "22.10 GB", "state": "pending", "check": "none", "detail": { "intro": "...", "shots": 3 } } ] }
 ```
 
-## POST /api/queue/:id/action
+## POST /api/queue/:id/action（规划，未实现）
 
 请求 `{ "action": "approve" | "reject" | "skip", "reason": "..." }`，返回该条新状态。
 驳回必须写 reason，空理由返回 400。
@@ -74,12 +106,12 @@
 
 `/api/logs/stream` 返回 `text/event-stream`，每行 `data: {...}`，断线由前端 3 秒重连。
 
-## POST /api/tasks
+## POST /api/tasks（规划，未实现）
 
 请求 `{ "type": "crawl" | "check" | "publish", "siteHost": "...", "dryRun": false }`。
 同一站点同时只允许一个任务，重复提交返回 409 `{ "code": "BUSY" }`。
 
-## GET /api/tasks/:id
+## GET /api/tasks/:id（规划，未实现）
 
 ```
 { "ok": true, "data": { "id": "t_01", "type": "crawl", "state": "running", "progress": 42,

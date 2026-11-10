@@ -170,13 +170,18 @@
           cookie: s.cookie
         };
         save();
+        if (window.__ptaSyncSite) window.__ptaSyncSite(host, s);
       },
-      reset: function (host) { delete data.overrides[host]; save(); },
+      reset: function (host) {
+        delete data.overrides[host]; save();
+        if (window.__ptaSyncDrop) window.__ptaSyncDrop(host);
+      },
       remove: function (host) {
         data.added = data.added.filter(function (a) { return a.host !== host; });
         delete data.overrides[host];
         if (data.hidden.indexOf(host) < 0) data.hidden.push(host);
         save();
+        if (window.__ptaSyncDrop) window.__ptaSyncDrop(host);
       }
     };
   }
@@ -193,7 +198,9 @@
     });
   }
 
+  var lastSiteRecords = null;
   function applySites(records, source) {
+    if (records) lastSiteRecords = records.slice();
     var list = buildSites(records);
     var store = window.__ptaStore;
     store.data.added.forEach(function (a) { list.push(makeSite(a)); });
@@ -226,11 +233,62 @@
         if (!j || !j.ok || !j.data || !Array.isArray(j.data.sites) || !j.data.sites.length) return false;
         window.__ptaSiteCounts = j.data.counts || null;
         applySites(j.data.sites, "api");
+        if (typeof loadSiteCfgFromApi === "function") loadSiteCfgFromApi();
         return true;
       })
       .catch(function () { return false; });
   }
   window.__ptaLoadSites = loadSitesFromApi;
+
+  /* 站点配置：写回服务端（密码 / cookie / totp 永不发送），并在启动时用服务端值覆盖本地 */
+  var SITE_SYNC_FIELDS = [
+    "enabled", "url", "arch", "tfa", "interval", "pages", "concurrency", "dupeCheck", "note",
+    "cats", "fullDiscOnly", "minRes", "minSize", "exclude", "queueMode", "window",
+    "mode", "stopAtKnown", "fullCycle", "trigger", "dailyAt", "everyMin",
+    "timeWindow", "winStart", "winEnd", "jitter", "loginMethod", "username"
+  ];
+  function serverMode() {
+    return !!window.fetch && /^https?:$/.test(location.protocol);
+  }
+  function siteSyncBody(s) {
+    var out = {};
+    SITE_SYNC_FIELDS.forEach(function (k) { if (s[k] !== undefined) out[k] = s[k]; });
+    return out;
+  }
+  window.__ptaSyncSite = function (host, s) {
+    if (!serverMode() || !window.__ptaSiteSource || window.__ptaSiteSource !== "api") return;
+    fetch("/api/site-config/" + encodeURIComponent(host), {
+      method: "PUT", credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(siteSyncBody(s))
+    }).catch(function () {});
+  };
+  window.__ptaSyncDrop = function (host) {
+    if (!serverMode() || window.__ptaSiteSource !== "api") return;
+    fetch("/api/site-config/" + encodeURIComponent(host), {
+      method: "DELETE", credentials: "same-origin"
+    }).catch(function () {});
+  };
+
+  function loadSiteCfgFromApi() {
+    if (!serverMode()) return Promise.resolve(false);
+    return fetch("/api/site-config", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !j.data) return false;
+        var store = window.__ptaStore;
+        var sites = j.data.sites || {};
+        Object.keys(sites).forEach(function (h) {
+          store.data.overrides[h] = Object.assign({}, store.data.overrides[h] || {}, sites[h]);
+        });
+        if (Array.isArray(j.data.hidden)) store.data.hidden = j.data.hidden.slice();
+        store.save();
+        applySites(lastSiteRecords || siteRecordsFromLocal());
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  window.__ptaLoadSiteCfg = loadSiteCfgFromApi;
 
   applySites(siteRecordsFromLocal());
 
