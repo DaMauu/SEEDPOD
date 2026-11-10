@@ -346,6 +346,7 @@
         applySites(j.data.sites, "api");
         if (window.__ptaPaintTopbar) window.__ptaPaintTopbar();
         if (typeof loadSiteCfgFromApi === "function") loadSiteCfgFromApi();
+        loadCredsOnce();
         return true;
       })
       .catch(function () { return false; });
@@ -401,6 +402,23 @@
       .catch(function () { return false; });
   }
   window.__ptaLoadSiteCfg = loadSiteCfgFromApi;
+
+  /* 哪些站已经有 cookie：读一次 /api/credentials，只拿 hasCookie，标到站点上供抽屉显示 */
+  function loadCredsOnce() {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+    return fetch("/api/credentials", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !Array.isArray(j.data)) return false;
+        var have = {};
+        j.data.forEach(function (c) { if (c && c.hasCookie) have[c.host] = true; });
+        (window.PTA_SITES || []).forEach(function (s) { s.cookieSaved = !!have[s.name]; });
+        if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  window.__ptaLoadCreds = loadCredsOnce;
 
   applySites(siteRecordsFromLocal());
 
