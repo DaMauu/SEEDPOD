@@ -2012,6 +2012,7 @@
             '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条">' +
               [[5,'5 条（试）'],[20,'20 条'],[100,'100 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
             '</select>' +
+            '<button class="btn ghost slim" id="crawl-plan-btn" title="只读本地配置，不发请求">看地址</button>' +
             '<button class="btn slim" id="crawl-live-run">抓一页</button>' +
             '<button class="btn primary slim" id="crawl-dry-run">干跑自检</button>' +
           "</div>" +
@@ -2153,6 +2154,35 @@
     fillCrawlSites();
     if (crawlSiteSel) crawlSiteSel.addEventListener("change", function () {
       try { localStorage.setItem(CKEY, crawlSiteSel.value); } catch (e) {}
+    });
+
+    /* 看地址：只调 /api/crawl/plan 读本地配置拼 URL，不发任何请求 */
+    var planBtn = $("#crawl-plan-btn");
+    if (planBtn) planBtn.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
+      var h0 = (crawlSiteSel && crawlSiteSel.value) || "";
+      if (!h0) { toast("先在右上角「选来源站」里挑一个站"); return; }
+      planBtn.disabled = true;
+      fetch("/api/crawl/plan", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ host: h0 })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        planBtn.disabled = false;
+        if (!j || !j.ok) { toast((j && j.error && j.error.message) || "拿不到抓取计划"); return; }
+        var p = j.data || {};
+        var box = $("#crawl-dry-box");
+        var meta = $("#crawl-dry-meta");
+        if (meta) meta.textContent = "下一抓 · 分类 " + (p.categoryId || "全部");
+        if (box) {
+          box.hidden = false;
+          box.innerHTML = '<div class="dl-dry-head"><b>下一抓 · ' + escapeHtml(p.host || "") + "</b>" +
+              '<span class="dl-dry-p">分类 ' + escapeHtml(p.categoryId || "全部") + "</span></div>" +
+            '<div class="dl-dry-note" style="word-break:break-all">GET ' + escapeHtml(p.url || "") + "</div>" +
+            '<div class="dl-dry-note">间隔至少 ' + Math.round((p.minGapMs || 0) / 1000) + " 秒 · 单站每天最多 " +
+              (p.dailyMax || 0) + " 次 · 请求里带的等待 " + (p.requestDelay || 0) + " 秒</div>" +
+            "<em>只是读出本地配置拼的地址，没有发请求</em>";
+        }
+      }).catch(function () { planBtn.disabled = false; toast("计划请求发不出去"); });
     });
 
     /* 真抓一页：只发一次 GET，服务端守住 30 秒间隔与每日上限；失败按错误码说人话 */

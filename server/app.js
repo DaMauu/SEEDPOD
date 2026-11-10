@@ -405,7 +405,7 @@ async function crawlOnceInner(host, opts) {
   const rec = state[host] || { lastAt: 0, day: today, count: 0, page: 0 };
   if (rec.day !== today) { rec.day = today; rec.count = 0; rec.page = 0; }
   if (now - (rec.lastAt || 0) < CRAWL_MIN_GAP_MS) {
-    return { err: { code: 'TOO_SOON', message: '距上次抓取不到 6 秒，等一下再抓',
+    return { err: { code: 'TOO_SOON', message: '距上次抓取不到 30 秒，等一下再抓',
       extra: { waitMs: CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0)) } } };
   }
   if (rec.count >= CRAWL_DAILY_MAX) {

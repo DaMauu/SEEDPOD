@@ -626,7 +626,7 @@ async function main() {
     need(anon.status === 401, '未登录能读本地库：' + anon.status);
   });
 
-  await check('抓取：一次 GET 入库，并守住 6 秒间隔', async () => {
+  await check('抓取：一次 GET 入库，并守住 30 秒间隔', async () => {
     const http = require('http');
     const page = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'nexusphp-browse.html'), 'utf8');
     let hits = 0;
@@ -664,7 +664,7 @@ async function main() {
       const again = await fetchA(BASE + '/api/crawl/run', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
       });
-      need(again.status === 429, '6 秒内第二次抓取没被拦住：' + again.status);
+      need(again.status === 429, '30 秒内第二次抓取没被拦住：' + again.status);
       const st = await (await fetchA(BASE + '/api/crawl/status?host=' + chost)).json();
       need(st.ok && st.data.count === 1 && st.data.page === 1, '抓取状态没记住：' + JSON.stringify(st.data).slice(0, 160));
       need(st.data.nextPage === undefined && st.data.waitMs > 0, '冷却剩余时间不对：' + JSON.stringify(st.data).slice(0, 120));
@@ -672,7 +672,7 @@ async function main() {
       const ov2 = await (await fetchA(BASE + '/api/stats/overview')).json();
       need(ov2.data.crawl && ov2.data.crawl.runsToday >= 1, '系统状态没统计今日抓取次数：' + JSON.stringify(ov2.data.crawl));
 
-      /* 同一站并发抓取：第二个必须被拦（409 BUSY），不能绕过 6 秒间隔打两发 */
+      /* 同一站并发抓取：第二个必须被拦（409 BUSY），不能绕过 30 秒间隔打两发 */
       const chost2 = 'crawlbusy.example';
       fs.writeFileSync(path.join(DATA, 'site-defs', chost2 + '.json'), JSON.stringify({
         host: chost2, base: 'http://127.0.0.1:' + port, engine: 'nexusphp', searchPath: '/torrents.php',
@@ -689,7 +689,7 @@ async function main() {
       need(codes.indexOf(409) >= 0, '并发抓取没被拦住：' + codes.join('/'));
       try { fs.unlinkSync(path.join(DATA, 'site-defs', chost2 + '.json')); } catch (e) {}
 
-      /* 登录失效也要记时间戳：立刻重试应该被 6 秒间隔挡住，而不是再打一次站点 */
+      /* 登录失效也要记时间戳：立刻重试应该被 30 秒间隔挡住，而不是再打一次站点 */
       const chost3 = 'crawl401.example';
       fs.writeFileSync(path.join(DATA, 'site-defs', chost3 + '.json'), JSON.stringify({
         host: chost3, base: 'http://127.0.0.1:' + port, engine: 'nexusphp', searchPath: '/torrents.php',
