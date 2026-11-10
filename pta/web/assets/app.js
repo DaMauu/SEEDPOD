@@ -1197,7 +1197,7 @@
               id: it.id, title: it.title, site: it.site || "", res: it.res || matchResOf(it.title),
               size: it.size || "", time: it.createdAt ? String(it.createdAt).slice(5, 16).replace("T", " ") : "",
               status: it.status, marks: it.marks || {}, type: it.catName || "", cat: it.cat || "",
-              detailsUrl: it.detailsUrl || ""
+              detailsUrl: it.detailsUrl || "", seeders: Number(it.seeders) || 0
             };
           });
           window.__ptaSourcesTotal = j.data.total;
@@ -1280,7 +1280,8 @@
             return href ? '<a class="t-link" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.title) + "</a>"
               : escapeHtml(it.title);
           })() + "</b>" +
-          '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") + toggles + "</span></span>" +
+          '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") +
+          (it.seeders ? '<i class="cat-site">做种 ' + it.seeders + "</i>" : "") + toggles + "</span></span>" +
           '<span>' + (function () {
             var t = it.type || catNameFromDef(it.site, it.cat);
             return t ? '<em class="chip np">' + escapeHtml(t) + "</em>" : '<span class="soft">—</span>';
