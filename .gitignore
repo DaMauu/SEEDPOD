@@ -1,11 +1,13 @@
 node_modules/
-# 本地真实站点数据（不提交）
+
+# 真实站点数据与本地采集结果（不提交）
 pta/web/assets/sites-data.local.js
 pta/data/site-arch.local.csv
 pta/data/sites-bookmark.local.json
 pta/data/site-search.local.json
+pta/data/site-defs/
 *.local.json
 
-# 容器数据目录（配置、SQLite）
+# 容器与运行时数据目录
 /data/
 data/

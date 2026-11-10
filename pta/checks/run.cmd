@@ -16,15 +16,20 @@ echo ==== audit (every clickable element) ====
 set AUDIT=%errorlevel%
 
 echo.
+echo ==== adapter (site parsers, offline) ====
+"%PTA_NODE%" pta\checks\adapter.js
+set ADAPTER=%errorlevel%
+
+echo.
 echo ==== api (backend contract) ====
 if not defined PTA_NODE set PTA_NODE=node
 "%PTA_NODE%" pta\checks\api.js
 set APIC=%errorlevel%
 
 echo.
-if %SMOKE%==0 if %AUDIT%==0 if %APIC%==0 (
+if %SMOKE%==0 if %AUDIT%==0 if %ADAPTER%==0 if %APIC%==0 (
   echo ALL CHECKS PASSED
   exit /b 0
 )
-echo FAILED: smoke=%SMOKE% audit=%AUDIT% api=%APIC%
+echo FAILED: smoke=%SMOKE% audit=%AUDIT% adapter=%ADAPTER% api=%APIC%
 exit /b 1

@@ -1,0 +1,19 @@
+{
+  "_说明": "站点定义示例：适配器的输入。真实定义在 pta/data/site-defs/<host>.json（不入库）。",
+  "_怎么来": "用本机浏览器登录态读该站种子页，解析分类链接/下拉框，再按关键词归到用途；登录字段取自 takelogin.php 表单。",
+  "host": "example.org",
+  "base": "https://example.org",
+  "engine": "nexusphp",
+  "login": {
+    "path": "/takelogin.php",
+    "method": "POST",
+    "fields": { "username": "username", "password": "password" }
+  },
+  "searchPath": "/torrents.php",
+  "params": { "search": "{q}", "search_area": "0", "search_mode": "0", "cat": "{cats}" },
+  "catMode": "single",
+  "cats": { "movie": ["401"], "tv": ["402"], "doc": ["404"], "music": ["406"], "anime": ["405"] },
+  "rate": { "minGapMs": 1000, "jitterMs": 800, "maxPerRun": 20 },
+  "note": "catMode 可选 single / multi / bracket，对应 cat=401 或 cat=401&cat=402 或 cat[]=401",
+  "updatedAt": null
+}

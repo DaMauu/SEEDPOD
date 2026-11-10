@@ -95,6 +95,16 @@ Chrome 必须以 `--remote-debugging-port=9222` 启动，脚本用 CDP 连过去
 `/api/queue` 0 条、`/api/downloaders` 0 条、干跑任务能提交并按 5 步跑完、公网入口 200。
 带 `?v=` 的新前端已经生效，不带版本号的 app.js 仍是 Cloudflare 旧缓存。
 
+## 站点适配（新）
+
+- `server/adapters/nexusphp.js`：纯解析层，`detect / parseCategories / parseList / buildSearchUrl / parseLoginForm`，不发任何请求
+- `pta/fixtures/nexusphp-browse.html`：脱敏夹具，`pta/checks/adapter.js` 5 条断言守着它
+- `pta/data/site-defs/<host>.json`：每站一份定义（登录、搜索参数、分类、限速），由 `scripts/collect-site-defs.js` 从采集结果生成，不入库
+- 示例结构见 `docs/site-def.example.json`
+
+已知差距：拿真实保存的三页回放，列表行数与标题/大小都对（各 101 行），但分类 id 与标题质量还没对齐，
+需要按站微调选择器；这一步只在本机用保存的页面做，不再发请求。
+
 ## 检查
 
 ```
