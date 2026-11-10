@@ -1299,6 +1299,57 @@
         toast(editing >= 0 ? "已保存：" + data.name : "已新增：" + data.name);
       });
 
+      var testBtn = $("#nd-test");
+      if (testBtn) testBtn.addEventListener("click", function () {
+        var res = $("#nd-test-res");
+        var url = ($("#nd-qb").value || "").trim();
+        var user = ($("#nd-user").value || "").trim();
+        var pass = $("#nd-pass").value || "";
+        if (!url) { toast("先填 qB 地址"); return; }
+        if (!/^https?:\/\//i.test(url)) { toast("地址要以 http:// 或 https:// 开头"); return; }
+        if (!window.fetch || !/^https?:$/.test(location.protocol)) {
+          toast("本地预览没有后端，连接测试不可用");
+          if (res) res.textContent = "本地预览没有后端，连接测试不可用";
+          return;
+        }
+        testBtn.disabled = true;
+        if (res) res.textContent = "正在连接…";
+        fetch("/api/downloaders", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: ($("#nd-name").value || "").trim() || "下载器", url: url, user: user, pass: pass })
+        }).then(function (r) {
+          return r.json().then(function (j) { return { status: r.status, j: j }; },
+            function () { return { status: r.status, j: null }; });
+        }).then(function (out) {
+          if (!out.j || !out.j.ok) {
+            var msg = (out.j && out.j.error && out.j.error.message) || ("保存失败 " + out.status);
+            if (res) res.textContent = msg;
+            toast(msg);
+            return null;
+          }
+          var id = out.j.data.id;
+          return fetch("/api/downloaders/" + encodeURIComponent(id) + "/test", { method: "POST", credentials: "same-origin" })
+            .then(function (r) { return r.json(); })
+            .then(function (tj) {
+              if (!tj || !tj.ok) { if (res) res.textContent = "探测失败"; toast("探测失败"); return; }
+              var d = tj.data;
+              var pass2 = d.pass === true;
+              var lines = (d.steps || []).map(function (s) {
+                return s.step + ":" + (s.status || "—") + (s.error ? "(" + s.error + ")" : "") + " " + (s.ms || 0) + "ms";
+              }).join(" · ");
+              if (res) res.textContent = (pass2 ? "通过 · " + d.version : "不通") + (lines ? " · " + lines : "");
+              toast(pass2 ? "连接通过 · " + d.version : "连接失败");
+              return fetch("/api/downloaders/" + encodeURIComponent(id), { method: "DELETE", credentials: "same-origin" }).catch(function () {});
+            });
+        }).catch(function () {
+          if (res) res.textContent = "本地预览没有后端，连接测试不可用";
+          toast("连接测试不可用");
+        }).then(function () {
+          testBtn.disabled = false;
+        });
+      });
+
       $("#nd-fetch").addEventListener("click", function () {
         var b = this;
         b.disabled = true;

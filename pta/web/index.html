@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261110e">
+<link rel="stylesheet" href="assets/app.css?v=20261110f">
 </head>
 <body data-page="dashboard">
 <div class="layout">
@@ -316,6 +316,10 @@
       <div class="nd-cats-list" id="nd-cat-list"></div>
       <p class="nd-cats-hint">从这台 qB 里读出来的分类，新任务默认用选中的那个。</p>
     </div>
+    <div class="nd-probe">
+      <button class="btn ghost slim" id="nd-test">测试连接</button>
+      <span class="nd-probe-res" id="nd-test-res">只连你自己填的地址，8 秒超时</span>
+    </div>
     <div class="modal-foot">
       <button class="btn ghost slim danger" id="node-del">删除</button>
       <div class="spacer"></div>
@@ -338,6 +342,6 @@
 <div id="dock-root"></div>
 <script src="assets/sites-data.js"></script>
 <script src="assets/sites-data.local.js" onerror="void 0"></script>
-<script src="assets/app.js?v=20261110e"></script>
+<script src="assets/app.js?v=20261110f"></script>
 </body>
 </html>

@@ -181,6 +181,22 @@ async function main() {
     need(/\.json$/.test(d.suggestedFilename()), '导出文件名不对：' + d.suggestedFilename());
   });
 
+  /* 5.5 下载器连接测试：没有后端时必须给提示 */
+  await check('下载器连接测试在没有后端时给出提示', async () => {
+    await open('#crawl');
+    await page.click('#node-add');
+    await page.waitForTimeout(250);
+    need(await page.locator('#node-modal').isVisible(), '下载器弹窗没有打开');
+    await page.fill('#nd-name', '检查用');
+    await page.fill('#nd-qb', 'http://127.0.0.1:8080');
+    await page.click('#nd-test');
+    await page.waitForTimeout(300);
+    const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
+    need(/不可用|没有后端/.test(t), '没有给出不可用提示：' + t);
+    await page.click('#node-cancel');
+    await page.waitForTimeout(150);
+  });
+
   /* 6.5 干跑按钮：没有后端时必须给提示，不许静默或发真实请求 */
   await check('干跑按钮在没有后端时给出提示', async () => {
     await open('#sources');
