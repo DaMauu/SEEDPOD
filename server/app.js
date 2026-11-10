@@ -1176,6 +1176,11 @@ const MIME = {
 function serveStatic(req, res, urlPath) {
   let rel = decodeURIComponent(urlPath.split('?')[0]);
   if (rel === '/' || rel === '') rel = '/index.html';
+  /* *.local.* 是本机数据（真实站点清单等），一律不通过 HTTP 发出去 */
+  if (/\.local\.[a-z0-9]+$/i.test(rel) || /(^|\/)\./.test(rel)) {
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    return res.end('not found');
+  }
   const file = path.join(WEB_DIR, rel);
   if (!file.startsWith(WEB_DIR)) return fail(res, 403, 'FORBIDDEN', '越界路径');
   fs.stat(file, (err, st) => {
