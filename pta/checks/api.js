@@ -581,10 +581,10 @@ async function main() {
     need(plan, '任务没有带计划');
     need(plan.pages === 3 && plan.concurrency === 2, '计划没读到站点配置：' + JSON.stringify(plan).slice(0, 140));
     need(plan.catGroups === 2 && plan.catIds === 3, '计划里的分类统计不对：' + JSON.stringify(plan).slice(0, 160));
-    need(plan.estimatedQueries === 6, '预估查询数不对：' + plan.estimatedQueries);
+    need(plan.estimatedQueries === 9, '预估查询数不对（3 个分类 id × 3 页）：' + plan.estimatedQueries);
     need(plan.inList === false, '不存在的站点却标成在清单里');
     need(Array.isArray(plan.warnings) && plan.warnings.length > 0, '缺警告');
-    need(Array.isArray(plan.searchUrls) && plan.searchUrls.length === 2, '搜索 URL 条数不对：' + JSON.stringify(plan.searchUrls || []).slice(0, 120));
+    need(Array.isArray(plan.searchUrls) && plan.searchUrls.length === 3, '搜索 URL 条数不对（每个分类 id 一条）：' + JSON.stringify(plan.searchUrls || []).slice(0, 160));
     const u = plan.searchUrls[0].url;
     need(u.indexOf('https://' + host + '/torrents.php?') === 0, '搜索 URL 前缀不对：' + u);
     need(/cat=1/.test(u) && /search=%7Bq%7D/.test(u), '搜索 URL 参数不对：' + u);

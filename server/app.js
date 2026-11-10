@@ -687,9 +687,13 @@ function buildDryPlan(host) {
     if (def.engine && !adapters.byName(def.engine)) warnings.push('该站引擎是 ' + def.engine + '，还没有对应的解析适配器');
     if (def.engine && def.engine !== 'nexusphp') warnings.push('该站引擎是 ' + def.engine + '，解析走适配器 ' + def.engine + '（列表与分类字段可能有差异）');
     if (def.base) {
+      /* 一个分类 id 一条搜索 URL：各引擎的多分类写法不一样，按单个 id 拼最稳 */
       groups.forEach(function (k) {
-        if (searchUrls.length >= 10) return;
-        searchUrls.push({ cat: k, url: adapters.buildSearchUrl(def, '{q}', cats[k] || []) });
+        const ids = cats[k] || [];
+        (ids.length ? ids : [null]).forEach(function (id) {
+          if (searchUrls.length >= 10) return;
+          searchUrls.push({ cat: k, catId: id, url: adapters.buildSearchUrl(def, '{q}', id ? [id] : []) });
+        });
       });
     }
   }
@@ -703,7 +707,7 @@ function buildDryPlan(host) {
     engine: preset && preset.engine ? preset.engine : '',
     catGroups: groups.length,
     catIds: ids,
-    estimatedQueries: groups.length * pages,
+    estimatedQueries: (ids || groups.length) * pages,
     knownCats: groups,
     searchUrls: searchUrls,
     inList: inList,

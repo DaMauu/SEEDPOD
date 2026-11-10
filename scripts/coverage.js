@@ -28,11 +28,15 @@ for (const it of list) {
 
 const state = readJson(path.join(DATA, 'samples', '_state.json'), {});
 const analysis = readJson(path.join(DATA, 'analysis.json'), {});
+let rawFiles = [];
+try { rawFiles = fs.readdirSync(path.join(DATA, 'samples')).filter(function (f) { return /\.html\.gz$/.test(f); }); } catch (e) { rawFiles = []; }
+const rawSet = {};
+rawFiles.forEach(function (f) { rawSet[f.replace(/\.html\.gz$/, '')] = 1; });
 const presets = (readJson(path.join(DATA, 'site-search.local.json'), { sites: {} }).sites) || {};
 
 const report = {
   total: targets.length,
-  sampled: 0, failedList: [], notSampled: [],
+  sampled: 0, withRaw: 0, analysisOnly: [], failedList: [], notSampled: [],
   engine: {}, byArch: {}, unparsed: [], noCats: [], noRows: [], noPreset: [],
   generatedAt: new Date().toISOString()
 };
@@ -49,6 +53,7 @@ targets.forEach(function (t) {
     return;
   }
   report.sampled++;
+  if (rawSet[t.host.replace(/[^a-z0-9.-]/gi, '_')]) report.withRaw++; else report.analysisOnly.push(t.host);
 
   const e = a.engine || 'unknown';
   report.engine[e] = (report.engine[e] || 0) + 1;
@@ -64,8 +69,8 @@ targets.forEach(function (t) {
 fs.writeFileSync(path.join(DATA, 'coverage.json'), JSON.stringify(report, null, 1), 'utf8');
 
 const pct = function (n) { return report.total ? Math.round(n / report.total * 100) : 0; };
-console.log('清单 ' + report.total + ' 站：已采样 ' + report.sampled + '（' + pct(report.sampled) + '%），' +
-  '未开始 ' + report.notSampled.length + '，采样失败 ' + report.failedList.length);
+console.log('清单 ' + report.total + ' 站：有分析 ' + report.sampled + '（' + pct(report.sampled) + '%，其中原始样本 ' + report.withRaw + '）' +
+  '，未开始 ' + report.notSampled.length + '，采样失败 ' + report.failedList.length);
 const eng = Object.keys(report.engine).map(function (k) { return k + ' ' + report.engine[k]; }).join(' / ');
 console.log('引擎：' + (eng || '无') + '；有搜索预设 ' + Object.keys(presets).length + ' 站');
 console.log('未识别 ' + report.unparsed.length + '，有引擎无分类 ' + report.noCats.length + '，有引擎无列表 ' + report.noRows.length);
