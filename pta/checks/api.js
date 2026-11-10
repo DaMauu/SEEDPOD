@@ -1001,6 +1001,49 @@ async function main() {
     need(health.ok, '健康检查不应要求登录');
   });
 
+  await check('发布记账：词条标已发布并留记录', async () => {
+    const catAdd = await (await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: '', siteId: 'pub1', title: 'Publish Fixture 2025 2160p 原盘 中字', res: '2160p', size: '60.00 GB' }] })
+    })).json();
+    need(catAdd.ok && catAdd.data.added === 1, '准备词条失败');
+    const list = await (await fetchA(BASE + '/api/catalog?q=Publish Fixture')).json();
+    const cid = list.data.items[0].id;
+
+    const dl = await (await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '记账用下载器', url: 'http://127.0.0.1:9' })
+    })).json();
+    need(dl.ok, '准备下载器失败：' + JSON.stringify(dl).slice(0, 120));
+
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Publish Fixture 2025 2160p 原盘 中字', res: '2160p', size: '60.00 GB', catalogId: cid, anonymous: true, imageHost: 'Imgbox' })
+    })).json();
+    const qid = q.data.id;
+    const app = await fetchA(BASE + '/api/queue/' + qid + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'approve' })
+    });
+    need(app.ok, '批准失败：' + JSON.stringify(await app.json()).slice(0, 140));
+    const pub = await fetchA(BASE + '/api/queue/' + qid + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish' })
+    });
+    const pj = await pub.json();
+    need(pub.ok, '发布失败：' + JSON.stringify(pj).slice(0, 160));
+
+    const rec = await (await fetchA(BASE + '/api/published')).json();
+    need(rec.ok && rec.data.total >= 1, '没有发布记录');
+    const hit = rec.data.items.filter(x => x.queueId === qid)[0];
+    need(hit && hit.anonymous === true && hit.imageHost === 'Imgbox', '发布记录字段没带上：' + JSON.stringify(hit || {}).slice(0, 160));
+
+    const cat = await (await fetchA(BASE + '/api/catalog?status=published')).json();
+    if (!cat.data.items.some(x => x.id === cid)) {
+      const all = await (await fetchA(BASE + '/api/catalog?q=Publish Fixture')).json();
+      need(false, '词条没标成已发布，状态：' + JSON.stringify((all.data.items[0] || {}).status) + ' / archived ' + (await (await fetchA(BASE + '/api/catalog?status=archived')).json()).data.total);
+    }
+    await fetchA(BASE + '/api/downloaders/' + dl.data.id, { method: 'DELETE' });
+  });
+
   await check('筛选条件取自面板配置', async () => {
     const rows = [
       { v: '2160p 及以上', on: false, sel: [] },

@@ -590,6 +590,25 @@ function composePublish(item) {
   };
 }
 
+/* ---------- 发布记录：只记账，不发外部站点 ---------- */
+const PUBLISHED_FILE = path.join(DATA_DIR, 'published.json');
+function readPublished() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(PUBLISHED_FILE, 'utf8'));
+    return Array.isArray(raw && raw.items) ? raw.items : [];
+  } catch (e) {
+    return [];
+  }
+}
+function appendPublished(rec) {
+  try {
+    const items = readPublished();
+    items.unshift(rec);
+    if (items.length > 5000) items.length = 5000;
+    fs.writeFileSync(PUBLISHED_FILE, JSON.stringify({ updatedAt: new Date().toISOString(), items }, null, 0), { mode: 0o600 });
+  } catch (e) {}
+}
+
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
 const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
@@ -599,7 +618,7 @@ const QUEUE_FLOW = {
   rejected: [],
   published: []
 };
-const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note', 'category', 'imageHost'];
+const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note', 'category', 'imageHost', 'catalogId'];
 
 function readQueue() {
   try {
@@ -681,6 +700,18 @@ function queueAction(id, body) {
   item.status = target;
   item.updatedAt = new Date().toISOString();
   if (reason) item.reason = reason;
+  if (action === 'publish') {
+    /* 发布成功：词条库里对应词条标为已发布，并留一条发布记录（不调外部站点，只记账） */
+    item.publishedAt = item.updatedAt;
+    if (item.catalogId) catalogStore.setStatus(item.catalogId, 'published');
+    appendPublished({
+      id: 'pub_' + String(Date.now()),
+      site: item.site || '', title: item.title || '', res: item.res || '', size: item.size || '',
+      infohash: item.infohash || '', catalogId: item.catalogId || '', queueId: item.id,
+      anonymous: item.anonymous === true, imageHost: item.imageHost || '站内',
+      cn: item.cn || '', at: item.updatedAt
+    });
+  }
   try { writeQueue(q); } catch (e) { return { err: { code: e.code || 'INTERNAL', message: e.message } }; }
   logEvent(action === 'reject' ? 'warn' : 'info', '待审核', action + ' · ' + (item.title || item.id).slice(0, 60) + (reason ? ' · ' + reason.slice(0, 80) : ''));
   return { item: item };
@@ -1644,6 +1675,10 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, data: out });
     }
     /* ---------- 词条库：第一步抓取的结果 ---------- */
+    if (p === '/api/published' && req.method === 'GET') {
+      const items = readPublished();
+      return send(res, 200, { ok: true, data: { total: items.length, items: items.slice(0, 100) } });
+    }
     if (p === '/api/publish/preview' && req.method === 'GET') {
       const id = u.searchParams.get('id') || '';
       const item = readQueue().items.filter(function (x) { return x.id === id; })[0];
