@@ -59,10 +59,12 @@ node scripts/discover-paths.js --dry     # 看会打哪些站
 node scripts/discover-paths.js           # 每站最多 2 次 GET：首页 + 导航里挑出的种子页
 ```
 
-- 首页源码里找 `种子 / 资源 / Torrents / Browse` 这类入口，按路径和文字打分，排除规则、论坛、账号等噪声
+- 首页源码里找 `种子 / 资源 / Torrents / Browse` 这类入口，按路径和文字打分，排除规则、论坛、账号、mytorrents、
+  torrentrequest 等噪声，支持 `index.php?page=torrents` 这种查询式入口
 - 找到就把列表页存成样本、记住路径（样本状态记 `discovered`），之后 `sample-sites.js` 会优先走这个路径
 - 认不出来记 `no-nav`，拿到空页记 `discovered-empty`，12 小时内不再重试
 - 登录墙、连不上、Cloudflare 这三类不参与（不是路径问题），仍要人工登录或换网络
+- 用 79 份真实样本回放验证：首选路径命中 65%，错误的候选 0 条；剩下 35% 是没有导航链接的 JS 空壳/登录页
 
 ## 发到测试机
 

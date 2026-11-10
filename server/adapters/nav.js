@@ -7,7 +7,7 @@ function decode(s) {
 }
 
 /* 明显不是种子列表的入口：账号、规则、论坛、上传、登录之类 */
-const DECOY = /(login|logout|signup|register|takelogin|usercp|userdetails|user\.php|donate|rules|faq|wiki|help|staff|forums?|viewtopic|chat|invite|upload|takeupload|mybonus|messages?|pm\.php|rss|api\/|opensearch|favicon|\.css|\.js$|\.png|\.jpg)/i;
+const DECOY = /(login|logout|signup|register|takelogin|usercp|userdetails|user\.php|donate|rules|faq|wiki|help|staff|forums?|viewtopic|chat|invite|upload|takeupload|mybonus|messages?|pm\.php|rss|api\/|opensearch|favicon|\.css|\.js$|\.png|\.jpg|mytorrents|torrentrequest|torrent-?recovery|recovery|requests?)/i;
 
 /* 值得当种子页的路径特征 */
 const GOOD_HREF = /(^|\/)(torrents?(\.php)?|browse(\.php)?|torrents\.php|list\.php)/i;
@@ -27,15 +27,28 @@ function normPath(href) {
 function scoreFor(path, text) {
   let score = 0;
   if (GOOD_HREF.test(path)) score += 3;
-  if (/^\/torrents?\.php$/i.test(path)) score += 3;
+  if (/^\/torrents?\.php$/i.test(path)) score += 4;
+  if (/\/(mytorrents|torrentrequest|torrent-?recovery)/i.test(path)) score -= 8;
   if (/^\/torrents?\/?$/i.test(path)) score += 3;
   if (/^\/browse(\.php)?\/?$/i.test(path)) score += 2;
   if (/torrent/i.test(path)) score += 1;
+  if (/[?&](page|action|do)=torrents/i.test(path)) score += 5;      /* index.php?page=torrents 这类写法 */
   if (GOOD_TEXT.test(text)) score += 3;
   if (/(种子|資源|资源|torrents?|browse)/i.test(text)) score += 1;
   if (path.split('/').filter(Boolean).length > 2) score -= 2;      /* 深层页面多半不是列表 */
   if (DECOY.test(path) || DECOY.test(text)) score -= 6;
   return score;
+}
+
+/* 把链接变成「可以第二次请求的目标」：一般就是路径，?page=torrents 这种要带上查询 */
+function targetOf(href) {
+  try {
+    const u = new URL(decode(href), 'https://placeholder.invalid/');
+    const p = u.pathname || '/';
+    if (p.length > 80) return '';
+    if (/[?&](page|action|do)=torrents/i.test(u.search)) return p + u.search.slice(0, 60);
+    return p;
+  } catch (e) { return ''; }
 }
 
 /* html：首页源码；limit：最多给几条候选 */
@@ -53,12 +66,13 @@ function findTorrentLinks(html, limit) {
     seenUrl[href] = 1;
     const path = normPath(href);
     if (!path || path === '/') continue;
-    const key = path.toLowerCase();
+    const target = targetOf(href) || path;
+    const key = target.toLowerCase();
     if (seenPath[key]) continue;
-    const s = scoreFor(path, text);
+    const s = scoreFor(target, text);
     if (s <= 0) continue;
     seenPath[key] = 1;
-    out.push({ path: path, text: text.slice(0, 40), score: s, href: href });
+    out.push({ path: path, target: target, text: text.slice(0, 40), score: s, href: href });
   }
   out.sort(function (a, b) { return b.score - a.score; });
   /* 只要前几条，并且分数太低的不算候选 */
@@ -70,7 +84,7 @@ function pickBrowsePath(html, tried) {
   const triedList = (tried || []).map(function (p) { return String(p).toLowerCase().replace(/\/+$/, '') || '/'; });
   const cands = findTorrentLinks(html, 5);
   for (const c of cands) {
-    const key = c.path.toLowerCase().replace(/\/+$/, '') || '/';
+    const key = String(c.target || c.path).toLowerCase().replace(/\/+$/, '') || '/';
     if (triedList.indexOf(key) < 0) return c;
   }
   return null;
