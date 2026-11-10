@@ -23,7 +23,7 @@ const RULES = [
   ['movie', /(电影|影片|movie|film|blu-?ray|uhd|4k|remux)/i]
 ];
 function purposeOf(label) {
-  const s = String(label || '');
+  const s = String(label || '').replace(/[\s\u3000]+/g, '');     /* 「电 影」这种拆字写法先拼回去 */
   for (const r of RULES) if (r[1].test(s)) return r[0];
   return 'other';
 }
@@ -63,7 +63,13 @@ Object.keys(analysis).sort().forEach(function (host) {
   });
   if (!catMap.length) noCats++;
 
-  const params = a.params || dflt.params;
+  const params = Object.assign({}, dflt.params, a.params || {});
+  /* 分类参数必须有：采样时没认出来就按引擎默认补一个，否则搜索不会按分类过滤 */
+  const hasCatParam = Object.keys(params).some(function (k) { return /cat/i.test(k); });
+  if (!hasCatParam && Object.keys(catMap).length !== 0) {
+    const key = a.engine === 'unit3d' ? 'categories[0]' : a.engine === 'gazelle' ? 'filter_cat[1]' : 'cat';
+    params[key] = '{cats}';
+  }
   const def = {
     host: host,
     base: 'https://' + host,

@@ -1,11 +1,12 @@
 /* 适配器入口：按引擎分发，三种引擎（NexusPHP / UNIT3D / Gazelle）对外都是同一组纯函数。
    任何解析都不发请求；请求由调用方决定。 */
 const nexusphp = require('./nexusphp');
+const generic = require('./generic');
 const unit3d = require('./unit3d');
 const gazelle = require('./gazelle');
 
-const ADAPTERS = [unit3d, gazelle, nexusphp];      /* 先认特征更强的，NexusPHP 的检测最宽松放到最后 */
-const BY_NAME = { nexusphp: nexusphp, unit3d: unit3d, gazelle: gazelle };
+const ADAPTERS = [unit3d, gazelle, nexusphp, generic];      /* 先认特征更强的，NexusPHP 的检测最宽松放到最后 */
+const BY_NAME = { nexusphp: nexusphp, unit3d: unit3d, gazelle: gazelle, custom: generic, generic: generic };
 
 function byName(name) {
   const key = String(name || '').toLowerCase();
@@ -103,5 +104,6 @@ module.exports = {
   isLoggedIn: isLoggedIn,
   nexusphp: nexusphp,
   unit3d: unit3d,
-  gazelle: gazelle
+  gazelle: gazelle,
+  custom: generic
 };

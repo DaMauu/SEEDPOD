@@ -28,7 +28,7 @@ function loadArch() {
 const state = readJson(path.join(OUT, '_state.json'), {});
 const arch = loadArch();
 
-const result = {};
+const result = readJson(path.join(DATA, 'analysis.json'), {}) || {};   /* 保留没有样本的旧结果，避免删样本后丢定义 */
 let files = [];
 try {
   files = fs.readdirSync(OUT).filter(function (f) { return /\.html\.gz$/.test(f); });
@@ -40,6 +40,7 @@ for (const f of files) {
   try { html = zlib.gunzipSync(fs.readFileSync(path.join(OUT, f))).toString('utf8'); } catch (e) { continue; }
   const um = state[host] || {};
   const engine = adapters.detectEngine(html);
+  delete result[host];
   const spec = adapters.detectSearchSpec(html);
   const cats = engine ? adapters.parseCategories(html, engine) : [];
   const rows = engine ? adapters.parseList(html, engine) : [];

@@ -12,7 +12,7 @@ const zlib = require('zlib');
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'pta', 'data');
 const OUT = path.join(DATA, 'samples');
-const STATE = path.join(OUT, '_state.json');
+const STATE = process.env.PTA_SAMPLE_STATE ? path.resolve(process.env.PTA_SAMPLE_STATE) : path.join(OUT, '_state.json');
 const PORT = Number(process.env.PTA_CDP_PORT || 9222);
 const LIMIT = Number(process.argv[2] || 0);
 const OFFSET = Number(process.argv[3] || 0);
@@ -64,6 +64,12 @@ function fileFor(host) { return path.join(OUT, host.replace(/[^a-z0-9.-]/gi, '_'
 
   for (const t of targets) {
     if (fs.existsSync(fileFor(t.host))) { skip++; continue; }
+    /* 明确失败过的（连不上、Cloudflare、页面被脚本顶掉）12 小时内不重复打 */
+    const prev = state[t.host];
+    if (prev && /^(net-error|cloudflare|error-panel|http-404)$/.test(prev.note || '')) {
+      const age = Date.now() - Date.parse(prev.at || 0);
+      if (!(age > 12 * 3600 * 1000)) { skip++; continue; }
+    }
     let rec = { host: t.host, arch: t.arch, url: '', at: new Date().toISOString(), status: 0, bytes: 0, note: '', tries: 0 };
     const cands = pathsFor(t.arch);
     let saved = false;
@@ -84,14 +90,31 @@ function fileFor(host) { return path.join(OUT, host.replace(/[^a-z0-9.-]/gi, '_'
           const res2 = await page.goto(url, { waitUntil: 'commit', timeout: 30000 }).catch(function (e) { rec.note = 'goto:' + String(e.message).split('\n')[0].slice(0, 70); return null; });
           rec.status = res2 ? res2.status() : 0;
         }
-        await sleep(2600);
-        const html = await page.content().catch(function () { return ''; });
+        await sleep(1200);
+        /* 等渲染完成：正文有内容就继续，最多等 9 秒（SPA 与 Cloudflare 挑战都要时间） */
+        await page.waitForFunction(function () {
+          var t = document.body && document.body.innerText ? document.body.innerText.trim() : '';
+          return t.length > 200;
+        }, null, { timeout: 9000 }).catch(function () {});
+        let html = await page.content().catch(function () { return ''; });
+        /* 还是 Cloudflare 挑战页就再等一轮（真正的人也是等几秒） */
+        if (/Just a moment|cf-browser-verification|challenge-platform|Checking your browser/i.test(html) && html.length < 60000) {
+          await sleep(6000);
+          html = await page.content().catch(function () { return ''; });
+          if (/Just a moment|cf-browser-verification|challenge-platform/i.test(html) && html.length < 60000) rec.note = 'cloudflare';
+        }
+        if (/pt-checker-panel/.test(html) && html.length < 80000) rec.note = rec.note || 'error-panel';
+        const ttl = (/<title[^>]*>([\s\S]{0,40}?)<\/title>/i.exec(html) || [])[1] || '';
+        if (/Just a moment|Attention Required|Access denied/i.test(ttl)) rec.note = rec.note || 'cloudflare';
         rec.bytes = html.length;
-        if (html && html.length >= 2000) {
+        /* Chrome 的网络错误页与站点 404 页都不是内容，单独记原因，别当样本存 */
+        if (/javascript:diagnoseErrors\(\)/.test(html)) rec.note = 'net-error';
+        else if (/<title>\s*404 Not Found\s*<\/title>/i.test(html)) rec.note = 'http-404';
+        const badPage = /^(cloudflare|error-panel|net-error|http-404)$/.test(rec.note || '');
+        if (html && html.length >= 2000 && !badPage) {
           fs.writeFileSync(fileFor(t.host), zlib.gzipSync(Buffer.from(html, 'utf8')));
           saved = true; ok++;
-          rec.note = '';
-          if (/takelogin\.php/i.test(html) && !/cat=|categories\[|filter_cat/i.test(html)) rec.note = 'login-wall';
+          rec.note = /takelogin\.php/i.test(html) && !/cat=|categories\[|filter_cat/i.test(html) ? 'login-wall' : '';
         } else if (!rec.note) rec.note = 'too-small';
       } catch (e) {
         rec.note = 'error:' + String(e.message).split('\n')[0].slice(0, 70);

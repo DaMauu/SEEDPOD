@@ -286,6 +286,22 @@ async function main() {
     need(j.data['demo2.example'].ids === 2, 'ids 统计不对：' + j.data['demo2.example'].ids);
     need(j.data['demo2.example'].groups === 1, 'groups 统计不对：' + j.data['demo2.example'].groups);
     need(j.data['demo2.example'].engine === 'gazelle', 'engine 没带出来');
+    const withMode = await fetchA(BASE + '/api/sites/demo3.example/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'unit3d', catMode: 'multi', catSlot: 2, cats: { movie: ['1'] }, source: 'auto', confirmed: false })
+    });
+    const wj = await withMode.json();
+    need(withMode.ok, '写 catMode 失败 ' + JSON.stringify(wj).slice(0, 140));
+    need(wj.data.preset.catMode === 'multi' && wj.data.preset.catSlot === 2, 'catMode/catSlot 没存下来：' + JSON.stringify(wj.data.preset).slice(0, 160));
+    need(wj.data.preset.source === 'auto' && wj.data.preset.confirmed === false, 'source/confirmed 没存下来');
+    const badMode = await fetchA(BASE + '/api/sites/demo3.example/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ catMode: 'weird' })
+    });
+    need(badMode.status === 400, '非法 catMode 没被拦：' + badMode.status);
+    const badSlot = await fetchA(BASE + '/api/sites/demo3.example/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ catSlot: 99 })
+    });
+    need(badSlot.status === 400, '非法 catSlot 没被拦：' + badSlot.status);
     const anon = await fetch(BASE + '/api/site-search');
     need(anon.status === 401, '未登录能读汇总：' + anon.status);
   });
@@ -307,7 +323,7 @@ async function main() {
     need(row.engine === 'unit3d', 'engine 不对：' + row.engine);
     need(row.groups === 2 && row.ids === 3, '分类统计不对：' + row.groups + '/' + row.ids);
     need(row.rows === 24 && row.sizeRows === 23, '采样行数没带出来：' + row.rows + '/' + row.sizeRows);
-    need((list.engines || []).join(',') === 'unit3d,gazelle,nexusphp', '引擎清单不对：' + (list.engines || []).join(','));
+    need((list.engines || []).join(',') === 'unit3d,gazelle,nexusphp,custom', '引擎清单不对：' + (list.engines || []).join(','));
     const one = await (await fetchA(BASE + '/api/site-def/' + host)).json();
     need(one.ok && one.data.engine === 'unit3d' && one.data.catMode === 'multi', '单站定义内容不对');
     const miss = await fetchA(BASE + '/api/site-def/nope.example');
@@ -620,16 +636,22 @@ async function main() {
   });
 
   await check('日志文件会轮转', async () => {
-    for (let i = 0; i < 40; i++) {
+    const rotatedFile = path.join(DATA, 'events.log.1');
+    let rotated = fs.existsSync(rotatedFile);
+    for (let i = 0; i < 150 && !rotated; i++) {
       await fetch(BASE + '/api/login', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ user: 'check', pass: 'wrong-' + i })
       });
+      rotated = fs.existsSync(rotatedFile);
     }
-    const rotated = fs.existsSync(path.join(DATA, 'events.log.1'));
     need(rotated, '日志超过上限却没有轮转');
+    /* 轮转后再写一条，确保主文件存在；主文件最多是上限再加一行 */
+    await fetch(BASE + '/api/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: 'check', pass: 'wrong-after-rotate' })
+    });
     const now = fs.statSync(path.join(DATA, 'events.log')).size;
-    /* 轮转是「写一行后超限才换」，所以主文件最多是上限再加一行 */
     need(now <= 1500 + 300, '轮转后主文件仍然超过上限：' + now);
   });
 

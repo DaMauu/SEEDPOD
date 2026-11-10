@@ -139,6 +139,20 @@ check('反推搜索参数', () => {
   need(/filter_cat/.test(gz.catParam), 'Gazelle 分类参数名没取到：' + gz.catParam);
 });
 
+check('兜底适配：认不出的 tracker 也能列出条目', () => {
+  const custom = require(path.join(ROOT, 'server', 'adapters', 'generic.js'));
+  const gHtml = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'custom-browse.html'), 'utf8');
+  need(adapters.detectEngine(gHtml) === 'custom', '兜底引擎没接上：' + adapters.detectEngine(gHtml));
+  const rows = custom.parseList(gHtml);
+  need(rows.length === 3, '兜底行数不对：' + rows.length);
+  need(rows[0].id === '1001' && rows[0].size === '8.88 GB', '兜底第一行不对：' + JSON.stringify(rows[0]));
+  need(/dl\.php\?id=1001/.test(rows[0].downloadUrl), '兜底下载链接没取到：' + rows[0].downloadUrl);
+  const cats = custom.parseCategories(gHtml);
+  need(cats.map(c => c.id).join(',') === '1,2', '兜底下拉框分类没解析：' + JSON.stringify(cats));
+  const u = custom.buildSearchUrl({ base: 'https://example.org', searchPath: '/search.php', params: { search: '{q}', cat: '{cats}' } }, 'x', ['1']);
+  need(u === 'https://example.org/search.php?search=x&cat=1', '兜底搜索 URL 不对：' + u);
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

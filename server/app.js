@@ -232,9 +232,19 @@ function sanitizePreset(body) {
     preset.cats = cats;
   }
   if (body.source !== undefined) {
-    if (['manual', 'probe'].indexOf(String(body.source)) < 0) return { err: { code: 'BAD_REQUEST', message: 'source 只能是 manual 或 probe' } };
+    if (['manual', 'probe', 'auto'].indexOf(String(body.source)) < 0) return { err: { code: 'BAD_REQUEST', message: 'source 只能是 manual / probe / auto' } };
     preset.source = String(body.source);
   }
+  if (body.catMode !== undefined) {
+    if (['single', 'multi', 'bracket'].indexOf(String(body.catMode)) < 0) return { err: { code: 'BAD_REQUEST', message: 'catMode 只能是 single / multi / bracket' } };
+    preset.catMode = String(body.catMode);
+  }
+  if (body.catSlot !== undefined) {
+    const slot = Number(body.catSlot);
+    if (!Number.isInteger(slot) || slot < 1 || slot > 20) return { err: { code: 'BAD_REQUEST', message: 'catSlot 必须是 1–20 的整数' } };
+    preset.catSlot = slot;
+  }
+  if (body.confirmed !== undefined) preset.confirmed = !!body.confirmed;
   return { preset };
 }
 
