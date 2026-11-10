@@ -73,6 +73,8 @@ function createStore(file) {
     store.items.forEach(function (x) { if (!site || String(x.site || '').toLowerCase() === site) byStatus[x.status] = (byStatus[x.status] || 0) + 1; });
     const limit = Math.max(1, Math.min(500, Number((opts && opts.limit) || 50)));
     const offset = Math.max(0, Number((opts && opts.offset) || 0));
+    /* 新抓的排前面：列表按入库时间倒序 */
+    items = items.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
     return { total: store.items.length, matched: items.length, byStatus: byStatus,
       items: items.slice(offset, offset + limit).map(function (x) { const c = Object.assign({}, x); delete c._key; return c; }) };
   }
