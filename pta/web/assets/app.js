@@ -75,7 +75,7 @@
         })(),
         url: url,
         arch: arch,
-        enabled: false,
+        enabled: true,
         login: "none",
         ratio: "—",
         canDl: false,
@@ -101,7 +101,8 @@
       enabled: on.length,
       loginOk: on.filter(function (x) { return x.login === "ok"; }).length,
       loginFail: on.filter(function (x) { return x.login === "fail"; }).length,
-      lowRatio: on.filter(function (x) { return !x.canDl; }).length,
+      unknown: on.filter(function (x) { return x.login === "none"; }).length,
+      lowRatio: on.filter(function (x) { return x.lowRatio; }).length,
       tfa: list.filter(function (x) { return x.tfa; }).length,
       np: list.filter(function (x) { return x.arch === "NP"; }).length,
       unit3d: list.filter(function (x) { return x.arch === "UNIT3D"; }).length,
@@ -788,12 +789,13 @@
       { label: "登录失效", value: String(loginFail), warn: loginFail > 0 },
       { label: "还没自检", value: String(unchecked), warn: false },
       { label: "下载器在线", value: dls ? (dls.online + " / " + dls.total) : "—", warn: !!(dls && dls.total && dls.online < dls.total) },
-      { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接下载器"), warn: !!(dls && dls.total && !free) },
-      { label: "今日抓取", value: o && o.crawl ? (o.crawl.runsToday + " 次 / " + (o.crawl.hostsToday || 0) + " 站") : "—", warn: false }
+      { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接下载器"), warn: !!(dls && dls.total && !free) }
     ];
+    var crawlTxt = o && o.crawl ? (o.crawl.runsToday + " 次 / " + (o.crawl.hostsToday || 0) + " 站") : "—";
     host.innerHTML =
       '<div class="status-hero"><span>登录正常</span><b class="' + (loginFail ? "warn" : "") + '">' +
-      loginOk + "</b><i>共启用 " + enabled + " 个" + (o ? "" : "（未连接后端）") + "</i></div>" +
+      loginOk + "</b><i>共启用 " + enabled + " 个" + (o ? "" : "（未连接后端）") + "</i>" +
+      '<div class="hero-sub"><span>今日抓取</span><b>' + crawlTxt + "</b></div></div>" +
       '<div class="status-list">' + list.map(function (it) {
         return '<div class="hstat' + (it.warn ? " warn" : "") + '"><span>' + it.label + "</span><b>" + it.value + "</b></div>";
       }).join("") + "</div>";
@@ -1249,12 +1251,13 @@
   function initSources() {
     var body = $("#dl-body");
     if (!body) return;
-    var state = { q: "" };
+    var state = { q: "", site: "", type: "", status: "" };
+    var MK = { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" };
 
-    /* 这一页就是词条库：抓回来的词条都从 /api/catalog 读，不再有假数据 */
+    /* 这一页就是数据清单：抓回来的词条都从 /api/catalog 读，筛选、标记、归档都在这里做 */
     function loadCatalog() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { paint(); return; }
-      fetch("/api/catalog?limit=200", { credentials: "same-origin" })
+      fetch("/api/catalog?limit=200" + (state.status ? "&status=" + encodeURIComponent(state.status) : ""), { credentials: "same-origin" })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) {
           if (!j || !j.ok) return paint();
@@ -1266,6 +1269,7 @@
             };
           });
           window.__ptaSourcesTotal = j.data.total;
+          fillOptions();
           paint();
         })
         .catch(function () { paint(); });
@@ -1276,18 +1280,43 @@
     }
     var ST_TXT = { new: "待筛选", selected: "已送审", published: "已发布", skipped: "跳过", archived: "归档" };
 
+    /* 站点 / 类型两个下拉都用真实数据填，没数据的选项不编造 */
+    function fillOptions() {
+      var all = window.__ptaSources || [];
+      [["dl-site", "site", "全部站点"], ["dl-type", "type", "全部类型"]].forEach(function (pair) {
+        var sel = $("#" + pair[0]);
+        if (!sel) return;
+        var seen = {}, list = [];
+        all.forEach(function (it) {
+          var v = it[pair[1]];
+          if (v && !seen[v]) { seen[v] = 1; list.push(v); }
+        });
+        list.sort();
+        sel.innerHTML = '<option value="">' + pair[2] + "</option>" + list.map(function (v) {
+          return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + "</option>";
+        }).join("");
+        if (state[pair[1]] && !seen[state[pair[1]]]) state[pair[1]] = "";
+        sel.value = state[pair[1]] || "";
+      });
+    }
+
     function paint() {
       var all = window.__ptaSources || [];
       var rows = all.filter(function (it) {
-        if (state.q && (it.title + " " + it.res).toLowerCase().indexOf(state.q) === -1) return false;
+        if (state.q && (it.title + " " + it.res + " " + it.site).toLowerCase().indexOf(state.q) === -1) return false;
+        if (state.site && it.site !== state.site) return false;
+        if (state.type && it.type !== state.type) return false;
         return true;
       });
       body.innerHTML = rows.map(function (it) {
-        var marks = Object.keys(it.marks || {}).filter(function (k) { return it.marks[k]; }).map(function (k) {
-          return { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" }[k] || k;
-        }).join(" · ");
-        return '<div class="dl-row">' +
-          '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" + (marks ? ' <em class="chip">' + escapeHtml(marks) + "</em>" : "") + "</span>" +
+        var toggles = Object.keys(MK).map(function (k) {
+          var on = !!(it.marks && it.marks[k]);
+          return '<button class="mark-btn' + (on ? " on" : "") + '" data-mark="' + k + '" data-cid="' + it.id +
+            '" data-marks="' + escapeHtml(JSON.stringify(it.marks || {})) + '">' + MK[k] + "</button>";
+        }).join("");
+        return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
+          '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" +
+          '<span class="mark-row">' + toggles + "</span></span>" +
           '<span><em class="chip np">' + escapeHtml(it.type) + "</em></span>" +
           '<span class="soft">' + escapeHtml(it.res) + "</span>" +
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +
@@ -1298,13 +1327,36 @@
       }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "词条库还是空的，去流程页点「抓一页」") + "</div>";
       var c = $("#dl-count");
       if (c) c.textContent = rows.length + (window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
+      var pg = $("#dl-page");
+      if (pg) pg.textContent = rows.length ? "筛选后 " + rows.length + " 条" : "";
     }
 
     window.__ptaRepaintSources = paint;
     window.__ptaLoadSources = loadCatalog;
     var q = $("#dl-q");
     if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
+    var siteSel = $("#dl-site");
+    if (siteSel) siteSel.addEventListener("change", function (e) { state.site = e.target.value; paint(); });
+    var typeSel = $("#dl-type");
+    if (typeSel) typeSel.addEventListener("change", function (e) { state.type = e.target.value; paint(); });
+    var statusSel = $("#dl-status");
+    if (statusSel) statusSel.addEventListener("change", function (e) { state.status = e.target.value; loadCatalog(); });
     body.addEventListener("click", function (e) {
+      var mb = e.target.closest("button[data-mark]");
+      if (mb) {
+        var cur = {};
+        try { cur = JSON.parse(mb.getAttribute("data-marks") || "{}"); } catch (err) {}
+        var key = mb.getAttribute("data-mark");
+        if (cur[key]) delete cur[key]; else cur[key] = true;
+        fetch("/api/catalog/" + encodeURIComponent(mb.getAttribute("data-cid")) + "/marks", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ marks: cur })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.ok) { toast("已改标记"); loadCatalog(); return; }
+          toast((j && j.error && j.error.message) || "改标记失败");
+        }).catch(function () { toast("改标记请求发不出去"); });
+        return;
+      }
       var arc = e.target.closest("button[data-archive]");
       if (!arc) return;
       var cid = arc.getAttribute("data-cid");
@@ -1318,62 +1370,19 @@
       }).catch(function () { arc.disabled = false; toast("归档请求发不出去"); });
     });
     loadCatalog();
-    var crawl = $("#dl-crawl");
-    if (crawl) {
-      var selSite = $("#dl-site");
-      if (selSite && MOCK.sitesList.length) {
-        var onSites = MOCK.sitesList.filter(function (x) { return x.enabled; }).slice(0, 30);
-        if (onSites.length) {
-          selSite.innerHTML = '<option value="">全部站点</option>' + onSites.map(function (s) {
-            return '<option value="' + escapeHtml(s.name) + '">' + escapeHtml(s.title || s.name) + "</option>";
-          }).join("");
-        }
-      }
-      var dryBox = null;
-      function paintDry(t) {
-        var bar = $(".dl-bar");
-        if (!dryBox) {
-          dryBox = el("div", "dl-dry");
-          if (bar && bar.parentNode) bar.parentNode.insertBefore(dryBox, bar.nextSibling);
-          else if (body && body.parentNode) body.parentNode.insertBefore(dryBox, body);
-        }
-        dryBox.hidden = false;
-        dryBox.innerHTML = '<div class="dl-dry-head"><b>干跑 · ' + escapeHtml(t.siteHost) + "</b>" +
-            '<span class="dl-dry-p">' + (t.progress || 0) + "%</span></div>" +
-          "<ul>" + (t.steps || []).map(function (s) {
-            return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
-          }).join("") + "</ul>" +
-          '<em>只跑本地步骤，不访问任何真实站点</em>' +
-          (t.state === "done" && t.result ? (function () {
-            var p = t.result.plan || {};
-            var warns = (t.result.warnings || []).map(function (w) { return "<li>" + escapeHtml(w) + "</li>"; }).join("");
-            return '<div class="dl-dry-note">计划：' + (p.pages || "-") + " 页 · 分类 " + (p.catGroups || 0) + " 组 · 预估 " +
-              (p.estimatedQueries || 0) + " 次查询</div>" + (warns ? '<ul class="dl-dry-warn">' + warns + "</ul>" : "");
-          })() : "");
-      }
-      function pickDryHost() {
-        var want = selSite && selSite.value;
-        if (want && MOCK.sitesList.some(function (x) { return x.name === want; })) return want;
-        var t0 = null;
-        try { t0 = localStorage.getItem("pta.target"); } catch (e) {}
-        if (t0 && MOCK.sitesList.some(function (x) { return x.name === t0; })) return t0;
-        var first = MOCK.sitesList[0];
-        return first ? first.name : "";
-      }
-      crawl.addEventListener("click", function () {
-        var siteHost = pickDryHost();
-        if (!siteHost) { toast("没有可用站点，先去站点页添加"); return; }
-        var submitted = false;
-        window.__ptaDryRun(siteHost, function (t) {
-          paintDry(t);
-          if (!submitted) { submitted = true; toast("已提交干跑任务"); }
-        }, function (t) {
-          toast("干跑完成 · " + (t.steps || []).length + " 步");
-        }, function (msg) {
-          toast(msg);
-        });
-      });
-    }
+    var bulk = $("#dl-archive");
+    if (bulk) bulk.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
+      bulk.disabled = true;
+      fetch("/api/catalog/bulk", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ fromStatus: "skipped", status: "archived" })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        toast(j && j.ok ? ("已归档 " + j.data.changed + " 条跳过项") : ((j && j.error && j.error.message) || "批量归档失败"));
+        bulk.disabled = false;
+        loadCatalog();
+      }).catch(function () { bulk.disabled = false; toast("批量归档请求发不出去"); });
+    });
     var ex = $("#dl-export");
     if (ex) ex.addEventListener("click", function () {
       var rows = window.__ptaSources || [];
@@ -1944,6 +1953,9 @@
             '<div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div></div>' +
           '<div class="drawer-head-right">' +
             '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
+            '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条">' +
+              [[5,'5 条（试）'],[20,'20 条'],[100,'100 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+            '</select>' +
             '<button class="btn slim" id="crawl-live-run">抓一页</button>' +
             '<button class="btn primary slim" id="crawl-dry-run">干跑自检</button>' +
           "</div>" +
@@ -1953,19 +1965,7 @@
       sectionHtml({ name: "抓取", desc: "按搜索预设的类目直接把词条抓进本地库，命中禁转/独占/DIY/限转的只打标记不过滤。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "筛选", desc: "从本地词条里挑出符合条件的，标出已有/已发布/跳过，归档不需要的。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
       sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub") +
-      '<section class="drawer open catalog-panel">' +
-        '<div class="drawer-head"><div class="drawer-t">' +
-          '<div class="drawer-title">词条库</div>' +
-          '<div class="drawer-desc">第一步抓回来的词条都在这里，按状态分：new 待筛选 / selected 已送审 / published 已发 / skipped 跳过 / archived 归档。</div>' +
-        '</div><div class="drawer-head-right"><select class="input slim" id="catalog-status">' +
-          [["", "全部"], ["new", "待筛选"], ["selected", "已送审"], ["published", "已发布"], ["skipped", "跳过"], ["archived", "归档"]].map(function (o) {
-            return '<option value="' + o[0] + '">' + o[1] + "</option>";
-          }).join("") +
-        '</select><span class="drawer-meta" id="catalog-meta">—</span>' +
-        '<button class="btn ghost slim" id="catalog-bulk">归档已跳过</button>' +
-        '<button class="btn slim" id="catalog-refresh">刷新</button></div></div>' +
-        '<div class="drawer-body" id="catalog-body"><div class="empty">正在读词条库…</div></div>' +
-      '</section>';
+      '';
 
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
@@ -2039,72 +2039,6 @@
       });
     })();
 
-    /* 词条库面板：最新 30 条，按状态看；能直接归档/跳过 */
-    var CAT_STATUS = { new: "待筛选", selected: "已送审", published: "已发布", skipped: "跳过", archived: "归档" };
-    function loadCatalog() {
-      var body = $("#catalog-body"), meta = $("#catalog-meta");
-      if (!body) return;
-      if (!window.fetch || !/^https?:$/.test(location.protocol)) {
-        body.innerHTML = '<div class="empty">本地预览没有后端，读不到词条库</div>';
-        return;
-      }
-      fetch("/api/catalog?limit=30" + (($("#catalog-status") && $("#catalog-status").value) ? "&status=" + encodeURIComponent($("#catalog-status").value) : ""), { credentials: "same-origin" })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          if (!j || !j.ok) { body.innerHTML = '<div class="empty">词条库读取失败</div>'; return; }
-          var d = j.data;
-          var c = d.byStatus || {};
-          if (meta) meta.textContent = "共 " + d.total + " 条 · 待筛选 " + (c.new || 0) + " · 已送审 " + (c.selected || 0) + " · 已发 " + (c.published || 0);
-          if (!d.items.length) { body.innerHTML = '<div class="empty">词条库还是空的，先点上面「抓一页」</div>'; return; }
-          body.innerHTML = d.items.map(function (it) {
-            var marks = Object.keys(it.marks || {}).filter(function (k) { return it.marks[k]; }).map(function (k) {
-              return { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" }[k] || k;
-            }).join(" · ");
-            return '<div class="list-item cat-row" data-cid="' + it.id + '">' +
-              '<div style="flex:1;min-width:0"><div class="t-main">' + escapeHtml(it.title) + "</div>" +
-              '<div class="t-sub">' + escapeHtml(it.site || "") + " · " + escapeHtml(it.size || "") +
-              (marks ? " · " + escapeHtml(marks) : "") + "</div></div>" +
-              '<span class="badge ' + (it.status === "new" ? "gray" : it.status === "selected" ? "amber" : it.status === "published" ? "green" : "") + '">' +
-              (CAT_STATUS[it.status] || it.status) + "</span>" +
-              (it.status === "new" ? '<button class="link-btn" data-catact="archived" data-cid="' + it.id + '">归档</button>' : "") +
-            "</div>";
-          }).join("");
-        })
-        .catch(function () { body.innerHTML = '<div class="empty">词条库读取失败</div>'; });
-    }
-    window.__ptaLoadCatalog = loadCatalog;
-
-    var catBody = $("#catalog-body");
-    if (catBody) {
-      catBody.addEventListener("click", function (e) {
-        var b = e.target.closest("button[data-catact]");
-        if (!b) return;
-        fetch("/api/catalog/" + encodeURIComponent(b.getAttribute("data-cid")) + "/status", {
-          method: "POST", credentials: "same-origin",
-          headers: { "content-type": "application/json" }, body: JSON.stringify({ status: b.getAttribute("data-catact") })
-        }).then(function (r) { return r.json(); }).then(function (j) {
-          toast(j && j.ok ? "已归档" : ((j && j.error && j.error.message) || "归档失败"));
-          loadCatalog();
-        }).catch(function () { toast("归档请求发不出去"); });
-      });
-    }
-    var catRefresh = $("#catalog-refresh");
-    if (catRefresh) catRefresh.addEventListener("click", function () { toast("已刷新词条库"); loadCatalog(); });
-    var catStatus = $("#catalog-status");
-    if (catStatus) catStatus.addEventListener("change", loadCatalog);
-    var catBulk = $("#catalog-bulk");
-    if (catBulk) catBulk.addEventListener("click", function () {
-      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
-      fetch("/api/catalog/bulk", {
-        method: "POST", credentials: "same-origin",
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ fromStatus: "skipped", status: "archived" })
-      }).then(function (r) { return r.json(); }).then(function (j) {
-        toast(j && j.ok ? ("已归档 " + j.data.changed + " 条跳过项") : ((j && j.error && j.error.message) || "批量归档失败"));
-        loadCatalog();
-      }).catch(function () { toast("批量归档请求发不出去"); });
-    });
-    loadCatalog();
-
     /* 干跑区不是空的：进来就显示上一次干跑的结果，没跑过才显示「还没跑过」 */
     (function showLastDry() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
@@ -2159,7 +2093,8 @@
       if (meta) meta.textContent = "正在抓 " + h + " …";
       fetch("/api/crawl/run", {
         method: "POST", credentials: "same-origin",
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ host: h })
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ host: h, limit: Number(($("#crawl-limit") && $("#crawl-limit").value) || 100) })
       }).then(function (r) {
         return r.json().then(function (j) { return { status: r.status, j: j }; }, function () { return { status: r.status, j: null }; });
       }).then(function (out) {
@@ -2858,10 +2793,10 @@
         "</span></div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "登录方式", type: "fixed", v: "Cookie（从浏览器导入或用下面的输入框粘贴）", noTag: true, hint: "账号密码与 2FA 已不再使用" }
+          { t: "登录方式", type: "fixed", v: "只用 Cookie", noTag: true, hint: "不需要账号密码 / 2FA；浏览器里登录后把整段 Cookie 复制过来" }
         ]) + "</div>" +
         '<div class="set-fields">' + setRowsHtml([
-          { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "", ph: "c_secure_uid=...; c_secure_pass=..." }
+          { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "", ph: "name1=value1; name2=value2（会话字段可能是 HttpOnly，document.cookie 里看不到，要从 DevTools 的 Application → Cookies 或请求头里复制）" }
         ]) + "</div>" +
         '<div class="sd-cookie-bar"><button class="btn ghost slim" id="sd-cookie-test">用已保存的 cookie 自检</button>' +
         '<span class="sd-cookie-res" id="sd-cookie-res">还没自检</span></div>';
@@ -2980,7 +2915,7 @@
           '<div><span>总站点</span><b>' + st.total + "</b></div>" +
           '<div><span>启用</span><b>' + st.enabled + "</b></div>" +
           '<div><span>登录失效</span><b class="warn">' + st.loginFail + "</b></div>" +
-          '<div><span>分享率不足</span><b class="bad">' + st.lowRatio + "</b></div>" +
+          '<div><span>未自检</span><b>' + st.unknown + "</b></div>" +
         "</div>" +
         '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
           '<div class="ss-legend">' + legend + "</div></div>" +
@@ -3199,10 +3134,11 @@
               return;
             }
             var d = j.data, st = (d.steps || [])[0] || {};
-            var txt = (d.pass ? "cookie 可用" : "cookie 已失效") + " · HTTP " + (st.status || "—") +
+            var txt = (d.pass ? "cookie 可用" : "cookie 用不了") + " · HTTP " + (st.status || "—") +
               (st.ms !== undefined ? " · " + st.ms + "ms" : "") + (st.error ? " · " + st.error : "");
+            if (!d.pass && d.hint) txt += " · " + d.hint;
             if (resBox) resBox.textContent = txt;
-            toast(txt);
+            toast(d.pass ? "cookie 可用" : (d.hint || "cookie 用不了"));
           })
           .catch(function () {
             if (resBox) resBox.textContent = "本地预览没有后端，自检不可用";

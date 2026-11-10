@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261114d">
+<link rel="stylesheet" href="assets/app.css?v=20261116a">
 </head>
 <body data-page="dashboard">
 <div class="layout">
@@ -57,7 +57,6 @@
         <div class="card status-card">
           <div class="panel-head"><h2>系统状态</h2><a href="#crawl">详情</a></div>
           <div class="health-row" id="health-strip"></div>
-          <p class="health-note">只看需要留意的：登录失效、分享率不足、节点离线、磁盘余量。</p>
         </div>
         <div class="card">
           <div class="panel-head"><h2>最近发布</h2><a href="#queue">队列</a></div>
@@ -182,11 +181,19 @@
     <section class="view" data-view="sources" hidden>
       <div class="dl-wrap">
         <div class="dl-bar">
-          <input class="input" id="dl-q" placeholder="搜标题 / IMDb" style="width:240px">
-          <select class="select slim" id="dl-site"><option>全部站点</option><option>站点 A</option><option>站点 B</option></select>
-          <select class="select slim" id="dl-type"><option>全部类型</option><option>原盘</option><option>UHD</option><option>Blu-ray</option></select>
+          <input class="input" id="dl-q" placeholder="搜标题 / 分辨率" style="width:220px">
+          <select class="select slim" id="dl-site"><option value="">全部站点</option></select>
+          <select class="select slim" id="dl-type"><option value="">全部类型</option></select>
+          <select class="select slim" id="dl-status">
+            <option value="">全部状态</option>
+            <option value="new">待筛选</option>
+            <option value="selected">已送审</option>
+            <option value="published">已发布</option>
+            <option value="skipped">跳过</option>
+            <option value="archived">归档</option>
+          </select>
           <div class="spacer"></div>
-          <button class="btn ghost slim" id="dl-crawl">增量抓取</button>
+          <button class="btn ghost slim" id="dl-archive">归档已跳过</button>
           <button class="btn ghost slim" id="dl-export">导出 JSON</button>
         </div>
         <div class="dl-panel">
@@ -351,7 +358,7 @@
 <div id="dock-root"></div>
 <script src="assets/sites-data.js"></script>
 <script src="assets/sites-data.local.js" onerror="void 0"></script>
-<script src="assets/data.js?v=20261114d"></script>
-<script src="assets/app.js?v=20261114d"></script>
+<script src="assets/data.js?v=20261116a"></script>
+<script src="assets/app.js?v=20261116a"></script>
 </body>
 </html>

@@ -337,8 +337,9 @@ function findDuplicates(item, pool) {
 
 /* ---------- 抓取：一次 GET 取一页，解析后进词条库（不做并发、不重试轰炸） ---------- */
 const CRAWL_STATE_FILE = path.join(DATA_DIR, 'crawl-state.json');
-const CRAWL_MIN_GAP_MS = 6000;      /* 站间至少 6 秒 */
+const CRAWL_MIN_GAP_MS = 30000;     /* 同一站两次抓取至少隔 30 秒 */
 const CRAWL_DAILY_MAX = 20;         /* 单站每天最多这么多次 */
+const CRAWL_ROWS_DEFAULT = 100;     /* 正常一轮抓多少条词条，先用小数量试 */
 
 function readCrawlState() {
   try { return JSON.parse(fs.readFileSync(CRAWL_STATE_FILE, 'utf8')) || {}; } catch (e) { return {}; }
@@ -440,7 +441,8 @@ async function crawlOnceInner(host, opts) {
     return { err: { code: 'CRAWL_HTTP_' + status, message: '站点返回 ' + status } };
   }
   try { rows = adapters.parseList(html, def.engine) || []; } catch (e) { rows = []; }
-  const items = rows.slice(0, 200).map(function (r) {
+  const limit = Math.max(1, Math.min(200, Number((opts && opts.limit) || 0) || CRAWL_ROWS_DEFAULT));
+  const items = rows.slice(0, limit).map(function (r) {
     return {
       site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
       sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
@@ -460,7 +462,7 @@ async function crawlOnceInner(host, opts) {
   writeCrawlState(state);
   logEvent('info', '抓取', host + ' 分类 ' + (plan.categoryId || '全部') + ' 第 ' + page + ' 页 · 抓回 ' + rows.length + ' 行 · 入库 ' + out.added + ' 新增 / ' + out.updated + ' 更新');
   return {
-    host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length,
+    host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
     categoryId: plan.categoryId, categories: plan.categories,
     added: out.added, updated: out.updated, skipped: out.skipped, nextPage: rows.length ? page + 1 : 1,
     daily: { day: rec.day, count: rec.count, max: CRAWL_DAILY_MAX }, nextAllowedMs: CRAWL_MIN_GAP_MS
@@ -939,25 +941,47 @@ async function sessionCheckOnce(host) {
   const base = (def && def.base ? String(def.base) : 'https://' + host).replace(/\/+$/, '');
   const engine = (def && def.engine) || '';
   const probePath = engine === 'nexusphp' || engine === '' ? '/index.php' : '/';
+  /* 第二探：首页没有登录特征时，再试一次列表页（有下载链接/用户菜单就算登录成功） */
+  const browsePath = engine === 'unit3d' ? '/torrents' : '/torrents.php';
   const t0 = Date.now();
-  try {
-    const res = await fetch(base + probePath, {
-      headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-      redirect: 'manual', signal: AbortSignal.timeout(15000)
-    });
-    const html = await res.text().catch(function () { return ''; });
-    /* 登录态由适配器统一判：能跨 NexusPHP / UNIT3D / Gazelle 三种页面写法 */
+  function judge(res, html) {
     const verdict = adapters.isLoggedIn(html);
-    /* 站点定义里带了 login.test.selector（Cardigann 的写法）时，再用它确认一次已登录 */
     const testSelector = def && def.login && def.login.test && def.login.test.selector;
     const selRe = testSelector ? selectorToRegex(testSelector) : null;
     const selHit = !!(selRe && selRe.test(html));
     const loggedOut = res.status === 302 || (verdict === false && !selHit) || /takelogin\.php|请先登录|请登录/i.test(html);
     const ok = res.status === 200 && !loggedOut && (verdict === true || selHit);
+    return { ok: ok, verdict: verdict, selHit: selHit };
+  }
+  try {
+    const res = await fetch(base + probePath, {
+      headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      redirect: 'manual', signal: AbortSignal.timeout(15000)
+    });
+    let html = await res.text().catch(function () { return ''; });
+    let v = judge(res, html);
+    const steps = [{ step: 'session', path: probePath, status: res.status, ms: Date.now() - t0, ok: v.ok }];
+    if (!v.ok) {
+      try {
+        const t1 = Date.now();
+        const res2 = await fetch(base + browsePath, {
+          headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          redirect: 'manual', signal: AbortSignal.timeout(15000)
+        });
+        const html2 = await res2.text().catch(function () { return ''; });
+        const v2 = judge(res2, html2);
+        steps.push({ step: 'browse', path: browsePath, status: res2.status, ms: Date.now() - t1, ok: v2.ok });
+        if (v2.ok) { v = v2; html = html2; }
+      } catch (e2) {
+        steps.push({ step: 'browse', path: browsePath, status: 0, ms: 0, error: '第二探失败' });
+      }
+    }
+    const ok = v.ok;
     logEvent(ok ? 'info' : 'warn', '站点', '会话自检 · ' + host + ' · ' + (ok ? '可用' : '已失效'));
     return {
-      pass: ok, engine: engine || 'unknown', probe: probePath, login: verdict,
-      steps: [{ step: 'session', status: res.status, ms: Date.now() - t0, ok: ok }],
+      pass: ok, engine: engine || 'unknown', probe: probePath, login: v.verdict,
+      hint: ok ? '' : 'cookie 可能不完整（浏览器里 HttpOnly 的会话字段没复制到）或已过期；从开发者工具 Application → Cookies，或网络请求的 Cookie 头整段复制',
+      steps: steps,
       cookieNames: cookie.split(';').map(function (x) { return x.split('=')[0].trim(); }).filter(Boolean)
     };
   } catch (e) {
@@ -1696,7 +1720,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const host = String((body && body.host) || '').trim().toLowerCase();
       if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
-      const out = await crawlOnce(host, { page: body && body.page });
+      const out = await crawlOnce(host, { page: body && body.page, limit: body && body.limit });
       if (out.err) {
         const code = out.err.code;
         const status = code === 'TOO_SOON' || code === 'DAILY_LIMIT' ? 429 : (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED' || code === 'BUSY') ? 409 : 400;

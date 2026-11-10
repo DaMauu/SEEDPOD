@@ -249,14 +249,13 @@ async function main() {
     need((await page.locator('#crawl-dry-box').isVisible()) === false, '没有后端却画出了步骤面板');
   });
 
-  /* 6.5 干跑按钮：没有后端时必须给提示，不许静默或发真实请求 */
-  await check('干跑按钮在没有后端时给出提示', async () => {
+  /* 6.5 数据清单的批量归档：没有后端时必须给提示，不许静默 */
+  await check('数据清单批量归档在没有后端时给出提示', async () => {
     await open('#sources');
-    await page.click('#dl-crawl');
+    await page.click('#dl-archive');
     await page.waitForTimeout(300);
     const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
-    need(/干跑/.test(t), '没有干跑提示：' + t);
-    need((await page.locator('.dl-dry:visible').count()) === 0, '没有后端却画出了任务面板');
+    need(/没有后端/.test(t), '没有提示：' + t);
   });
 
   /* 7. 日志下载 */
