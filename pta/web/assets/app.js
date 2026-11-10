@@ -1802,7 +1802,7 @@
             '<button class="btn primary slim" id="crawl-dry-run">干跑自检</button>' +
           "</div>" +
         "</div>" +
-        '<div class="drawer-body"><div class="dl-dry" id="crawl-dry-box" hidden></div></div>' +
+        '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
       "</section>" +
       sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +

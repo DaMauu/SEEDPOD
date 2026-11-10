@@ -2242,3 +2242,5 @@ body::after {
 
 .sd-preset-url{display:block;font-size:11px;color:var(--accent);word-break:break-all;margin:5px 0;text-decoration:none}
 .sd-preset-url:hover{text-decoration:underline}
+
+.drawer.open .drawer-body[hidden]{display:none}
