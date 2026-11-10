@@ -653,6 +653,7 @@ async function main() {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
       })).json();
       need(plan.ok && /torrents\.php/.test(plan.data.url), '抓取计划没生成：' + JSON.stringify(plan).slice(0, 160));
+      need(plan.data.minGapMs === 30000 && plan.data.dailyMax === 20, '抓取节奏约束不对：' + JSON.stringify({ gap: plan.data.minGapMs, max: plan.data.dailyMax }));
 
       const run = await (await fetchA(BASE + '/api/crawl/run', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
