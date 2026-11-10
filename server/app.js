@@ -674,6 +674,10 @@ function createQueueItem(body) {
   }
   if (body.anonymous !== undefined) item.anonymous = body.anonymous === true || body.anonymous === 'true';
   if (body.intro !== undefined) item.intro = String(body.intro).slice(0, 4000);
+  /* 标题里能读出来的年份/分辨率/体积先补上，待审核页就不用显示空的年份 */
+  if (!item.year) { const y = match.yearOf(title); if (y) item.year = y; }
+  if (!item.res) { const r = match.resOf(title); if (r) item.res = r; }
+  if (!item.sizeBytes) { const b = match.sizeBytesOf({ size: item.size }); if (b) item.sizeBytes = b; }
   q.items.unshift(item);
   if (q.items.length > 500) q.items.length = 500;
   try { writeQueue(q); } catch (e) { return { err: { code: e.code || 'INTERNAL', message: e.message } }; }

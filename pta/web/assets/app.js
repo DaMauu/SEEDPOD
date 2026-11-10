@@ -928,8 +928,8 @@
     function itemHtml(it) {
       var st = STATUS[it.status] || ["未知", "gray"];
       return '<button class="q-item' + (state.sel === it.id ? " on" : "") + '" data-id="' + it.id + '">' +
-        '<span class="q-title"><b>' + escapeHtml(it.cn || it.title) + "</b>" +
-          "<i>" + escapeHtml(it.res) + " · " + escapeHtml(it.size) + "</i></span>" +
+        '<span class="q-title"><b>' + escapeHtml(it.title) + "</b>" +
+          "<i>" + (it.cn ? escapeHtml(it.cn) + " · " : "") + escapeHtml(it.res) + " · " + escapeHtml(it.size) + "</i></span>" +
         '<span class="badge ' + st[1] + '">' + st[0] + "</span>" +
       "</button>";
     }
@@ -957,13 +957,14 @@
     function introText(it) {
       var p2 = subParts(it);
       var tail = [p2.audio, "中文字幕"].filter(Boolean).join("，");
-      return (it.cn || it.title) + "（" + it.year + "）" + it.res + " 原盘，" + tail + "。";
+      var year = it.year ? "（" + it.year + "）" : "";
+      return (it.title || it.cn) + year + (it.res || "") + " 原盘" + (tail ? "，" + tail : "") + "。";
     }
 
     function detailHtml(it) {
       if (!it) return '<div class="sites-empty">选一条看发布预览</div>';
       var st = STATUS[it.status] || ["未知", "gray"];
-      var titleTpl = (it.cn ? it.cn + " " : "") + it.title.replace(/\s+/g, " ").trim();
+      var titleTpl = String(it.title || "").replace(/\s+/g, " ").trim();
       return '<div class="qd-head">' +
           '<div class="qd-id"><div class="qd-title-row"><h2>' + escapeHtml(it.cn || it.title) + "</h2>" +
             '<span class="badge ' + st[1] + '">' + st[0] + "</span></div>" +
@@ -972,7 +973,7 @@
             "<span>站点<b>" + escapeHtml(it.site) + "</b></span>" +
             "<span>分辨率<b>" + escapeHtml(it.res) + "</b></span>" +
             "<span>大小<b>" + escapeHtml(it.size) + "</b></span>" +
-            "<span>年份<b>" + it.year + " · " + escapeHtml(it.imdb) + "</b></span>" +
+            "<span>年份<b>" + (it.year || "—") + " · " + escapeHtml(it.imdb) + "</b></span>" +
           "</div>" +
         "</div>" +
         '<div class="qd-grid">' +
