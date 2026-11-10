@@ -1265,7 +1265,7 @@
             return {
               id: it.id, title: it.title, site: it.site || "", res: it.res || matchResOf(it.title),
               size: it.size || "", time: it.createdAt ? String(it.createdAt).slice(5, 16).replace("T", " ") : "",
-              status: it.status, marks: it.marks || {}, type: it.catName || it.cat || "词条"
+              status: it.status, marks: it.marks || {}, type: it.catName || ""
             };
           });
           window.__ptaSourcesTotal = j.data.total;
@@ -1317,7 +1317,7 @@
         return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
           '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" +
           '<span class="mark-row">' + toggles + "</span></span>" +
-          '<span><em class="chip np">' + escapeHtml(it.type) + "</em></span>" +
+          '<span>' + (it.type ? '<em class="chip np">' + escapeHtml(it.type) + "</em>" : '<span class="soft">—</span>') + "</span>" +
           '<span class="soft">' + escapeHtml(it.res) + "</span>" +
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +
           '<span class="soft">' + escapeHtml(it.time) + "</span>" +

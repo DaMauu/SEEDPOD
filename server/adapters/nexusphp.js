@@ -94,11 +94,15 @@ function parseDataRows(src) {
     const catLink = /[?&]cat=(\d+)/i.exec(inner) || /cat(\d+)=/i.exec(inner);
     const dl = (/href=["']([^"']*download\.php\?[^"']*(?<![a-z0-9])id=\d+[^"']*)["']/i.exec(inner) || [])[1];
     const det = (/href=["']([^"']*(?<![a-z0-9])details\.php\?id=\d+[^"']*)["']/i.exec(inner) || [])[1];
+    /* 分类名直接在行里取（分类链接的文字），面板就不必只显示裸 id */
+    const catNameM = /<a\b[^>]*[?&]cat=\d+[^>]*>([\s\S]{0,80}?)<\/a>/i.exec(inner);
+    const catName = catNameM ? text(catNameM[1]).slice(0, 40) : '';
     const seeders = attr('data-seeders') || attr('data-seeds');
     out.push({
       id: id,
       title: (title || '').slice(0, 300),
       catId: catAttr || (catLink ? catLink[1] : ''),
+      catName: catName,
       size: size,
       sizeBytes: sizeBytes,
       detailsUrl: det || 'details.php?id=' + id,
