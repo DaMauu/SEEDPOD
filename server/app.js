@@ -632,8 +632,12 @@ async function sessionCheckOnce(host) {
     const html = await res.text().catch(function () { return ''; });
     /* 登录态由适配器统一判：能跨 NexusPHP / UNIT3D / Gazelle 三种页面写法 */
     const verdict = adapters.isLoggedIn(html);
-    const loggedOut = res.status === 302 || verdict === false || /takelogin\.php|请先登录|请登录/i.test(html);
-    const ok = res.status === 200 && !loggedOut && verdict === true;
+    /* 站点定义里带了 login.test.selector（Cardigann 的写法）时，再用它确认一次已登录 */
+    const testSelector = def && def.login && def.login.test && def.login.test.selector;
+    const selRe = testSelector ? selectorToRegex(testSelector) : null;
+    const selHit = !!(selRe && selRe.test(html));
+    const loggedOut = res.status === 302 || (verdict === false && !selHit) || /takelogin\.php|请先登录|请登录/i.test(html);
+    const ok = res.status === 200 && !loggedOut && (verdict === true || selHit);
     logEvent(ok ? 'info' : 'warn', '站点', '会话自检 · ' + host + ' · ' + (ok ? '可用' : '已失效'));
     return {
       pass: ok, engine: engine || 'unknown', probe: probePath, login: verdict,
@@ -858,6 +862,20 @@ function newSession() {
   const tok = crypto.randomBytes(24).toString('hex');
   SESSIONS.set(tok, Date.now() + SESSION_TTL);
   return tok;
+}
+
+/* 站点定义里的 login.test.selector 借的是 Cardigann 的写法（如 a[href*="logout.php"]）。
+   这里只翻成「页面里有没有这个链接」的正则，够用且不需要 DOM。 */
+function selectorToRegex(selector) {
+  const s = String(selector || '');
+  const m = /\[\s*href\s*([*^$]?)=\s*["']([^"']+)["']\s*\]/i.exec(s);
+  if (!m) return null;
+  const op = m[1];
+  const val = m[2].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (op === '^=') return new RegExp('href=["\'][^"\']*' + val, 'i');
+  if (op === '$=') return new RegExp(val + '["\']', 'i');
+  if (op === '=') return new RegExp('href=["\']' + val + '["\']', 'i');
+  return new RegExp('href=["\'][^"\']*' + val, 'i');
 }
 
 function basicAuthOk(req) {

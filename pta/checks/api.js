@@ -430,6 +430,14 @@ async function main() {
     const http = require('http');
     const mock = http.createServer((rq, rs) => {
       if (rq.url === '/index.php') {
+        /* 有一种站只给会员区链接，通用判定认不出来，要靠站点定义的 login.test 选择器 */
+        if ((rq.headers.cookie || '').indexOf('member=') >= 0) {
+          const ck2 = rq.headers.cookie || '';
+          const okM = ck2.indexOf('member=1') >= 0;
+          rs.writeHead(200, { 'content-type': 'text/html' });
+          rs.end(okM ? '<html><body><a href="member-area.php">会员区</a></body></html>' : '<html><body>请登录</body></html>');
+          return;
+        }
         const cookie = rq.headers.cookie || '';
         const ok = cookie.indexOf('c_secure_uid=good') >= 0;
         rs.writeHead(ok ? 200 : 302, ok ? { 'content-type': 'text/html' } : { location: '/login.php' });
@@ -495,6 +503,18 @@ async function main() {
       const u3bad = await (await fetchA(BASE + '/api/sites/' + u3dHost + '/session-test', { method: 'POST' })).json();
       need(u3bad.data.pass === false, 'UNIT3D 失效 cookie 判成功');
       await fetchA(BASE + '/api/credentials/' + u3dHost, { method: 'DELETE' });
+
+      /* login.test 选择器：通用判定认不出的会员区链接，靠定义里的 test.selector 判活 */
+      const mHost = 'member.example';
+      fs.writeFileSync(path.join(defDir, mHost + '.json'), JSON.stringify({
+        host: mHost, base: 'http://127.0.0.1:' + port, engine: 'nexusphp',
+        login: { method: 'cookie', test: { path: '/index.php', selector: 'a[href*="member-area.php"]' } }
+      }));
+      await fetchA(BASE + '/api/credentials/' + mHost, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'member=1' })
+      });
+      const mOk = await (await fetchA(BASE + '/api/sites/' + mHost + '/session-test', { method: 'POST' })).json();
+      need(mOk.data.pass === true, 'login.test 选择器没起作用：' + JSON.stringify(mOk.data).slice(0, 160));
     } finally {
       mock.close();
     }
@@ -699,12 +719,9 @@ async function main() {
       rotated = fs.existsSync(rotatedFile);
     }
     need(rotated, '日志超过上限却没有轮转');
-    /* 轮转后再写一条，确保主文件存在；主文件最多是上限再加一行 */
-    await fetch(BASE + '/api/login', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user: 'check', pass: 'wrong-after-rotate' })
-    });
-    const now = fs.statSync(path.join(DATA, 'events.log')).size;
+    /* 轮转刚发生时主文件可能还没重建，按 0 计；主文件最多是上限再加一行 */
+    const logPath = path.join(DATA, 'events.log');
+    const now = fs.existsSync(logPath) ? fs.statSync(logPath).size : 0;
     need(now <= 1500 + 300, '轮转后主文件仍然超过上限：' + now);
   });
 

@@ -14,13 +14,18 @@ function readJson(p, fb) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); 
 
 /* 分类标签 → 用途。中英文都认，顺序有意义：先匹配具体的，再落到 other */
 const RULES = [
-  ['anime', /(动漫|动画|番剧|剧场版|anime|animation)/i],
-  ['doc', /(纪录|记录片|纪录片|documentar|docu\b)/i],
-  ['music', /(音乐|无损|演唱会|mv\b|music|concert|audio|flac)/i],
-  ['book', /(电子书|书籍|图书|杂志|资料|学习|book|ebook|comic|漫画)/i],
-  ['game', /(游戏|game)/i],
-  ['tv', /(剧集|电视剧|连续剧|美剧|英剧|日剧|韩剧|国产剧|综艺|tv|series|show)/i],
-  ['movie', /(电影|影片|movie|film|blu-?ray|uhd|4k|remux)/i]
+  /* 先判专门的类型，再判影视大类；顺序错了就全掉进 other */
+  ['anime', /(动漫|动画|番剧|剧场版|anime|animation|cartoon)/i],
+  ['doc', /(纪录|记录片|纪录片|documentar|docs?\b|docu\b)/i],
+  ['sport', /(体育|體\s*育|赛事|sport)/i],
+  ['adult', /(\bxxx\b|adult|18\+|amateur|softcore|hardcore|hentai|成人|色情)/i],
+  ['music', /(音乐|音樂|无损|演唱会|演唱|ost\b|classical|muzica|mv\b|music|concert|audio|flac|mp3|lossless)/i],
+  ['book', /(电子书|电子书|书籍|图书|杂志|资料|有声书|学习|教程|漫画|book|ebook|audiobook|comic|magazine|tutorial|manga)/i],
+  ['game', /(游戏|遊戲|jocuri|game|playstation|nintendo|xbox|\bps[2-5]\b|\bpc\s*games?\b)/i],
+  ['software', /(软件|軟體|apps?\b|programs?\b|programe|mobile|android|linux|windows|macos|imagini)/i],
+  ['tv', /(剧集|劇集|电视剧|连续剧|短剧|美剧|英剧|日剧|韩剧|国产剧|综艺|episode|series|\btv\b|shows?\b|sitcom|anime.?series)/i],
+  ['movie', /(电影|電影|影视|影視|影片|filme?|movie|blu-?ray|uhd|4k|1080p|720p|remux|web-?dl|dvd-?r|dvdrip|bdrip|rips?\b|untouched|encoded|sdr|hdr)/i],
+  ['other', /(其他|其它|misc|others?\b|all\b|categories|pack|unknown)/i]
 ];
 function purposeOf(label) {
   const s = String(label || '').replace(/[\s\u3000]+/g, '');     /* 「电 影」这种拆字写法先拼回去 */
@@ -93,11 +98,20 @@ Object.keys(analysis).sort().forEach(function (host) {
     host: host,
     base: 'https://' + host,
     engine: a.engine,
-    login: a.engine === 'unit3d'
-      ? { method: 'POST', path: '/login', fields: { username: 'username', password: 'password' } }
-      : a.engine === 'gazelle'
-        ? { method: 'POST', path: '/login.php', fields: { username: 'username', password: 'password' } }
-        : { method: 'POST', path: '/takelogin.php', fields: { username: 'username', password: 'password' } },
+    login: Object.assign(
+      a.engine === 'unit3d'
+        ? { method: 'POST', path: '/login', fields: { username: 'username', password: 'password' } }
+        : a.engine === 'gazelle'
+          ? { method: 'POST', path: '/login.php', fields: { username: 'username', password: 'password' } }
+          : { method: 'POST', path: '/takelogin.php', fields: { username: 'username', password: 'password' } },
+      /* 会话自检用：借 Cardigann 的 test 写法（请求哪个页面、页面里出现哪个链接算已登录） */
+      {
+        test: a.engine === 'unit3d'
+          ? { path: '/', selector: 'a[href*="/logout"]' }
+          : { path: '/index.php', selector: 'a[href*="logout.php"]' }
+      }
+    ),
+    limits: { requestDelay: 3, retryDelay: 30, maxErrors: 3 },
     searchPath: (a.searchPath || dflt.searchPath),
     params: params,
     catMode: a.catMode || dflt.catMode,
@@ -105,8 +119,13 @@ Object.keys(analysis).sort().forEach(function (host) {
     cats: cats,
     catMap: catMap,
     rate: { minGapMs: 1200, jitterMs: 900, maxPerRun: 20 },
+    limits: { requestDelay: 3, retryDelay: 30, maxErrors: 3 },
+    caps: { categorymappings: [] },
     source: { kind: a.engineSource === 'shell' ? 'shell' : 'sample', analyzedAt: a.analyzedAt || now, rows: a.rows, sizeRows: a.rowsWithSize, cats: catMap.length },
     list: a.list || { anchor: '', sizeStrategy: 'none', rows: 0, sizeRows: 0, dlRows: 0 },
+    /* 下面两块按 Cardigann 的叫法留兼容位，方便以后直接吃别人写的定义 */
+    caps: { categorymappings: catMap.map(function (c) { return { id: c.id, desc: c.label, purpose: c.purpose }; }) },
+    search: { rows: { selector: (a.list && a.list.anchor) || '' }, paths: [{ path: (a.searchPath || dflt.searchPath), inputs: params }] },
     note: a.engineSource === 'shell'
       ? '页面是 JS 空壳，引擎按资源特征判断（' + a.engine + '），分类还没采到'
       : a.rows ? ('采样解析：' + a.rows + ' 行，' + catMap.length + ' 个分类') : '采样页没有解析出列表，只有分类'
