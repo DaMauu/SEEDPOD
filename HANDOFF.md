@@ -12,11 +12,14 @@
 
 测试机上 `/opt/seedpod` **不是 git 仓库**，发版是复制文件（发前先备份到 `/opt/seedpod/backup-时间戳/`）：
 
+22 端口时通时断，scp 经常整条失败，用 base64 走 ssh 更稳（发完务必比 md5）：
+
 ```
-scp server/app.js            pta:/opt/seedpod/server/app.js
-scp pta/web/index.html       pta:/opt/seedpod/pta/web/index.html
-scp pta/web/assets/app.js    pta:/opt/seedpod/pta/web/assets/app.js
-scp pta/web/assets/app.css   pta:/opt/seedpod/pta/web/assets/app.css
+for f in server/app.js pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css; do
+  base64 -w0 "$f" | ssh pta "base64 -d > /opt/seedpod/$f"
+done
+md5sum server/app.js pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css
+ssh pta 'md5sum /opt/seedpod/server/app.js /opt/seedpod/pta/web/index.html /opt/seedpod/pta/web/assets/app.js /opt/seedpod/pta/web/assets/app.css'
 ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
 ```
 
