@@ -1,0 +1,8 @@
+# 开发用：源码挂进容器，改完 docker compose -f docker-compose.yml -f docker-compose.dev.yml restart 就生效
+# 生产部署不要用它，避免容器和镜像内容不一致
+services:
+  seedpod:
+    volumes:
+      - ./server:/app/server
+      - ./pta/web:/app/pta/web
+      - ./data:/data

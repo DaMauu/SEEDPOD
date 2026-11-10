@@ -34,6 +34,18 @@ docker run -d --name seedpod -p 8080:8080 -v "$PWD/data:/data" -e TZ=Asia/Shangh
   - `config.json`：运行模式与速率（面板改完直接落盘）
 - 镜像不含真实站点清单（`sites-data.local.js` 在 `.dockerignore` 里），容器里跑的是示例站点
 
+## 开发调试（不重建镜像）
+
+服务器上调试时，把源码挂进容器，改完重启即可：
+
+```
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# 改完代码
+docker compose -f docker-compose.yml -f docker-compose.dev.yml restart
+```
+
+生产部署只用 `docker-compose.yml`，保证容器内容与镜像一致。
+
 ## 只监听本机 / 走隧道访问
 
 镜像默认映射 `8080:8080`（全网可达）。不想暴露时把 compose 里的端口改成 `127.0.0.1:8080:8080`，再通过隧道看：
