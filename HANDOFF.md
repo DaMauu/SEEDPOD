@@ -216,8 +216,8 @@ PTA_UI_URL=https://面板域名 PTA_UI_USER=xxx PTA_UI_PASS=xxx node scripts/ver
 
 - smoke.js 22 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮（目前 0 问题）
-- adapter.js 13 条：四种引擎（NexusPHP / UNIT3D / Gazelle / 兜底）的分类、列表、搜索 URL、登录态判定
-- api.js 31 条：健康、配置区间、落盘、站点清单、凭据读写与批量导入、预设读写、定义摘要、干跑任务、日志轮转、登录与 401
+- adapter.js 18 条：四种引擎（NexusPHP / UNIT3D / Gazelle / 兜底）的分类、列表、搜索 URL、登录态判定
+- api.js 37 条：健康、配置区间、落盘、站点清单、凭据读写与批量导入、预设读写、定义摘要、抓取节奏与并发锁、词条库 CRUD/标记/批量、筛选、发布记账、干跑任务、日志轮转、登录与 401
 
 改完必须全绿再提交。
 
