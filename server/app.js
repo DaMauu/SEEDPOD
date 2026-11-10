@@ -993,7 +993,9 @@ async function sessionCheckOnce(host) {
     };
   } catch (e) {
     logEvent('warn', '站点', '会话自检 · ' + host + ' · 失败：' + String(e.message).slice(0, 80));
-    return { pass: false, engine: engine || 'unknown', steps: [{ step: 'connect', status: 0, ms: Date.now() - t0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) }], cookieNames: [] };
+    return { pass: false, engine: engine || 'unknown',
+      hint: '连不上这个站点（超时或网络不通），先确认浏览器里能打开它，再重新自检；cookie 很长时确认没有截断',
+      steps: [{ step: 'connect', status: 0, ms: Date.now() - t0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) }], cookieNames: [] };
   }
 }
 

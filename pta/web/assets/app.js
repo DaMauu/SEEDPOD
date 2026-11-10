@@ -2895,7 +2895,10 @@
           { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "", ph: "name1=value1; name2=value2（会话字段可能是 HttpOnly，document.cookie 里看不到，要从 DevTools 的 Application → Cookies 或请求头里复制）" }
         ]) + "</div>" +
         '<div class="sd-cookie-bar"><button class="btn ghost slim" id="sd-cookie-test">用已保存的 cookie 自检</button>' +
-        '<span class="sd-cookie-res" id="sd-cookie-res">还没自检</span></div>';
+        '<span class="sd-cookie-res" id="sd-cookie-res">还没自检</span></div>' +
+        '<div class="sd-cookie-bar"><span class="sd-cookie-res">' +
+          (s.cookieSaved ? "服务端已有这个站的 cookie（AES 加密存放，只回 hasCookie）" : "服务端还没有这个站的 cookie，粘贴后点保存设置") +
+        "</span></div>";
       }
 
       return '<div class="sd-form">' + body + "</div>";
@@ -3285,9 +3288,16 @@
         persist(); refreshStats(); paint();
         if (!pendingCookie) { toast("设置已保存"); return; }
         window.__ptaCred.req(s.name, "PUT", { cookie: pendingCookie }).then(function (res) {
-          if (res && res.j && res.j.ok) { s.cookieSaved = true; toast("设置与 cookie 都已保存"); }
-          else toast((res && res.j && res.j.error && res.j.error.message) || "cookie 没存进服务端");
+          if (res && res.j && res.j.ok) {
+            s.cookieSaved = true;
+            toast("设置与 cookie 都已保存，正在自检…");
+          } else toast((res && res.j && res.j.error && res.j.error.message) || "cookie 没存进服务端");
           paint();
+          /* 存完立刻自检一次，省得用户再点还以为是「需要登录」 */
+          if (res && res.j && res.j.ok) setTimeout(function () {
+            var b = $("#sd-cookie-test");
+            if (b) b.click();
+          }, 80);
         });
         return;
       }
