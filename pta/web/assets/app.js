@@ -2020,12 +2020,8 @@
     }
     var dryRunBtn = $("#crawl-dry-run");
     if (dryRunBtn) dryRunBtn.addEventListener("click", function () {
-      var host0 = target;
-      if (!host0) {
-        var first = MOCK.sitesList[0];
-        host0 = first ? first.name : "";
-      }
-      if (!host0) { toast("先去站点页加一个站点"); return; }
+      var host0 = (crawlSiteSel && crawlSiteSel.value) || target || "";
+      if (!host0) { toast("先在右上角「选来源站」里挑一个站，再干跑自检"); return; }
       var seen = false;
       window.__ptaDryRun(host0, function (t) {
         paintCrawlDry(t);
