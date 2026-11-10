@@ -612,7 +612,7 @@ async function sessionCheckOnce(host) {
   const def = readSiteDef(host);
   const base = (def && def.base ? String(def.base) : 'https://' + host).replace(/\/+$/, '');
   const engine = (def && def.engine) || '';
-  const probePath = engine === 'unit3d' ? '/' : '/index.php';
+  const probePath = engine === 'nexusphp' || engine === '' ? '/index.php' : '/';
   const t0 = Date.now();
   try {
     const res = await fetch(base + probePath, {

@@ -290,6 +290,32 @@ async function main() {
     need(anon.status === 401, '未登录能读汇总：' + anon.status);
   });
 
+  await check('站点定义摘要与单站定义', async () => {
+    const host = 'defs.example';
+    const defDir = path.join(DATA, 'site-defs');
+    fs.mkdirSync(defDir, { recursive: true });
+    fs.writeFileSync(path.join(defDir, host + '.json'), JSON.stringify({
+      host: host, base: 'https://' + host, engine: 'unit3d', searchPath: '/torrents',
+      params: { name: '{q}', 'categories[0]': '{cats}' }, catMode: 'multi',
+      cats: { movie: ['1'], tv: ['2', '3'] },
+      source: { kind: 'sample', rows: 24, sizeRows: 23, cats: 3, analyzedAt: new Date().toISOString() }
+    }));
+    const list = await (await fetchA(BASE + '/api/site-defs')).json();
+    need(list.ok && Array.isArray(list.data), '摘要接口形状不对');
+    const row = list.data.find(d => d.host === host);
+    need(row, '摘要里没有刚写的定义');
+    need(row.engine === 'unit3d', 'engine 不对：' + row.engine);
+    need(row.groups === 2 && row.ids === 3, '分类统计不对：' + row.groups + '/' + row.ids);
+    need(row.rows === 24 && row.sizeRows === 23, '采样行数没带出来：' + row.rows + '/' + row.sizeRows);
+    need((list.engines || []).join(',') === 'unit3d,gazelle,nexusphp', '引擎清单不对：' + (list.engines || []).join(','));
+    const one = await (await fetchA(BASE + '/api/site-def/' + host)).json();
+    need(one.ok && one.data.engine === 'unit3d' && one.data.catMode === 'multi', '单站定义内容不对');
+    const miss = await fetchA(BASE + '/api/site-def/nope.example');
+    need(miss.status === 404, '没有定义应回 404：' + miss.status);
+    const anon = await fetch(BASE + '/api/site-defs');
+    need(anon.status === 401, '未登录能读定义摘要：' + anon.status);
+  });
+
   await check('待审核队列状态机', async () => {
     const add = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -368,6 +394,15 @@ async function main() {
         rs.end(ok ? '<html>欢迎回来 <a href="userdetails.php?id=1">ok</a></html>' : '');
         return;
       }
+      if (rq.url === '/') {
+        const ck = rq.headers.cookie || '';
+        const okU3d = ck.indexOf('session=u3d-good') >= 0;
+        rs.writeHead(200, { 'content-type': 'text/html' });
+        rs.end(okU3d
+          ? '<html><body><a href="/logout">Logout</a><a href="/users/fixture">me</a><a href="/torrents/123/download">DL</a></body></html>'
+          : '<html><body><a href="/login">Sign in</a></body></html>');
+        return;
+      }
       rs.writeHead(404); rs.end('x');
     });
     await new Promise(r => mock.listen(0, '127.0.0.1', r));
@@ -402,6 +437,22 @@ async function main() {
       await fetchA(BASE + '/api/credentials/' + host, { method: 'DELETE' });
       const none = await fetchA(BASE + '/api/sites/' + host + '/session-test', { method: 'POST' });
       need(none.status === 400, '没有 cookie 时应 400：' + none.status);
+
+      /* 同一个自检要能认 UNIT3D 的登录态（探测路径是 /，页面靠退出链接判断） */
+      const u3dHost = 'u3d.example';
+      fs.writeFileSync(path.join(defDir, u3dHost + '.json'), JSON.stringify({ host: u3dHost, base: 'http://127.0.0.1:' + port, engine: 'unit3d' }));
+      await fetchA(BASE + '/api/credentials/' + u3dHost, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'session=u3d-good' })
+      });
+      const u3 = await (await fetchA(BASE + '/api/sites/' + u3dHost + '/session-test', { method: 'POST' })).json();
+      need(u3.data.pass === true, 'UNIT3D 有效 cookie 判失效：' + JSON.stringify(u3.data).slice(0, 180));
+      need(u3.data.engine === 'unit3d' && u3.data.probe === '/', 'UNIT3D 探测路径不对：' + JSON.stringify(u3.data).slice(0, 140));
+      await fetchA(BASE + '/api/credentials/' + u3dHost, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'session=nope' })
+      });
+      const u3bad = await (await fetchA(BASE + '/api/sites/' + u3dHost + '/session-test', { method: 'POST' })).json();
+      need(u3bad.data.pass === false, 'UNIT3D 失效 cookie 判成功');
+      await fetchA(BASE + '/api/credentials/' + u3dHost, { method: 'DELETE' });
     } finally {
       mock.close();
     }
@@ -578,7 +629,8 @@ async function main() {
     const rotated = fs.existsSync(path.join(DATA, 'events.log.1'));
     need(rotated, '日志超过上限却没有轮转');
     const now = fs.statSync(path.join(DATA, 'events.log')).size;
-    need(now < 1500, '轮转后主文件仍然超过上限：' + now);
+    /* 轮转是「写一行后超限才换」，所以主文件最多是上限再加一行 */
+    need(now <= 1500 + 300, '轮转后主文件仍然超过上限：' + now);
   });
 
   await check('登录失败返回 401', async () => {

@@ -2449,7 +2449,7 @@
       ["doc", "纪录"], ["music", "音乐"], ["sport", "体育"], ["other", "其他"]];
     var RES = [["any", "不限"], ["720p", "720p 及以上"], ["1080p", "1080p 及以上"], ["2160p", "2160p 及以上"]];
 
-    var SET_TABS = [["basic", "基本信息"], ["login", "登录"], ["override", "站点覆盖"]];
+    var SET_TABS = [["basic", "基本信息"], ["login", "登录"], ["search", "搜索预设"], ["override", "站点覆盖"]];
 
     function settingsHtml(s) {
       var opts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
@@ -2480,6 +2480,25 @@
         '<div class="set-fields">' + setRowsHtml([
           { t: "分类映射", type: "button", cls: "map-row", v: (catMapCount(s.name) ? "已配 " + catMapCount(s.name) + " 条" : "配置映射"), hint: "站点自己的分类对到库内分类，不受上面的开关影响" }
         ]) + "</div>";
+      } else if (tab === "search") {
+        var pdetail = s.presetDetail;
+        var psum = presetOf(s.name) || {};
+        var sEng = (pdetail && pdetail.engine) || psum.engine || "";
+        var catGroups = pdetail && pdetail.cats ? pdetail.cats : null;
+        var catLines = catGroups ? Object.keys(catGroups).map(function (g) {
+          return '<div class="sd-row"><span>' + escapeHtml(g) + "</span><b>" + escapeHtml((catGroups[g] || []).join(", ") || "—") + "</b></div>";
+        }).join("") : "";
+        body = '<div class="set-fields">' + setRowsHtml([
+          { t: "引擎", type: "fixed", v: sEng ? (engCode(sEng) + " · " + sEng) : "未识别", noTag: true },
+          { t: "预设来源", type: "fixed", v: pdetail ? (pdetail.source === "auto" ? "采样自动生成，还没人工确认" : (pdetail.source || "手填")) : "还没有预设", noTag: true },
+          { t: "分类参数", type: "fixed", v: (pdetail && pdetail.catMode ? pdetail.catMode : "—") + (pdetail && pdetail.catParam ? " · " + pdetail.catParam : ""), noTag: true }
+        ]) + "</div>" +
+        '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +
+          (catLines || '<div class="sd-row"><span>状态</span><b>还没有分类映射</b></div>') +
+        "</div></div>" +
+        '<div class="sd-cookie-bar"><span class="sd-cookie-res" id="sd-preset-res">' +
+          (pdetail ? "更新于 " + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
+        "</span></div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "登录方式", type: "fixed", v: "Cookie（从浏览器导入或用下面的输入框粘贴）", noTag: true, hint: "账号密码与 2FA 已不再使用" }
@@ -2520,6 +2539,17 @@
 
     function paintDetail() {
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
+      if (s && state.setTab === "search" && window.fetch && /^https?:$/.test(location.protocol) && !s.presetLoaded) {
+        s.presetLoaded = true;
+        fetch("/api/sites/" + encodeURIComponent(s.name) + "/search", { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !j.ok) return;
+            s.presetDetail = (j.data && j.data.preset) || null;
+            if (state.sel === s.name) paint();
+          })
+          .catch(function () { s.presetLoaded = false; });
+      }
       if (s && state.setTab === "login" && window.__ptaCred && !s.cookieChecked) {
         s.cookieChecked = true;
         window.__ptaCred.req("").then(function (res) {
