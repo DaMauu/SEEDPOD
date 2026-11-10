@@ -1807,6 +1807,7 @@ html, body { overflow-x: hidden; }
 .ss-legend { display: flex; gap: 14px; margin-top: 7px; font-size: 10.5px; color: var(--muted); }
 .ss-legend .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
 .ss-legend .dot.np { background: #8b7cf6; } .ss-legend .dot.u3d { background: #34c4a0; }
+.ss-cov { margin-top: 8px; font-size: 11px; color: var(--muted); }
 .ss-legend .dot.gz { background: #4aa3f5; } .ss-legend .dot.oth { background: #f0a93b; }
 .ss-legend .dot.unk { background: #c6cbd6; }
 

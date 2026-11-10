@@ -2568,6 +2568,18 @@
           : '<div class="sd-scroll">' + overviewHtml(s) + "</div>");
     }
 
+    function coverageStats() {
+      var defs = window.__ptaDefs || {};
+      var hosts = Object.keys(defs);
+      var verified = 0, eng = {};
+      hosts.forEach(function (h) {
+        var d = defs[h] || {};
+        if ((d.rows || 0) > 0) verified++;
+        eng[d.engine || "?"] = (eng[d.engine || "?"] || 0) + 1;
+      });
+      return { total: hosts.length, verified: verified, eng: eng };
+    }
+
     function renderStats() {
       var host = $("#sites-stats");
       if (!host) return;
@@ -2591,7 +2603,14 @@
           '<div><span>分享率不足</span><b class="bad">' + st.lowRatio + "</b></div>" +
         "</div>" +
         '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
-          '<div class="ss-legend">' + legend + "</div></div>";
+          '<div class="ss-legend">' + legend + "</div></div>" +
+        (function () {
+          var cov = coverageStats();
+          if (!cov.total) return "";
+          return '<div class="ss-cov">已适配 ' + cov.total + ' 站 · 采样成功 ' + cov.verified +
+            ' 站（NP ' + (cov.eng.nexusphp || 0) + ' · U3D ' + (cov.eng.unit3d || 0) +
+            ' · GZ ' + (cov.eng.gazelle || 0) + ' · 兜底 ' + (cov.eng.custom || 0) + '）</div>';
+        })();
     }
 
     function paint() {
