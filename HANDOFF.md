@@ -72,6 +72,17 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 数据文件（都在 `data/` 下，0600）：`config.json` 面板配置、`site-config.json` 站点配置（密码类字段不落盘）、
 `queue.json` 待审核条目、`downloaders.json` 下载器（密码只写不读）、`site-search.local.json` 搜索预设（在 `pta/data/`，不入库）。
 
+## 搜索预设怎么来的（可复现）
+
+用本机 Chrome 的登录态读每个站的种子页（`/torrents.php` 或 `/torrents`），从页面里解析三类写法：
+分类链接（`?cat=401`、`cat406=1`）、下拉框 option、图标 `img[title]`；再按标签关键词归到用途（movie/tv/doc/anime/music/book/game/other），
+顺带记下该页真实存在的搜索参数名（`search` / `search_area` / `search_mode`，UNIT3D 是 `name` + `categories[]`，Gazelle 是 `searchstr` + `filter_cat[]`）。
+
+Chrome 必须以 `--remote-debugging-port=9222` 启动，脚本用 CDP 连过去，每站新开标签、只发一次 GET、读完即关，站与站之间停 4 秒。
+采集结果写 `pta/data/site-search.local.json`，再复制到 `/opt/seedpod/data/` 并重启服务。
+
+截至 2026-11-10：已采 7 站 / 108 个分类 id，其余站点还没采。
+
 ## 站点搜索预设为什么单独存
 
 同一个分类 id 在不同站点对应的类型不一样，搜索参数名也各不相同（nexusphp 用 search/cat，unit3d 用 name/categories[]，gazelle 用 searchstr/filter_cat）。

@@ -72,6 +72,7 @@ pta\checks\run.cmd
 | done | 本地查重（不联网） | `/api/queue/:id/check` 比对队列与本地库，片名前 4 词做键，年份/分辨率不同不算重复 |
 | done | 待审核台服务端状态机 | `POST /api/queue` 造条目，approve/reject/publish 各有校验，越级 409 |
 | done | 站点搜索预设按站存 | `/api/sites/:host/search` 支持引擎/路径/参数名/分类 id，真实数据不入库 |
+| done | 搜索预设采集（真实站点，逐步） | 已采 7 站 108 个分类 id，脚本逐站一次请求、间隔 4 秒，结果不入库 |
 | done | 站点页显示预设状态 | 列表标「预设」，详情显示「搜索预设 已确认/未确认」，读 `/api/site-search` 汇总 |
 | done | 待审核台前端接 `/api/queue` | 有后端时列表读服务端，「通过并发布」走 approve+publish，驳回必须填理由 |
 | done | 下载器连通性探测（后端） | 只连自己填的地址，8 秒超时，401 时用账号密码登录一次再重试，失败给原因 |
