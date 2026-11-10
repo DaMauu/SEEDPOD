@@ -161,7 +161,7 @@ async function main() {
     await page.waitForTimeout(250);
     need(await page.locator('.rule-item[data-set="fetch"].open').isVisible(), '拉取卡没展开');
     await page.evaluate(() => {
-      const r = [...document.querySelectorAll('.rule-item[data-set="pub"] .rule-row')].find(x => x.textContent.includes('标题规则'));
+      const r = [...document.querySelectorAll('.rule-item[data-set="pub"] .rule-row')].find(x => (x.textContent.includes('标题与副标题')));
       if (r) r.click();
     });
     await page.waitForTimeout(200);

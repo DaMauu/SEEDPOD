@@ -459,7 +459,8 @@ function writeDl(d) {
   }
 }
 function publicDl(d) {
-  return { id: d.id, name: d.name || '', url: d.url, user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth };
+  return { id: d.id, name: d.name || '', url: d.url, user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth,
+    lastProbe: d.lastProbe || null };
 }
 function normDlUrl(raw) {
   const s = String(raw || '').trim().replace(/\/+$/, '');
@@ -519,7 +520,22 @@ async function probeDownloader(d) {
     }
     const version = (await r.res.text().catch(function () { return ''; })).trim().slice(0, 40);
     const pass = r.res.status === 200 && !!version;
-    return { pass: pass, version: pass ? version : '', steps: steps };
+    /* 顺手问一下磁盘余量：qBittorrent 在 sync/maindata 的 server_state 里给 */
+    let freeSpace = 0, savePath = '';
+    if (pass) {
+      try {
+        const t1 = Date.now();
+        const main = await hit('/api/v2/sync/maindata');
+        const data = await main.res.json().catch(function () { return null; });
+        const st = (data && data.server_state) || {};
+        freeSpace = Number(st.free_space_on_disk) || 0;
+        savePath = String(st.save_path || '');
+        steps.push({ step: 'space', status: main.res.status, ms: ms(t1), ok: freeSpace > 0 });
+      } catch (e) {
+        steps.push({ step: 'space', status: 0, ms: 0, error: '拿不到磁盘余量：' + String(e && e.message || e).slice(0, 80) });
+      }
+    }
+    return { pass: pass, version: pass ? version : '', freeSpace: freeSpace, savePath: savePath, steps: steps };
   } catch (e) {
     steps.push({ step: 'connect', status: 0, ms: 0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e && e.message || e).slice(0, 160) });
     return { pass: false, version: '', steps: steps };
@@ -581,6 +597,19 @@ function runDryTask(t) {
 }
 /* ---------- 站点凭据：只存密文，接口永不回显明文 ---------- */
 const CRED_FILE = path.join(DATA_DIR, 'credentials.json');
+
+/* 站点自检结果落盘：面板的「系统状态」要用真实的登录正常/失效数，不猜 */
+const SITE_STATUS_FILE = path.join(DATA_DIR, 'site-status.json');
+function readSiteStatus() {
+  try { return JSON.parse(fs.readFileSync(SITE_STATUS_FILE, 'utf8')) || {}; } catch (e) { return {}; }
+}
+function writeSiteStatus(host, rec) {
+  try {
+    const all = readSiteStatus();
+    all[host] = rec;
+    fs.writeFileSync(SITE_STATUS_FILE, JSON.stringify(all, null, 1), { mode: 0o600 });
+  } catch (e) {}
+}
 
 function readCreds() {
   try {
@@ -1010,6 +1039,7 @@ const server = http.createServer(async (req, res) => {
       if (!h2 || !/^[a-z0-9][a-z0-9.-]*$/i.test(h2)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');
       const r2 = await sessionCheckOnce(h2);
       if (r2.err) return fail(res, 400, r2.err.code, r2.err.message);
+      writeSiteStatus(h2, { at: new Date().toISOString(), pass: !!r2.pass, engine: r2.engine || '' });
       return send(res, 200, { ok: true, data: r2 });
     }
     if (p === '/api/flow' && req.method === 'GET') {
@@ -1044,6 +1074,45 @@ const server = http.createServer(async (req, res) => {
         };
       });
       return send(res, 200, { ok: true, data: out });
+    }
+    if (p === '/api/stats/overview' && req.method === 'GET') {
+      /* 面板「系统状态」用的真实数字：站点来自清单与自检记录，下载器来自上次探测 */
+      const sites = loadSiteList();
+      const siteCfg = (readSiteCfg().sites || {});
+      const status = readSiteStatus();
+      let enabled = 0, loginOk = 0, loginFail = 0, loginUnknown = 0, checked = 0;
+      sites.forEach(function (x) {
+        const h = x.host;
+        if (siteCfg[h] && siteCfg[h].enabled === false) return;
+        enabled++;
+        const st = status[h];
+        if (!st) { loginUnknown++; return; }
+        checked++;
+        if (st.pass) loginOk++; else loginFail++;
+      });
+      const dls = readDl().items;
+      let online = 0, freeSpace = 0, lastAt = '', version = '';
+      dls.forEach(function (d) {
+        const lp = d.lastProbe || null;
+        if (lp && lp.pass) { online++; freeSpace += Number(lp.freeSpace) || 0; }
+        if (lp && lp.at && lp.at > lastAt) { lastAt = lp.at; version = lp.version || ''; }
+      });
+      const q = readQueue();
+      const counts = {};
+      (q.items || []).forEach(function (x) { counts[x.status] = (counts[x.status] || 0) + 1; });
+      let active = 0;
+      TASKS.forEach(function (t) { if (t && (t.state === 'queued' || t.state === 'running')) active++; });
+      return send(res, 200, {
+        ok: true,
+        data: {
+          sites: { total: sites.length, enabled: enabled, loginOk: loginOk, loginFail: loginFail, loginUnknown: loginUnknown, checked: checked },
+          downloaders: { total: dls.length, online: online, offline: dls.length - online, freeSpace: freeSpace, version: version, lastAt: lastAt || null },
+          queue: { total: (q.items || []).length, counts: counts },
+          library: { total: readLibrary().length },
+          tasks: { active: active },
+          updatedAt: new Date().toISOString()
+        }
+      });
     }
     if (p === '/api/site-defs' && req.method === 'GET') {
       const list = [];
@@ -1212,6 +1281,12 @@ const server = http.createServer(async (req, res) => {
       if (test) {
         if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
         const r = await probeDownloader(store.items[idx]);
+        /* 探测结果落盘：磁盘余量这类实时数据下次打开面板就能显示，不用再探一次 */
+        store.items[idx].lastProbe = {
+          at: new Date().toISOString(), pass: !!r.pass, version: r.version || '',
+          freeSpace: Number(r.freeSpace) || 0, savePath: r.savePath || ''
+        };
+        try { writeDl(store); } catch (e) {}
         logEvent(r.pass ? 'info' : 'warn', '下载器', '连通性探测 · ' + (store.items[idx].name || store.items[idx].url) + ' · ' + (r.pass ? '通过 ' + r.version : '失败'));
         return send(res, 200, { ok: true, data: r });
       }

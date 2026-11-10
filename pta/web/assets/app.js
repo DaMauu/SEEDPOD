@@ -330,6 +330,22 @@
   }
   window.__ptaLoadDefs = loadDefs;
 
+  /* 系统状态：站点自检结果、下载器在线与磁盘余量，都来自后端真实数据 */
+  window.__ptaOverview = null;
+  function loadOverview() {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+    return fetch("/api/stats/overview", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !j.data) return false;
+        window.__ptaOverview = j.data;
+        if (typeof window.__ptaPaintHealth === "function") window.__ptaPaintHealth();
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  window.__ptaLoadOverview = loadOverview;
+
   /* 顶栏三个状态：后端连通、待审核条数、下载器数量；没有数据就不显示次数 */
   function paintTopbar() {
     var svc = $("#pill-service"), pend = $("#pill-pending"), nodes = $("#pill-nodes");
@@ -751,24 +767,36 @@
     }
   }
 
+  window.__ptaPaintHealth = function () { renderHealth(); renderSiteHealth(); renderNodeCapacity(); };
+
+  function fmtBytes(n) {
+    var v = Number(n) || 0;
+    if (!v) return "";
+    var u = ["B", "KB", "MB", "GB", "TB", "PB"], i = 0;
+    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+    return (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + " " + u[i];
+  }
+
+  /* 系统状态用的都是后端真实数据：站点数来自清单，登录结果来自自检记录，磁盘余量来自下载器探测 */
   function renderHealth() {
     var host = $("#health-strip");
     if (!host) return;
-    var s = MOCK.sites;
-    var nodes = MOCK.nodes.slice(1);
-    var online = nodes.filter(function (n) { return n.online; }).length;
-    var used = nodes.reduce(function (a, n) { return a + n.used; }, 0);
-    var total = nodes.reduce(function (a, n) { return a + n.total; }, 0);
-    var free = (total - used).toFixed(1);
-    var loginWarn = s.loginOk < s.enabled;
+    var o = window.__ptaOverview;
+    var loginOk = o ? o.sites.loginOk : 0;
+    var enabled = o ? o.sites.enabled : 0;
+    var loginFail = o ? o.sites.loginFail : 0;
+    var unchecked = o ? o.sites.loginUnknown : 0;
+    var dls = o ? o.downloaders : null;
+    var free = dls ? fmtBytes(dls.freeSpace) : "";
     var list = [
-      { label: "分享率不足", value: String(s.lowRatio), warn: s.lowRatio > 0 },
-      { label: "节点在线", value: online + " / " + nodes.length, warn: online < nodes.length },
-      { label: "磁盘余量", value: free + " / " + total + " TB", warn: false }
+      { label: "登录失效", value: String(loginFail), warn: loginFail > 0 },
+      { label: "还没自检", value: String(unchecked), warn: false },
+      { label: "下载器在线", value: dls ? (dls.online + " / " + dls.total) : "—", warn: !!(dls && dls.total && dls.online < dls.total) },
+      { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接下载器"), warn: !!(dls && dls.total && !free) }
     ];
     host.innerHTML =
-      '<div class="status-hero"><span>登录正常</span><b class="' + (loginWarn ? "warn" : "") + '">' +
-      s.loginOk + "</b><i>共启用 " + s.enabled + " 个</i></div>" +
+      '<div class="status-hero"><span>登录正常</span><b class="' + (loginFail ? "warn" : "") + '">' +
+      loginOk + "</b><i>共启用 " + enabled + " 个" + (o ? "" : "（未连接后端）") + "</i></div>" +
       '<div class="status-list">' + list.map(function (it) {
         return '<div class="hstat' + (it.warn ? " warn" : "") + '"><span>' + it.label + "</span><b>" + it.value + "</b></div>";
       }).join("") + "</div>";
@@ -778,32 +806,40 @@
     var host = $("#site-health");
     var bars = $("#site-bars");
     if (!host) return;
-    var s = MOCK.sites;
+    var o = window.__ptaOverview;
+    var s = o ? o.sites : { total: 0, enabled: 0, loginOk: 0, loginFail: 0, loginUnknown: 0 };
     host.innerHTML =
       '<div class="mini"><span>已启用</span><b>' + s.enabled + " / " + s.total + "</b></div>" +
       '<div class="mini"><span>登录正常</span><b>' + s.loginOk + "</b></div>" +
-      '<div class="mini warn"><span>分享率不足</span><b>' + s.lowRatio + "</b></div>" +
-      '<div class="mini"><span>需要 2FA</span><b>' + s.tfa + "</b></div>";
+      '<div class="mini' + (s.loginFail ? " warn" : "") + '"><span>登录失效</span><b>' + s.loginFail + "</b></div>" +
+      '<div class="mini"><span>还没自检</span><b>' + s.loginUnknown + "</b></div>";
     if (bars) {
+      var counts = window.__ptaSiteCounts || null;
+      var np = counts && counts.NP ? counts.NP : 0;
+      var u3d = counts && counts.UNIT3D ? counts.UNIT3D : 0;
+      var sum = np + u3d;
       bars.innerHTML =
-        '<div class="arch-bar"><i style="width:' + Math.round(s.np / (s.np + s.unit3d) * 100) + '%"></i>' +
-        '<i class="u3d" style="width:' + Math.round(s.unit3d / (s.np + s.unit3d) * 100) + '%"></i></div>' +
-        '<div class="arch-legend">NexusPHP ' + s.np + " · UNIT3D " + s.unit3d + "</div>";
+        '<div class="arch-bar"><i style="width:' + (sum ? Math.round(np / sum * 100) : 0) + '%"></i>' +
+        '<i class="u3d" style="width:' + (sum ? Math.round(u3d / sum * 100) : 0) + '%"></i></div>' +
+        '<div class="arch-legend">NexusPHP ' + np + " · UNIT3D " + u3d + "</div>";
     }
   }
 
   function renderNodeCapacity() {
     var host = $("#dash-nodes");
     if (!host) return;
-    var nodes = MOCK.nodes.slice(1);
-    var online = nodes.filter(function (n) { return n.online; }).length;
-    var used = nodes.reduce(function (a, n) { return a + n.used; }, 0);
-    var total = nodes.reduce(function (a, n) { return a + n.total; }, 0);
-    var pct = total ? Math.round(used / total * 100) : 0;
+    var o = window.__ptaOverview;
+    var d = o ? o.downloaders : null;
+    if (!d || !d.total) {
+      host.innerHTML = '<div class="node-sum-line"><span>未接下载器</span><span class="mono">—</span></div>' +
+        '<div class="progress" style="margin-top:8px"><i style="width:0%"></i></div>';
+      return;
+    }
+    var free = fmtBytes(d.freeSpace) || "未知";
     host.innerHTML =
-      '<div class="node-sum-line"><span>' + online + " / " + nodes.length + " 在线</span>" +
-      '<span class="mono">' + used.toFixed(1) + " / " + total + " TB</span></div>" +
-      '<div class="progress" style="margin-top:8px"><i style="width:' + pct + '%"></i></div>';
+      '<div class="node-sum-line"><span>' + d.online + " / " + d.total + " 在线" + (d.version ? " · " + escapeHtml(d.version) : "") + "</span>" +
+      '<span class="mono">剩余 ' + free + "</span></div>" +
+      '<div class="progress" style="margin-top:8px"><i style="width:' + (d.total ? Math.round(d.online / d.total * 100) : 0) + '%"></i></div>';
   }
 
   function renderRecentSources() {
@@ -1804,9 +1840,9 @@
         "</div>" +
         '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
       "</section>" +
-      sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub");
+      sectionHtml({ name: "抓取", desc: "按搜索预设的类目直接把词条抓进本地库，命中禁转/独占/DIY/限转的只打标记不过滤。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "筛选", desc: "从本地词条里挑出符合条件的，标出已有/已发布/跳过，归档不需要的。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
+      sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub");
 
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
@@ -3051,6 +3087,7 @@
     paint();
     if (window.__ptaLoadPresets) window.__ptaLoadPresets();
     if (window.__ptaLoadDefs) window.__ptaLoadDefs();
+    if (window.__ptaLoadOverview) window.__ptaLoadOverview();
   }
 
   /* ---------- 站点：新增弹窗 + 本地保存 ---------- */
