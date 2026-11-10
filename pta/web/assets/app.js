@@ -1404,11 +1404,11 @@
     var screenBtn = $("#dl-screen");
     if (screenBtn) screenBtn.addEventListener("click", function () {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
-      ptaConfirm("按条件送审", "会按流程页「筛选」里的条件把待筛选的词条送去待审核，不符合的标成跳过。继续？", function () {
+      ptaConfirm("按条件送审", (state.site ? "只处理「" + state.site + "」的待筛选词条，" : "") + "会按流程页「筛选」里的条件送去待审核，不符合的标成跳过。继续？", function () {
         screenBtn.disabled = true;
         fetch("/api/catalog/screen", {
           method: "POST", credentials: "same-origin",
-          headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 200 })
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 200, host: state.site || "" })
         }).then(function (r) { return r.json(); }).then(function (j) {
           screenBtn.disabled = false;
           if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
