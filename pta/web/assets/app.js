@@ -2005,7 +2005,8 @@
           return;
         }
         var d = out.j.data;
-        var line = "抓回 " + d.rows + " 行 · 新增 " + d.added + " · 更新 " + d.updated + " · 今日第 " + d.daily.count + " 次";
+        var line = "第 " + d.page + " 页 · 抓回 " + d.rows + " 行 · 新增 " + d.added + " · 更新 " + d.updated +
+          " · 今日第 " + d.daily.count + " 次 · 下次第 " + d.nextPage + " 页";
         if (meta) meta.textContent = line;
         toast(line);
         if (window.__ptaLoadOverview) window.__ptaLoadOverview();

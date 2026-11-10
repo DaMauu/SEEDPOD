@@ -209,6 +209,14 @@ check('判同一个种子：标题/年份/分辨率/体积/infohash', () => {
   need(match.normTitle('【某站】Some Movie 2020 1080p WEB-DL DDP5.1-GRP') === 'some movie 2020', '标题归一把站点前缀/编码/组名没清干净：' + match.normTitle('【某站】Some Movie 2020 1080p WEB-DL DDP5.1-GRP'));
 });
 
+check('翻页地址拼接', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const base = 'https://x.example/torrents.php?search=&cat=401';
+  need(adapters.withPage(base, 1) === base, '第 1 页不该改地址');
+  need(/[?&]page=2$/.test(adapters.withPage(base, 2)), '第 2 页没拼上 page=2：' + adapters.withPage(base, 2));
+  need(adapters.withPage('https://x.example/torrents?name=a', 3).indexOf('page=3') > 0, '不带路面的地址也要能拼 page');
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

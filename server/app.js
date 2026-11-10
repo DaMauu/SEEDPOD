@@ -385,14 +385,14 @@ function crawlPlan(host) {
     requestDelay: (def.limits && def.limits.requestDelay) || 3, minGapMs: CRAWL_MIN_GAP_MS, dailyMax: CRAWL_DAILY_MAX };
 }
 
-async function crawlOnce(host) {
+async function crawlOnce(host, opts) {
   const plan = crawlPlan(host);
   if (plan.err) return { err: plan.err };
   const state = readCrawlState();
   const now = Date.now();
   const today = new Date().toISOString().slice(0, 10);
-  const rec = state[host] || { lastAt: 0, day: today, count: 0 };
-  if (rec.day !== today) { rec.day = today; rec.count = 0; }
+  const rec = state[host] || { lastAt: 0, day: today, count: 0, page: 0 };
+  if (rec.day !== today) { rec.day = today; rec.count = 0; rec.page = 0; }
   if (now - (rec.lastAt || 0) < CRAWL_MIN_GAP_MS) {
     return { err: { code: 'TOO_SOON', message: '距上次抓取不到 6 秒，等一下再抓',
       extra: { waitMs: CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0)) } } };
@@ -400,12 +400,15 @@ async function crawlOnce(host) {
   if (rec.count >= CRAWL_DAILY_MAX) {
     return { err: { code: 'DAILY_LIMIT', message: '这个站今天已经抓够 ' + CRAWL_DAILY_MAX + ' 次了', extra: { count: rec.count } } };
   }
+  /* 翻页续抓：默认接着上次的下一页；到底了（上次 0 行）就从头来 */
+  const page = Math.max(1, Math.min(50, Number((opts && opts.page) || 0) || ((rec.page || 0) + 1)));
+  const url = adapters.withPage(plan.url, page);
   const def = readSiteDef(host);
   const cookie = decryptField(readCreds()[host].cookie);
   const t0 = Date.now();
-  let rows = [], status = 0, html = '';
+  let rows = [], status = 0, html = [];
   try {
-    const res = await fetch(plan.url, {
+    const res = await fetch(url, {
       headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
       redirect: 'manual', signal: AbortSignal.timeout(20000)
     });
@@ -436,12 +439,14 @@ async function crawlOnce(host) {
   if (items.length) out = catalogStore.add(items);
   rec.lastAt = now;
   rec.count = (rec.count || 0) + 1;
+  rec.page = rows.length ? page : 0;      /* 这一页有东西就记住页码，到底了就归零 */
+  rec.lastRows = rows.length;
   state[host] = rec;
   writeCrawlState(state);
-  logEvent('info', '抓取', host + ' 抓回 ' + rows.length + ' 行 · 入库 ' + out.added + ' 新增 / ' + out.updated + ' 更新');
+  logEvent('info', '抓取', host + ' 第 ' + page + ' 页 · 抓回 ' + rows.length + ' 行 · 入库 ' + out.added + ' 新增 / ' + out.updated + ' 更新');
   return {
-    host: host, url: plan.url, status: status, ms: Date.now() - t0, rows: rows.length,
-    added: out.added, updated: out.updated, skipped: out.skipped,
+    host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length,
+    added: out.added, updated: out.updated, skipped: out.skipped, nextPage: rows.length ? page + 1 : 1,
     daily: { day: rec.day, count: rec.count, max: CRAWL_DAILY_MAX }, nextAllowedMs: CRAWL_MIN_GAP_MS
   };
 }
@@ -1535,11 +1540,24 @@ const server = http.createServer(async (req, res) => {
       if (plan.err) return fail(res, plan.err.code === 'NO_COOKIE' ? 409 : 400, plan.err.code, plan.err.message);
       return send(res, 200, { ok: true, data: plan });
     }
+    if (p === '/api/crawl/status' && req.method === 'GET') {
+      const host = String(u.searchParams.get('host') || '').trim().toLowerCase();
+      if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
+      const rec = readCrawlState()[host] || { lastAt: 0, day: '', count: 0, page: 0 };
+      const now = Date.now();
+      return send(res, 200, { ok: true, data: {
+        host: host, lastAt: rec.lastAt || 0, day: rec.day || '', count: rec.count || 0,
+        page: rec.page || 0, lastRows: rec.lastRows || 0,
+        dailyMax: CRAWL_DAILY_MAX, minGapMs: CRAWL_MIN_GAP_MS,
+        waitMs: Math.max(0, CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0))),
+        leftToday: Math.max(0, CRAWL_DAILY_MAX - (rec.day === new Date().toISOString().slice(0, 10) ? (rec.count || 0) : 0))
+      } });
+    }
     if (p === '/api/crawl/run' && req.method === 'POST') {
       const body = await readBody(req);
       const host = String((body && body.host) || '').trim().toLowerCase();
       if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
-      const out = await crawlOnce(host);
+      const out = await crawlOnce(host, { page: body && body.page });
       if (out.err) {
         const code = out.err.code;
         const status = code === 'TOO_SOON' || code === 'DAILY_LIMIT' ? 429 : (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED') ? 409 : 400;

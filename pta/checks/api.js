@@ -665,6 +665,9 @@ async function main() {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
       });
       need(again.status === 429, '6 秒内第二次抓取没被拦住：' + again.status);
+      const st = await (await fetchA(BASE + '/api/crawl/status?host=' + chost)).json();
+      need(st.ok && st.data.count === 1 && st.data.page === 1, '抓取状态没记住：' + JSON.stringify(st.data).slice(0, 160));
+      need(st.data.nextPage === undefined && st.data.waitMs > 0, '冷却剩余时间不对：' + JSON.stringify(st.data).slice(0, 120));
       const list = await (await fetchA(BASE + '/api/catalog?q=&limit=5')).json();
       need(list.data.total > 0, '词条库里没有抓回来的数据');
     } finally {

@@ -33,6 +33,20 @@ function resolve(def) {
 }
 
 function buildSearchUrl(def, q, cats) { return resolve(def).buildSearchUrl(def, q, cats); }
+
+/* 翻页：三种引擎都用 page=N，直接在已拼好的搜索地址后面补一个参数 */
+function withPage(url, page) {
+  const p = Math.max(1, Number(page) || 1);
+  if (p <= 1) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.set('page', String(p));
+    return u.toString();
+  } catch (e) {
+    const sep = String(url).indexOf('?') >= 0 ? '&' : '?';
+    return String(url) + sep + 'page=' + p;
+  }
+}
 function parseList(html, engine) { const a = byName(engine) || detectAdapter(html); return a ? a.parseList(html) : []; }
 function parseCategories(html, engine) { const a = byName(engine) || detectAdapter(html); return a ? a.parseCategories(html) : []; }
 
@@ -116,6 +130,7 @@ module.exports = {
   names: function () { return ADAPTERS.map(function (a) { return a.name; }); },
   byName: byName,
   buildSearchUrl: buildSearchUrl,
+  withPage: withPage,
   parseList: parseList,
   parseCategories: parseCategories,
   isLoggedIn: isLoggedIn,
