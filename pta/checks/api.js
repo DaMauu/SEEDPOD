@@ -1091,6 +1091,16 @@ async function main() {
     const reasons = JSON.stringify(run.data.byReason);
     need(/分辨率/.test(reasons) && /中字/.test(reasons), '跳过原因不对：' + reasons);
     await fetchA(BASE + '/api/flow', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: { dedupe: [[]] } }) });
+
+    /* 已经送审过的同一条，从别的站再抓到时不该重复入选 */
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: 'other.example', siteId: '9', title: 'Flow Fixture Good 2024 2160p 中字', res: '2160p', sizeBytes: 64424509440 }] })
+    });
+    const run2 = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'other.example', limit: 10 })
+    })).json();
+    need(run2.ok && run2.data.selected === 0 && /已有/.test(JSON.stringify(run2.data.byReason)), '已送审的词条被重复入选：' + JSON.stringify(run2.data));
   });
 
   child.kill();

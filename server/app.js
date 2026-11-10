@@ -515,6 +515,11 @@ function screenCatalog(opts) {
   const maxBytes = Number(rules.maxSizeGB) > 0 ? Number(rules.maxSizeGB) * 1073741824 : 0;
   const needChinese = !!rules.requireChinese;
   const pool = readQueue().items.concat(readLibrary().map(function (x) { return Object.assign({ source: 'library' }, x); }));
+  /* 已经送审或发过的词条也算「已有」，避免同一条从别的站又挑一遍 */
+  const doneCat = catalogStore.list({ limit: 5000 }).items.filter(function (x) {
+    return x.status === 'selected' || x.status === 'published';
+  }).map(function (x) { return Object.assign({ source: 'catalog', site: x.site }, x); });
+  const poolAll = pool.concat(doneCat);
 
   const all = catalogStore.list({ status: 'new', limit: 5000 }).items;
   const queue = readQueue();
@@ -533,7 +538,7 @@ function screenCatalog(opts) {
     else if (maxBytes && bytes && bytes > maxBytes) reason = '体积偏大';
     else if (needChinese && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(title)) reason = '没有中字';
     else {
-      const hit = findDuplicates(Object.assign({}, it, { sizeBytes: bytes }), pool)[0];
+      const hit = findDuplicates(Object.assign({}, it, { sizeBytes: bytes }), poolAll)[0];
       if (hit) reason = '已有' + (hit.site ? '（' + hit.site + '）' : '');
     }
     if (reason) {
