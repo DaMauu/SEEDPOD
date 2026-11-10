@@ -61,3 +61,11 @@ tar czf - -C pta/data site-defs site-search.local.json | \
 
 面板上「站点 → 搜索预设」页签能看到每站的引擎、来源（auto/手动）、分类 id；
 `GET /api/site-defs` 是摘要，`GET /api/site-def/:host` 是单站完整定义。
+
+## 人工存档（登录墙 / 连不上 / 空壳页）
+
+在浏览器里打开该站种子列表页 → Ctrl+S → 保存类型选「网页，仅 HTML」→ 文件名用域名放进 `pta/data/manual/`，
+然后 `node scripts/ingest-manual.js`：压成样本 → 重新分析 → 重建定义与预设 → 校验 → 覆盖率，用过的文件移到 `manual/done/`。
+
+面板的「站点 → 搜索预设」页签会给每站现拼真实搜索链接（`GET /api/sites/:host/search?q=关键词`，
+只拼字符串不发请求），点开就能核对分类 id 对不对；确认无误点「确认这个预设」，来源会改成手动。
