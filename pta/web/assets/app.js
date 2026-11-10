@@ -1842,7 +1842,7 @@
         ' inputmode="numeric" placeholder="' + escapeHtml(r.ph || "") + '"><em class="num-warn"></em>';
     }
     if (r.type === "fixed") {
-      return '<span class="fixed-val' + (r.noTag ? " ref" : "") + '">' + escapeHtml(r.v || "系统锁定") + (r.noTag ? "" : "<i>系统固定</i>") + "</span>";
+      return '<span class="fixed-val' + (r.noTag ? " ref" : "") + '"' + k + ">" + escapeHtml(r.v || "系统锁定") + (r.noTag ? "" : "<i>系统固定</i>") + "</span>";
     }
     if (r.type === "custom") return r.html || "";
     if (r.type === "button") {
@@ -2420,35 +2420,17 @@
         { t: "连续失败熔断", type: "fixed", v: "3 次 4xx 暂停 15 分钟", hint: "429/403 直接停，遵守 Retry-After" },
         { t: "请求审计", type: "fixed", v: "全量记日志", hint: "每次请求可追溯到时间、站点、路径" }
       ] },
-      { name: "面板账号", desc: "登录这个面板用的账号，和站点账号无关。", rows: [
-        { t: "面板用户名", type: "text", v: "admin" },
-        { t: "面板密码", type: "password", k: "panelPass", ph: "留空表示不修改", hint: "保存时会再确认一次，避免误改" },
-        { t: "两步验证", type: "switch", v: true, hint: "登录面板时需要输入一次 TOTP" },
-        { t: "登录保持", type: "select", v: "7 天", opts: ["7 天", "30 天", "关闭浏览器失效"] },
-        { t: "面板地址", type: "text", v: "https://pta.example/", hint: "在 DNS 那边解析到 A 机" },
-        { t: "只允许局域网访问", type: "switch", v: true, hint: "关掉后外网也能打开，需要配合防火墙" },
-        { t: "已登录设备", type: "text", v: "Windows · 192.0.2.23", disabled: true },
-        { t: "退出所有设备", type: "button", v: "全部退出" }
+      { name: "面板账号", desc: "面板账号由服务器环境变量决定，面板里不改密码，也不存明文。", save: false, rows: [
+        { t: "面板用户名", type: "fixed", noTag: true, k: "panelUser", v: "读取中…" },
+        { t: "面板密码", type: "fixed", noTag: true, v: "只放在测试机的 systemd 环境变量 PTA_PASS，面板读不到也不回显；要改就去测试机改环境变量后重启服务" },
+        { t: "会话", type: "fixed", noTag: true, v: "HttpOnly cookie，服务进程内存里保存，重启服务需要重新登录" },
+        { t: "退出登录", type: "button", v: "退出", hint: "清掉当前浏览器的会话 cookie" }
       ] },
-      { name: "通知", desc: "哪些事需要主动推送给你。", rows: [
-        { t: "Telegram bot", type: "text", v: "@pta_bot", disabled: true },
-        { t: "每日汇总", type: "switch", v: true, hint: "每天 22:00 发一条" },
-        { t: "失败立即推送", type: "switch", v: true },
-        { t: "登录失效提醒", type: "switch", v: true },
-        { t: "Webhook 地址", type: "text", v: "", ph: "POST JSON 到自己的服务" },
-        { t: "邮件通知", type: "text", v: "", ph: "收件邮箱（SMTP 在配置里）" },
-        { t: "静默时段", type: "select", v: "不静默", opts: ["不静默", "22:00–08:00", "00:00–08:00"], hint: "这段时间只记录不推送" }
-      ] },
-      { name: "系统", desc: "版本、备份和这台浏览器里的数据。", rows: [
-        { t: "当前版本", type: "text", v: "0.3.2 原型", disabled: true },
-        { t: "立即备份", type: "button", v: "开始备份" },
-        { t: "清空本地缓存", type: "button", v: "清空", hint: "只会清掉浏览器里的设置，不动服务器数据" },
-        { t: "数据保留", type: "select", v: "90 天", opts: ["30 天", "90 天", "180 天", "永久"], hint: "数据清单里过期的记录自动清" },
-        { t: "日志保留", type: "select", v: "30 天", opts: ["7 天", "30 天", "90 天"] },
-        { t: "自动备份", type: "select", v: "每天 03:00", opts: ["每天 03:00", "每周一次", "关闭"], hint: "备份站点、流程、通知这几组设置" },
-        { t: "磁盘低水位", type: "select", v: "50 GB", opts: ["20 GB", "50 GB", "100 GB"], hint: "低于这个值停止新下载" },
-        { t: "时区", type: "select", v: "Asia/Shanghai", opts: ["Asia/Shanghai", "UTC"], hint: "抓取时段和汇总都按这个时区" },
-        { t: "API 令牌", type: "button", v: "重新生成" }
+      { name: "系统", desc: "版本、存储和这台浏览器里的数据。", save: false, rows: [
+        { t: "当前版本", type: "fixed", noTag: true, k: "sysVersion", v: "读取中…" },
+        { t: "数据目录", type: "fixed", noTag: true, v: "由服务端 PTA_DATA 指定，站点定义、词条库、队列、日志都在里面" },
+        { t: "日志上限", type: "fixed", noTag: true, v: "2 MB，超过自动轮转一份旧日志" },
+        { t: "清空本地缓存", type: "button", v: "清空", hint: "只会清掉浏览器里的设置，不动服务器数据" }
       ] }
     ];
     panel.innerHTML = '<div class="set-stack">' + GROUPS.map(function (g, i) {
@@ -2456,10 +2438,28 @@
         '<div class="set-card-head">' +
           '<div class="set-card-t"><h2 class="set-h2">' + g.name + "</h2>" +
           '<p class="set-desc">' + g.desc + "</p></div>" +
-          '<button type="button" class="btn primary slim set-save">保存</button>' +
+          (g.save === false ? "" : '<button type="button" class="btn primary slim set-save">保存</button>') +
         "</div>" +
         '<div class="set-fields">' + setRowsHtml(g.rows) + "</div></section>";
     }).join("") + "</div>";
+    /* 面板用户名和版本都从后端读，读不到就显示占位，不编一个 */
+    (function loadMeta() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
+      fetch("api/health", { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          var el = panel.querySelector('[data-k="sysVersion"]');
+          if (el && j && j.ok && j.data && j.data.version) el.textContent = "v" + j.data.version;
+        })
+        .catch(function () {});
+      fetch("api/session", { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          var el = panel.querySelector('[data-k="panelUser"]');
+          if (el && j && j.ok && j.data && j.data.user) el.textContent = j.data.user;
+        })
+        .catch(function () {});
+    })();
     panel.addEventListener("click", function (e) {
       var sw = e.target.closest("button[data-switch]");
       if (sw) { sw.classList.toggle("on"); return; }
@@ -2474,15 +2474,15 @@
           });
           return;
         }
-        if (lbl === "API 令牌") {
-          var buf = new Uint8Array(16);
-          (window.crypto || window.msCrypto).getRandomValues(buf);
-          var tk = [].map.call(buf, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
-          toast("新令牌：" + tk.slice(0, 8) + "…（只显示一次）");
-          console.log("[PTA] api token", tk);
+        if (lbl === "退出登录") {
+          ptaConfirm("退出登录", "会清掉当前浏览器的会话 cookie，下次要重新登录。退出？", function () {
+            fetch("api/logout", { method: "POST", credentials: "same-origin" })
+              .then(function () { toast("已退出，正在刷新"); setTimeout(function () { location.reload(); }, 500); })
+              .catch(function () { toast("退出请求发不出去"); });
+          });
           return;
         }
-        toast(lbl + "（假数据）");
+        toast(lbl);
       }
     });
     /* 已连后端时，抓取节奏以服务端为准 */
@@ -2572,15 +2572,6 @@
           if (!j || !j.ok) { toast((j && j.error && j.error.message) || "服务端拒绝保存"); return; }
           toast("已保存到服务端");
         }).catch(function () { toast("服务端没有响应，已存本地"); });
-        return;
-      }
-      var pw = panel.querySelector('[data-k="panelPass"]');
-      var val = pw ? pw.value : "";
-      if (val) {
-        ptaConfirm("您正在修改面板密码", "保存后旧密码立即失效，所有已登录设备都要重新登录。确定继续？", function () {
-          if (pw) pw.value = "";
-          toast("面板密码已修改（假数据）");
-        });
         return;
       }
       toast("设置已保存");
