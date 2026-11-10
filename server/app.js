@@ -321,21 +321,6 @@ function writeLibrary(items) {
     throw err;
   }
 }
-/* 片名归一：只留字母数字，按前 4 个词做键，避免分辨率/音轨把同一部片拆开 */
-function titleKeyOf(title) {
-  const words = String(title || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
-  return words.slice(0, 4).join(' ');
-}
-function sizeGbOf(text) {
-  const m = /([\d.]+)\s*(GB|GiB|G|MB|MiB|TB)/i.exec(String(text || ''));
-  if (!m) return 0;
-  const n = parseFloat(m[1]);
-  if (!isFinite(n)) return 0;
-  const u = m[2].toUpperCase();
-  if (u.indexOf('TB') === 0) return n * 1024;
-  if (u.indexOf('MB') === 0 || u === 'M') return n / 1024;
-  return n;
-}
 function findDuplicates(item, pool) {
   const out = [];
   (pool || []).forEach(function (x) {
@@ -504,7 +489,6 @@ function flowScreenRules() {
   return out;
 }
 
-const SCREEN_RES = /^(2160p|1080p|1080i|720p|576p|480p)$/i;
 function screenCatalog(opts) {
   const o = opts || {};
   const limit = Math.max(1, Math.min(200, Number(o.limit) || 50));
