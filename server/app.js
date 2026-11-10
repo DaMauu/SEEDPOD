@@ -550,7 +550,8 @@ function screenCatalog(opts) {
   if (queue.items.length > 500) queue.items.length = 500;
   if (picked.length) { try { writeQueue(queue); } catch (e) {} }
   if (checked) logEvent('info', '筛选', '检查 ' + checked + ' 条 · 入选 ' + selected + ' 条 · 跳过 ' + skipped + ' 条');
-  return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, queued: picked.length };
+  return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, queued: picked.length,
+    rules: { res: resAllow, minSizeGB: rules.minSizeGB || 0, maxSizeGB: rules.maxSizeGB || 0, requireChinese: needChinese } };
 }
 
 /* ---------- 第三步发布：把待审核条目组装成发种草稿（不联网，只拼字段） ---------- */

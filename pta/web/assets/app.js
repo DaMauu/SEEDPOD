@@ -1384,7 +1384,9 @@
         if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
         var d = j.data || {};
         var rs = Object.keys(d.byReason || {}).map(function (k) { return k + " " + d.byReason[k]; }).join(" · ");
-        toast("检查 " + d.checked + " 条 · 送审 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
+        var rl = d.rules || {};
+        var noRule = !(rl.res && rl.res.length) && !rl.minSizeGB && !rl.maxSizeGB && !rl.requireChinese;
+        toast((noRule ? "还没设筛选条件，按全部通过 · " : "") + "检查 " + d.checked + " 条 · 送审 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
         loadCatalog();
       }).catch(function () { screenBtn.disabled = false; toast("筛选请求发不出去"); });
     });
