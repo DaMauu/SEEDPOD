@@ -1898,6 +1898,31 @@
 
     renderTpl();
 
+    /* 第二步筛选：把词条库里还没处理的挑出来，已有的跳过，能发的送进待审核 */
+    (function screenBtn() {
+      var sec = document.querySelector('.rule-item[data-set="dedupe"] .drawer-head-right');
+      if (!sec || $("#crawl-screen-run")) return;
+      var b = document.createElement("button");
+      b.className = "btn primary slim";
+      b.id = "crawl-screen-run";
+      b.textContent = "筛选送审";
+      sec.insertBefore(b, sec.firstChild);
+      b.addEventListener("click", function () {
+        if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，筛选不可用"); return; }
+        b.disabled = true;
+        fetch("/api/catalog/screen", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 50, rules: {} })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          b.disabled = false;
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
+          var d = j.data;
+          toast("检查 " + d.checked + " 条 · 入选 " + d.selected + " · 跳过 " + d.skipped);
+          if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+        }).catch(function () { b.disabled = false; toast("筛选请求发不出去"); });
+      });
+    })();
+
     /* 干跑区不是空的：进来就显示上一次干跑的结果，没跑过才显示「还没跑过」 */
     (function showLastDry() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) return;

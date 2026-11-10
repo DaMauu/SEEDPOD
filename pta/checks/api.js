@@ -673,6 +673,34 @@ async function main() {
     }
   });
 
+  await check('筛选：入选送待审核，已有与不符的跳过', async () => {
+    /* 先放一条本地库已有的同片，筛选时应该被判「已有」 */
+    await fetchA(BASE + '/api/library', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Screen Fixture A 2022 1080p BluRay', year: 2022, res: '1080p', size: '20.00 GB' })
+    });
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [
+        { site: 'screen.example', siteId: '1', title: 'Screen Fixture A 2022 1080p BluRay x264-GRP', res: '1080p', sizeBytes: 21474836480 },
+        { site: 'screen.example', siteId: '2', title: 'Screen Fixture B 2023 2160p WEB-DL', res: '2160p', sizeBytes: 64424509440 },
+        { site: 'screen.example', siteId: '3', title: 'Screen Fixture C 2021 720p HDTV', res: '720p', sizeBytes: 1073741824 }
+      ] })
+    });
+    const run = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ host: 'screen.example', limit: 10, rules: { res: ['1080p', '2160p'] } })
+    })).json();
+    need(run.ok, '筛选接口失败：' + JSON.stringify(run).slice(0, 160));
+    need(run.data.checked === 3, '筛选条数不对：' + run.data.checked);
+    need(run.data.selected === 1, '应只入选 1 条（1080p 那条已有、720p 不符），实际 ' + run.data.selected + '：' + JSON.stringify(run.data.byReason));
+    need(run.data.skipped === 2, '跳过条数不对：' + run.data.skipped);
+    const q = await (await fetchA(BASE + '/api/queue')).json();
+    need(q.data.items.some(x => x.catalogId && x.note && /词条库/.test(x.note)), '入选的词条没进待审核');
+    const cat = await (await fetchA(BASE + '/api/catalog?status=selected')).json();
+    need(cat.data.items.some(x => x.site === 'screen.example'), '入选后词条状态没变成 selected');
+  });
+
   await check('词条库导入、去重与状态流转', async () => {
     const add = await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' },

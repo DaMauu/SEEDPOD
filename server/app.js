@@ -446,6 +446,62 @@ async function crawlOnce(host) {
   };
 }
 
+/* ---------- 第二步筛选：从词条库挑出可发的，送进待审核 ---------- */
+const SCREEN_RES = /^(2160p|1080p|1080i|720p|576p|480p)$/i;
+function screenCatalog(opts) {
+  const o = opts || {};
+  const limit = Math.max(1, Math.min(200, Number(o.limit) || 50));
+  const host = String(o.host || '').trim().toLowerCase();
+  const rules = o.rules || {};
+  const resAllow = Array.isArray(rules.res) ? rules.res.map(function (x) { return String(x).toLowerCase(); }) : [];
+  const minBytes = Number(rules.minSizeGB) > 0 ? Number(rules.minSizeGB) * 1073741824 : 0;
+  const maxBytes = Number(rules.maxSizeGB) > 0 ? Number(rules.maxSizeGB) * 1073741824 : 0;
+  const needChinese = !!rules.requireChinese;
+  const pool = readQueue().items.concat(readLibrary().map(function (x) { return Object.assign({ source: 'library' }, x); }));
+
+  const all = catalogStore.list({ status: 'new', limit: 5000 }).items;
+  const queue = readQueue();
+  const byReason = {};
+  let checked = 0, selected = 0, skipped = 0;
+  const picked = [];
+
+  all.filter(function (x) { return !host || x.site === host; }).slice(0, limit).forEach(function (it) {
+    checked++;
+    const title = String(it.title || '');
+    const res = String(it.res || '').toLowerCase() || (match.resOf(title) || '');
+    const bytes = Number(it.sizeBytes) || match.sizeBytesOf({ size: it.size }) || 0;
+    let reason = '';
+    if (resAllow.length && res && resAllow.indexOf(res) < 0) reason = '分辨率不符 ' + res;
+    else if (minBytes && bytes && bytes < minBytes) reason = '体积偏小';
+    else if (maxBytes && bytes && bytes > maxBytes) reason = '体积偏大';
+    else if (needChinese && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(title)) reason = '没有中字';
+    else {
+      const hit = findDuplicates(Object.assign({}, it, { sizeBytes: bytes }), pool)[0];
+      if (hit) reason = '已有' + (hit.site ? '（' + hit.site + '）' : '');
+    }
+    if (reason) {
+      catalogStore.setStatus(it.id, 'skipped');
+      byReason[reason] = (byReason[reason] || 0) + 1;
+      skipped++;
+      return;
+    }
+    const item = {
+      id: 'q_' + String(++queue.seq).padStart(4, '0'), status: 'pending', createdAt: new Date().toISOString(),
+      title: title, res: res, size: it.size || (bytes ? match.sizeBytesOf({ sizeBytes: bytes }) : ''),
+      sizeBytes: bytes, site: it.site || '', infohash: it.infohash || '',
+      catalogId: it.id, note: '来自词条库 ' + (it.siteId ? '#' + it.siteId : '')
+    };
+    queue.items.unshift(item);
+    catalogStore.setStatus(it.id, 'selected');
+    picked.push(item.id);
+    selected++;
+  });
+  if (queue.items.length > 500) queue.items.length = 500;
+  if (picked.length) { try { writeQueue(queue); } catch (e) {} }
+  if (checked) logEvent('info', '筛选', '检查 ' + checked + ' 条 · 入选 ' + selected + ' 条 · 跳过 ' + skipped + ' 条');
+  return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, queued: picked.length };
+}
+
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
 const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
@@ -1464,6 +1520,11 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, data: out });
     }
     /* ---------- 词条库：第一步抓取的结果 ---------- */
+    if (p === '/api/catalog/screen' && req.method === 'POST') {
+      const body = await readBody(req);
+      const out = screenCatalog(body || {});
+      return send(res, 200, { ok: true, data: out });
+    }
     if (p === '/api/catalog' && req.method === 'GET') {
       const data = catalogStore.list({
         q: u.searchParams.get('q') || '',
