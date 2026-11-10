@@ -1921,7 +1921,8 @@
       if (t.state !== "done" || !t.result) return "";
       var p = t.result.plan || {};
       var head = '<div class="dl-dry-note">计划：' + (p.pages || "-") + " 页 · 并发 " + (p.concurrency || "-") +
-        " · 分类 " + (p.catGroups || 0) + " 组 / " + (p.catIds || 0) + " 个 id · 预估 " + (p.estimatedQueries || 0) + " 次查询</div>";
+        " · 分类 " + (p.catGroups || 0) + " 组 / " + (p.catIds || 0) + " 个 id · 预估 " + (p.estimatedQueries || 0) + " 次查询" +
+        ((p.searchUrls && p.searchUrls.length) ? " · 会请求 " + p.searchUrls.length + " 个地址" : "") + "</div>";
       var warns = (t.result.warnings || []).map(function (w) {
         return "<li>" + escapeHtml(w) + "</li>";
       }).join("");

@@ -437,6 +437,16 @@ async function main() {
 
   await check('干跑计划随配置变化', async () => {
     const host = 'plan.example';
+    /* 给这台临时实例塞一份站点定义，验证搜索 URL 是按定义拼出来的 */
+    const defDir = path.join(DATA, 'site-defs');
+    fs.mkdirSync(defDir, { recursive: true });
+    fs.writeFileSync(path.join(defDir, host + '.json'), JSON.stringify({
+      host: host, base: 'https://' + host, engine: 'nexusphp',
+      searchPath: '/torrents.php',
+      params: { search: '{q}', search_area: '0', search_mode: '0', cat: '{cats}' },
+      catMode: 'single',
+      cats: { movie: ['1', '2'], tv: ['3'] }
+    }));
     await fetchA(BASE + '/api/site-config/' + host, {
       method: 'PUT', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ pages: 3, concurrency: 2, interval: 45, enabled: true })
@@ -458,6 +468,10 @@ async function main() {
     need(plan.estimatedQueries === 6, '预估查询数不对：' + plan.estimatedQueries);
     need(plan.inList === false, '不存在的站点却标成在清单里');
     need(Array.isArray(plan.warnings) && plan.warnings.length > 0, '缺警告');
+    need(Array.isArray(plan.searchUrls) && plan.searchUrls.length === 2, '搜索 URL 条数不对：' + JSON.stringify(plan.searchUrls || []).slice(0, 120));
+    const u = plan.searchUrls[0].url;
+    need(u.indexOf('https://' + host + '/torrents.php?') === 0, '搜索 URL 前缀不对：' + u);
+    need(/cat=1/.test(u) && /search=%7Bq%7D/.test(u), '搜索 URL 参数不对：' + u);
     const done = await waitTask(j.data.id, 6000);
     need(done.result && Array.isArray(done.result.warnings), '完成后没有带回警告');
     need(done.result.warnings.length === plan.warnings.length, '完成后警告数量变了');

@@ -14,6 +14,7 @@ const TOKEN = process.env.PTA_TOKEN || '';
 const PTA_USER = process.env.PTA_USER || '';
 const PTA_PASS = process.env.PTA_PASS || '';
 const VERSION = require('../package.json').version;
+const nexusphp = require('./adapters/nexusphp');
 const STARTED = Date.now();
 
 const LIMITS = {
@@ -568,6 +569,16 @@ function runDryTask(t) {
   if (tick.unref) tick.unref();
   t.timer = tick;
 }
+/* 站点定义：pta/data/site-defs/<host>.json，由 scripts/collect-site-defs.js 生成 */
+const DEF_DIR = path.join(DATA_DIR, 'site-defs');
+function readSiteDef(host) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(DEF_DIR, host + '.json'), 'utf8'));
+  } catch (e) {
+    return null;
+  }
+}
+
 /* 干跑计划：只读本地配置和清单，不访问任何站点 */
 function buildDryPlan(host) {
   const cfg = readConfig();
@@ -590,6 +601,21 @@ function buildDryPlan(host) {
   else if (!groups.length) warnings.push('搜索预设里没有配置任何分类');
   if (interval < LIMITS[cfg.runMode === 'prod' ? 'prod' : 'test'].interval[0]) warnings.push('请求间隔低于当前模式下限，会被压到下限');
 
+  /* 用站点定义拼出真实会请求的搜索 URL（只拼字符串，不发请求） */
+  const def = readSiteDef(host);
+  let searchUrls = [];
+  if (!def) {
+    warnings.push('没有站点定义，拼不出搜索 URL');
+  } else {
+    if (def.engine && def.engine !== 'nexusphp') warnings.push('该站引擎是 ' + def.engine + '，目前只接了 nexusphp 解析');
+    if (def.base) {
+      groups.forEach(function (k) {
+        if (searchUrls.length >= 10) return;
+        searchUrls.push({ cat: k, url: nexusphp.buildSearchUrl(def, '{q}', cats[k] || []) });
+      });
+    }
+  }
+
   return {
     siteHost: host,
     runMode: cfg.runMode,
@@ -601,6 +627,7 @@ function buildDryPlan(host) {
     catIds: ids,
     estimatedQueries: groups.length * pages,
     knownCats: groups,
+    searchUrls: searchUrls,
     inList: inList,
     enabled: site.enabled !== false,
     warnings: warnings
