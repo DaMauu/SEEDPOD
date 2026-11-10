@@ -195,6 +195,65 @@ async function main() {
     need(after.data.preset === null, '删除后还能读到预设');
   });
 
+  await check('待审核队列状态机', async () => {
+    const add = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Check Fixture Movie 2020 1080p Blu-ray AVC', cn: '检查用', res: '1080p', size: '22.10 GB', site: 'example.org' })
+    });
+    const aj = await add.json();
+    need(add.ok, '新增条目失败 ' + JSON.stringify(aj).slice(0, 160));
+    const id = aj.data.id;
+    need(/^q_/.test(id) && aj.data.status === 'pending', '新增条目结构不对：' + JSON.stringify(aj.data).slice(0, 120));
+    const list = await (await fetchA(BASE + '/api/queue?status=pending')).json();
+    need(list.data.items.some(x => x.id === id), '列表里找不到新条目');
+    need(list.data.counts && list.data.counts.pending >= 1, 'counts 不对');
+
+    const early = await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish' })
+    });
+    need(early.status === 409, '未通过就发布居然成功：' + early.status);
+    const ej = await early.json();
+    need(ej.error && ej.error.code === 'BAD_STATE', '错误码不对：' + JSON.stringify(ej).slice(0, 120));
+
+    const noReason = await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject' })
+    });
+    need(noReason.status === 400, '驳回没写理由却通过了：' + noReason.status);
+
+    const ok = await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'approve' })
+    });
+    const oj = await ok.json();
+    need(ok.ok && oj.data.status === 'approved', '通过失败：' + JSON.stringify(oj).slice(0, 120));
+    const pub = await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish' })
+    });
+    const pj2 = await pub.json();
+    need(pub.ok && pj2.data.status === 'published', '发布失败：' + JSON.stringify(pj2).slice(0, 120));
+    const twice = await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', reason: '改主意' })
+    });
+    need(twice.status === 409, '已发布还能驳回到 ' + twice.status);
+
+    const del = await fetchA(BASE + '/api/queue/' + id, { method: 'DELETE' });
+    need(del.ok, '删除条目失败');
+    const gone = await fetchA(BASE + '/api/queue/' + id);
+    need(gone.status === 404, '删除后还能读到：' + gone.status);
+  });
+
+  await check('待审核队列校验与鉴权', async () => {
+    const empty = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cn: '只有中文名' })
+    });
+    need(empty.status === 400, '没有 title 却新增成功：' + empty.status);
+    const bad = await fetchA(BASE + '/api/queue/q_9999/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'approve' })
+    });
+    need(bad.status === 404, '不存在的条目返回 ' + bad.status);
+    const anon = await fetch(BASE + '/api/queue');
+    need(anon.status === 401, '未登录能读队列：' + anon.status);
+  });
+
   await check('干跑任务能提交并跑完', async () => {
     const r = await fetchA(BASE + '/api/tasks', {
       method: 'POST', headers: { 'content-type': 'application/json' },

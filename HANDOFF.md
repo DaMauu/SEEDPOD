@@ -24,6 +24,14 @@
 | GET /api/site-config | 服务端保存的站点配置（白名单字段） |
 | PUT /api/site-config/:host | 合并写站点配置，密码/cookie/totp 拒收 |
 | DELETE /api/site-config/:host | 删掉站点配置并恢复默认 |
+| GET /api/sites/:host/search | 该站的搜索预设（引擎/路径/参数名/分类 id） |
+| PUT /api/sites/:host/search | 合并写搜索预设，字段有校验 |
+| DELETE /api/sites/:host/search | 删搜索预设 |
+| GET /api/queue | 待审核条目与各状态计数 |
+| POST /api/queue | 新增待审核条目（title 必填） |
+| GET /api/queue/:id | 单条详情 |
+| POST /api/queue/:id/action | approve / reject / publish，带状态机校验 |
+| DELETE /api/queue/:id | 删除条目 |
 | POST /api/tasks | 提交干跑任务（只接 dryRun，不访问外部站点） |
 | GET /api/tasks | 最近 50 条任务，`?state=active` 只看在跑的 |
 | GET /api/tasks/:id | 单条任务与步骤进度 |
@@ -31,8 +39,16 @@
 | GET /api/logs | 最近事件 |
 | GET /api/logs/stream | SSE，断线按 id 补历史 |
 
-事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、干跑任务新建与完成、任务取消。
-站点配置落在 `data/site-config.json`（0600），密码类字段一律不落盘。
+事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、改搜索预设、待审核条目增删与状态变更、干跑任务新建与完成、任务取消。
+
+数据文件（都在 `data/` 下，0600）：`config.json` 面板配置、`site-config.json` 站点配置（密码类字段不落盘）、
+`queue.json` 待审核条目、`site-search.local.json` 搜索预设（在 `pta/data/`，不入库）。
+
+## 站点搜索预设为什么单独存
+
+同一个分类 id 在不同站点对应的类型不一样，搜索参数名也各不相同（nexusphp 用 search/cat，unit3d 用 name/categories[]，gazelle 用 searchstr/filter_cat）。
+写死一套会导致「想搜电影却点到别的类型」，所以按站存一份：引擎、搜索路径、参数名、每个用途对应的分类 id。
+真实预设只在本机与测试机，仓库里只有 `docs/site-search.example.json` 示例。
 
 ## 检查
 

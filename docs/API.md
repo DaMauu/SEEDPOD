@@ -112,17 +112,38 @@
 { "ok": true, "data": { "pass": true, "steps": [ { "step": "login", "status": 200, "ms": 812 } ] } }
 ```
 
-## GET /api/queue?tab=pending（规划，未实现）
+## GET /api/queue
+
+`?status=pending|approved|rejected|published` 可过滤，`?limit=` 最多 500。
 
 ```
-{ "ok": true, "data": [ { "id": 101, "title": "...", "cn": "...", "year": 2020, "res": "1080p",
-  "size": "22.10 GB", "state": "pending", "check": "none", "detail": { "intro": "...", "shots": 3 } } ] }
+{ "ok": true, "data": {
+  "counts": { "total": 3, "pending": 1, "approved": 1, "rejected": 0, "published": 1 },
+  "items": [ { "id": "q_0001", "title": "...", "cn": "...", "res": "1080p", "size": "22.10 GB",
+    "site": "example.org", "status": "pending", "createdAt": "..." } ] } }
 ```
 
-## POST /api/queue/:id/action（规划，未实现）
+条目落在 `data/queue.json`（0600），最多保留 500 条。
 
-请求 `{ "action": "approve" | "reject" | "skip", "reason": "..." }`，返回该条新状态。
-驳回必须写 reason，空理由返回 400。
+## POST /api/queue
+
+新增条目，`title` 必填（不超过 300 字），可选 `cn/year/res/size/imdb/site/check/checkCls/note/shots`。
+新条目状态一律是 `pending`。抓取执行器没接之前，这就是造数据的入口。
+
+## GET /api/queue/:id
+
+单条详情，不存在 404。
+
+## POST /api/queue/:id/action
+
+请求 `{ "action": "approve" | "reject" | "publish", "reason": "..." }`，返回该条新数据。
+
+状态机：`pending → approved / rejected`，`approved → published / rejected`，`rejected`、`published` 是终态。
+越级（例如 pending 直接 publish）返回 409 `BAD_STATE`，附带当前状态与允许的目标；驳回必须写 reason，空理由 400。
+
+## DELETE /api/queue/:id
+
+删掉条目并写事件日志。
 
 ## GET /api/logs?limit=200（SSE 用 /api/logs/stream）
 
@@ -171,6 +192,7 @@
 | UNAUTHORIZED | 令牌缺失或过期 |
 | NOT_FOUND | 资源不存在 |
 | BUSY | 同站点已有任务在跑 |
+| BAD_STATE | 待审核条目当前状态不允许这个操作 |
 | SITE_FAILED | 站点返回 4xx/5xx，已按策略重试 |
 | RATE_LIMITED | 触发熔断，附带 retryAfter 秒 |
 | INTERNAL | 未预期错误，附带 traceId |

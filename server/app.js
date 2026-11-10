@@ -214,6 +214,82 @@ function sanitizePreset(body) {
   return { preset };
 }
 
+/* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
+const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
+const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
+const QUEUE_FLOW = {
+  pending: ['approved', 'rejected'],
+  approved: ['published', 'rejected'],
+  rejected: [],
+  published: []
+};
+const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'imdb', 'site', 'check', 'checkCls', 'note'];
+
+function readQueue() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'));
+    const items = Array.isArray(raw && raw.items) ? raw.items : [];
+    return { seq: Number(raw && raw.seq) || items.length, items: items.filter(function (x) { return x && x.id; }) };
+  } catch (e) {
+    return { seq: 0, items: [] };
+  }
+}
+function writeQueue(q) {
+  try {
+    fs.writeFileSync(QUEUE_FILE, JSON.stringify({ seq: q.seq, items: q.items }, null, 1), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入待审核队列失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+function queueCounts(items) {
+  const c = { total: items.length, pending: 0, approved: 0, rejected: 0, published: 0 };
+  items.forEach(function (x) { if (c[x.status] !== undefined) c[x.status]++; });
+  return c;
+}
+function createQueueItem(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return { err: { code: 'BAD_REQUEST', message: '请求体不是合法 JSON 对象' } };
+  const title = String(body.title || '').trim();
+  if (!title || title.length > 300) return { err: { code: 'BAD_REQUEST', message: 'title 必填且不超过 300 字' } };
+  const q = readQueue();
+  const item = { id: 'q_' + String(++q.seq).padStart(4, '0'), status: 'pending', createdAt: new Date().toISOString() };
+  QUEUE_FIELDS.forEach(function (k) {
+    if (body[k] === undefined || body[k] === null) return;
+    item[k] = typeof body[k] === 'number' ? body[k] : String(body[k]).slice(0, 300);
+  });
+  if (body.shots !== undefined) {
+    if (!Array.isArray(body.shots)) return { err: { code: 'BAD_REQUEST', message: 'shots 必须是数组' } };
+    item.shots = body.shots.slice(0, 12).map(function (s) { return String(s).slice(0, 500); });
+  }
+  q.items.unshift(item);
+  if (q.items.length > 500) q.items.length = 500;
+  try { writeQueue(q); } catch (e) { return { err: { code: e.code || 'INTERNAL', message: e.message } }; }
+  logEvent('info', '待审核', '新增条目 · ' + title.slice(0, 60) + ' · ' + item.id);
+  return { item: item };
+}
+function queueAction(id, body) {
+  if (!body || typeof body !== 'object') return { err: { code: 'BAD_REQUEST', message: '请求体不是合法 JSON' } };
+  const action = String(body.action || '');
+  if (!QUEUE_ACTIONS[action]) return { err: { code: 'BAD_REQUEST', message: 'action 只能是 approve / reject / publish' } };
+  const q = readQueue();
+  const item = q.items.filter(function (x) { return x.id === id; })[0];
+  if (!item) return { err: { code: 'NOT_FOUND', message: '条目不存在' } };
+  const target = QUEUE_ACTIONS[action];
+  const allowed = QUEUE_FLOW[item.status] || [];
+  if (allowed.indexOf(target) < 0) {
+    return { err: { code: 'BAD_STATE', message: '当前状态 ' + item.status + ' 不能变成 ' + target, extra: { status: item.status, allowed: allowed } } };
+  }
+  const reason = body.reason == null ? '' : String(body.reason).slice(0, 500);
+  if (action === 'reject' && !reason.trim()) return { err: { code: 'BAD_REQUEST', message: '驳回必须写理由' } };
+  item.status = target;
+  item.updatedAt = new Date().toISOString();
+  if (reason) item.reason = reason;
+  try { writeQueue(q); } catch (e) { return { err: { code: e.code || 'INTERNAL', message: e.message } }; }
+  logEvent(action === 'reject' ? 'warn' : 'info', '待审核', action + ' · ' + (item.title || item.id).slice(0, 60) + (reason ? ' · ' + reason.slice(0, 80) : ''));
+  return { item: item };
+}
+
 /* ---------- 任务：干跑队列（只走本地步骤，不访问任何外部站点） ---------- */
 const TASKS = new Map();
 const TASK_TYPES = ['crawl', 'check', 'publish'];
@@ -562,6 +638,47 @@ const server = http.createServer(async (req, res) => {
       }
       if (changes.length) logEvent('info', '设置', '修改配置 · ' + changes.join(' · '));
       return send(res, 200, { ok: true, data: next });
+    }
+    if (p === '/api/queue' && req.method === 'GET') {
+      const status = u.searchParams.get('status') || '';
+      const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);
+      const q = readQueue();
+      const items = q.items.filter(function (x) { return !status || x.status === status; }).slice(0, limit);
+      return send(res, 200, { ok: true, data: { items: items, counts: queueCounts(q.items) } });
+    }
+    if (p === '/api/queue' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const r = createQueueItem(body);
+      if (r.err) return fail(res, r.err.code === 'BAD_REQUEST' ? 400 : 500, r.err.code, r.err.message);
+      return send(res, 200, { ok: true, data: r.item });
+    }
+    if (p.startsWith('/api/queue/')) {
+      const rest = p.slice('/api/queue/'.length).replace(/\/+$/, '');
+      const act = /\/action$/.test(rest);
+      const id = decodeURIComponent(act ? rest.replace(/\/action$/, '') : rest);
+      if (!id) return fail(res, 400, 'BAD_REQUEST', '缺少条目 id');
+      if (act) {
+        if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+        const body = await readBody(req);
+        const r = queueAction(id, body);
+        if (r.err) return fail(res, r.err.code === 'NOT_FOUND' ? 404 : r.err.code === 'BAD_STATE' ? 409 : 400, r.err.code, r.err.message, r.err.extra);
+        return send(res, 200, { ok: true, data: r.item });
+      }
+      if (req.method === 'DELETE') {
+        const q = readQueue();
+        const i = q.items.findIndex(function (x) { return x.id === id; });
+        if (i < 0) return fail(res, 404, 'NOT_FOUND', '条目不存在');
+        const gone = q.items.splice(i, 1)[0];
+        try { writeQueue(q); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '待审核', '删除条目 · ' + (gone.title || id).slice(0, 60));
+        return send(res, 200, { ok: true, data: { id: id } });
+      }
+      if (req.method !== 'GET') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET / DELETE');
+      const q = readQueue();
+      const one = q.items.filter(function (x) { return x.id === id; })[0];
+      if (!one) return fail(res, 404, 'NOT_FOUND', '条目不存在');
+      return send(res, 200, { ok: true, data: one });
     }
     if (p === '/api/tasks' && req.method === 'POST') {
       const body = await readBody(req);
