@@ -2215,3 +2215,7 @@ body::after {
 /* ---- 站点列表：搜索预设标记 ---- */
 .si-preset{flex:0 0 42px;font-size:10px;color:#aeb4c2;text-align:center;letter-spacing:.02em}
 .si-preset.on{color:var(--accent);font-weight:600}
+
+/* ---- 流程页干跑自检 ---- */
+.crawl-dry .drawer-body{padding-top:0}
+.crawl-dry .dl-dry{margin:0 0 4px}

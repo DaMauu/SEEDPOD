@@ -197,6 +197,16 @@ async function main() {
     await page.waitForTimeout(150);
   });
 
+  /* 6.4 流程页干跑自检：没有后端时给提示 */
+  await check('流程页干跑自检在没有后端时给出提示', async () => {
+    await open('#crawl');
+    await page.click('#crawl-dry-run');
+    await page.waitForTimeout(320);
+    const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
+    need(/干跑|不可用/.test(t), '没有干跑提示：' + t);
+    need((await page.locator('#crawl-dry-box').isVisible()) === false, '没有后端却画出了步骤面板');
+  });
+
   /* 6.5 干跑按钮：没有后端时必须给提示，不许静默或发真实请求 */
   await check('干跑按钮在没有后端时给出提示', async () => {
     await open('#sources');
@@ -204,7 +214,7 @@ async function main() {
     await page.waitForTimeout(300);
     const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
     need(/干跑/.test(t), '没有干跑提示：' + t);
-    need((await page.locator('.dl-dry').count()) === 0, '没有后端却画出了任务面板');
+    need((await page.locator('.dl-dry:visible').count()) === 0, '没有后端却画出了任务面板');
   });
 
   /* 7. 日志下载 */

@@ -1812,9 +1812,50 @@
 
     loadFlowState();
     host.innerHTML =
+      '<section class="drawer open crawl-dry">' +
+        '<div class="drawer-head">' +
+          '<div class="drawer-t"><div class="drawer-title">流程自检（干跑）</div>' +
+            '<div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div></div>' +
+          '<div class="drawer-head-right">' +
+            '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
+            '<button class="btn primary slim" id="crawl-dry-run">干跑自检</button>' +
+          "</div>" +
+        "</div>" +
+        '<div class="drawer-body"><div class="dl-dry" id="crawl-dry-box" hidden></div></div>' +
+      "</section>" +
       sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "未设置", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "未设置", rules: DEDUPE_RULES }, 1, "dedupe") +
       sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "未设置", rules: PUB_RULES }, 2, "pub");
+
+    function paintCrawlDry(t) {
+      var box = $("#crawl-dry-box");
+      var meta = $("#crawl-dry-meta");
+      if (!box) return;
+      box.hidden = false;
+      if (meta) meta.textContent = t.state === "done" ? "已完成" : (t.progress || 0) + "%";
+      box.innerHTML = '<div class="dl-dry-head"><b>干跑 · ' + escapeHtml(t.siteHost) + "</b>" +
+          '<span class="dl-dry-p">' + (t.progress || 0) + "%</span></div>" +
+        "<ul>" + (t.steps || []).map(function (s) {
+          return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
+        }).join("") + "</ul>" +
+        '<em>只跑本地步骤，不访问任何真实站点</em>';
+    }
+    var dryRunBtn = $("#crawl-dry-run");
+    if (dryRunBtn) dryRunBtn.addEventListener("click", function () {
+      var host0 = target;
+      if (!host0) {
+        var first = MOCK.sitesList.filter(function (x) { return x.enabled; })[0];
+        host0 = first ? first.name : "";
+      }
+      if (!host0) { toast("先去站点页加一个站点"); return; }
+      var seen = false;
+      window.__ptaDryRun(host0, function (t) {
+        paintCrawlDry(t);
+        if (!seen) { seen = true; toast("已提交干跑任务"); }
+      }, function (t) {
+        if (t.state === "done") toast("干跑完成 · " + (t.steps || []).length + " 步");
+      }, function (msg) { toast(msg); });
+    });
 
     renderTpl();
 
