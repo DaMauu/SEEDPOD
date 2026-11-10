@@ -74,6 +74,7 @@ pta\checks\run.cmd
 | done | 本地查重（不联网） | `/api/queue/:id/check` 比对队列与本地库，片名前 4 词做键，年份/分辨率不同不算重复 |
 | done | 待审核台服务端状态机 | `POST /api/queue` 造条目，approve/reject/publish 各有校验，越级 409 |
 | done | 站点搜索预设按站存 | `/api/sites/:host/search` 支持引擎/路径/参数名/分类 id，真实数据不入库 |
+| done | cookie 导入与会话自检 | 浏览器读 cookie → 服务端加密存 → `session-test` 判定可用；实测 7 站全通 |
 | done | 凭据加密存储与 2FA | AES-256-GCM 存密文，TOTP 自算并过 RFC 向量，登录自检 60 秒限流 |
 | done | 前端拆分第一步 | 规则表（抓取/查重/发布）搬到 `assets/data.js`，app.js 从 3349 行减到 3222 行，检查全绿 |
 | done | NexusPHP 列表解析对齐真实页面 | 三页各 100 行，标题/分类/下载链接均 100/100；大小字段待按站补 |

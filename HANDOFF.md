@@ -49,6 +49,7 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/credentials | 站点凭据状态（不回明文） |
 | PUT /api/credentials/:host | 加密保存账号/密码/2FA 密钥 |
 | DELETE /api/credentials/:host | 删除凭据 |
+| POST /api/sites/:host/session-test | 只用 cookie 做一次会话自检（不碰密码与 2FA） |
 | POST /api/sites/:host/login-test | 用户点击触发的登录自检（60 秒限流） |
 | GET /api/flow | 抓取/查重/发布三套规则的服务端存档 |
 | PUT /api/flow | 合并保存流程规则（形状有校验） |
@@ -125,6 +126,17 @@ Chrome 必须以 `--remote-debugging-port=9222` 启动，脚本用 CDP 连过去
 - `data/credentials.json`：只存密文；接口与日志都不出现明文
 - `POST /api/sites/:host/login-test`：用户触发、60 秒限流、有 TOTP 就先生成动态码，登录后访问 `/index.php` 验证
 - 登录页采样用无痕上下文（否则已登录会跳走）：7 站里 6 站拿到表单，其中 2 站有 2FA 字段
+
+## cookie 导入流程（推荐路径）
+
+```
+node scripts/import-cookies.js                 # 本机 Chrome（9222）读各站 cookie → pta/data/cookies.tmp.json（0600）
+base64 -w0 pta/data/cookies.tmp.json | ssh pta "base64 -d > /tmp/cookies.json && chmod 600 /tmp/cookies.json"
+ssh pta 'cd /opt/seedpod && PTA_DATA=/opt/seedpod/data node scripts/load-cookies.js /tmp/cookies.json; rm -f /tmp/cookies.json'
+```
+
+服务端用 `data/.secret` 加密后写 `data/credentials.json`；接口只回 `hasCookie`。
+2026-11-10 实测：导入 7 站，服务端用这些 cookie 访问首页全部判定为可用（服务端 IP 与浏览器不同也没被拦）。
 
 ## 批量采样（脚本）
 

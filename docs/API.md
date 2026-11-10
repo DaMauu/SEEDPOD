@@ -59,11 +59,24 @@
 
 ## PUT /api/credentials/:host
 
-`{ "user": "...", "pass": "...", "totp": "base32密钥" }`，逐字段加密保存；传空字符串表示清除该字段。
+`{ "user": "...", "pass": "...", "totp": "base32密钥", "cookie": "c_secure_uid=...; c_secure_pass=..." }`，
+逐字段加密保存；传空字符串表示清除该字段。cookie 与账号密码是两条独立路径，存哪个用哪个。
 
 ## DELETE /api/credentials/:host
 
 删除该站凭据。
+
+## POST /api/sites/:host/session-test
+
+只用已保存的 cookie 访问一次 `/index.php`，判断会话还在不在（不需要账号密码，也不涉及 2FA）：
+
+```
+{ "ok": true, "data": { "pass": true,
+  "steps": [ { "step": "session", "status": 200, "ms": 187, "ok": true } ],
+  "cookieNames": [ "c_secure_uid" ] } }
+```
+
+cookie 失效（302 到登录页，或页面出现「请登录」）时 `pass: false`。没有 cookie 返回 400 `NO_COOKIE`。
 
 ## POST /api/sites/:host/login-test
 

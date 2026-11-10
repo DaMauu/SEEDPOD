@@ -425,6 +425,55 @@ async function main() {
     }
   });
 
+  await check('cookie 导入与会话自检', async () => {
+    const http = require('http');
+    const mock = http.createServer((rq, rs) => {
+      if (rq.url === '/index.php') {
+        const cookie = rq.headers.cookie || '';
+        const ok = cookie.indexOf('c_secure_uid=good') >= 0;
+        rs.writeHead(ok ? 200 : 302, ok ? { 'content-type': 'text/html' } : { location: '/login.php' });
+        rs.end(ok ? '<html>欢迎回来 <a href="userdetails.php?id=1">ok</a></html>' : '');
+        return;
+      }
+      rs.writeHead(404); rs.end('x');
+    });
+    await new Promise(r => mock.listen(0, '127.0.0.1', r));
+    const port = mock.address().port;
+    const host = 'cookie.example';
+    try {
+      const defDir = path.join(DATA, 'site-defs');
+      fs.mkdirSync(defDir, { recursive: true });
+      fs.writeFileSync(path.join(defDir, host + '.json'), JSON.stringify({ host: host, base: 'http://127.0.0.1:' + port, engine: 'nexusphp' }));
+
+      const save = await fetchA(BASE + '/api/credentials/' + host, {
+        method: 'PUT', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ cookie: 'c_secure_uid=good; c_secure_pass=xyz' })
+      });
+      const sj = await save.json();
+      need(save.ok, '保存 cookie 失败 ' + JSON.stringify(sj).slice(0, 140));
+      need(sj.data.hasCookie === true, '没有标记 hasCookie');
+      need(JSON.stringify(sj).indexOf('c_secure_pass=xyz') < 0, '回包里带出了 cookie 值');
+      const raw = fs.readFileSync(path.join(DATA, 'credentials.json'), 'utf8');
+      need(raw.indexOf('c_secure_pass=xyz') < 0, '磁盘上出现了明文 cookie');
+
+      const ok = await (await fetchA(BASE + '/api/sites/' + host + '/session-test', { method: 'POST' })).json();
+      need(ok.data.pass === true, '有效 cookie 却判失效：' + JSON.stringify(ok.data).slice(0, 180));
+      need(ok.data.cookieNames.indexOf('c_secure_uid') >= 0, '没回 cookie 名');
+
+      await fetchA(BASE + '/api/credentials/' + host, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'c_secure_uid=bad' })
+      });
+      const bad = await (await fetchA(BASE + '/api/sites/' + host + '/session-test', { method: 'POST' })).json();
+      need(bad.data.pass === false, '失效 cookie 却判成功');
+
+      await fetchA(BASE + '/api/credentials/' + host, { method: 'DELETE' });
+      const none = await fetchA(BASE + '/api/sites/' + host + '/session-test', { method: 'POST' });
+      need(none.status === 400, '没有 cookie 时应 400：' + none.status);
+    } finally {
+      mock.close();
+    }
+  });
+
   await check('本地查重（不联网）', async () => {
     const add = await fetchA(BASE + '/api/library', {
       method: 'POST', headers: { 'content-type': 'application/json' },

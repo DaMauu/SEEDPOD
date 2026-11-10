@@ -595,7 +595,7 @@ function writeCreds(all) {
 function publicCred(c) {
   return {
     host: c.host, user: c.user ? '已保存' : '', hasUser: !!c.user,
-    hasPass: !!c.pass, hasTotp: !!c.totp, updatedAt: c.updatedAt || null
+    hasPass: !!c.pass, hasTotp: !!c.totp, hasCookie: !!c.cookie, updatedAt: c.updatedAt || null
   };
 }
 function decryptField(v) {
@@ -665,6 +665,33 @@ async function loginTestOnce(host) {
     logEvent('warn', '站点', '登录自检 · ' + host + ' · 失败：' + String(e.message).slice(0, 80));
     steps.push({ step: 'connect', status: 0, ms: 0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) });
     return { pass: false, steps: steps, cookieNames: [] };
+  }
+}
+
+/* 会话自检：只用已保存的 cookie 访问一次首页，判断还能不能用 */
+async function sessionCheckOnce(host) {
+  const all = readCreds();
+  const c = all[host];
+  if (!c || !c.cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
+  const cookie = decryptField(c.cookie);
+  if (!cookie) return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } };
+  const def = readSiteDef(host);
+  const base = (def && def.base ? String(def.base) : 'https://' + host).replace(/\/+$/, '');
+  const t0 = Date.now();
+  try {
+    const res = await fetch(base + '/index.php', {
+      headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      redirect: 'manual', signal: AbortSignal.timeout(15000)
+    });
+    const html = await res.text().catch(function () { return ''; });
+    const loggedOut = res.status === 302 || /takelogin\.php|请先登录|请登录/i.test(html);
+    const ok = res.status === 200 && !loggedOut && /logout\.php|userdetails\.php|欢迎回来/i.test(html);
+    logEvent(ok ? 'info' : 'warn', '站点', '会话自检 · ' + host + ' · ' + (ok ? '可用' : '已失效'));
+    return { pass: ok, steps: [{ step: 'session', status: res.status, ms: Date.now() - t0, ok: ok }],
+      cookieNames: cookie.split(';').map(function (x) { return x.split('=')[0].trim(); }).filter(Boolean) };
+  } catch (e) {
+    logEvent('warn', '站点', '会话自检 · ' + host + ' · 失败：' + String(e.message).slice(0, 80));
+    return { pass: false, steps: [{ step: 'connect', status: 0, ms: Date.now() - t0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) }], cookieNames: [] };
   }
 }
 
@@ -958,7 +985,7 @@ const server = http.createServer(async (req, res) => {
         if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
         const cur = Object.assign({}, all[host] || {});
         let changed = [];
-        for (const k of ['user', 'pass', 'totp']) {
+        for (const k of ['user', 'pass', 'totp', 'cookie']) {
           if (body[k] === undefined) continue;
           const v = String(body[k] || '');
           if (!v) { delete cur[k]; changed.push(k); continue; }
@@ -978,6 +1005,14 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { ok: true, data: { host: host } });
       }
       return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 PUT / DELETE');
+    }
+    if (p.startsWith('/api/sites/') && /\/session-test\/?$/.test(p)) {
+      if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+      const h2 = decodeURIComponent(p.slice('/api/sites/'.length).replace(/\/session-test\/?$/, ''));
+      if (!h2 || !/^[a-z0-9][a-z0-9.-]*$/i.test(h2)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');
+      const r2 = await sessionCheckOnce(h2);
+      if (r2.err) return fail(res, 400, r2.err.code, r2.err.message);
+      return send(res, 200, { ok: true, data: r2 });
     }
     if (p.startsWith('/api/sites/') && /\/login-test\/?$/.test(p)) {
       if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
