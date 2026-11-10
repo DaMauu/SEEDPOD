@@ -3554,6 +3554,9 @@
     window.__ptaCurrent = key;
     setActive(key);
     if (key === "dashboard" && typeof renderDashboard === "function") renderDashboard();
+    /* 进列表页时重新拉一次，别拿上次打开时的旧数据 */
+    if (key === "sources" && typeof window.__ptaLoadSources === "function") window.__ptaLoadSources();
+    if (key === "queue" && typeof window.__ptaLoadQueue === "function") window.__ptaLoadQueue();
     if (!opts.pop) {
       if (opts.replace) history.replaceState({ view: key }, "", "#" + key);
       else history.pushState({ view: key }, "", "#" + key);
