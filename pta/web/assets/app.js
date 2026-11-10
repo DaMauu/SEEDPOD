@@ -2122,7 +2122,9 @@
       }).then(function (out) {
         liveBtn.disabled = false;
         if (!out.j || !out.j.ok) {
+          var code = out.j && out.j.error && out.j.error.code;
           var msg = (out.j && out.j.error && out.j.error.message) || ("抓取失败 " + out.status);
+          if (code === "NO_COOKIE" || code === "LOGIN_REQUIRED") msg += "：去站点页的「登录」页签把这个站的 cookie 存进来";
           if (meta) meta.textContent = msg;
           toast(msg);
           return;
@@ -2133,6 +2135,7 @@
         if (meta) meta.textContent = line;
         toast(line);
         if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+        if (window.__ptaLoadSources) window.__ptaLoadSources();
       }).catch(function () {
         liveBtn.disabled = false;
         toast("抓取请求发不出去");
