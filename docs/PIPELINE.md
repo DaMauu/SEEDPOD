@@ -50,6 +50,20 @@ node scripts/pipeline.js --sample 20  # 只补 20 个站
 
 这些站不生成样本；`net-error` / `http-404` / `cloudflare` / `error-panel` 在 12 小时内不再重试。
 
+## 自动找种子页（替代大部分人工存档）
+
+有些站按架构猜的路径不对（返回 404）或列表页被脚本顶掉。这种情况不用人工存 HTML，让脚本自己看首页导航：
+
+```
+node scripts/discover-paths.js --dry     # 看会打哪些站
+node scripts/discover-paths.js           # 每站最多 2 次 GET：首页 + 导航里挑出的种子页
+```
+
+- 首页源码里找 `种子 / 资源 / Torrents / Browse` 这类入口，按路径和文字打分，排除规则、论坛、账号等噪声
+- 找到就把列表页存成样本、记住路径（样本状态记 `discovered`），之后 `sample-sites.js` 会优先走这个路径
+- 认不出来记 `no-nav`，拿到空页记 `discovered-empty`，12 小时内不再重试
+- 登录墙、连不上、Cloudflare 这三类不参与（不是路径问题），仍要人工登录或换网络
+
 ## 发到测试机
 
 定义与预设属于运行数据，放 `/opt/seedpod/data`（不是仓库里的 `pta/data`）：

@@ -77,12 +77,14 @@ function fileFor(host) { return path.join(OUT, host.replace(/[^a-z0-9.-]/gi, '_'
     if (fs.existsSync(fileFor(t.host))) { skip++; continue; }
     /* 明确失败过的（连不上、Cloudflare、页面被脚本顶掉）12 小时内不重复打 */
     const prev = state[t.host];
-    if (prev && /^(net-error|cloudflare|error-panel|http-404)$/.test(prev.note || '')) {
+    if (prev && /^(net-error|cloudflare|error-panel|http-404|no-nav|discovered-empty)$/.test(prev.note || '')) {
       const age = Date.now() - Date.parse(prev.at || 0);
       if (!(age > 12 * 3600 * 1000)) { skip++; continue; }
     }
     let rec = { host: t.host, arch: t.arch, url: '', at: new Date().toISOString(), status: 0, bytes: 0, note: '', tries: 0 };
-    const cands = pathsFor(t.arch);
+    /* 上次用首页导航找到的路径优先，没有就走架构默认的两条 */
+    const hinted = (prev && prev.browsePath) ? [prev.browsePath] : [];
+    const cands = hinted.concat(pathsFor(t.arch).filter(function (p) { return hinted.indexOf(p) < 0; })).slice(0, 2);
     let saved = false;
     for (let i = 0; i < cands.length && !saved; i++) {
       if (i > 0) await sleep(2500);

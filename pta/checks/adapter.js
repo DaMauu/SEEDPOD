@@ -162,6 +162,21 @@ check('JS 空壳页也能认出引擎', () => {
   need(adapters.detectShellEngine('<html><body>nothing</body></html>') === '', '普通页面被当成空壳 tracker');
 });
 
+check('从首页导航里找种子页路径', () => {
+  const nav = require(path.join(ROOT, 'server', 'adapters', 'nav.js'));
+  const home = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'home-nav.html'), 'utf8');
+  const cands = nav.findTorrentLinks(home);
+  need(cands.length > 0, '首页导航里没找到候选');
+  need(cands[0].path === '/torrents.php', '首选路径不对：' + cands[0].path);
+  const paths = cands.map(c => c.path);
+  need(paths.indexOf('/rules.php') < 0 && paths.indexOf('/forums.php') < 0, '把规则/论坛当成了种子页：' + paths.join(','));
+  const pick = nav.pickBrowsePath(home, ['/torrents.php']);
+  need(pick === null, '试过的路径应被排除，却给了 ' + (pick && pick.path));
+  const unit3dHome = '<a href="/torrents">Torrents</a><a href="/login">Login</a><a href="/users/x">u</a>';
+  need(nav.pickBrowsePath(unit3dHome, []).path === '/torrents', 'UNIT3D 的 /torrents 没认出来');
+  need(nav.findTorrentLinks('<a href="/rules.php">规则</a>').length === 0, '只有规则链接时不该给候选');
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');
