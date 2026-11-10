@@ -689,6 +689,7 @@
     renderPending();
     renderPublished();
     renderHealth();
+    if (window.__ptaLoadDashLists) window.__ptaLoadDashLists();
 
     var lg = $("#dash-logs");
     if (lg) {
@@ -851,25 +852,49 @@
   function renderPending() {
     var host = $("#dash-pending");
     if (!host) return;
-    var rows = MOCK.queue.filter(function (it) { return it.status === "pending"; }).slice(0, 3);
+    var rows = (window.__ptaQueuePending || []).slice(0, 3);
+    if (!rows.length) { host.innerHTML = '<div class="empty">没有待审核的条目</div>'; return; }
     host.innerHTML = rows.map(function (it) {
       return '<div class="list-item"><div style="flex:1;min-width:0">' +
         '<div class="t-main">' + escapeHtml(it.cn || it.title) + '</div>' +
-        '<div class="t-sub">' + escapeHtml(it.res) + " · " + escapeHtml(it.size) + " · " + escapeHtml(it.site) + "</div></div>" +
-        '<a class="btn ghost sm" href="queue.html">审核</a></div>';
-    }).join("") || '<div class="empty">没有待审核的条目</div>';
+        '<div class="t-sub">' + escapeHtml(it.res || "") + " · " + escapeHtml(it.size || "") + " · " + escapeHtml(it.site || "") + "</div></div>" +
+        '<a class="btn ghost sm" href="#queue">审核</a></div>';
+    }).join("");
   }
 
   function renderPublished() {
     var host = $("#dash-published");
     if (!host) return;
-    host.innerHTML = MOCK.published.slice(0, 3).map(function (p) {
+    var list = window.__ptaPublished || [];
+    if (!list.length) {
+      host.innerHTML = '<div class="empty">还没有发布记录</div>';
+      return;
+    }
+    host.innerHTML = list.slice(0, 3).map(function (p) {
+      var t = p.at ? String(p.at).slice(5, 16).replace("T", " ") : "";
       return '<div class="list-item">' +
-        '<div style="flex:1;min-width:0"><div class="t-main">' + escapeHtml(p.cn || p.title) + "（" + escapeHtml(p.title) + "）</div>" +
-        '<div class="t-sub">' + escapeHtml(p.site) + " · " + escapeHtml(p.size) + "</div></div>" +
-        '<span class="t-sub">' + escapeHtml(p.time) + '</span><span class="badge green">成功</span></div>';
+        '<div style="flex:1;min-width:0"><div class="t-main">' + escapeHtml(p.cn || p.title) + "</div>" +
+        '<div class="t-sub">' + escapeHtml(p.site || "未选站点") + " · " + escapeHtml(p.size || "") + "</div></div>" +
+        '<span class="t-sub">' + escapeHtml(t) + '</span><span class="badge green">已发布</span></div>';
     }).join("");
   }
+
+  /* 首页列表用真实数据：待审核读 /api/queue，已发布读 /api/published */
+  function loadDashLists() {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+    return Promise.all([
+      fetch("/api/queue?status=pending", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch("/api/published", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (res) {
+      var q = res[0], p = res[1];
+      if (q && q.ok && q.data) window.__ptaQueuePending = q.data.items || [];
+      if (p && p.ok && p.data) window.__ptaPublished = p.data.items || [];
+      renderPending();
+      renderPublished();
+      return true;
+    });
+  }
+  window.__ptaLoadDashLists = loadDashLists;
 
   function initQueue() {
     var listBox = $("#queue-items");
