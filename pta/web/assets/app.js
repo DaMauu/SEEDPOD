@@ -312,6 +312,24 @@
   }
   window.__ptaLoadPresets = loadPresets;
 
+  /* 站点定义摘要（引擎、采样行数、分类数），来自 /api/site-defs；只用于展示，不参与判定 */
+  window.__ptaDefs = {};
+  function loadDefs() {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+    return fetch("/api/site-defs", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !Array.isArray(j.data)) return false;
+        var map = {};
+        j.data.forEach(function (d) { if (d && d.host) map[d.host] = d; });
+        window.__ptaDefs = map;
+        if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  window.__ptaLoadDefs = loadDefs;
+
   /* 顶栏三个状态：后端连通、待审核条数、下载器数量；没有数据就不显示次数 */
   function paintTopbar() {
     var svc = $("#pill-service"), pend = $("#pill-pending"), nodes = $("#pill-nodes");
@@ -2303,6 +2321,16 @@
       return p && p.engine ? p : null;
     }
 
+    var ENG = { nexusphp: "NP", unit3d: "U3D", gazelle: "GZ" };
+    function engCode(name) { return ENG[name] || (name || "").toUpperCase() || "?"; }
+    function defOf(host) { return (window.__ptaDefs || {})[host] || null; }
+
+    function presetTxt(host) {
+      var p = presetOf(host);
+      if (!p) return "—";
+      return engCode(p.engine) + (p.groups ? " " + p.groups + "组" : "");
+    }
+
     function initials(s) {
       var t = s.title || s.name;
       var m = t.match(/^[A-Za-z0-9]+/);
@@ -2336,7 +2364,7 @@
         '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
         '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
         '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
-        '<span class="si-preset ' + (presetOf(s.name) ? "on" : "") + '">' + (presetOf(s.name) ? "预设" : "—") + "</span>" +
+        '<span class="si-preset ' + (presetOf(s.name) ? "on" : "") + '">' + escapeHtml(presetTxt(s.name)) + "</span>" +
         '<span class="si-mode">' + modeTxt + "</span>" +
         '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
       "</div>";
@@ -2379,6 +2407,11 @@
       var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
       var methodTxt = "Cookie";
       var catTxt = (s.cats || []).length + " 个分类" + (s.fullDiscOnly ? " · 只收原盘" : "");
+      var dres = defOf(s.name);
+      var pres = presetOf(s.name);
+      var engRaw = (pres && pres.engine) || (dres && dres.engine) || "";
+      var engTxt = engRaw ? engCode(engRaw) + " · " + engRaw : "未识别";
+      var sampleTxt = dres ? (dres.rows || 0) + " 行 · " + (dres.groups || 0) + " 组分类" : "还没采样";
       return '<div class="sd-strip">' +
           "<span>已收录<b>" + (s.items ? s.items.toLocaleString() : "—") + "</b></span>" +
           "<span>今日<b>+" + todayNew + "</b></span>" +
@@ -2391,6 +2424,8 @@
             '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
             '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
             '<div class="sd-row"><span>登录凭据</span><b>' + (s.cookieSaved ? "已保存" : "未保存") + "</b></div>" +
+            '<div class="sd-row"><span>引擎</span><b>' + escapeHtml(engTxt) + "</b></div>" +
+            '<div class="sd-row"><span>采样</span><b>' + escapeHtml(sampleTxt) + "</b></div>" +
             '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
           "</div>" +
           '<div class="sd-block"><h4>抓取</h4>' +
@@ -2864,6 +2899,7 @@
     refreshStats();
     paint();
     if (window.__ptaLoadPresets) window.__ptaLoadPresets();
+    if (window.__ptaLoadDefs) window.__ptaLoadDefs();
   }
 
   /* ---------- 站点：新增弹窗 + 本地保存 ---------- */

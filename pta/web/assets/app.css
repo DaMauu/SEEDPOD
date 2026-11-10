@@ -2213,7 +2213,7 @@ body::after {
 .nd-probe-res{font-size:12px;color:#8b90a0;line-height:1.5}
 
 /* ---- 站点列表：搜索预设标记 ---- */
-.si-preset{flex:0 0 42px;font-size:10px;color:#aeb4c2;text-align:center;letter-spacing:.02em}
+.si-preset{flex:0 0 58px;font-size:10px;color:#aeb4c2;text-align:center;letter-spacing:.02em}
 .si-preset.on{color:var(--accent);font-weight:600}
 
 /* ---- 流程页干跑自检 ---- */
@@ -2233,7 +2233,7 @@ body::after {
 .site-item .st i{width:7px;height:7px}
 
 /* 站点列表改成 8 列：复选框 | 状态点 | 站名 | 架构 | 登录 | 预设 | 抓取 | 上次抓取 */
-.st-head, .site-item{grid-template-columns:26px 10px minmax(0,1fr) 96px 84px 46px 56px 92px;gap:12px}
+.st-head, .site-item{grid-template-columns:26px 10px minmax(0,1fr) 96px 84px 58px 56px 92px;gap:12px}
 .site-item .st{justify-self:start}
 
 /* 顶栏：状态条与页面 token 分两组显示 */
