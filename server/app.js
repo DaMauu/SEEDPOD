@@ -1339,7 +1339,11 @@ const server = http.createServer(async (req, res) => {
       if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');
       const def = readSiteDef(host);
       if (!def) return fail(res, 404, 'NO_DEF', '这个站还没有站点定义');
-      return send(res, 200, { ok: true, data: def });
+      const rec = readCrawlState()[host] || null;
+      return send(res, 200, { ok: true, data: Object.assign({}, def, {
+        crawl: rec ? { at: rec.lastAt || 0, count: rec.count || 0, page: rec.page || 0,
+          catIdx: rec.catIdx || 0, catId: rec.catId || '', day: rec.day || '' } : null
+      }) });
     }
     if (p.startsWith('/api/sites/') && /\/search\/?$/.test(p)) {
       const host = decodeURIComponent(p.slice('/api/sites/'.length).replace(/\/search\/?$/, '').replace(/\/+$/, ''));

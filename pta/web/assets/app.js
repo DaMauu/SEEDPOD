@@ -2704,7 +2704,13 @@
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "引擎", type: "fixed", v: sEng ? (engCode(sEng) + " · " + sEng) : "未识别", noTag: true },
           { t: "预设来源", type: "fixed", v: pdetail ? (pdetail.source === "auto" ? "采样自动生成，还没人工确认" : pdetail.source === "arch" ? "按清单架构推断，还没采样" : (pdetail.source || "手填")) : "还没有预设", noTag: true },
-          { t: "分类参数", type: "fixed", v: (pdetail && pdetail.catMode ? pdetail.catMode : "—") + (pdetail && pdetail.catParam ? " · " + pdetail.catParam : ""), noTag: true }
+          { t: "分类参数", type: "fixed", v: (pdetail && pdetail.catMode ? pdetail.catMode : "—") + (pdetail && pdetail.catParam ? " · " + pdetail.catParam : ""), noTag: true },
+          { t: "抓取状态", type: "fixed", noTag: true, v: (function () {
+            var c = s.defCrawl;
+            if (!c || !c.at) return "还没抓过";
+            var when = new Date(c.at).toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
+            return "上次 " + when + " · 今日 " + (c.count || 0) + " 次 · 分类 " + ((c.catIdx || 0) + 1) + " · 下一页 " + ((c.page || 0) + 1);
+          })() }
         ]) + "</div>" +
         '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +
           (catLines || '<div class="sd-row"><span>状态</span><b>还没有分类映射</b></div>') +
@@ -2783,6 +2789,15 @@
             if (state.sel === s.name) paint();
           })
           .catch(function () { s.presetLoaded = false; });
+        /* 顺带取一次站点定义里的抓取进度（今日次数、当前分类、下一页） */
+        fetch("/api/site-def/" + encodeURIComponent(s.name), { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !j.ok || !j.data) return;
+            s.defCrawl = j.data.crawl || null;
+            if (state.sel === s.name) paint();
+          })
+          .catch(function () {});
       }
       if (s && state.setTab === "login" && window.__ptaCred && !s.cookieChecked) {
         s.cookieChecked = true;
