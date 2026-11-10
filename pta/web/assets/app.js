@@ -1061,6 +1061,21 @@
       filePick.value = "";
     });
 
+    var bulkApprove = $("#q-bulkapprove");
+    if (bulkApprove) bulkApprove.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，批量批准不可用"); return; }
+      bulkApprove.disabled = true;
+      fetch("/api/queue/bulk", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "approve", fromStatus: "pending" })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        bulkApprove.disabled = false;
+        if (!j || !j.ok) { toast((j && j.error && j.error.message) || "批量批准失败"); return; }
+        toast("已批准 " + j.data.changed + " 条" + (j.data.skipped ? "，跳过 " + j.data.skipped + " 条" : ""));
+        if (loadServer) loadServer();
+      }).catch(function () { bulkApprove.disabled = false; toast("批量批准请求发不出去"); });
+    });
+
     var bulk = $("#q-bulkcheck");
     if (bulk) bulk.addEventListener("click", function () {
       var list = rows().filter(function (x) { return x.status === "pending" || x.status === "approved"; });
