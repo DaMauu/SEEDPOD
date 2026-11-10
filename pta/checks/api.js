@@ -901,6 +901,13 @@ async function main() {
     const pubList = await (await fetchA(BASE + '/api/queue?status=published')).json();
     need(pubList.data.items.filter(x => x.id === idA || x.id === idB).length === 2, '批量发布后状态不对');
     await fetchA(BASE + '/api/downloaders/' + dlTmp.data.id, { method: 'DELETE' });
+
+    /* 跳过：要走服务端状态，刷新后不能又回到待确认 */
+    const idSkip = await mk('Bulk Fixture Skip 2022 1080p');
+    const sk = await (await fetchA(BASE + '/api/queue/' + idSkip + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'skip' })
+    })).json();
+    need(sk.ok && sk.data.status === 'skipped', '跳过没落到服务端：' + JSON.stringify(sk).slice(0, 140));
   });
 
   await check('干跑任务能提交并跑完', async () => {
