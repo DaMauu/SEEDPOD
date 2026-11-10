@@ -1762,6 +1762,24 @@ const server = http.createServer(async (req, res) => {
       if (r.err) return fail(res, r.err.code === 'BAD_REQUEST' ? 400 : 500, r.err.code, r.err.message);
       return send(res, 200, { ok: true, data: r.item });
     }
+    if (p === '/api/queue/bulk' && req.method === 'POST') {
+      const body = await readBody(req);
+      const action = String((body && body.action) || '');
+      if (action !== 'approve' && action !== 'reject') return fail(res, 400, 'BAD_REQUEST', 'action 只能是 approve / reject');
+      const reason = String((body && body.reason) || '').slice(0, 500);
+      if (action === 'reject' && !reason.trim()) return fail(res, 400, 'BAD_REQUEST', '批量驳回要写理由');
+      const ids = Array.isArray(body && body.ids) ? body.ids.map(String) : [];
+      const fromStatus = String((body && body.fromStatus) || 'pending');
+      const q = readQueue();
+      const want = ids.length ? ids : q.items.filter(function (x) { return x.status === fromStatus; }).map(function (x) { return x.id; });
+      let changed = 0, skipped = 0;
+      want.slice(0, 200).forEach(function (id) {
+        const r = queueAction(id, { action: action, reason: reason });
+        if (r.err) { skipped++; return; }
+        changed++;
+      });
+      return send(res, 200, { ok: true, data: { changed: changed, skipped: skipped, action: action } });
+    }
     if (p.startsWith('/api/queue/')) {
       const rest = p.slice('/api/queue/'.length).replace(/\/+$/, '');
       if (/\/check$/.test(rest)) {

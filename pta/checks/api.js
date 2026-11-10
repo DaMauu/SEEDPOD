@@ -838,6 +838,23 @@ async function main() {
     need(bad.status === 404, '不存在的条目返回 ' + bad.status);
     const anon = await fetch(BASE + '/api/queue');
     need(anon.status === 401, '未登录能读队列：' + anon.status);
+
+    /* 批量批准：pending 一次过，不许跳过状态机 */
+    const mk = async (t) => (await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: t })
+    })).json()).data.id;
+    const idA = await mk('Bulk Fixture A 2020 1080p');
+    const idB = await mk('Bulk Fixture B 2021 1080p');
+    const bulk = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'approve', ids: [idA, idB] })
+    })).json();
+    need(bulk.ok && bulk.data.changed === 2, '批量批准没生效：' + JSON.stringify(bulk).slice(0, 140));
+    const after = await (await fetchA(BASE + '/api/queue?status=approved')).json();
+    need(after.data.items.filter(x => x.id === idA || x.id === idB).length === 2, '批量批准后状态不对');
+    const noReason = await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', ids: [idA] })
+    });
+    need(noReason.status === 400, '批量驳回没写理由却通过：' + noReason.status);
   });
 
   await check('干跑任务能提交并跑完', async () => {
