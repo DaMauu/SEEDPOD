@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Torrents - Fixture</title></head>
+<body>
+<div class="userinfo"><a href="user.php?id=42">fixture</a> | <a href="logout.php">Logout</a></div>
+<form class="search_form" method="get" action="torrents.php">
+  <input type="text" name="searchstr" value="">
+  <select name="filter_cat[1]">
+    <option value="">All</option>
+    <option value="1">Music</option>
+    <option value="2">Audiobooks</option>
+    <option value="3">Comedy</option>
+  </select>
+</form>
+<table class="torrent_table">
+  <tbody>
+    <tr class="group torrents">
+      <td><a href="torrents.php?id=1001">Fixture Album 2020 FLAC</a></td>
+    </tr>
+    <tr class="torrent_row groupid_1001">
+      <td class="td_info">
+        <a href="torrents.php?action=download&amp;id=5551&amp;authkey=abc&amp;torrent_pass=def">DL</a>
+        <a href="torrents.php?id=1001&amp;torrentid=5551">FLAC / 24bit Lossless</a>
+      </td>
+      <td class="td_size number_column nobr">333.33 MB</td>
+    </tr>
+    <tr class="torrent_row groupid_1001">
+      <td class="td_info">
+        <a href="torrents.php?action=download&amp;id=5552&amp;authkey=abc&amp;torrent_pass=def">DL</a>
+        <a href="torrents.php?id=1001&amp;torrentid=5552">MP3 / 320</a>
+      </td>
+      <td class="td_size number_column nobr">101.01 MB</td>
+    </tr>
+    <tr class="group torrents">
+      <td><a href="torrents.php?id=1002">Fixture Audiobook 2021</a></td>
+    </tr>
+    <tr class="torrent_row groupid_1002">
+      <td class="td_info">
+        <a href="torrents.php?action=download&amp;id=5553&amp;authkey=abc&amp;torrent_pass=def">DL</a>
+        <a href="torrents.php?id=1002&amp;torrentid=5553">MP3 / 64</a>
+      </td>
+      <td class="td_size number_column nobr">88.88 MB</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>

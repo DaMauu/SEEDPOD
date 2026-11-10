@@ -66,6 +66,79 @@ check('解析登录表单', () => {
   need(adapter.parseLoginForm('<html></html>') === null, '没有登录表单时应返回 null');
 });
 
+const unit3d = require(path.join(ROOT, 'server', 'adapters', 'unit3d.js'));
+const gazelle = require(path.join(ROOT, 'server', 'adapters', 'gazelle.js'));
+const adapters = require(path.join(ROOT, 'server', 'adapters', 'index.js'));
+const u3dHtml = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'unit3d-browse.html'), 'utf8');
+const gzHtml = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'gazelle-browse.html'), 'utf8');
+
+check('识别 UNIT3D 且不误判成别的引擎', () => {
+  need(unit3d.detect(u3dHtml) === true, '没有识别出 UNIT3D');
+  need(adapters.detectEngine(u3dHtml) === 'unit3d', '入口分发没选 unit3d：' + adapters.detectEngine(u3dHtml));
+  need(adapter.detect(u3dHtml) === false, 'UNIT3D 页面被当成 NexusPHP');
+  need(gazelle.detect(u3dHtml) === false, 'UNIT3D 页面被当成 Gazelle');
+});
+
+check('解析 UNIT3D 列表与分类', () => {
+  const rows = unit3d.parseList(u3dHtml);
+  need(rows.length === 2, '行数不对：' + rows.length);
+  need(rows[0].id === '1234', 'id 不对：' + rows[0].id);
+  need(rows[0].size === '12.34 GiB', '大小不对：' + rows[0].size);
+  need(/\/torrents\/1234\/download/.test(rows[0].downloadUrl), '下载地址不对：' + rows[0].downloadUrl);
+  const cats = unit3d.parseCategories(u3dHtml);
+  need(cats.map(c => c.id).join(',') === '1,2,3', '分类 id 不对：' + cats.map(c => c.id).join(','));
+  need(cats[0].label === 'Movies', '分类标签不对：' + cats[0].label);
+});
+
+check('拼 UNIT3D 搜索 URL', () => {
+  const def = { base: 'https://example.org', engine: 'unit3d', searchPath: '/torrents' };
+  const u = unit3d.buildSearchUrl(def, '金瓶双艳', ['1', '2']);
+  need(u.indexOf('https://example.org/torrents?') === 0, '基础地址不对：' + u);
+  need(/name=%E9%87%91%E7%93%B6/.test(u), '搜索词没编码：' + u);
+  need((u.match(/categories%5B0%5D%5B%5D=/g) || []).length === 2, '多分类拼法不对：' + u);
+});
+
+check('识别并解析 Gazelle', () => {
+  need(gazelle.detect(gzHtml) === true, '没有识别出 Gazelle');
+  need(adapters.detectEngine(gzHtml) === 'gazelle', '入口分发没选 gazelle：' + adapters.detectEngine(gzHtml));
+  const rows = gazelle.parseList(gzHtml);
+  need(rows.length === 3, '行数不对：' + rows.length);
+  need(rows[0].id === '5551' && rows[0].size === '333.33 MB', '第一行不对：' + JSON.stringify(rows[0]));
+  need(rows[0].title === 'Fixture Album 2020 FLAC', '标题没取到组名：' + rows[0].title);
+  const cats = gazelle.parseCategories(gzHtml);
+  need(cats.map(c => c.id).join(',') === '1,2,3', '分类 id 不对：' + cats.map(c => c.id).join(','));
+  /* 复选框写法（filter_cat[1] + label）也要认 */
+  const boxHtml = '<input type="checkbox" name="filter_cat[1]" id="cat_1" value="1"><label for="cat_1">Music</label>';
+  need(gazelle.parseCategories(boxHtml)[0].label === 'Music', '复选框分类没解析出来');
+});
+
+check('拼 Gazelle 搜索 URL', () => {
+  const def = { base: 'https://example.org', engine: 'gazelle', searchPath: '/torrents.php', catSlot: 1 };
+  const u = gazelle.buildSearchUrl(def, 'fixture', ['1']);
+  need(/searchstr=fixture/.test(u), '搜索词没拼：' + u);
+  need(/filter_cat%5B1%5D=1/.test(u), '分类槽位不对：' + u);
+});
+
+check('跨引擎登录态判定', () => {
+  need(adapters.isLoggedIn(u3dHtml) === true, 'UNIT3D 已登录页面判成未登录');
+  need(adapters.isLoggedIn(gzHtml) === true, 'Gazelle 已登录页面判成未登录');
+  const npLogged = html.replace('</body>', '<a href="userdetails.php?id=42">me</a></body>');
+  need(adapters.isLoggedIn(npLogged) === true, 'NexusPHP 已登录页面判成未登录');
+  const wall = '<html><body><form action="takelogin.php" method="post"><input name="username"></form>请先登录</body></html>';
+  need(adapters.isLoggedIn(wall) === false, '登录墙没判成未登录');
+  need(adapters.isLoggedIn('<html><body>nothing</body></html>') === null, '空白页面应该判不出来');
+});
+
+check('反推搜索参数', () => {
+  const np = adapters.detectSearchSpec(html);
+  need(np.params && np.params.search === '{q}', 'NexusPHP 参数没反推出来：' + JSON.stringify(np.params));
+  const u3 = adapters.detectSearchSpec(u3dHtml);
+  need(u3.params && u3.params.name === '{q}', 'UNIT3D 参数没反推出来：' + JSON.stringify(u3.params));
+  const gz = adapters.detectSearchSpec(gzHtml);
+  need(gz.params && gz.params.searchstr === '{q}', 'Gazelle 参数没反推出来：' + JSON.stringify(gz.params));
+  need(/filter_cat/.test(gz.catParam), 'Gazelle 分类参数名没取到：' + gz.catParam);
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

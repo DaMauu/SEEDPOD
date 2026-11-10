@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Torrents - Fixture</title></head>
+<body>
+<table class="top-nav"><tr><td><a href="/users/fixture">fixture</a></td><td><a href="/logout">Logout</a></td></tr></table>
+<form method="get" action="/torrents">
+  <input type="text" name="name" value="">
+  <select name="sortField"><option value="created_at">Created</option></select>
+  <input type="checkbox" name="categories[0][]" id="cat_1" value="1"><label for="cat_1">Movies</label>
+  <input type="checkbox" name="categories[0][]" id="cat_2" value="2"><label for="cat_2">TV Shows</label>
+  <input type="checkbox" name="categories[0][]" id="cat_3" value="3"><label for="cat_3">Music</label>
+</form>
+<table class="torrent-search--list">
+  <tbody>
+    <tr>
+      <td class="torrent-search--list__overview">
+        <a class="torrent-search--list__name" href="/torrents/1234">Fixture Movie 2021 1080p BluRay AVC DTS-HD MA 5.1</a>
+        <span class="torrent-search--list__type">电影 Movie</span>
+      </td>
+      <td class="torrent-search--list__size">12.34 GiB</td>
+      <td class="torrent-search--list__actions"><a href="/torrents/1234/download">Download</a></td>
+    </tr>
+    <tr>
+      <td class="torrent-search--list__overview">
+        <a class="torrent-search--list__name" href="/torrents/1235">Fixture Series S01E01 2160p WEB-DL DDP5.1</a>
+        <span class="torrent-search--list__type">剧集 TV</span>
+      </td>
+      <td class="torrent-search--list__size">1.02 GiB</td>
+      <td class="torrent-search--list__actions"><a href="/torrents/1235/download">Download</a></td>
+    </tr>
+  </tbody>
+</table>
+<div class="pagination"><a href="/torrents?page=2">2</a></div>
+</body>
+</html>

@@ -14,7 +14,8 @@ const TOKEN = process.env.PTA_TOKEN || '';
 const PTA_USER = process.env.PTA_USER || '';
 const PTA_PASS = process.env.PTA_PASS || '';
 const VERSION = require('../package.json').version;
-const nexusphp = require('./adapters/nexusphp');
+const adapters = require('./adapters');
+const nexusphp = adapters.nexusphp;
 const secretbox = require('./secretbox');
 const KEYRING = secretbox.loadKey(DATA_DIR);
 const STARTED = Date.now();
@@ -610,21 +611,28 @@ async function sessionCheckOnce(host) {
   if (!cookie) return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } };
   const def = readSiteDef(host);
   const base = (def && def.base ? String(def.base) : 'https://' + host).replace(/\/+$/, '');
+  const engine = (def && def.engine) || '';
+  const probePath = engine === 'unit3d' ? '/' : '/index.php';
   const t0 = Date.now();
   try {
-    const res = await fetch(base + '/index.php', {
+    const res = await fetch(base + probePath, {
       headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
       redirect: 'manual', signal: AbortSignal.timeout(15000)
     });
     const html = await res.text().catch(function () { return ''; });
-    const loggedOut = res.status === 302 || /takelogin\.php|请先登录|请登录/i.test(html);
-    const ok = res.status === 200 && !loggedOut && /logout\.php|userdetails\.php|欢迎回来/i.test(html);
+    /* 登录态由适配器统一判：能跨 NexusPHP / UNIT3D / Gazelle 三种页面写法 */
+    const verdict = adapters.isLoggedIn(html);
+    const loggedOut = res.status === 302 || verdict === false || /takelogin\.php|请先登录|请登录/i.test(html);
+    const ok = res.status === 200 && !loggedOut && verdict === true;
     logEvent(ok ? 'info' : 'warn', '站点', '会话自检 · ' + host + ' · ' + (ok ? '可用' : '已失效'));
-    return { pass: ok, steps: [{ step: 'session', status: res.status, ms: Date.now() - t0, ok: ok }],
-      cookieNames: cookie.split(';').map(function (x) { return x.split('=')[0].trim(); }).filter(Boolean) };
+    return {
+      pass: ok, engine: engine || 'unknown', probe: probePath, login: verdict,
+      steps: [{ step: 'session', status: res.status, ms: Date.now() - t0, ok: ok }],
+      cookieNames: cookie.split(';').map(function (x) { return x.split('=')[0].trim(); }).filter(Boolean)
+    };
   } catch (e) {
     logEvent('warn', '站点', '会话自检 · ' + host + ' · 失败：' + String(e.message).slice(0, 80));
-    return { pass: false, steps: [{ step: 'connect', status: 0, ms: Date.now() - t0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) }], cookieNames: [] };
+    return { pass: false, engine: engine || 'unknown', steps: [{ step: 'connect', status: 0, ms: Date.now() - t0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) }], cookieNames: [] };
   }
 }
 
@@ -666,11 +674,12 @@ function buildDryPlan(host) {
   if (!def) {
     warnings.push('没有站点定义，拼不出搜索 URL');
   } else {
-    if (def.engine && def.engine !== 'nexusphp') warnings.push('该站引擎是 ' + def.engine + '，目前只接了 nexusphp 解析');
+    if (def.engine && !adapters.byName(def.engine)) warnings.push('该站引擎是 ' + def.engine + '，还没有对应的解析适配器');
+    if (def.engine && def.engine !== 'nexusphp') warnings.push('该站引擎是 ' + def.engine + '，解析走适配器 ' + def.engine + '（列表与分类字段可能有差异）');
     if (def.base) {
       groups.forEach(function (k) {
         if (searchUrls.length >= 10) return;
-        searchUrls.push({ cat: k, url: nexusphp.buildSearchUrl(def, '{q}', cats[k] || []) });
+        searchUrls.push({ cat: k, url: adapters.buildSearchUrl(def, '{q}', cats[k] || []) });
       });
     }
   }
@@ -978,6 +987,34 @@ const server = http.createServer(async (req, res) => {
         };
       });
       return send(res, 200, { ok: true, data: out });
+    }
+    if (p === '/api/site-defs' && req.method === 'GET') {
+      const list = [];
+      let files = [];
+      try { files = fs.readdirSync(DEF_DIR); } catch (e) { files = []; }
+      files.filter(function (f) { return /\.json$/.test(f); }).forEach(function (f) {
+        try {
+          const d = JSON.parse(fs.readFileSync(path.join(DEF_DIR, f), 'utf8'));
+          const cats = d.cats || {};
+          let ids = 0;
+          Object.keys(cats).forEach(function (k) { ids += (cats[k] || []).length; });
+          list.push({
+            host: d.host || f.replace(/\.json$/, ''), engine: d.engine || '',
+            groups: Object.keys(cats).length, ids: ids,
+            rows: (d.source && d.source.rows) || 0, sizeRows: (d.source && d.source.sizeRows) || 0,
+            updatedAt: (d.source && d.source.analyzedAt) || null
+          });
+        } catch (e) {}
+      });
+      list.sort(function (a, b) { return String(a.host).localeCompare(String(b.host)); });
+      return send(res, 200, { ok: true, data: list, total: list.length, engines: adapters.names() });
+    }
+    if (p.startsWith('/api/site-def/') && req.method === 'GET') {
+      const host = decodeURIComponent(p.slice('/api/site-def/'.length)).replace(/\/+$/, '');
+      if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');
+      const def = readSiteDef(host);
+      if (!def) return fail(res, 404, 'NO_DEF', '这个站还没有站点定义');
+      return send(res, 200, { ok: true, data: def });
     }
     if (p.startsWith('/api/sites/') && /\/search\/?$/.test(p)) {
       const host = decodeURIComponent(p.slice('/api/sites/'.length).replace(/\/search\/?$/, '').replace(/\/+$/, ''));
