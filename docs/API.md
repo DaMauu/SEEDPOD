@@ -50,8 +50,7 @@
 站点凭据列表，只回状态，不回值：
 
 ```
-{ "ok": true, "data": [ { "host": "example.org", "user": "已保存", "hasUser": true,
-  "hasPass": true, "hasTotp": true, "updatedAt": "..." } ] }
+{ "ok": true, "data": [ { "host": "example.org", "hasCookie": true, "updatedAt": "..." } ] }
 ```
 
 密文存在 `data/credentials.json`（0600），AES-256-GCM 加密，密钥来自环境变量 `PTA_SECRET`
@@ -59,8 +58,9 @@
 
 ## PUT /api/credentials/:host
 
-`{ "user": "...", "pass": "...", "totp": "base32密钥", "cookie": "c_secure_uid=...; c_secure_pass=..." }`，
-逐字段加密保存；传空字符串表示清除该字段。cookie 与账号密码是两条独立路径，存哪个用哪个。
+`{ "cookie": "c_secure_uid=...; c_secure_pass=..." }`，加密保存；传空字符串表示清除。
+
+站点侧只支持 cookie 登录：账号密码与 2FA 那套已经移除（面板自己的登录不受影响，仍是 `PTA_USER` / `PTA_PASS`）。
 
 ## DELETE /api/credentials/:host
 
@@ -77,21 +77,6 @@
 ```
 
 cookie 失效（302 到登录页，或页面出现「请登录」）时 `pass: false`。没有 cookie 返回 400 `NO_COOKIE`。
-
-## POST /api/sites/:host/login-test
-
-用已保存的凭据真登录一次（**只在用户点击时调用**），同一站 60 秒内只允许一次，超了返回 429 `TOO_FREQUENT`。
-有 TOTP 密钥会先生成动态码；登录后访问 `/index.php` 判断是否真的登进去了。
-
-```
-{ "ok": true, "data": { "pass": true,
-  "steps": [ { "step": "totp", "status": 200, "note": "已生成 6 位动态码" },
-             { "step": "login", "status": 302, "ms": 420 },
-             { "step": "verify", "status": 200, "ms": 300, "ok": true } ],
-  "cookieNames": [ "c_secure_uid", "c_secure_pass" ] } }
-```
-
-没有凭据或没有站点定义返回 400 `NO_CREDENTIALS` / `NO_DEF`。
 
 ## GET /api/flow
 

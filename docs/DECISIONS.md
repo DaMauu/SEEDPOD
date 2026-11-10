@@ -51,10 +51,11 @@
 - 登录自检必须由用户点击触发，同一站 60 秒一次；不做后台轮询、不做批量探测
 - TOTP 自己算（`server/totp.js`），不引第三方库，按 RFC 4226/6238 的官方向量写死断言
 
-## 2026-11-10 优先用 cookie，账号密码 + 2FA 作为兜底
+## 2026-11-10 站点登录只保留 cookie
 
-- cookie 路径最短：不碰密码、不算 2FA，导入一次就能用；代价是会过期，需要重新导入
-- 账号密码 + 2FA 保留，用来在 cookie 失效后重新登录，或者站点要求每次验证码时兜底
+- 站点侧只用 cookie：不存账号密码、不算 2FA，导入一次就能用；过期就重新导入
+- 账号密码 + 2FA 的代码与接口已删除（`server/totp.js`、`login-test`），避免留一条用不到又要维护的路径
+- 面板自己的登录不受影响：仍然是 `PTA_USER` / `PTA_PASS` + HttpOnly 会话 cookie
 - cookie 由本机浏览器直接导入（`scripts/import-cookies.js` 读 CDP），不让人手抄；
   传输走 ssh 到服务器后由 `scripts/load-cookies.js` 用服务器自己的密钥加密落盘，明文临时文件立即删掉
 - 两条路径都只存密文，接口只回 `hasPass / hasTotp / hasCookie`

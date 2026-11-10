@@ -149,8 +149,7 @@
           mode: s.mode, stopAtKnown: s.stopAtKnown, fullCycle: s.fullCycle,
           trigger: s.trigger, dailyAt: s.dailyAt, everyMin: s.everyMin,
           timeWindow: s.timeWindow, winStart: s.winStart, winEnd: s.winEnd, jitter: s.jitter,
-          loginMethod: s.loginMethod, username: s.username, password: s.password,
-          cookie: s.cookie
+          loginMethod: "cookie"
         };
         save();
         if (window.__ptaSyncSite) window.__ptaSyncSite(host, s);
@@ -281,6 +280,21 @@
     }).catch(function () { return null; });
   }
   window.__ptaDl = { req: dlRequest };
+
+  /* 站点凭据（cookie）：只发密文方向的请求，回包只有 hasCookie */
+  function credRequest(host, method, body) {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(null);
+    const url = host ? "/api/credentials/" + encodeURIComponent(host) : "/api/credentials";
+    return fetch(url, {
+      method: method || "GET", credentials: "same-origin",
+      headers: body ? { "content-type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, j: j }; },
+        function () { return { status: r.status, j: null }; });
+    }).catch(function () { return null; });
+  }
+  window.__ptaCred = { req: credRequest };
 
   /* 站点搜索预设状态：只读汇总，用于列表上标「已确认/未确认」 */
   window.__ptaPresets = {};
@@ -2363,7 +2377,7 @@
       var recs = MOCK.sources.slice(0, 6);
       var acts = MOCK.logs.slice(0, 3);
       var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
-      var methodTxt = s.loginMethod === "cookie" ? "Cookie" : "账号密码" + (s.tfa ? " + 2FA" : "");
+      var methodTxt = "Cookie";
       var catTxt = (s.cats || []).length + " 个分类" + (s.fullDiscOnly ? " · 只收原盘" : "");
       return '<div class="sd-strip">' +
           "<span>已收录<b>" + (s.items ? s.items.toLocaleString() : "—") + "</b></span>" +
@@ -2376,7 +2390,7 @@
           '<div class="sd-block"><h4>登录</h4>' +
             '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
             '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
-            '<div class="sd-row"><span>cookie 剩余</span><b>' + (s.loginMethod === "cookie" ? "—" : s.cookieDays + " 天") + "</b></div>" +
+            '<div class="sd-row"><span>登录凭据</span><b>' + (s.cookieSaved ? "已保存" : "未保存") + "</b></div>" +
             '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
           "</div>" +
           '<div class="sd-block"><h4>抓取</h4>' +
@@ -2433,17 +2447,13 @@
         ]) + "</div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "登录方式", type: "select", k: "loginMethod", v: method, opts: ["password", "cookie"], labels: { password: "账号密码", cookie: "Cookie" } }
-        ]) + "</div>" + (method === "cookie"
-          ? '<div class="set-fields">' + setRowsHtml([
-              { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "" }
-            ]) + "</div>"
-          : '<div class="set-fields">' + setRowsHtml([
-              { t: "用户名", type: "text", k: "username", v: s.username || "" },
-              { t: "密码", type: "password", k: "password", v: s.password || "", ph: "留空表示不修改" },
-              { t: "两步验证", type: "switch", k: "tfa", on: s.tfa },
-              { t: "TOTP 密钥", type: "text", k: "totp", v: s.totp || "", ph: "绑定 2FA 时填，登录自动算码" }
-            ]) + "</div>");
+          { t: "登录方式", type: "fixed", v: "Cookie（从浏览器导入或用下面的输入框粘贴）", noTag: true, hint: "账号密码与 2FA 已不再使用" }
+        ]) + "</div>" +
+        '<div class="set-fields">' + setRowsHtml([
+          { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "", ph: "c_secure_uid=...; c_secure_pass=..." }
+        ]) + "</div>" +
+        '<div class="sd-cookie-bar"><button class="btn ghost slim" id="sd-cookie-test">用已保存的 cookie 自检</button>' +
+        '<span class="sd-cookie-res" id="sd-cookie-res">还没自检</span></div>';
       }
 
       return '<div class="sd-form">' + body + "</div>";
@@ -2475,6 +2485,15 @@
 
     function paintDetail() {
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
+      if (s && state.setTab === "login" && window.__ptaCred && !s.cookieChecked) {
+        s.cookieChecked = true;
+        window.__ptaCred.req("").then(function (res) {
+          if (!res || !res.j || !res.j.ok || !Array.isArray(res.j.data)) return;
+          var hit = res.j.data.filter(function (c) { return c.host === s.name; })[0];
+          s.cookieSaved = !!(hit && hit.hasCookie);
+          if (state.sel === s.name) paint();
+        });
+      }
       if (!detail) return;
       if (!s || !state.open) { detail.hidden = true; detail.innerHTML = ""; return; }
       detail.hidden = false;
@@ -2653,6 +2672,30 @@
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!s) return;
 
+      if (e.target.closest && e.target.closest("#sd-cookie-test")) {
+        var resBox = $("#sd-cookie-res");
+        if (resBox) resBox.textContent = "正在用已保存的 cookie 访问首页…";
+        fetch("/api/sites/" + encodeURIComponent(s.name) + "/session-test", { method: "POST", credentials: "same-origin" })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (!j || !j.ok) {
+              var msg = (j && j.error && j.error.message) || "自检失败";
+              if (resBox) resBox.textContent = msg;
+              toast(msg);
+              return;
+            }
+            var d = j.data, st = (d.steps || [])[0] || {};
+            var txt = (d.pass ? "cookie 可用" : "cookie 已失效") + " · HTTP " + (st.status || "—") +
+              (st.ms !== undefined ? " · " + st.ms + "ms" : "") + (st.error ? " · " + st.error : "");
+            if (resBox) resBox.textContent = txt;
+            toast(txt);
+          })
+          .catch(function () {
+            if (resBox) resBox.textContent = "本地预览没有后端，自检不可用";
+            toast("本地预览没有后端，自检不可用");
+          });
+        return;
+      }
       if (act === "selfcheck") {
         if (btn.disabled) return;
         var oldTxt = btn.textContent;
@@ -2690,8 +2733,16 @@
 
       if (act === "save") {
         collect(s);
+        var pendingCookie = String(s.cookie || "").trim();
+        delete s.cookie;                    /* cookie 不进 localStorage，只走服务端密文 */
         window.__ptaStore.set(s.name, s);
-        persist(); refreshStats(); paint(); toast("设置已保存（本地）");
+        persist(); refreshStats(); paint();
+        if (!pendingCookie) { toast("设置已保存"); return; }
+        window.__ptaCred.req(s.name, "PUT", { cookie: pendingCookie }).then(function (res) {
+          if (res && res.j && res.j.ok) { s.cookieSaved = true; toast("设置与 cookie 都已保存"); }
+          else toast((res && res.j && res.j.error && res.j.error.message) || "cookie 没存进服务端");
+          paint();
+        });
         return;
       }
       if (act === "reset") {

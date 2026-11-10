@@ -10,7 +10,7 @@
 
 ## 一、检查分三层（pta/checks）
 
-0. `security.js`（6 条）：base32、HOTP/TOTP 官方向量、校验容错、凭据加解密往返、密钥解析。
+0. `security.js`（2 条）：凭据加解密往返与密钥解析（TOTP 相关已随功能移除）。
 	`adapter.js` 站点解析（5 条）：用夹具验 NexusPHP 的分类识别、列表解析、搜索 URL 拼装、登录表单解析，全程离线。
 1. `smoke.js` 功能断言（22 条）：未登录弹登录页、错误密码有提示、登录后进面板、七个路由能开、分类映射能存、越界参数被拦、上传 3 张出 3 缩略图、批量查重跑完、归档与两个下载、下载器连接测试与干跑按钮在没后端时有提示、确认弹窗能开能关、无 JS 报错。
 2. `audit.js` 交互审计：把每个页面所有可点的东西逐个点一遍（约 140 个交互点），没有反应就报 DEAD；同时查重复 id、指向不存在页面的链接。
@@ -75,7 +75,7 @@ pta\checks\run.cmd
 | done | 待审核台服务端状态机 | `POST /api/queue` 造条目，approve/reject/publish 各有校验，越级 409 |
 | done | 站点搜索预设按站存 | `/api/sites/:host/search` 支持引擎/路径/参数名/分类 id，真实数据不入库 |
 | done | cookie 导入与会话自检 | 浏览器读 cookie → 服务端加密存 → `session-test` 判定可用；实测 7 站全通 |
-| done | 凭据加密存储与 2FA | AES-256-GCM 存密文，TOTP 自算并过 RFC 向量，登录自检 60 秒限流 |
+| done | 站点登录只留 cookie | 删除账号密码/2FA 与 login-test，登录设置页改成 cookie 输入 + 自检按钮 |
 | done | 前端拆分第一步 | 规则表（抓取/查重/发布）搬到 `assets/data.js`，app.js 从 3349 行减到 3222 行，检查全绿 |
 | done | NexusPHP 列表解析对齐真实页面 | 三页各 100 行，标题/分类/下载链接均 100/100；大小字段待按站补 |
 | done | NexusPHP 适配器（解析层，不发请求） | `server/adapters/nexusphp.js` 纯函数：分类/列表/搜索 URL/登录表单，夹具 5 条断言 |

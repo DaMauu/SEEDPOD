@@ -46,11 +46,10 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/site-config | 服务端保存的站点配置（白名单字段） |
 | PUT /api/site-config/:host | 合并写站点配置，密码/cookie/totp 拒收 |
 | DELETE /api/site-config/:host | 删掉站点配置并恢复默认 |
-| GET /api/credentials | 站点凭据状态（不回明文） |
-| PUT /api/credentials/:host | 加密保存账号/密码/2FA 密钥 |
+| GET /api/credentials | 站点凭据状态（只回 hasCookie） |
+| PUT /api/credentials/:host | 加密保存 cookie |
 | DELETE /api/credentials/:host | 删除凭据 |
 | POST /api/sites/:host/session-test | 只用 cookie 做一次会话自检（不碰密码与 2FA） |
-| POST /api/sites/:host/login-test | 用户点击触发的登录自检（60 秒限流） |
 | GET /api/flow | 抓取/查重/发布三套规则的服务端存档 |
 | PUT /api/flow | 合并保存流程规则（形状有校验） |
 | GET /api/site-search | 所有站点预设的汇总（列表页标已确认/未确认用） |
@@ -119,12 +118,16 @@ Chrome 必须以 `--remote-debugging-port=9222` 启动，脚本用 CDP 连过去
 适配器的坑记一下：NexusPHP 的行内嵌了 `<table>`，按 `<tr>` 切行会把一行切成几段；
 现在改成「按 details.php 链接定位 + 前后窗口取字段」，并且必须排除 `userdetails.php`（它包含 `details.php` 子串）。
 
-## 凭据与登录自检（新）
+## 站点凭据（只有 cookie）
 
-- `server/totp.js`：base32 + HOTP/TOTP，RFC 4226/6238 向量全过
+站点登录改成只用 cookie：面板里粘贴或由脚本导入，服务端 AES-256-GCM 加密存 `data/credentials.json`，
+接口只回 `hasCookie`，`POST /api/sites/:host/session-test` 用 cookie 访问首页判活。账号密码与 2FA 已移除；
+面板自己的登录（`PTA_USER`/`PTA_PASS`）没有动。
+
+## 旧记录：凭据与登录自检
+
 - `server/secretbox.js`：AES-256-GCM 加解密，密钥 `PTA_SECRET` → `data/.secret`（0600）
 - `data/credentials.json`：只存密文；接口与日志都不出现明文
-- `POST /api/sites/:host/login-test`：用户触发、60 秒限流、有 TOTP 就先生成动态码，登录后访问 `/index.php` 验证
 - 登录页采样用无痕上下文（否则已登录会跳走）：7 站里 6 站拿到表单，其中 2 站有 2FA 字段
 
 ## cookie 导入流程（推荐路径）
