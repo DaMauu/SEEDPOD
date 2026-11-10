@@ -52,7 +52,52 @@
 - **不内置私有站定义与会话数据**：别人仓库里的定义文件可能含站点域名与私有站 cookie 说明；我们的真实站清单、凭据、样本一律只在本机/测试机，不入库。
 - **不绕过站点限制**：不自动破验证码、不轮换 UA 去压测、不共享 cookie；每站请求仍按「一次性、可解释、有配额」执行。
 
-## 5. 参考
+## 6. Vertex（栗山未来的追剧刷流工具）
+
+仓库：<https://github.com/vertex-app/vertex>，**MIT 许可**，可以合法借鉴甚至改写代码，条件是保留版权声明并注明来源；
+我们目前是「借结构与约定、代码自己写」，没有整段拷贝。
+
+它的项目逻辑值得逐条学：
+
+- `app/common/Site.js`：站点基类。每个站点实例持有 cookie、priority、rssUrl、maxRetryCount、刷新 cron；
+  `_getDocument(url)` 统一发请求（带 cookie）→ 缓存 300 秒 → JSDOM 解析；
+  `_downloadTorrent(url)` 下载 .torrent → bencode 解码 → **算 infohash / 体积 / 文件名** → 存到 torrents/；
+  `search()` 调站点自己的 `searchTorrent`；`pushTorrentById()` 下载失败重试 3 次（间隔 2 秒）、推送失败重试 5 次；
+  `refreshInfo()` 每小时抓账号数据写进 sqlite。
+- `app/libs/site/*.js`：每站一个小模块，导出 `{name, url, id, downloadLink}` 与 `getInfo()/searchTorrent(keyword)`。
+  搜索结果的字段约定是重点：`{site, id, title, subtitle, category, link, seeders, leechers, snatches, size(字节), time, tags}`。
+  行数据优先用站点给的 `data-*` 属性（`data-torrent-id`、`data-title`、`data-size-bytes`、`data-seeders`、`data-added-ts`），
+  拿不到才退回文本解析。
+- `app/libs/util.js`：`requestPromise` 统一 UA、按域名白名单走代理、`trustAllCerts`、120 秒超时；
+  用 `trk_jschal_js` / `jschl-answer` / `cloudflare-static` 这些特征判断「5 秒盾」，命中就换 Puppeteer 带 cookie 再抓一次；
+  还有 `calSize/formatSize` 体积换算、CookieCloud 解密同步 cookie、文件名→TMDB 匹配、集数解析。
+- `data/site/*.json`：每站一份配置（cookie、优先级、rss、重试次数、cron）。
+
+我们照抄/对齐的部分：
+
+| Vertex 做法 | 我们的落点 |
+| --- | --- |
+| 行数据优先 `data-*` | `server/adapters/nexusphp.js` 的 `parseDataRows`，真机上 audiences.me 从 0 行变 96 行 |
+| 行字段含字节体积 | 所有解析器现在都带 `sizeBytes`（`server/adapters/size.js` 统一换算） |
+| 下载链接模板 `download.php?id={ID}` | 站点定义新增 `downloadLink`（按引擎生成，`{ID}` 占位） |
+| 重试上限 5 次 | 站点定义 `limits.maxRetryCount`（默认 5） |
+| 定时刷新账号信息 | 站点定义 `refreshCron`（默认 `0 */4 * * *`），由脚本/定时任务执行 |
+| .torrent → infohash | 新写 `server/adapters/torrent.js`：bencode 解码 + `SHA1(bencode(info))`，交叉做种先比 hash |
+| 5 秒盾特征 | 采样器的 cloudflare 判定补 `jschl-answer` 等标记 |
+
+故意不一样的地方（我们更克制）：
+
+- 不引 jsdom / redis / puppeteer / better-sqlite3：本项目坚持零依赖，解析用正则+窗口，缓存用文件，遇到盾就记 `cloudflare` 下次再说。
+- 不落明文 cookie：我们用 AES-256-GCM 存密文（`server/secretbox.js`），接口只回 `hasCookie`。
+- 不抓账号数据（做种量、等级）：当前目标只需要「能搜索 + 能下载链接」，账号统计以后单独做。
+- 不内置 CookieCloud 服务：它的解密逻辑值得借（key = MD5(uuid-passwd) 前 16 位，AES 解密 `get/<uuid>` 的 encrypted 字段），
+  但需要用户自己部署服务，属于可选功能。
+- 不在进程内跑 cron：定时由 systemd timer 或脚本驱动，进程只管请求。
+
+## 7. 参考
+
+- Vertex（MIT）：<https://github.com/vertex-app/vertex>，站点基类 `app/common/Site.js`、每站适配 `app/libs/site/`、请求与工具 `app/libs/util.js`
+- Vertex 文档站：<https://wiki.vertex-app.top/>
 
 - Jackett 定义格式（登录方法、test 选择器、caps、search 块）：<https://github.com/Jackett/Jackett/wiki/Definition-format>
 - Prowlarr 的 Cardigann 定义仓库与 schema：<https://github.com/Prowlarr/Indexers>

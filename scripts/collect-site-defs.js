@@ -111,7 +111,13 @@ Object.keys(analysis).sort().forEach(function (host) {
           : { path: '/index.php', selector: 'a[href*="logout.php"]' }
       }
     ),
-    limits: { requestDelay: 3, retryDelay: 30, maxErrors: 3 },
+    limits: { requestDelay: 3, retryDelay: 30, maxErrors: 3, maxRetryCount: 5 },
+    /* 下载链接模板，借 Vertex 的 downloadLink 写法（{ID} 占位） */
+    downloadLink: a.engine === 'unit3d' ? '/torrents/{ID}/download'
+      : a.engine === 'gazelle' ? 'torrents.php?action=download&id={ID}'
+        : a.engine === 'nexusphp' ? 'download.php?id={ID}'
+          : '',
+    refreshCron: '0 */4 * * *',
     searchPath: (a.searchPath || dflt.searchPath),
     params: params,
     catMode: a.catMode || dflt.catMode,
@@ -119,8 +125,6 @@ Object.keys(analysis).sort().forEach(function (host) {
     cats: cats,
     catMap: catMap,
     rate: { minGapMs: 1200, jitterMs: 900, maxPerRun: 20 },
-    limits: { requestDelay: 3, retryDelay: 30, maxErrors: 3 },
-    caps: { categorymappings: [] },
     source: { kind: a.engineSource === 'shell' ? 'shell' : 'sample', analyzedAt: a.analyzedAt || now, rows: a.rows, sizeRows: a.rowsWithSize, cats: catMap.length },
     list: a.list || { anchor: '', sizeStrategy: 'none', rows: 0, sizeRows: 0, dlRows: 0 },
     /* 下面两块按 Cardigann 的叫法留兼容位，方便以后直接吃别人写的定义 */

@@ -63,6 +63,11 @@ files.forEach(function (f) {
 
   if (!(d.rate && d.rate.minGapMs >= 500)) warn('请求间隔偏小或缺失');
 
+  /* 下载链接模板与重试上限：接手执行器时要直接能用 */
+  if (d.source && d.source.kind === 'sample' && !d.downloadLink) warn('没有 downloadLink 模板（下载链接拼不出来）');
+  if (d.downloadLink && d.downloadLink.indexOf('{ID}') < 0) bad('downloadLink 模板缺 {ID} 占位：' + d.downloadLink);
+  if (!(d.limits && d.limits.maxRetryCount >= 1 && d.limits.maxRetryCount <= 20)) warn('limits.maxRetryCount 缺失或越界');
+
   /* 列表行选择器与大小字段策略：请求层要靠它定位行 */
   const SIZE_STRATEGY = ['td_size', 'row-window-br-flatten', 'row-window-inline', 'missing', 'none', 'unknown'];
   if (!d.list || typeof d.list !== 'object') bad('缺 list（行选择器与大小策略）');

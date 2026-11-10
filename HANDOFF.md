@@ -161,8 +161,8 @@ gzip 存到 `pta/data/samples/<host>.html.gz`，状态写 `_state.json`。
 
 清单 307 个站，**每站都有站点定义与搜索预设**：
 
-- 真实采样确认引擎：106 站（其中 22 站是 JS 空壳页，按页面资源特征认出引擎、分类待补）
-- 按清单架构推断：201 站（定义里 source.kind=arch，预设 source=arch，面板上标「按清单架构推断」）
+- 真实采样确认引擎：144 站（其中 22 站是 JS 空壳页，按页面资源特征认出引擎、分类待补）
+- 按清单架构推断：164 站（定义里 source.kind=arch，预设 source=arch，面板上标「按清单架构推断」）
 - 没拿到的原因是登录墙、连不上、Cloudflare、路径 404、停放域名，分类清单见 pta/data/blocked-*.txt（不入库）
 
 当前原始样本 113 份在 `pta/data/samples/`（不入库）。流水线一条命令：

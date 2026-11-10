@@ -1,3 +1,4 @@
+const sizeLib = require('./size');
 /* UNIT3D 站点适配：只做解析与 URL 拼装，不发任何请求。
    UNIT3D 的种子页是 /torrents，每个种子是 /torrents/<id>，下载是 /torrents/<id>/download，
    搜索参数是 name + categories[0][]。
@@ -83,6 +84,7 @@ function parseList(html) {
       title: mk.title.slice(0, 300),
       catId: cat ? cat[1] : '',
       size: size ? size[1].replace(/\s+/g, ' ') : '',
+      sizeBytes: size ? sizeLib.parseSize(size[1]) : 0,
       detailsUrl: mk.href,
       downloadUrl: dl || '/torrents/' + mk.id + '/download'
     };

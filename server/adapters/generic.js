@@ -1,3 +1,4 @@
+const sizeLib = require('./size');
 /* 通用适配：认不出 NexusPHP / UNIT3D / Gazelle 的站，用一个「链接驱动」的兜底解析。
    只做解析与 URL 拼装，不发任何请求。目标是「有种子列表页就能列出条目」，
    不追求字段完备：标题、大小、详情链接、下载链接拿得到就填，拿不到就留空。 */
@@ -69,6 +70,7 @@ function parseList(html) {
       title: mk.title.slice(0, 300),
       catId: '',
       size: size ? size[1].replace(/\s+/g, ' ') : '',
+      sizeBytes: size ? sizeLib.parseSize(size[1]) : 0,
       detailsUrl: mk.href,
       downloadUrl: dl || ''
     };

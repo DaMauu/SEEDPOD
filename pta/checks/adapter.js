@@ -177,6 +177,27 @@ check('从首页导航里找种子页路径', () => {
   need(nav.findTorrentLinks('<a href="/rules.php">规则</a>').length === 0, '只有规则链接时不该给候选');
 });
 
+check('解析种子文件：体积、名字、infohash', () => {
+  const crypto = require('crypto');
+  const torrent = require(path.join(ROOT, 'server', 'adapters', 'torrent.js'));
+  const info = 'd6:lengthi1024e4:name8:test.iso12:piece lengthi16384ee';
+  const buf = Buffer.from('d8:announce9:http://x/4:info' + info + 'e', 'binary');
+  const r = torrent.torrentInfo(buf);
+  need(r, '单文件种子没解析出来');
+  need(r.size === 1024, '体积不对：' + r.size);
+  need(r.name === 'test.iso', '名字不对：' + r.name);
+  const expect = crypto.createHash('sha1').update(Buffer.from(info, 'binary')).digest('hex');
+  need(r.infohash === expect, 'infohash 不对：' + r.infohash + ' ≠ ' + expect);
+
+  const files = 'ld6:lengthi100e4:pathl1:aee' + 'd6:lengthi2048e4:pathl1:beee' + 'e';
+  const multi = 'd5:files' + files + '4:name3:abc12:piece lengthi16384ee';
+  const mbuf = Buffer.from('d4:info' + multi + 'e', 'binary');
+  const m = torrent.torrentInfo(mbuf);
+  need(m && m.size === 2148, '多文件体积不对：' + (m && m.size));
+  need(m.files === 2, '文件数不对：' + (m && m.files));
+  need(torrent.torrentInfo(Buffer.from('not a torrent')) === null, '坏数据应返回 null');
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

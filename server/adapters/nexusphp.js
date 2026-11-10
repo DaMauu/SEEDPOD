@@ -1,3 +1,5 @@
+const sizeLib = require('./size');
+
 /* NexusPHP 站点适配：只做解析与 URL 拼装，不发任何请求。
    所有函数都是纯函数，输入 HTML/配置，输出结构化数据，方便用夹具回归。 */
 
@@ -53,13 +55,73 @@ function parseCategories(html) {
 /* 列表：先用 details.php?id= 定位每一行（标题、分类、详情地址），
    再用 download.php?id= 说话（它一行一个，正好是行边界，大小在前后的列里）。
    这样不怕行内嵌套 table，也不怕标题链接和海报链接指向同一个 id。 */
+/* 新版主题（含 Vertex 支持的那些站）会把字段挂在行的 data-* 上：
+   data-torrent-id / data-title / data-size-bytes / data-seeders …，比抠文本可靠得多，优先用它们 */
+const bytesToSize = sizeLib.formatSize;
+
+function parseDataRows(src) {
+  const out = [];
+  const seen = {};
+  const tagRe = /<([a-z][a-z0-9]*)\b([^>]*\bdata-torrent-id\s*=\s*["'](\d+)["'][^>]*)>([\s\S]{0,6000}?)<\/\1>/gi;
+  let m;
+  while ((m = tagRe.exec(src))) {
+    const attrs = m[2];
+    const id = m[3];
+    if (seen[id]) continue;
+    seen[id] = 1;
+    const inner = m[4];
+    const attr = function (name) {
+      const re = new RegExp('\\b' + name + '\\s*=\\s*["\u0027]([^"\u0027]*)["\u0027]', 'i');
+      const r = re.exec(attrs);
+      return r ? decode(r[1]).trim() : '';
+    };
+    let title = attr('data-title') || attr('data-name') || '';
+    if (!title) {
+      const t = /<a\b[^>]*?title=["']([^"']+)["']/i.exec(inner);
+      if (t) title = decode(t[1]);
+    }
+    if (!title) {
+      const a = /<a\b[^>]*href=["'][^"']*(?<![a-z0-9])details\.php\?id=\d+[^"']*["'][^>]*>([\s\S]{1,300}?)<\/a>/i.exec(inner);
+      if (a) title = text(a[1]);
+    }
+    let sizeBytes = Number(attr('data-size-bytes')) || sizeLib.parseSize(attr('data-size')) || 0;
+    let size = sizeBytes ? bytesToSize(sizeBytes) : '';
+    if (!size) {
+      const f = SIZE_RE.exec(flat(inner));
+      if (f) { size = f[1].replace(/\s+/g, ' '); sizeBytes = sizeLib.parseSize(size); }
+    }
+    const catAttr = attr('data-category') || attr('data-cat');
+    const catLink = /[?&]cat=(\d+)/i.exec(inner) || /cat(\d+)=/i.exec(inner);
+    const dl = (/href=["']([^"']*download\.php\?[^"']*(?<![a-z0-9])id=\d+[^"']*)["']/i.exec(inner) || [])[1];
+    const det = (/href=["']([^"']*(?<![a-z0-9])details\.php\?id=\d+[^"']*)["']/i.exec(inner) || [])[1];
+    const seeders = attr('data-seeders') || attr('data-seeds');
+    out.push({
+      id: id,
+      title: (title || '').slice(0, 300),
+      catId: catAttr || (catLink ? catLink[1] : ''),
+      size: size,
+      sizeBytes: sizeBytes,
+      detailsUrl: det || 'details.php?id=' + id,
+      downloadUrl: dl || '',
+      seeders: seeders ? Number(seeders) || 0 : undefined
+    });
+  }
+  return out.map(function (r) {
+    if (r.seeders === undefined) delete r.seeders;
+    return r;
+  });
+}
+
 function parseList(html) {
   const src = String(html || '');
+  /* 优先走 data-* 行；认不出来再退回「按详情链接定位行」的老路子 */
+  const dataRows = parseDataRows(src);
+  if (dataRows.length) return dataRows.filter(function (r) { return r.title || r.id; });
   const rows = {};
   const order = [];
 
   function rec(id) {
-    if (!rows[id]) { rows[id] = { id: id, title: '', catId: '', size: '', detailsUrl: '', downloadUrl: '' }; order.push(id); }
+    if (!rows[id]) { rows[id] = { id: id, title: '', catId: '', size: '', sizeBytes: 0, detailsUrl: '', downloadUrl: '' }; order.push(id); }
     return rows[id];
   }
 
@@ -105,7 +167,7 @@ function parseList(html) {
     const end = endOf[id] != null ? endOf[id] : Math.min(src.length, start + 5000);
     const win = src.slice(start, end);
     const size = SIZE_RE.exec(flat(win));
-    if (size) r.size = size[1].replace(/\s+/g, ' ');
+    if (size) { r.size = size[1].replace(/\s+/g, ' '); r.sizeBytes = sizeLib.parseSize(size[1]); }
   });
 
   return order.map(function (id) { return rows[id]; }).filter(function (r) { return r.title; });
