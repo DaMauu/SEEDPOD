@@ -169,6 +169,7 @@
     MOCK.sites = siteStats(list);
     if (source) window.__ptaSiteSource = source;
     if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
+    if (typeof window.__ptaFillCrawlSites === "function") window.__ptaFillCrawlSites();
     if (current === "dashboard" && typeof renderDashboard === "function") renderDashboard();
     return list.length;
   }
@@ -1975,6 +1976,7 @@
             '<div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div></div>' +
           '<div class="drawer-head-right">' +
             '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
+            '<select class="input slim" id="crawl-site" title="从哪个站抓"><option value="">选来源站</option></select>' +
             '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条">' +
               [[5,'5 条（试）'],[20,'20 条'],[100,'100 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
             '</select>' +
@@ -2104,13 +2106,33 @@
     }
     paintTarget();
 
+    /* 来源站：抓哪个站由这里选，和「发布 → 目标站」分开，不默认抓清单第一个 */
+    var crawlSiteSel = $("#crawl-site");
+    var CKEY = "pta.crawlSite";
+    function fillCrawlSites() {
+      if (!crawlSiteSel) return;
+      var list = (MOCK.sitesList || []).slice().sort(function (a, b) {
+        return String(a.title || a.name).localeCompare(String(b.title || b.name));
+      });
+      var cur = "";
+      try { cur = localStorage.getItem(CKEY) || ""; } catch (e) {}
+      if (!cur || !list.some(function (x) { return x.name === cur; })) cur = "";
+      crawlSiteSel.innerHTML = '<option value="">选来源站</option>' + list.map(function (x) {
+        return '<option value="' + escapeHtml(x.name) + '"' + (x.name === cur ? " selected" : "") + ">" + escapeHtml(x.title || x.name) + "</option>";
+      }).join("");
+    }
+    window.__ptaFillCrawlSites = fillCrawlSites;
+    fillCrawlSites();
+    if (crawlSiteSel) crawlSiteSel.addEventListener("change", function () {
+      try { localStorage.setItem(CKEY, crawlSiteSel.value); } catch (e) {}
+    });
+
     /* 真抓一页：只发一次 GET，服务端守住 30 秒间隔与每日上限；失败按错误码说人话 */
     var liveBtn = $("#crawl-live-run");
     if (liveBtn) liveBtn.addEventListener("click", function () {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，抓取不可用"); return; }
-      /* 必须先在「发布 → 目标站」里选站，不能默认抓清单里第一个站 */
-      var h = target;
-      if (!h) { toast("先在下面「发布」里选目标站，再回来抓"); return; }
+      var h = (crawlSiteSel && crawlSiteSel.value) || "";
+      if (!h) { toast("先在右上角「选来源站」里挑一个站"); return; }
       liveBtn.disabled = true;
       var meta = $("#crawl-dry-meta");
       if (meta) meta.textContent = "正在抓 " + h + " …";
