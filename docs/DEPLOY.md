@@ -32,7 +32,7 @@ docker run -d --name seedpod -p 8080:8080 -v "$PWD/data:/data" -e TZ=Asia/Shangh
 - 面板静态文件：镜像内 `/app/pta/web`
 - 数据目录：容器内 `/data`，映射到宿主机 `./data`
   - `config.json`：运行模式与速率（面板改完直接落盘）
-- 镜像不含真实站点清单（`sites-data.local.js` 在 `.dockerignore` 里），容器里跑的是示例站点
+- 镜像不含真实站点清单：真实清单只放数据目录 `data/sites-data.local.js`（web 根下即使有同名文件也不会被 HTTP 发出，服务端对 `*.local.*` 直接 404）
 
 ## 不用 Docker，直接跑源码（当前测试机就是这样）
 

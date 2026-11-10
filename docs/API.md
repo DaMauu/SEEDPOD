@@ -43,7 +43,7 @@
 } }
 ```
 
-`arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自 `pta/web/assets/sites-data.local.js`，缺失则为空数组。
+`arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自数据目录的 `sites-data.local.js`（不进 web 根、也不通过 HTTP 暴露），缺失则为空数组。
 
 ## GET /api/credentials
 

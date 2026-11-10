@@ -84,17 +84,23 @@ function loadRecentLogs(limit) {
 
 /* ---------- 站点清单：从 assets/sites-data.local.js 读取，缺失则回退示例清单 ---------- */
 function loadSiteList() {
-  const file = path.join(WEB_DIR, 'assets', 'sites-data.local.js');
+  /* 真实站点清单只放在数据目录，绝不放进 web 根；老部署的 assets 位置只在本地开发兜底 */
+  const files = [path.join(DATA_DIR, 'sites-data.local.js'), path.join(WEB_DIR, 'assets', 'sites-data.local.js')];
   const sandbox = { window: {} };
   try {
-    const code = fs.readFileSync(file, 'utf8');
+    let code = null;
+    for (let i = 0; i < files.length && code === null; i++) {
+      try { code = fs.readFileSync(files[i], 'utf8'); } catch (e) {}
+    }
+    if (code === null) return [];
     vm.runInNewContext(code, sandbox, { timeout: 1000 });
     const urls = (sandbox.window.SITE_URLS || []).slice();
     const arch = sandbox.window.PT_ARCH || {};
+    const names = sandbox.window.PT_NAMES || {};
     const seen = {};
     return urls.map(function (u) {
       const host = String(u).replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
-      return { host, url: u, arch: arch[host] || '?' };
+      return { host, url: u, arch: arch[host] || '?', title: names[host] || '' };
     }).filter(function (x) { return x.host && !seen[x.host] && (seen[x.host] = 1); });
   } catch (e) {
     return [];

@@ -35,7 +35,7 @@ ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
 - `pta/web/index.html`、`pta/web/assets/app.js`、`pta/web/assets/app.css`、`pta/web/assets/data.js`
 - `data/site-defs/<host>.json`（站点定义，按需）
 
-不要覆盖 `pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv`、`data/` 下任何文件。
+不要覆盖 `data/sites-data.local.js`（真实站点清单，只在数据目录，不进 web 根）、`pta/data/site-arch.local.csv`、`data/` 下任何文件。
 Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html` 里的 `?v=`。
 
 ## 后端接口（已实现）
@@ -244,6 +244,6 @@ PTA_UI_URL=https://面板域名 PTA_UI_USER=xxx PTA_UI_PASS=xxx node scripts/ver
 
 ## 注意
 
-- 真实站点清单只在本机与测试机：`pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv`，都已被 gitignore，不要提交
+- 真实站点清单只在本机与测试机的数据目录：`data/sites-data.local.js`、`pta/data/site-arch.local.csv`，都已被 gitignore，不要提交；服务端对 `*.local.*` 一律 404，页面也不再引用它
 - 面板账号密码不入库，只配在测试机 systemd 环境变量里
 - Cloudflare 会缓存 js/css，静态资源已加 no-cache 与版本号；换版本记得改 `?v=` 参数
