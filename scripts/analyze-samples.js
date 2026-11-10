@@ -47,9 +47,24 @@ for (const f of files) {
   const withSize = rows.filter(function (r) { return r.size; }).length;
   const withDl = rows.filter(function (r) { return r.downloadUrl; }).length;
   const withCat = rows.filter(function (r) { return r.catId || r.catName; }).length;
+  /* 没识别出引擎的，记清是哪种原因，后面做覆盖率与时才能解释清楚 */
+  let status = engine ? 'ok' : 'unknown';
+  if (!engine) {
+    if (/ERR_[A-Z_]{4,}|diagnoseErrors|This site can.t be reached/i.test(html)) status = 'unreachable';
+    else if (/Just a moment|cf-browser-verification|challenge-platform/i.test(html)) status = 'challenge';
+    else if (/pt-checker-panel/.test(html)) status = /File not found|not found|404|不存在/i.test(html.replace(/<style[\s\S]*?<\/style>/gi, '')) ? 'not-found' : 'blocked';
+    else if (/<input[^>]+type=["']password["']/i.test(html)) status = 'login-wall';
+    else if (/domain.{0,20}(for sale|正在出售)|sedoparking|hugedomains|afternic/i.test(html)) status = 'parked';
+    else if (html.length < 20000) status = 'thin';
+  }
+  const declared = um.arch || arch[host] || '?';
+  const engineArch = { nexusphp: 'NP', unit3d: 'UNIT3D', gazelle: 'GZ', custom: 'OTHER' }[engine] || '';
   result[host] = {
     host: host,
-    arch: um.arch || arch[host] || '?',
+    arch: declared,
+    engineArch: engineArch,
+    archAgree: engineArch ? (engineArch === declared) : null,
+    verdict: status,
     engine: engine,
     engineHint: spec.engine,
     url: um.url || '',
@@ -73,6 +88,11 @@ for (const f of files) {
   };
 }
 
+/* 标出「有分析结果但原始样本已经不在」的条目，避免把旧结果当新证据 */
+Object.keys(result).forEach(function (h) {
+  const f = path.join(OUT, h.replace(/[^a-z0-9.-]/gi, '_') + '.html.gz');
+  result[h].rawMissing = !fs.existsSync(f);
+});
 fs.writeFileSync(path.join(DATA, 'analysis.json'), JSON.stringify(result, null, 1), 'utf8');
 
 const hosts = Object.keys(result);

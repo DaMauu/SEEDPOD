@@ -108,7 +108,7 @@ function fileFor(host) { return path.join(OUT, host.replace(/[^a-z0-9.-]/gi, '_'
         if (/Just a moment|Attention Required|Access denied/i.test(ttl)) rec.note = rec.note || 'cloudflare';
         rec.bytes = html.length;
         /* Chrome 的网络错误页与站点 404 页都不是内容，单独记原因，别当样本存 */
-        if (/javascript:diagnoseErrors\(\)/.test(html)) rec.note = 'net-error';
+        if (/ERR_[A-Z_]{4,}|diagnoseErrors|This site can.t be reached/i.test(html)) rec.note = 'net-error';
         else if (/<title>\s*404 Not Found\s*<\/title>/i.test(html)) rec.note = 'http-404';
         const badPage = /^(cloudflare|error-panel|net-error|http-404)$/.test(rec.note || '');
         if (html && html.length >= 2000 && !badPage) {
