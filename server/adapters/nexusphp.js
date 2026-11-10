@@ -45,23 +45,26 @@ function parseCategories(html) {
   return out;
 }
 
-/* 列表：一行一个种子，尽量只用站内稳定的锚点（details.php / download.php）定位 */
+/* 列表：按「详情链接」定位每个种子，再在前后窗口里取分类与大小。
+   这样不怕行内嵌套 table（NexusPHP 的标题单元格里就有嵌套表格）。 */
 function parseList(html) {
+  const src = String(html || '');
   const rows = [];
-  const chunks = String(html || '').split(/<tr\b/i).slice(1);
-  for (const chunk of chunks) {
-    if (!/details\.php\?id=\d+/i.test(chunk)) continue;
-    const id = (/details\.php\?id=(\d+)/i.exec(chunk) || [])[1];
-    if (!id) continue;
-    const href = (/href=["']([^"']*details\.php\?id=\d+[^"']*)["']/i.exec(chunk) || [])[1] || '';
-    let title = (/<a[^>]*details\.php\?id=\d+[^>]*title=["']([^"']+)["']/i.exec(chunk) || [])[1];
-    if (!title) {
-      const a = /<a[^>]*details\.php\?id=\d+[^>]*>([\s\S]{1,200}?)<\/a>/i.exec(chunk);
-      if (a) title = text(a[1]);
-    }
-    const sizeMatch = /([\d.]+\s*(?:TB|GB|MB|KB))/i.exec(text(chunk));
-    const catId = (/[?&]cat=(\d+)/i.exec(chunk) || /cat(\d+)=/i.exec(chunk) || [])[1];
-    const dl = (/href=["']([^"']*download\.php\?[^"']*)["']/i.exec(chunk) || [])[1];
+  const seen = {};
+  const link = /<a\b[^>]*?href=["']([^"']*(?<![a-z0-9])details\.php\?id=(\d+)[^"']*)["'][^>]*>([\s\S]{1,240}?)<\/a>/gi;
+  let m;
+  while ((m = link.exec(src))) {
+    const href = m[1];
+    const id = m[2];
+    if (!id || seen[id]) continue;
+    seen[id] = 1;
+    const before = src.slice(Math.max(0, m.index - 1200), m.index);
+    const after = src.slice(m.index, Math.min(src.length, m.index + 2500));
+    let title = (/<a\b[^>]*?title=["']([^"']+)["'][^>]*?href=["'][^"']*(?<![a-z0-9])details\.php\?id=\d+/i.exec(before + src.slice(m.index, m.index + 240)) || [])[1];
+    if (!title) title = text(m[3]);
+    const sizeMatch = /([\d.]+\s*(?:TB|GB|MB|KB))/i.exec(decode(after));
+    const catId = (/[?&]cat=(\d+)/i.exec(before) || /cat(\d+)=/i.exec(before) || [])[1];
+    const dl = (/href=["']([^"']*download\.php\?[^"']*)["']/i.exec(after) || [])[1];
     rows.push({
       id: id,
       title: text(title).slice(0, 300),

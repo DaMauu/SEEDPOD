@@ -73,6 +73,7 @@ pta\checks\run.cmd
 | done | 本地查重（不联网） | `/api/queue/:id/check` 比对队列与本地库，片名前 4 词做键，年份/分辨率不同不算重复 |
 | done | 待审核台服务端状态机 | `POST /api/queue` 造条目，approve/reject/publish 各有校验，越级 409 |
 | done | 站点搜索预设按站存 | `/api/sites/:host/search` 支持引擎/路径/参数名/分类 id，真实数据不入库 |
+| done | NexusPHP 列表解析对齐真实页面 | 三页各 100 行，标题/分类/下载链接均 100/100；大小字段待按站补 |
 | done | NexusPHP 适配器（解析层，不发请求） | `server/adapters/nexusphp.js` 纯函数：分类/列表/搜索 URL/登录表单，夹具 5 条断言 |
 | done | 站点定义（site-defs） | `scripts/collect-site-defs.js` 把采集结果整理成每站一份定义，真实定义不入库 |
 | done | 搜索预设采集（真实站点，逐步） | 已采 7 站 108 个分类 id，脚本逐站一次请求、间隔 4 秒，结果不入库 |
