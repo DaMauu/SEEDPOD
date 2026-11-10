@@ -690,13 +690,23 @@ async function main() {
     need(d.subtitle === '测试副标题', '副标题没取到：' + d.subtitle);
     need(d.tags.codec === 'H.264', '编码标签不对：' + d.tags.codec);
     need(d.tags.medium === 'Blu-ray', '媒介标签不对：' + d.tags.medium);
-    need(d.ready === true && d.warnings.length === 0, '齐全的草稿不该有提醒：' + JSON.stringify(d.warnings));
+    need(d.ready === false, '没给截图/简介时不该算齐全');
+    need(d.warnings.some(w => /截图/.test(w)) && d.warnings.some(w => /简介/.test(w)), '截图/简介缺项没提醒：' + JSON.stringify(d.warnings));
+    need(d.imageHost === '站内' && d.anonymous === false, '图床/匿名默认值不对：' + JSON.stringify({ imageHost: d.imageHost, anonymous: d.anonymous }));
     const missing = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ title: 'Draft Fixture No Year No Res' })
     })).json();
     const p2 = await (await fetchA(BASE + '/api/publish/preview?id=' + missing.data.id)).json();
     need(p2.data.ready === false && p2.data.warnings.some(w => /副标题/.test(w)), '缺项没提醒：' + JSON.stringify(p2.data.warnings));
+
+    /* 发布时把表单字段带上：匿名、图床、副标题、简介要能存进条目 */
+    const st = await (await fetchA(BASE + '/api/queue/' + qid + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', anonymous: true, imageHost: 'Pixhost', cn: '改过的副标题', intro: '改过的简介' })
+    })).json();
+    need(st.ok, '批准失败：' + JSON.stringify(st).slice(0, 140));
+    need(st.data && st.data.anonymous === true && st.data.imageHost === 'Pixhost', '表单字段没存进条目：' + JSON.stringify(st.data || {}).slice(0, 160));
   });
 
   await check('筛选：入选送待审核，已有与不符的跳过', async () => {

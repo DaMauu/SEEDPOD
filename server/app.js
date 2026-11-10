@@ -536,11 +536,14 @@ function composePublish(item) {
   if (!subtitle) warnings.push('没有中文副标题，发布前要补');
   if (!res) warnings.push('识别不出分辨率');
   if (!item.site) warnings.push('没选目标站');
+  if ((item.shots || []).length < 3) warnings.push('截图不足 3 张');
+  if (!item.intro) warnings.push('简介还是空的（会先用模板占位）');
   return {
     title: title, subtitle: subtitle, year: year, res: res,
-    intro: '【片名】' + title + '\n【年份】' + (year || '—') + '\n【分辨率】' + (res || '—') +
-      '\n【简介】' + (item.intro || '（待补）') + '\n【截图】' + ((item.shots || []).length ? '见下' : '（待补）'),
-    tags: tags, anonymous: !!item.anonymous, category: item.category || '', screenshots: (item.shots || []).slice(0, 12),
+    intro: item.intro || ('【片名】' + title + '\n【年份】' + (year || '—') + '\n【分辨率】' + (res || '—') +
+      '\n【简介】（待补）\n【截图】' + ((item.shots || []).length ? '见下' : '（待补）')),
+    tags: tags, anonymous: !!item.anonymous, imageHost: item.imageHost || '站内',
+    category: item.category || '', screenshots: (item.shots || []).slice(0, 12),
     warnings: warnings, ready: warnings.length === 0
   };
 }
@@ -554,7 +557,7 @@ const QUEUE_FLOW = {
   rejected: [],
   published: []
 };
-const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note'];
+const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note', 'category', 'imageHost'];
 
 function readQueue() {
   try {
@@ -593,6 +596,8 @@ function createQueueItem(body) {
     if (!Array.isArray(body.shots)) return { err: { code: 'BAD_REQUEST', message: 'shots 必须是数组' } };
     item.shots = body.shots.slice(0, 12).map(function (s) { return String(s).slice(0, 500); });
   }
+  if (body.anonymous !== undefined) item.anonymous = body.anonymous === true || body.anonymous === 'true';
+  if (body.intro !== undefined) item.intro = String(body.intro).slice(0, 4000);
   q.items.unshift(item);
   if (q.items.length > 500) q.items.length = 500;
   try { writeQueue(q); } catch (e) { return { err: { code: e.code || 'INTERNAL', message: e.message } }; }
@@ -612,6 +617,11 @@ function queueAction(id, body) {
     return { err: { code: 'BAD_STATE', message: '当前状态 ' + item.status + ' 不能变成 ' + target, extra: { status: item.status, allowed: allowed } } };
   }
   const reason = body.reason == null ? '' : String(body.reason).slice(0, 500);
+  /* 发布前允许把表单里改过的字段一起带上来（匿名、图床、副标题、简介） */
+  if (body.anonymous !== undefined) item.anonymous = body.anonymous === true || body.anonymous === 'true';
+  if (body.imageHost !== undefined) item.imageHost = String(body.imageHost).slice(0, 40);
+  if (body.cn !== undefined) item.cn = String(body.cn).slice(0, 120);
+  if (body.intro !== undefined) item.intro = String(body.intro).slice(0, 4000);
   if (action === 'reject' && !reason.trim()) return { err: { code: 'BAD_REQUEST', message: '驳回必须写理由' } };
   if (action === 'publish') {
     const blockers = [];

@@ -950,6 +950,11 @@
           '<section class="sd-card qd-pubinfo"><h3>发布信息</h3>' +
             '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
             '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(subTitle(it)) + '"></div>' +
+            '<div class="qd-field"><span>图床</span><select class="input" id="qd-host">' +
+              ["站内", "Pixhost", "Imgbox", "本地图床"].map(function (h) {
+                return '<option' + ((it.imageHost || "站内") === h ? " selected" : "") + ">" + h + "</option>";
+              }).join("") + "</select></div>" +
+            '<div class="qd-field"><span>匿名发布</span><input type="checkbox" id="qd-anon"' + (it.anonymous ? " checked" : "") + "></div>" +
             '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
           "</section>" +
           '<section class="sd-card qd-desc-card"><h3>简介</h3>' +
@@ -1122,12 +1127,19 @@
           return;
         }
         var seq = it.status === "pending" ? ["approve", "publish"] : ["publish"];
+        var form = {
+          anonymous: !!($("#qd-anon") && $("#qd-anon").checked),
+          imageHost: ($("#qd-host") && $("#qd-host").value) || "站内",
+          cn: ($("#qd-sub") && $("#qd-sub").value) || "",
+          intro: ($("#qd-desc") && $("#qd-desc").value) || ""
+        };
         it.status = "publishing";
         paint();
         var chain = Promise.resolve(null);
         seq.forEach(function (a) {
           chain = chain.then(function () {
-            return window.__ptaQueue.req("/" + encodeURIComponent(it.id) + "/action", "POST", { action: a });
+            return window.__ptaQueue.req("/" + encodeURIComponent(it.id) + "/action", "POST",
+              Object.assign({ action: a }, a === "publish" ? form : {}));
           });
         });
         chain.then(function (res) {
