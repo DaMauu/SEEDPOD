@@ -10,6 +10,19 @@
 线上：源码直跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，nginx 反代 + Cloudflare，入口是 pta 开头的那个域名。
 开机自启已配；改完代码 `systemctl restart seedpod` 生效。
 
+测试机上 `/opt/seedpod` **不是 git 仓库**，发版是复制文件（发前先备份到 `/opt/seedpod/backup-时间戳/`）：
+
+```
+scp server/app.js            pta:/opt/seedpod/server/app.js
+scp pta/web/index.html       pta:/opt/seedpod/pta/web/index.html
+scp pta/web/assets/app.js    pta:/opt/seedpod/pta/web/assets/app.js
+scp pta/web/assets/app.css   pta:/opt/seedpod/pta/web/assets/app.css
+ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
+```
+
+不要覆盖 `pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv`、`data/` 下任何文件。
+Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html` 里的 `?v=`。
+
 ## 后端接口（已实现）
 
 | 接口 | 说明 |
@@ -55,6 +68,12 @@
 同一个分类 id 在不同站点对应的类型不一样，搜索参数名也各不相同（nexusphp 用 search/cat，unit3d 用 name/categories[]，gazelle 用 searchstr/filter_cat）。
 写死一套会导致「想搜电影却点到别的类型」，所以按站存一份：引擎、搜索路径、参数名、每个用途对应的分类 id。
 真实预设只在本机与测试机，仓库里只有 `docs/site-search.example.json` 示例。
+
+## 线上验证（最近一次）
+
+改了四个文件后重启，实测：登录通过、`/api/sites` 305 条（NP 83 / UNIT3D 46）、`/api/site-search` 0 条（还没采）、
+`/api/queue` 0 条、`/api/downloaders` 0 条、干跑任务能提交并按 5 步跑完、公网入口 200。
+带 `?v=` 的新前端已经生效，不带版本号的 app.js 仍是 Cloudflare 旧缓存。
 
 ## 检查
 
