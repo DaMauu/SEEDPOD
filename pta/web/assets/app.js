@@ -1693,7 +1693,7 @@
   /* 默认全部留空：不预选、不开启，避免看起来像已经配好了 */
   Object.keys(RULE_SETS).forEach(function (k) {
     RULE_SETS[k].forEach(function (g) {
-      g.sum = "未设置";
+      g.sum = "跟随默认";
       (g.rows || []).forEach(function (r) {
         if (r.chips) r.sel = [];
         if (r.type === "switch") r.on = false;
@@ -1804,9 +1804,9 @@
         "</div>" +
         '<div class="drawer-body"><div class="dl-dry" id="crawl-dry-box" hidden></div></div>' +
       "</section>" +
-      sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "未设置", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "未设置", rules: DEDUPE_RULES }, 1, "dedupe") +
-      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "未设置", rules: PUB_RULES }, 2, "pub");
+      sectionHtml({ name: "抓取", desc: "按预设去源站拉数据，逐行判定，然后交给查重。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
+      sectionHtml({ name: "查重", desc: "这条在目标站和本地库里是不是已经有了。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
+      sectionHtml({ name: "发布", desc: "自动补全材料、质检，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub");
 
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
@@ -1851,6 +1851,27 @@
     });
 
     renderTpl();
+
+    /* 干跑区不是空的：进来就显示上一次干跑的结果，没跑过才显示「还没跑过」 */
+    (function showLastDry() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
+      fetch('/api/tasks', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.ok || !Array.isArray(j.data)) return;
+          var dry = j.data.filter(function (t) { return t && t.result && t.result.dryRun; })
+            .sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); })[0];
+          var meta = $("#crawl-dry-meta");
+          if (!dry) { if (meta) meta.textContent = '还没跑过'; return; }
+          if (meta) {
+            var when = String(dry.createdAt || '').slice(5, 16).replace('T', ' ');
+            meta.textContent = '上次 ' + when + ' · ' + (dry.state === 'done' ? '完成' : dry.state);
+          }
+          var box = $("#crawl-dry-box");
+          if (box && !box.innerHTML) { box.hidden = false; paintCrawlDry(dry); }
+        })
+        .catch(function () {});
+    })();
 
     /* 目标站 */
     var TKEY = "pta.target";
@@ -1967,7 +1988,7 @@
         var ctl = f.querySelector(".input, .select");
         if (ctl && ctl.value) parts.push(ctl.value);
       });
-      return parts.length ? parts.slice(0, 3).join(" · ") + (parts.length > 3 ? " 等" : "") : "未设置";
+      return parts.length ? parts.slice(0, 3).join(" · ") + (parts.length > 3 ? " 等" : "") : "跟随默认";
     }
 
     /* 标题正则只在发布侧生效：限 200 字，语法错就退成纯文本 */
@@ -2009,9 +2030,9 @@
         if (!meta) return;
         var first = "";
         [].forEach.call(sec.querySelectorAll(".rule-item .rule-sum"), function (s) {
-          if (!first && s.textContent && s.textContent !== "未设置") first = s.textContent;
+          if (!first && s.textContent && s.textContent !== "跟随默认") first = s.textContent;
         });
-        meta.textContent = first || "未设置";
+        meta.textContent = first || "跟随默认";
       });
     }
     refreshSums();
