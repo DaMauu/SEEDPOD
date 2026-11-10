@@ -956,6 +956,30 @@
     if (bulk) bulk.addEventListener("click", function () {
       var list = rows().filter(function (x) { return x.status === "pending" || x.status === "approved"; });
       if (!list.length) { toast("当前列表没有可查重的条目"); return; }
+      /* 有后端就走服务端查重（只比本地库和队列里的条目，不联网） */
+      if (window.__ptaQueue && list[0].server && /^https?:$/.test(location.protocol)) {
+        bulk.disabled = true;
+        bulk.textContent = "查重中 0/" + list.length;
+        var done = 0, dup = 0;
+        var step = function () {
+          var it = list[done];
+          if (!it) {
+            bulk.disabled = false;
+            bulk.textContent = "批量查重";
+            toast("查重完成：" + list.length + " 条，重复 " + dup + " 条");
+            if (loadServer) loadServer();
+            return;
+          }
+          window.__ptaQueue.req("/" + encodeURIComponent(it.id) + "/check", "POST").then(function (res) {
+            if (res && res.j && res.j.ok && res.j.data && res.j.data.duplicate) dup++;
+            done++;
+            bulk.textContent = "查重中 " + done + "/" + list.length;
+            step();
+          });
+        };
+        step();
+        return;
+      }
       bulk.disabled = true;
       bulk.textContent = "查重中 0/" + list.length;
       var i = 0, dup = 0;

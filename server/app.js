@@ -284,6 +284,59 @@ function sanitizeFlow(body) {
   return { sets: out };
 }
 
+/* ---------- 本地查重：只查本地库和队列里已有条目，不联网 ---------- */
+const LIB_FILE = path.join(DATA_DIR, 'library.json');
+
+function readLibrary() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(LIB_FILE, 'utf8'));
+    return Array.isArray(raw && raw.items) ? raw.items : [];
+  } catch (e) {
+    return [];
+  }
+}
+function writeLibrary(items) {
+  try {
+    fs.writeFileSync(LIB_FILE, JSON.stringify({ updatedAt: new Date().toISOString(), items }, null, 1), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入本地库失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+/* 片名归一：只留字母数字，按前 4 个词做键，避免分辨率/音轨把同一部片拆开 */
+function titleKeyOf(title) {
+  const words = String(title || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  return words.slice(0, 4).join(' ');
+}
+function sizeGbOf(text) {
+  const m = /([\d.]+)\s*(GB|GiB|G|MB|MiB|TB)/i.exec(String(text || ''));
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  if (!isFinite(n)) return 0;
+  const u = m[2].toUpperCase();
+  if (u.indexOf('TB') === 0) return n * 1024;
+  if (u.indexOf('MB') === 0 || u === 'M') return n / 1024;
+  return n;
+}
+function findDuplicates(item, pool) {
+  const key = titleKeyOf(item.title);
+  if (!key) return [];
+  const size = sizeGbOf(item.size);
+  return pool.filter(function (x) {
+    if (!x || String(x.id) === String(item.id)) return false;
+    if (titleKeyOf(x.title) !== key) return false;
+    if (item.year && x.year && String(item.year) !== String(x.year)) return false;
+    if (item.res && x.res && item.res !== x.res) return false;
+    return true;
+  }).map(function (x) {
+    const s = sizeGbOf(x.size);
+    const sameSize = size > 0 && s > 0 && Math.abs(s - size) / Math.max(s, size) <= 0.05;
+    return { id: x.id || null, source: x.source || 'queue', title: x.title, site: x.site || '',
+      size: x.size || '', reason: sameSize ? '同片且体积相近' : '同片' };
+  });
+}
+
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
 const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
@@ -936,6 +989,38 @@ const server = http.createServer(async (req, res) => {
       if (req.method !== 'GET') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET / PUT / DELETE');
       return send(res, 200, { ok: true, data: publicDl(store.items[idx]) });
     }
+    if (p === '/api/library' && req.method === 'GET') {
+      return send(res, 200, { ok: true, data: readLibrary() });
+    }
+    if (p === '/api/library' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const title = String(body.title || '').trim();
+      if (!title || title.length > 300) return fail(res, 400, 'BAD_REQUEST', 'title 必填且不超过 300 字');
+      const items = readLibrary();
+      const entry = {
+        id: 'lib_' + String(items.length + 1).padStart(4, '0'),
+        title: title, cn: body.cn ? String(body.cn).slice(0, 120) : '',
+        year: body.year ? Number(body.year) || 0 : 0, res: body.res ? String(body.res).slice(0, 20) : '',
+        size: body.size ? String(body.size).slice(0, 40) : '', site: body.site ? String(body.site).slice(0, 120) : '',
+        addedAt: new Date().toISOString()
+      };
+      items.push(entry);
+      if (items.length > 2000) items.splice(0, items.length - 2000);
+      try { writeLibrary(items); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+      logEvent('info', '查重', '本地库新增 · ' + title.slice(0, 60));
+      return send(res, 200, { ok: true, data: entry });
+    }
+    if (p.startsWith('/api/library/') && req.method === 'DELETE') {
+      const id = decodeURIComponent(p.slice('/api/library/'.length).replace(/\/+$/, ''));
+      const items = readLibrary();
+      const i = items.findIndex(function (x) { return x.id === id; });
+      if (i < 0) return fail(res, 404, 'NOT_FOUND', '条目不存在');
+      const gone = items.splice(i, 1)[0];
+      try { writeLibrary(items); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+      logEvent('info', '查重', '本地库删除 · ' + String(gone.title).slice(0, 60));
+      return send(res, 200, { ok: true, data: { id: id } });
+    }
     if (p === '/api/queue' && req.method === 'GET') {
       const status = u.searchParams.get('status') || '';
       const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);
@@ -952,6 +1037,21 @@ const server = http.createServer(async (req, res) => {
     }
     if (p.startsWith('/api/queue/')) {
       const rest = p.slice('/api/queue/'.length).replace(/\/+$/, '');
+      if (/\/check$/.test(rest)) {
+        if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+        const cid = decodeURIComponent(rest.replace(/\/check$/, ''));
+        const q = readQueue();
+        const item = q.items.filter(function (x) { return x.id === cid; })[0];
+        if (!item) return fail(res, 404, 'NOT_FOUND', '条目不存在');
+        const pool = q.items.concat(readLibrary().map(function (x) { return Object.assign({ source: 'library' }, x); }));
+        const matches = findDuplicates(item, pool);
+        item.check = matches.length ? '已有同片 · ' + (matches[0].site || matches[0].source || '本地') : '无重复';
+        item.checkCls = matches.length ? 'amber' : 'green';
+        item.checkedAt = new Date().toISOString();
+        try { writeQueue(q); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent(matches.length ? 'warn' : 'info', '查重', (item.title || item.id).slice(0, 60) + ' · ' + (matches.length ? '发现 ' + matches.length + ' 条重复' : '无重复'));
+        return send(res, 200, { ok: true, data: { item: item, duplicate: matches.length > 0, matches: matches } });
+      }
       const act = /\/action$/.test(rest);
       const id = decodeURIComponent(act ? rest.replace(/\/action$/, '') : rest);
       if (!id) return fail(res, 400, 'BAD_REQUEST', '缺少条目 id');

@@ -358,6 +358,51 @@ async function main() {
     need(gone.status === 404, '删除后还能读到：' + gone.status);
   });
 
+  await check('本地查重（不联网）', async () => {
+    const add = await fetchA(BASE + '/api/library', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Check Fixture Movie 2021 2160p UHD Blu-ray', year: 2021, res: '2160p', size: '44.10 GB', site: 'example.org' })
+    });
+    const lib = await add.json();
+    need(add.ok, '本地库新增失败 ' + JSON.stringify(lib).slice(0, 140));
+
+    const same = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Check Fixture Movie 2021 2160p UHD Blu-ray AVC', year: 2021, res: '2160p', size: '44.20 GB', site: 'example.org' })
+    });
+    const sid = (await same.json()).data.id;
+    const dup = await fetchA(BASE + '/api/queue/' + sid + '/check', { method: 'POST' });
+    const dj = await dup.json();
+    need(dup.ok, '查重接口失败 ' + JSON.stringify(dj).slice(0, 140));
+    need(dj.data.duplicate === true, '同名同分辨率没有判重');
+    need(dj.data.matches.some(m => m.source === 'library'), '没匹配到本地库');
+    need(/已有同片/.test(dj.data.item.check), '条目上的查重文案没更新：' + dj.data.item.check);
+
+    const other = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Totally Different Film 1999 1080p Blu-ray', year: 1999, res: '1080p', size: '8.10 GB' })
+    });
+    const oid = (await other.json()).data.id;
+    const clean = await (await fetchA(BASE + '/api/queue/' + oid + '/check', { method: 'POST' })).json();
+    need(clean.data.duplicate === false, '不同片被误判为重复');
+    need(clean.data.item.check === '无重复', '无重复文案不对：' + clean.data.item.check);
+
+    const yearDiff = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Check Fixture Movie 2021 2160p UHD Blu-ray', year: 1990, res: '2160p' })
+    });
+    const yid = (await yearDiff.json()).data.id;
+    const yd = await (await fetchA(BASE + '/api/queue/' + yid + '/check', { method: 'POST' })).json();
+    need(yd.data.duplicate === false, '年份不同却判成重复');
+
+    await fetchA(BASE + '/api/library/' + lib.data.id, { method: 'DELETE' });
+    await fetchA(BASE + '/api/queue/' + sid, { method: 'DELETE' });
+    await fetchA(BASE + '/api/queue/' + oid, { method: 'DELETE' });
+    await fetchA(BASE + '/api/queue/' + yid, { method: 'DELETE' });
+    const anon = await fetch(BASE + '/api/library');
+    need(anon.status === 401, '未登录能读本地库：' + anon.status);
+  });
+
   await check('待审核队列校验与鉴权', async () => {
     const empty = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cn: '只有中文名' })

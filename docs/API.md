@@ -171,6 +171,31 @@
 
 连不上时 `pass: false`，`steps[0]` 带 `error`（超时会写「连接超时」）。
 
+## GET /api/library
+
+本地片库（查重用），条目字段：`id`、`title`、`cn`、`year`、`res`、`size`、`site`、`addedAt`。最多保留 2000 条。
+
+## POST /api/library
+
+新增一条，`title` 必填（不超过 300 字），其余可选。数据落在 `data/library.json`（0600）。
+
+## DELETE /api/library/:id
+
+删掉一条并写事件日志。
+
+## POST /api/queue/:id/check
+
+本地查重，只比对**队列里已有条目 + 本地库**，不访问任何站点。
+片名归一后取前 4 个词做键，年份不同不算重复，分辨率不同不算重复；体积相差 5% 以内标「同片且体积相近」。
+
+```
+{ "ok": true, "data": { "duplicate": true,
+  "matches": [ { "id": "lib_0001", "source": "library", "title": "...", "site": "", "size": "21.50 GB", "reason": "同片且体积相近" } ],
+  "item": { "id": "q_0001", "check": "已有同片 · library", "checkCls": "amber" } } }
+```
+
+查完会把该条目的 `check` / `checkCls` / `checkedAt` 一起写回队列。
+
 ## GET /api/queue
 
 `?status=pending|approved|rejected|published` 可过滤，`?limit=` 最多 500。
@@ -188,6 +213,31 @@
 
 新增条目，`title` 必填（不超过 300 字），可选 `cn/year/res/size/imdb/site/check/checkCls/note/shots`。
 新条目状态一律是 `pending`。抓取执行器没接之前，这就是造数据的入口。
+
+## GET /api/library
+
+本地片库（查重用），条目字段：`id`、`title`、`cn`、`year`、`res`、`size`、`site`、`addedAt`。最多保留 2000 条。
+
+## POST /api/library
+
+新增一条，`title` 必填（不超过 300 字），其余可选。数据落在 `data/library.json`（0600）。
+
+## DELETE /api/library/:id
+
+删掉一条并写事件日志。
+
+## POST /api/queue/:id/check
+
+本地查重，只比对**队列里已有条目 + 本地库**，不访问任何站点。
+片名归一后取前 4 个词做键，年份不同不算重复，分辨率不同不算重复；体积相差 5% 以内标「同片且体积相近」。
+
+```
+{ "ok": true, "data": { "duplicate": true,
+  "matches": [ { "id": "lib_0001", "source": "library", "title": "...", "site": "", "size": "21.50 GB", "reason": "同片且体积相近" } ],
+  "item": { "id": "q_0001", "check": "已有同片 · library", "checkCls": "amber" } } }
+```
+
+查完会把该条目的 `check` / `checkCls` / `checkedAt` 一起写回队列。
 
 ## GET /api/queue/:id
 

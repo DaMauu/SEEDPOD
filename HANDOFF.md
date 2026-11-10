@@ -51,6 +51,10 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | PUT /api/downloaders/:id | 按字段改下载器 |
 | DELETE /api/downloaders/:id | 删除下载器 |
 | POST /api/downloaders/:id/test | 只连它自己填的地址做一次连通性探测 |
+| GET /api/library | 本地片库（查重用，最多 2000 条） |
+| POST /api/library | 新增本地库条目 |
+| DELETE /api/library/:id | 删除本地库条目 |
+| POST /api/queue/:id/check | 本地查重（队列 + 本地库，不联网），回写 check/checkCls |
 | GET /api/queue | 待审核条目与各状态计数 |
 | POST /api/queue | 新增待审核条目（title 必填） |
 | GET /api/queue/:id | 单条详情 |
@@ -88,7 +92,7 @@ pta\checks\run.cmd
 
 - smoke.js 22 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮
-- api.js 27 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
+- api.js 28 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
 
 改完必须全绿再提交。
 
