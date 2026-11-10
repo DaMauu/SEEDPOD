@@ -626,6 +626,53 @@ async function main() {
     need(anon.status === 401, '未登录能读本地库：' + anon.status);
   });
 
+  await check('抓取：一次 GET 入库，并守住 6 秒间隔', async () => {
+    const http = require('http');
+    const page = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'nexusphp-browse.html'), 'utf8');
+    let hits = 0;
+    const mock = http.createServer((rq, rs) => {
+      hits++;
+      if ((rq.headers.cookie || '').indexOf('c_secure_uid=good') < 0) { rs.writeHead(302, { location: '/takelogin.php' }); rs.end(); return; }
+      rs.writeHead(200, { 'content-type': 'text/html' });
+      rs.end(page);
+    });
+    await new Promise(r => mock.listen(0, '127.0.0.1', r));
+    const port = mock.address().port;
+    const chost = 'crawl.example';
+    const cdef = path.join(DATA, 'site-defs', chost + '.json');
+    fs.writeFileSync(cdef, JSON.stringify({
+      host: chost, base: 'http://127.0.0.1:' + port, engine: 'nexusphp', searchPath: '/torrents.php',
+      params: { search: 'search' }, catMode: 'single', catSlot: 1,
+      catMap: [{ id: '401', label: '电影', purpose: 'movie' }]
+    }));
+    try {
+      await fetchA(BASE + '/api/credentials/' + chost, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'c_secure_uid=good' })
+      });
+      const plan = await (await fetchA(BASE + '/api/crawl/plan', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
+      })).json();
+      need(plan.ok && /torrents\.php/.test(plan.data.url), '抓取计划没生成：' + JSON.stringify(plan).slice(0, 160));
+
+      const run = await (await fetchA(BASE + '/api/crawl/run', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
+      })).json();
+      need(run.ok, '抓取失败：' + JSON.stringify(run).slice(0, 200));
+      need(run.data.rows > 0 && run.data.added > 0, '抓回来没入库：' + JSON.stringify(run.data).slice(0, 160));
+      need(hits === 1, '一次抓取只能发一次请求，实际 ' + hits + ' 次');
+
+      const again = await fetchA(BASE + '/api/crawl/run', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
+      });
+      need(again.status === 429, '6 秒内第二次抓取没被拦住：' + again.status);
+      const list = await (await fetchA(BASE + '/api/catalog?q=&limit=5')).json();
+      need(list.data.total > 0, '词条库里没有抓回来的数据');
+    } finally {
+      try { fs.unlinkSync(cdef); } catch (e) {}
+      mock.close();
+    }
+  });
+
   await check('词条库导入、去重与状态流转', async () => {
     const add = await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' },

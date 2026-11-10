@@ -1844,6 +1844,7 @@
             '<div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div></div>' +
           '<div class="drawer-head-right">' +
             '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
+            '<button class="btn slim" id="crawl-live-run">抓一页</button>' +
             '<button class="btn primary slim" id="crawl-dry-run">干跑自检</button>' +
           "</div>" +
         "</div>" +
@@ -1939,6 +1940,39 @@
       refreshSums();
     }
     paintTarget();
+
+    /* 真抓一页：只发一次 GET，服务端守住 6 秒间隔与每日上限；失败按错误码说人话 */
+    var liveBtn = $("#crawl-live-run");
+    if (liveBtn) liveBtn.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，抓取不可用"); return; }
+      var h = target || (MOCK.sitesList[0] && MOCK.sitesList[0].name) || "";
+      if (!h) { toast("先去站点页选一个站点"); return; }
+      liveBtn.disabled = true;
+      var meta = $("#crawl-dry-meta");
+      if (meta) meta.textContent = "正在抓 " + h + " …";
+      fetch("/api/crawl/run", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ host: h })
+      }).then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, j: j }; }, function () { return { status: r.status, j: null }; });
+      }).then(function (out) {
+        liveBtn.disabled = false;
+        if (!out.j || !out.j.ok) {
+          var msg = (out.j && out.j.error && out.j.error.message) || ("抓取失败 " + out.status);
+          if (meta) meta.textContent = msg;
+          toast(msg);
+          return;
+        }
+        var d = out.j.data;
+        var line = "抓回 " + d.rows + " 行 · 新增 " + d.added + " · 更新 " + d.updated + " · 今日第 " + d.daily.count + " 次";
+        if (meta) meta.textContent = line;
+        toast(line);
+        if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+      }).catch(function () {
+        liveBtn.disabled = false;
+        toast("抓取请求发不出去");
+      });
+    });
 
     /* 规则正文与 RULE_SETS 对齐（服务端数据套回界面） */
     function syncFlowDom() {

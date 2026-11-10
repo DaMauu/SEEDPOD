@@ -350,6 +350,102 @@ function findDuplicates(item, pool) {
   return out.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
 }
 
+/* ---------- 抓取：一次 GET 取一页，解析后进词条库（不做并发、不重试轰炸） ---------- */
+const CRAWL_STATE_FILE = path.join(DATA_DIR, 'crawl-state.json');
+const CRAWL_MIN_GAP_MS = 6000;      /* 站间至少 6 秒 */
+const CRAWL_DAILY_MAX = 20;         /* 单站每天最多这么多次 */
+
+function readCrawlState() {
+  try { return JSON.parse(fs.readFileSync(CRAWL_STATE_FILE, 'utf8')) || {}; } catch (e) { return {}; }
+}
+function writeCrawlState(s) {
+  try { fs.writeFileSync(CRAWL_STATE_FILE, JSON.stringify(s, null, 1), { mode: 0o600 }); } catch (e) {}
+}
+
+/* 标题/属性里带这些词的，只打标记，不过滤 */
+function marksOf(title) {
+  const t = String(title || '');
+  const m = {};
+  if (/禁转|禁止转载|no\s*-?re-?distribut/i.test(t)) m.noRedistribute = true;
+  if (/独占|exclusive/i.test(t)) m.exclusive = true;
+  if (/diy/i.test(t)) m.diy = true;
+  if (/限转|limited/i.test(t)) m.limited = true;
+  return m;
+}
+
+function crawlPlan(host) {
+  const def = readSiteDef(host);
+  if (!def) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
+  if (!def.engine) return { err: { code: 'NO_ENGINE', message: '这个站还没识别出引擎' } };
+  const all = readCreds();
+  if (!all[host] || !all[host].cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
+  const first = (def.catMap || []).slice(0, 1).map(function (x) { return x.id; });
+  const url = adapters.buildSearchUrl(def, '', first);
+  return { host: host, engine: def.engine, url: url, categories: (def.catMap || []).length,
+    requestDelay: (def.limits && def.limits.requestDelay) || 3, minGapMs: CRAWL_MIN_GAP_MS, dailyMax: CRAWL_DAILY_MAX };
+}
+
+async function crawlOnce(host) {
+  const plan = crawlPlan(host);
+  if (plan.err) return { err: plan.err };
+  const state = readCrawlState();
+  const now = Date.now();
+  const today = new Date().toISOString().slice(0, 10);
+  const rec = state[host] || { lastAt: 0, day: today, count: 0 };
+  if (rec.day !== today) { rec.day = today; rec.count = 0; }
+  if (now - (rec.lastAt || 0) < CRAWL_MIN_GAP_MS) {
+    return { err: { code: 'TOO_SOON', message: '距上次抓取不到 6 秒，等一下再抓',
+      extra: { waitMs: CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0)) } } };
+  }
+  if (rec.count >= CRAWL_DAILY_MAX) {
+    return { err: { code: 'DAILY_LIMIT', message: '这个站今天已经抓够 ' + CRAWL_DAILY_MAX + ' 次了', extra: { count: rec.count } } };
+  }
+  const def = readSiteDef(host);
+  const cookie = decryptField(readCreds()[host].cookie);
+  const t0 = Date.now();
+  let rows = [], status = 0, html = '';
+  try {
+    const res = await fetch(plan.url, {
+      headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      redirect: 'manual', signal: AbortSignal.timeout(20000)
+    });
+    status = res.status;
+    html = await res.text().catch(function () { return ''; });
+  } catch (e) {
+    logEvent('warn', '抓取', host + ' 抓取失败：' + String(e && e.message || e).slice(0, 80));
+    return { err: { code: 'CRAWL_FAILED', message: e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 160) } };
+  }
+  const loggedOut = status === 302 || /takelogin\.php|请先登录/i.test(html);
+  if (loggedOut) {
+    logEvent('warn', '抓取', host + ' cookie 已失效，抓取中止');
+    return { err: { code: 'LOGIN_REQUIRED', message: 'cookie 已失效，先做一次会话自检' } };
+  }
+  if (status !== 200) {
+    return { err: { code: 'CRAWL_HTTP_' + status, message: '站点返回 ' + status } };
+  }
+  try { rows = adapters.parseList(html, def.engine) || []; } catch (e) { rows = []; }
+  const items = rows.slice(0, 200).map(function (r) {
+    return {
+      site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
+      sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
+      detailsUrl: r.detailsUrl || '', downloadUrl: r.downloadUrl || '', infohash: r.infohash || '',
+      seeders: Number(r.seeders) || 0, marks: marksOf(r.title)
+    };
+  }).filter(function (x) { return x.title && x.siteId; });
+  let out = { added: 0, updated: 0, skipped: 0, total: 0 };
+  if (items.length) out = catalogStore.add(items);
+  rec.lastAt = now;
+  rec.count = (rec.count || 0) + 1;
+  state[host] = rec;
+  writeCrawlState(state);
+  logEvent('info', '抓取', host + ' 抓回 ' + rows.length + ' 行 · 入库 ' + out.added + ' 新增 / ' + out.updated + ' 更新');
+  return {
+    host: host, url: plan.url, status: status, ms: Date.now() - t0, rows: rows.length,
+    added: out.added, updated: out.updated, skipped: out.skipped,
+    daily: { day: rec.day, count: rec.count, max: CRAWL_DAILY_MAX }, nextAllowedMs: CRAWL_MIN_GAP_MS
+  };
+}
+
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
 const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
@@ -1345,6 +1441,27 @@ const server = http.createServer(async (req, res) => {
       try { writeLibrary(items); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
       logEvent('info', '查重', '本地库删除 · ' + String(gone.title).slice(0, 60));
       return send(res, 200, { ok: true, data: { id: id } });
+    }
+    /* ---------- 抓取：计划与执行 ---------- */
+    if (p === '/api/crawl/plan' && req.method === 'POST') {
+      const body = await readBody(req);
+      const host = String((body && body.host) || '').trim().toLowerCase();
+      if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
+      const plan = crawlPlan(host);
+      if (plan.err) return fail(res, plan.err.code === 'NO_COOKIE' ? 409 : 400, plan.err.code, plan.err.message);
+      return send(res, 200, { ok: true, data: plan });
+    }
+    if (p === '/api/crawl/run' && req.method === 'POST') {
+      const body = await readBody(req);
+      const host = String((body && body.host) || '').trim().toLowerCase();
+      if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
+      const out = await crawlOnce(host);
+      if (out.err) {
+        const code = out.err.code;
+        const status = code === 'TOO_SOON' || code === 'DAILY_LIMIT' ? 429 : (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED') ? 409 : 400;
+        return fail(res, status, code, out.err.message, out.err.extra);
+      }
+      return send(res, 200, { ok: true, data: out });
     }
     /* ---------- 词条库：第一步抓取的结果 ---------- */
     if (p === '/api/catalog' && req.method === 'GET') {
