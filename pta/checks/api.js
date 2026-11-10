@@ -815,6 +815,10 @@ async function main() {
     const list = await (await fetchA(BASE + '/api/catalog?q=Catalog')).json();
     need(list.ok && list.data.total >= 2, '词条列表不对：' + JSON.stringify(list.data).slice(0, 160));
     need(list.data.byStatus.new >= 2, '新词条状态不对：' + JSON.stringify(list.data.byStatus));
+    /* 列表要带 matched：分页与筛选后条数都靠它，不能只给总数 */
+    need(list.data.matched === list.data.items.length && list.data.matched >= 2, '列表没给 matched 计数：' + JSON.stringify({ matched: list.data.matched, items: list.data.items.length }));
+    const siteFiltered = await (await fetchA(BASE + '/api/catalog?site=example.org&limit=5')).json();
+    need(siteFiltered.ok && siteFiltered.data.items.every(x => x.site === 'example.org'), '按站点过滤没生效：' + JSON.stringify(siteFiltered.data.items.map(x => x.site)));
     const id = list.data.items[0].id;
     need(!!id, '词条没有 id');
 
