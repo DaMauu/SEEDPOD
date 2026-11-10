@@ -24,6 +24,7 @@
 | GET /api/site-config | 服务端保存的站点配置（白名单字段） |
 | PUT /api/site-config/:host | 合并写站点配置，密码/cookie/totp 拒收 |
 | DELETE /api/site-config/:host | 删掉站点配置并恢复默认 |
+| GET /api/site-search | 所有站点预设的汇总（列表页标已确认/未确认用） |
 | GET /api/sites/:host/search | 该站的搜索预设（引擎/路径/参数名/分类 id） |
 | PUT /api/sites/:host/search | 合并写搜索预设，字段有校验 |
 | DELETE /api/sites/:host/search | 删搜索预设 |

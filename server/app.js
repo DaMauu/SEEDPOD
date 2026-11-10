@@ -638,6 +638,21 @@ const server = http.createServer(async (req, res) => {
       });
       return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
     }
+    if (p === '/api/site-search' && req.method === 'GET') {
+      const sites = readSearchPresets();
+      const out = {};
+      Object.keys(sites).forEach(function (h) {
+        const s = sites[h] || {};
+        const cats = s.cats && typeof s.cats === 'object' ? s.cats : {};
+        let ids = 0;
+        Object.keys(cats).forEach(function (k) { ids += (cats[k] || []).length; });
+        out[h] = {
+          engine: s.engine || "", source: s.source || "", updatedAt: s.updatedAt || "",
+          groups: Object.keys(cats).length, ids: ids
+        };
+      });
+      return send(res, 200, { ok: true, data: out });
+    }
     if (p.startsWith('/api/sites/') && /\/search\/?$/.test(p)) {
       const host = decodeURIComponent(p.slice('/api/sites/'.length).replace(/\/search\/?$/, '').replace(/\/+$/, ''));
       if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) {

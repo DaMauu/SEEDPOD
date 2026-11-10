@@ -45,6 +45,17 @@
 
 `arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自 `pta/web/assets/sites-data.local.js`，缺失则为空数组。
 
+## GET /api/site-search
+
+所有站点搜索预设的汇总，用于列表页标「已确认 / 未确认」：
+
+```
+{ "ok": true, "data": {
+  "example.org": { "engine": "nexusphp", "source": "probe", "updatedAt": "...", "groups": 4, "ids": 9 } } }
+```
+
+`groups` 是配置了几个用途，`ids` 是分类 id 总数；没配过的站点不会出现在结果里。
+
 ## GET /api/sites/:host/search
 
 返回该站点的搜索预设（没配过就是 `null`）：

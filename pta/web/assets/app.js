@@ -299,6 +299,22 @@
   }
   window.__ptaDl = { req: dlRequest };
 
+  /* 站点搜索预设状态：只读汇总，用于列表上标「已确认/未确认」 */
+  window.__ptaPresets = {};
+  function loadPresets() {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+    return fetch("/api/site-search", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok || !j.data || typeof j.data !== "object") return false;
+        window.__ptaPresets = j.data;
+        if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  window.__ptaLoadPresets = loadPresets;
+
   /* 拉服务端清单；失败（file://、未登录、离线）就保持本地数据，不打断页面 */
   function loadSitesFromApi() {
     if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
@@ -2227,6 +2243,11 @@
 
     function archOf(s) { return ACH[s.arch] || ACH["?"]; }
 
+    function presetOf(host) {
+      var p = (window.__ptaPresets || {})[host];
+      return p && p.engine ? p : null;
+    }
+
     function initials(s) {
       var t = s.title || s.name;
       var m = t.match(/^[A-Za-z0-9]+/);
@@ -2259,6 +2280,7 @@
         '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
         '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
         '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
+        '<span class="si-preset ' + (presetOf(s.name) ? "on" : "") + '">' + (presetOf(s.name) ? "预设" : "—") + "</span>" +
         '<span class="si-mode">' + modeTxt + "</span>" +
         '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
         '<span class="st ' + dotCls(s) + '"><i></i></span>' +
@@ -2271,7 +2293,8 @@
           '<em class="ava lg ' + a[0] + '">' + escapeHtml(initials(s)) + "</em>" +
           '<div class="sd-id"><div class="sd-title-row"><h2>' + escapeHtml(s.title || s.name) + "</h2>" +
             '<em class="chip ' + a[0] + '">' + a[1] + "</em>" +
-            '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span></div>" +
+            '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span>" +
+            '<span class="chip ' + (presetOf(s.name) ? "np" : "unk") + '">搜索预设 ' + (presetOf(s.name) ? "已确认" : "未确认") + "</span></div>" +
             '<span class="sd-url">' + escapeHtml(s.url) + "</span></div>" +
           '<div class="sd-actions">' +
             '<button class="btn slim" data-act="crawl">抓取测试</button>' +
@@ -2729,6 +2752,7 @@
     refreshBulk();
     refreshStats();
     paint();
+    if (window.__ptaLoadPresets) window.__ptaLoadPresets();
   }
 
   /* ---------- 站点：新增弹窗 + 本地保存 ---------- */

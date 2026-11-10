@@ -257,6 +257,20 @@ async function main() {
     await fetchA(BASE + '/api/downloaders/' + id, { method: 'DELETE' });
   });
 
+  await check('搜索预设汇总', async () => {
+    await fetchA(BASE + '/api/sites/demo2.example/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'gazelle', cats: { movie: ['1', '2'] }, source: 'manual' })
+    });
+    const j = await (await fetchA(BASE + '/api/site-search')).json();
+    need(j.ok && j.data && j.data['demo2.example'], '汇总里没有刚写的站点');
+    need(j.data['demo2.example'].ids === 2, 'ids 统计不对：' + j.data['demo2.example'].ids);
+    need(j.data['demo2.example'].groups === 1, 'groups 统计不对：' + j.data['demo2.example'].groups);
+    need(j.data['demo2.example'].engine === 'gazelle', 'engine 没带出来');
+    const anon = await fetch(BASE + '/api/site-search');
+    need(anon.status === 401, '未登录能读汇总：' + anon.status);
+  });
+
   await check('待审核队列状态机', async () => {
     const add = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
