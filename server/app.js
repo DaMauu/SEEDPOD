@@ -502,6 +502,34 @@ function screenCatalog(opts) {
   return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, queued: picked.length };
 }
 
+/* ---------- 第三步发布：把待审核条目组装成发种草稿（不联网，只拼字段） ---------- */
+function composePublish(item) {
+  if (!item) return { err: { code: 'NOT_FOUND', message: '条目不存在' } };
+  const title = String(item.title || '').trim();
+  if (!title) return { err: { code: 'BAD_REQUEST', message: '条目缺标题' } };
+  const year = Number(item.year) || match.yearOf(title) || 0;
+  const res = String(item.res || match.resOf(title) || '');
+  const subtitle = String(item.cn || '').trim();
+  const tags = {
+    source: /blu-?ray|原盘|bdrip/i.test(title) ? 'Blu-ray' : (/web-?dl/i.test(title) ? 'WEB-DL' : ''),
+    medium: /remux/i.test(title) ? 'Remux' : (/blu-?ray|原盘/i.test(title) ? 'Blu-ray' : ''),
+    codec: /x265|h\.?265|hevc/i.test(title) ? 'H.265' : (/x264|h\.?264|avc/i.test(title) ? 'H.264' : ''),
+    audio: (/atmos/i.test(title) ? 'Atmos ' : '') + (/truehd/i.test(title) ? 'TrueHD' : (/dts/i.test(title) ? 'DTS' : (/ddp|ac3|aac/i.test(title) ? 'AC3/AAC' : ''))).trim(),
+    subs: /中字|chs|cht|简繁|双语/i.test(title) ? '中字' : ''
+  };
+  const warnings = [];
+  if (!subtitle) warnings.push('没有中文副标题，发布前要补');
+  if (!res) warnings.push('识别不出分辨率');
+  if (!item.site) warnings.push('没选目标站');
+  return {
+    title: title, subtitle: subtitle, year: year, res: res,
+    intro: '【片名】' + title + '\n【年份】' + (year || '—') + '\n【分辨率】' + (res || '—') +
+      '\n【简介】' + (item.intro || '（待补）') + '\n【截图】' + ((item.shots || []).length ? '见下' : '（待补）'),
+    tags: tags, anonymous: !!item.anonymous, category: item.category || '', screenshots: (item.shots || []).slice(0, 12),
+    warnings: warnings, ready: warnings.length === 0
+  };
+}
+
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
 const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
@@ -1520,6 +1548,13 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, data: out });
     }
     /* ---------- 词条库：第一步抓取的结果 ---------- */
+    if (p === '/api/publish/preview' && req.method === 'GET') {
+      const id = u.searchParams.get('id') || '';
+      const item = readQueue().items.filter(function (x) { return x.id === id; })[0];
+      const draft = composePublish(item);
+      if (draft.err) return fail(res, draft.err.code === 'NOT_FOUND' ? 404 : 400, draft.err.code, draft.err.message);
+      return send(res, 200, { ok: true, data: draft });
+    }
     if (p === '/api/catalog/screen' && req.method === 'POST') {
       const body = await readBody(req);
       const out = screenCatalog(body || {});

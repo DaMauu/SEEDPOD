@@ -972,6 +972,7 @@
             ? '<button class="btn primary slim" data-qact="retry">重试发布</button>'
             : '<button class="btn primary slim" data-qact="publish">通过并发布</button>') +
           '<button class="btn ghost slim" data-qact="reject">驳回</button>' +
+          '<button class="btn ghost slim" data-qact="draft">草稿预览</button>' +
           '<div class="spacer"></div>' +
           '<input class="input slim" id="qd-reason" placeholder="驳回理由（可留空）" style="width:200px">' +
           '<button class="btn ghost slim" data-qact="skip">跳过</button>' +
@@ -1086,6 +1087,21 @@
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (!it) return;
       var act = b.getAttribute("data-qact");
+      if (act === "draft" && it.server) {
+        /* 用后端组装草稿：标题/副标题/简介/标签/缺项提醒 */
+        fetch("/api/publish/preview?id=" + encodeURIComponent(it.id), { credentials: "same-origin" })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (!j || !j.ok) { toast((j && j.error && j.error.message) || "草稿生成失败"); return; }
+            var d = j.data;
+            if ($("#qd-title")) $("#qd-title").value = d.title;
+            if ($("#qd-sub")) $("#qd-sub").value = d.subtitle;
+            if ($("#qd-desc")) $("#qd-desc").value = d.intro;
+            toast(d.ready ? "草稿齐了，可以直接发" : "草稿有缺项：" + d.warnings.join(" · "));
+          })
+          .catch(function () { toast("草稿请求发不出去"); });
+        return;
+      }
       if (it.server) {
         if (act === "skip") {
           toast("已跳过：" + (it.cn || it.title));

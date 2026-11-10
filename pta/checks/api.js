@@ -673,6 +673,28 @@ async function main() {
     }
   });
 
+  await check('发布草稿组装：标题/副标题/标签/缺项提醒', async () => {
+    const add = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Draft Fixture 2020 1080p Blu-ray AVC DTS-HD MA 5.1-中字', res: '1080p', site: 'example.org', cn: '测试副标题' })
+    });
+    const qid = (await add.json()).data.id;
+    const prev = await (await fetchA(BASE + '/api/publish/preview?id=' + qid)).json();
+    need(prev.ok, '草稿接口失败：' + JSON.stringify(prev).slice(0, 160));
+    const d = prev.data;
+    need(/2020/.test(d.intro) && d.year === 2020, '简介里没带年份：' + JSON.stringify(d).slice(0, 160));
+    need(d.subtitle === '测试副标题', '副标题没取到：' + d.subtitle);
+    need(d.tags.codec === 'H.264', '编码标签不对：' + d.tags.codec);
+    need(d.tags.medium === 'Blu-ray', '媒介标签不对：' + d.tags.medium);
+    need(d.ready === true && d.warnings.length === 0, '齐全的草稿不该有提醒：' + JSON.stringify(d.warnings));
+    const missing = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Draft Fixture No Year No Res' })
+    })).json();
+    const p2 = await (await fetchA(BASE + '/api/publish/preview?id=' + missing.data.id)).json();
+    need(p2.data.ready === false && p2.data.warnings.some(w => /副标题/.test(w)), '缺项没提醒：' + JSON.stringify(p2.data.warnings));
+  });
+
   await check('筛选：入选送待审核，已有与不符的跳过', async () => {
     /* 先放一条本地库已有的同片，筛选时应该被判「已有」 */
     await fetchA(BASE + '/api/library', {
