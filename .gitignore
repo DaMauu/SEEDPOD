@@ -11,3 +11,6 @@ pta/data/site-defs/
 # 容器与运行时数据目录
 /data/
 data/
+
+# 临时脚本（一次性验证用，不进仓库）
+.tmp-*
