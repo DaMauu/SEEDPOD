@@ -114,6 +114,18 @@ Chrome 必须以 `--remote-debugging-port=9222` 启动，脚本用 CDP 连过去
 适配器的坑记一下：NexusPHP 的行内嵌了 `<table>`，按 `<tr>` 切行会把一行切成几段；
 现在改成「按 details.php 链接定位 + 前后窗口取字段」，并且必须排除 `userdetails.php`（它包含 `details.php` 子串）。
 
+## 批量采样（脚本）
+
+`node scripts/sample-sites.js [数量] [偏移]`：连本机 Chrome 的调试端口（9222），逐站打开种子页、等渲染后取 `page.content()`，
+gzip 存到 `pta/data/samples/<host>.html.gz`，状态写 `_state.json`。
+
+- 每站只发一次 GET，读完关标签，站间随机 4–6 秒
+- 已有样本自动跳过，可以按偏移分批续跑
+- 样本与状态都在 `pta/data/` 下，不入库
+
+2026-11-10 首批 12 站：10 个存下（1 个页面过小、1 个证书链无效直接跳过），离线分析 8/10 可解析（分类与列表都出来了），
+另外 2 个不是 NexusPHP 结构、需要单独看；大小字段普遍还取不到，按站的表格列差异较大。
+
 ## 检查
 
 ```
