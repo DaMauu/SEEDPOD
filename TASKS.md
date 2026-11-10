@@ -88,7 +88,10 @@ pta\checks\run.cmd
 | done | 下载器页前端接探测接口 | 弹窗里点测试：先临时建记录再探，显示 steps 与版本号，探完自动清理 |
 | done | 下载器保存走服务端 | 新增走 POST、改走 PUT、删除走 DELETE，刷新页面从服务端还原，密码只写不读 |
 | done | 发布级查重 | `server/match.js`：infohash 优先，其次标题归一/年份/分辨率/体积容差/发布组；命中带理由 |
-| done | 种子文件解析 | `server/adapters/torrent.js`：bencode 解码 + `SHA1(bencode(info))` 算 infohash、体积、文件名 |
+| done | 流程页按三步重排 | 抓取（预设+抓取标记）→ 筛选（筛选条件+已有归档）→ 发布（目标站+标题副标题+简介+发布字段） |
+| done | 词条库 | `POST /api/catalog` 导入（按站内 id / infohash 去重）、`/status` 流转 new→selected→published/skipped/archived |
+| done | 面板去假数据 | 系统状态、首页数字、节点页全部来自 `/api/stats/overview` 与下载器探测；没接下载器就显示空状态 |
+| done | 下载器探测落盘 | 探测时顺带取磁盘余量（qB `sync/maindata`），结果存 `lastProbe`，系统状态与节点页复用 |
 | done | 发布前前置校验 | 缺标题、缺该站搜索预设、没有下载器时 409 PUBLISH_BLOCKED 并列出缺什么 |
 | done | 站点页「抓取测试」改名「连接自检（干跑）」 | 详情头部显示上次自检时间与结论，走干跑任务，不访问真实站点 |
 
