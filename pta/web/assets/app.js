@@ -2609,6 +2609,17 @@
       return s.login === "ok" ? "ok" : s.login === "fail" ? "bad" : "idle";
     }
 
+    /* 上次抓取：优先用服务端抓取状态（crawl-state → /api/site-defs），没有才退回本地值 */
+    function lastCrawlTxt(s) {
+      var d = defOf(s.name);
+      if (!d) return s.last || "—";
+      if (!d.crawled) return "未抓取";
+      var t = d.crawlAt ? new Date(d.crawlAt) : null;
+      function p2(n) { return String(n).padStart(2, "0"); }
+      var when = t && !isNaN(t.getTime()) ? p2(t.getMonth() + 1) + "-" + p2(t.getDate()) + " " + p2(t.getHours()) + ":" + p2(t.getMinutes()) : "抓过";
+      return when + (d.crawlCount ? " · 今日 " + d.crawlCount : "");
+    }
+
     function itemHtml(s) {
       var a = archOf(s);
       var picked = state.picks.indexOf(s.name) >= 0;
@@ -2622,7 +2633,7 @@
         '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
         '<span class="si-preset ' + (presetOf(s.name) ? "on" : "") + '">' + escapeHtml(presetTxt(s.name)) + "</span>" +
         '<span class="si-mode">' + modeTxt + "</span>" +
-        '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
+        '<span class="si-last">' + escapeHtml(lastCrawlTxt(s)) + "</span>" +
       "</div>";
     }
 
