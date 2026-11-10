@@ -1,55 +1,52 @@
-# HANDOFF · SEEDPOD 面板原型
+# HANDOFF · SEEDPOD 面板
 
 最后更新：2026-11-10
 
-## 当前状态
+## 现在是什么状态
 
-静态面板原型已完成主要界面与交互（纯 HTML/CSS/JS，无构建），入口：
+前端 7 个页面 + 登录页，全部交互可点（142 个交互点无死按钮）。
+后端是本机 Node 零依赖服务，已实现：会话登录、配置读写、站点清单、事件日志、SSE、静态托管。
+
+线上：源码直跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，nginx 反代 + Cloudflare，入口是 pta 开头的那个域名。
+开机自启已配；改完代码 `systemctl restart seedpod` 生效。
+
+## 后端接口（已实现）
+
+| 接口 | 说明 |
+| --- | --- |
+| GET /api/health | 探活，不需要登录 |
+| POST /api/login | 账号密码换 HttpOnly 会话 cookie（12h） |
+| GET /api/session | 当前是否已登录 |
+| POST /api/logout | 注销 |
+| GET /api/config | 系统硬底线 + 用户配置 + 双模式区间 |
+| PATCH /api/config/user | 改速率，越界 400 |
+| GET /api/sites | 305 个站点（host/url/arch）与架构统计 |
+| GET /api/logs | 最近事件 |
+| GET /api/logs/stream | SSE，断线按 id 补历史 |
+
+事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置。
+
+## 检查
 
 ```
-pta/web/index.html      页面结构（7 个 view + 各类弹窗）
-pta/web/assets/app.js   假数据、渲染、路由、交互（约 2100 行）
-pta/web/assets/app.css  样式（大量分层的覆盖块，后写的覆盖先写的）
+pta\checks\run.cmd
 ```
 
-页面：总览、站点、流程（抓取/查重/发布/下载器）、待审核、数据清单、日志、设置。
+- smoke.js 18 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
+- audit.js：逐个点所有可点元素，报死按钮
+- api.js 11 条：健康、配置区间、落盘、站点清单结构、登录与 401
 
-## 最近改动（本轮）
+改完必须全绿再提交。
 
-- 顶栏固定品牌 SEEDPOD + 原盘转载面板，点 logo 回总览；右上角状态药丸所有页面共用；另加开发进度条（35%，写死在 index.html 的 dp-bar 宽度与 dp-num）
-- 站点页：整页表格（305 行）替代左右分栏，表头全选框；批量设置移入工具栏；详情改为行内展开（无侧边栏），按钮行含概览/抓取测试/基本信息/登录/站点覆盖
-- 站点概览：左列登录、抓取上下两张卡，右列最近收录 6 条，两列等高
-- 流程页：默认全部留空（不预选、不开启），摘要实时回显；栏目保存与新增下载器移到卡片右上角
-- 待审核：审核台布局，发布信息独占一行，简介与截图并排等高；副标题改为地区/音轨/字幕，简介去掉站点名
-- 数据清单、日志：定宽并垂直居中（数据清单自适应内容、日志 560px）
-- 日志与总览实时日志：SSH 终端黑绿风格，等宽字体 + 雅黑中文
-- 背景：右下角半屏呼吸灯（3.4s 明暗起伏）
-- 设置页：三张卡片各自右上角保存；表单两列平铺、无行分隔线
-- 请求层参数固定：设置页新增「抓取节奏」（速度 8–120 秒可调，越界提示并拒绝保存；并发/间隔下限/退避/熔断/审计只读），流程页拉取改为只读「跟随设置」
-- 发布新增「标题规则」：排除/白名单支持正则（限 200 字，写错回退纯文本），带就地测试匹配
+## 下一步
 
-## 自动开发基础设施
+1. 前端站点页改成从 `/api/sites` 取数（现在仍读 assets/sites-data.local.js）
+2. 站点详情「抓取测试」改成服务端真探测（需要一个不带账号的 GET，注意别被站点当异常请求）
+3. 站点配置从 localStorage 迁到服务端持久化
+4. 之后才碰抓取执行器与 qB 连接
 
-- `TASKS.md`：任务清单与完成标准，自动循环每轮从这里取活
-- `pta/checks/smoke.js`：14 条回归（7 个路由、站点映射、越界拦截、规则卡、上传/查重、归档/导出、日志下载、无脚本错误）
-- `pta/checks/run.cmd`：Windows 一键入口，可用 PTA_NODE / PTA_PW 指定 node 和 playwright-core
-- `pta/checks/audit.js`：把所有可点元素逐个点一遍（约 140 个交互点），没反应报 DEAD，另查重复 id 与坏链接
-- 自动修闭环与规矩写在 `TASKS.md` 第二节：最小改动、全绿才提交、两轮不好就回滚标 blocked
-- 验证方式：临时改坏 `#cm-ok` 后跑出失败并退出非零，恢复后回到全绿；审计发现并修掉了缺失的 ptaConfirm
+## 注意
 
-## 本地与远端
-
-- 仓库 C:\Users\wiii\Desktop\SEEDPOD，分支 main，远端 https://github.com/DaMauu/SEEDPOD.git
-- 本地领先 origin/main 约 30 个提交，Push 一直失败（github 443 连接重置/超时），网络恢复后需 `git push origin main`
-- 真实站点数据只在本地：assets/sites-data.local.js、data/site-arch.local.csv（均已 gitignore）
-
-## 下一步待做
-
-1. 推送积压提交
-2. 站点设置三页（基本信息/登录/站点覆盖）交互补全：保存、恢复默认、移除站点已接，分类映射仍是空按钮
-3. 待审核：上传截图、驳回理由、批量查重仍是假数据
-4. 后端、真实抓取与发布、鉴权部署（0%）
-
-## 上下文
-
-本会话已经很长，建议开新会话继续，先读本文件。
+- 真实站点清单只在本机与测试机：`pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv`，都已被 gitignore，不要提交
+- 面板账号密码不入库，只配在测试机 systemd 环境变量里
+- Cloudflare 会缓存 js/css，静态资源已加 no-cache 与版本号；换版本记得改 `?v=` 参数

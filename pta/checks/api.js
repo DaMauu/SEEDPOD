@@ -116,6 +116,18 @@ async function main() {
     need(api.status === 404, '未知接口状态码是 ' + api.status);
   });
 
+  await check('站点清单结构', async () => {
+    const j = await (await fetchA(BASE + '/api/sites')).json();
+    need(j.ok, 'ok 不为 true');
+    need(Array.isArray(j.data.sites), 'sites 不是数组');
+    need(j.data.counts && j.data.counts.total === j.data.sites.length, 'counts.total 与列表长度不一致');
+    j.data.sites.slice(0, 5).forEach(x => {
+      need(typeof x.host === 'string' && x.host.indexOf('/') < 0, 'host 不合法：' + x.host);
+      need(/^https?:\/\//.test(x.url), 'url 不合法：' + x.url);
+      need(['NP', 'UNIT3D', 'GZ', 'OTHER', '?'].indexOf(x.arch) >= 0, 'arch 取值不对：' + x.arch);
+    });
+  });
+
   await check('登录失败返回 401', async () => {
     const r = await fetch(BASE + '/api/login', {
       method: 'POST', headers: { 'content-type': 'application/json' },

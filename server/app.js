@@ -4,6 +4,7 @@
 const http = require('http');
 const fs = require('fs');
 const crypto = require('crypto');
+const vm = require('vm');
 const path = require('path');
 
 const PORT = Number(process.env.PTA_PORT || 8080);
@@ -53,6 +54,25 @@ function loadRecentLogs(limit) {
     if (out.length) logSeq = Math.max(logSeq, out[out.length - 1].id || 0);
     return out;
   } catch (e) { return []; }
+}
+
+/* ---------- 站点清单：从 assets/sites-data.local.js 读取，缺失则回退示例清单 ---------- */
+function loadSiteList() {
+  const file = path.join(WEB_DIR, 'assets', 'sites-data.local.js');
+  const sandbox = { window: {} };
+  try {
+    const code = fs.readFileSync(file, 'utf8');
+    vm.runInNewContext(code, sandbox, { timeout: 1000 });
+    const urls = (sandbox.window.SITE_URLS || []).slice();
+    const arch = sandbox.window.PT_ARCH || {};
+    const seen = {};
+    return urls.map(function (u) {
+      const host = String(u).replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+      return { host, url: u, arch: arch[host] || '?' };
+    }).filter(function (x) { return x.host && !seen[x.host] && (seen[x.host] = 1); });
+  } catch (e) {
+    return [];
+  }
 }
 
 function clientIp(req) {
@@ -227,6 +247,18 @@ const server = http.createServer(async (req, res) => {
       logEvent('info', '登录', '退出登录 · ' + clientIp(req));
       res.setHeader('set-cookie', 'pta_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax');
       return send(res, 200, { ok: true, data: {} });
+    }
+    if (p === '/api/sites' && req.method === 'GET') {
+      const list = loadSiteList();
+      const counts = { total: list.length, np: 0, unit3d: 0, gz: 0, other: 0, unknown: 0 };
+      list.forEach(function (x) {
+        if (x.arch === 'NP') counts.np++;
+        else if (x.arch === 'UNIT3D') counts.unit3d++;
+        else if (x.arch === 'GZ') counts.gz++;
+        else if (x.arch === 'OTHER') counts.other++;
+        else counts.unknown++;
+      });
+      return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
     }
     if (p === '/api/config' && req.method === 'GET') {
       return send(res, 200, { ok: true, data: { sys: {
