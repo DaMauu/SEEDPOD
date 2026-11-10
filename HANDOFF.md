@@ -175,8 +175,16 @@ node scripts/pipeline.js --sample  # 先补采样（每站一次 GET，站间 4-
 产物：`pta/data/{analysis.json,site-defs/,site-search.local.json,coverage.json}`；
 详细流程与失败分类见 `docs/PIPELINE.md`。
 
-## 判定同一条种子（不要重复转载）
+## 抓取（第一步）怎么跑
 
+`POST /api/crawl/plan {host}` 只拼 URL 不发请求（可先看要抓哪个地址）；
+`POST /api/crawl/run {host}` 真发一次 GET，按站点定义的搜索参数取第一页，
+解析后进词条库（`server/catalog.js`），命中的禁转/独占/DIY/限转只打标记。
+服务端硬约束：同站两次抓取至少隔 6 秒（不足返回 429 TOO_SOON），单站每天最多 20 次，
+没 cookie 返回 409 NO_COOKIE，cookie 失效返回 409 LOGIN_REQUIRED，串行、不重试轰炸。
+面板「抓取」页右上角「抓一页」按钮走的就是它。
+
+## 判定同一条种子（不要重复转载）
 `server/match.js`：先比 infohash（相同即同一条，不同即不是），再比归一后的标题、年份、分辨率、
 体积（差 8% 以上判不同版本，2% 内加分）、发布组。
 `POST /api/queue/:id/check` 用的就是它，返回的每条命中都带理由。
