@@ -2496,8 +2496,10 @@
         '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +
           (catLines || '<div class="sd-row"><span>状态</span><b>还没有分类映射</b></div>') +
         "</div></div>" +
-        '<div class="sd-cookie-bar"><span class="sd-cookie-res" id="sd-preset-res">' +
-          (pdetail ? "更新于 " + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
+        '<div class="sd-cookie-bar">' +
+          (pdetail && pdetail.confirmed ? "" : '<button class="btn ghost slim" id="sd-preset-confirm">确认这个预设</button>') +
+          '<span class="sd-cookie-res" id="sd-preset-res">' +
+          (pdetail ? (pdetail.confirmed ? "已人工确认 · " : "更新于 ") + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
         "</span></div>";
       } else {
         body = '<div class="set-fields">' + setRowsHtml([
@@ -2756,6 +2758,38 @@
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!s) return;
 
+      if (e.target.closest && e.target.closest("#sd-preset-confirm")) {
+        var prBox = $("#sd-preset-res");
+        var sNow = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
+        if (!sNow) return;
+        if (!window.fetch || !/^https?:$/.test(location.protocol)) {
+          if (prBox) prBox.textContent = "本地预览没有后端，确认不可用";
+          toast("本地预览没有后端，确认不可用");
+          return;
+        }
+        if (prBox) prBox.textContent = "正在确认…";
+        fetch("/api/sites/" + encodeURIComponent(sNow.name) + "/search", {
+          method: "PUT", credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ confirmed: true, source: "manual" })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (!j || !j.ok) {
+            var m = (j && j.error && j.error.message) || "确认失败";
+            if (prBox) prBox.textContent = m;
+            toast(m);
+            return;
+          }
+          sNow.presetDetail = j.data.preset;
+          sNow.presetLoaded = true;
+          if (prBox) prBox.textContent = "已确认，来源改为手动";
+          toast("预设已确认");
+          if (window.__ptaLoadPresets) window.__ptaLoadPresets();
+          paintDetail();
+        }).catch(function () {
+          if (prBox) prBox.textContent = "确认失败：连不上后端";
+        });
+        return;
+      }
       if (e.target.closest && e.target.closest("#sd-cookie-test")) {
         var resBox = $("#sd-cookie-res");
         if (resBox) resBox.textContent = "正在用已保存的 cookie 访问首页…";

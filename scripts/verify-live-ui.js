@@ -94,6 +94,17 @@ function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
     check('预设页显示引擎与来源', /引擎/.test(txt) && /预设来源/.test(txt), '');
     check('预设页显示分类 id 区块', /分类 id/.test(txt), '');
 
+    /* 预设确认按钮：点一下应回写 confirmed 并刷新来源 */
+    const confirmState = await page.evaluate(function () {
+      const b = document.querySelector('#sd-preset-confirm');
+      if (!b) return 'no-button';
+      b.click();
+      return 'clicked';
+    }).catch(function () { return 'error'; });
+    await sleep(2200);
+    txt = await bodyText();
+    check('能确认搜索预设', /已确认|已人工确认/.test(txt), '按钮：' + confirmState);
+
     /* 登录页签的 cookie 自检按钮也在 */
     const cookieBtn = await page.evaluate(function () {
       const b = document.querySelector('button[data-settab="login"]');
