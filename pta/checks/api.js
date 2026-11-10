@@ -819,6 +819,19 @@ async function main() {
     const del = await fetchA(BASE + '/api/catalog/' + id, { method: 'DELETE' });
     need(del.ok, '删除词条失败');
 
+    /* 手工改标记：解析没识别出来时人能补 */
+    const mkItem = await (await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: 'mark.example', siteId: '7', title: 'Mark Fixture 2020 1080p', marks: {} }] })
+    })).json();
+    const mkList = await (await fetchA(BASE + '/api/catalog?q=Mark Fixture')).json();
+    const mkId = mkList.data.items[0].id;
+    const mk = await (await fetchA(BASE + '/api/catalog/' + mkId + '/marks', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ marks: { noRedistribute: true, diy: true, nonsense: true } })
+    })).json();
+    need(mk.ok && mk.data.marks.noRedistribute === true && mk.data.marks.diy === true, '标记没写上：' + JSON.stringify(mk).slice(0, 140));
+    need(!mk.data.marks.nonsense, '不认识的标记不该写进去：' + JSON.stringify(mk.data.marks));
+
     /* 批量：把 skipped 的全部归档 */
     const bulk = await (await fetchA(BASE + '/api/catalog/bulk', {
       method: 'POST', headers: { 'content-type': 'application/json' },

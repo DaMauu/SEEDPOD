@@ -87,6 +87,22 @@ function createStore(file) {
     const c = Object.assign({}, it); delete c._key;
     return { item: c };
   }
+  function setMarks(id, marks) {
+    const store = read();
+    const it = store.items.filter(function (x) { return x.id === id; })[0];
+    if (!it) return { err: '词条不存在' };
+    const next = {};
+    MARKS.forEach(function (k) {
+      const v = marks && marks[k];
+      if (v === true || v === 1) next[k] = true;
+      else if (typeof v === 'number' && v > 0) next[k] = v;
+    });
+    it.marks = next;
+    it.updatedAt = new Date().toISOString();
+    write(store);
+    const c = Object.assign({}, it); delete c._key;
+    return { item: c };
+  }
   function remove(id) {
     const store = read();
     const i = store.items.findIndex(function (x) { return x.id === id; });
@@ -102,7 +118,7 @@ function createStore(file) {
     store.items.forEach(function (x) { byStatus[x.status] = (byStatus[x.status] || 0) + 1; });
     return { total: store.items.length, byStatus: byStatus };
   }
-  return { add: add, list: list, setStatus: setStatus, remove: remove, summary: summary, STATUSES: STATUSES, MARKS: MARKS };
+  return { add: add, list: list, setStatus: setStatus, setMarks: setMarks, remove: remove, summary: summary, STATUSES: STATUSES, MARKS: MARKS };
 }
 
 module.exports = { createStore: createStore, STATUSES: STATUSES, MARKS: MARKS };

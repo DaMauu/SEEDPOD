@@ -1777,8 +1777,17 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith('/api/catalog/')) {
       const rest = decodeURIComponent(p.slice('/api/catalog/'.length).replace(/\/+$/, ''));
       const isStatus = /\/status$/.test(rest);
-      const id = isStatus ? rest.replace(/\/status$/, '') : rest;
+      const isMarks = /\/marks$/.test(rest);
+      const id = isStatus ? rest.replace(/\/status$/, '') : isMarks ? rest.replace(/\/marks$/, '') : rest;
       if (!id) return fail(res, 400, 'BAD_REQUEST', '缺少词条 id');
+      if (isMarks) {
+        if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+        const body = await readBody(req);
+        const r = catalogStore.setMarks(id, (body && body.marks) || {});
+        if (r.err) return fail(res, /不存在/.test(r.err) ? 404 : 400, /不存在/.test(r.err) ? 'NOT_FOUND' : 'BAD_REQUEST', r.err);
+        logEvent('info', '词条库', '改标记 · ' + String(r.item.title).slice(0, 60) + ' · ' + Object.keys(r.item.marks || {}).join(','));
+        return send(res, 200, { ok: true, data: r.item });
+      }
       if (isStatus) {
         if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
         const body = await readBody(req);
