@@ -7,6 +7,7 @@
 - `docs/ARCHITECTURE.md` 分层、数据流、数据模型、风控为什么这么定
 - `docs/API.md` 接口契约，字段以这里为准，不许临时加
 - `docs/DECISIONS.md` 已经定下来的取舍，改主意要追加新条目
+- `docs/PRIOR-ART.md` 借了 Jackett/Prowlarr Cardigann 的哪些结构与判定规矩，哪些不能抄
 
 ## 一、检查分三层（pta/checks）
 
