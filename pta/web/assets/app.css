@@ -399,7 +399,7 @@ tbody tr:hover td { background: #fafbff; }
 .status-hero span { font-size: 9.5px; letter-spacing: .8px; color: var(--muted); }
 .status-hero b { font-size: 34px; line-height: 1.1; font-weight: 600; letter-spacing: -.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .status-hero b.warn { color: var(--amber); }
-.status-list { display: flex; flex-direction: column; justify-content: center; }
+.status-list { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .status-list .hstat { padding: 6px 0; border-bottom: 1px solid var(--line); }
 .status-list .hstat:last-child { border-bottom: 0; }
 .status-list .hstat span { font-size: 9px; letter-spacing: .6px; }
@@ -409,7 +409,9 @@ tbody tr:hover td { background: #fafbff; }
 .status-card .health-row { grid-template-columns: 1.15fr 1fr; }
 /* tighten horizontal gap inside square modules */
 .stat-grid { grid-template-columns: auto minmax(0, 1fr); gap: 20px; }
-.status-card .health-row { grid-template-columns: auto minmax(0, 1fr); gap: 20px; }
+.status-card .health-row { grid-template-columns: minmax(0, 1fr) minmax(112px, 1fr); gap: 20px; }
+.status-list .hstat { gap: 8px; }
+.status-list .hstat b { white-space: nowrap; }
 .stat-hero b { margin-right: 0; }
 /* right-align list values */
 .stat-list .hstat, .status-list .hstat { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }

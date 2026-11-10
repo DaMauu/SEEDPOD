@@ -789,7 +789,7 @@
       { label: "登录失效", value: String(loginFail), warn: loginFail > 0 },
       { label: "还没自检", value: String(unchecked), warn: false },
       { label: "下载器在线", value: dls ? (dls.online + " / " + dls.total) : "—", warn: !!(dls && dls.total && dls.online < dls.total) },
-      { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接下载器"), warn: !!(dls && dls.total && !free) }
+      { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接"), warn: !!(dls && dls.total && !free) }
     ];
     var crawlTxt = o && o.crawl ? (o.crawl.runsToday + " 次 / " + (o.crawl.hostsToday || 0) + " 站") : "—";
     host.innerHTML =
