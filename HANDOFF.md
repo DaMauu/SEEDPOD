@@ -33,7 +33,9 @@ pta/web/assets/app.css  样式（大量分层的覆盖块，后写的覆盖先�
 - `TASKS.md`：任务清单与完成标准，自动循环每轮从这里取活
 - `pta/checks/smoke.js`：14 条回归（7 个路由、站点映射、越界拦截、规则卡、上传/查重、归档/导出、日志下载、无脚本错误）
 - `pta/checks/run.cmd`：Windows 一键入口，可用 PTA_NODE / PTA_PW 指定 node 和 playwright-core
-- 验证方式：临时改坏 `#cm-ok` 后跑出 12/14 并退出非零，恢复后回到 14/14
+- `pta/checks/audit.js`：把所有可点元素逐个点一遍（约 140 个交互点），没反应报 DEAD，另查重复 id 与坏链接
+- 自动修闭环与规矩写在 `TASKS.md` 第二节：最小改动、全绿才提交、两轮不好就回滚标 blocked
+- 验证方式：临时改坏 `#cm-ok` 后跑出失败并退出非零，恢复后回到全绿；审计发现并修掉了缺失的 ptaConfirm
 
 ## 本地与远端
 

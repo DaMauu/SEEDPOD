@@ -156,7 +156,20 @@ async function main() {
     need(/\.log$/.test(d.suggestedFilename()), '日志文件名不对：' + d.suggestedFilename());
   });
 
-  /* 8. 全站无脚本错误 */
+  /* 8. 确认弹窗（ptaConfirm）真的能开能关 */
+  await check('确认弹窗可用', async () => {
+    await open('#settings');
+    await page.click('button[data-btn="清空本地缓存"]');
+    await page.waitForTimeout(250);
+    need(await page.locator('#confirm-modal').isVisible(), '确认弹窗没出现');
+    const title = await page.textContent('#confirm-title');
+    need(/清空本地缓存/.test(title), '标题不对：' + title);
+    await page.click('#confirm-no');
+    await page.waitForTimeout(200);
+    need(!(await page.locator('#confirm-modal').isVisible()), '点取消没关掉');
+  });
+
+  /* 9. 全站无脚本错误 */
   await check('无 JavaScript 报错', async () => {
     need(errors.length === 0, errors.slice(0, 3).join(' | '));
   });

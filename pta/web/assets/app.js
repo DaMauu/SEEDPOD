@@ -222,7 +222,27 @@
     clearTimeout(t._tm);
     t._tm = setTimeout(function () { t.classList.remove("show"); }, 1800);
   }
-  window.PTA = { toast: toast, MOCK: MOCK };
+  /* 通用确认弹窗：模块内任何地方都能用 */
+  function ptaConfirm(title, text, onOk) {
+    var mask = $("#confirm-modal");
+    if (!mask) { if (onOk) onOk(); return; }
+    $("#confirm-title").textContent = title || "确认操作";
+    $("#confirm-text").textContent = text || "";
+    var yes = $("#confirm-yes"), no = $("#confirm-no");
+    function close() {
+      mask.hidden = true;
+      yes.removeEventListener("click", ok);
+      no.removeEventListener("click", close);
+      mask.removeEventListener("click", backdrop);
+    }
+    function ok() { close(); if (onOk) onOk(); }
+    function backdrop(e) { if (e.target === mask) close(); }
+    yes.addEventListener("click", ok);
+    no.addEventListener("click", close);
+    mask.addEventListener("click", backdrop);
+    mask.hidden = false;
+  }
+  window.PTA = { toast: toast, confirm: ptaConfirm, MOCK: MOCK };
 
   /* ---------- 站点/目标站 分类映射 ---------- */
   var CATMAP_KEY = "pta.catmap";
