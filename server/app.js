@@ -1471,6 +1471,7 @@ const server = http.createServer(async (req, res) => {
             groups: Object.keys(cats).length, ids: ids,
             rows: (d.source && d.source.rows) || 0, sizeRows: (d.source && d.source.sizeRows) || 0,
             kind: (d.source && d.source.kind) || '',
+            cats: cats,
             updatedAt: (d.source && d.source.analyzedAt) || null,
             crawlAt: cr ? (cr.lastAt || 0) : 0,
             crawlCount: cr && cr.day === today0 ? (cr.count || 0) : 0,
