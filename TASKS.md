@@ -101,6 +101,11 @@ pta\checks\run.cmd
 | done | 站点状态带不再换行错位 | 数字/进度条/覆盖说明各占一行，窄屏下不重叠 |
 | done | 搜索预设页签恢复分类 id 与链接预览 | 服务端没给 url 时用预设分类 + 站点定义自己拼；预览去掉 `{q}` 占位，点开是真站分类页 |
 | done | 抓取节奏改 30 秒 / 每轮 100 条 | `CRAWL_MIN_GAP_MS=30000`，一轮默认 100 条，面板可切 5/20/100 先小量试 |
+| done | 数据清单可单条送审 / 批量送审 | `POST /api/catalog/screen` 支持 `ids`；行内「送审」、工具栏「按条件送审」都走它，页面回显入选/跳过原因 |
+| done | 数据清单接站点详情页 | 标题可点，服务端存的是相对路径，前端按站点定义 base 补成完整 URL |
+| done | 站点抽屉概览改真数据 | 今日次数/已收录/最近收录都读 `/api/site-def` 与 `/api/catalog?site=`，没有了就写没有 |
+| done | 设置页去掉假项 | 删掉面板密码/2FA/通知/备份/API 令牌这些没后端的控件；用户名与版本读后端，退出登录走 `/api/logout` |
+| done | 清掉死代码与假样本 | 删掉趋势图/待办/已发布样本和两个没人调用的渲染函数，页面没有任何编造的统计 |
 | done | 发布记账 | 发布成功把词条标 published、写 `published.json` 记录（含匿名/图床），`/api/published` 可查；首页已发布列表读它 |
 | done | 词条库批量 | `/api/catalog/bulk` 按状态批量改；词条库面板有状态筛选与「归档已跳过」；数据清单页改成读词条库并支持归档 |
 | done | 词条库 | `POST /api/catalog` 导入（按站内 id / infohash 去重）、`/status` 流转 new→selected→published/skipped/archived |
