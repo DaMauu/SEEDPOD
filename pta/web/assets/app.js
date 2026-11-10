@@ -2747,6 +2747,7 @@
             '<span class="sd-url">' + escapeHtml(s.url) + "</span>" +
             '<span class="sd-selfcheck" id="sd-selfcheck">' + (s.checkAt ? "上次自检 " + escapeHtml(s.checkAt) + " · " + escapeHtml(s.checkMsg || "") : "还没做过连接自检") + "</span></div>" +
           '<div class="sd-actions">' +
+            '<button class="btn slim" data-act="crawl-one" title="按搜索预设抓这个站一页，只发一次 GET">抓一页</button>' +
             '<button class="btn slim" data-act="selfcheck" title="干跑自检：只读本地配置，不访问真实站点">连接自检（干跑）</button>' +
             '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
             SET_TABS.map(function (t) {
@@ -3311,6 +3312,37 @@
             if (resBox) resBox.textContent = "本地预览没有后端，自检不可用";
             toast("本地预览没有后端，自检不可用");
           });
+        return;
+      }
+      if (act === "crawl-one") {
+        if (btn.disabled) return;
+        if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，抓取不可用"); return; }
+        ptaConfirm("抓一页", "会对 " + s.name + " 发一次 GET（带已存的 cookie），抓第一页最多 100 条入库。确认？", function () {
+        var oldT = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "抓取中…";
+        fetch("/api/crawl/run", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ host: s.name, limit: 100 })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          btn.disabled = false;
+          btn.textContent = oldT;
+          if (!j || !j.ok) {
+            var code = j && j.error && j.error.code;
+            var msg = (j && j.error && j.error.message) || "抓取失败";
+            if (code === "NO_COOKIE" || code === "LOGIN_REQUIRED") msg += "：先在「登录」页签存 cookie";
+            toast(msg);
+            return;
+          }
+          var d = j.data || {};
+          toast("第 " + d.page + " 页 · 抓回 " + d.rows + " 行 · 新增 " + d.added + " · 今日第 " + (d.daily && d.daily.count) + " 次");
+          s.drawerLoaded = false;
+          if (window.__ptaLoadSources) window.__ptaLoadSources();
+          if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+          if (state.sel === s.name) paint();
+        }).catch(function () { btn.disabled = false; btn.textContent = oldT; toast("抓取请求发不出去"); });
+        });
         return;
       }
       if (act === "selfcheck") {
