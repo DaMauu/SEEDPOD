@@ -116,7 +116,7 @@ Object.keys(analysis).sort().forEach(function (host) {
 
   /* 搜索预设：只补自动生成的，人工确认过的（source 不是 auto）保持不动 */
   const cur = presets.sites[host];
-  if (cur && cur.source && cur.source !== 'auto') return;
+  if (cur && cur.source && ['auto', 'arch'].indexOf(cur.source) < 0) return;   /* 人工确认过的不动，arch 的可以被更准的结果覆盖 */
   presets.sites[host] = {
     engine: a.engine,
     searchPath: def.searchPath,

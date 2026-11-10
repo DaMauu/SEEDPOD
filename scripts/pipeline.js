@@ -36,6 +36,7 @@ if (doSample) steps.push(['sample-sites.js', sampleCount ? [sampleCount] : [], '
 if (!skipAnalyze) steps.push(['analyze-samples.js', ['--quiet'], '离线分析']);
 steps.push(['collect-site-defs.js', [], '生成站点定义与预设']);
 steps.push(['validate-defs.js', [], '校验站点定义']);
+steps.push(['audit-presets.js', [], '预设体检']);
 steps.push(['coverage.js', [], '覆盖率']);
 
 let failed = 0;

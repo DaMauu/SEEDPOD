@@ -102,7 +102,7 @@ function detectShellEngine(html) {
     /torrent-search--list/i.test(s),
     /(?:livewire|wire:model|wire:click)/i.test(s) && /(?:build\/assets|vite)/i.test(s)
   ].filter(Boolean).length;
-  if (u3d >= 2) return 'unit3d';
+  if (u3d >= 1) return 'unit3d';
   if (/gazelle/i.test(s) && /torrents\.php|filter_cat|searchstr|browse/i.test(s)) return 'gazelle';
   if (/details\.php\?id=/i.test(s)) return 'nexusphp';
   return '';
