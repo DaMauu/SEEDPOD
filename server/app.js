@@ -1840,7 +1840,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/queue/bulk' && req.method === 'POST') {
       const body = await readBody(req);
       const action = String((body && body.action) || '');
-      if (action !== 'approve' && action !== 'reject') return fail(res, 400, 'BAD_REQUEST', 'action 只能是 approve / reject');
+      if (action !== 'approve' && action !== 'reject' && action !== 'publish') return fail(res, 400, 'BAD_REQUEST', 'action 只能是 approve / reject / publish');
       const reason = String((body && body.reason) || '').slice(0, 500);
       if (action === 'reject' && !reason.trim()) return fail(res, 400, 'BAD_REQUEST', '批量驳回要写理由');
       const ids = Array.isArray(body && body.ids) ? body.ids.map(String) : [];

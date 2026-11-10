@@ -1008,6 +1008,24 @@
       }).catch(function () { bulkApprove.disabled = false; toast("批量批准请求发不出去"); });
     });
 
+    var bulkPublish = $("#q-bulkpublish");
+    if (bulkPublish) bulkPublish.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，批量发布不可用"); return; }
+      ptaConfirm("批量发布", "会把「已通过」的条目全部记成已发布（只记账，不往真实站点发）。继续？", function () {
+        bulkPublish.disabled = true;
+        fetch("/api/queue/bulk", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "publish", fromStatus: "approved" })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          bulkPublish.disabled = false;
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "批量发布失败"); return; }
+          toast("已发布 " + j.data.changed + " 条" + (j.data.skipped ? "，跳过 " + j.data.skipped + " 条" : ""));
+          if (loadServer) loadServer();
+          if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+        }).catch(function () { bulkPublish.disabled = false; toast("批量发布请求发不出去"); });
+      });
+    });
+
     var bulk = $("#q-bulkcheck");
     if (bulk) bulk.addEventListener("click", function () {
       var list = rows().filter(function (x) { return x.status === "pending" || x.status === "approved"; });

@@ -887,6 +887,20 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', ids: [idA] })
     });
     need(noReason.status === 400, '批量驳回没写理由却通过：' + noReason.status);
+
+    /* 批量发布：只处理 approved 的；发布闸门要求至少一个下载器，先临时建一个再删掉 */
+    const dlTmp = await (await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '批量发布用', url: 'http://127.0.0.1:9' })
+    })).json();
+    need(dlTmp.ok, '准备临时下载器失败：' + JSON.stringify(dlTmp).slice(0, 120));
+    const pubBulk = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish', ids: [idA, idB] })
+    })).json();
+    need(pubBulk.ok && pubBulk.data.changed === 2, '批量发布没生效：' + JSON.stringify(pubBulk).slice(0, 140));
+    const pubList = await (await fetchA(BASE + '/api/queue?status=published')).json();
+    need(pubList.data.items.filter(x => x.id === idA || x.id === idB).length === 2, '批量发布后状态不对');
+    await fetchA(BASE + '/api/downloaders/' + dlTmp.data.id, { method: 'DELETE' });
   });
 
   await check('干跑任务能提交并跑完', async () => {
