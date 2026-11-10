@@ -56,7 +56,7 @@ pta\checks\run.cmd
 | done | 补上缺失的确认弹窗 ptaConfirm | 删除下载器、清缓存、改密码都会弹确认，审计无 JS 报错 |
 | done | 前端登录页 | 未登录显示登录页，错误密码有提示，登录后可进面板 |
 | done | 登录改由服务端校验 | POST /api/login 发 HttpOnly 会话 cookie，接口无会话返回 401 |
-| done | 日志接服务端 SSE | 日志页显示 server 心跳，不再是本地假数据 |
+| done | 日志接服务端 SSE | 服务端事件（启动/登录/改配置）实时推送，SSE 断线自动补历史 |
 | done | 容器化并在实机跑通 | 镜像构建成功、健康检查 healthy、配置改动重启后仍在 |
 | done | 前端从 `/api/config` 读真实配置 | 设置页显示服务端值，保存时 PATCH 回服务端 |
 | done | 面板密码与公网反代 | 未登录 401，登录 200，域名走 nginx 反代 |

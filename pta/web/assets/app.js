@@ -60,15 +60,7 @@
       { name: "D · 下载节点", role: "下载 / 做种", host: "192.0.2.13", online: true, disk: "14.1 / 18 TB", used: 14.1, total: 18, qb: "4.6.7", seeding: "1,905", path: "/data/pt" },
       { name: "E · 下载节点", role: "下载 / 做种", host: "192.0.2.14", online: false, disk: "3.2 / 8 TB", used: 3.2, total: 8, qb: "离线", seeding: "—", path: "/data/pt" }
     ],
-    sitesList: [],    logs: [
-      { t: "12:40:02", lvl: "ok", tag: "抓取", msg: "站点 A 第 231 页完成，累计 23,186 条，新增 87 条。" },
-      { t: "12:39:58", lvl: "", tag: "查重", msg: "主站索引命中 214 条，跳过 127 条重复。" },
-      { t: "12:39:40", lvl: "", tag: "发布", msg: "《金瓶双艳》发布成功，种子 #8842103。" },
-      { t: "12:38:12", lvl: "warn", tag: "图床", msg: "站内图床上传较慢（8.4s），已重试一次成功。" },
-      { t: "12:36:55", lvl: "error", tag: "详情", msg: "《修女艾达》详情页 403，任务转入失败队列。" },
-      { t: "12:35:10", lvl: "", tag: "节点", msg: "节点 E 心跳超时，已暂停下发。" },
-      { t: "12:30:00", lvl: "ok", tag: "调度", msg: "增量抓取任务开始：只抓第 1~2 页。" }
-    ]
+    sitesList: [],    logs: []
   };
 
 
@@ -463,6 +455,18 @@
   function kpi(label, value, delta, cls) {
     return '<div class="kpi"><div class="label">' + label + '</div><div class="value">' + value +
       '</div><div class="delta ' + (cls || "") + '">' + delta + "</div></div>";
+  }
+
+  function paintDashLogs() {
+    var lg = $("#dash-logs");
+    if (!lg) return;
+    if (!MOCK.logs.length) {
+      lg.innerHTML = '<div class="dash-log-empty">还没有日志，连上后端后这里会实时刷新</div>';
+      return;
+    }
+    lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
+      return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
+    }).join("");
   }
 
   function renderTodos() {
@@ -1098,7 +1102,7 @@
           '<span class="log-src">' + escapeHtml(l.tag) + "</span>" +
           '<span class="log-msg">' + escapeHtml(l.msg) + "</span>" +
         "</div>";
-      }).join("") || '<div class="sites-empty">没有匹配的日志</div>';
+      }).join("") || '<div class="sites-empty">还没有日志，连上后端后这里会实时刷新</div>';
       host.scrollTop = host.scrollHeight;
     }
 
@@ -2578,22 +2582,16 @@
   /* 实时日志：本地演示按节奏追加，接后端后可换成 SSE/轮询 */
   var LOG_STREAM = {
     timer: null,
-    templates: [
-      { lvl: "info", tag: "抓取", msg: "站点 A 第 232 页完成，新增 6 条。" },
-      { lvl: "info", tag: "查重", msg: "主站索引命中 18 条，跳过 5 条重复。" },
-      { lvl: "warn", tag: "图床", msg: "站内图床上传较慢（6.2s），已重试一次。" },
-      { lvl: "info", tag: "发布", msg: "《乱》发布成功，种子 #8842199。" },
-      { lvl: "info", tag: "调度", msg: "下一轮抓取 15 分钟后开始。" },
-      { lvl: "error", tag: "详情", msg: "《修女艾达》详情页 403，转入失败队列。" }
-    ],
+    templates: [],
     now: function () {
       var d = new Date();
       var p = function (n) { return (n < 10 ? "0" : "") + n; };
       return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
     },
     push: function (item) {
-      var t = item || this.templates[Math.floor(Math.random() * this.templates.length)];
-      var line = { t: this.now(), lvl: t.lvl, tag: t.tag, msg: t.msg };
+      if (!item) return;            /* 只显示服务端推来的日志 */
+      var t = item;
+      var line = { t: t.t || this.now(), lvl: t.lvl, tag: t.tag, msg: t.msg };
       MOCK.logs.unshift(line);
       if (MOCK.logs.length > 80) MOCK.logs.length = 80;
       if (window.__ptaRepaintLogs) window.__ptaRepaintLogs();
@@ -2612,15 +2610,31 @@
       if (this.timer) return;
       this.timer = setInterval(function () { self.push(); }, 6500);
     },
+    lastId: 0,
     startLive: function () {
       var self = this;
       if (this.es || !window.EventSource) return false;
       this.stop();
-      this.es = new EventSource("api/logs/stream");
+      this.es = new EventSource("api/logs/stream?last=" + (this.lastId || 0));
       this.es.onmessage = function (ev) {
         var d = null;
         try { d = JSON.parse(ev.data); } catch (e) { return; }
-        self.push({ lvl: d.level === "warn" ? "warn" : d.level === "error" ? "error" : "info", tag: d.src || "服务", msg: d.msg || "" });
+        if (d.id) {
+          if (d.id <= self.lastId) return;
+          self.lastId = d.id;
+        }
+        var hhmmss = "";
+        if (d.ts) {
+          var dt = new Date(d.ts);
+          var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+          hhmmss = p2(dt.getHours()) + ":" + p2(dt.getMinutes()) + ":" + p2(dt.getSeconds());
+        }
+        self.push({
+          t: hhmmss || self.now(),
+          lvl: d.level === "warn" ? "warn" : d.level === "error" ? "error" : "info",
+          tag: d.src || "服务",
+          msg: d.msg || ""
+        });
       };
       return true;
     },
@@ -2635,7 +2649,6 @@
     API.probe();
     setTimeout(function () { if (API.mode === "live") LOG_STREAM.startLive(); }, 900);
     setInterval(function () { API.probe(); }, 30000);
-    LOG_STREAM.start();
     refreshPills();
   }
   /* ---------- 登录 ---------- */

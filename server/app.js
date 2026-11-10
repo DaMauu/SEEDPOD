@@ -23,6 +23,41 @@ const DEFAULTS = { runMode: 'test', interval: 60, dailySite: 20, dailyAll: 100 }
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const CFG_FILE = path.join(DATA_DIR, 'config.json');
+const LOG_FILE = path.join(DATA_DIR, 'events.log');
+
+/* ---------- 事件日志：写文件 + 内存环 + SSE 广播 ---------- */
+let logSeq = 0;
+const LOG_RING = [];
+const SSE_CLIENTS = new Set();
+
+function logEvent(level, src, msg) {
+  const entry = { id: ++logSeq, ts: new Date().toISOString(), level, src, msg };
+  LOG_RING.push(entry);
+  if (LOG_RING.length > 500) LOG_RING.shift();
+  try { fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n'); } catch (e) {}
+  const payload = 'id: ' + entry.id + '\ndata: ' + JSON.stringify(entry) + '\n\n';
+  SSE_CLIENTS.forEach(function (res) {
+    try { res.write(payload); } catch (e) { SSE_CLIENTS.delete(res); }
+  });
+  console.log('[' + level + '] ' + src + ' ' + msg);
+  return entry;
+}
+
+function loadRecentLogs(limit) {
+  try {
+    const lines = fs.readFileSync(LOG_FILE, 'utf8').trim().split('\n');
+    const out = [];
+    for (let i = Math.max(0, lines.length - limit); i < lines.length; i++) {
+      try { out.push(JSON.parse(lines[i])); } catch (e) {}
+    }
+    if (out.length) logSeq = Math.max(logSeq, out[out.length - 1].id || 0);
+    return out;
+  } catch (e) { return []; }
+}
+
+function clientIp(req) {
+  return (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0].trim();
+}
 
 function readConfig() {
   try {
@@ -175,8 +210,10 @@ const server = http.createServer(async (req, res) => {
       if (!PTA_USER || !PTA_PASS) return fail(res, 503, 'NO_ACCOUNT', '服务端还没有设置面板账号');
       const body = await readBody(req);
       if (!body || body.user !== PTA_USER || body.pass !== PTA_PASS) {
+        logEvent('warn', '登录', '密码错误 · 用户 ' + ((body && body.user) || '(空)') + ' · 来自 ' + clientIp(req));
         return fail(res, 401, 'BAD_CREDENTIALS', '用户名或密码不对');
       }
+      logEvent('info', '登录', '登录成功 · 用户 ' + body.user + ' · 来自 ' + clientIp(req));
       const tok = newSession();
       res.setHeader('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (SESSION_TTL / 1000));
       return send(res, 200, { ok: true, data: { user: PTA_USER, token: tok } });
@@ -187,6 +224,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/logout' && req.method === 'POST') {
       const tok = parseCookies(req).pta_sid;
       if (tok) SESSIONS.delete(tok);
+      logEvent('info', '登录', '退出登录 · ' + clientIp(req));
       res.setHeader('set-cookie', 'pta_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax');
       return send(res, 200, { ok: true, data: {} });
     }
@@ -206,19 +244,30 @@ const server = http.createServer(async (req, res) => {
       ["interval", "dailySite", "dailyAll"].forEach(function (k) {
         if (body[k] !== undefined) next[k] = Number(body[k]);
       });
+      const changes = Object.keys(next).filter(function (k) { return cfg[k] !== next[k]; })
+        .map(function (k) { return k + ' ' + cfg[k] + '→' + next[k]; });
       try {
         writeConfig(next);
       } catch (e) {
         return fail(res, 500, e.code || "INTERNAL", e.message);
       }
+      if (changes.length) logEvent('info', '设置', '修改配置 · ' + changes.join(' · '));
       return send(res, 200, { ok: true, data: next });
+    }
+    if (p === '/api/logs' && req.method === 'GET') {
+      const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);
+      return send(res, 200, { ok: true, data: LOG_RING.slice(-limit) });
     }
     if (p === '/api/logs/stream' && req.method === 'GET') {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
-      const push = (level, msg) => res.write('data: ' + JSON.stringify({ ts: new Date().toISOString(), level, src: 'server', msg }) + '\n\n');
-      push('info', '已连接日志流');
-      const timer = setInterval(() => push('info', '心跳 ' + new Date().toLocaleTimeString('zh-CN')), 5000);
-      req.on('close', () => clearInterval(timer));
+      res.write('retry: 3000\n\n');
+      const last = Number(u.searchParams.get('last') || req.headers['last-event-id'] || 0) || 0;
+      LOG_RING.filter(function (e) { return e.id > last; }).forEach(function (e) {
+        res.write('id: ' + e.id + '\ndata: ' + JSON.stringify(e) + '\n\n');
+      });
+      SSE_CLIENTS.add(res);
+      const ping = setInterval(function () { try { res.write(': ping\n\n'); } catch (e) {} }, 15000);
+      req.on('close', function () { clearInterval(ping); SSE_CLIENTS.delete(res); });
       return;
     }
     return fail(res, 404, 'NOT_FOUND', '接口不存在：' + p);
@@ -226,6 +275,9 @@ const server = http.createServer(async (req, res) => {
 
   return serveStatic(req, res, p);
 });
+
+LOG_RING.push.apply(LOG_RING, loadRecentLogs(200));
+logEvent('info', '服务', '服务启动 v' + VERSION + ' · 端口 ' + PORT + ' · 数据目录 ' + DATA_DIR);
 
 server.listen(PORT, () => {
   console.log('SEEDPOD 服务已启动 http://0.0.0.0:' + PORT + '  数据目录 ' + DATA_DIR +

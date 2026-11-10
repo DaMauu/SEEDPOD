@@ -2194,3 +2194,4 @@ body::after {
   75% { transform: translateX(6px); }
 }
 .menu-link.menu-logout { width: 100%; text-align: left; background: none; border: 0; color: #b3352f; }
+.dash-log-empty { padding: 18px 4px; font-size: 12px; color: var(--muted-2); }
