@@ -1,36 +1,9 @@
-/* 媒体资料库 · 静态原型假数据与渲染逻辑 */
+/* SEEDPOD 面板：前端逻辑（无构建，直接跑在浏览器里） */
 (function () {
   var PAGE = document.body.getAttribute("data-page") || "dashboard";
 
   var MOCK = {
-    stats: {
-      crawlAt: "今天 12:40",
-      crawlPages: 231,
-      targetLogin: "剩余 6 天",
-      pending: 12,
-      nodes: "4 / 5 在线",
-      today: { scanned: 23186, checked: 214, fresh: 87, posted: 3, failed: 1, dbTotal: 128406, monthPosted: 84, totalPosted: 1240 }
-    },
     sites: null, /* 由站点清单实时算出 */
-    trend: {
-      week: { values: [3, 4, 5, 4, 5, 3, 3], labels: ["一", "二", "三", "四", "五", "六", "日"] },
-      month: {
-        values: [1, 2, 0, 3, 2, 4, 3, 5, 2, 1, 4, 3, 2, 5, 4, 3, 6, 4, 2, 3, 5, 4, 6, 3, 2, 5, 4, 3, 6, 4],
-        labels: []
-      }
-    },
-    todos: [
-      { level: "warn", title: "12 部待发等你确认", desc: "最早一条已等 2 小时", action: "去确认", href: "#queue" },
-      { level: "bad", title: "2 个站登录失效", desc: "站点 A、站点 C 需要重新登录", action: "去登录", href: "#settings" },
-      { level: "warn", title: "节点 E 离线 37 分钟", desc: "还有 214 个种子未同步", action: "查看", href: "#nodes" },
-      { level: "", title: "抓取任务运行正常", desc: "下一轮 18:00 自动增量", action: "看日志", href: "#logs" }
-    ],
-    published: [
-      { title: "The Golden Lotus", cn: "金瓶双艳", site: "主站 B", time: "12:39", size: "30.67 GB" },
-      { title: "Perfect Blue", cn: "未麻的部屋", site: "主站 B", time: "11:52", size: "44.14 GB" },
-      { title: "Ran", cn: "乱", site: "主站 B", time: "10:18", size: "87.77 GB" },
-      { title: "Green Snake", cn: "青蛇劫起", site: "主站 B", time: "昨天 22:41", size: "43.67 GB" }
-    ],
     queue: [],
     sources: [],
     nodes: [],
@@ -717,52 +690,6 @@
     lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
       return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
     }).join("");
-  }
-
-  function renderTodos() {
-    var host = $("#dash-todos");
-    if (!host) return;
-    host.innerHTML = MOCK.todos.map(function (t) {
-      return '<a class="list-item todo-item" href="' + t.href + '">' +
-        '<span class="dot ' + (t.level || "") + '" style="align-self:center"></span>' +
-        '<div style="flex:1;min-width:0"><div class="t-main">' + escapeHtml(t.title) + "</div>" +
-        '<div class="t-sub">' + escapeHtml(t.desc) + "</div></div>" +
-        '<span class="btn sm ghost">' + escapeHtml(t.action) + "</span></a>";
-    }).join("");
-  }
-
-  function renderTrend(range) {
-    var host = $("#trend-chart");
-    if (!host) return;
-    var d = MOCK.trend[range] || MOCK.trend.week;
-    var max = Math.max.apply(null, d.values) || 1;
-    host.innerHTML = d.values.map(function (v, i) {
-      var label = d.labels && d.labels[i] ? "周" + d.labels[i] : "第 " + (i + 1) + " 天";
-      return '<div class="chart-col" title="' + label + "：" + v + ' 部"><i style="height:' +
-        Math.max(4, Math.round(v / max * 100)) + '%"></i></div>';
-    }).join("");
-    var lab = $("#trend-labels");
-    if (lab) {
-      lab.innerHTML = d.labels && d.labels.length ? d.labels.map(function (x) {
-        return "<span>" + escapeHtml(x) + "</span>";
-      }).join("") : "";
-      lab.style.display = d.labels && d.labels.length ? "flex" : "none";
-    }
-    var total = d.values.reduce(function (a, b) { return a + b; }, 0);
-    var tot = $("#trend-total");
-    if (tot) tot.textContent = "共 " + total + " 部";
-    var seg = $("#trend-range");
-    if (seg && !seg._bound) {
-      seg._bound = true;
-      $$("a", seg).forEach(function (a) {
-        a.addEventListener("click", function (e) {
-          e.preventDefault();
-          $$("a", seg).forEach(function (x) { x.classList.remove("active"); });
-          a.classList.add("active");
-          renderTrend(a.getAttribute("data-range"));
-        });
-      });
-    }
   }
 
   window.__ptaPaintHealth = function () { renderDashboard(); renderSiteHealth(); renderNodeCapacity(); };
