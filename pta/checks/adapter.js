@@ -198,6 +198,17 @@ check('解析种子文件：体积、名字、infohash', () => {
   need(torrent.torrentInfo(Buffer.from('not a torrent')) === null, '坏数据应返回 null');
 });
 
+check('判同一个种子：标题/年份/分辨率/体积/infohash', () => {
+  const match = require(path.join(ROOT, 'server', 'match.js'));
+  const a = { title: 'Some Movie 2020 1080p BluRay AVC-GRP', year: 2020, res: '1080p', size: '22.10 GB' };
+  need(match.compare(a, { title: 'Some Movie 2020 1080p Blu-ray x264-OTHER', year: 2020, res: '1080p', size: '22.05 GB' }).same === true, '同片不同发布组应判同');
+  need(match.compare(a, { title: 'Some Movie 2020 2160p BluRay x265-GRP', year: 2020, res: '2160p', size: '22.05 GB' }).same === false, '分辨率不同应判不同');
+  need(match.compare(a, { title: 'Some Movie 2020 1080p BluRay AVC-GRP', year: 2020, res: '1080p', size: '3.00 GB' }).same === false, '体积差太多应判不同');
+  need(match.compare({ title: 'X 2020 1080p', infohash: 'a'.repeat(40) }, { title: '完全不同的标题', infohash: 'a'.repeat(40) }).same === true, 'infohash 相同应判同');
+  need(match.compare({ title: 'X 2020 1080p', infohash: 'a'.repeat(40) }, { title: 'X 2020 1080p', infohash: 'b'.repeat(40) }).same === false, 'infohash 不同应判不同');
+  need(match.normTitle('【某站】Some Movie 2020 1080p WEB-DL DDP5.1-GRP') === 'some movie 2020', '标题归一把站点前缀/编码/组名没清干净：' + match.normTitle('【某站】Some Movie 2020 1080p WEB-DL DDP5.1-GRP'));
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

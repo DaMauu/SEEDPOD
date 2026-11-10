@@ -17,6 +17,7 @@ const VERSION = require('../package.json').version;
 const adapters = require('./adapters');
 const nexusphp = adapters.nexusphp;
 const secretbox = require('./secretbox');
+const match = require('./match');
 const KEYRING = secretbox.loadKey(DATA_DIR);
 const STARTED = Date.now();
 
@@ -334,21 +335,17 @@ function sizeGbOf(text) {
   return n;
 }
 function findDuplicates(item, pool) {
-  const key = titleKeyOf(item.title);
-  if (!key) return [];
-  const size = sizeGbOf(item.size);
-  return pool.filter(function (x) {
-    if (!x || String(x.id) === String(item.id)) return false;
-    if (titleKeyOf(x.title) !== key) return false;
-    if (item.year && x.year && String(item.year) !== String(x.year)) return false;
-    if (item.res && x.res && item.res !== x.res) return false;
-    return true;
-  }).map(function (x) {
-    const s = sizeGbOf(x.size);
-    const sameSize = size > 0 && s > 0 && Math.abs(s - size) / Math.max(s, size) <= 0.05;
-    return { id: x.id || null, source: x.source || 'queue', title: x.title, site: x.site || '',
-      size: x.size || '', reason: sameSize ? '同片且体积相近' : '同片' };
+  const out = [];
+  (pool || []).forEach(function (x) {
+    if (!x || String(x.id) === String(item.id)) return;
+    const r = match.compare(item, x);
+    if (!r.same) return;
+    out.push({
+      id: x.id || null, source: x.source || 'queue', title: x.title, site: x.site || '',
+      size: x.size || '', reason: r.reasons.join(' · '), score: r.score
+    });
   });
+  return out.sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
 }
 
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
@@ -360,7 +357,7 @@ const QUEUE_FLOW = {
   rejected: [],
   published: []
 };
-const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'imdb', 'site', 'check', 'checkCls', 'note'];
+const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note'];
 
 function readQueue() {
   try {
@@ -1251,6 +1248,8 @@ const server = http.createServer(async (req, res) => {
         title: title, cn: body.cn ? String(body.cn).slice(0, 120) : '',
         year: body.year ? Number(body.year) || 0 : 0, res: body.res ? String(body.res).slice(0, 20) : '',
         size: body.size ? String(body.size).slice(0, 40) : '', site: body.site ? String(body.site).slice(0, 120) : '',
+        sizeBytes: body.sizeBytes ? Number(body.sizeBytes) || 0 : 0,
+        infohash: body.infohash ? String(body.infohash).toLowerCase().replace(/[^a-f0-9]/g, '').slice(0, 40) : '',
         addedAt: new Date().toISOString()
       };
       items.push(entry);

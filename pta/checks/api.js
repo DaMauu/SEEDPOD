@@ -566,6 +566,30 @@ async function main() {
     need(dj.data.duplicate === true, '同名同分辨率没有判重');
     need(dj.data.matches.some(m => m.source === 'library'), '没匹配到本地库');
     need(/已有同片/.test(dj.data.item.check), '条目上的查重文案没更新：' + dj.data.item.check);
+    need(dj.data.matches[0].reason && dj.data.matches[0].reason.length > 0, '没给出判定理由');
+
+    /* 同名同分辨率但体积差太多：不是同一个版本，不能判重 */
+    const bigDiff = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Check Fixture Movie 2021 2160p UHD Blu-ray', year: 2021, res: '2160p', size: '8.20 GB', site: 'example.org' })
+    });
+    const bdId = (await bigDiff.json()).data.id;
+    const bd = await (await fetchA(BASE + '/api/queue/' + bdId + '/check', { method: 'POST' })).json();
+    need(bd.data.duplicate === false, '体积差 80% 还判成重复');
+
+    /* infohash 相同就是同一条，标题不一样也认 */
+    await fetchA(BASE + '/api/library', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Hash Fixture One 2020 1080p', infohash: 'a'.repeat(40), size: '10.00 GB' })
+    });
+    const hashItem = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Hash Fixture Two 2020 1080p Something Else', infohash: 'a'.repeat(40), size: '10.00 GB' })
+    });
+    const hid = (await hashItem.json()).data.id;
+    const hd = await (await fetchA(BASE + '/api/queue/' + hid + '/check', { method: 'POST' })).json();
+    need(hd.data.duplicate === true, 'infohash 相同却没判重');
+    need(hd.data.matches.some(m => /infohash/.test(m.reason || '')), 'infohash 判定没写进理由：' + JSON.stringify(hd.data.matches).slice(0, 160));
 
     const other = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

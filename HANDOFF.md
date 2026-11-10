@@ -175,6 +175,12 @@ node scripts/pipeline.js --sample  # 先补采样（每站一次 GET，站间 4-
 产物：`pta/data/{analysis.json,site-defs/,site-search.local.json,coverage.json}`；
 详细流程与失败分类见 `docs/PIPELINE.md`。
 
+## 判定同一条种子（不要重复转载）
+
+`server/match.js`：先比 infohash（相同即同一条，不同即不是），再比归一后的标题、年份、分辨率、
+体积（差 8% 以上判不同版本，2% 内加分）、发布组。
+`POST /api/queue/:id/check` 用的就是它，返回的每条命中都带理由。
+
 ## 检查
 
 ```
