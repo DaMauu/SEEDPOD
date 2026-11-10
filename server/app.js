@@ -1407,20 +1407,27 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/site-defs' && req.method === 'GET') {
       const list = [];
+      const crawlState = readCrawlState();
+      const today0 = new Date().toISOString().slice(0, 10);
       let files = [];
       try { files = fs.readdirSync(DEF_DIR); } catch (e) { files = []; }
       files.filter(function (f) { return /\.json$/.test(f); }).forEach(function (f) {
         try {
           const d = JSON.parse(fs.readFileSync(path.join(DEF_DIR, f), 'utf8'));
           const cats = d.cats || {};
+          const host = d.host || f.replace(/\.json$/, '');
           let ids = 0;
           Object.keys(cats).forEach(function (k) { ids += (cats[k] || []).length; });
+          const cr = crawlState[host] || null;
           list.push({
-            host: d.host || f.replace(/\.json$/, ''), engine: d.engine || '',
+            host: host, engine: d.engine || '',
             groups: Object.keys(cats).length, ids: ids,
             rows: (d.source && d.source.rows) || 0, sizeRows: (d.source && d.source.sizeRows) || 0,
             kind: (d.source && d.source.kind) || '',
-            updatedAt: (d.source && d.source.analyzedAt) || null
+            updatedAt: (d.source && d.source.analyzedAt) || null,
+            crawlAt: cr ? (cr.lastAt || 0) : 0,
+            crawlCount: cr && cr.day === today0 ? (cr.count || 0) : 0,
+            crawled: !!(cr && cr.lastAt)
           });
         } catch (e) {}
       });

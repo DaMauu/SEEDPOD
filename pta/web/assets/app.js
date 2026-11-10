@@ -2983,6 +2983,15 @@
               var ps = presetStats();
               if (!ps.total) return "";
               return ' · 预设：已确认 ' + ps.confirmed + ' · 有分类 ' + ps.withCats + ' · 待补 ' + (ps.total - ps.withCats);
+            })() +
+            (function () {
+              var defs = window.__ptaDefs || {};
+              var crawled = 0, today = 0;
+              Object.keys(defs).forEach(function (h) {
+                if (defs[h] && defs[h].crawled) crawled++;
+                if (defs[h] && defs[h].crawlCount) today += defs[h].crawlCount;
+              });
+              return crawled ? ' · 已抓过 ' + crawled + ' 站（今日 ' + today + ' 次）' : ' · 还没抓过';
             })() + "</div>";
         })();
     }
