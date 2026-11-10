@@ -2353,9 +2353,10 @@
             '<em class="chip ' + a[0] + '">' + a[1] + "</em>" +
             '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span>" +
             '<span class="chip ' + (presetOf(s.name) ? "np" : "unk") + '">搜索预设 ' + (presetOf(s.name) ? "已确认" : "未确认") + "</span></div>" +
-            '<span class="sd-url">' + escapeHtml(s.url) + "</span></div>" +
+            '<span class="sd-url">' + escapeHtml(s.url) + "</span>" +
+            '<span class="sd-selfcheck" id="sd-selfcheck">' + (s.checkAt ? "上次自检 " + escapeHtml(s.checkAt) + " · " + escapeHtml(s.checkMsg || "") : "还没做过连接自检") + "</span></div>" +
           '<div class="sd-actions">' +
-            '<button class="btn slim" data-act="crawl">抓取测试</button>' +
+            '<button class="btn slim" data-act="selfcheck" title="干跑自检：只读本地配置，不访问真实站点">连接自检（干跑）</button>' +
             '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
             SET_TABS.map(function (t) {
               var on = state.tab === "settings" && state.setTab === t[0];
@@ -2671,17 +2672,37 @@
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!s) return;
 
-      if (act === "crawl") {
+      if (act === "selfcheck") {
         if (btn.disabled) return;
         var oldTxt = btn.textContent;
         btn.disabled = true;
-        btn.textContent = "测试中…";
-        setTimeout(function () {
+        btn.textContent = "自检中…";
+        var setLine = function (msg) {
+          s.checkAt = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+          s.checkMsg = msg;
+          var line = $("#sd-selfcheck");
+          if (line) line.textContent = "上次自检 " + s.checkAt + " · " + msg;
+        };
+        window.__ptaDryRun(s.name, function (t) {
+          if (t.state === "running" || t.state === "queued") {
+            setLine("跑第 " + (t.progress || 0) + "%");
+          }
+        }, function (t) {
           btn.disabled = false;
           btn.textContent = oldTxt;
-          var ok = s.login === "ok" && s.enabled;
-          toast(ok ? "测试通过：登录、列表、详情都正常（假数据）" : "测试未通过：" + (!s.enabled ? "站点已停用" : "登录失效") + "（假数据）");
-        }, 900);
+          var plan = (t.result && t.result.plan) || {};
+          var warns = (t.result && t.result.warnings) || [];
+          var msg = "预估 " + (plan.estimatedQueries || 0) + " 次查询" +
+            (plan.catGroups ? " · 分类 " + plan.catGroups + " 组" : "") +
+            (warns.length ? " · " + warns.length + " 条提示" : " · 没有发现问题");
+          setLine(msg);
+          toast("自检完成：" + msg);
+        }, function (err) {
+          btn.disabled = false;
+          btn.textContent = oldTxt;
+          setLine(err);
+          toast(err);
+        });
         return;
       }
       if (act === "login") { toast("重新登录：" + (s.title || s.name) + "（假数据）"); return; }

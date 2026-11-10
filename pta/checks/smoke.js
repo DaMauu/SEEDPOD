@@ -197,6 +197,27 @@ async function main() {
     await page.waitForTimeout(150);
   });
 
+  /* 6.3 站点详情连接自检：没有后端时给提示，按钮文案标明干跑 */
+  await check('站点连接自检在没有后端时给出提示', async () => {
+    await open('#sites');
+    await page.locator('.site-item').nth(1).click();
+    await page.waitForTimeout(700);
+    const label = await page.evaluate(() => {
+      const b = document.querySelector('#site-detail button[data-act="selfcheck"]');
+      return b ? b.textContent : 'missing';
+    });
+    need(/干跑/.test(label), '按钮没标明干跑：' + label);
+    await page.evaluate(() => {
+      const b = document.querySelector('#site-detail button[data-act="selfcheck"]');
+      if (b) b.click();
+    });
+    await page.waitForTimeout(320);
+    const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
+    need(/干跑|不可用/.test(t), '没有不可用提示：' + t);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+  });
+
   /* 6.4 流程页干跑自检：没有后端时给提示 */
   await check('流程页干跑自检在没有后端时给出提示', async () => {
     await open('#crawl');
