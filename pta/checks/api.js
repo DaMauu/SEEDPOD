@@ -19,6 +19,11 @@ function check(name, fn) {
 }
 function need(cond, msg) { if (!cond) throw new Error(msg); }
 
+const AUTH = 'Basic ' + Buffer.from('check:check-pass').toString('base64');
+function fetchA(url, opts) {
+  return fetch(url, Object.assign({}, opts || {}, { headers: Object.assign({ authorization: AUTH }, (opts || {}).headers || {}) }));
+}
+
 async function waitUp() {
   for (let i = 0; i < 40; i++) {
     try {
@@ -33,7 +38,10 @@ async function waitUp() {
 async function main() {
   const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'app.js')], {
     cwd: ROOT,
-    env: Object.assign({}, process.env, { PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'pta', 'web') }),
+    env: Object.assign({}, process.env, {
+      PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'pta', 'web'),
+      PTA_USER: 'check', PTA_PASS: 'check-pass'
+    }),
     stdio: ['ignore', 'pipe', 'pipe']
   });
   let out = '';
@@ -56,7 +64,7 @@ async function main() {
   });
 
   await check('config 默认值与双模式区间', async () => {
-    const j = await (await fetch(BASE + '/api/config')).json();
+    const j = await (await fetchA(BASE + '/api/config')).json();
     need(j.ok, 'ok 不为 true');
     need(j.data.user.runMode === 'test', '默认不是测试模式');
     need(j.data.user.interval === 60, '默认间隔应为 60');
@@ -66,7 +74,7 @@ async function main() {
   });
 
   await check('越界返回 400 OUT_OF_RANGE', async () => {
-    const r = await fetch(BASE + '/api/config/user', {
+    const r = await fetchA(BASE + '/api/config/user', {
       method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ interval: 3 })
     });
     need(r.status === 400, '状态码是 ' + r.status);
@@ -75,7 +83,7 @@ async function main() {
   });
 
   await check('合法修改落盘', async () => {
-    const r = await fetch(BASE + '/api/config/user', {
+    const r = await fetchA(BASE + '/api/config/user', {
       method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ interval: '45', dailySite: 15 })
     });
     need(r.ok, '修改失败');
@@ -86,26 +94,41 @@ async function main() {
   });
 
   await check('切换正式模式后下限变 8', async () => {
-    await fetch(BASE + '/api/config/user', {
+    await fetchA(BASE + '/api/config/user', {
       method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ runMode: 'prod' })
     });
-    const r = await fetch(BASE + '/api/config/user', {
+    const r = await fetchA(BASE + '/api/config/user', {
       method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ interval: 10 })
     });
     need(r.ok, '正式模式 10 秒应被接受');
-    const bad = await fetch(BASE + '/api/config/user', {
+    const bad = await fetchA(BASE + '/api/config/user', {
       method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ interval: 5 })
     });
     need(bad.status === 400, '正式模式 5 秒应被拒绝');
   });
 
   await check('静态页面与未知接口', async () => {
-    const home = await fetch(BASE + '/');
+    const home = await fetchA(BASE + '/');
     need(home.ok && /SEEDPOD/.test(await home.text()), '首页不对');
-    const spa = await fetch(BASE + '/whatever/route');
+    const spa = await fetchA(BASE + '/whatever/route');
     need(spa.ok, '未知路径没有回退到首页');
-    const api = await fetch(BASE + '/api/nope');
+    const api = await fetchA(BASE + '/api/nope');
     need(api.status === 404, '未知接口状态码是 ' + api.status);
+  });
+
+  await check('未登录返回 401 并要求 Basic', async () => {
+    const r = await fetch(BASE + '/');
+    need(r.status === 401, '未登录状态码是 ' + r.status);
+    need(/Basic realm="SEEDPOD"/.test(r.headers.get('www-authenticate') || ''), '缺少 WWW-Authenticate');
+  });
+
+  await check('登录后可以打开面板', async () => {
+    const r = await fetchA(BASE + '/');
+    need(r.ok && /SEEDPOD/.test(await r.text()), '登录后拿不到首页');
+    const bad = await fetch(BASE + '/', { headers: { authorization: 'Basic ' + Buffer.from('check:wrong').toString('base64') } });
+    need(bad.status === 401, '错误密码居然通过');
+    const health = await fetch(BASE + '/api/health');
+    need(health.ok, '健康检查不应要求登录');
   });
 
   child.kill();

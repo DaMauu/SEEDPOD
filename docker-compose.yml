@@ -5,12 +5,16 @@ services:
     container_name: seedpod
     restart: unless-stopped
     ports:
-      - "${PTA_PORT:-8080}:8080"
+      # 只对本机或 docker 网桥开放时，把 PTA_BIND 设成 127.0.0.1 或 172.17.0.1
+      - "${PTA_BIND:-0.0.0.0}:${PTA_PORT:-8080}:8080"
     volumes:
       - ./data:/data
     environment:
       TZ: Asia/Shanghai
       PTA_PORT: 8080
+      # 面板登录密码（HTTP Basic）。两个都填才生效，留空则不验证
+      PTA_USER: "${PTA_USER:-}"
+      PTA_PASS: "${PTA_PASS:-}"
       # 需要外部访问时再设，设了以后所有 /api 都要带 Authorization: Bearer <token>
       PTA_TOKEN: ""
     healthcheck:

@@ -9,6 +9,8 @@ const PORT = Number(process.env.PTA_PORT || 8080);
 const DATA_DIR = path.resolve(process.env.PTA_DATA || './data');
 const WEB_DIR = path.resolve(process.env.PTA_WEB || './pta/web');
 const TOKEN = process.env.PTA_TOKEN || '';
+const PTA_USER = process.env.PTA_USER || '';
+const PTA_PASS = process.env.PTA_PASS || '';
 const VERSION = require('../package.json').version;
 const STARTED = Date.now();
 
@@ -103,6 +105,17 @@ function serveStatic(req, res, urlPath) {
   });
 }
 
+function basicAuthOk(req) {
+  if (!PTA_USER) return true;
+  const h = req.headers.authorization || '';
+  if (h.slice(0, 6).toLowerCase() !== 'basic ') return false;
+  let raw = '';
+  try { raw = Buffer.from(h.slice(6), 'base64').toString('utf8'); } catch (e) { return false; }
+  const i = raw.indexOf(':');
+  if (i < 0) return false;
+  return raw.slice(0, i) === PTA_USER && raw.slice(i + 1) === PTA_PASS;
+}
+
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://local');
   const p = u.pathname;
@@ -112,6 +125,14 @@ const server = http.createServer(async (req, res) => {
       version: VERSION, uptime: Math.round((Date.now() - STARTED) / 1000),
       db: 'file', loginFail: 0, nodesOnline: 0, nodesTotal: 0
     } });
+  }
+
+  if (p !== '/api/health' && !basicAuthOk(req)) {
+    res.writeHead(401, {
+      'WWW-Authenticate': 'Basic realm="SEEDPOD", charset="UTF-8"',
+      'content-type': 'text/plain; charset=utf-8'
+    });
+    return res.end('需要登录');
   }
 
   if (p.startsWith('/api/')) {
@@ -157,5 +178,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log('SEEDPOD 服务已启动 http://0.0.0.0:' + PORT + '  数据目录 ' + DATA_DIR);
+  console.log('SEEDPOD 服务已启动 http://0.0.0.0:' + PORT + '  数据目录 ' + DATA_DIR +
+    (PTA_USER ? '  已开启面板密码' : '  未设面板密码') + (TOKEN ? ' · API 令牌已开' : ''));
 });

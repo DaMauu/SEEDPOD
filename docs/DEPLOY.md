@@ -48,6 +48,40 @@ ssh -N -L 8080:127.0.0.1:8080 root@<你的机器>
 
 bind mount 到 `/data` 时，宿主机目录通常属于 root，容器内的 pta 用户写不进去。镜像自带 entrypoint：以 root 启动时先把 `/data` 归给 pta，再降权运行，所以不用手动 chown。
 
+## 公网访问（反代 + 面板密码）
+
+不要让容器直接把 8080 绑到 0.0.0.0 裸奔，标准做法是只绑内网，再用 nginx 反代：
+
+```
+# .env
+PTA_BIND=172.17.0.1      # 只给 docker 网桥，宿主外不可达
+PTA_USER=admin
+PTA_PASS=换成你自己的密码
+```
+
+nginx 侧（server 和一个容器同名即可，需把 nginx 加进同一网络）：
+
+```
+docker network connect seedpod_default nginx
+```
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name pta.example.com;
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+    location / {
+        proxy_pass http://seedpod:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+面板自己有 HTTP Basic 认证，nginx 不用再加一层。
+
 ## 访问控制
 
 默认只适合本机或内网。要给外部访问，先设令牌：

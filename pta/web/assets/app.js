@@ -1722,6 +1722,34 @@
         toast(lbl + "（假数据）");
       }
     });
+    /* 已连后端时，抓取节奏以服务端为准 */
+    function loadServerPace() {
+      if (typeof API === "undefined" || API.mode !== "live" || !API.getConfig) return;
+      API.getConfig().then(function (j) {
+        if (!j || !j.ok) return;
+        var u = (j.data && j.data.user) || {};
+        var card = panel.querySelector(".set-card");
+        var sel = card.querySelector('select[data-k="runMode"]');
+        var pace = card.querySelector('input[data-k="paceSec"]');
+        var ds = card.querySelector('input[data-k="dailySite"]');
+        var da = card.querySelector('input[data-k="dailyAll"]');
+        if (sel && u.runMode) sel.value = u.runMode;
+        var test = !sel || sel.value !== "prod";
+        if (pace) {
+          pace.setAttribute("data-min", test ? "30" : "8");
+          pace.setAttribute("placeholder", test ? "30–120" : "8–120");
+          if (u.interval != null) pace.value = u.interval;
+        }
+        if (ds && u.dailySite != null) ds.value = u.dailySite;
+        if (da && u.dailyAll != null) da.value = u.dailyAll;
+        checkNums(card);
+      }).catch(function () {});
+    }
+    window.__ptaAfterProbe = loadServerPace;
+    setTimeout(loadServerPace, 300);
+    setTimeout(loadServerPace, 1600);
+    setTimeout(loadServerPace, 3600);
+
     (function restoreSettings() {
       var data = null;
       try { data = JSON.parse(localStorage.getItem("pta.settings2") || "null"); } catch (e) {}
@@ -1767,6 +1795,22 @@
         vals.push(ctl ? ctl.value : "");
       });
       try { localStorage.setItem("pta.settings2", JSON.stringify(vals)); } catch (err) {}
+
+      var card = e.target.closest(".set-card");
+      var rmSel = card && card.querySelector('select[data-k="runMode"]');
+      if (rmSel && typeof API !== "undefined" && API.mode === "live" && API.patchConfig) {
+        var pack = {
+          runMode: rmSel.value,
+          interval: Number(card.querySelector('input[data-k="paceSec"]').value),
+          dailySite: Number(card.querySelector('input[data-k="dailySite"]').value),
+          dailyAll: Number(card.querySelector('input[data-k="dailyAll"]').value)
+        };
+        API.patchConfig(pack).then(function (j) {
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "服务端拒绝保存"); return; }
+          toast("已保存到服务端");
+        }).catch(function () { toast("服务端没有响应，已存本地"); });
+        return;
+      }
       var pw = panel.querySelector('[data-k="panelPass"]');
       var val = pw ? pw.value : "";
       if (val) {
@@ -2496,7 +2540,19 @@
         if (timer) clearTimeout(timer);
         renderProgress();
         refreshPills();
+        if (typeof window.__ptaAfterProbe === "function") window.__ptaAfterProbe();
       });
+    },
+    getConfig: function () {
+      return fetch("api/config", { cache: "no-store" })
+        .then(function (r) { return r.json(); });
+    },
+    patchConfig: function (body) {
+      return fetch("api/config/user", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json(); });
     }
   };
 
