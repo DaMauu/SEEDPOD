@@ -1946,7 +1946,7 @@
       var b = document.createElement("button");
       b.className = "btn primary slim";
       b.id = "crawl-screen-run";
-      b.textContent = "筛选送审";
+      b.textContent = "按条件筛选";
       sec.insertBefore(b, sec.firstChild);
       b.addEventListener("click", function () {
         if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，筛选不可用"); return; }
@@ -1958,7 +1958,8 @@
           b.disabled = false;
           if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
           var d = j.data;
-          toast("检查 " + d.checked + " 条 · 入选 " + d.selected + " · 跳过 " + d.skipped);
+          var rs = Object.keys(d.byReason || {}).map(function (k) { return k + " " + d.byReason[k]; }).join(" · ");
+          toast("检查 " + d.checked + " 条 · 入选 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
           if (window.__ptaLoadOverview) window.__ptaLoadOverview();
         }).catch(function () { b.disabled = false; toast("筛选请求发不出去"); });
       });

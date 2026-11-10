@@ -984,6 +984,37 @@ async function main() {
     need(health.ok, '健康检查不应要求登录');
   });
 
+  await check('筛选条件取自面板配置', async () => {
+    const rows = [
+      { v: '2160p 及以上', on: false, sel: [] },
+      { v: '20 GB 起', on: false, sel: [] },
+      { v: '不限', on: false, sel: [] },
+      { v: '', on: false, sel: [] },
+      { v: '', on: false, sel: [] },
+      { v: '', on: true, sel: [] }
+    ];
+    const save = await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: { dedupe: [rows] } })
+    });
+    need(save.ok, '保存筛选条件失败');
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [
+        { site: 'flow.example', siteId: '1', title: 'Flow Fixture Low 2024 1080p', res: '1080p', sizeBytes: 32212254720 },
+        { site: 'flow.example', siteId: '2', title: 'Flow Fixture NoZh 2024 2160p', res: '2160p', sizeBytes: 64424509440 },
+        { site: 'flow.example', siteId: '3', title: 'Flow Fixture Good 2024 2160p 中字', res: '2160p', sizeBytes: 64424509440 }
+      ] })
+    });
+    const run = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'flow.example', limit: 10 })
+    })).json();
+    need(run.ok, '按面板条件筛选失败：' + JSON.stringify(run).slice(0, 160));
+    need(run.data.selected === 1, '面板条件没生效，入选 ' + run.data.selected + '：' + JSON.stringify(run.data.byReason));
+    const reasons = JSON.stringify(run.data.byReason);
+    need(/分辨率/.test(reasons) && /中字/.test(reasons), '跳过原因不对：' + reasons);
+    await fetchA(BASE + '/api/flow', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: { dedupe: [[]] } }) });
+  });
+
   child.kill();
   await new Promise(r => setTimeout(r, 200));
   try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}

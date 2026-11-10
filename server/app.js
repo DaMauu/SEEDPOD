@@ -474,12 +474,33 @@ async function crawlOnceInner(host, opts) {
 }
 
 /* ---------- 第二步筛选：从词条库挑出可发的，送进待审核 ---------- */
+/* 筛选参数优先用请求里的，其次用面板「筛选条件」那一组配置。
+   flow 里只存了每行的 {v,on,sel}，没有标题，所以按 data.js 里的行顺序取：
+   0 分辨率要求 / 1 体积范围 / 2 最大体积 / 3 地区版本 / 4 必须有简介 / 5 必须带中字 */
+function flowScreenRules() {
+  const flow = readFlow();
+  const rows = (flow && flow.sets && Array.isArray(flow.sets.dedupe) && Array.isArray(flow.sets.dedupe[0]))
+    ? flow.sets.dedupe[0] : [];
+  const val = function (i) { return rows[i] ? String(rows[i].v || '') : ''; };
+  const on = function (i) { return !!(rows[i] && rows[i].on); };
+  const out = { res: [], minSizeGB: 0, maxSizeGB: 0, requireChinese: false };
+  const rv = val(0);
+  if (/2160|4k/i.test(rv)) out.res = ['2160p'];
+  else if (/1080/.test(rv)) out.res = ['1080p', '2160p'];
+  const lo = /([\d.]+)\s*GB/.exec(val(1));
+  if (lo) out.minSizeGB = Number(lo[1]) || 0;
+  const hi = /([\d.]+)\s*GB/.exec(val(2));
+  if (hi) out.maxSizeGB = Number(hi[1]) || 0;
+  if (on(5)) out.requireChinese = true;
+  return out;
+}
+
 const SCREEN_RES = /^(2160p|1080p|1080i|720p|576p|480p)$/i;
 function screenCatalog(opts) {
   const o = opts || {};
   const limit = Math.max(1, Math.min(200, Number(o.limit) || 50));
   const host = String(o.host || '').trim().toLowerCase();
-  const rules = o.rules || {};
+  const rules = (o.rules && Object.keys(o.rules).length) ? o.rules : flowScreenRules();
   const resAllow = Array.isArray(rules.res) ? rules.res.map(function (x) { return String(x).toLowerCase(); }) : [];
   const minBytes = Number(rules.minSizeGB) > 0 ? Number(rules.minSizeGB) * 1073741824 : 0;
   const maxBytes = Number(rules.maxSizeGB) > 0 ? Number(rules.maxSizeGB) * 1073741824 : 0;
