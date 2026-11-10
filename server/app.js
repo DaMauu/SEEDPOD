@@ -669,10 +669,18 @@ function queueCounts(items) {
 }
 function cleanShots(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr.slice(0, 12).map(function (s) {
-    if (typeof s === 'string') return { name: '', url: s.slice(0, 400000) };
-    return { name: String((s && s.name) || '').slice(0, 120), url: String((s && s.url) || '').slice(0, 400000) };
-  }).filter(function (s) { return s.url; });
+  const out = [];
+  let bytes = 0;
+  arr.slice(0, 12).forEach(function (s) {
+    const one = typeof s === 'string' ? { name: '', url: s } : { name: String((s && s.name) || '').slice(0, 120), url: String((s && s.url) || '') };
+    if (!one.url) return;
+    /* 单条最多 400KB 字符，整组不超过 2.5MB，别把队列文件撑爆 */
+    one.url = one.url.slice(0, 400000);
+    if (bytes + one.url.length > 2500000) return;
+    bytes += one.url.length;
+    out.push(one);
+  });
+  return out;
 }
 
 function createQueueItem(body) {
