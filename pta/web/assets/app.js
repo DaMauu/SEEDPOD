@@ -1647,11 +1647,12 @@
     if (!panel) return;
     var GROUPS = [
       { name: "抓取节奏", desc: "请求层由程序固定，只有速度在安全区间里可调；越界只提醒，不会保存也不会执行。", rows: [
-        { t: "请求间隔", type: "num", k: "paceSec", v: "30", range: [8, 120], ph: "8–120", hint: "低于 8 秒会被拦下，最高 120 秒" },
+        { t: "运行模式", type: "select", k: "runMode", v: "test", opts: ["test", "prod"], labels: { test: "测试（按人手速度）", prod: "正式" }, hint: "测试模式一分钟一次，用来验证流程" },
+        { t: "请求间隔", type: "num", k: "paceSec", v: "60", range: [30, 120], ph: "30–120", hint: "测试模式最低 30 秒，按人手速度跑" },
         { t: "并发", type: "fixed", v: "1", hint: "固定单线程，不开放调整" },
-        { t: "单站每日上限", type: "num", k: "dailySite", v: "100", range: [1, 300], hint: "程序按站规再压一次，最多到站规的 1/3" },
-        { t: "全站每日上限", type: "num", k: "dailyAll", v: "800", range: [50, 2000] },
-        { t: "最小间隔", type: "fixed", v: "8 秒", hint: "低于这个值一律不执行" },
+        { t: "单站每日上限", type: "num", k: "dailySite", v: "20", range: [1, 300], hint: "程序按站规再压一次，最多到站规的 1/3" },
+        { t: "全站每日上限", type: "num", k: "dailyAll", v: "100", range: [50, 2000] },
+        { t: "最小间隔", type: "fixed", v: "测试 30 秒 / 正式 8 秒", hint: "低于这个值一律不执行" },
         { t: "失败重试", type: "fixed", v: "3 次 · 退避 30 秒起" },
         { t: "连续失败熔断", type: "fixed", v: "3 次 4xx 暂停 15 分钟", hint: "429/403 直接停，遵守 Retry-After" },
         { t: "请求审计", type: "fixed", v: "全量记日志", hint: "每次请求可追溯到时间、站点、路径" }
@@ -1737,6 +1738,21 @@
 
     panel.addEventListener("input", function (e) {
       if (e.target && e.target.classList.contains("num")) checkNums(e.target.closest(".set-card"));
+    });
+    panel.addEventListener("change", function (e) {
+      var sel = e.target.closest && e.target.closest('select[data-k="runMode"]');
+      if (!sel) return;
+      var test = sel.value !== "prod";
+      var pace = panel.querySelector('input[data-k="paceSec"]');
+      if (pace) {
+        pace.setAttribute("data-min", test ? "30" : "8");
+        pace.setAttribute("placeholder", test ? "30–120" : "8–120");
+        if (Number(pace.value || 0) < Number(pace.getAttribute("data-min"))) pace.value = test ? "60" : "30";
+        var hintEl = pace.closest(".set-field").querySelector(".lbl i");
+        if (hintEl) hintEl.textContent = test ? "测试模式最低 30 秒，按人手速度跑" : "正式模式最低 8 秒，最高 120 秒";
+      }
+      checkNums(sel.closest(".set-card"));
+      toast(test ? "已切到测试模式：一分钟一次" : "已切到正式模式");
     });
 
     document.addEventListener("click", function (e) {

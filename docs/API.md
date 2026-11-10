@@ -22,8 +22,11 @@
 ```
 { "ok": true, "data": {
   "sys": { "concurrency": 1, "minInterval": 8, "retry": 3, "backoff": 30, "breaker": 15, "audit": true },
-  "user": { "interval": 30, "dailySite": 100, "dailyAll": 800 },
-  "limits": { "interval": [8, 120], "dailySite": [1, 300], "dailyAll": [50, 2000] }
+  "user": { "runMode": "test", "interval": 60, "dailySite": 20, "dailyAll": 100 },
+  "limits": {
+    "test": { "interval": [30, 120], "dailySite": [1, 300], "dailyAll": [50, 2000] },
+    "prod": { "interval": [8, 120], "dailySite": [1, 300], "dailyAll": [50, 2000] }
+  }
 } }
 ```
 

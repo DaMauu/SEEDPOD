@@ -91,11 +91,19 @@ async function main() {
   await check('请求间隔越界被拦截', async () => {
     await open('#settings');
     const card = page.locator('.set-card').first();
-    await card.locator('input.num').first().fill('4');
+    await card.locator('input.num').first().fill('20');
     await card.locator('.set-save').click();
     await page.waitForTimeout(300);
     const warn = await card.locator('.num-warn').first().textContent();
     need(/不允许保存/.test(warn), '没有出现区间提示：' + warn);
+    need(/30/.test(warn), '测试模式下限应是 30 秒：' + warn);
+    await card.locator('select[data-k="runMode"]').selectOption('prod');
+    await page.waitForTimeout(200);
+    await card.locator('input.num').first().fill('4');
+    await card.locator('.set-save').click();
+    await page.waitForTimeout(250);
+    const warn2 = await card.locator('.num-warn').first().textContent();
+    need(/8/.test(warn2), '正式模式下限应是 8 秒：' + warn2);
     const toast = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
     need(/超出安全范围|拦下/.test(toast), '没有拦截提示：' + toast);
   });
