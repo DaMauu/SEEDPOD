@@ -1143,7 +1143,8 @@
             if ($("#qd-title")) $("#qd-title").value = d.title;
             if ($("#qd-sub")) $("#qd-sub").value = d.subtitle;
             if ($("#qd-desc")) $("#qd-desc").value = d.intro;
-            toast(d.ready ? "草稿齐了，可以直接发" : "草稿有缺项：" + d.warnings.join(" · "));
+            var hint = d.categoryHint && d.categoryHint.mapped ? "，分类建议 " + d.categoryHint.purpose + "（" + d.categoryHint.ids.join(",") + "）" : "";
+            toast((d.ready ? "草稿齐了" : "草稿有缺项：" + d.warnings.join(" · ")) + hint);
           })
           .catch(function () { toast("草稿请求发不出去"); });
         return;

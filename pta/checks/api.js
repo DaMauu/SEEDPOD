@@ -727,6 +727,7 @@ async function main() {
     need(d.ready === false, '没给截图/简介时不该算齐全');
     need(d.warnings.some(w => /截图/.test(w)) && d.warnings.some(w => /简介/.test(w)), '截图/简介缺项没提醒：' + JSON.stringify(d.warnings));
     need(d.imageHost === '站内' && d.anonymous === false, '图床/匿名默认值不对：' + JSON.stringify({ imageHost: d.imageHost, anonymous: d.anonymous }));
+    need(d.categoryHint && d.categoryHint.purpose === 'movie', '内容类型没猜出来：' + JSON.stringify(d.categoryHint));
     const missing = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ title: 'Draft Fixture No Year No Res' })

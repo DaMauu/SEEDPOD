@@ -574,18 +574,39 @@ function composePublish(item) {
     audio: (/atmos/i.test(title) ? 'Atmos ' : '') + (/truehd/i.test(title) ? 'TrueHD' : (/dts/i.test(title) ? 'DTS' : (/ddp|ac3|aac/i.test(title) ? 'AC3/AAC' : ''))).trim(),
     subs: /中字|chs|cht|简繁|双语/i.test(title) ? '中字' : ''
   };
+  /* 按标题猜内容类型，再从目标站定义的分类里挑对应的 id，发布时直接带过去 */
+  function purposeOfTitle(t) {
+    const s = String(t || '');
+    if (/动漫|动画|anime|番剧/i.test(s)) return 'anime';
+    if (/纪录|documentar/i.test(s)) return 'doc';
+    if (/音乐|演唱|音乐会|mv\b|ost\b|flac|concert/i.test(s)) return 'music';
+    if (/电子书|有声书|book|ebook|audiobook/i.test(s)) return 'book';
+    if (/游戏|\bgame\b|jocuri/i.test(s)) return 'game';
+    if (/软件|apps?\b|software/i.test(s)) return 'software';
+    if (/体育|sport/i.test(s)) return 'sport';
+    if (/\bs\d{1,2}e\d{1,3}\b|剧集|电视剧|综艺|series|episode/i.test(s)) return 'tv';
+    if (/电影|movie|film|blu-?ray|remux|web-?dl|原盘/i.test(s)) return 'movie';
+    return 'other';
+  }
+  const purpose = purposeOfTitle(title);
+  const def = item.site ? readSiteDef(item.site) : null;
+  const catIds = (def && def.cats && def.cats[purpose]) ? def.cats[purpose].slice(0, 8) : [];
+  const categoryHint = { purpose: purpose, ids: catIds, mapped: !!catIds.length };
+
   const warnings = [];
   if (!subtitle) warnings.push('没有中文副标题，发布前要补');
   if (!res) warnings.push('识别不出分辨率');
   if (!item.site) warnings.push('没选目标站');
   if ((item.shots || []).length < 3) warnings.push('截图不足 3 张');
   if (!item.intro) warnings.push('简介还是空的（会先用模板占位）');
+  if (def && !catIds.length && def.catMap && def.catMap.length) warnings.push('目标站没有对应的「' + purpose + '」分类，发布时要手动选一个');
   return {
     title: title, subtitle: subtitle, year: year, res: res,
     intro: item.intro || ('【片名】' + title + '\n【年份】' + (year || '—') + '\n【分辨率】' + (res || '—') +
       '\n【简介】（待补）\n【截图】' + ((item.shots || []).length ? '见下' : '（待补）')),
     tags: tags, anonymous: !!item.anonymous, imageHost: item.imageHost || '站内',
-    category: item.category || '', screenshots: (item.shots || []).slice(0, 12),
+    category: item.category || '', categoryHint: categoryHint,
+    screenshots: (item.shots || []).slice(0, 12),
     warnings: warnings, ready: warnings.length === 0
   };
 }
