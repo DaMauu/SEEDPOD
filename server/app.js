@@ -667,6 +667,14 @@ function queueCounts(items) {
   items.forEach(function (x) { if (c[x.status] !== undefined) c[x.status]++; });
   return c;
 }
+function cleanShots(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.slice(0, 12).map(function (s) {
+    if (typeof s === 'string') return { name: '', url: s.slice(0, 400000) };
+    return { name: String((s && s.name) || '').slice(0, 120), url: String((s && s.url) || '').slice(0, 400000) };
+  }).filter(function (s) { return s.url; });
+}
+
 function createQueueItem(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return { err: { code: 'BAD_REQUEST', message: '请求体不是合法 JSON 对象' } };
   const title = String(body.title || '').trim();
@@ -679,11 +687,12 @@ function createQueueItem(body) {
   });
   if (body.shots !== undefined) {
     if (!Array.isArray(body.shots)) return { err: { code: 'BAD_REQUEST', message: 'shots 必须是数组' } };
-    item.shots = body.shots.slice(0, 12).map(function (s) { return String(s).slice(0, 500); });
+    item.shots = cleanShots(body.shots);
   }
   if (body.anonymous !== undefined) item.anonymous = body.anonymous === true || body.anonymous === 'true';
   if (body.intro !== undefined) item.intro = String(body.intro).slice(0, 4000);
   if (body.targetSite !== undefined) item.targetSite = String(body.targetSite).slice(0, 120);
+  if (body.shots !== undefined) item.shots = cleanShots(body.shots);
   /* 标题里能读出来的年份/分辨率/体积先补上，待审核页就不用显示空的年份 */
   if (!item.year) { const y = match.yearOf(title); if (y) item.year = y; }
   if (!item.res) { const r = match.resOf(title); if (r) item.res = r; }

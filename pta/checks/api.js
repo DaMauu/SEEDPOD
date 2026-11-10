@@ -1089,7 +1089,8 @@ async function main() {
 
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Publish Fixture 2025 2160p 原盘 中字', res: '2160p', size: '60.00 GB', site: 'source.example', targetSite: '主站', catalogId: cid, anonymous: true, imageHost: 'Imgbox' })
+      body: JSON.stringify({ title: 'Publish Fixture 2025 2160p 原盘 中字', res: '2160p', size: '60.00 GB', site: 'source.example', targetSite: '主站', catalogId: cid, anonymous: true, imageHost: 'Imgbox',
+        shots: [{ name: 'a.jpg', url: 'data:image/jpeg;base64,AAAA' }, { name: 'b.jpg', url: 'data:image/jpeg;base64,BBBB' }, { name: 'c.jpg', url: 'data:image/jpeg;base64,CCCC' }] })
     })).json();
     const qid = q.data.id;
     const app = await fetchA(BASE + '/api/queue/' + qid + '/action', {
@@ -1107,6 +1108,9 @@ async function main() {
     const hit = rec.data.items.filter(x => x.queueId === qid)[0];
     need(hit && hit.anonymous === true && hit.imageHost === 'Imgbox', '发布记录字段没带上：' + JSON.stringify(hit || {}).slice(0, 160));
     need(hit.site === '主站' && hit.sourceSite === 'source.example', '发布记录的站点应该是目标站：' + JSON.stringify({ site: hit.site, from: hit.sourceSite }));
+    const qAfter = await (await fetchA(BASE + '/api/queue')).json();
+    const qHit = qAfter.data.items.filter(x => x.id === qid)[0];
+    need(qHit && Array.isArray(qHit.shots) && qHit.shots.length === 3 && qHit.shots[0].url, '截图没存进条目：' + JSON.stringify((qHit || {}).shots).slice(0, 160));
 
     const cat = await (await fetchA(BASE + '/api/catalog?status=published')).json();
     if (!cat.data.items.some(x => x.id === cid)) {

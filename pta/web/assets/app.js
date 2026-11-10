@@ -230,7 +230,11 @@
       id: String(it.id), title: it.title || "", cn: it.cn || "", year: it.year || "", res: it.res || "",
       size: it.size || "", imdb: it.imdb || "—", site: it.site || "", status: it.status || "pending",
       check: it.check || "未查", checkCls: it.checkCls || "gray", reason: it.reason || "",
-      shots: (it.shots || []).map(function (s, i) { return { name: "shot" + (i + 1), url: s }; }),
+      shots: (it.shots || []).map(function (s, i) {
+        /* 服务端现在存 {name,url}；老数据可能是字符串 */
+        if (s && typeof s === "object") return { name: s.name || ("shot" + (i + 1)), url: s.url || "" };
+        return { name: "shot" + (i + 1), url: s };
+      }).filter(function (s) { return s.url; }),
       server: true
     };
   }
@@ -1010,6 +1014,29 @@
     var filePick = el("input");
     filePick.type = "file"; filePick.accept = "image/*"; filePick.multiple = true; filePick.style.display = "none";
     document.body.appendChild(filePick);
+    /* 截图上传：先按最长边 1600px 压成 jpeg，避免把几 MB 的 base64 塞进服务端队列文件 */
+    function shrinkImage(file, done) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var max = 1600;
+            var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+            var scale = Math.min(1, max / Math.max(w, h));
+            var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+            var cv = document.createElement("canvas");
+            cv.width = cw; cv.height = ch;
+            cv.getContext("2d").drawImage(img, 0, 0, cw, ch);
+            done(cv.toDataURL("image/jpeg", 0.82));
+          } catch (e) { done(String(fr.result)); }
+        };
+        img.onerror = function () { done(String(fr.result)); };
+        img.src = String(fr.result);
+      };
+      fr.readAsDataURL(file);
+    }
+
     filePick.addEventListener("change", function () {
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       var files = [].slice.call(filePick.files || []);
@@ -1017,12 +1044,10 @@
       it.shots = it.shots || [];
       var left = files.length;
       files.slice(0, 3).forEach(function (f) {
-        var rd = new FileReader();
-        rd.onload = function () {
-          it.shots.push({ name: f.name, url: String(rd.result) });
+        shrinkImage(f, function (url) {
+          it.shots.push({ name: f.name, url: url });
           if (--left <= 0) { paint(); toast("已加入 " + it.shots.length + " 张截图"); }
-        };
-        rd.readAsDataURL(f);
+        });
       });
       filePick.value = "";
     });
@@ -1160,7 +1185,8 @@
           imageHost: ($("#qd-host") && $("#qd-host").value) || "站内",
           cn: ($("#qd-sub") && $("#qd-sub").value) || "",
           intro: ($("#qd-desc") && $("#qd-desc").value) || "",
-          targetSite: ($("#qd-target") && $("#qd-target").value) || ""
+          targetSite: ($("#qd-target") && $("#qd-target").value) || "",
+          shots: (it.shots || []).filter(function (x) { return x && x.url; }).slice(0, 12)
         };
         it.status = "publishing";
         paint();
