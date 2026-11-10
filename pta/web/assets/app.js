@@ -2744,14 +2744,56 @@
         var psum = presetOf(s.name) || {};
         var dfn = defOf(s.name);
         var sEng = (pdetail && pdetail.engine) || psum.engine || "";
-        var catGroups = pdetail && pdetail.cats ? pdetail.cats : null;
+        var catGroups = (pdetail && pdetail.cats) || (psum && psum.cats) || (dfn && dfn.cats) || null;
+        /* 服务端的按站查询偶尔给不出 url；用预设里的分类 + 站点定义自己拼一份，保证这块不空 */
+        function firstCatId(v) {
+          var a = Array.isArray(v) ? v : String(v || "").split(",");
+          return a.filter(function (x) { return x !== "" && x !== null && x !== undefined; })[0] || "";
+        }
+        function cleanUrl(u) {
+          /* 服务端拼的是带 {q} 占位的模板：预览里去掉占位，点开就是干净的分类浏览页 */
+          return String(u || "").split("%7Bq%7D").join("").split("%7bq%7d").join("").split("{q}").join("");
+        }
+        function previewUrls() {
+          if (s.presetUrls && s.presetUrls.length) {
+            return s.presetUrls.map(function (u) { return { group: u.group, catId: u.catId, url: cleanUrl(u.url) }; });
+          }
+          var d = dfn || {};
+          var base = String(d.base || s.url || "").replace(/\/+$/, "");
+          var sp = (d.search && d.search.searchPath) || "";
+          var params = d.search && d.search.params;
+          if (!base || !sp || !params) return [];
+          var out = [];
+          Object.keys(catGroups || {}).forEach(function (g) {
+            var cid = firstCatId((catGroups || {})[g]);
+            if (!cid) return;
+            var qs = Object.keys(params).map(function (k) {
+              var v = String(params[k]).split("{cats}").join(cid).split("{q}").join("");
+              return encodeURIComponent(k) + "=" + encodeURIComponent(v);
+            }).join("&");
+            out.push({ group: g, catId: cid, url: base + sp + "?" + qs });
+          });
+          return out;
+        }
         var catLines = catGroups ? Object.keys(catGroups).map(function (g) {
           return '<div class="sd-row"><span>' + escapeHtml(g) + "</span><b>" + escapeHtml((catGroups[g] || []).join(", ") || "—") + "</b></div>";
         }).join("") : "";
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "引擎", type: "fixed", v: sEng ? (engCode(sEng) + " · " + sEng) : "未识别", noTag: true },
-          { t: "预设来源", type: "fixed", v: pdetail ? (pdetail.source === "auto" ? "采样自动生成，还没人工确认" : pdetail.source === "arch" ? "按清单架构推断，还没采样" : (pdetail.source || "手填")) : "还没有预设", noTag: true },
-          { t: "分类参数", type: "fixed", v: (pdetail && pdetail.catMode ? pdetail.catMode : "—") + (pdetail && pdetail.catParam ? " · " + pdetail.catParam : ""), noTag: true },
+          { t: "预设来源", type: "fixed", v: (function () {
+            var src = (pdetail && pdetail.source) || (psum && psum.source) || "";
+            if (!src) return "还没有预设";
+            if (src === "auto") return "采样自动生成，还没人工确认";
+            if (src === "arch") return "按清单架构推断，还没采样";
+            if (src === "manual") return "人工确认过的";
+            return src;
+          })(), noTag: true },
+          { t: "分类参数", type: "fixed", v: (function () {
+            var mode = (pdetail && pdetail.catMode) || (dfn && dfn.search && dfn.search.catMode) || "";
+            var param = (pdetail && pdetail.catParam) || (dfn && dfn.search && dfn.search.params ? Object.keys(dfn.search.params).filter(function (k) { return String(dfn.search.params[k]).indexOf("{cats}") >= 0; })[0] : "");
+            if (!mode && !param) return (catGroups && Object.keys(catGroups).length) ? "cat（按分类 id 筛）" : "—";
+            return (mode || "—") + (param ? " · " + param : "");
+          })(), noTag: true },
           { t: "抓取状态", type: "fixed", noTag: true, v: (function () {
             var c = s.defCrawl;
             if (!c || !c.at) return "还没抓过";
@@ -2769,7 +2811,7 @@
           (catLines || '<div class="sd-row"><span>状态</span><b>还没有分类映射</b></div>') +
         "</div></div>" +
         (function () {
-          var urls = s.presetUrls || [];
+          var urls = previewUrls();
           if (!urls.length) return "";
           return '<div class="set-fields"><div class="sd-block"><h4>搜索链接预览</h4>' +
             urls.slice(0, 6).map(function (u) {
@@ -2785,7 +2827,7 @@
           (pdetail ? (pdetail.confirmed ? "已人工确认 · " : "更新于 ") + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
         "</span></div>" +
         '<div class="sd-cookie-bar"><span class="sd-cookie-res">' +
-          (!pdetail || !pdetail.cats || !Object.keys(pdetail.cats).length
+          (!catGroups || !Object.keys(catGroups).length
             ? (dfn && dfn.kind === "shell"
               ? "这个站的列表由脚本渲染，源码里没有分类：在浏览器登录后把种子页存到 pta/data/manual 再跑 ingest-manual"
               : "还没采到分类 id：登录后存种子页到 pta/data/manual，或等下次补采")
