@@ -361,7 +361,10 @@
       e.stopPropagation();
       menu.classList.toggle("open");
     });
-    document.addEventListener("click", function () { menu.classList.remove("open"); });
+    document.addEventListener("click", function (e) {
+      menu.classList.remove("open");
+      if (e.target && e.target.closest && e.target.closest("#menu-logout")) logout();
+    });
   }
 
   function initChrome() {
@@ -386,6 +389,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' +
           "</button>" +
           '<div class="menu" id="menu">' + navLinks +
+            '<button type="button" class="menu-link menu-logout" id="menu-logout">退出登录</button>' +
           "</div>" +
         "</div>");
     }
@@ -2617,7 +2621,80 @@
     LOG_STREAM.start();
     refreshPills();
   }
-  document.addEventListener("DOMContentLoaded", function () {
+  /* ---------- 登录 ---------- */
+  var AUTH_KEY = "pta.session";
+  /* 演示用的本地账号；正式版改成 POST /api/login，由服务端校验 */
+  var AUTH_DEMO = { user: "admin", pass: "seedpod-6x2f" };
+
+  var AUTH = {
+    read: function () {
+      try {
+        return JSON.parse(sessionStorage.getItem(AUTH_KEY) || localStorage.getItem(AUTH_KEY) || "null");
+      } catch (e) { return null; }
+    },
+    save: function (user, remember) {
+      var payload = JSON.stringify({ user: user, at: Date.now() });
+      try {
+        if (remember) { localStorage.setItem(AUTH_KEY, payload); sessionStorage.removeItem(AUTH_KEY); }
+        else { sessionStorage.setItem(AUTH_KEY, payload); localStorage.removeItem(AUTH_KEY); }
+      } catch (e) {}
+    },
+    clear: function () {
+      try { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+    },
+    ok: function () { return !!AUTH.read(); }
+  };
+
+  function initAuth(next) {
+    if (AUTH.ok()) { next(); return; }
+
+    var mask = el("div", "login-mask");
+    mask.id = "login-mask";
+    mask.innerHTML =
+      '<form class="login-card" id="login-form" autocomplete="on">' +
+        '<div class="login-brand"><img src="assets/whale.png" alt=""><b>SEEDPOD</b><span>原盘转载面板</span></div>' +
+        '<h2>登录</h2>' +
+        '<label class="login-field"><span>用户名</span>' +
+          '<input class="input" id="login-user" autocomplete="username" placeholder="admin"></label>' +
+        '<label class="login-field"><span>密码</span>' +
+          '<input class="input" id="login-pass" type="password" autocomplete="current-password" placeholder="">' +
+        '</label>' +
+        '<div class="login-row">' +
+          '<button type="button" class="switch on" id="login-remember"><i></i></button>' +
+          '<span>记住登录状态</span><em class="login-err" id="login-err"></em>' +
+        '</div>' +
+        '<button class="btn primary login-btn" type="submit" id="login-submit">登录</button>' +
+      '</form>';
+    document.body.appendChild(mask);
+    var userEl = $("#login-user"), passEl = $("#login-pass"), errEl = $("#login-err");
+    var remember = $("#login-remember");
+    remember.addEventListener("click", function () { remember.classList.toggle("on"); });
+
+    $("#login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var u = (userEl.value || "").trim();
+      var p = passEl.value || "";
+      if (!u || !p) { errEl.textContent = "用户名和密码都要填"; return; }
+      if (u !== AUTH_DEMO.user || p !== AUTH_DEMO.pass) {
+        errEl.textContent = "用户名或密码不对";
+        mask.classList.remove("shake");
+        void mask.offsetWidth;
+        mask.classList.add("shake");
+        return;
+      }
+      AUTH.save(u, remember.classList.contains("on"));
+      mask.remove();
+      next();
+    });
+    setTimeout(function () { userEl.focus(); }, 60);
+  }
+
+  function logout() {
+    AUTH.clear();
+    location.reload();
+  }
+
+  function boot() {
     initChrome();
     initNav();
     initMenu();
@@ -2632,5 +2709,9 @@
     initRouter();
     renderDashboard();
     initRuntime();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initAuth(boot);
   });
 })();

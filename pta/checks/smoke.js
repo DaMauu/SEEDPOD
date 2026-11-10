@@ -51,7 +51,33 @@ async function main() {
   }
 
   await open('');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await open('');
+
+  /* 0. 登录页 */
+  await check('未登录显示登录页', async () => {
+    need(await page.locator('#login-mask').isVisible(), '没有出现登录页');
+    need(!(await page.locator('.dock').count()) || !(await page.locator('.dock').isVisible()), '未登录就露出了面板');
+  });
+
+  await check('错误密码有提示', async () => {
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'wrong');
+    await page.click('#login-submit');
+    await page.waitForTimeout(300);
+    const err = await page.textContent('#login-err');
+    need(/不对/.test(err), '没有报错：' + err);
+    need(await page.locator('#login-mask').isVisible(), '错误密码也进去了');
+  });
+
+  await check('登录后进入面板', async () => {
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'seedpod-6x2f');
+    await page.click('#login-submit');
+    await page.waitForTimeout(500);
+    need((await page.locator('#login-mask').count()) === 0, '登录页没有消失');
+    need(await page.locator('.dock').isVisible(), '面板没有出现');
+  });
 
   /* 1. 七个页面都能打开，且只显示一个视图 */
   for (const h of ['#dashboard', '#sites', '#crawl', '#queue', '#sources', '#logs', '#settings']) {

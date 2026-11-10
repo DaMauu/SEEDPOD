@@ -72,7 +72,12 @@ async function main() {
   }
 
   await open('#dashboard');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await open('#dashboard');
+  await page.fill('#login-user', 'admin');
+  await page.fill('#login-pass', 'seedpod-6x2f');
+  await page.click('#login-submit');
+  await page.waitForTimeout(500);
 
   for (const route of ROUTES) {
     await open(route);
