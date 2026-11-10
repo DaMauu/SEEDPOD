@@ -195,7 +195,7 @@ async function main() {
     await seed('sources');
     /* 本地预览没有后端：这一页改为读词条库，应该给出明确空状态而不是假数据 */
     const emptyTxt = await page.textContent('#dl-body');
-    need(/词条库还是空的/.test(emptyTxt || ''), '没有后端时没显示空状态：' + String(emptyTxt || '').slice(0, 80));
+    need(/数据清单还是空的/.test(emptyTxt || ''), '没有后端时没显示空状态：' + String(emptyTxt || '').slice(0, 80));
     /* 分页控件在没有数据时也要在，且上一页/下一页都是禁用态 */
     const pageTxt = await page.textContent('#dl-page');
     need(/第 1 \/ 1 页/.test(pageTxt || ''), '页脚页码不对：' + pageTxt);

@@ -653,7 +653,7 @@
     var t = $("#today-stats");
     if (t) {
       t.innerHTML = [
-        "词条库 <b>" + cat.total.toLocaleString() + "</b>",
+        "词条 <b>" + cat.total.toLocaleString() + "</b>",
         "待发 <b>" + ((cat.byStatus && cat.byStatus.selected) || 0) + "</b>",
         "已发布 <b>" + published + "</b>",
         "跳过 <b>" + ((cat.byStatus && cat.byStatus.skipped) || 0) + "</b>",
@@ -1295,7 +1295,7 @@
             : '<button class="link-btn" data-send="1" data-cid="' + it.id + '">送审</button>' +
               '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
         "</div>";
-      }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "词条库还是空的，去流程页点「抓一页」") + "</div>";
+      }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "数据清单还是空的，去流程页点「抓一页」") + "</div>";
       var c = $("#dl-count");
       if (c) c.textContent = rows.length + (window.__ptaSourcesTotal && rows.length !== window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
       var pages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -1415,7 +1415,7 @@
       a.download = "pta-catalog.json";
       a.click();
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      toast(rows.length ? ("已导出 " + rows.length + " 条词条") : "词条库还是空的，没有可导出的");
+      toast(rows.length ? ("已导出 " + rows.length + " 条词条") : "数据清单还是空的，没有可导出的");
     });
     paint();
   }
@@ -2854,7 +2854,7 @@
             var when = new Date(c.at).toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
             return "上次 " + when + " · 今日 " + (c.count || 0) + " 次 · 分类 " + ((c.catIdx || 0) + 1) + " · 下一页 " + ((c.page || 0) + 1);
           })() },
-          { t: "词条库", type: "fixed", noTag: true, v: (function () {
+          { t: "词条", type: "fixed", noTag: true, v: (function () {
             var c = s.defCatalog;
             if (!c || !c.total) return "这个站还没有词条";
             var b = c.byStatus || {};
