@@ -1777,6 +1777,7 @@ const server = http.createServer(async (req, res) => {
       const data = catalogStore.list({
         q: u.searchParams.get('q') || '',
         status: u.searchParams.get('status') || '',
+        site: u.searchParams.get('site') || '',
         limit: u.searchParams.get('limit') || 50,
         offset: u.searchParams.get('offset') || 0
       });

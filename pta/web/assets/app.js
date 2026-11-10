@@ -2623,20 +2623,15 @@
     }
 
     function overviewHtml(s) {
-      var k = hashStr(s.name);
-      var todayNew = "—";
-      var runsToday = "0";
-      var next = !s.enabled ? "—"
-        : s.trigger === "manual" ? "手动触发"
-        : s.trigger === "daily" ? "次日 " + (s.dailyAt || "18:00")
-        : "未开始";
-      var lastRes = ["未抓取", "idle"];
+      var cr = s.defCrawl || null;
+      var cat = s.defCatalog || null;
+      var todayNew = cr ? "+" + (cr.count || 0) : "—";
+      var next = s.enabled ? "手动触发（点「抓一页」）" : "已停用";
+      var lastRes = cr && cr.at ? ["已抓取", "ok"] : ["未抓取", "idle"];
       var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量 + 定期全量" : "增量";
-      var recs = MOCK.sources.slice(0, 6);
-      var acts = MOCK.logs.slice(0, 3);
+      var recs = s.recentItems || [];
       var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
-      var methodTxt = "Cookie";
-      var catTxt = (s.cats || []).length + " 个分类" + (s.fullDiscOnly ? " · 只收原盘" : "");
+      var catTxt = dresCatTxt(s);
       var dres = defOf(s.name);
       var pres = presetOf(s.name);
       var engRaw = (pres && pres.engine) || (dres && dres.engine) || "";
@@ -2644,38 +2639,48 @@
       var sampleTxt = dres ? (dres.rows || 0) + " 行 · " + (dres.groups || 0) + " 组分类" : "还没采样";
       var KIND_TXT = { sample: "采样确认", shell: "引擎按页面特征确认，分类待补", arch: "按清单架构推断，还没采样" };
       var kindTxt = !dres ? "没有定义" : (KIND_TXT[dres.kind] || (dres.engine ? "引擎已确认，分类待补" : "按清单架构推断，还没采样"));
-      return '<div class="sd-strip">' +
-          "<span>已收录<b>" + (s.items ? s.items.toLocaleString() : "—") + "</b></span>" +
-          "<span>今日<b>+" + todayNew + "</b></span>" +
-          "<span>上次<b>" + escapeHtml(s.last) + "</b></span>" +
+      return '<div class="sd-ov">' +
+        '<div class="sd-strip">' +
+          "<span>已收录<b>" + (cat && cat.total ? cat.total : "—") + "</b></span>" +
+          "<span>今日<b>" + todayNew + "</b></span>" +
+          "<span>上次<b>" + escapeHtml(cr && cr.at ? lastCrawlTxt(s) : "未抓取") + "</b></span>" +
           "<span>下次<b>" + escapeHtml(next) + "</b></span>" +
         "</div>" +
         '<div class="sd-compact">' +
           '<div class="sd-col">' +
           '<div class="sd-block"><h4>登录</h4>' +
             '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
-            '<div class="sd-row"><span>方式</span><b>' + methodTxt + "</b></div>" +
+            '<div class="sd-row"><span>方式</span><b>Cookie</b></div>' +
             '<div class="sd-row"><span>登录凭据</span><b>' + (s.cookieSaved ? "已保存" : "未保存") + "</b></div>" +
             '<div class="sd-row"><span>引擎</span><b>' + escapeHtml(engTxt) + "</b></div>" +
             '<div class="sd-row"><span>采样</span><b>' + escapeHtml(sampleTxt) + "</b></div>" +
             '<div class="sd-row"><span>来源</span><b>' + escapeHtml(kindTxt) + "</b></div>" +
-            '<div class="sd-row"><span>分享率</span><b>' + escapeHtml(s.ratio) + "</b></div>" +
           "</div>" +
           '<div class="sd-block"><h4>抓取</h4>' +
             '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
-            '<div class="sd-row"><span>今日已跑</span><b>' + runsToday + " 轮</b></div>" +
+            '<div class="sd-row"><span>今日已跑</span><b>' + (cr ? (cr.count || 0) : 0) + " 次</b></div>" +
             '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
-            '<div class="sd-row"><span>范围</span><b>' + catTxt + "</b></div>" +
+            '<div class="sd-row"><span>范围</span><b>' + escapeHtml(catTxt) + "</b></div>" +
           "</div>" +
           "</div>" +
           '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
-            recs.map(function (r) {
+            (recs.length ? recs.map(function (r) {
               return '<div class="sd-recent"><span class="t-main">' + escapeHtml(r.title) + "</span>" +
-                '<span class="soft">' + escapeHtml(r.size) + "</span>" +
-                '<span class="soft">' + escapeHtml(r.time) + "</span></div>";
-            }).join("") +
+                '<span class="soft">' + escapeHtml(r.size || "") + "</span>" +
+                '<span class="soft">' + escapeHtml(String(r.createdAt || "").slice(5, 16).replace("T", " ")) + "</span></div>";
+            }).join("") : '<div class="sd-row"><span>状态</span><b>这个站还没有词条</b></div>') +
           "</div>" +
         "</div>";
+    }
+
+    /* 分类范围文案：优先用预设里的分类组，没有就说没采到 */
+    function dresCatTxt(s) {
+      var pres = presetOf(s.name);
+      var d = defOf(s.name);
+      var groups = (pres && pres.groups) || (d && d.groups) || 0;
+      var txt = groups ? groups + " 组分类" : "还没有分类";
+      if (s.fullDiscOnly) txt += " · 只收原盘";
+      return txt;
     }
 
     var CATS = [["movie", "电影"], ["tv", "剧集"], ["show", "综艺"], ["anime", "动漫"],
@@ -2850,8 +2855,18 @@
 
     function paintDetail() {
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
-      if (s && state.setTab === "search" && window.fetch && /^https?:$/.test(location.protocol) && !s.presetLoaded) {
-        s.presetLoaded = true;
+      /* 抽屉一打开就把站点定义、搜索预设、最近词条都取一次：概览和搜索页签都用得上 */
+      if (s && window.fetch && /^https?:$/.test(location.protocol) && !s.drawerLoaded) {
+        s.drawerLoaded = true;
+        fetch("/api/site-def/" + encodeURIComponent(s.name), { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !j.ok || !j.data) return;
+            s.defCrawl = j.data.crawl || null;
+            s.defCatalog = j.data.catalog || null;
+            if (state.sel === s.name) paint();
+          })
+          .catch(function () {});
         fetch("/api/sites/" + encodeURIComponent(s.name) + "/search", { credentials: "same-origin" })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (j) {
@@ -2860,15 +2875,12 @@
             s.presetUrls = (j.data && Array.isArray(j.data.urls)) ? j.data.urls : [];
             if (state.sel === s.name) paint();
           })
-          .catch(function () { s.presetLoaded = false; });
-        /* 顺带取一次站点定义里的抓取进度（今日次数、当前分类、下一页） */
-        fetch("/api/site-def/" + encodeURIComponent(s.name), { credentials: "same-origin" })
+          .catch(function () {});
+        fetch("/api/catalog?site=" + encodeURIComponent(s.name) + "&limit=6", { credentials: "same-origin" })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (j) {
-            if (!j || !j.ok || !j.data) return;
-            s.defCrawl = j.data.crawl || null;
-            s.defCatalog = j.data.catalog || null;
-            if (state.sel === s.name) paint();
+            if (!j || !j.ok) return;
+            s.recentItems = (j.data && j.data.items) || [];
             if (state.sel === s.name) paint();
           })
           .catch(function () {});
