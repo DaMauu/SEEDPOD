@@ -50,7 +50,7 @@ async function main() {
     cwd: ROOT,
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'pta', 'web'),
-      PTA_USER: 'check', PTA_PASS: 'check-pass'
+      PTA_USER: 'check', PTA_PASS: 'check-pass', PTA_LOG_MAX: '1500'
     }),
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -401,6 +401,35 @@ async function main() {
     need(j.error && j.error.code === 'DRY_RUN_ONLY', '错误码不对：' + JSON.stringify(j));
     const bad = await fetchA(BASE + '/api/tasks/t_9999', { method: 'GET' });
     need(bad.status === 404, '不存在的任务返回 ' + bad.status);
+  });
+
+  await check('日志过滤', async () => {
+    const all = await (await fetchA(BASE + '/api/logs?limit=100')).json();
+    need(all.ok && Array.isArray(all.data), '日志结构不对');
+    need(all.data.length > 0, '一条日志都没有');
+    need(all.meta && all.meta.total >= all.data.length, 'meta 不对');
+    const warns = await (await fetchA(BASE + '/api/logs?level=warn&limit=50')).json();
+    need(warns.data.every(x => x.level === 'warn'), 'level 过滤没生效');
+    const two = await (await fetchA(BASE + '/api/logs?limit=2')).json();
+    need(two.data.length <= 2, 'limit 没生效：' + two.data.length);
+    const lastId = two.data.length ? two.data[two.data.length - 1].id : 0;
+    const newer = await (await fetchA(BASE + '/api/logs?since=' + lastId)).json();
+    need(newer.data.every(x => x.id > lastId), 'since 过滤没生效');
+    const bySrc = await (await fetchA(BASE + '/api/logs?src=服务&limit=10')).json();
+    need(bySrc.data.every(x => String(x.src).indexOf('服务') >= 0), 'src 过滤没生效');
+  });
+
+  await check('日志文件会轮转', async () => {
+    for (let i = 0; i < 40; i++) {
+      await fetch(BASE + '/api/login', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ user: 'check', pass: 'wrong-' + i })
+      });
+    }
+    const rotated = fs.existsSync(path.join(DATA, 'events.log.1'));
+    need(rotated, '日志超过上限却没有轮转');
+    const now = fs.statSync(path.join(DATA, 'events.log')).size;
+    need(now < 1500, '轮转后主文件仍然超过上限：' + now);
   });
 
   await check('登录失败返回 401', async () => {

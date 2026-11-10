@@ -25,6 +25,22 @@ const DEFAULTS = { runMode: 'test', interval: 60, dailySite: 20, dailyAll: 100 }
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const CFG_FILE = path.join(DATA_DIR, 'config.json');
 const LOG_FILE = path.join(DATA_DIR, 'events.log');
+const LOG_MAX = Math.max(1024, Number(process.env.PTA_LOG_MAX || 2 * 1024 * 1024) || 2 * 1024 * 1024);
+let logBytes = 0;
+try { logBytes = fs.statSync(LOG_FILE).size; } catch (e) { logBytes = 0; }
+
+/* 日志超过上限就轮转一次，只保留上一份，避免无限增长 */
+function rotateLogIfNeeded(nextLineBytes) {
+  logBytes += nextLineBytes;
+  if (logBytes <= LOG_MAX) return false;
+  try {
+    fs.renameSync(LOG_FILE, LOG_FILE + '.1');
+  } catch (e) {
+    try { fs.unlinkSync(LOG_FILE); } catch (e2) {}
+  }
+  logBytes = 0;
+  return true;
+}
 
 /* ---------- 事件日志：写文件 + 内存环 + SSE 广播 ---------- */
 let logSeq = 0;
@@ -35,7 +51,11 @@ function logEvent(level, src, msg) {
   const entry = { id: ++logSeq, ts: new Date().toISOString(), level, src, msg };
   LOG_RING.push(entry);
   if (LOG_RING.length > 500) LOG_RING.shift();
-  try { fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n'); } catch (e) {}
+  const line = JSON.stringify(entry) + '\n';
+  try { fs.appendFileSync(LOG_FILE, line); } catch (e) {}
+  if (rotateLogIfNeeded(Buffer.byteLength(line))) {
+    LOG_RING.push({ id: ++logSeq, ts: new Date().toISOString(), level: 'info', src: '日志', msg: '日志文件超过 ' + Math.round(LOG_MAX / 1024) + ' KB，已轮转为 events.log.1' });
+  }
   const payload = 'id: ' + entry.id + '\ndata: ' + JSON.stringify(entry) + '\n\n';
   SSE_CLIENTS.forEach(function (res) {
     try { res.write(payload); } catch (e) { SSE_CLIENTS.delete(res); }
@@ -914,7 +934,17 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/logs' && req.method === 'GET') {
       const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);
-      return send(res, 200, { ok: true, data: LOG_RING.slice(-limit) });
+      const level = (u.searchParams.get('level') || '').trim();
+      const src = (u.searchParams.get('src') || '').trim();
+      const since = Number(u.searchParams.get('since') || 0) || 0;
+      let rows = LOG_RING.filter(function (e) {
+        if (level && e.level !== level) return false;
+        if (src && String(e.src || '').indexOf(src) < 0) return false;
+        if (since && e.id <= since) return false;
+        return true;
+      });
+      rows = rows.slice(-limit);
+      return send(res, 200, { ok: true, data: rows, meta: { total: LOG_RING.length, filtered: rows.length, level: level, src: src, logMax: LOG_MAX } });
     }
     if (p === '/api/logs/stream' && req.method === 'GET') {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
@@ -936,6 +966,16 @@ const server = http.createServer(async (req, res) => {
 
 LOG_RING.push.apply(LOG_RING, loadRecentLogs(200));
 logEvent('info', '服务', '服务启动 v' + VERSION + ' · 端口 ' + PORT + ' · 数据目录 ' + DATA_DIR);
+try {
+  const q = readQueue();
+  const d = readDl();
+  const sites = loadSiteList();
+  const presets = Object.keys(readSearchPresets()).length;
+  logEvent('info', '服务', '数据概览 · 站点 ' + sites.length + ' · 待审核 ' + q.items.length +
+    ' · 下载器 ' + d.items.length + ' · 搜索预设 ' + presets);
+} catch (e) {
+  logEvent('warn', '服务', '数据概览读取失败：' + e.message);
+}
 
 server.listen(PORT, () => {
   console.log('SEEDPOD 服务已启动 http://0.0.0.0:' + PORT + '  数据目录 ' + DATA_DIR +

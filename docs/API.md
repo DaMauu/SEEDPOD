@@ -188,11 +188,17 @@
 
 删掉条目并写事件日志。
 
-## GET /api/logs?limit=200（SSE 用 /api/logs/stream）
+## GET /api/logs
+
+参数：`limit`（默认 100，最多 500）、`level`（info/warn/error 精确匹配）、`src`（子串匹配）、`since`（只返回 id 大于它的）。
 
 ```
-{ "ok": true, "data": [ { "ts": "...", "level": "info", "src": "crawl", "msg": "..." } ] }
+{ "ok": true,
+  "data": [ { "id": 12, "ts": "...", "level": "info", "src": "任务", "msg": "..." } ],
+  "meta": { "total": 40, "filtered": 3, "level": "warn", "src": "", "logMax": 2097152 } }
 ```
+
+事件写在 `data/events.log`，超过 `PTA_LOG_MAX`（默认 2 MB）就轮转成 `events.log.1`，只保留上一份并写一条「日志轮转」事件。
 
 `/api/logs/stream` 返回 `text/event-stream`，每行 `data: {...}`，断线由前端 3 秒重连。
 

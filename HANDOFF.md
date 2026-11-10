@@ -58,7 +58,7 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/tasks | 最近 50 条任务，`?state=active` 只看在跑的 |
 | GET /api/tasks/:id | 单条任务与步骤进度 |
 | POST /api/tasks/:id/cancel | 取消排队/运行中的任务 |
-| GET /api/logs | 最近事件 |
+| GET /api/logs | 最近事件，支持 level/src/since/limit 过滤 |
 | GET /api/logs/stream | SSE，断线按 id 补历史 |
 
 事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、改搜索预设、待审核条目增删与状态变更、干跑任务新建与完成、任务取消。
@@ -86,7 +86,7 @@ pta\checks\run.cmd
 
 - smoke.js 21 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮
-- api.js 24 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
+- api.js 26 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
 
 改完必须全绿再提交。
 
