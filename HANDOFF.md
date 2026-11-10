@@ -180,8 +180,8 @@ node scripts/pipeline.js --sample  # 先补采样（每站一次 GET，站间 4-
 `POST /api/crawl/plan {host}` 只拼 URL 不发请求（可先看要抓哪个地址）；
 `POST /api/crawl/run {host}` 真发一次 GET，按站点定义的搜索参数取第一页，
 解析后进词条库（`server/catalog.js`），命中的禁转/独占/DIY/限转只打标记。
-服务端硬约束：同站两次抓取至少隔 6 秒（不足返回 429 TOO_SOON），单站每天最多 20 次，
-没 cookie 返回 409 NO_COOKIE，cookie 失效返回 409 LOGIN_REQUIRED，串行、不重试轰炸。
+服务端硬约束：同站两次抓取至少隔 6 秒（不足返回 429 TOO_SOON），同一站同时只允许一次（并发第二个返回 409 BUSY），
+单站每天最多 20 次，没 cookie 返回 409 NO_COOKIE，cookie 失效返回 409 LOGIN_REQUIRED，串行、不重试轰炸。
 抓取按预设分类轮转（每次换下一个分类，抓完一圈回到第一个），页码续抓记在 `crawl-state.json`，
 `GET /api/crawl/status?host=` 能看今日次数、当前分类、页码与冷却剩余；`/api/site-def/:host` 里也带这份进度。
 面板「抓取」页右上角「抓一页」按钮走的就是它，下面的「词条库」面板显示最新 30 条与状态，可归档。
