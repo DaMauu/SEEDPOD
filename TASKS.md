@@ -90,6 +90,8 @@ pta\checks\run.cmd
 | done | 发布级查重 | `server/match.js`：infohash 优先，其次标题归一/年份/分辨率/体积容差/发布组；命中带理由 |
 | done | 流程页按三步重排 | 抓取（预设+抓取标记）→ 筛选（筛选条件+已有归档）→ 发布（目标站+标题副标题+简介+发布字段） |
 | done | 抓取执行 | `/api/crawl/plan` 只拼 URL；`/api/crawl/run` 单次 GET 入词条库，6 秒间隔 + 单站每日 20 次 + 无 cookie/登录失效直接拒 |
+| done | 抓取翻页与类目轮转 | 每次换下一个分类、页码续抓记在 crawl-state；`/api/crawl/status` 可查今日次数/当前分类/冷却 |
+| done | 词条库面板 | 抓取页底部最新 30 条，状态徽标 + 禁转/独占/DIY/限转标记，可归档；站点设置页显示抓取进度 |
 | done | 第二步筛选 | `/api/catalog/screen` 按分辨率/体积/中字/已有判重挑词条：入选进待审核并标 selected，其余标 skipped 并记原因 |
 | done | 第三步草稿 | `/api/publish/preview` 组装标题/副标题/简介/标签（来源/媒介/编码/音轨/中字），缺项给提醒；待审核页「草稿预览」回填表单 |
 | done | 词条库 | `POST /api/catalog` 导入（按站内 id / infohash 去重）、`/status` 流转 new→selected→published/skipped/archived |

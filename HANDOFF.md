@@ -182,7 +182,11 @@ node scripts/pipeline.js --sample  # 先补采样（每站一次 GET，站间 4-
 解析后进词条库（`server/catalog.js`），命中的禁转/独占/DIY/限转只打标记。
 服务端硬约束：同站两次抓取至少隔 6 秒（不足返回 429 TOO_SOON），单站每天最多 20 次，
 没 cookie 返回 409 NO_COOKIE，cookie 失效返回 409 LOGIN_REQUIRED，串行、不重试轰炸。
-面板「抓取」页右上角「抓一页」按钮走的就是它。
+抓取按预设分类轮转（每次换下一个分类，抓完一圈回到第一个），页码续抓记在 `crawl-state.json`，
+`GET /api/crawl/status?host=` 能看今日次数、当前分类、页码与冷却剩余；`/api/site-def/:host` 里也带这份进度。
+面板「抓取」页右上角「抓一页」按钮走的就是它，下面的「词条库」面板显示最新 30 条与状态，可归档。
+第二步「筛选送审」：`/api/catalog/screen` 挑出可发的送待审核，其余标 skipped 并记原因。
+第三步「草稿预览」：`/api/publish/preview?id=` 组装标题/副标题/简介/标签并给缺项提醒。
 
 ## 判定同一条种子（不要重复转载）
 `server/match.js`：先比 infohash（相同即同一条，不同即不是），再比归一后的标题、年份、分辨率、
