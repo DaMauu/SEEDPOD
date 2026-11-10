@@ -92,9 +92,26 @@ function detectSearchSpec(html) {
   return out;
 }
 
+/* 页面是 JS 空壳（列表要靠浏览器渲染）时，用资源与框架特征判断引擎。
+   只在三种适配器都认不出时用，返回引擎名或空串。 */
+function detectShellEngine(html) {
+  const s = String(html || '');
+  if (!s) return '';
+  const u3d = [
+    /unit3d/i.test(s),
+    /torrent-search--list/i.test(s),
+    /(?:livewire|wire:model|wire:click)/i.test(s) && /(?:build\/assets|vite)/i.test(s)
+  ].filter(Boolean).length;
+  if (u3d >= 2) return 'unit3d';
+  if (/gazelle/i.test(s) && /torrents\.php|filter_cat|searchstr|browse/i.test(s)) return 'gazelle';
+  if (/details\.php\?id=/i.test(s)) return 'nexusphp';
+  return '';
+}
+
 module.exports = {
   detectAdapter: detectAdapter,
   detectEngine: detectEngine,
+  detectShellEngine: detectShellEngine,
   detectSearchSpec: detectSearchSpec,
   names: function () { return ADAPTERS.map(function (a) { return a.name; }); },
   byName: byName,

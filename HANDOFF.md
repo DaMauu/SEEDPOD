@@ -161,9 +161,9 @@ gzip 存到 `pta/data/samples/<host>.html.gz`，状态写 `_state.json`。
 
 清单 307 个站，**每站都有站点定义与搜索预设**：
 
-- 真实采样成功并识别出引擎：84 站（NexusPHP 38+21、UNIT3D 12+1、Gazelle 7+6，含早前样本）
-- 按清单架构推断：223 站（定义里 `source.kind=arch`，预设 `source=arch`，面板上标「按清单架构推断」）
-- 登不进去的 21 站（登录墙）、连不上的 42 站（DNS/连接被拒）、Cloudflare 12 站、404 25 站、停车域名 4 站
+- 真实采样确认引擎：91 站（其中 7 站是 JS 空壳页，按页面资源特征认出引擎、分类待补）
+- 按清单架构推断：216 站（定义里 source.kind=arch，预设 source=arch，面板上标「按清单架构推断」）
+- 没拿到的原因是登录墙、连不上、Cloudflare、路径 404、停放域名，分类清单见 pta/data/blocked-*.txt（不入库）
 
 当前原始样本 113 份在 `pta/data/samples/`（不入库）。流水线一条命令：
 

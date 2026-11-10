@@ -153,6 +153,15 @@ check('兜底适配：认不出的 tracker 也能列出条目', () => {
   need(u === 'https://example.org/search.php?search=x&cat=1', '兜底搜索 URL 不对：' + u);
 });
 
+check('JS 空壳页也能认出引擎', () => {
+  const u3Shell = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'unit3d-shell.html'), 'utf8');
+  const gzShell = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'gazelle-shell.html'), 'utf8');
+  need(adapters.detectEngine(u3Shell) === '', '空壳页不该被解析型适配器认出来：' + adapters.detectEngine(u3Shell));
+  need(adapters.detectShellEngine(u3Shell) === 'unit3d', 'UNIT3D 空壳页没认出来：' + adapters.detectShellEngine(u3Shell));
+  need(adapters.detectShellEngine(gzShell) === 'gazelle', 'Gazelle 空壳页没认出来：' + adapters.detectShellEngine(gzShell));
+  need(adapters.detectShellEngine('<html><body>nothing</body></html>') === '', '普通页面被当成空壳 tracker');
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

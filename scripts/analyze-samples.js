@@ -39,7 +39,10 @@ for (const f of files) {
   let html = '';
   try { html = zlib.gunzipSync(fs.readFileSync(path.join(OUT, f))).toString('utf8'); } catch (e) { continue; }
   const um = state[host] || {};
-  const engine = adapters.detectEngine(html);
+  const strongEngine = adapters.detectEngine(html);
+  const shellEngine = strongEngine ? '' : adapters.detectShellEngine(html);
+  const engine = strongEngine || shellEngine;
+  const engineSource = strongEngine ? 'parse' : shellEngine ? 'shell' : '';
   delete result[host];
   const spec = adapters.detectSearchSpec(html);
   const cats = engine ? adapters.parseCategories(html, engine) : [];
@@ -49,6 +52,7 @@ for (const f of files) {
   const withCat = rows.filter(function (r) { return r.catId || r.catName; }).length;
   /* 没识别出引擎的，记清是哪种原因，后面做覆盖率与时才能解释清楚 */
   let status = engine ? 'ok' : 'unknown';
+  if (shellEngine) status = 'shell';
   if (!engine) {
     if (/ERR_[A-Z_]{4,}|diagnoseErrors|This site can.t be reached/i.test(html)) status = 'unreachable';
     else if (/Just a moment|cf-browser-verification|challenge-platform/i.test(html)) status = 'challenge';
@@ -66,6 +70,7 @@ for (const f of files) {
     archAgree: engineArch ? (engineArch === declared) : null,
     verdict: status,
     engine: engine,
+    engineSource: engineSource,
     engineHint: spec.engine,
     url: um.url || '',
     status: um.status || 0,
