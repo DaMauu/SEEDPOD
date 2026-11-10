@@ -43,6 +43,23 @@ async function main() {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
 
+  await page.addInitScript(() => { window.__PTA_TEST_HOOKS__ = true; });
+  const FIX_QUEUE = [
+    { id: '101', title: 'Fixture Alpha 2020 1080p Blu-ray AVC TrueHD 7.1', cn: '夹具甲', year: 2020, res: '1080p', size: '22.10 GB', imdb: '5.4', site: 'demo-a.example', status: 'pending', check: '未查', checkCls: 'gray' },
+    { id: '102', title: 'Fixture Beta 1997 1080p Blu-ray AVC DTS-HD MA 5.1', cn: '夹具乙', year: 1997, res: '1080p', size: '44.14 GB', imdb: '8.0', site: 'demo-a.example', status: 'pending', check: '未查', checkCls: 'gray' }
+  ];
+  const FIX_SOURCES = [
+    { title: 'Fixture Alpha 2020 1080p Blu-ray AVC TrueHD 7.1', type: '原盘', res: '1080p', size: '22.10 GB', time: '刚刚', check: '无重复', checkCls: 'green' },
+    { title: 'Fixture Beta 1997 1080p Blu-ray AVC DTS-HD MA 5.1', type: '原盘', res: '1080p', size: '44.14 GB', time: '刚刚', check: '无重复', checkCls: 'green' }
+  ];
+  async function seed(kind) {
+    await page.evaluate(([k, q, s2]) => {
+      if (!window.__PTA_TEST__) return;
+      if (k === 'queue') window.__PTA_TEST__.queue(q);
+      if (k === 'sources') window.__PTA_TEST__.sources(s2);
+    }, [kind, FIX_QUEUE, FIX_SOURCES]);
+    await page.waitForTimeout(150);
+  }
   async function open(hash) {
     await page.route('**/sites-data.local.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB }));
     await page.route('**/api/health', r => r.abort());
@@ -158,6 +175,9 @@ async function main() {
   /* 5. 待审核：上传截图 + 批量查重 */
   await check('待审核上传与批量查重', async () => {
     await open('#queue');
+    await seed('queue');
+    await page.locator('.q-item').first().click();
+    await page.waitForTimeout(200);
     const files = ['whale.png', 'icon.png', 'favicon-32.png'].map(f => path.join(WEB, 'assets', f));
     await page.setInputFiles('input[type=file]', files);
     await page.waitForTimeout(600);
@@ -172,6 +192,7 @@ async function main() {
   /* 6. 数据清单：归档与导出 */
   await check('数据清单归档与导出', async () => {
     await open('#sources');
+    await seed('sources');
     await page.click('button[data-archive]');
     await page.waitForTimeout(250);
     need(await page.locator('.dl-row.is-archived').count() === 1, '归档没有标记行');

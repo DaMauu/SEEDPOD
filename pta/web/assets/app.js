@@ -31,28 +31,8 @@
       { title: "Ran", cn: "乱", site: "主站 B", time: "10:18", size: "87.77 GB" },
       { title: "Green Snake", cn: "青蛇劫起", site: "主站 B", time: "昨天 22:41", size: "43.67 GB" }
     ],
-    queue: [
-      { id: 101, title: "Follow Me 2020 1080p HKG Blu-ray AVC TrueHD 7.1", cn: "极限网红", year: 2020, res: "1080p", size: "22.10 GB", imdb: "5.4", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 102, title: "Perfect Blue 1997 1080p HKG Blu-ray AVC DTS-HD MA 5.1", cn: "未麻的部屋", year: 1997, res: "1080p", size: "44.14 GB", imdb: "8.0", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 103, title: "Ran 1985 2160p UHD Blu-ray DoVi HDR10 HEVC DTS-HD MA 5.1", cn: "乱", year: 1985, res: "2160p", size: "87.77 GB", imdb: "8.2", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 104, title: "The Golden Lotus 1974 1080p AUS Blu-ray AVC LPCM 2.0", cn: "金瓶双艳", year: 1974, res: "1080p", size: "30.67 GB", imdb: "5.7", site: "站点 A", status: "approved", check: "无重复", checkCls: "green" },
-      { id: 105, title: "Crouching Tiger Hidden Dragon 2000 2160p USA UHD Blu-ray HEVC TrueHD 7.1", cn: "卧虎藏龙", year: 2000, res: "2160p", size: "89.12 GB", imdb: "7.9", site: "站点 B", status: "dupe", check: "已有 89.1G", checkCls: "amber" },
-      { id: 106, title: "Ida 2013 1080p AUS BluRay AVC DTS-HD MA 5.1", cn: "修女艾达", year: 2013, res: "1080p", size: "27.86 GB", imdb: "7.4", site: "站点 B", status: "failed", check: "详情页 403", checkCls: "red" },
-      { id: 107, title: "Green Snake 2021 CHN Blu-ray 1080p AVC Atmos TrueHD 7.1", cn: "青蛇劫起", year: 2021, res: "1080p", size: "43.67 GB", imdb: "6.8", site: "站点 A", status: "pending", check: "无重复", checkCls: "green" },
-      { id: 108, title: "Blades of the Guardians 2026 1080p HKG Blu-ray AVC TrueHD 7.1 Atmos", cn: "镖人：风起大漠", year: 2026, res: "1080p", size: "39.45 GB", imdb: "—", site: "站点 A", status: "pending", check: "未查", checkCls: "gray" }
-    ],
-    sources: [
-      { title: "Follow Me 2020 1080p HKG Blu-ray AVC TrueHD 7.1", type: "原盘", res: "1080p", size: "22.10 GB", time: "8 分钟前", check: "无重复", checkCls: "green" },
-      { title: "Feng hua xue yue 1977 1080p AUS Blu-ray AVC LPCM 2.0", type: "原盘", res: "1080p", size: "37.19 GB", time: "8 分钟前", check: "无重复", checkCls: "green" },
-      { title: "Ichijo Sayuri: Nureta yokujo 1972 1080p AUS Blu-ray AVC LPCM 2.0", type: "原盘", res: "1080p", size: "23.93 GB", time: "9 分钟前", check: "无重复", checkCls: "green" },
-      { title: "Koibito-tachi wa nureta 1973 1080p AUS Blu-ray AVC LPCM 2.0", type: "原盘", res: "1080p", size: "23.94 GB", time: "9 分钟前", check: "无重复", checkCls: "green" },
-      { title: "The Golden Lotus 1974 1080p AUS Blu-ray AVC LPCM 2.0", type: "原盘", res: "1080p", size: "30.67 GB", time: "9 分钟前", check: "无重复", checkCls: "green" },
-      { title: "Illicit Desire 1973 1080p AUS Blu-ray AVC LPCM 2.0", type: "原盘", res: "1080p", size: "36.48 GB", time: "9 分钟前", check: "已收录", checkCls: "amber" },
-      { title: "Tai Chi Zero 2012 1080p AUS Blu-ray AVC DTS-HD MA 5.1", type: "原盘", res: "1080p", size: "28.79 GB", time: "9 分钟前", check: "无重复", checkCls: "green" },
-      { title: "Perfect Blue 1997 1080p HKG Blu-ray AVC DTS-HD MA 5.1", type: "原盘", res: "1080p", size: "44.14 GB", time: "23 小时前", check: "无重复", checkCls: "green" },
-      { title: "Kite 2014 1080p HKG Blu-ray AVC TrueHD 5.1", type: "原盘", res: "1080p", size: "21.88 GB", time: "1 天前", check: "限制分发", checkCls: "red" },
-      { title: "Interview with the Vampire 1994 2160p UHD Blu-ray DV HEVC TrueHD 7.1", type: "原盘", res: "2160p", size: "22.12 GB", time: "4 小时前", check: "无重复", checkCls: "green" }
-    ],
+    queue: [],
+    sources: [],
     nodes: [
       { name: "A · 控制节点", role: "编排 / 数据库 / 发布", host: "192.0.2.10", online: true, disk: "系统盘 64 / 128 GB", used: 0, total: 0, qb: "—", seeding: "—", path: "/srv/pta" },
       { name: "B · 下载节点", role: "下载 / 做种", host: "192.0.2.11", online: true, disk: "12.3 / 16 TB", used: 12.3, total: 16, qb: "5.0.3", seeding: "1,240", path: "/data/pt" },
@@ -64,7 +44,15 @@
   };
 
 
-  /* ---------- 站点清单：URL -> 站点对象（假数据由 host 哈希决定，稳定可复现） ---------- */
+  /* 测试夹具入口：只在 file:// 且测试脚本显式开启时存在，正常使用不会注册任何假数据 */
+  if (location.protocol === "file:" && window.__PTA_TEST_HOOKS__) {
+    window.__PTA_TEST__ = {
+      queue: function (items) { MOCK.queue = items || []; if (window.__ptaRepaintQueue) window.__ptaRepaintQueue(); },
+      sources: function (items) { MOCK.sources = items || []; if (window.__ptaRepaintSources) window.__ptaRepaintSources(); }
+    };
+  }
+
+  /* ---------- 站点清单：URL -> 站点对象（字段全部来自清单本身，不再按域名编造状态） ---------- */
   var GAZELLE_HOSTS = ["redacted.sh", "orpheus.network", "gazellegames.net", "animebytes.tv", "passthepopcorn.me", "jpopsuki.eu", "dicmusic.com"];
   function hashStr(str) {
     var h = 2166136261;
@@ -73,7 +61,6 @@
   }
   /* 记录可以是字符串（旧格式）或 {url, host, arch, title}（/api/sites 返回的格式） */
   function buildSites(records) {
-    var LAST = ["今天 12:40", "今天 11:58", "今天 09:12", "昨天 23:10", "昨天 18:44", "2 天前"];
     var seen = {}, out = [];
     (records || []).forEach(function (rec) {
       var url = typeof rec === "string" ? rec : (rec && (rec.url || rec.host)) || "";
@@ -82,10 +69,6 @@
         url.replace(/^https?:\/\//, "").split("/")[0].replace(/^www\./, "");
       if (!host || seen[host]) return;
       seen[host] = 1;
-      var r = hashStr(host);
-      var enabled = r % 100 < 62;
-      var login = !enabled ? "none" : ((r >>> 7) % 100 < 92 ? "ok" : "fail");
-      var ratioNum = 0.55 + ((r >>> 11) % 430) / 100;
       var measured = (typeof rec === "object" && rec && rec.arch) || (window.PT_ARCH || {})[host];
       var arch = measured || "?";
       out.push({
@@ -98,14 +81,14 @@
         })(),
         url: url,
         arch: arch,
-        enabled: enabled,
-        login: login,
-        ratio: enabled ? ratioNum.toFixed(2) : "—",
-        canDl: enabled && ratioNum >= 1,
-        tfa: ((r >>> 3) % 100) < 34,
-        last: enabled ? (login === "fail" ? LAST[5] : LAST[(r >>> 5) % 5]) : "未抓取",
-        items: enabled ? 40 + ((r >>> 2) % 3200) : 0,
-        cookieDays: 2 + ((r >>> 13) % 28),
+        enabled: false,
+        login: "none",
+        ratio: "—",
+        canDl: false,
+        tfa: false,
+        last: "未抓取",
+        items: 0,
+        cookieDays: 0,
         interval: "3.0", pages: "2", concurrency: "1", dupeCheck: true, totp: "", note: "",
         loginMethod: "password", username: "", password: "", cookie: "",
         cats: ["movie", "tv", "doc", "music"], fullDiscOnly: true, minRes: "1080p", minSize: "5",
@@ -315,6 +298,25 @@
   }
   window.__ptaLoadPresets = loadPresets;
 
+  /* 顶栏三个状态：后端连通、待审核条数、下载器数量；没有数据就不显示次数 */
+  function paintTopbar() {
+    var svc = $("#pill-service"), pend = $("#pill-pending"), nodes = $("#pill-nodes");
+    if (!svc) return;
+    var online = window.__ptaSiteSource === "api";
+    svc.innerHTML = '<span class="dot ' + (online ? "ok" : "") + '"></span>' + (online ? "后端已连接" : "未连接后端");
+    var pn = (window.__ptaQueueCounts && window.__ptaQueueCounts.pending) || 0;
+    if (pend) {
+      pend.hidden = !pn;
+      pend.innerHTML = '<span class="dot warn"></span>' + pn + " 条待审核";
+    }
+    var dn = window.__ptaDownloaderCount;
+    if (nodes) {
+      nodes.hidden = dn === undefined;
+      nodes.innerHTML = '<span class="dot ok"></span>下载器 ' + (dn || 0);
+    }
+  }
+  window.__ptaPaintTopbar = paintTopbar;
+
   /* 拉服务端清单；失败（file://、未登录、离线）就保持本地数据，不打断页面 */
   function loadSitesFromApi() {
     if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
@@ -324,6 +326,7 @@
         if (!j || !j.ok || !j.data || !Array.isArray(j.data.sites) || !j.data.sites.length) return false;
         window.__ptaSiteCounts = j.data.counts || null;
         applySites(j.data.sites, "api");
+        if (window.__ptaPaintTopbar) window.__ptaPaintTopbar();
         if (typeof loadSiteCfgFromApi === "function") loadSiteCfgFromApi();
         return true;
       })
@@ -529,7 +532,7 @@
     { key: "dashboard", label: "总览", href: "#dashboard", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>" },
     { key: "sites", label: "站点", href: "#sites", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18\"/><path d=\"M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18\"/></svg>" },
     { key: "crawl", label: "流程", href: "#crawl", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7h16\"/><path d=\"M4 12h10\"/><path d=\"M4 17h6\"/><circle cx=\"18\" cy=\"16\" r=\"3\"/></svg>" },
-    { key: "queue", label: "待审核", href: "#queue", count: 12, icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12\"/><path d=\"M8 11l4 4 4-4\"/><path d=\"M4 21h16\"/></svg>" },
+    { key: "queue", label: "待审核", href: "#queue", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12\"/><path d=\"M8 11l4 4 4-4\"/><path d=\"M4 21h16\"/></svg>" },
     { key: "sources", label: "数据清单", href: "#sources", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h5l2 3h2l2-3h5\"/><path d=\"M5 5h14l2 7v7H3v-7l2-7z\"/></svg>" },
     { key: "logs", label: "日志", href: "#logs", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6h12M9 12h12M9 18h12\"/><path d=\"M4 6h.01M4 12h.01M4 18h.01\"/></svg>" },
     { key: "settings", label: "设置", href: "#settings", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7h16M4 12h16M4 17h16\"/><circle cx=\"9\" cy=\"7\" r=\"2\"/><circle cx=\"15\" cy=\"12\" r=\"2\"/><circle cx=\"8\" cy=\"17\" r=\"2\"/></svg>" },
@@ -549,12 +552,23 @@
     });
   }
 
+  /* 导航角标：只有真的有数据才显示 */
+  function setNavCount(key, n) {
+    var item = document.querySelector('.dock-item[data-view="' + key + '"]');
+    if (!item) return;
+    var badge = item.querySelector(".dock-count");
+    if (!n) { if (badge) badge.remove(); return; }
+    if (!badge) { badge = document.createElement("span"); badge.className = "dock-count"; item.appendChild(badge); }
+    badge.textContent = n > 99 ? "99+" : String(n);
+  }
+  window.__ptaSetNavCount = setNavCount;
+
   function initChrome() {
     var root = $("#dock-root");
     if (root) {
       root.innerHTML = '<nav class="dock">' + NAV_ITEMS.map(function (it) {
         var active = it.key === PAGE ? " active" : "";
-        var count = it.count ? '<span class="dock-count">' + it.count + "</span>" : "";
+        var count = "";
         return '<a class="dock-item' + active + '" href="' + it.href + '" data-view="' + it.key + '" title="' + it.label + '">' + (it.icon || "") + '<span class="dock-label">' + it.label + '</span>' + count + "</a>";
       }).join("") + "</nav>";
     }
@@ -562,7 +576,7 @@
     if (right && !$("#menu-btn")) {
       var navLinks = NAV_ITEMS.map(function (it) {
         var active = it.key === PAGE ? " active" : "";
-        var count = it.count ? '<span class="dock-count">' + it.count + "</span>" : "";
+        var count = "";
         return '<a class="menu-link' + active + '" href="' + it.href + '" data-view="' + it.key + '">' + it.label + count + "</a>";
       }).join("");
       right.insertAdjacentHTML("beforeend",
@@ -605,15 +619,15 @@
     var pub = MOCK.queue.filter(function (x) { return x.status === "published"; }).length;
     var fail = MOCK.queue.filter(function (x) { return x.status === "failed"; }).length;
     var pending = MOCK.queue.filter(function (x) { return x.status === "pending"; }).length;
-    var todayPosted = 2 + pub;
-    var monthPosted = 81 + todayPosted;
-    var totalPosted = 1240 + pub;
-    var dbTotal = 23186;
-    var fresh = 87;
+    var todayPosted = pub;
+    var monthPosted = pub;
+    var totalPosted = pub;
+    var dbTotal = MOCK.sources.length;
+    var fresh = 0;
 
     function set(id, v) { var el = $(id); if (el) el.textContent = v; }
     set("#hero-num", String(todayPosted));
-    set("#hero-delta", "较昨日 +1");
+    set("#hero-delta", "累计已发布");
     set("#stat-month", String(monthPosted));
     set("#stat-total", totalPosted.toLocaleString());
     set("#stat-db", dbTotal.toLocaleString());
@@ -622,7 +636,7 @@
     if (t) {
       t.innerHTML = [
         "抓取 <b>" + dbTotal.toLocaleString() + "</b>",
-        "判重 <b>214</b>",
+        "判重 <b>0</b>",
         "新收录 <b>" + fresh + "</b>",
         "已发布 <b>" + todayPosted + "</b>",
         "失败 <b>" + fail + "</b>"
@@ -1080,14 +1094,22 @@
       return window.__ptaQueue.req("?limit=200").then(function (res) {
         if (!res || !res.j || !res.j.ok || !res.j.data || !Array.isArray(res.j.data.items)) return false;
         MOCK.queue = res.j.data.items.map(window.__ptaQueue.map);
+        var pendingN = (res.j.data.counts && res.j.data.counts.pending) || 0;
+        window.__ptaQueueCounts = res.j.data.counts || null;
+        if (window.__ptaPaintTopbar) window.__ptaPaintTopbar();
+        if (window.__ptaSetNavCount) window.__ptaSetNavCount("queue", pendingN);
+        var allLink = $("#dash-pending-all");
+        if (allLink) allLink.textContent = pendingN ? "全部 " + pendingN : "全部";
         if (state.sel && !MOCK.queue.some(function (x) { return x.id === state.sel; })) state.sel = null;
         paint();
         return true;
       });
     }
     window.__ptaLoadQueue = loadServer;
+    window.__ptaRepaintQueue = paint;
 
     paint();
+    window.__ptaRepaintQueue = paint;
     loadServer();
   }
 
@@ -1111,11 +1133,13 @@
           '<span><span class="badge ' + (it.checkCls === "green" ? "green" : it.checkCls === "red" ? "red" : "amber") + '">' + escapeHtml(it.check) + "</span></span>" +
           '<span class="ta-r"><button class="link-btn" data-archive="1">归档</button></span>' +
         "</div>";
-      }).join("") || '<div class="sites-empty">没有匹配的条目</div>';
+      }).join("") || '<div class="sites-empty">' +
+        (MOCK.sources.length ? "没有匹配的条目" : "还没有拉取到数据，抓取执行器接上真实站点后这里才会有内容") + "</div>";
       var c = $("#dl-count");
       if (c) c.textContent = rows.length;
     }
 
+    window.__ptaRepaintSources = paint;
     var q = $("#dl-q");
     if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
     body.addEventListener("click", function (e) {
@@ -1171,7 +1195,7 @@
         var t0 = null;
         try { t0 = localStorage.getItem("pta.target"); } catch (e) {}
         if (t0 && MOCK.sitesList.some(function (x) { return x.name === t0; })) return t0;
-        var first = MOCK.sitesList.filter(function (x) { return x.enabled; })[0];
+        var first = MOCK.sitesList[0];
         return first ? first.name : "";
       }
       crawl.addEventListener("click", function () {
@@ -1238,6 +1262,8 @@
         });
         save();
         paint();
+        window.__ptaDownloaderCount = res.j.data.length;
+        if (window.__ptaPaintTopbar) window.__ptaPaintTopbar();
         return true;
       });
     }
@@ -1905,7 +1931,7 @@
     if (dryRunBtn) dryRunBtn.addEventListener("click", function () {
       var host0 = target;
       if (!host0) {
-        var first = MOCK.sitesList.filter(function (x) { return x.enabled; })[0];
+        var first = MOCK.sitesList[0];
         host0 = first ? first.name : "";
       }
       if (!host0) { toast("先去站点页加一个站点"); return; }
@@ -2418,13 +2444,13 @@
       var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量+定期" : "增量";
       return '<div class="site-item' + (state.sel === s.name ? " on" : "") + '" data-host="' + escapeHtml(s.name) + '">' +
         '<input type="checkbox" class="site-pick" data-host="' + escapeHtml(s.name) + '"' + (picked ? " checked" : "") + ">" +
+        '<span class="st ' + dotCls(s) + '"><i></i></span>' +
         '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
         '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
         '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
         '<span class="si-preset ' + (presetOf(s.name) ? "on" : "") + '">' + (presetOf(s.name) ? "预设" : "—") + "</span>" +
         '<span class="si-mode">' + modeTxt + "</span>" +
         '<span class="si-last">' + escapeHtml(s.last || "—") + "</span>" +
-        '<span class="st ' + dotCls(s) + '"><i></i></span>' +
       "</div>";
     }
 
@@ -2452,18 +2478,16 @@
 
     function overviewHtml(s) {
       var k = hashStr(s.name);
-      var todayNew = s.enabled ? (k % 26) + (s.login === "fail" ? 0 : 3) : 0;
-      var runsToday = s.enabled ? 1 + (k >>> 9) % 4 : 0;
+      var todayNew = "—";
+      var runsToday = "0";
       var next = !s.enabled ? "—"
         : s.trigger === "manual" ? "手动触发"
-        : s.trigger === "daily" ? "明天 " + (s.dailyAt || "18:00")
-        : "约 " + ((k >>> 14) % 50 + 10) + " 分钟后";
-      var lastRes = !s.enabled ? ["已停用", "idle"]
-        : s.login === "fail" ? ["登录失效", "bad"]
-        : (k >>> 20) % 10 === 0 ? ["部分失败", "warn"] : ["成功", "ok"];
+        : s.trigger === "daily" ? "次日 " + (s.dailyAt || "18:00")
+        : "未开始";
+      var lastRes = ["未抓取", "idle"];
       var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量 + 定期全量" : "增量";
-      var recs = [0, 1, 2, 3, 4, 5].map(function (i) { return MOCK.sources[(k + i * 3) % MOCK.sources.length]; });
-      var acts = [0, 1, 2].map(function (i) { return MOCK.logs[(k + i) % MOCK.logs.length]; });
+      var recs = MOCK.sources.slice(0, 6);
+      var acts = MOCK.logs.slice(0, 3);
       var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
       var methodTxt = s.loginMethod === "cookie" ? "Cookie" : "账号密码" + (s.tfa ? " + 2FA" : "");
       var catTxt = (s.cats || []).length + " 个分类" + (s.fullDiscOnly ? " · 只收原盘" : "");
@@ -3064,41 +3088,8 @@
     go(VIEW_META[start] ? start : current, { force: true, pop: true });
   }
 
-/* ---------- 运行时：开发进度 / 后端连接 / 实时日志 ---------- */
+/* ---------- 运行时：后端连接 / 实时日志 ---------- */
 
-  /* 开发进度按模块加权，改这里即可自动重算 */
-  var PROGRESS_ITEMS = [
-    { name: "面板界面", weight: 22, done: 0.90 },
-    { name: "流程配置", weight: 10, done: 0.85 },
-    { name: "站点管理", weight: 8, done: 0.80 },
-    { name: "待审核台", weight: 6, done: 0.70 },
-    { name: "后端接口", weight: 15, done: 0 },
-    { name: "真实抓取", weight: 14, done: 0 },
-    { name: "真实发布", weight: 10, done: 0 },
-    { name: "部署与鉴权", weight: 8, done: 0 },
-    { name: "测试与文档", weight: 7, done: 0.10 }
-  ];
-
-  function progressPercent() {
-    var total = 0, got = 0;
-    PROGRESS_ITEMS.forEach(function (it) { total += it.weight; got += it.weight * it.done; });
-    return Math.round(got / (total || 1) * 100);
-  }
-
-  function renderProgress() {
-    var pct = progressPercent();
-    var bar = document.querySelector(".dev-progress .dp-bar i");
-    var num = document.querySelector(".dev-progress .dp-num");
-    var box = document.querySelector(".dev-progress");
-    if (bar) bar.style.width = pct + "%";
-    if (num) num.textContent = pct + "%";
-    if (box) {
-      var lines = PROGRESS_ITEMS.map(function (it) {
-        return it.name + " " + Math.round(it.done * 100) + "% × 权重 " + it.weight;
-      });
-      box.title = "按模块加权：" + pct + "%\n" + lines.join("\n");
-    }
-  }
 
   /* 后端连接：有 /api/health 就切到实时，没有就留在本地演示 */
   var API = {
@@ -3123,7 +3114,6 @@
         API.health = null;
       }).then(function () {
         if (timer) clearTimeout(timer);
-        renderProgress();
         refreshPills();
         if (typeof LOG_STREAM !== "undefined" && LOG_STREAM.startLive) LOG_STREAM.startLive();
         if (typeof window.__ptaAfterProbe === "function") window.__ptaAfterProbe();
@@ -3222,7 +3212,6 @@
   };
 
   function initRuntime() {
-    renderProgress();
     API.probe();
     setTimeout(function () { if (API.mode === "live") LOG_STREAM.startLive(); }, 900);
     setInterval(function () { API.probe(); }, 30000);

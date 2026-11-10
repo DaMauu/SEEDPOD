@@ -2227,3 +2227,14 @@ body::after {
 
 /* ---- 站点详情：连接自检结果 ---- */
 .sd-selfcheck{display:block;margin-top:4px;font-size:11px;color:#8b90a0}
+
+/* ---- 站点列表：状态点固定贴在复选框右边、站名左边 ---- */
+.site-item .st{flex:0 0 8px;width:8px;justify-content:center}
+.site-item .st i{width:7px;height:7px}
+
+/* 站点列表改成 8 列：复选框 | 状态点 | 站名 | 架构 | 登录 | 预设 | 抓取 | 上次抓取 */
+.st-head, .site-item{grid-template-columns:26px 10px minmax(0,1fr) 96px 84px 46px 56px 92px;gap:12px}
+.site-item .st{justify-self:start}
+
+/* 顶栏：状态条与页面 token 分两组显示 */
+.topbar-right .pills-row + .pills-row{margin-left:6px}
