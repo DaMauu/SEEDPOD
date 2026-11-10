@@ -1553,12 +1553,14 @@
       $("#node-ok").addEventListener("click", function () {
         var name = $("#nd-name").value.trim();
         if (!name) { toast("先填名称"); return; }
+        var host = $("#nd-host").value.trim();
+        if (!host) { toast("先填地址（下载器的 Web 地址）"); return; }
         var data = {
           name: name,
           role: editing >= 0 ? (MOCK.nodes[editing].role || "下载 / 做种") : "下载 / 做种",
-          host: $("#nd-host").value.trim() || "192.0.2.0",
+          host: host,
           path: editing >= 0 ? MOCK.nodes[editing].path : "/data/pt",
-          qb: "5.0.3",
+          qb: editing >= 0 ? (MOCK.nodes[editing].qb || "") : "",
           qbUser: $("#nd-user").value.trim(),
           qbPass: $("#nd-pass").value,
           maxDown: $("#nd-down").value.trim(),
