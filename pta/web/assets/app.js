@@ -1418,6 +1418,8 @@
           var noRule = !(rl.res && rl.res.length) && !rl.minSizeGB && !rl.maxSizeGB && !rl.requireChinese;
           toast((noRule ? "还没设筛选条件，按全部通过 · " : "") + "检查 " + d.checked + " 条 · 送审 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
           loadCatalog();
+          if (window.__ptaLoadQueue) window.__ptaLoadQueue();
+          if (window.__ptaLoadOverview) window.__ptaLoadOverview();
         }).catch(function () { screenBtn.disabled = false; toast("筛选请求发不出去"); });
       });
     });
