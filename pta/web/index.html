@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261110x">
+<link rel="stylesheet" href="assets/app.css?v=20261110y">
 </head>
 <body data-page="dashboard">
 <div class="layout">
@@ -97,6 +97,12 @@
             <option value="ok">登录正常</option>
             <option value="fail">登录失效</option>
             <option value="none">未登录</option>
+          </select>
+          <select class="select slim" id="site-preset">
+            <option value="all">全部预设</option>
+            <option value="pending">预设待确认</option>
+            <option value="confirmed">预设已确认</option>
+            <option value="nocats">没有分类 id</option>
           </select>
           <button class="btn ghost slim" id="bulk-open" disabled>批量设置</button>
           <button class="btn primary slim" data-act="new-site">添加站点</button>
@@ -338,7 +344,7 @@
 <div id="dock-root"></div>
 <script src="assets/sites-data.js"></script>
 <script src="assets/sites-data.local.js" onerror="void 0"></script>
-<script src="assets/data.js?v=20261110x"></script>
-<script src="assets/app.js?v=20261110x"></script>
+<script src="assets/data.js?v=20261110y"></script>
+<script src="assets/app.js?v=20261110y"></script>
 </body>
 </html>

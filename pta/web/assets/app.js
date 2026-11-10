@@ -2307,7 +2307,7 @@
     var list = $("#sites-list");
     if (!list) return;
     var detail = $("#site-detail");
-    var state = { q: "", status: "all", arch: "all", login: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false, closed: {} };
+    var state = { q: "", status: "all", arch: "all", login: "all", preset: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false, closed: {} };
     var PER_PAGE = 11;
     var ACH = {
       NP: ["np", "NexusPHP"], UNIT3D: ["u3d", "UNIT3D"], GZ: ["gz", "Gazelle"],
@@ -2344,6 +2344,12 @@
         if (state.status === "off" && s.enabled) return false;
         if (state.arch !== "all" && (s.arch || "?") !== state.arch) return false;
         if (state.login !== "all" && s.login !== state.login) return false;
+        if (state.preset && state.preset !== "all") {
+          var pr = (window.__ptaPresets || {})[s.name] || null;
+          if (state.preset === "confirmed" && !(pr && pr.confirmed)) return false;
+          if (state.preset === "pending" && !(pr && !pr.confirmed)) return false;
+          if (state.preset === "nocats" && !(pr && !pr.ids)) return false;
+        }
         if (state.q && ((s.title || "") + " " + s.name + " " + s.url).toLowerCase().indexOf(state.q) === -1) return false;
         return true;
       });
@@ -2722,6 +2728,8 @@
     if (archSel) archSel.addEventListener("change", function (e) { state.arch = e.target.value; state.page = 1; paint(); });
     var loginSel = $("#site-login");
     if (loginSel) loginSel.addEventListener("change", function (e) { state.login = e.target.value; state.page = 1; paint(); });
+    var presetSel = $("#site-preset");
+    if (presetSel) presetSel.addEventListener("change", function (e) { state.preset = e.target.value; state.page = 1; paint(); });
 
     /* ---- 详情交互 ---- */
     if (detail) detail.addEventListener("change", function (e) {

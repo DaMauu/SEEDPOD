@@ -300,6 +300,7 @@ async function main() {
     need(j.data['demo2.example'].ids === 2, 'ids 统计不对：' + j.data['demo2.example'].ids);
     need(j.data['demo2.example'].groups === 1, 'groups 统计不对：' + j.data['demo2.example'].groups);
     need(j.data['demo2.example'].engine === 'gazelle', 'engine 没带出来');
+    need(j.data['demo2.example'].confirmed === true, 'source=manual 的预设应算已确认');
     const withMode = await fetchA(BASE + '/api/sites/demo3.example/search', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ engine: 'unit3d', catMode: 'multi', catSlot: 2, cats: { movie: ['1'] }, source: 'auto', confirmed: false })
@@ -308,6 +309,8 @@ async function main() {
     need(withMode.ok, '写 catMode 失败 ' + JSON.stringify(wj).slice(0, 140));
     need(wj.data.preset.catMode === 'multi' && wj.data.preset.catSlot === 2, 'catMode/catSlot 没存下来：' + JSON.stringify(wj.data.preset).slice(0, 160));
     need(wj.data.preset.source === 'auto' && wj.data.preset.confirmed === false, 'source/confirmed 没存下来');
+    const sum2 = await (await fetchA(BASE + '/api/site-search')).json();
+    need(sum2.data['demo3.example'].confirmed === false, 'source=auto 的预设不该算已确认');
     const badMode = await fetchA(BASE + '/api/sites/demo3.example/search', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ catMode: 'weird' })
     });

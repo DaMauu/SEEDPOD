@@ -1024,7 +1024,8 @@ const server = http.createServer(async (req, res) => {
         Object.keys(cats).forEach(function (k) { ids += (cats[k] || []).length; });
         out[h] = {
           engine: s.engine || "", source: s.source || "", updatedAt: s.updatedAt || "",
-          groups: Object.keys(cats).length, ids: ids
+          groups: Object.keys(cats).length, ids: ids,
+          confirmed: s.confirmed === true || s.source === 'manual' || s.source === 'probe'
         };
       });
       return send(res, 200, { ok: true, data: out });
