@@ -1234,7 +1234,7 @@
   function initSources() {
     var body = $("#dl-body");
     if (!body) return;
-    var state = { q: "", site: "", type: "", status: "", page: 0 };
+    var state = { q: "", site: "", type: "", status: "", mark: "", page: 0 };
     var PAGE = 100, LOAD_MAX = 500;
     var MK = { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" };
 
@@ -1316,6 +1316,11 @@
         if (state.q && (it.title + " " + it.res + " " + it.site).toLowerCase().indexOf(state.q) === -1) return false;
         if (state.site && it.site !== state.site) return false;
         if (state.type && it.type !== state.type) return false;
+        if (state.mark) {
+          var mk = it.marks || {};
+          if (state.mark === "any") { if (!Object.keys(mk).some(function (k) { return mk[k]; })) return false; }
+          else if (!mk[state.mark]) return false;
+        }
         return true;
       });
       var pages0 = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -1371,6 +1376,8 @@
     if (siteSel) siteSel.addEventListener("change", function (e) { state.site = e.target.value; state.page = 0; paint(); });
     var typeSel = $("#dl-type");
     if (typeSel) typeSel.addEventListener("change", function (e) { state.type = e.target.value; state.page = 0; paint(); });
+    var markSel = $("#dl-mark");
+    if (markSel) markSel.addEventListener("change", function (e) { state.mark = e.target.value; state.page = 0; paint(); });
     var statusSel = $("#dl-status");
     if (statusSel) statusSel.addEventListener("change", function (e) { state.status = e.target.value; state.page = 0; loadCatalog(); });
     var prevBtn = $("#dl-prev");

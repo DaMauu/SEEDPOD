@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261117q">
+<link rel="stylesheet" href="assets/app.css?v=20261117r">
 </head>
 <body data-page="dashboard">
 <div class="layout">
@@ -193,6 +193,14 @@
             <option value="skipped">跳过</option>
             <option value="archived">归档</option>
           </select>
+          <select class="select slim" id="dl-mark">
+            <option value="">全部标记</option>
+            <option value="any">有任意标记</option>
+            <option value="noRedistribute">禁转</option>
+            <option value="exclusive">独占</option>
+            <option value="diy">DIY</option>
+            <option value="limited">限转</option>
+          </select>
           <div class="spacer"></div>
           <button class="btn slim" id="dl-screen">按条件送审</button>
           <button class="btn ghost slim" id="dl-archive">归档已跳过</button>
@@ -363,7 +371,7 @@
 </div>
 <div id="dock-root"></div>
 <script src="assets/sites-data.js"></script>
-<script src="assets/data.js?v=20261117q"></script>
-<script src="assets/app.js?v=20261117q"></script>
+<script src="assets/data.js?v=20261117r"></script>
+<script src="assets/app.js?v=20261117r"></script>
 </body>
 </html>
