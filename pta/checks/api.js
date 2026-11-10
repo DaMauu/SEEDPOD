@@ -302,6 +302,14 @@ async function main() {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ catSlot: 99 })
     });
     need(badSlot.status === 400, '非法 catSlot 没被拦：' + badSlot.status);
+    const archSrc = await fetchA(BASE + '/api/sites/demo4.example/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ engine: 'nexusphp', source: 'arch' })
+    });
+    need(archSrc.ok, 'source=arch 被拒了：' + archSrc.status);
+    const bogusSrc = await fetchA(BASE + '/api/sites/demo4.example/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ source: 'bogus' })
+    });
+    need(bogusSrc.status === 400, '非法 source 没被拦：' + bogusSrc.status);
     const anon = await fetch(BASE + '/api/site-search');
     need(anon.status === 401, '未登录能读汇总：' + anon.status);
   });

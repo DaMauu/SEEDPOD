@@ -37,6 +37,25 @@ const DEFAULTS = {
 const analysis = readJson(path.join(DATA, 'analysis.json'), null);
 if (!analysis) { console.log('缺少 pta/data/analysis.json，先跑 node scripts/analyze-samples.js'); process.exit(1); }
 
+/* 清单里的站：没采样到的也要有一份「按架构推断」的定义，保证 300 多个站都有配置可用 */
+const ARCH_ENGINE = { NP: 'nexusphp', UNIT3D: 'unit3d', GZ: 'gazelle', OTHER: 'custom' };
+const listed = [];
+const archMap = {};
+try {
+  fs.readFileSync(path.join(DATA, 'site-arch.local.csv'), 'utf8').split(/\r?\n/).slice(1).forEach(function (l) {
+    const c = l.split(',');
+    if (c[0]) archMap[c[0].trim()] = (c[2] || '').trim();
+  });
+} catch (e) {}
+const seenHost = {};
+(readJson(path.join(DATA, 'sites-bookmark.local.json'), []) || []).forEach(function (it) {
+  if (!/内站|外站/.test(it.path || '')) return;
+  const host = String(it.url || '').replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+  if (!host || seenHost[host]) return;
+  seenHost[host] = 1;
+  listed.push({ host: host, arch: archMap[host] || '?' });
+});
+
 const presets = readJson(PRESETS, { sites: {} });
 presets.sites = presets.sites || {};
 
@@ -111,9 +130,57 @@ Object.keys(analysis).sort().forEach(function (host) {
   presetsAdded++;
 });
 
+/* 没采到的站：按清单架构推断一份定义，标注来源，避免面板上这些站完全没配置 */
+let inferred = 0;
+listed.forEach(function (t) {
+  const prev = analysis[t.host];
+  if (prev && prev.engine) return;                      /* 已识别引擎的上面处理过 */
+  const engine = ARCH_ENGINE[t.arch] || 'custom';   /* 架构未知就按兜底引擎配，先保证有定义可用 */
+  const dflt = DEFAULTS[engine] || DEFAULTS.nexusphp;
+  const def = {
+    host: t.host,
+    base: 'https://' + t.host,
+    engine: engine,
+    login: engine === 'unit3d'
+      ? { method: 'POST', path: '/login', fields: { username: 'username', password: 'password' } }
+      : engine === 'gazelle'
+        ? { method: 'POST', path: '/login.php', fields: { username: 'username', password: 'password' } }
+        : { method: 'POST', path: '/takelogin.php', fields: { username: 'username', password: 'password' } },
+    searchPath: dflt.searchPath,
+    params: dflt.params,
+    catMode: dflt.catMode,
+    catSlot: 1,
+    cats: {},
+    catMap: [],
+    rate: { minGapMs: 1500, jitterMs: 1000, maxPerRun: 10 },
+    source: { kind: 'arch', analyzedAt: null, rows: 0, sizeRows: 0, cats: 0 },
+    note: prev
+      ? '采样到了但没解析出引擎（可能是登录墙 / 挑战页 / 域名失效），引擎按清单架构（' + t.arch + '）推断'
+      : '还没采样：引擎按清单架构（' + t.arch + '）推断，参数用该引擎默认值，分类待确认'
+  };
+  if (!dry) fs.writeFileSync(path.join(OUT, t.host + '.json'), JSON.stringify(def, null, 1), 'utf8');
+  /* 预设也补一条：引擎和默认参数先能拼出搜索 URL，分类等采样后再说 */
+  if (!presets.sites[t.host]) {
+    presets.sites[t.host] = {
+      engine: engine,
+      searchPath: dflt.searchPath,
+      browsePath: dflt.searchPath,
+      params: dflt.params,
+      catMode: dflt.catMode,
+      cats: {},
+      source: 'arch',
+      confirmed: false,
+      updatedAt: now,
+      note: '按清单架构推断，还没采样确认'
+    };
+  }
+  inferred++;
+  defs++;
+});
+
 if (!dry) {
   fs.writeFileSync(PRESETS, JSON.stringify(presets, null, 1), 'utf8');
 }
 
-console.log('站定义 ' + defs + ' 份（无分类 ' + noCats + '，引擎未识别 ' + unknown + '），' +
+console.log('站定义 ' + defs + ' 份（采样 ' + (defs - inferred) + ' + 按架构推断 ' + inferred + '；无分类 ' + noCats + '，引擎未识别 ' + unknown + '），' +
   '自动搜索预设 ' + presetsAdded + ' 条，预设文件共 ' + Object.keys(presets.sites).length + ' 条' + (dry ? '（dry run，未写盘）' : ''));

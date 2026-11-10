@@ -2490,7 +2490,7 @@
         }).join("") : "";
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "引擎", type: "fixed", v: sEng ? (engCode(sEng) + " · " + sEng) : "未识别", noTag: true },
-          { t: "预设来源", type: "fixed", v: pdetail ? (pdetail.source === "auto" ? "采样自动生成，还没人工确认" : (pdetail.source || "手填")) : "还没有预设", noTag: true },
+          { t: "预设来源", type: "fixed", v: pdetail ? (pdetail.source === "auto" ? "采样自动生成，还没人工确认" : pdetail.source === "arch" ? "按清单架构推断，还没采样" : (pdetail.source || "手填")) : "还没有预设", noTag: true },
           { t: "分类参数", type: "fixed", v: (pdetail && pdetail.catMode ? pdetail.catMode : "—") + (pdetail && pdetail.catParam ? " · " + pdetail.catParam : ""), noTag: true }
         ]) + "</div>" +
         '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +

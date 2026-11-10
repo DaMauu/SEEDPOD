@@ -232,7 +232,7 @@ function sanitizePreset(body) {
     preset.cats = cats;
   }
   if (body.source !== undefined) {
-    if (['manual', 'probe', 'auto'].indexOf(String(body.source)) < 0) return { err: { code: 'BAD_REQUEST', message: 'source 只能是 manual / probe / auto' } };
+    if (['manual', 'probe', 'auto', 'arch'].indexOf(String(body.source)) < 0) return { err: { code: 'BAD_REQUEST', message: 'source 只能是 manual / probe / auto / arch' } };
     preset.source = String(body.source);
   }
   if (body.catMode !== undefined) {
