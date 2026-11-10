@@ -3550,6 +3550,7 @@
       v.classList.toggle("active", on);
     });
     current = key;
+    window.__ptaCurrent = key;
     setActive(key);
     if (key === "dashboard" && typeof renderDashboard === "function") renderDashboard();
     if (!opts.pop) {
@@ -3829,6 +3830,11 @@
     renderDashboard();
     initRuntime();
     if (typeof loadSitesFromApi === "function") loadSitesFromApi();
+    /* 停在总览页时每 30 秒刷一次真实状态，别让数字一直停在进页面那一刻 */
+    setInterval(function () {
+      if (window.__ptaCurrent !== "dashboard") return;
+      if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+    }, 30000);
   }
 
   document.addEventListener("DOMContentLoaded", function () {
