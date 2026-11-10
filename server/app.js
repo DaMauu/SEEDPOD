@@ -290,6 +290,95 @@ function queueAction(id, body) {
   return { item: item };
 }
 
+/* ---------- 下载器：只连用户自己填的地址，做一次连通性探测 ---------- */
+const DL_FILE = path.join(DATA_DIR, 'downloaders.json');
+const DL_TIMEOUT = 8000;
+
+function readDl() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(DL_FILE, 'utf8'));
+    return { seq: Number(raw && raw.seq) || 0, items: Array.isArray(raw && raw.items) ? raw.items : [] };
+  } catch (e) {
+    return { seq: 0, items: [] };
+  }
+}
+function writeDl(d) {
+  try {
+    fs.writeFileSync(DL_FILE, JSON.stringify({ seq: d.seq, items: d.items }, null, 1), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入下载器失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+function publicDl(d) {
+  return { id: d.id, name: d.name || '', url: d.url, user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth };
+}
+function normDlUrl(raw) {
+  const s = String(raw || '').trim().replace(/\/+$/, '');
+  if (!/^https?:\/\/[^\s]+$/i.test(s)) return null;
+  return s;
+}
+function sanitizeDl(body, prev) {
+  const out = Object.assign({}, prev || {});
+  if (body.name !== undefined) {
+    const n = String(body.name).trim();
+    if (n.length > 60) return { err: { code: 'BAD_REQUEST', message: 'name 最多 60 字' } };
+    out.name = n;
+  }
+  if (body.url !== undefined) {
+    const u = normDlUrl(body.url);
+    if (!u) return { err: { code: 'BAD_URL', message: '地址必须是 http/https 开头' } };
+    out.url = u;
+  }
+  if (body.user !== undefined) out.user = String(body.user).slice(0, 100);
+  if (body.pass !== undefined) out.pass = body.pass ? String(body.pass).slice(0, 200) : '';
+  if (body.disableAuth !== undefined) out.disableAuth = !!body.disableAuth;
+  return { dl: out };
+}
+
+async function probeDownloader(d) {
+  const steps = [];
+  const base = d.url;
+  const cookie = { value: '' };
+  function ms(t0) { return Date.now() - t0; }
+  async function hit(path, opts) {
+    const t0 = Date.now();
+    const h = Object.assign({}, (opts && opts.headers) || {});
+    if (cookie.value) h.cookie = cookie.value;
+    const res = await fetch(base + path, Object.assign({}, opts || {}, {
+      headers: h, redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT)
+    }));
+    return { res: res, ms: ms(t0) };
+  }
+  try {
+    let r = await hit('/api/v2/app/version');
+    steps.push({ step: 'version', status: r.res.status, ms: r.ms });
+    if ((r.res.status === 401 || r.res.status === 403) && (d.user || d.pass)) {
+      const t0 = Date.now();
+      const login = await fetch(base + '/api/v2/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', referer: base },
+        body: 'username=' + encodeURIComponent(d.user || '') + '&password=' + encodeURIComponent(d.pass || ''),
+        redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT)
+      });
+      const setCookie = login.headers.get('set-cookie') || '';
+      const m = /SID=([^;]+)/.exec(setCookie);
+      if (m) cookie.value = 'SID=' + m[1];
+      const text = await login.text().catch(function () { return ''; });
+      steps.push({ step: 'login', status: login.status, ms: ms(t0), ok: /ok/i.test(text) });
+      r = await hit('/api/v2/app/version');
+      steps.push({ step: 'version', status: r.res.status, ms: r.ms });
+    }
+    const version = (await r.res.text().catch(function () { return ''; })).trim().slice(0, 40);
+    const pass = r.res.status === 200 && !!version;
+    return { pass: pass, version: pass ? version : '', steps: steps };
+  } catch (e) {
+    steps.push({ step: 'connect', status: 0, ms: 0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e && e.message || e).slice(0, 160) });
+    return { pass: false, version: '', steps: steps };
+  }
+}
+
 /* ---------- 任务：干跑队列（只走本地步骤，不访问任何外部站点） ---------- */
 const TASKS = new Map();
 const TASK_TYPES = ['crawl', 'check', 'publish'];
@@ -638,6 +727,55 @@ const server = http.createServer(async (req, res) => {
       }
       if (changes.length) logEvent('info', '设置', '修改配置 · ' + changes.join(' · '));
       return send(res, 200, { ok: true, data: next });
+    }
+    if (p === '/api/downloaders' && req.method === 'GET') {
+      const d = readDl();
+      return send(res, 200, { ok: true, data: d.items.map(publicDl) });
+    }
+    if (p === '/api/downloaders' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const s = sanitizeDl(body, {});
+      if (s.err) return fail(res, 400, s.err.code, s.err.message);
+      if (!s.dl.url) return fail(res, 400, 'BAD_REQUEST', 'url 必填');
+      const store = readDl();
+      const item = Object.assign(s.dl, { id: 'dl_' + String(++store.seq).padStart(3, '0') });
+      store.items.push(item);
+      try { writeDl(store); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+      logEvent('info', '下载器', '新增下载器 · ' + (item.name || item.url));
+      return send(res, 200, { ok: true, data: publicDl(item) });
+    }
+    if (p.startsWith('/api/downloaders/')) {
+      const rest = p.slice('/api/downloaders/'.length).replace(/\/+$/, '');
+      const test = /\/test$/.test(rest);
+      const id = decodeURIComponent(test ? rest.replace(/\/test$/, '') : rest);
+      const store = readDl();
+      const idx = store.items.findIndex(function (x) { return x.id === id; });
+      if (idx < 0) return fail(res, 404, 'NOT_FOUND', '下载器不存在');
+      if (test) {
+        if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+        const r = await probeDownloader(store.items[idx]);
+        logEvent(r.pass ? 'info' : 'warn', '下载器', '连通性探测 · ' + (store.items[idx].name || store.items[idx].url) + ' · ' + (r.pass ? '通过 ' + r.version : '失败'));
+        return send(res, 200, { ok: true, data: r });
+      }
+      if (req.method === 'PUT' || req.method === 'POST') {
+        const body = await readBody(req);
+        if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+        const s = sanitizeDl(body, store.items[idx]);
+        if (s.err) return fail(res, 400, s.err.code, s.err.message);
+        store.items[idx] = s.dl;
+        try { writeDl(store); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '下载器', '修改下载器 · ' + (s.dl.name || s.dl.url));
+        return send(res, 200, { ok: true, data: publicDl(s.dl) });
+      }
+      if (req.method === 'DELETE') {
+        const gone = store.items.splice(idx, 1)[0];
+        try { writeDl(store); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '下载器', '删除下载器 · ' + (gone.name || gone.url));
+        return send(res, 200, { ok: true, data: { id: id } });
+      }
+      if (req.method !== 'GET') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET / PUT / DELETE');
+      return send(res, 200, { ok: true, data: publicDl(store.items[idx]) });
     }
     if (p === '/api/queue' && req.method === 'GET') {
       const status = u.searchParams.get('status') || '';

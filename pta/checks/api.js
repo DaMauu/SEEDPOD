@@ -195,6 +195,68 @@ async function main() {
     need(after.data.preset === null, '删除后还能读到预设');
   });
 
+  await check('下载器秘密不回显', async () => {
+    const add = await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '本机检查用', url: 'http://127.0.0.1:1/', user: 'admin', pass: 'topsecret' })
+    });
+    const aj = await add.json();
+    need(add.ok, '新增下载器失败 ' + JSON.stringify(aj).slice(0, 160));
+    need(aj.data.hasPass === true, '没有标记 hasPass');
+    need(aj.data.pass === undefined, '回包带出了密码');
+    need(aj.data.url === 'http://127.0.0.1:1', 'url 没有去掉结尾斜杠：' + aj.data.url);
+    const list = await (await fetchA(BASE + '/api/downloaders')).json();
+    need(JSON.stringify(list).indexOf('topsecret') < 0, '列表里带出了密码');
+    const bad = await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'x', url: 'ftp://nope' })
+    });
+    need(bad.status === 400, '非法地址没被拦：' + bad.status);
+    const del = await fetchA(BASE + '/api/downloaders/' + aj.data.id, { method: 'DELETE' });
+    need(del.ok, '删除下载器失败');
+  });
+
+  await check('下载器连通性探测（本地假 qB）', async () => {
+    const http = require('http');
+    const mock = http.createServer((rq, rs) => {
+      if (rq.url === '/api/v2/app/version') { rs.writeHead(200, { 'content-type': 'text/plain' }); rs.end('v5.0.3'); return; }
+      rs.writeHead(404); rs.end('nope');
+    });
+    await new Promise(r => mock.listen(0, '127.0.0.1', r));
+    const port = mock.address().port;
+    try {
+      const add = await fetchA(BASE + '/api/downloaders', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: '假 qB', url: 'http://127.0.0.1:' + port })
+      });
+      const aj = await add.json();
+      need(add.ok, '新增假 qB 失败');
+      const t = await fetchA(BASE + '/api/downloaders/' + aj.data.id + '/test', { method: 'POST' });
+      const tj = await t.json();
+      need(t.ok, '探测接口失败 ' + JSON.stringify(tj).slice(0, 160));
+      need(tj.data.pass === true, '探测没通过：' + JSON.stringify(tj.data).slice(0, 200));
+      need(tj.data.version === 'v5.0.3', '版本号不对：' + tj.data.version);
+      need(Array.isArray(tj.data.steps) && tj.data.steps[0].status === 200, 'steps 结构不对');
+      await fetchA(BASE + '/api/downloaders/' + aj.data.id, { method: 'DELETE' });
+    } finally {
+      mock.close();
+    }
+  });
+
+  await check('下载器探测失败要给出原因', async () => {
+    const add = await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '连不上', url: 'http://127.0.0.1:9' })
+    });
+    const id = (await add.json()).data.id;
+    const t = await fetchA(BASE + '/api/downloaders/' + id + '/test', { method: 'POST' });
+    const tj = await t.json();
+    need(t.ok, '探测接口本身挂了');
+    need(tj.data.pass === false, '连不上却报成功');
+    need(tj.data.steps[0].error, '没有给出失败原因');
+    await fetchA(BASE + '/api/downloaders/' + id, { method: 'DELETE' });
+  });
+
   await check('待审核队列状态机', async () => {
     const add = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

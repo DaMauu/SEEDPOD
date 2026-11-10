@@ -27,6 +27,11 @@
 | GET /api/sites/:host/search | 该站的搜索预设（引擎/路径/参数名/分类 id） |
 | PUT /api/sites/:host/search | 合并写搜索预设，字段有校验 |
 | DELETE /api/sites/:host/search | 删搜索预设 |
+| GET /api/downloaders | 已配置的下载器（密码只回 hasPass） |
+| POST /api/downloaders | 新增下载器，地址必须是 http/https |
+| PUT /api/downloaders/:id | 按字段改下载器 |
+| DELETE /api/downloaders/:id | 删除下载器 |
+| POST /api/downloaders/:id/test | 只连它自己填的地址做一次连通性探测 |
 | GET /api/queue | 待审核条目与各状态计数 |
 | POST /api/queue | 新增待审核条目（title 必填） |
 | GET /api/queue/:id | 单条详情 |
@@ -42,7 +47,7 @@
 事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、改搜索预设、待审核条目增删与状态变更、干跑任务新建与完成、任务取消。
 
 数据文件（都在 `data/` 下，0600）：`config.json` 面板配置、`site-config.json` 站点配置（密码类字段不落盘）、
-`queue.json` 待审核条目、`site-search.local.json` 搜索预设（在 `pta/data/`，不入库）。
+`queue.json` 待审核条目、`downloaders.json` 下载器（密码只写不读）、`site-search.local.json` 搜索预设（在 `pta/data/`，不入库）。
 
 ## 站点搜索预设为什么单独存
 

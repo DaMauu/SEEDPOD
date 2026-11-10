@@ -112,6 +112,38 @@
 { "ok": true, "data": { "pass": true, "steps": [ { "step": "login", "status": 200, "ms": 812 } ] } }
 ```
 
+## GET /api/downloaders
+
+```
+{ "ok": true, "data": [ { "id": "dl_001", "name": "本机", "url": "http://127.0.0.1:8080",
+  "user": "admin", "hasPass": true, "disableAuth": false } ] }
+```
+
+密码只写不读：列表与详情永远只回 `hasPass`。数据落在 `data/downloaders.json`（0600）。
+
+## POST /api/downloaders
+
+`url` 必填，必须是 http/https；`name` 最多 60 字；可选 `user`、`pass`、`disableAuth`。地址不合法 400 `BAD_URL`。
+
+## PUT /api/downloaders/:id
+
+按字段合并修改，规则同上。`pass` 传空字符串表示清掉已存密码。
+
+## DELETE /api/downloaders/:id
+
+删掉下载器并写事件日志。
+
+## POST /api/downloaders/:id/test
+
+只连这个下载器自己填的地址，8 秒超时，最多两次请求（先取版本，遇到 401/403 再用账号密码登录一次后重取）。
+
+```
+{ "ok": true, "data": { "pass": true, "version": "v5.0.3",
+  "steps": [ { "step": "version", "status": 200, "ms": 42 } ] } }
+```
+
+连不上时 `pass: false`，`steps[0]` 带 `error`（超时会写「连接超时」）。
+
 ## GET /api/queue
 
 `?status=pending|approved|rejected|published` 可过滤，`?limit=` 最多 500。
@@ -188,6 +220,7 @@
 | BAD_REQUEST | 参数缺失或类型错 |
 | OUT_OF_RANGE | 数值越界，见 limits |
 | BAD_HOST | 站点域名不合法 |
+| BAD_URL | 下载器地址不是 http/https |
 | DRY_RUN_ONLY | 真抓取未接入，只接受干跑 |
 | UNAUTHORIZED | 令牌缺失或过期 |
 | NOT_FOUND | 资源不存在 |
