@@ -1404,20 +1404,22 @@
     var screenBtn = $("#dl-screen");
     if (screenBtn) screenBtn.addEventListener("click", function () {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
-      screenBtn.disabled = true;
-      fetch("/api/catalog/screen", {
-        method: "POST", credentials: "same-origin",
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 200 })
-      }).then(function (r) { return r.json(); }).then(function (j) {
-        screenBtn.disabled = false;
-        if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
-        var d = j.data || {};
-        var rs = Object.keys(d.byReason || {}).map(function (k) { return k + " " + d.byReason[k]; }).join(" · ");
-        var rl = d.rules || {};
-        var noRule = !(rl.res && rl.res.length) && !rl.minSizeGB && !rl.maxSizeGB && !rl.requireChinese;
-        toast((noRule ? "还没设筛选条件，按全部通过 · " : "") + "检查 " + d.checked + " 条 · 送审 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
-        loadCatalog();
-      }).catch(function () { screenBtn.disabled = false; toast("筛选请求发不出去"); });
+      ptaConfirm("按条件送审", "会按流程页「筛选」里的条件把待筛选的词条送去待审核，不符合的标成跳过。继续？", function () {
+        screenBtn.disabled = true;
+        fetch("/api/catalog/screen", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 200 })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          screenBtn.disabled = false;
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
+          var d = j.data || {};
+          var rs = Object.keys(d.byReason || {}).map(function (k) { return k + " " + d.byReason[k]; }).join(" · ");
+          var rl = d.rules || {};
+          var noRule = !(rl.res && rl.res.length) && !rl.minSizeGB && !rl.maxSizeGB && !rl.requireChinese;
+          toast((noRule ? "还没设筛选条件，按全部通过 · " : "") + "检查 " + d.checked + " 条 · 送审 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
+          loadCatalog();
+        }).catch(function () { screenBtn.disabled = false; toast("筛选请求发不出去"); });
+      });
     });
     var bulk = $("#dl-archive");
     if (bulk) bulk.addEventListener("click", function () {
