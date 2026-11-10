@@ -228,7 +228,7 @@
   function mapServerQueue(it) {
     return {
       id: String(it.id), title: it.title || "", cn: it.cn || "", year: it.year || "", res: it.res || "",
-      size: it.size || "", imdb: it.imdb || "—", site: it.site || "", status: it.status || "pending",
+      size: it.size || "", imdb: it.imdb || "—", site: it.site || "", targetSite: it.targetSite || "", status: it.status || "pending",
       check: it.check || "未查", checkCls: it.checkCls || "gray", reason: it.reason || "",
       shots: (it.shots || []).map(function (s, i) {
         /* 服务端现在存 {name,url}；老数据可能是字符串 */
@@ -880,7 +880,7 @@
       var st = STATUS[it.status] || ["未知", "gray"];
       return '<button class="q-item' + (state.sel === it.id ? " on" : "") + '" data-id="' + it.id + '">' +
         '<span class="q-title"><b>' + escapeHtml(it.title) + "</b>" +
-          "<i>" + (it.cn ? escapeHtml(it.cn) + " · " : "") + escapeHtml(it.res) + " · " + escapeHtml(it.size) + "</i></span>" +
+          "<i>" + (it.cn ? escapeHtml(it.cn) + " · " : "") + escapeHtml(it.res) + " · " + escapeHtml(it.size) + (it.targetSite ? " · 目标 " + escapeHtml(it.targetSite) : "") + "</i></span>" +
         '<span class="badge ' + st[1] + '">' + st[0] + "</span>" +
       "</button>";
     }
