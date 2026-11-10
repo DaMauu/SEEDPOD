@@ -887,6 +887,20 @@
       return '<div class="shot"><span>' + n + "</span></div>";
     }
 
+    /* 目标站：默认用流程页选的那个，也可以在条目里单独改；转载就是把别的站的东西发到这个站 */
+    function targetOptions(it) {
+      var cur = String(it.targetSite || "");
+      try { if (!cur) cur = localStorage.getItem("pta.target") || ""; } catch (e) {}
+      var list = (MOCK.sitesList || []).slice().sort(function (a, b) {
+        return String(a.title || a.name).localeCompare(String(b.title || b.name));
+      });
+      if (cur && !list.some(function (x) { return x.name === cur; })) cur = "";
+      return '<option value="">未选择</option>' + list.map(function (x) {
+        return '<option value="' + escapeHtml(x.name) + '"' + (x.name === cur ? " selected" : "") + ">" +
+          escapeHtml(x.title || x.name) + "</option>";
+      }).join("");
+    }
+
     function subParts(it) {
       var t = it.title || "";
       var regions = { HKG: "港版", AUS: "澳版", USA: "美版", JPN: "日版", KOR: "韩版",
@@ -925,6 +939,7 @@
         "</div>" +
         '<div class="qd-grid">' +
           '<section class="sd-card qd-pubinfo"><h3>发布信息</h3>' +
+            '<div class="qd-field"><span>目标站</span><select class="input" id="qd-target">' + targetOptions(it) + "</select></div>" +
             '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
             '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(subTitle(it)) + '"></div>' +
             '<div class="qd-field"><span>图床</span><select class="input" id="qd-host">' +
@@ -1144,7 +1159,8 @@
           anonymous: !!($("#qd-anon") && $("#qd-anon").checked),
           imageHost: ($("#qd-host") && $("#qd-host").value) || "站内",
           cn: ($("#qd-sub") && $("#qd-sub").value) || "",
-          intro: ($("#qd-desc") && $("#qd-desc").value) || ""
+          intro: ($("#qd-desc") && $("#qd-desc").value) || "",
+          targetSite: ($("#qd-target") && $("#qd-target").value) || ""
         };
         it.status = "publishing";
         paint();

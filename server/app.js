@@ -584,14 +584,15 @@ function composePublish(item) {
     return 'other';
   }
   const purpose = purposeOfTitle(title);
-  const def = item.site ? readSiteDef(item.site) : null;
+  const targetSite = String(item.targetSite || item.site || '').trim();
+  const def = targetSite ? readSiteDef(targetSite) : null;
   const catIds = (def && def.cats && def.cats[purpose]) ? def.cats[purpose].slice(0, 8) : [];
   const categoryHint = { purpose: purpose, ids: catIds, mapped: !!catIds.length };
 
   const warnings = [];
   if (!subtitle) warnings.push('没有中文副标题，发布前要补');
   if (!res) warnings.push('识别不出分辨率');
-  if (!item.site) warnings.push('没选目标站');
+  if (!targetSite) warnings.push('没选目标站');
   if ((item.shots || []).length < 3) warnings.push('截图不足 3 张');
   if (!item.intro) warnings.push('简介还是空的（会先用模板占位）');
   if (def && !catIds.length && def.catMap && def.catMap.length) warnings.push('目标站没有对应的「' + purpose + '」分类，发布时要手动选一个');
@@ -600,7 +601,7 @@ function composePublish(item) {
     intro: item.intro || ('【片名】' + title + '\n【年份】' + (year || '—') + '\n【分辨率】' + (res || '—') +
       '\n【简介】（待补）\n【截图】' + ((item.shots || []).length ? '见下' : '（待补）')),
     tags: tags, anonymous: !!item.anonymous, imageHost: item.imageHost || '站内',
-    category: item.category || '', categoryHint: categoryHint,
+    category: item.category || '', categoryHint: categoryHint, targetSite: targetSite,
     screenshots: (item.shots || []).slice(0, 12),
     warnings: warnings, ready: warnings.length === 0
   };
@@ -635,7 +636,7 @@ const QUEUE_FLOW = {
   published: [],
   skipped: []
 };
-const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note', 'category', 'imageHost', 'catalogId'];
+const QUEUE_FIELDS = ['title', 'cn', 'year', 'res', 'size', 'sizeBytes', 'infohash', 'imdb', 'site', 'check', 'checkCls', 'note', 'category', 'imageHost', 'catalogId', 'targetSite'];
 
 function readQueue() {
   try {
@@ -676,6 +677,7 @@ function createQueueItem(body) {
   }
   if (body.anonymous !== undefined) item.anonymous = body.anonymous === true || body.anonymous === 'true';
   if (body.intro !== undefined) item.intro = String(body.intro).slice(0, 4000);
+  if (body.targetSite !== undefined) item.targetSite = String(body.targetSite).slice(0, 120);
   /* 标题里能读出来的年份/分辨率/体积先补上，待审核页就不用显示空的年份 */
   if (!item.year) { const y = match.yearOf(title); if (y) item.year = y; }
   if (!item.res) { const r = match.resOf(title); if (r) item.res = r; }
@@ -707,7 +709,7 @@ function queueAction(id, body) {
   if (action === 'reject' && !reason.trim()) return { err: { code: 'BAD_REQUEST', message: '驳回必须写理由' } };
   if (action === 'publish') {
     const blockers = [];
-    const site = String(item.site || '').trim();
+    const site = String(item.targetSite || item.site || '').trim();
     if (!item.title || !String(item.title).trim()) blockers.push('条目缺标题');
     if (/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(site)) {
       const preset = (readSearchPresets() || {})[site];
@@ -727,7 +729,7 @@ function queueAction(id, body) {
     if (item.catalogId) catalogStore.setStatus(item.catalogId, 'published');
     appendPublished({
       id: 'pub_' + String(Date.now()),
-      site: item.site || '', title: item.title || '', res: item.res || '', size: item.size || '',
+      site: String(item.targetSite || item.site || ''), sourceSite: item.site || '', title: item.title || '', res: item.res || '', size: item.size || '',
       infohash: item.infohash || '', catalogId: item.catalogId || '', queueId: item.id,
       anonymous: item.anonymous === true, imageHost: item.imageHost || '站内',
       cn: item.cn || '', at: item.updatedAt
