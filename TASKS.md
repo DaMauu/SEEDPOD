@@ -112,6 +112,8 @@ pta\checks\run.cmd
 | done | 列表页进就刷新 | 进数据清单/待审核时重新拉一次；总览每 30 秒刷新真实状态 |
 | done | 站点抽屉显示 cookie 状态 | 启动时读一次 `/api/credentials`（只拿 hasCookie），概览里直接显示「已保存/未保存」 |
 | done | 文案统一 | 界面上不再出现单独「词条库」说法，统一叫数据清单 / 词条 |
+| done | 安全修复：真实站点清单不再公开 | 真实清单移到数据目录 `data/sites-data.local.js`，web 根不再引用；服务端对 `*.local.*` 一律 404；线上验证该路径 404、登录后 `/api/sites` 仍返回 305 站与标题 |
+| done | 待审核条目可选目标站 | 发布记录区分 `site`（目标站）与 `sourceSite`（来源站）；跳过动作改走服务端 `skipped` 状态 |
 | done | 发布记账 | 发布成功把词条标 published、写 `published.json` 记录（含匿名/图床），`/api/published` 可查；首页已发布列表读它 |
 | done | 词条库批量 | `/api/catalog/bulk` 按状态批量改；词条库面板有状态筛选与「归档已跳过」；数据清单页改成读词条库并支持归档 |
 | done | 词条库 | `POST /api/catalog` 导入（按站内 id / infohash 去重）、`/status` 流转 new→selected→published/skipped/archived |
