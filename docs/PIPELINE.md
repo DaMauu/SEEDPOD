@@ -31,6 +31,8 @@ node scripts/pipeline.js --sample 20  # 只补 20 个站
 3. 生成定义 `scripts/collect-site-defs.js`
    - `pta/data/site-defs/<host>.json`：引擎、搜索路径、参数模板、分类（用途 → id）、catMap、限速
    - `pta/data/site-search.local.json`：面板读的搜索预设；只覆盖 `source=auto` 的条目，人工确认过的不动
+   - 分类用途按内置词典猜；猜错的可以在 `pta/data/cat-overrides.local.json` 按站点钉死，
+     形如 `{"<host>": {"分类名或分类 id": "movie"}}`，重跑这个脚本即生效（这个文件只在本地/测试机，不入库）
 
 另外两个只读脚本：`scripts/validate-defs.js`（定义自检）、`scripts/coverage.js`（覆盖率报告）。
 

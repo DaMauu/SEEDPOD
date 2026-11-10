@@ -27,8 +27,23 @@ const RULES = [
   ['movie', /(电影|電影|影视|影視|影片|filme?|movie|blu-?ray|uhd|4k|1080p|720p|remux|web-?dl|dvd-?r|dvdrip|bdrip|rips?\b|untouched|encoded|sdr|hdr)/i],
   ['other', /(其他|其它|misc|others?\b|all\b|categories|pack|unknown)/i]
 ];
-function purposeOf(label) {
+/* 人工兜底：pta/data/cat-overrides.local.json 里可以按站点把某个分类名钉到指定用途，
+   形如 {"52pt.site": {"电 影": "movie", "演唱会": "music"}}，键支持分类名或分类 id。 */
+const OVERRIDES = (function () {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(DATA, 'cat-overrides.local.json'), 'utf8')) || {};
+  } catch (e) {
+    return {};
+  }
+})();
+
+function purposeOf(label, host, id) {
   const s = String(label || '').replace(/[\s\u3000]+/g, '');     /* 「电 影」这种拆字写法先拼回去 */
+  const o = host && OVERRIDES[host];
+  if (o) {
+    const hit = o[String(label || '').trim()] || o[String(id || '').trim()] || (s ? o[s] : '');
+    if (hit) return String(hit);
+  }
   for (const r of RULES) if (r[1].test(s)) return r[0];
   return 'other';
 }
@@ -81,7 +96,7 @@ Object.keys(analysis).sort().forEach(function (host) {
   (a.catList || []).forEach(function (c) {
     if (ids[c.id]) return;
     ids[c.id] = 1;
-    const p = purposeOf(c.label);
+    const p = purposeOf(c.label, host, c.id);
     (cats[p] = cats[p] || []).push(String(c.id));
     catMap.push({ id: String(c.id), label: c.label, purpose: p });
   });
