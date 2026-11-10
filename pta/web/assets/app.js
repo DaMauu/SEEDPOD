@@ -1756,11 +1756,12 @@
       });
     });
     try { localStorage.setItem(FLOW_KEY, JSON.stringify(data)); } catch (e) {}
+    flowRequest("PUT", { sets: data }).then(function (res) {
+      if (res && res.j && res.j.ok) window.__ptaFlowSynced = true;
+    });
   }
-  function loadFlowState() {
-    var data = null;
-    try { data = JSON.parse(localStorage.getItem(FLOW_KEY) || "null"); } catch (e) {}
-    if (!data) return;
+  function applyFlowData(data) {
+    if (!data) return false;
     Object.keys(RULE_SETS).forEach(function (k) {
       (data[k] || []).forEach(function (grp, gi) {
         var g = RULE_SETS[k][gi];
@@ -1774,6 +1775,25 @@
         });
       });
     });
+    return true;
+  }
+
+  function flowRequest(method, body) {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(null);
+    return fetch("/api/flow", {
+      method: method || "GET", credentials: "same-origin",
+      headers: body ? { "content-type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, j: j }; },
+        function () { return { status: r.status, j: null }; });
+    }).catch(function () { return null; });
+  }
+
+  function loadFlowState() {
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem(FLOW_KEY) || "null"); } catch (e) {}
+    applyFlowData(data);
   }
 
   function initCrawlSettings() {
@@ -1897,6 +1917,45 @@
       refreshSums();
     }
     paintTarget();
+
+    /* 规则正文与 RULE_SETS 对齐（服务端数据套回界面） */
+    function syncFlowDom() {
+      host.querySelectorAll(".rule-item").forEach(function (item) {
+        var k = item.getAttribute("data-set"), idx = Number(item.getAttribute("data-idx"));
+        var set = RULE_SETS[k];
+        if (!set || !set[idx]) return;
+        [].forEach.call(item.querySelectorAll(".set-field"), function (f, m) {
+          var r = set[idx].rows[m];
+          if (!r) return;
+          var sw = f.querySelector("[data-switch]");
+          if (sw) { sw.classList.toggle("on", !!r.on); return; }
+          var pk = f.querySelector(".pick-row");
+          if (pk) {
+            [].forEach.call(pk.querySelectorAll(".cat-chip"), function (c) {
+              c.classList.toggle("on", (r.sel || []).indexOf(c.textContent) >= 0);
+            });
+            return;
+          }
+          var ctl = f.querySelector(".input, .select");
+          if (ctl && r.v !== undefined && r.v !== null) ctl.value = r.v;
+        });
+      });
+      refreshSums();
+    }
+
+    function syncFlowFromServer() {
+      return flowRequest("GET").then(function (res) {
+        if (!res || !res.j || !res.j.ok || !res.j.data || !res.j.data.sets) return false;
+        var data = res.j.data.sets;
+        try { localStorage.setItem(FLOW_KEY, JSON.stringify(data)); } catch (e) {}
+        applyFlowData(data);
+        syncFlowDom();
+        renderTpl();
+        return true;
+      });
+    }
+    window.__ptaLoadFlow = syncFlowFromServer;
+    syncFlowFromServer();
 
     var mask = $("#target-modal");
     function renderTargetList(qv) {

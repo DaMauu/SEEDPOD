@@ -234,6 +234,56 @@ function sanitizePreset(body) {
   return { preset };
 }
 
+/* ---------- 流程规则：抓取/查重/发布三套规则的服务端持久化 ---------- */
+const FLOW_FILE = path.join(DATA_DIR, 'flow.json');
+const FLOW_SETS = ['fetch', 'dedupe', 'pub'];
+
+function readFlow() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(FLOW_FILE, 'utf8'));
+    return raw && raw.sets ? raw : null;
+  } catch (e) {
+    return null;
+  }
+}
+function writeFlow(sets) {
+  try {
+    fs.writeFileSync(FLOW_FILE, JSON.stringify({ updatedAt: new Date().toISOString(), sets }, null, 1), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入流程规则失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+function sanitizeFlow(body) {
+  const src = body && body.sets !== undefined ? body.sets : body;
+  if (!src || typeof src !== 'object' || Array.isArray(src)) return { err: { code: 'BAD_REQUEST', message: '请求体要是 { fetch, dedupe, pub }' } };
+  const out = {};
+  for (const key of FLOW_SETS) {
+    if (src[key] === undefined) continue;
+    const groups = src[key];
+    if (!Array.isArray(groups) || groups.length > 30) return { err: { code: 'BAD_REQUEST', message: key + ' 必须是数组且最多 30 组' } };
+    out[key] = groups.map(function (grp) {
+      if (!Array.isArray(grp) || grp.length > 40) throw Object.assign(new Error(key + ' 每组必须是数组且最多 40 行'), { bad: true });
+      return grp.map(function (row) {
+        if (!row || typeof row !== 'object' || Array.isArray(row)) throw Object.assign(new Error(key + ' 的行必须是对象'), { bad: true });
+        const o = {};
+        if (row.v !== undefined && row.v !== null) {
+          if (typeof row.v === 'object') throw Object.assign(new Error(key + ' 的 v 只能是字符串/数字/布尔'), { bad: true });
+          o.v = typeof row.v === 'string' ? row.v.slice(0, 300) : row.v;
+        }
+        if (row.on !== undefined) o.on = !!row.on;
+        if (row.sel !== undefined) {
+          if (!Array.isArray(row.sel) || row.sel.length > 40) throw Object.assign(new Error(key + ' 的 sel 必须是数组且最多 40 项'), { bad: true });
+          o.sel = row.sel.map(function (x) { return String(x).slice(0, 60); });
+        }
+        return o;
+      });
+    });
+  }
+  return { sets: out };
+}
+
 /* ---------- 待审核台：服务端状态机（pending -> approved/rejected -> published） ---------- */
 const QUEUE_FILE = path.join(DATA_DIR, 'queue.json');
 const QUEUE_ACTIONS = { approve: 'approved', reject: 'rejected', publish: 'published' };
@@ -714,6 +764,23 @@ const server = http.createServer(async (req, res) => {
         else counts.unknown++;
       });
       return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
+    }
+    if (p === '/api/flow' && req.method === 'GET') {
+      const flow = readFlow();
+      return send(res, 200, { ok: true, data: flow || { sets: null, updatedAt: null } });
+    }
+    if (p === '/api/flow' && (req.method === 'PUT' || req.method === 'POST')) {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      let r;
+      try { r = sanitizeFlow(body); } catch (e) { return fail(res, 400, 'BAD_REQUEST', e.message); }
+      if (r.err) return fail(res, 400, r.err.code, r.err.message);
+      const prev = readFlow();
+      const merged = Object.assign({}, (prev && prev.sets) || {}, r.sets);
+      try { writeFlow(merged); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+      const keys = Object.keys(r.sets || {});
+      logEvent('info', '流程', '保存流程规则 · ' + (keys.join('/') || '空'));
+      return send(res, 200, { ok: true, data: { sets: merged, updatedAt: new Date().toISOString() } });
     }
     if (p === '/api/site-search' && req.method === 'GET') {
       const sites = readSearchPresets();

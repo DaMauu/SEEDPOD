@@ -40,6 +40,8 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/site-config | 服务端保存的站点配置（白名单字段） |
 | PUT /api/site-config/:host | 合并写站点配置，密码/cookie/totp 拒收 |
 | DELETE /api/site-config/:host | 删掉站点配置并恢复默认 |
+| GET /api/flow | 抓取/查重/发布三套规则的服务端存档 |
+| PUT /api/flow | 合并保存流程规则（形状有校验） |
 | GET /api/site-search | 所有站点预设的汇总（列表页标已确认/未确认用） |
 | GET /api/sites/:host/search | 该站的搜索预设（引擎/路径/参数名/分类 id） |
 | PUT /api/sites/:host/search | 合并写搜索预设，字段有校验 |
@@ -86,7 +88,7 @@ pta\checks\run.cmd
 
 - smoke.js 22 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮
-- api.js 26 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
+- api.js 27 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
 
 改完必须全绿再提交。
 

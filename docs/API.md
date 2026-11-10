@@ -45,6 +45,22 @@
 
 `arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自 `pta/web/assets/sites-data.local.js`，缺失则为空数组。
 
+## GET /api/flow
+
+抓取 / 查重 / 发布三套规则的服务端存档，没存过时 `sets` 为 `null`：
+
+```
+{ "ok": true, "data": { "updatedAt": "...", "sets": {
+  "fetch": [ [ { "sel": ["电影"] }, { "v": "增量（只抓新页）", "on": true } ] ],
+  "dedupe": [ ... ], "pub": [ ... ] } } }
+```
+
+## PUT /api/flow
+
+按 `fetch` / `dedupe` / `pub` 合并保存。每组是最多 30 个数组、每个数组最多 40 行，
+行只能是对象，字段只认 `v`（字符串/数字/布尔，字符串最长 300）、`on`（布尔）、`sel`（最多 40 项字符串）。
+形状不对返回 400 `BAD_REQUEST`。
+
 ## GET /api/site-search
 
 所有站点搜索预设的汇总，用于列表页标「已确认 / 未确认」：

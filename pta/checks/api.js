@@ -257,6 +257,25 @@ async function main() {
     await fetchA(BASE + '/api/downloaders/' + id, { method: 'DELETE' });
   });
 
+  await check('流程规则存取', async () => {
+    const empty = await (await fetchA(BASE + '/api/flow')).json();
+    need(empty.ok && empty.data.sets === null, '初始应为空：' + JSON.stringify(empty).slice(0, 120));
+    const sets = { fetch: [[{ v: '增量（只抓新页）', on: true, sel: ['电影', '剧集'] }]], pub: [[{ on: false }]] };
+    const put = await fetchA(BASE + '/api/flow', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: sets }) });
+    const pj = await put.json();
+    need(put.ok, '保存失败 ' + JSON.stringify(pj).slice(0, 140));
+    need(pj.data.sets.fetch[0][0].sel.length === 2, 'sel 没存下来');
+    const back = await (await fetchA(BASE + '/api/flow')).json();
+    need(back.data.sets && back.data.sets.fetch[0][0].v === '增量（只抓新页）', '读回来不对');
+    need(back.data.sets.pub[0][0].on === false, '布尔值没存对');
+    const badShape = await fetchA(BASE + '/api/flow', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: { fetch: 'nope' } }) });
+    need(badShape.status === 400, '错误形状没被拦：' + badShape.status);
+    const badRow = await fetchA(BASE + '/api/flow', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: { fetch: [[{ v: { a: 1 } }]] } }) });
+    need(badRow.status === 400, '对象值没被拦：' + badRow.status);
+    const anon = await fetch(BASE + '/api/flow');
+    need(anon.status === 401, '未登录能读流程规则：' + anon.status);
+  });
+
   await check('搜索预设汇总', async () => {
     await fetchA(BASE + '/api/sites/demo2.example/search', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
