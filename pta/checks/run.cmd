@@ -21,15 +21,20 @@ echo ==== adapter (site parsers, offline) ====
 set ADAPTER=%errorlevel%
 
 echo.
+echo ==== security (totp + credential box, offline) ====
+"%PTA_NODE%" pta\checks\security.js
+set SEC=%errorlevel%
+
+echo.
 echo ==== api (backend contract) ====
 if not defined PTA_NODE set PTA_NODE=node
 "%PTA_NODE%" pta\checks\api.js
 set APIC=%errorlevel%
 
 echo.
-if %SMOKE%==0 if %AUDIT%==0 if %ADAPTER%==0 if %APIC%==0 (
+if %SMOKE%==0 if %AUDIT%==0 if %ADAPTER%==0 if %SEC%==0 if %APIC%==0 (
   echo ALL CHECKS PASSED
   exit /b 0
 )
-echo FAILED: smoke=%SMOKE% audit=%AUDIT% adapter=%ADAPTER% api=%APIC%
+echo FAILED: smoke=%SMOKE% audit=%AUDIT% adapter=%ADAPTER% security=%SEC% api=%APIC%
 exit /b 1

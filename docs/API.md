@@ -45,6 +45,41 @@
 
 `arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自 `pta/web/assets/sites-data.local.js`，缺失则为空数组。
 
+## GET /api/credentials
+
+站点凭据列表，只回状态，不回值：
+
+```
+{ "ok": true, "data": [ { "host": "example.org", "user": "已保存", "hasUser": true,
+  "hasPass": true, "hasTotp": true, "updatedAt": "..." } ] }
+```
+
+密文存在 `data/credentials.json`（0600），AES-256-GCM 加密，密钥来自环境变量 `PTA_SECRET`
+或 `data/.secret`（首次启动自动生成，0600）。密钥与密文都不入库，接口日志里也不出现。
+
+## PUT /api/credentials/:host
+
+`{ "user": "...", "pass": "...", "totp": "base32密钥" }`，逐字段加密保存；传空字符串表示清除该字段。
+
+## DELETE /api/credentials/:host
+
+删除该站凭据。
+
+## POST /api/sites/:host/login-test
+
+用已保存的凭据真登录一次（**只在用户点击时调用**），同一站 60 秒内只允许一次，超了返回 429 `TOO_FREQUENT`。
+有 TOTP 密钥会先生成动态码；登录后访问 `/index.php` 判断是否真的登进去了。
+
+```
+{ "ok": true, "data": { "pass": true,
+  "steps": [ { "step": "totp", "status": 200, "note": "已生成 6 位动态码" },
+             { "step": "login", "status": 302, "ms": 420 },
+             { "step": "verify", "status": 200, "ms": 300, "ok": true } ],
+  "cookieNames": [ "c_secure_uid", "c_secure_pass" ] } }
+```
+
+没有凭据或没有站点定义返回 400 `NO_CREDENTIALS` / `NO_DEF`。
+
 ## GET /api/flow
 
 抓取 / 查重 / 发布三套规则的服务端存档，没存过时 `sets` 为 `null`：

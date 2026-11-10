@@ -15,6 +15,9 @@ const PTA_USER = process.env.PTA_USER || '';
 const PTA_PASS = process.env.PTA_PASS || '';
 const VERSION = require('../package.json').version;
 const nexusphp = require('./adapters/nexusphp');
+const totp = require('./totp');
+const secretbox = require('./secretbox');
+const KEYRING = secretbox.loadKey(DATA_DIR);
 const STARTED = Date.now();
 
 const LIMITS = {
@@ -569,6 +572,102 @@ function runDryTask(t) {
   if (tick.unref) tick.unref();
   t.timer = tick;
 }
+/* ---------- 站点凭据：只存密文，接口永不回显明文 ---------- */
+const CRED_FILE = path.join(DATA_DIR, 'credentials.json');
+
+function readCreds() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(CRED_FILE, 'utf8'));
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch (e) {
+    return {};
+  }
+}
+function writeCreds(all) {
+  try {
+    fs.writeFileSync(CRED_FILE, JSON.stringify(all, null, 1), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入凭据失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+function publicCred(c) {
+  return {
+    host: c.host, user: c.user ? '已保存' : '', hasUser: !!c.user,
+    hasPass: !!c.pass, hasTotp: !!c.totp, updatedAt: c.updatedAt || null
+  };
+}
+function decryptField(v) {
+  if (!v) return '';
+  try { return secretbox.decrypt(v, KEYRING.key); } catch (e) { return ''; }
+}
+/* 登录自检：真正登录一次，只由用户点击触发；每站 60 秒最多一次 */
+const LOGIN_ATTEMPT = new Map();
+const LOGIN_GAP_MS = 60 * 1000;
+
+async function loginTestOnce(host) {
+  const all = readCreds();
+  const c = all[host];
+  if (!c || !c.user || !c.pass) return { err: { code: 'NO_CREDENTIALS', message: '这个站还没保存账号密码' } };
+  const def = readSiteDef(host);
+  if (!def || !def.base) return { err: { code: 'NO_DEF', message: '没有站点定义，不知道往哪里登录' } };
+  const last = LOGIN_ATTEMPT.get(host) || 0;
+  if (Date.now() - last < LOGIN_GAP_MS) {
+    return { err: { code: 'TOO_FREQUENT', message: '同一个站 60 秒只能自检一次，请稍后再试' } };
+  }
+
+  const user = decryptField(c.user), pass = decryptField(c.pass), secret = decryptField(c.totp);
+  const base = String(def.base).replace(/\/+$/, '');
+  const loginPath = (def.login && def.login.path) || '/takelogin.php';
+  const fields = (def.login && def.login.fields) || { username: 'username', password: 'password' };
+  const steps = [];
+  const jar = { cookie: '' };
+  LOGIN_ATTEMPT.set(host, Date.now());
+
+  async function hit(pathname, opts) {
+    const t0 = Date.now();
+    const headers = Object.assign({}, (opts && opts.headers) || {});
+    if (jar.cookie) headers.cookie = jar.cookie;
+    const res = await fetch(base + pathname, Object.assign({}, opts || {}, {
+      headers: headers, redirect: 'manual', signal: AbortSignal.timeout(15000)
+    }));
+    const sc = res.headers.get('set-cookie');
+    if (sc) {
+      const parts = sc.split(/,(?=[^;]+=)/).map(function (x) { return x.split(';')[0].trim(); }).filter(Boolean);
+      if (parts.length) jar.cookie = parts.join('; ');
+    }
+    return { res: res, ms: Date.now() - t0 };
+  }
+
+  try {
+    const body = new URLSearchParams();
+    body.set(fields.username || 'username', user);
+    body.set(fields.password || 'password', pass);
+    if (secret) {
+      const code = totp.totp(secret);
+      body.set(fields.totp || 'two_step_code', code);
+      steps.push({ step: 'totp', status: 200, ms: 0, note: '已生成 6 位动态码' });
+    }
+    const login = await hit(loginPath, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', referer: base + '/' },
+      body: body.toString()
+    });
+    steps.push({ step: 'login', status: login.res.status, ms: login.ms });
+    const check = await hit('/index.php');
+    const html = await check.res.text().catch(function () { return ''; });
+    const ok = check.res.status === 200 && /logout\.php|userdetails\.php|欢迎回来|index\.php\?logout/i.test(html);
+    steps.push({ step: 'verify', status: check.res.status, ms: check.ms, ok: ok });
+    logEvent(ok ? 'info' : 'warn', '站点', '登录自检 · ' + host + ' · ' + (ok ? '通过' : '未通过'));
+    return { pass: ok, steps: steps, cookieNames: jar.cookie.split(';').map(function (x) { return x.split('=')[0].trim(); }).filter(Boolean) };
+  } catch (e) {
+    logEvent('warn', '站点', '登录自检 · ' + host + ' · 失败：' + String(e.message).slice(0, 80));
+    steps.push({ step: 'connect', status: 0, ms: 0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e.message).slice(0, 160) });
+    return { pass: false, steps: steps, cookieNames: [] };
+  }
+}
+
 /* 站点定义：pta/data/site-defs/<host>.json，由 scripts/collect-site-defs.js 生成 */
 const DEF_DIR = path.join(DATA_DIR, 'site-defs');
 function readSiteDef(host) {
@@ -844,6 +943,49 @@ const server = http.createServer(async (req, res) => {
         else counts.unknown++;
       });
       return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
+    }
+    if (p === '/api/credentials' && req.method === 'GET') {
+      const all = readCreds();
+      const list = Object.keys(all).map(function (h) { return publicCred(Object.assign({ host: h }, all[h])); });
+      return send(res, 200, { ok: true, data: list });
+    }
+    if (p.startsWith('/api/credentials/')) {
+      const host = decodeURIComponent(p.slice('/api/credentials/'.length).replace(/\/+$/, ''));
+      if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');
+      const all = readCreds();
+      if (req.method === 'PUT' || req.method === 'POST') {
+        const body = await readBody(req);
+        if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+        const cur = Object.assign({}, all[host] || {});
+        let changed = [];
+        for (const k of ['user', 'pass', 'totp']) {
+          if (body[k] === undefined) continue;
+          const v = String(body[k] || '');
+          if (!v) { delete cur[k]; changed.push(k); continue; }
+          cur[k] = secretbox.encrypt(v, KEYRING.key);
+          changed.push(k);
+        }
+        cur.updatedAt = new Date().toISOString();
+        all[host] = cur;
+        try { writeCreds(all); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        if (changed.length) logEvent('info', '站点', '保存凭据 · ' + host + ' · ' + changed.join('/'));
+        return send(res, 200, { ok: true, data: publicCred(Object.assign({ host: host }, cur)) });
+      }
+      if (req.method === 'DELETE') {
+        delete all[host];
+        try { writeCreds(all); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '站点', '删除凭据 · ' + host);
+        return send(res, 200, { ok: true, data: { host: host } });
+      }
+      return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 PUT / DELETE');
+    }
+    if (p.startsWith('/api/sites/') && /\/login-test\/?$/.test(p)) {
+      if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+      const host = decodeURIComponent(p.slice('/api/sites/'.length).replace(/\/login-test\/?$/, ''));
+      if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return fail(res, 400, 'BAD_HOST', '站点域名不合法');
+      const r = await loginTestOnce(host);
+      if (r.err) return fail(res, r.err.code === 'NO_CREDENTIALS' || r.err.code === 'NO_DEF' ? 400 : 429, r.err.code, r.err.message);
+      return send(res, 200, { ok: true, data: r });
     }
     if (p === '/api/flow' && req.method === 'GET') {
       const flow = readFlow();
