@@ -2544,6 +2544,7 @@
         if (timer) clearTimeout(timer);
         renderProgress();
         refreshPills();
+        if (typeof LOG_STREAM !== "undefined" && LOG_STREAM.startLive) LOG_STREAM.startLive();
         if (typeof window.__ptaAfterProbe === "function") window.__ptaAfterProbe();
       });
     },
@@ -2611,12 +2612,28 @@
       if (this.timer) return;
       this.timer = setInterval(function () { self.push(); }, 6500);
     },
+    startLive: function () {
+      var self = this;
+      if (this.es || !window.EventSource) return false;
+      this.stop();
+      this.es = new EventSource("api/logs/stream");
+      this.es.onmessage = function (ev) {
+        var d = null;
+        try { d = JSON.parse(ev.data); } catch (e) { return; }
+        self.push({ lvl: d.level === "warn" ? "warn" : d.level === "error" ? "error" : "info", tag: d.src || "服务", msg: d.msg || "" });
+      };
+      return true;
+    },
+    stopLive: function () {
+      if (this.es) { this.es.close(); this.es = null; }
+    },
     stop: function () { clearInterval(this.timer); this.timer = null; }
   };
 
   function initRuntime() {
     renderProgress();
     API.probe();
+    setTimeout(function () { if (API.mode === "live") LOG_STREAM.startLive(); }, 900);
     setInterval(function () { API.probe(); }, 30000);
     LOG_STREAM.start();
     refreshPills();
@@ -2627,6 +2644,32 @@
   var AUTH_DEMO = { user: "admin", pass: "seedpod-6x2f" };
 
   var AUTH = {
+    key: AUTH_KEY,
+    login: function (u, p, remember) {
+      return fetch("api/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ user: u, pass: p })
+      }).then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, body: j }; });
+      }).then(function (res) {
+        if (res.status === 200 && res.body && res.body.ok) { AUTH.save(u, remember); return { ok: true }; }
+        if (res.status === 503) return { ok: false, msg: "服务端还没有设置面板账号" };
+        if (res.status === 401) return { ok: false, msg: "用户名或密码不对" };
+        return { ok: false, msg: "登录失败，稍后再试" };
+      }).catch(function () {
+        if (u === AUTH_DEMO.user && p === AUTH_DEMO.pass) { AUTH.save(u, remember); return { ok: true }; }
+        return { ok: false, msg: "用户名或密码不对" };
+      });
+    },
+    probe: function () {
+      return fetch("api/session", { cache: "no-store" }).then(function (r) {
+        return r.status === 200;
+      }).catch(function () { return null; });
+    },
+    logout: function () {
+      fetch("api/logout", { method: "POST" }).catch(function () {});
+    },
     read: function () {
       try {
         return JSON.parse(sessionStorage.getItem(AUTH_KEY) || localStorage.getItem(AUTH_KEY) || "null");
@@ -2645,9 +2688,7 @@
     ok: function () { return !!AUTH.read(); }
   };
 
-  function initAuth(next) {
-    if (AUTH.ok()) { next(); return; }
-
+  function showLogin(next) {
     var mask = el("div", "login-mask");
     mask.id = "login-mask";
     mask.innerHTML =
@@ -2675,21 +2716,31 @@
       var u = (userEl.value || "").trim();
       var p = passEl.value || "";
       if (!u || !p) { errEl.textContent = "用户名和密码都要填"; return; }
-      if (u !== AUTH_DEMO.user || p !== AUTH_DEMO.pass) {
-        errEl.textContent = "用户名或密码不对";
+      errEl.textContent = "登录中…";
+      var btn = $("#login-submit");
+      btn.disabled = true;
+      AUTH.login(u, p, remember.classList.contains("on")).then(function (res) {
+        btn.disabled = false;
+        if (res.ok) { mask.remove(); next(); return; }
+        errEl.textContent = res.msg || "用户名或密码不对";
         mask.classList.remove("shake");
         void mask.offsetWidth;
         mask.classList.add("shake");
-        return;
-      }
-      AUTH.save(u, remember.classList.contains("on"));
-      mask.remove();
-      next();
+      });
     });
     setTimeout(function () { userEl.focus(); }, 60);
   }
 
+  function initAuth(next) {
+    AUTH.probe().then(function (serverAuthed) {
+      if (serverAuthed === true) { next(); return; }
+      if (serverAuthed === null && AUTH.ok()) { next(); return; }
+      showLogin(next);
+    });
+  }
+
   function logout() {
+    AUTH.logout();
     AUTH.clear();
     location.reload();
   }

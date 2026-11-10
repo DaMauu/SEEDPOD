@@ -116,16 +116,42 @@ async function main() {
     need(api.status === 404, '未知接口状态码是 ' + api.status);
   });
 
-  await check('未登录返回 401 并要求 Basic', async () => {
-    const r = await fetch(BASE + '/');
+  await check('登录失败返回 401', async () => {
+    const r = await fetch(BASE + '/api/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: 'check', pass: 'wrong' })
+    });
+    need(r.status === 401, '错误密码状态码是 ' + r.status);
+  });
+
+  await check('登录成功发会话 cookie', async () => {
+    const r = await fetch(BASE + '/api/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: 'check', pass: 'check-pass' })
+    });
+    need(r.ok, '登录失败 ' + r.status);
+    const cookie = r.headers.get('set-cookie') || '';
+    need(/pta_sid=/.test(cookie), '没有下发 pta_sid');
+    need(/HttpOnly/i.test(cookie), 'cookie 没有 HttpOnly');
+    const session = await fetch(BASE + '/api/session', { headers: { cookie: cookie.split(';')[0] } });
+    need(session.ok, '带 cookie 读会话失败');
+    const noCookie = await fetch(BASE + '/api/session');
+    need(noCookie.status === 401, '不带会话居然能读');
+  });
+
+  await check('未登录访问接口返回 401', async () => {
+    const r = await fetch(BASE + '/api/config');
     need(r.status === 401, '未登录状态码是 ' + r.status);
-    need(/Basic realm="SEEDPOD"/.test(r.headers.get('www-authenticate') || ''), '缺少 WWW-Authenticate');
+    const j = await r.json();
+    need(j.error && j.error.code === 'UNAUTHORIZED', '错误码不对：' + JSON.stringify(j));
+    const home = await fetch(BASE + '/');
+    need(home.ok, '静态页面应保持可打开，由前端弹登录页');
   });
 
   await check('登录后可以打开面板', async () => {
     const r = await fetchA(BASE + '/');
     need(r.ok && /SEEDPOD/.test(await r.text()), '登录后拿不到首页');
-    const bad = await fetch(BASE + '/', { headers: { authorization: 'Basic ' + Buffer.from('check:wrong').toString('base64') } });
+    const bad = await fetch(BASE + '/api/config', { headers: { authorization: 'Basic ' + Buffer.from('check:wrong').toString('base64') } });
     need(bad.status === 401, '错误密码居然通过');
     const health = await fetch(BASE + '/api/health');
     need(health.ok, '健康检查不应要求登录');

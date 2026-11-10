@@ -3,6 +3,7 @@
    环境变量：PTA_PORT(8080) PTA_DATA(./data) PTA_TOKEN(可选) PTA_WEB(./pta/web) */
 const http = require('http');
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 
 const PORT = Number(process.env.PTA_PORT || 8080);
@@ -96,13 +97,45 @@ function serveStatic(req, res, urlPath) {
       const fallback = path.join(WEB_DIR, 'index.html');
       return fs.readFile(fallback, (e2, buf) => {
         if (e2) return fail(res, 404, 'NOT_FOUND', '页面不存在');
-        res.writeHead(200, { 'content-type': MIME['.html'] });
+        res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache, must-revalidate' });
         res.end(buf);
       });
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream' });
+    const ext = path.extname(file);
+    const noCache = ['.html', '.js', '.css'].indexOf(ext) >= 0;
+    res.writeHead(200, {
+      'content-type': MIME[ext] || 'application/octet-stream',
+      'cache-control': noCache ? 'no-cache, must-revalidate' : 'public, max-age=86400'
+    });
     fs.createReadStream(file).pipe(res);
   });
+}
+
+/* ---------- 会话 ---------- */
+const SESSIONS = new Map();          // token -> expiresAt
+const SESSION_TTL = 12 * 3600 * 1000;
+
+function parseCookies(req) {
+  const out = {};
+  (req.headers.cookie || '').split(';').forEach(function (part) {
+    const i = part.indexOf('=');
+    if (i < 0) return;
+    out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  });
+  return out;
+}
+function sessionUser(req) {
+  const tok = parseCookies(req).pta_sid || (req.headers['x-session'] || '');
+  if (!tok) return null;
+  const exp = SESSIONS.get(tok);
+  if (!exp) return null;
+  if (exp < Date.now()) { SESSIONS.delete(tok); return null; }
+  return { token: tok };
+}
+function newSession() {
+  const tok = crypto.randomBytes(24).toString('hex');
+  SESSIONS.set(tok, Date.now() + SESSION_TTL);
+  return tok;
 }
 
 function basicAuthOk(req) {
@@ -127,18 +160,35 @@ const server = http.createServer(async (req, res) => {
     } });
   }
 
-  if (p !== '/api/health' && !basicAuthOk(req)) {
-    res.writeHead(401, {
-      'WWW-Authenticate': 'Basic realm="SEEDPOD", charset="UTF-8"',
-      'content-type': 'text/plain; charset=utf-8'
-    });
-    return res.end('需要登录');
+  const authConfigured = !!(PTA_USER || TOKEN);
+  if (authConfigured && p.startsWith('/api/') && p !== '/api/health' && p !== '/api/login') {
+    const authed = !!sessionUser(req) || basicAuthOk(req);
+    if (!authed) return fail(res, 401, 'UNAUTHORIZED', '需要登录');
   }
 
   if (p.startsWith('/api/')) {
     if (TOKEN) {
       const auth = req.headers.authorization || '';
       if (auth !== 'Bearer ' + TOKEN) return fail(res, 401, 'UNAUTHORIZED', '令牌缺失或过期');
+    }
+    if (p === '/api/login' && req.method === 'POST') {
+      if (!PTA_USER || !PTA_PASS) return fail(res, 503, 'NO_ACCOUNT', '服务端还没有设置面板账号');
+      const body = await readBody(req);
+      if (!body || body.user !== PTA_USER || body.pass !== PTA_PASS) {
+        return fail(res, 401, 'BAD_CREDENTIALS', '用户名或密码不对');
+      }
+      const tok = newSession();
+      res.setHeader('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (SESSION_TTL / 1000));
+      return send(res, 200, { ok: true, data: { user: PTA_USER, token: tok } });
+    }
+    if (p === '/api/session' && req.method === 'GET') {
+      return send(res, 200, { ok: true, data: { user: PTA_USER } });
+    }
+    if (p === '/api/logout' && req.method === 'POST') {
+      const tok = parseCookies(req).pta_sid;
+      if (tok) SESSIONS.delete(tok);
+      res.setHeader('set-cookie', 'pta_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax');
+      return send(res, 200, { ok: true, data: {} });
     }
     if (p === '/api/config' && req.method === 'GET') {
       return send(res, 200, { ok: true, data: { sys: {
