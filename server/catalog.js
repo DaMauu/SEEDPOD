@@ -6,7 +6,7 @@ const path = require('path');
 
 const STATUSES = ['new', 'selected', 'archived', 'published', 'skipped'];
 const MARKS = ['noRedistribute', 'exclusive', 'diy', 'limited', 'limitedDays'];
-const FIELDS = ['site', 'siteId', 'title', 'subtitle', 'size', 'res', 'cat', 'catName', 'infohash', 'detailsUrl', 'downloadUrl', 'seeders', 'leechers'];
+const FIELDS = ['site', 'siteId', 'title', 'subtitle', 'size', 'res', 'cat', 'catName', 'addedAt', 'infohash', 'detailsUrl', 'downloadUrl', 'seeders', 'leechers'];
 
 function createStore(file) {
   function read() {

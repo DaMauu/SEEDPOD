@@ -97,12 +97,21 @@ function parseDataRows(src) {
     /* 分类名直接在行里取（分类链接的文字），面板就不必只显示裸 id */
     const catNameM = /<a\b[^>]*[?&]cat=\d+[^>]*>([\s\S]{0,80}?)<\/a>/i.exec(inner);
     const catName = catNameM ? text(catNameM[1]).slice(0, 40) : '';
+    /* 发布时间：优先 data-added / data-time（时间戳或 ISO），没写就留空，不瞎猜 */
+    const addedRaw = attr('data-added') || attr('data-time') || attr('data-published') || '';
+    let addedAt = '';
+    if (addedRaw) {
+      const n = Number(addedRaw);
+      if (/^\d{10,13}$/.test(String(addedRaw)) && n > 0) addedAt = new Date(n < 1e12 ? n * 1000 : n).toISOString();
+      else if (!isNaN(Date.parse(addedRaw))) addedAt = new Date(Date.parse(addedRaw)).toISOString();
+    }
     const seeders = attr('data-seeders') || attr('data-seeds');
     out.push({
       id: id,
       title: (title || '').slice(0, 300),
       catId: catAttr || (catLink ? catLink[1] : ''),
       catName: catName,
+      addedAt: addedAt,
       size: size,
       sizeBytes: sizeBytes,
       detailsUrl: det || 'details.php?id=' + id,

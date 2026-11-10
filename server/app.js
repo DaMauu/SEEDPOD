@@ -453,9 +453,18 @@ async function crawlOnceInner(host, opts) {
       site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
       sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
       detailsUrl: r.detailsUrl || '', downloadUrl: r.downloadUrl || '', infohash: r.infohash || '',
-      seeders: Number(r.seeders) || 0, marks: marksOf(r.title)
+      seeders: Number(r.seeders) || 0, marks: marksOf(r.title), addedAt: r.addedAt || ''
     };
   }).filter(function (x) { return x.title && x.siteId; });
+  /* 站上发布时间不满 7 天的，按目标站规矩只打标记，不过滤 */
+  const nowMs = Date.now();
+  items.forEach(function (it) {
+    if (!it.addedAt) return;
+    const age = nowMs - Date.parse(it.addedAt);
+    if (!(age >= 0 && age < 7 * 86400000)) return;
+    it.marks = it.marks || {};
+    it.marks.limitedDays = Math.max(1, Math.ceil((7 * 86400000 - age) / 86400000));
+  });
   let out = { added: 0, updated: 0, skipped: 0, total: 0 };
   if (items.length) out = catalogStore.add(items);
   rec.lastAt = now;

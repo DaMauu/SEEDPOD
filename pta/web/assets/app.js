@@ -1236,7 +1236,7 @@
     if (!body) return;
     var state = { q: "", site: "", type: "", status: "", mark: "", page: 0 };
     var PAGE = 100, LOAD_MAX = 2000;
-    var MK = { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" };
+    var MK = { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转", limitedDays: "未满 7 天" };
 
     /* 这一页就是数据清单：抓回来的词条都从 /api/catalog 读，筛选、标记、归档都在这里做 */
     function loadCatalog() {
