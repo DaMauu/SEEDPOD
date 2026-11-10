@@ -1316,7 +1316,7 @@
         }).join("");
         return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
           '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" +
-          '<span class="mark-row">' + toggles + "</span></span>" +
+          '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") + toggles + "</span></span>" +
           '<span>' + (it.type ? '<em class="chip np">' + escapeHtml(it.type) + "</em>" : '<span class="soft">—</span>') + "</span>" +
           '<span class="soft">' + escapeHtml(it.res) + "</span>" +
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +

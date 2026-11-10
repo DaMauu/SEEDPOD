@@ -2247,7 +2247,8 @@ body::after {
 
 .drawer.open .drawer-body[hidden]{display:none}
 
-.mark-row{display:flex;gap:6px;margin-top:4px}
+.mark-row{display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap}
+.cat-site{font-style:normal;font-size:10.5px;color:#9aa0b0;margin-right:2px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mark-btn{font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid #d8dbe6;background:#fff;color:#8b90a0}
 .mark-btn.on{background:#eef0ff;border-color:#b9bdf0;color:#4f46e5}
 
