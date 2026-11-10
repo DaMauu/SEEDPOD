@@ -181,6 +181,16 @@ node scripts/pipeline.js --sample  # 先补采样（每站一次 GET，站间 4-
 pta\checks\run.cmd
 ```
 
+线上面板真机验证（要本机 Chrome 开着调试端口，只访问面板自己的域名）：
+
+```
+PTA_UI_URL=https://面板域名 PTA_UI_USER=xxx PTA_UI_PASS=xxx node scripts/verify-live-ui.js
+```
+
+9 条断言：能登录、站点清单渲染、覆盖统计条、预设列显示引擎与组数、详情能开、
+设置能切到搜索预设页签、页签里显示引擎与来源、显示分类 id、登录页签有 cookie 自检按钮。
+2026-11-10 实测 9/9 通过。
+
 - smoke.js 22 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮（目前 0 问题）
 - adapter.js 13 条：四种引擎（NexusPHP / UNIT3D / Gazelle / 兜底）的分类、列表、搜索 URL、登录态判定
