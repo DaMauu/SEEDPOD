@@ -1338,7 +1338,10 @@
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +
           '<span class="soft">' + escapeHtml(it.time) + "</span>" +
           '<span><span class="badge ' + (it.status === "published" ? "green" : it.status === "selected" ? "amber" : "") + '">' + escapeHtml(ST_TXT[it.status] || it.status) + "</span></span>" +
-          '<span class="ta-r">' + (it.status === "archived" ? '<span class="soft">已归档</span>' : '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
+          '<span class="dl-ops">' + (it.status === "archived" || it.status === "published" || it.status === "selected"
+            ? '<span class="soft">' + (it.status === "archived" ? "已归档" : it.status === "published" ? "已发布" : "已送审") + "</span>"
+            : '<button class="link-btn" data-send="1" data-cid="' + it.id + '">送审</button>' +
+              '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
         "</div>";
       }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "词条库还是空的，去流程页点「抓一页」") + "</div>";
       var c = $("#dl-count");
@@ -1371,6 +1374,27 @@
           if (j && j.ok) { toast("已改标记"); loadCatalog(); return; }
           toast((j && j.error && j.error.message) || "改标记失败");
         }).catch(function () { toast("改标记请求发不出去"); });
+        return;
+      }
+      var send = e.target.closest("button[data-send]");
+      if (send) {
+        var sid = send.getAttribute("data-cid");
+        send.disabled = true;
+        fetch("/api/catalog/screen", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ ids: [sid], limit: 1 })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.ok) {
+            var d = j.data || {};
+            var why = Object.keys(d.byReason || {})[0];
+            toast(d.selected ? "已送进待审核" : ("没送审：" + (why || "条件不符")));
+            loadCatalog();
+            if (window.__ptaLoadQueue) window.__ptaLoadQueue();
+            return;
+          }
+          send.disabled = false;
+          toast((j && j.error && j.error.message) || "送审失败");
+        }).catch(function () { send.disabled = false; toast("送审请求发不出去"); });
         return;
       }
       var arc = e.target.closest("button[data-archive]");

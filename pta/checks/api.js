@@ -771,6 +771,20 @@ async function main() {
     const cat = await (await fetchA(BASE + '/api/catalog?status=selected')).json();
     need(cat.data.items.some(x => x.site === 'screen.example'), '入选后词条状态没变成 selected');
 
+    /* 按单条送审（数据清单行内「送审」用的就是 ids 过滤） */
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: 'screen.example', siteId: '9', title: 'Screen Fixture D 2024 1080p BluRay', res: '1080p', sizeBytes: 21474836480 }] })
+    });
+    const only = await (await fetchA(BASE + '/api/catalog?q=Screen Fixture D')).json();
+    const did = (only.data.items[0] || {}).id;
+    need(did, '按条送审的夹具没进库');
+    const one = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ids: [did], limit: 10, rules: { res: ['1080p', '2160p'] } })
+    })).json();
+    need(one.ok && one.data.checked === 1 && one.data.selected === 1, '按条送审没生效：' + JSON.stringify(one.data));
+
     /* 站点定义里带该站的词条统计 */
     fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
     fs.writeFileSync(path.join(DATA, 'site-defs', 'screen.example.json'), JSON.stringify({

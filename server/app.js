@@ -508,12 +508,15 @@ function screenCatalog(opts) {
   const poolAll = pool.concat(doneCat);
 
   const all = catalogStore.list({ status: 'new', limit: 5000 }).items;
+  const onlyIds = Array.isArray(o.ids) ? o.ids.map(String) : null;
   const queue = readQueue();
   const byReason = {};
   let checked = 0, selected = 0, skipped = 0;
   const picked = [];
 
-  all.filter(function (x) { return !host || x.site === host; }).slice(0, limit).forEach(function (it) {
+  all.filter(function (x) { return !host || x.site === host; })
+    .filter(function (x) { return !onlyIds || onlyIds.indexOf(String(x.id)) >= 0; })
+    .slice(0, limit).forEach(function (it) {
     checked++;
     const title = String(it.title || '');
     const res = String(it.res || '').toLowerCase() || (match.resOf(title) || '');
