@@ -1249,7 +1249,7 @@
       if (!raw) return "";
       if (/^https?:\/\//i.test(raw)) return raw;
       if (!site) return "";
-      var d = defOf(site);
+      var d = (window.__ptaDefs || {})[site];
       var base = (d && d.base) || ("https://" + site);
       var origin = base;
       try { origin = new URL(base).origin; } catch (e) { origin = base.replace(/\/+$/, ""); }
