@@ -931,7 +931,7 @@
             '<span class="badge ' + st[1] + '">' + st[0] + "</span></div>" +
             '<span class="sd-url">' + escapeHtml(it.title) + "</span></div>" +
           '<div class="qd-meta">' +
-            "<span>站点<b>" + escapeHtml(it.site) + "</b></span>" +
+            "<span>来源站<b>" + escapeHtml(it.site || "—") + "</b></span>" +
             "<span>分辨率<b>" + escapeHtml(it.res) + "</b></span>" +
             "<span>大小<b>" + escapeHtml(it.size) + "</b></span>" +
             "<span>年份<b>" + (it.year || "—") + " · " + escapeHtml(it.imdb) + "</b></span>" +
