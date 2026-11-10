@@ -171,6 +171,30 @@ async function main() {
     need(r.status === 401, '未登录能读站点配置：' + r.status);
   });
 
+  await check('站点搜索预设读写', async () => {
+    const host = 'demo.example';
+    const empty = await (await fetchA(BASE + '/api/sites/' + host + '/search')).json();
+    need(empty.ok && empty.data.preset === null, '新站点预设应为 null：' + JSON.stringify(empty).slice(0, 120));
+    const put = await fetchA(BASE + '/api/sites/' + host + '/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', searchPath: '/torrents.php', browsePath: '/torrents.php',
+        params: { search: '{q}', cat: '{cats}' }, cats: { movie: ['401'], tv: ['402'] }, source: 'manual' })
+    });
+    const pj = await put.json();
+    need(put.ok, '写入预设失败 ' + JSON.stringify(pj).slice(0, 160));
+    need(pj.data.preset.engine === 'nexusphp', 'engine 没写进去');
+    const back = await (await fetchA(BASE + '/api/sites/' + host + '/search')).json();
+    need(back.data.preset && back.data.preset.cats.movie[0] === '401', '写进去的 cats 读不回来');
+    const bad = await fetchA(BASE + '/api/sites/' + host + '/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ engine: 'lol' })
+    });
+    need(bad.status === 400, '非法 engine 没被拦：' + bad.status);
+    const del = await fetchA(BASE + '/api/sites/' + host + '/search', { method: 'DELETE' });
+    need(del.ok, '删除预设失败');
+    const after = await (await fetchA(BASE + '/api/sites/' + host + '/search')).json();
+    need(after.data.preset === null, '删除后还能读到预设');
+  });
+
   await check('干跑任务能提交并跑完', async () => {
     const r = await fetchA(BASE + '/api/tasks', {
       method: 'POST', headers: { 'content-type': 'application/json' },

@@ -181,6 +181,16 @@ async function main() {
     need(/\.json$/.test(d.suggestedFilename()), '导出文件名不对：' + d.suggestedFilename());
   });
 
+  /* 6.5 干跑按钮：没有后端时必须给提示，不许静默或发真实请求 */
+  await check('干跑按钮在没有后端时给出提示', async () => {
+    await open('#sources');
+    await page.click('#dl-crawl');
+    await page.waitForTimeout(300);
+    const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
+    need(/干跑/.test(t), '没有干跑提示：' + t);
+    need((await page.locator('.dl-dry').count()) === 0, '没有后端却画出了任务面板');
+  });
+
   /* 7. 日志下载 */
   await check('日志下载', async () => {
     await open('#logs');

@@ -2195,3 +2195,15 @@ body::after {
 }
 .menu-link.menu-logout { width: 100%; text-align: left; background: none; border: 0; color: #b3352f; }
 .dash-log-empty { padding: 18px 4px; font-size: 12px; color: var(--muted-2); }
+
+/* ---- 干跑任务面板（数据清单页） ---- */
+.dl-dry{margin:10px 0 14px;padding:12px 14px;border:1px solid #d8dbe6;border-radius:12px;background:#f8f9fc}
+.dl-dry-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2b2f3a}
+.dl-dry-head b{font-weight:600}
+.dl-dry-p{margin-left:auto;font-variant-numeric:tabular-nums;color:#5b6172}
+.dl-dry ul{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 8px;padding:0;list-style:none}
+.dl-dry li{display:flex;align-items:center;gap:6px;font-size:12px;color:#8b90a0}
+.dl-dry li i{width:7px;height:7px;border-radius:50%;background:#ccd0dc}
+.dl-dry li.done{color:#2b2f3a}
+.dl-dry li.done i{background:#4f46e5}
+.dl-dry em{font-style:normal;font-size:11px;color:#9aa0b0}

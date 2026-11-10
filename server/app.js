@@ -138,6 +138,82 @@ function sanitizeSitePatch(body) {
   return { patch: patch, dropped: dropped };
 }
 
+/* ---------- 站点搜索预设：每站的搜索参数名与分类 id 都不一样，落在本地文件里 ---------- */
+const SITE_SEARCH_FILE = path.join(DATA_DIR, 'site-search.local.json');
+const SEARCH_ENGINES = ['nexusphp', 'unit3d', 'gazelle', 'custom'];
+
+function readSearchPresets() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(SITE_SEARCH_FILE, 'utf8'));
+    const sites = raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw && typeof raw === 'object' ? raw : {});
+    return sites && typeof sites === 'object' ? sites : {};
+  } catch (e) {
+    return {};
+  }
+}
+function writeSearchPresets(sites) {
+  try {
+    fs.writeFileSync(SITE_SEARCH_FILE, JSON.stringify({ updatedAt: new Date().toISOString(), sites }, null, 1), { mode: 0o600 });
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入搜索预设失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
+}
+function strMap(v, maxKeys, maxLen) {
+  const out = {};
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return { err: '必须是对象' };
+  const keys = Object.keys(v);
+  if (keys.length > maxKeys) return { err: '字段太多（上限 ' + maxKeys + '）' };
+  for (const k of keys) {
+    if (!/^[a-zA-Z0-9_.\[\]-]{1,40}$/.test(k)) return { err: '参数名不合法：' + k };
+    const val = v[k];
+    if (typeof val !== 'string' && typeof val !== 'number' && typeof val !== 'boolean') return { err: '参数 ' + k + ' 类型不对' };
+    out[k] = String(val).slice(0, maxLen);
+  }
+  return { out };
+}
+function sanitizePreset(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return { err: { code: 'BAD_REQUEST', message: '请求体不是合法 JSON 对象' } };
+  const preset = {};
+  if (body.engine !== undefined) {
+    if (SEARCH_ENGINES.indexOf(String(body.engine)) < 0) {
+      return { err: { code: 'BAD_REQUEST', message: 'engine 只能是 ' + SEARCH_ENGINES.join(' / ') } };
+    }
+    preset.engine = String(body.engine);
+  }
+  for (const k of ['searchPath', 'browsePath', 'note']) {
+    if (body[k] === undefined) continue;
+    if (typeof body[k] !== 'string' || body[k].length > 300) return { err: { code: 'BAD_REQUEST', message: k + ' 必须是字符串且不超过 300 字' } };
+    preset[k] = body[k];
+  }
+  if (body.params !== undefined) {
+    const m = strMap(body.params, 30, 200);
+    if (m.err) return { err: { code: 'BAD_REQUEST', message: 'params ' + m.err } };
+    preset.params = m.out;
+  }
+  if (body.cats !== undefined) {
+    if (!body.cats || typeof body.cats !== 'object' || Array.isArray(body.cats)) {
+      return { err: { code: 'BAD_REQUEST', message: 'cats 必须是 分类名 -> id 数组 的对象' } };
+    }
+    const cats = {};
+    const keys = Object.keys(body.cats);
+    if (keys.length > 20) return { err: { code: 'BAD_REQUEST', message: 'cats 分类太多（上限 20）' } };
+    for (const key of keys) {
+      const arr = body.cats[key];
+      if (!Array.isArray(arr)) return { err: { code: 'BAD_REQUEST', message: 'cats.' + key + ' 必须是数组' } };
+      if (arr.length > 50) return { err: { code: 'BAD_REQUEST', message: 'cats.' + key + ' 最多 50 个' } };
+      cats[key] = arr.map(function (x) { return String(x).slice(0, 20); });
+    }
+    preset.cats = cats;
+  }
+  if (body.source !== undefined) {
+    if (['manual', 'probe'].indexOf(String(body.source)) < 0) return { err: { code: 'BAD_REQUEST', message: 'source 只能是 manual 或 probe' } };
+    preset.source = String(body.source);
+  }
+  return { preset };
+}
+
 /* ---------- 任务：干跑队列（只走本地步骤，不访问任何外部站点） ---------- */
 const TASKS = new Map();
 const TASK_TYPES = ['crawl', 'check', 'publish'];
@@ -396,6 +472,33 @@ const server = http.createServer(async (req, res) => {
         else counts.unknown++;
       });
       return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
+    }
+    if (p.startsWith('/api/sites/') && /\/search\/?$/.test(p)) {
+      const host = decodeURIComponent(p.slice('/api/sites/'.length).replace(/\/search\/?$/, '').replace(/\/+$/, ''));
+      if (!host || host.length > 200 || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) {
+        return fail(res, 400, 'BAD_HOST', '站点域名不合法');
+      }
+      const sites = readSearchPresets();
+      if (req.method === 'GET') {
+        return send(res, 200, { ok: true, data: { host: host, preset: sites[host] || null, engines: SEARCH_ENGINES } });
+      }
+      if (req.method === 'PUT' || req.method === 'POST') {
+        const body = await readBody(req);
+        const s = sanitizePreset(body);
+        if (s.err) return fail(res, 400, s.err.code, s.err.message);
+        const next = Object.assign({}, sites[host] || {}, s.preset, { updatedAt: new Date().toISOString() });
+        sites[host] = next;
+        try { writeSearchPresets(sites); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '站点', '更新搜索预设 · ' + host + ' · ' + (next.engine || '未填引擎'));
+        return send(res, 200, { ok: true, data: { host: host, preset: next } });
+      }
+      if (req.method === 'DELETE') {
+        delete sites[host];
+        try { writeSearchPresets(sites); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+        logEvent('info', '站点', '删除搜索预设 · ' + host);
+        return send(res, 200, { ok: true, data: { host: host } });
+      }
+      return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET / PUT / DELETE');
     }
     if (p === '/api/site-config' && req.method === 'GET') {
       const cfg = readSiteCfg();

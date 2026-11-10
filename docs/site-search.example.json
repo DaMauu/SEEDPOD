@@ -1,0 +1,40 @@
+{
+  "_说明": "站点搜索预设的示例与字段说明。真实文件在 pta/data/site-search.local.json（不入库）。",
+  "_为什么需要它": "同一个分类 id 在不同站点可能对应完全不同的类型；搜索参数名也各不相同，写死会导致搜电影却拿到别的类型。",
+  "sites": {
+    "example-nexusphp.org": {
+      "engine": "nexusphp",
+      "searchPath": "/torrents.php",
+      "browsePath": "/torrents.php",
+      "params": {
+        "search": "{q}",
+        "search_area": "0",
+        "search_mode": "0",
+        "cat": "{cats}"
+      },
+      "cats": {
+        "movie": ["401", "402"],
+        "tv": ["402"],
+        "doc": ["406"],
+        "music": ["408"]
+      },
+      "source": "probe",
+      "note": "分类 id 取自站内种子页的分类下拉框",
+      "updatedAt": "2026-11-10T00:00:00.000Z"
+    },
+    "example-unit3d.org": {
+      "engine": "unit3d",
+      "searchPath": "/torrents",
+      "browsePath": "/torrents",
+      "params": {
+        "name": "{q}",
+        "categories[]": "{cats}"
+      },
+      "cats": {
+        "movie": ["1"],
+        "tv": ["2"]
+      },
+      "source": "manual"
+    }
+  }
+}

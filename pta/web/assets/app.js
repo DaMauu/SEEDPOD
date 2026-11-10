@@ -224,6 +224,44 @@
   }
   window.__ptaApplySites = applySites;
 
+  /* 干跑任务：提交 -> 轮询进度。没有后端时立刻回错误，绝不发真实站点请求 */
+  function submitDryRun(host, onStep, onDone, onErr) {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) {
+      onErr("本地预览没有后端，干跑不可用");
+      return null;
+    }
+    var timer = null;
+    fetch("/api/tasks", {
+      method: "POST", credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ type: "crawl", siteHost: host, dryRun: true })
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, j: j }; },
+        function () { return { status: r.status, j: null }; });
+    }).then(function (res) {
+      if (!res.j || !res.j.ok || !res.j.data) {
+        onErr((res.j && res.j.error && res.j.error.message) || ("提交失败 " + res.status));
+        return;
+      }
+      onStep(res.j.data);
+      timer = setInterval(function () {
+        fetch("/api/tasks/" + encodeURIComponent(res.j.data.id), { credentials: "same-origin" })
+          .then(function (r) { return r.json(); })
+          .then(function (jj) {
+            if (!jj || !jj.ok || !jj.data) { clearInterval(timer); onErr("任务查询失败"); return; }
+            onStep(jj.data);
+            if (["done", "failed", "canceled"].indexOf(jj.data.state) >= 0) {
+              clearInterval(timer);
+              onDone(jj.data);
+            }
+          })
+          .catch(function () { clearInterval(timer); onErr("任务查询中断"); });
+      }, 400);
+    }).catch(function () { onErr("本地预览没有后端，干跑不可用"); });
+    return { stop: function () { if (timer) clearInterval(timer); } };
+  }
+  window.__ptaDryRun = submitDryRun;
+
   /* 拉服务端清单；失败（file://、未登录、离线）就保持本地数据，不打断页面 */
   function loadSitesFromApi() {
     if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
@@ -969,7 +1007,55 @@
       toast("已归档：" + title);
     });
     var crawl = $("#dl-crawl");
-    if (crawl) crawl.addEventListener("click", function () { toast("开始增量抓取（假数据）"); });
+    if (crawl) {
+      var selSite = $("#dl-site");
+      if (selSite && MOCK.sitesList.length) {
+        var onSites = MOCK.sitesList.filter(function (x) { return x.enabled; }).slice(0, 30);
+        if (onSites.length) {
+          selSite.innerHTML = '<option value="">全部站点</option>' + onSites.map(function (s) {
+            return '<option value="' + escapeHtml(s.name) + '">' + escapeHtml(s.title || s.name) + "</option>";
+          }).join("");
+        }
+      }
+      var dryBox = null;
+      function paintDry(t) {
+        var bar = $(".dl-bar");
+        if (!dryBox) {
+          dryBox = el("div", "dl-dry");
+          if (bar && bar.parentNode) bar.parentNode.insertBefore(dryBox, bar.nextSibling);
+          else if (body && body.parentNode) body.parentNode.insertBefore(dryBox, body);
+        }
+        dryBox.hidden = false;
+        dryBox.innerHTML = '<div class="dl-dry-head"><b>干跑 · ' + escapeHtml(t.siteHost) + "</b>" +
+            '<span class="dl-dry-p">' + (t.progress || 0) + "%</span></div>" +
+          "<ul>" + (t.steps || []).map(function (s) {
+            return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
+          }).join("") + "</ul>" +
+          '<em>只跑本地步骤，不访问任何真实站点</em>';
+      }
+      function pickDryHost() {
+        var want = selSite && selSite.value;
+        if (want && MOCK.sitesList.some(function (x) { return x.name === want; })) return want;
+        var t0 = null;
+        try { t0 = localStorage.getItem("pta.target"); } catch (e) {}
+        if (t0 && MOCK.sitesList.some(function (x) { return x.name === t0; })) return t0;
+        var first = MOCK.sitesList.filter(function (x) { return x.enabled; })[0];
+        return first ? first.name : "";
+      }
+      crawl.addEventListener("click", function () {
+        var siteHost = pickDryHost();
+        if (!siteHost) { toast("没有可用站点，先去站点页添加"); return; }
+        var submitted = false;
+        window.__ptaDryRun(siteHost, function (t) {
+          paintDry(t);
+          if (!submitted) { submitted = true; toast("已提交干跑任务"); }
+        }, function (t) {
+          toast("干跑完成 · " + (t.steps || []).length + " 步");
+        }, function (msg) {
+          toast(msg);
+        });
+      });
+    }
     var ex = $("#dl-export");
     if (ex) ex.addEventListener("click", function () {
       var data = JSON.stringify(MOCK.sources, null, 2);

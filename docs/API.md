@@ -45,6 +45,32 @@
 
 `arch` 取值：NP / UNIT3D / GZ / OTHER / ?（未确认）。清单来自 `pta/web/assets/sites-data.local.js`，缺失则为空数组。
 
+## GET /api/sites/:host/search
+
+返回该站点的搜索预设（没配过就是 `null`）：
+
+```
+{ "ok": true, "data": { "host": "example.org", "engines": ["nexusphp", "unit3d", "gazelle", "custom"],
+  "preset": {
+    "engine": "nexusphp", "searchPath": "/torrents.php", "browsePath": "/torrents.php",
+    "params": { "search": "{q}", "cat": "{cats}" },
+    "cats": { "movie": ["401"], "tv": ["402"] },
+    "source": "probe", "updatedAt": "..." } } }
+```
+
+`{q}` 是搜索词占位，`{cats}` 是分类 id 占位；`cats` 下面的键是用途（movie/tv/doc/music…），值是该站对应的分类 id。
+字段说明与示例见 `docs/site-search.example.json`，真实预设落在 `pta/data/site-search.local.json`（不入库）。
+
+## PUT /api/sites/:host/search
+
+按字段合并写预设。`engine` 只能取 nexusphp / unit3d / gazelle / custom，`searchPath`、`browsePath`、`note` 是不超过 300 字的字符串，
+`params` 是字符串键值（最多 30 个），`cats` 是 用途 -> id 数组（最多 20 个用途、每个 50 个 id），`source` 只能 manual 或 probe。
+非法取值 400 `BAD_REQUEST`。成功回 `{ "host": "...", "preset": {...} }`。
+
+## DELETE /api/sites/:host/search
+
+删掉该站点预设，同时写一条事件日志。
+
 ## GET /api/site-config
 
 ```
