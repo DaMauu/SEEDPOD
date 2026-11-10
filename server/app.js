@@ -382,7 +382,7 @@ async function probeDownloader(d) {
 /* ---------- 任务：干跑队列（只走本地步骤，不访问任何外部站点） ---------- */
 const TASKS = new Map();
 const TASK_TYPES = ['crawl', 'check', 'publish'];
-const TASK_STEPS = ['准备', '读取配置', '分析待处理清单', '查重', '汇总'];
+const TASK_STEPS = ['准备', '读取面板配置', '读取站点配置与搜索预设', '生成待抓取清单', '汇总'];
 const TASK_KEEP = 50;
 let taskSeq = 0;
 
@@ -390,7 +390,8 @@ function taskPublic(t) {
   return {
     id: t.id, type: t.type, siteHost: t.siteHost, dryRun: t.dryRun, state: t.state,
     progress: t.progress, steps: t.steps, createdAt: t.createdAt,
-    startedAt: t.startedAt, finishedAt: t.finishedAt, error: t.error, result: t.result
+    startedAt: t.startedAt, finishedAt: t.finishedAt, error: t.error, result: t.result,
+    plan: t.plan || null
   };
 }
 function activeTaskFor(host) {
@@ -421,13 +422,55 @@ function runDryTask(t) {
       t.state = 'done';
       t.progress = 100;
       t.finishedAt = new Date().toISOString();
-      t.result = { dryRun: true, steps: t.steps.length, note: '干跑：没有访问任何站点' };
+      t.result = {
+        dryRun: true, steps: t.steps.length, note: '干跑：没有访问任何站点',
+        plan: t.plan, warnings: (t.plan && t.plan.warnings) || []
+      };
       logEvent('info', '任务', '干跑完成 · ' + t.siteHost + ' · ' + t.steps.length + ' 步');
     }
   }, 260);
   if (tick.unref) tick.unref();
   t.timer = tick;
 }
+/* 干跑计划：只读本地配置和清单，不访问任何站点 */
+function buildDryPlan(host) {
+  const cfg = readConfig();
+  const site = (readSiteCfg().sites || {})[host] || {};
+  const preset = (readSearchPresets() || {})[host] || null;
+  const inList = loadSiteList().some(function (x) { return x.host === host; });
+  const warnings = [];
+  const cats = preset && preset.cats ? preset.cats : {};
+  const groups = Object.keys(cats);
+  let ids = 0;
+  groups.forEach(function (k) { ids += (cats[k] || []).length; });
+  const pages = Math.max(1, Number(site.pages) || 2);
+  const concurrency = Math.max(1, Number(site.concurrency) || 1);
+  const interval = Number(site.interval) || cfg.interval;
+
+  if (!inList) warnings.push('站点不在清单里（可能是手填的域名）');
+  if (site.enabled === false) warnings.push('这个站点在配置里是停用状态');
+  if (!preset) warnings.push('还没有搜索预设，分类 id 未知');
+  else if (!preset.engine) warnings.push('搜索预设缺 engine');
+  else if (!groups.length) warnings.push('搜索预设里没有配置任何分类');
+  if (interval < LIMITS[cfg.runMode === 'prod' ? 'prod' : 'test'].interval[0]) warnings.push('请求间隔低于当前模式下限，会被压到下限');
+
+  return {
+    siteHost: host,
+    runMode: cfg.runMode,
+    interval: interval,
+    pages: pages,
+    concurrency: concurrency,
+    engine: preset && preset.engine ? preset.engine : '',
+    catGroups: groups.length,
+    catIds: ids,
+    estimatedQueries: groups.length * pages,
+    knownCats: groups,
+    inList: inList,
+    enabled: site.enabled !== false,
+    warnings: warnings
+  };
+}
+
 function createTask(body) {
   const type = String(body.type || 'crawl');
   if (TASK_TYPES.indexOf(type) < 0) return { err: { code: 'BAD_REQUEST', message: 'type 只能是 ' + TASK_TYPES.join(' / ') } };
@@ -444,7 +487,8 @@ function createTask(body) {
     id: 't_' + String(++taskSeq).padStart(4, '0'),
     type: type, siteHost: host, dryRun: true, state: 'queued', progress: 0,
     steps: TASK_STEPS.map(function (n) { return { name: n, state: 'wait' }; }),
-    createdAt: new Date().toISOString(), startedAt: null, finishedAt: null, error: null, result: null
+    createdAt: new Date().toISOString(), startedAt: null, finishedAt: null, error: null, result: null,
+    plan: buildDryPlan(host)
   };
   TASKS.set(t.id, t);
   trimTasks();

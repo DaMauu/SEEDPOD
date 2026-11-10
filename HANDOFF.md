@@ -51,7 +51,7 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/queue/:id | 单条详情 |
 | POST /api/queue/:id/action | approve / reject / publish，带状态机校验 |
 | DELETE /api/queue/:id | 删除条目 |
-| POST /api/tasks | 提交干跑任务（只接 dryRun，不访问外部站点） |
+| POST /api/tasks | 提交干跑任务（只接 dryRun，不访问外部站点）；带 plan：页数/并发/分类组/预估查询数/警告 |
 | GET /api/tasks | 最近 50 条任务，`?state=active` 只看在跑的 |
 | GET /api/tasks/:id | 单条任务与步骤进度 |
 | POST /api/tasks/:id/cancel | 取消排队/运行中的任务 |
@@ -83,7 +83,7 @@ pta\checks\run.cmd
 
 - smoke.js 21 条：登录、七页渲染、分类映射、越界拦截、上传/查重、导出下载、确认弹窗、无 JS 错
 - audit.js：逐个点所有可点元素，报死按钮
-- api.js 16 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
+- api.js 24 条：健康、配置区间、落盘、站点清单结构、站点配置读写、干跑任务生命周期、登录与 401
 
 改完必须全绿再提交。
 

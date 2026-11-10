@@ -1133,7 +1133,13 @@
           "<ul>" + (t.steps || []).map(function (s) {
             return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
           }).join("") + "</ul>" +
-          '<em>只跑本地步骤，不访问任何真实站点</em>';
+          '<em>只跑本地步骤，不访问任何真实站点</em>' +
+          (t.state === "done" && t.result ? (function () {
+            var p = t.result.plan || {};
+            var warns = (t.result.warnings || []).map(function (w) { return "<li>" + escapeHtml(w) + "</li>"; }).join("");
+            return '<div class="dl-dry-note">计划：' + (p.pages || "-") + " 页 · 分类 " + (p.catGroups || 0) + " 组 · 预估 " +
+              (p.estimatedQueries || 0) + " 次查询</div>" + (warns ? '<ul class="dl-dry-warn">' + warns + "</ul>" : "");
+          })() : "");
       }
       function pickDryHost() {
         var want = selSite && selSite.value;
@@ -1838,7 +1844,18 @@
         "<ul>" + (t.steps || []).map(function (s) {
           return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
         }).join("") + "</ul>" +
-        '<em>只跑本地步骤，不访问任何真实站点</em>';
+        '<em>只跑本地步骤，不访问任何真实站点</em>' + dryNotes(t);
+    }
+
+    function dryNotes(t) {
+      if (t.state !== "done" || !t.result) return "";
+      var p = t.result.plan || {};
+      var head = '<div class="dl-dry-note">计划：' + (p.pages || "-") + " 页 · 并发 " + (p.concurrency || "-") +
+        " · 分类 " + (p.catGroups || 0) + " 组 / " + (p.catIds || 0) + " 个 id · 预估 " + (p.estimatedQueries || 0) + " 次查询</div>";
+      var warns = (t.result.warnings || []).map(function (w) {
+        return "<li>" + escapeHtml(w) + "</li>";
+      }).join("");
+      return head + (warns ? '<ul class="dl-dry-warn">' + warns + "</ul>" : "");
     }
     var dryRunBtn = $("#crawl-dry-run");
     if (dryRunBtn) dryRunBtn.addEventListener("click", function () {

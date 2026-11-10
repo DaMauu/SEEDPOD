@@ -349,6 +349,34 @@ async function main() {
     need(Array.isArray(list.data) && list.data.some(t => t.id === j.data.id), '任务列表里找不到刚提交的任务');
   });
 
+  await check('干跑计划随配置变化', async () => {
+    const host = 'plan.example';
+    await fetchA(BASE + '/api/site-config/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ pages: 3, concurrency: 2, interval: 45, enabled: true })
+    });
+    await fetchA(BASE + '/api/sites/' + host + '/search', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', cats: { movie: ['1', '2'], tv: ['3'] } })
+    });
+    const r = await fetchA(BASE + '/api/tasks', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'crawl', siteHost: host, dryRun: true })
+    });
+    const j = await r.json();
+    need(r.ok, '提交失败 ' + JSON.stringify(j).slice(0, 140));
+    const plan = j.data.plan;
+    need(plan, '任务没有带计划');
+    need(plan.pages === 3 && plan.concurrency === 2, '计划没读到站点配置：' + JSON.stringify(plan).slice(0, 140));
+    need(plan.catGroups === 2 && plan.catIds === 3, '计划里的分类统计不对：' + JSON.stringify(plan).slice(0, 160));
+    need(plan.estimatedQueries === 6, '预估查询数不对：' + plan.estimatedQueries);
+    need(plan.inList === false, '不存在的站点却标成在清单里');
+    need(Array.isArray(plan.warnings) && plan.warnings.length > 0, '缺警告');
+    const done = await waitTask(j.data.id, 6000);
+    need(done.result && Array.isArray(done.result.warnings), '完成后没有带回警告');
+    need(done.result.warnings.length === plan.warnings.length, '完成后警告数量变了');
+  });
+
   await check('同站点并发任务返回 409', async () => {
     const body = JSON.stringify({ type: 'crawl', siteHost: 'busy.example', dryRun: true });
     const first = await fetchA(BASE + '/api/tasks', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
