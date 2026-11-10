@@ -1868,7 +1868,15 @@
       "</section>" +
       sectionHtml({ name: "抓取", desc: "按搜索预设的类目直接把词条抓进本地库，命中禁转/独占/DIY/限转的只打标记不过滤。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
       sectionHtml({ name: "筛选", desc: "从本地词条里挑出符合条件的，标出已有/已发布/跳过，归档不需要的。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
-      sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub");
+      sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub") +
+      '<section class="drawer open catalog-panel">' +
+        '<div class="drawer-head"><div class="drawer-t">' +
+          '<div class="drawer-title">词条库</div>' +
+          '<div class="drawer-desc">第一步抓回来的词条都在这里，按状态分：new 待筛选 / selected 已送审 / published 已发 / skipped 跳过 / archived 归档。</div>' +
+        '</div><div class="drawer-head-right"><span class="drawer-meta" id="catalog-meta">—</span>' +
+        '<button class="btn slim" id="catalog-refresh">刷新</button></div></div>' +
+        '<div class="drawer-body" id="catalog-body"><div class="empty">正在读词条库…</div></div>' +
+      '</section>';
 
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
@@ -1938,6 +1946,59 @@
         }).catch(function () { b.disabled = false; toast("筛选请求发不出去"); });
       });
     })();
+
+    /* 词条库面板：最新 30 条，按状态看；能直接归档/跳过 */
+    var CAT_STATUS = { new: "待筛选", selected: "已送审", published: "已发布", skipped: "跳过", archived: "归档" };
+    function loadCatalog() {
+      var body = $("#catalog-body"), meta = $("#catalog-meta");
+      if (!body) return;
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) {
+        body.innerHTML = '<div class="empty">本地预览没有后端，读不到词条库</div>';
+        return;
+      }
+      fetch("/api/catalog?limit=30", { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.ok) { body.innerHTML = '<div class="empty">词条库读取失败</div>'; return; }
+          var d = j.data;
+          var c = d.byStatus || {};
+          if (meta) meta.textContent = "共 " + d.total + " 条 · 待筛选 " + (c.new || 0) + " · 已送审 " + (c.selected || 0) + " · 已发 " + (c.published || 0);
+          if (!d.items.length) { body.innerHTML = '<div class="empty">词条库还是空的，先点上面「抓一页」</div>'; return; }
+          body.innerHTML = d.items.map(function (it) {
+            var marks = Object.keys(it.marks || {}).filter(function (k) { return it.marks[k]; }).map(function (k) {
+              return { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" }[k] || k;
+            }).join(" · ");
+            return '<div class="list-item cat-row" data-cid="' + it.id + '">' +
+              '<div style="flex:1;min-width:0"><div class="t-main">' + escapeHtml(it.title) + "</div>" +
+              '<div class="t-sub">' + escapeHtml(it.site || "") + " · " + escapeHtml(it.size || "") +
+              (marks ? " · " + escapeHtml(marks) : "") + "</div></div>" +
+              '<span class="badge ' + (it.status === "new" ? "gray" : it.status === "selected" ? "amber" : it.status === "published" ? "green" : "") + '">' +
+              (CAT_STATUS[it.status] || it.status) + "</span>" +
+              (it.status === "new" ? '<button class="link-btn" data-catact="archived" data-cid="' + it.id + '">归档</button>' : "") +
+            "</div>";
+          }).join("");
+        })
+        .catch(function () { body.innerHTML = '<div class="empty">词条库读取失败</div>'; });
+    }
+    window.__ptaLoadCatalog = loadCatalog;
+
+    var catBody = $("#catalog-body");
+    if (catBody) {
+      catBody.addEventListener("click", function (e) {
+        var b = e.target.closest("button[data-catact]");
+        if (!b) return;
+        fetch("/api/catalog/" + encodeURIComponent(b.getAttribute("data-cid")) + "/status", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ status: b.getAttribute("data-catact") })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          toast(j && j.ok ? "已归档" : ((j && j.error && j.error.message) || "归档失败"));
+          loadCatalog();
+        }).catch(function () { toast("归档请求发不出去"); });
+      });
+    }
+    var catRefresh = $("#catalog-refresh");
+    if (catRefresh) catRefresh.addEventListener("click", function () { toast("已刷新词条库"); loadCatalog(); });
+    loadCatalog();
 
     /* 干跑区不是空的：进来就显示上一次干跑的结果，没跑过才显示「还没跑过」 */
     (function showLastDry() {
