@@ -1235,44 +1235,73 @@
     if (!body) return;
     var state = { q: "" };
 
+    /* 这一页就是词条库：抓回来的词条都从 /api/catalog 读，不再有假数据 */
+    function loadCatalog() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { paint(); return; }
+      fetch("/api/catalog?limit=200", { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.ok) return paint();
+          window.__ptaSources = (j.data.items || []).map(function (it) {
+            return {
+              id: it.id, title: it.title, site: it.site || "", res: it.res || matchResOf(it.title),
+              size: it.size || "", time: it.createdAt ? String(it.createdAt).slice(5, 16).replace("T", " ") : "",
+              status: it.status, marks: it.marks || {}, type: it.catName || it.cat || "词条"
+            };
+          });
+          window.__ptaSourcesTotal = j.data.total;
+          paint();
+        })
+        .catch(function () { paint(); });
+    }
+    function matchResOf(t) {
+      var m = /\b(2160p|1080p|1080i|720p|576p|480p)\b/i.exec(String(t || ""));
+      return m ? m[1] : "";
+    }
+    var ST_TXT = { new: "待筛选", selected: "已送审", published: "已发布", skipped: "跳过", archived: "归档" };
+
     function paint() {
-      var rows = MOCK.sources.filter(function (it) {
+      var all = window.__ptaSources || [];
+      var rows = all.filter(function (it) {
         if (state.q && (it.title + " " + it.res).toLowerCase().indexOf(state.q) === -1) return false;
         return true;
       });
       body.innerHTML = rows.map(function (it) {
+        var marks = Object.keys(it.marks || {}).filter(function (k) { return it.marks[k]; }).map(function (k) {
+          return { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转" }[k] || k;
+        }).join(" · ");
         return '<div class="dl-row">' +
-          '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b></span>" +
+          '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" + (marks ? ' <em class="chip">' + escapeHtml(marks) + "</em>" : "") + "</span>" +
           '<span><em class="chip np">' + escapeHtml(it.type) + "</em></span>" +
           '<span class="soft">' + escapeHtml(it.res) + "</span>" +
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +
           '<span class="soft">' + escapeHtml(it.time) + "</span>" +
-          '<span><span class="badge ' + (it.checkCls === "green" ? "green" : it.checkCls === "red" ? "red" : "amber") + '">' + escapeHtml(it.check) + "</span></span>" +
-          '<span class="ta-r"><button class="link-btn" data-archive="1">归档</button></span>' +
+          '<span><span class="badge ' + (it.status === "published" ? "green" : it.status === "selected" ? "amber" : "") + '">' + escapeHtml(ST_TXT[it.status] || it.status) + "</span></span>" +
+          '<span class="ta-r">' + (it.status === "archived" ? '<span class="soft">已归档</span>' : '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
         "</div>";
-      }).join("") || '<div class="sites-empty">' +
-        (MOCK.sources.length ? "没有匹配的条目" : "还没有拉取到数据，抓取执行器接上真实站点后这里才会有内容") + "</div>";
+      }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "词条库还是空的，去流程页点「抓一页」") + "</div>";
       var c = $("#dl-count");
-      if (c) c.textContent = rows.length;
+      if (c) c.textContent = rows.length + (window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
     }
 
     window.__ptaRepaintSources = paint;
+    window.__ptaLoadSources = loadCatalog;
     var q = $("#dl-q");
     if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
     body.addEventListener("click", function (e) {
       var arc = e.target.closest("button[data-archive]");
       if (!arc) return;
-      var row = arc.closest(".dl-row");
-      var title = row ? row.querySelector(".dl-title b").textContent : "";
-      var it = MOCK.sources.filter(function (x) { return x.title === title; })[0];
-      if (it) it.archived = true;
-      if (row) {
-        row.classList.add("is-archived");
-        arc.textContent = "已归档";
-        arc.disabled = true;
-      }
-      toast("已归档：" + title);
+      var cid = arc.getAttribute("data-cid");
+      arc.disabled = true;
+      fetch("/api/catalog/" + encodeURIComponent(cid) + "/status", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "archived" })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        if (j && j.ok) { toast("已归档"); loadCatalog(); }
+        else { arc.disabled = false; toast((j && j.error && j.error.message) || "归档失败"); }
+      }).catch(function () { arc.disabled = false; toast("归档请求发不出去"); });
     });
+    loadCatalog();
     var crawl = $("#dl-crawl");
     if (crawl) {
       var selSite = $("#dl-site");

@@ -193,9 +193,9 @@ async function main() {
   await check('数据清单归档与导出', async () => {
     await open('#sources');
     await seed('sources');
-    await page.click('button[data-archive]');
-    await page.waitForTimeout(250);
-    need(await page.locator('.dl-row.is-archived').count() === 1, '归档没有标记行');
+    /* 本地预览没有后端：这一页改为读词条库，应该给出明确空状态而不是假数据 */
+    const emptyTxt = await page.textContent('#dl-body');
+    need(/词条库还是空的/.test(emptyTxt || ''), '没有后端时没显示空状态：' + String(emptyTxt || '').slice(0, 80));
     const dl = page.waitForEvent('download');
     await page.click('#dl-export');
     const d = await dl;
