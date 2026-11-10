@@ -262,6 +262,29 @@
   }
   window.__ptaDryRun = submitDryRun;
 
+  /* 待审核台：读服务端队列（没有后端就走前端假数据） */
+  function queueRequest(path, method, body) {
+    if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(null);
+    return fetch("/api/queue" + path, {
+      method: method || "GET", credentials: "same-origin",
+      headers: body ? { "content-type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, j: j }; },
+        function () { return { status: r.status, j: null }; });
+    }).catch(function () { return null; });
+  }
+  function mapServerQueue(it) {
+    return {
+      id: String(it.id), title: it.title || "", cn: it.cn || "", year: it.year || "", res: it.res || "",
+      size: it.size || "", imdb: it.imdb || "—", site: it.site || "", status: it.status || "pending",
+      check: it.check || "未查", checkCls: it.checkCls || "gray", reason: it.reason || "",
+      shots: (it.shots || []).map(function (s, i) { return { name: "shot" + (i + 1), url: s }; }),
+      server: true
+    };
+  }
+  window.__ptaQueue = { req: queueRequest, map: mapServerQueue };
+
   /* 拉服务端清单；失败（file://、未登录、离线）就保持本地数据，不打断页面 */
   function loadSitesFromApi() {
     if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve(false);
@@ -746,6 +769,7 @@
     if (!listBox) return;
 
     var state = { tab: "all", q: "", sel: null };
+    MOCK.queue.forEach(function (x) { x.id = String(x.id); });
     var STATUS = {
       pending: ["待确认", "amber"],
       approved: ["已通过", "green"],
@@ -862,7 +886,7 @@
     listBox.addEventListener("click", function (e) {
       var b = e.target.closest(".q-item");
       if (!b) return;
-      state.sel = Number(b.getAttribute("data-id"));
+      state.sel = b.getAttribute("data-id");
       paint();
     });
 
@@ -931,6 +955,42 @@
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (!it) return;
       var act = b.getAttribute("data-qact");
+      if (it.server) {
+        if (act === "skip") {
+          toast("已跳过：" + (it.cn || it.title));
+          var ns = rows().filter(function (x) { return x.status === "pending" && x.id !== it.id; })[0];
+          state.sel = ns ? ns.id : it.id;
+          paint();
+          return;
+        }
+        if (act === "reject") {
+          var rs = $("#qd-reason") ? $("#qd-reason").value.trim() : "";
+          if (!rs) { toast("驳回要写理由"); return; }
+          window.__ptaQueue.req("/" + encodeURIComponent(it.id) + "/action", "POST", { action: "reject", reason: rs })
+            .then(function (res) {
+              toast(res && res.j && res.j.ok ? "已驳回：" + (it.cn || it.title)
+                : (res && res.j && res.j.error && res.j.error.message) || "驳回失败");
+              return loadServer();
+            });
+          return;
+        }
+        var seq = it.status === "pending" ? ["approve", "publish"] : ["publish"];
+        it.status = "publishing";
+        paint();
+        var chain = Promise.resolve(null);
+        seq.forEach(function (a) {
+          chain = chain.then(function () {
+            return window.__ptaQueue.req("/" + encodeURIComponent(it.id) + "/action", "POST", { action: a });
+          });
+        });
+        chain.then(function (res) {
+          var ok = res && res.j && res.j.ok;
+          toast(ok ? "已发布：" + (it.cn || it.title)
+            : (res && res.j && res.j.error && res.j.error.message) || "发布失败");
+          return loadServer();
+        });
+        return;
+      }
       if (act === "publish" || act === "retry") {
         it.status = "publishing";
         it.pubMsg = "";
@@ -962,7 +1022,19 @@
       paint();
     });
 
+    function loadServer() {
+      return window.__ptaQueue.req("?limit=200").then(function (res) {
+        if (!res || !res.j || !res.j.ok || !res.j.data || !Array.isArray(res.j.data.items)) return false;
+        MOCK.queue = res.j.data.items.map(window.__ptaQueue.map);
+        if (state.sel && !MOCK.queue.some(function (x) { return x.id === state.sel; })) state.sel = null;
+        paint();
+        return true;
+      });
+    }
+    window.__ptaLoadQueue = loadServer;
+
     paint();
+    loadServer();
   }
 
   function initSources() {

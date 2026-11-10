@@ -68,7 +68,7 @@ pta\checks\run.cmd
 | pending | 流程页搜索预设与判定规则生效 | 选定后摘要即时更新并可持久化 |
 | done | 待审核台服务端状态机 | `POST /api/queue` 造条目，approve/reject/publish 各有校验，越级 409 |
 | done | 站点搜索预设按站存 | `/api/sites/:host/search` 支持引擎/路径/参数名/分类 id，真实数据不入库 |
-| pending | 待审核台前端接 `/api/queue` | 列表与详情改读服务端，操作走 action 接口 |
+| done | 待审核台前端接 `/api/queue` | 有后端时列表读服务端，「通过并发布」走 approve+publish，驳回必须填理由 |
 | done | 下载器连通性探测（后端） | 只连自己填的地址，8 秒超时，401 时用账号密码登录一次再重试，失败给原因 |
 | pending | 下载器页前端接探测接口 | 页面上直接点测试并显示 steps 与版本号 |
 | pending | 站点页「抓取测试」改名「连接自检（干跑）」 | 界面标明未接真站，只跑本地检查 |
