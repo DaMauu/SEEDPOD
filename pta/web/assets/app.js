@@ -2104,12 +2104,13 @@
     }
     paintTarget();
 
-    /* 真抓一页：只发一次 GET，服务端守住 6 秒间隔与每日上限；失败按错误码说人话 */
+    /* 真抓一页：只发一次 GET，服务端守住 30 秒间隔与每日上限；失败按错误码说人话 */
     var liveBtn = $("#crawl-live-run");
     if (liveBtn) liveBtn.addEventListener("click", function () {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，抓取不可用"); return; }
-      var h = target || (MOCK.sitesList[0] && MOCK.sitesList[0].name) || "";
-      if (!h) { toast("先去站点页选一个站点"); return; }
+      /* 必须先在「发布 → 目标站」里选站，不能默认抓清单里第一个站 */
+      var h = target;
+      if (!h) { toast("先在下面「发布」里选目标站，再回来抓"); return; }
       liveBtn.disabled = true;
       var meta = $("#crawl-dry-meta");
       if (meta) meta.textContent = "正在抓 " + h + " …";
