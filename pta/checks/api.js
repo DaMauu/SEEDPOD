@@ -626,8 +626,47 @@ async function main() {
     need(anon.status === 401, '未登录能读本地库：' + anon.status);
   });
 
-  await check('待审核队列校验与鉴权', async () => {
-    const empty = await fetchA(BASE + '/api/queue', {
+  await check('词条库导入、去重与状态流转', async () => {
+    const add = await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [
+        { site: 'example.org', siteId: '101', title: 'Catalog Fixture 2023 1080p Blu-ray', size: '20.00 GB', sizeBytes: 21474836480, marks: { noRedistribute: true } },
+        { site: 'example.org', siteId: '102', title: 'Catalog Fixture Two 2024 2160p', size: '60.00 GB' }
+      ] })
+    });
+    const aj = await add.json();
+    need(add.ok && aj.data.added === 2, '导入词条失败：' + JSON.stringify(aj).slice(0, 160));
+
+    /* 同站同 id 再导一次＝更新，不新增 */
+    const again = await (await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: 'example.org', siteId: '101', title: 'Catalog Fixture 2023 1080p Blu-ray REPACK', size: '20.10 GB' }] })
+    })).json();
+    need(again.data.added === 0 && again.data.updated === 1, '重复导入没按更新处理：' + JSON.stringify(again.data));
+
+    const list = await (await fetchA(BASE + '/api/catalog?q=Catalog')).json();
+    need(list.ok && list.data.total >= 2, '词条列表不对：' + JSON.stringify(list.data).slice(0, 160));
+    need(list.data.byStatus.new >= 2, '新词条状态不对：' + JSON.stringify(list.data.byStatus));
+    const id = list.data.items[0].id;
+    need(!!id, '词条没有 id');
+
+    const st = await (await fetchA(BASE + '/api/catalog/' + id + '/status', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 'selected' })
+    })).json();
+    need(st.ok && st.data.status === 'selected', '状态没改过来：' + JSON.stringify(st).slice(0, 140));
+    const bad = await fetchA(BASE + '/api/catalog/' + id + '/status', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: 'not-a-status' })
+    });
+    need(bad.status === 400, '非法状态没被拒：' + bad.status);
+
+    const ov = await (await fetchA(BASE + '/api/stats/overview')).json();
+    need(ov.data.catalog && ov.data.catalog.total >= 2, '系统状态里没有词条库统计：' + JSON.stringify(ov.data.catalog));
+
+    const del = await fetchA(BASE + '/api/catalog/' + id, { method: 'DELETE' });
+    need(del.ok, '删除词条失败');
+  });
+
+  await check('待审核队列校验与鉴权', async () => {    const empty = await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cn: '只有中文名' })
     });
     need(empty.status === 400, '没有 title 却新增成功：' + empty.status);

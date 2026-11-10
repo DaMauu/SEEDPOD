@@ -658,30 +658,31 @@
   }
 
   function renderDashboard() {
-    var pub = MOCK.queue.filter(function (x) { return x.status === "published"; }).length;
-    var fail = MOCK.queue.filter(function (x) { return x.status === "failed"; }).length;
-    var pending = MOCK.queue.filter(function (x) { return x.status === "pending"; }).length;
-    var todayPosted = pub;
-    var monthPosted = pub;
-    var totalPosted = pub;
-    var dbTotal = MOCK.sources.length;
-    var fresh = 0;
+    /* 首页数字只用后端真实数据：队列、词条库、本地去重库；没有后端时显示 0，不编造 */
+    var ov = window.__ptaOverview;
+    var qc = (ov && ov.queue && ov.queue.counts) || {};
+    var pending = qc.pending || 0;
+    var published = qc.published || 0;
+    var fail = qc.rejected || 0;
+    var cat = (ov && ov.catalog) || { total: 0, byStatus: {} };
+    var lib = (ov && ov.library && ov.library.total) || 0;
 
     function set(id, v) { var el = $(id); if (el) el.textContent = v; }
-    set("#hero-num", String(todayPosted));
+    set("#hero-num", String(published));
     set("#hero-delta", "累计已发布");
-    set("#stat-month", String(monthPosted));
-    set("#stat-total", totalPosted.toLocaleString());
-    set("#stat-db", dbTotal.toLocaleString());
+    set("#stat-month", String(published));
+    set("#stat-total", published.toLocaleString());
+    set("#stat-db", cat.total.toLocaleString());
 
     var t = $("#today-stats");
     if (t) {
       t.innerHTML = [
-        "抓取 <b>" + dbTotal.toLocaleString() + "</b>",
-        "判重 <b>0</b>",
-        "新收录 <b>" + fresh + "</b>",
-        "已发布 <b>" + todayPosted + "</b>",
-        "失败 <b>" + fail + "</b>"
+        "词条库 <b>" + cat.total.toLocaleString() + "</b>",
+        "待发 <b>" + ((cat.byStatus && cat.byStatus.selected) || 0) + "</b>",
+        "已发布 <b>" + published + "</b>",
+        "跳过 <b>" + ((cat.byStatus && cat.byStatus.skipped) || 0) + "</b>",
+        "本地库 <b>" + lib.toLocaleString() + "</b>",
+        "待审核 <b>" + pending + "</b>"
       ].join("　·　");
     }
 
@@ -695,7 +696,7 @@
         return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
       }).join("");
     }
-    return { pending: pending, pub: pub, fail: fail };
+    return { pending: pending, pub: published, fail: fail };
   }
 
   function kpi(label, value, delta, cls) {
@@ -761,7 +762,7 @@
     }
   }
 
-  window.__ptaPaintHealth = function () { renderHealth(); renderSiteHealth(); renderNodeCapacity(); };
+  window.__ptaPaintHealth = function () { renderDashboard(); renderSiteHealth(); renderNodeCapacity(); };
 
   function fmtBytes(n) {
     var v = Number(n) || 0;
@@ -2148,7 +2149,7 @@
         var bad = checkNums(save.closest(".drawer") || host);
         if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
         saveFlowState();
-        var label = { fetch: "抓取", dedupe: "查重", pub: "发布" }[sKey] || sKey;
+        var label = { fetch: "抓取", dedupe: "筛选", pub: "发布" }[sKey] || sKey;
         toast(label + "设置已保存");
       }
     });

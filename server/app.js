@@ -18,6 +18,7 @@ const adapters = require('./adapters');
 const nexusphp = adapters.nexusphp;
 const secretbox = require('./secretbox');
 const match = require('./match');
+const catalog = require('./catalog');
 const KEYRING = secretbox.loadKey(DATA_DIR);
 const STARTED = Date.now();
 
@@ -301,6 +302,7 @@ function sanitizeFlow(body) {
 
 /* ---------- 本地查重：只查本地库和队列里已有条目，不联网 ---------- */
 const LIB_FILE = path.join(DATA_DIR, 'library.json');
+const catalogStore = catalog.createStore(path.join(DATA_DIR, 'catalog.json'));
 
 function readLibrary() {
   try {
@@ -1109,6 +1111,7 @@ const server = http.createServer(async (req, res) => {
           downloaders: { total: dls.length, online: online, offline: dls.length - online, freeSpace: freeSpace, version: version, lastAt: lastAt || null },
           queue: { total: (q.items || []).length, counts: counts },
           library: { total: readLibrary().length },
+          catalog: catalogStore.summary(),
           tasks: { active: active },
           updatedAt: new Date().toISOString()
         }
@@ -1342,6 +1345,46 @@ const server = http.createServer(async (req, res) => {
       try { writeLibrary(items); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
       logEvent('info', '查重', '本地库删除 · ' + String(gone.title).slice(0, 60));
       return send(res, 200, { ok: true, data: { id: id } });
+    }
+    /* ---------- 词条库：第一步抓取的结果 ---------- */
+    if (p === '/api/catalog' && req.method === 'GET') {
+      const data = catalogStore.list({
+        q: u.searchParams.get('q') || '',
+        status: u.searchParams.get('status') || '',
+        limit: u.searchParams.get('limit') || 50,
+        offset: u.searchParams.get('offset') || 0
+      });
+      return send(res, 200, { ok: true, data: data });
+    }
+    if (p === '/api/catalog' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const items = Array.isArray(body) ? body : body.items;
+      if (!Array.isArray(items)) return fail(res, 400, 'BAD_REQUEST', 'items 必须是数组');
+      let out;
+      try { out = catalogStore.add(items); } catch (e) { return fail(res, 500, 'INTERNAL', '写入词条库失败：' + e.message); }
+      logEvent('info', '词条库', '导入 ' + out.added + ' 条 · 更新 ' + out.updated + ' 条 · 跳过 ' + out.skipped + ' 条');
+      return send(res, 200, { ok: true, data: out });
+    }
+    if (p.startsWith('/api/catalog/')) {
+      const rest = decodeURIComponent(p.slice('/api/catalog/'.length).replace(/\/+$/, ''));
+      const isStatus = /\/status$/.test(rest);
+      const id = isStatus ? rest.replace(/\/status$/, '') : rest;
+      if (!id) return fail(res, 400, 'BAD_REQUEST', '缺少词条 id');
+      if (isStatus) {
+        if (req.method !== 'POST') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST');
+        const body = await readBody(req);
+        const r = catalogStore.setStatus(id, String((body && body.status) || ''));
+        if (r.err) return fail(res, /不存在/.test(r.err) ? 404 : 400, /不存在/.test(r.err) ? 'NOT_FOUND' : 'BAD_REQUEST', r.err);
+        logEvent('info', '词条库', '状态改为 ' + r.item.status + ' · ' + String(r.item.title).slice(0, 60));
+        return send(res, 200, { ok: true, data: r.item });
+      }
+      if (req.method === 'DELETE') {
+        const r = catalogStore.remove(id);
+        if (r.err) return fail(res, 404, 'NOT_FOUND', r.err);
+        return send(res, 200, { ok: true, data: { id: id } });
+      }
+      return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST /status 或 DELETE');
     }
     if (p === '/api/queue' && req.method === 'GET') {
       const status = u.searchParams.get('status') || '';
