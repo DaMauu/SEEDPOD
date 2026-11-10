@@ -30,7 +30,13 @@ function readConfig() {
   }
 }
 function writeConfig(cfg) {
-  fs.writeFileSync(CFG_FILE, JSON.stringify(cfg, null, 2));
+  try {
+    fs.writeFileSync(CFG_FILE, JSON.stringify(cfg, null, 2));
+  } catch (e) {
+    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入配置失败：" + e.message);
+    err.code = "STORAGE_FAILED";
+    throw err;
+  }
 }
 
 function send(res, code, payload, headers) {
@@ -79,6 +85,11 @@ function serveStatic(req, res, urlPath) {
   if (!file.startsWith(WEB_DIR)) return fail(res, 403, 'FORBIDDEN', '越界路径');
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
+      /* 带扩展名的请求按 404 处理，别把 index.html 当 js/css 返回 */
+      if (path.extname(rel)) {
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+        return res.end('not found');
+      }
       /* 单页应用：未知路径回退到 index.html，由前端 hash 路由接管 */
       const fallback = path.join(WEB_DIR, 'index.html');
       return fs.readFile(fallback, (e2, buf) => {
@@ -124,7 +135,11 @@ const server = http.createServer(async (req, res) => {
       ["interval", "dailySite", "dailyAll"].forEach(function (k) {
         if (body[k] !== undefined) next[k] = Number(body[k]);
       });
-      writeConfig(next);
+      try {
+        writeConfig(next);
+      } catch (e) {
+        return fail(res, 500, e.code || "INTERNAL", e.message);
+      }
       return send(res, 200, { ok: true, data: next });
     }
     if (p === '/api/logs/stream' && req.method === 'GET') {

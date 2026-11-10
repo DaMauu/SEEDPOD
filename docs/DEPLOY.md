@@ -34,6 +34,20 @@ docker run -d --name seedpod -p 8080:8080 -v "$PWD/data:/data" -e TZ=Asia/Shangh
   - `config.json`：运行模式与速率（面板改完直接落盘）
 - 镜像不含真实站点清单（`sites-data.local.js` 在 `.dockerignore` 里），容器里跑的是示例站点
 
+## 只监听本机 / 走隧道访问
+
+镜像默认映射 `8080:8080`（全网可达）。不想暴露时把 compose 里的端口改成 `127.0.0.1:8080:8080`，再通过隧道看：
+
+```
+ssh -N -L 8080:127.0.0.1:8080 root@<你的机器>
+```
+
+然后本地打开 http://localhost:8080 。
+
+## 挂载权限
+
+bind mount 到 `/data` 时，宿主机目录通常属于 root，容器内的 pta 用户写不进去。镜像自带 entrypoint：以 root 启动时先把 `/data` 归给 pta，再降权运行，所以不用手动 chown。
+
 ## 访问控制
 
 默认只适合本机或内网。要给外部访问，先设令牌：
