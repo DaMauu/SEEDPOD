@@ -1194,7 +1194,8 @@
             return {
               id: it.id, title: it.title, site: it.site || "", res: it.res || matchResOf(it.title),
               size: it.size || "", time: it.createdAt ? String(it.createdAt).slice(5, 16).replace("T", " ") : "",
-              status: it.status, marks: it.marks || {}, type: it.catName || "", cat: it.cat || ""
+              status: it.status, marks: it.marks || {}, type: it.catName || "", cat: it.cat || "",
+              detailsUrl: it.detailsUrl || ""
             };
           });
           window.__ptaSourcesTotal = j.data.total;
@@ -1241,6 +1242,19 @@
       });
     }
 
+    /* 详情页地址：服务端存的是相对路径，用站点定义里的 base（或站点域名）补成完整 URL */
+    function absUrl(site, p) {
+      var raw = String(p || "").trim();
+      if (!raw) return "";
+      if (/^https?:\/\//i.test(raw)) return raw;
+      if (!site) return "";
+      var d = defOf(site);
+      var base = (d && d.base) || ("https://" + site);
+      var origin = base;
+      try { origin = new URL(base).origin; } catch (e) { origin = base.replace(/\/+$/, ""); }
+      return origin.replace(/\/+$/, "") + "/" + raw.replace(/^\/+/, "");
+    }
+
     function paint() {
       var all = window.__ptaSources || [];
       var rows = all.filter(function (it) {
@@ -1256,7 +1270,11 @@
             '" data-marks="' + escapeHtml(JSON.stringify(it.marks || {})) + '">' + MK[k] + "</button>";
         }).join("");
         return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
-          '<span class="dl-title"><b>' + escapeHtml(it.title) + "</b>" +
+          '<span class="dl-title"><b>' + (function () {
+            var href = absUrl(it.site, it.detailsUrl);
+            return href ? '<a class="t-link" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.title) + "</a>"
+              : escapeHtml(it.title);
+          })() + "</b>" +
           '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") + toggles + "</span></span>" +
           '<span>' + (function () {
             var t = it.type || catNameFromDef(it.site, it.cat);
