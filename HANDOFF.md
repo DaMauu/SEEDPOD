@@ -23,6 +23,12 @@ ssh pta 'md5sum /opt/seedpod/server/app.js /opt/seedpod/pta/web/index.html /opt/
 ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
 ```
 
+发版要带上的文件（少一个就起不来或页面白屏）：
+
+- `server/app.js` 与 `server/adapters/nexusphp.js`（少了 adapter 会 MODULE_NOT_FOUND 起不来）
+- `pta/web/index.html`、`pta/web/assets/app.js`、`pta/web/assets/app.css`、`pta/web/assets/data.js`
+- `data/site-defs/<host>.json`（站点定义，按需）
+
 不要覆盖 `pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv`、`data/` 下任何文件。
 Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html` 里的 `?v=`。
 
