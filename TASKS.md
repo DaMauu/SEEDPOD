@@ -108,6 +108,10 @@ pta\checks\run.cmd
 | done | 清掉死代码与假样本 | 删掉趋势图/待办/已发布样本和两个没人调用的渲染函数，页面没有任何编造的统计 |
 | done | 数据清单分页 | 一次读 500 条、每页 100，页脚显示「第 x / y 页」与上下页；`/api/catalog` 带 `matched` 计数 |
 | done | 抓取来源站可选 | 流程页右上角「选来源站」，抓一页与干跑自检都按它走，记住上次选择；没选就提示，不再默认第一个站 |
+| done | 待审核「全部发布」 | `/api/queue/bulk` 支持 `publish`，只处理 approved，发布前过下载器/预设闸门，api 检查覆盖 |
+| done | 列表页进就刷新 | 进数据清单/待审核时重新拉一次；总览每 30 秒刷新真实状态 |
+| done | 站点抽屉显示 cookie 状态 | 启动时读一次 `/api/credentials`（只拿 hasCookie），概览里直接显示「已保存/未保存」 |
+| done | 文案统一 | 界面上不再出现单独「词条库」说法，统一叫数据清单 / 词条 |
 | done | 发布记账 | 发布成功把词条标 published、写 `published.json` 记录（含匿名/图床），`/api/published` 可查；首页已发布列表读它 |
 | done | 词条库批量 | `/api/catalog/bulk` 按状态批量改；词条库面板有状态筛选与「归档已跳过」；数据清单页改成读词条库并支持归档 |
 | done | 词条库 | `POST /api/catalog` 导入（按站内 id / infohash 去重）、`/status` 流转 new→selected→published/skipped/archived |
