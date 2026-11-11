@@ -79,6 +79,8 @@ function parseList(html) {
     const size = SIZE_RE.exec(flat(win));
     const cat = CATQ.exec(win);
     const dl = (/href=["']([^"']*\/torrents\/\d+\/download[^"']*)["']/i.exec(win) || [])[1];
+    /* 行里常带 <time datetime="...">，有就用来判「未满 7 天」，没有就留空 */
+    const dt = /<time\b[^>]*datetime=["']([^"']+)["']/i.exec(win);
     return {
       id: mk.id,
       title: mk.title.slice(0, 300),
@@ -86,7 +88,8 @@ function parseList(html) {
       size: size ? size[1].replace(/\s+/g, ' ') : '',
       sizeBytes: size ? sizeLib.parseSize(size[1]) : 0,
       detailsUrl: mk.href,
-      downloadUrl: dl || '/torrents/' + mk.id + '/download'
+      downloadUrl: dl || '/torrents/' + mk.id + '/download',
+      addedAt: dt && !isNaN(Date.parse(dt[1])) ? new Date(Date.parse(dt[1])).toISOString() : ''
     };
   });
 }
