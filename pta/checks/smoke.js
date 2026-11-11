@@ -223,7 +223,7 @@ async function main() {
     await page.waitForTimeout(150);
   });
 
-  /* 6.3 站点详情连接自检：没有后端时给提示，按钮文案标明干跑 */
+  /* 6.3 站点详情连接自检：没有后端时给提示，按钮文案标明本地 */
   await check('站点连接自检在没有后端时给出提示', async () => {
     await open('#sites');
     await page.locator('.site-item').nth(1).click();
@@ -232,25 +232,42 @@ async function main() {
       const b = document.querySelector('#site-detail button[data-act="selfcheck"]');
       return b ? b.textContent : 'missing';
     });
-    need(/干跑/.test(label), '按钮没标明干跑：' + label);
+    need(/连接自检|本地/.test(label), '按钮没标明本地自检：' + label);
     await page.evaluate(() => {
       const b = document.querySelector('#site-detail button[data-act="selfcheck"]');
       if (b) b.click();
     });
     await page.waitForTimeout(320);
     const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
-    need(/干跑|不可用/.test(t), '没有不可用提示：' + t);
+    need(/演练|不可用|本地/.test(t), '没有不可用提示：' + t);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(150);
   });
 
-  /* 6.4 流程页干跑自检：没有后端时给提示 */
-  await check('流程页干跑自检在没有后端时给出提示', async () => {
+  /* 6.3b 登录页签的 cookie 自检按钮：必须挂到 data-act 上，点了要有反馈 */
+  await check('登录页签 cookie 自检按钮可点', async () => {
+    await open('#sites');
+    await page.locator('.site-item').nth(1).click();
+    await page.waitForTimeout(700);
+    await page.click('#site-detail button[data-settab="login"]');
+    await page.waitForTimeout(300);
+    const has = await page.evaluate(() => !!document.querySelector('#site-detail button#sd-cookie-test[data-act="cookie-test"]'));
+    need(has, '登录页签的自检按钮没有挂 data-act，点了不会生效');
+    await page.evaluate(() => { const b = document.querySelector('#sd-cookie-test'); if (b) b.click(); });
+    await page.waitForTimeout(320);
+    const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
+    need(/不可用|没有后端/.test(t), 'cookie 自检没有反馈：' + t);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+  });
+
+  /* 6.4 流程页演练：没有后端时给提示 */
+  await check('流程页演练在没有后端时给出提示', async () => {
     await open('#crawl');
     await page.click('#crawl-dry-run');
     await page.waitForTimeout(320);
     const t = await page.evaluate(() => (document.querySelector('.toast') || {}).textContent || '');
-    need(/干跑|不可用/.test(t), '没有干跑提示：' + t);
+    need(/演练|不可用/.test(t), '没有演练提示：' + t);
     need((await page.locator('#crawl-dry-box').isVisible()) === false, '没有后端却画出了步骤面板');
   });
 

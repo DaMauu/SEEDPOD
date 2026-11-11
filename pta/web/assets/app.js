@@ -175,10 +175,10 @@
   }
   window.__ptaApplySites = applySites;
 
-  /* 干跑任务：提交 -> 轮询进度。没有后端时立刻回错误，绝不发真实站点请求 */
+  /* 演练任务：提交 -> 轮询进度。没有后端时立刻回错误，绝不发真实站点请求 */
   function submitDryRun(host, onStep, onDone, onErr) {
     if (!window.fetch || !/^https?:$/.test(location.protocol)) {
-      onErr("本地预览没有后端，干跑不可用");
+      onErr("本地预览没有后端，演练不可用");
       return null;
     }
     var timer = null;
@@ -208,7 +208,7 @@
           })
           .catch(function () { clearInterval(timer); onErr("任务查询中断"); });
       }, 400);
-    }).catch(function () { onErr("本地预览没有后端，干跑不可用"); });
+    }).catch(function () { onErr("本地预览没有后端，演练不可用"); });
     return { stop: function () { if (timer) clearInterval(timer); } };
   }
   window.__ptaDryRun = submitDryRun;
@@ -1328,9 +1328,16 @@
       var pageRows = rows.slice(state.page * PAGE, state.page * PAGE + PAGE);
       body.innerHTML = pageRows.map(function (it) {
         var toggles = Object.keys(MK).map(function (k) {
-          var on = !!(it.marks && it.marks[k]);
-          return '<button class="mark-btn' + (on ? " on" : "") + '" data-mark="' + k + '" data-cid="' + it.id +
-            '" data-marks="' + escapeHtml(JSON.stringify(it.marks || {})) + '">' + MK[k] + "</button>";
+          var v = it.marks && it.marks[k];
+          var on = !!v;
+          var label = MK[k];
+          var tip = "点一下手动加 / 去这个标记";
+          if (k === "limitedDays") {
+            tip = "按站上发布时间算：7 天内的只打「未满 7 天」标记，不过滤；点一下可手动加 / 去";
+            if (typeof v === "number" && v > 0) label = "未满7天·剩" + v + "天";
+          }
+          return '<button class="mark-btn' + (on ? " on" : "") + '" title="' + tip + '" data-mark="' + k + '" data-cid="' + it.id +
+            '" data-marks="' + escapeHtml(JSON.stringify(it.marks || {})) + '">' + label + "</button>";
         }).join("");
         return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
           '<span class="dl-title"><b>' + (function () {
@@ -1881,7 +1888,7 @@
       return '<select class="select"' + k + ">" + opts + "</select>";
     }
     if (r.type === "textarea") {
-      return '<textarea class="input sd-note"' + k + ">" + escapeHtml(r.v || "") + "</textarea>";
+      return '<textarea class="input sd-note"' + k + (r.ph ? ' placeholder="' + escapeHtml(r.ph) + '"' : "") + ">" + escapeHtml(r.v || "") + "</textarea>";
     }
     if (r.type === "num") {
       return '<input class="input num"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' +
@@ -2037,17 +2044,17 @@
     host.innerHTML =
       '<section class="drawer open crawl-dry">' +
         '<div class="drawer-head">' +
-          '<div class="drawer-t"><div class="drawer-title">流程自检（干跑）</div>' +
+          '<div class="drawer-t"><div class="drawer-title">本地演练（不发请求）</div>' +
             '<div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div></div>' +
           '<div class="drawer-head-right">' +
             '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
             '<select class="input slim" id="crawl-site" title="从哪个站抓"><option value="">选来源站</option></select>' +
             '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条">' +
-              [[5,'5 条（试）'],[20,'20 条'],[100,'100 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+              [[5,'5 条（试）'],[10,'10 条'],[20,'20 条'],[100,'100 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
             '</select>' +
             '<button class="btn ghost slim" id="crawl-plan-btn" title="只读本地配置，不发请求">看地址</button>' +
             '<button class="btn slim" id="crawl-live-run">抓一页</button>' +
-            '<button class="btn primary slim" id="crawl-dry-run">干跑自检</button>' +
+            '<button class="btn primary slim" id="crawl-dry-run">开始演练</button>' +
           "</div>" +
         "</div>" +
         '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
@@ -2063,7 +2070,7 @@
       if (!box) return;
       box.hidden = false;
       if (meta) meta.textContent = t.state === "done" ? "已完成" : (t.progress || 0) + "%";
-      box.innerHTML = '<div class="dl-dry-head"><b>干跑 · ' + escapeHtml(t.siteHost) + "</b>" +
+      box.innerHTML = '<div class="dl-dry-head"><b>演练 · ' + escapeHtml(t.siteHost) + "</b>" +
           '<span class="dl-dry-p">' + (t.progress || 0) + "%</span></div>" +
         "<ul>" + (t.steps || []).map(function (s) {
           return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
@@ -2087,13 +2094,13 @@
     var dryRunBtn = $("#crawl-dry-run");
     if (dryRunBtn) dryRunBtn.addEventListener("click", function () {
       var host0 = (crawlSiteSel && crawlSiteSel.value) || target || "";
-      if (!host0) { toast("先在右上角「选来源站」里挑一个站，再干跑自检"); return; }
+      if (!host0) { toast("先在右上角「选来源站」里挑一个站，再开始演练"); return; }
       var seen = false;
       window.__ptaDryRun(host0, function (t) {
         paintCrawlDry(t);
-        if (!seen) { seen = true; toast("已提交干跑任务"); }
+        if (!seen) { seen = true; toast("已提交演练"); }
       }, function (t) {
-        if (t.state === "done") toast("干跑完成 · " + (t.steps || []).length + " 步");
+        if (t.state === "done") toast("演练完成 · " + (t.steps || []).length + " 步");
       }, function (msg) { toast(msg); });
     });
 
@@ -2125,7 +2132,7 @@
       });
     })();
 
-    /* 干跑区不是空的：进来就显示上一次干跑的结果，没跑过才显示「还没跑过」 */
+    /* 演练区不是空的：进来就显示上一次演练的结果，没跑过才显示「还没跑过」 */
     (function showLastDry() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
       fetch('/api/tasks', { credentials: 'same-origin' })
@@ -2188,6 +2195,14 @@
     if (crawlSiteSel) crawlSiteSel.addEventListener("change", function () {
       try { localStorage.setItem(CKEY, crawlSiteSel.value); } catch (e) {}
     });
+    var limitSel = $("#crawl-limit");
+    var LKEY = "pta.crawlLimit";
+    if (limitSel) {
+      try { if (localStorage.getItem(LKEY)) limitSel.value = localStorage.getItem(LKEY); } catch (e) {}
+      limitSel.addEventListener("change", function () {
+        try { localStorage.setItem(LKEY, limitSel.value); } catch (e) {}
+      });
+    }
 
     /* 看地址：只调 /api/crawl/plan 读本地配置拼 URL，不发任何请求 */
     var planBtn = $("#crawl-plan-btn");
@@ -2680,7 +2695,7 @@
     var list = $("#sites-list");
     if (!list) return;
     var detail = $("#site-detail");
-    var state = { q: "", status: "all", arch: "all", login: "all", preset: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "basic", open: false, closed: {} };
+    var state = { q: "", status: "all", arch: "all", login: "all", preset: "all", sel: null, tab: "overview", picks: [], page: 1, setTab: "login", open: false, closed: {} };
     var PER_PAGE = 11;
     var ACH = {
       NP: ["np", "NexusPHP"], UNIT3D: ["u3d", "UNIT3D"], GZ: ["gz", "Gazelle"],
@@ -2771,17 +2786,20 @@
 
     function headHtml(s) {
       var a = archOf(s);
+      var archOpts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
+        return '<option value="' + k + '"' + ((s.arch || "?") === k ? " selected" : "") + ">" + ACH[k][1] + "</option>";
+      }).join("");
       return '<div class="sd-top">' +
           '<em class="ava lg ' + a[0] + '">' + escapeHtml(initials(s)) + "</em>" +
           '<div class="sd-id"><div class="sd-title-row"><h2>' + escapeHtml(s.title || s.name) + "</h2>" +
-            '<em class="chip ' + a[0] + '">' + a[1] + "</em>" +
             '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span>" +
             '<span class="chip ' + (presetOf(s.name) ? "np" : "unk") + '">搜索预设 ' + (presetOf(s.name) ? "已确认" : "未确认") + "</span></div>" +
-            '<span class="sd-url">' + escapeHtml(s.url) + "</span>" +
             '<span class="sd-selfcheck" id="sd-selfcheck">' + (s.checkAt ? "上次自检 " + escapeHtml(s.checkAt) + " · " + escapeHtml(s.checkMsg || "") : "还没做过连接自检") + "</span></div>" +
           '<div class="sd-actions">' +
+            '<button class="switch sm' + (s.enabled ? " on" : "") + '" data-switch="enabled" title="启用或停用这个站的抓取"><i></i></button>' +
             '<button class="btn slim" data-act="crawl-one" title="按搜索预设抓这个站一页，只发一次 GET">抓一页</button>' +
-            '<button class="btn slim" data-act="selfcheck" title="干跑自检：只读本地配置，不访问真实站点">连接自检（干跑）</button>' +
+            '<select class="select slim sd-arch-sel" id="sd-arch" title="站点架构">' + archOpts + "</select>" +
+            '<button class="btn slim" data-act="selfcheck" title="演练：只读本地配置，不访问真实站点">连接自检</button>' +
             '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
             SET_TABS.map(function (t) {
               var on = state.tab === "settings" && state.setTab === t[0];
@@ -2857,7 +2875,7 @@
       ["doc", "纪录"], ["music", "音乐"], ["sport", "体育"], ["other", "其他"]];
     var RES = [["any", "不限"], ["720p", "720p 及以上"], ["1080p", "1080p 及以上"], ["2160p", "2160p 及以上"]];
 
-    var SET_TABS = [["basic", "基本信息"], ["login", "登录"], ["search", "搜索预设"], ["override", "站点覆盖"]];
+    var SET_TABS = [["login", "登录"], ["search", "搜索预设"], ["override", "站点覆盖"]];
 
     function settingsHtml(s) {
       var opts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
@@ -2865,23 +2883,16 @@
       }).join("");
       var method = s.loginMethod || "password";
       var mode = s.mode || "incr";
-      var tab = state.setTab || "basic";
+      var tab = state.setTab || "login";
       var body = "";
 
-      if (tab === "basic") {
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "启用抓取", type: "switch", k: "enabled", on: s.enabled },
-          { t: "站点地址", type: "text", k: "url", v: s.url },
-          { t: "架构", type: "select", k: "arch", v: s.arch || "?", opts: ["NP", "UNIT3D", "GZ", "OTHER", "?"], labels: { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" } },
-          { t: "备注", type: "textarea", k: "note", v: s.note || "" }
-        ]) + "</div>";
-      } else if (tab === "override") {
+      if (tab === "override") {
         body = '<div class="set-fields">' + setRowsHtml([
           { t: "单独设置本站", type: "switch", k: "override", on: s.override, hint: s.override ? "只影响这个站" : "关闭即跟随流程页" }
         ]) + "</div>" +
         '<div class="set-fields' + (s.override ? "" : " is-off") + '">' + setRowsHtml([
           { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"] },
-          { t: "每日上限", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值" },
+          { t: "每天抓几次", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值", hint: "这是次数上限，不是条数；一轮多少条在流程页「抓一页」左边选" },
           { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail },
           { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } }
         ]) + "</div>" +
@@ -2971,7 +2982,7 @@
           "</div></div>";
         })() +
         '<div class="sd-cookie-bar">' +
-          (pdetail && pdetail.confirmed ? "" : '<button class="btn ghost slim" id="sd-preset-confirm">确认这个预设</button>') +
+          (pdetail && pdetail.confirmed ? "" : '<button class="btn ghost slim" id="sd-preset-confirm" data-act="preset-confirm">确认这个预设</button>') +
           '<span class="sd-cookie-res" id="sd-preset-res">' +
           (pdetail ? (pdetail.confirmed ? "已人工确认 · " : "更新于 ") + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
         "</span></div>" +
@@ -2983,17 +2994,23 @@
             : "分类来自采样，对照站点没问题就点确认，来源会改成手动") +
         "</span></div>";
       } else {
+        var savedWhen = "";
+        if (s.cookieSaved && s.cookieUpdatedAt) {
+          var ct = new Date(s.cookieUpdatedAt);
+          if (!isNaN(ct.getTime())) savedWhen = " · " + ct.toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
+        }
+        var savedTxt = s.cookieSaved ? ("已保存" + savedWhen) : "未保存";
+        var checkTxt = s.cookieCheckMsg || "还没自检";
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "登录方式", type: "fixed", v: "只用 Cookie", noTag: true, hint: "不需要账号密码 / 2FA；浏览器里登录后把整段 Cookie 复制过来" }
+          { t: "站点地址", type: "text", k: "url", v: s.url || "", ph: "https://站点域名/index.php" }
         ]) + "</div>" +
         '<div class="set-fields">' + setRowsHtml([
-          { t: "Cookie", type: "textarea", k: "cookie", v: s.cookie || "", ph: "name1=value1; name2=value2（会话字段可能是 HttpOnly，document.cookie 里看不到，要从 DevTools 的 Application → Cookies 或请求头里复制）" }
+          { t: "Cookie（" + savedTxt + "）", type: "textarea", k: "cookie", v: s.cookie || "", ph: (s.cookieSaved
+            ? "已保存的 cookie 不回显；要换就整段粘贴覆盖再保存"
+            : "粘贴 name1=value1; name2=value2") }
         ]) + "</div>" +
-        '<div class="sd-cookie-bar"><button class="btn ghost slim" id="sd-cookie-test">用已保存的 cookie 自检</button>' +
-        '<span class="sd-cookie-res" id="sd-cookie-res">还没自检</span></div>' +
-        '<div class="sd-cookie-bar"><span class="sd-cookie-res">' +
-          (s.cookieSaved ? "服务端已有这个站的 cookie（AES 加密存放，只回 hasCookie）" : "服务端还没有这个站的 cookie，粘贴后点保存设置") +
-        "</span></div>";
+        '<div class="sd-cookie-bar"><button class="btn ghost slim" id="sd-cookie-test" data-act="cookie-test">自检</button>' +
+        '<span class="sd-cookie-res" id="sd-cookie-res">' + escapeHtml(checkTxt) + "</span></div>";
       }
 
       return '<div class="sd-form">' + body + "</div>";
@@ -3061,6 +3078,7 @@
           if (!res || !res.j || !res.j.ok || !Array.isArray(res.j.data)) return;
           var hit = res.j.data.filter(function (c) { return c.host === s.name; })[0];
           s.cookieSaved = !!(hit && hit.hasCookie);
+          s.cookieUpdatedAt = (hit && hit.updatedAt) || "";
           if (state.sel === s.name) paint();
         });
       }
@@ -3239,6 +3257,16 @@
         var cur = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
         if (cur) { collect(cur); paintDetail(); }
       }
+      if (e.target.id === "sd-arch") {
+        var ca = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
+        if (ca) {
+          ca.arch = e.target.value;
+          window.__ptaStore.set(ca.name, ca);
+          window.__ptaStore.save();
+          refreshStats(); paint();
+          toast("架构改成 " + (ACH[ca.arch] || ACH["?"])[1]);
+        }
+      }
     });
     if (detail) detail.addEventListener("click", function (e) {
       if (e.target.closest('[data-act="close-sheet"]')) {
@@ -3281,6 +3309,16 @@
           var cs = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
           if (cs) { collect(cs); paintDetail(); }
         }
+        if (sk === "enabled") {
+          var es = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
+          if (es) {
+            es.enabled = sw.classList.contains("on");
+            window.__ptaStore.set(es.name, es);
+            window.__ptaStore.save();
+            refreshStats(); paint();
+            toast(es.enabled ? "已启用抓取" : "已停用抓取");
+          }
+        }
         return;
       }
 
@@ -3290,7 +3328,7 @@
       var s = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
       if (!s) return;
 
-      if (e.target.closest && e.target.closest("#sd-preset-confirm")) {
+      if (act === "preset-confirm") {
         var prBox = $("#sd-preset-res");
         var sNow = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
         if (!sNow) return;
@@ -3322,7 +3360,7 @@
         });
         return;
       }
-      if (e.target.closest && e.target.closest("#sd-cookie-test")) {
+      if (act === "cookie-test") {
         var resBox = $("#sd-cookie-res");
         if (resBox) resBox.textContent = "正在用已保存的 cookie 访问首页…";
         fetch("/api/sites/" + encodeURIComponent(s.name) + "/session-test", { method: "POST", credentials: "same-origin" })
@@ -3330,6 +3368,7 @@
           .then(function (j) {
             if (!j || !j.ok) {
               var msg = (j && j.error && j.error.message) || "自检失败";
+              s.cookieCheckMsg = msg;
               if (resBox) resBox.textContent = msg;
               toast(msg);
               return;
@@ -3338,10 +3377,12 @@
             var txt = (d.pass ? "cookie 可用" : "cookie 用不了") + " · HTTP " + (st.status || "—") +
               (st.ms !== undefined ? " · " + st.ms + "ms" : "") + (st.error ? " · " + st.error : "");
             if (!d.pass && d.hint) txt += " · " + d.hint;
+            s.cookieCheckMsg = txt;
             if (resBox) resBox.textContent = txt;
             toast(d.pass ? "cookie 可用" : (d.hint || "cookie 用不了"));
           })
           .catch(function () {
+            s.cookieCheckMsg = "本地预览没有后端，自检不可用";
             if (resBox) resBox.textContent = "本地预览没有后端，自检不可用";
             toast("本地预览没有后端，自检不可用");
           });
@@ -3350,14 +3391,16 @@
       if (act === "crawl-one") {
         if (btn.disabled) return;
         if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，抓取不可用"); return; }
-        ptaConfirm("抓一页", "会对 " + s.name + " 发一次 GET（带已存的 cookie），抓第一页最多 100 条入库。确认？", function () {
+        var cLim = 100;
+        try { cLim = Number(localStorage.getItem("pta.crawlLimit") || 100) || 100; } catch (e) {}
+        ptaConfirm("抓一页", "会对 " + s.name + " 发一次 GET（带已存的 cookie），抓第一页最多 " + cLim + " 条入库。确认？", function () {
         var oldT = btn.textContent;
         btn.disabled = true;
         btn.textContent = "抓取中…";
         fetch("/api/crawl/run", {
           method: "POST", credentials: "same-origin",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ host: s.name, limit: 100 })
+          body: JSON.stringify({ host: s.name, limit: cLim })
         }).then(function (r) { return r.json(); }).then(function (j) {
           btn.disabled = false;
           btn.textContent = oldT;
@@ -3423,6 +3466,8 @@
         window.__ptaCred.req(s.name, "PUT", { cookie: pendingCookie }).then(function (res) {
           if (res && res.j && res.j.ok) {
             s.cookieSaved = true;
+            s.cookieUpdatedAt = (res.j.data && res.j.data.updatedAt) || new Date().toISOString();
+            s.cookieCheckMsg = "正在用保存的 cookie 自检…（站点慢时最多约半分钟）";
             toast("设置与 cookie 都已保存，正在自检…");
           } else toast((res && res.j && res.j.error && res.j.error.message) || "cookie 没存进服务端");
           paint();

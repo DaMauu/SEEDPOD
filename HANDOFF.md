@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-11（当前部署 17w / commit 88b2de3）
+最后更新：2026-11-11（当前部署 17y）
 
 先读 [AGENTS.md](AGENTS.md)；成熟工具的定义格式与可借鉴点见 [docs/PRIOR-ART.md](docs/PRIOR-ART.md)：铁律、必须一起发的文件、发版命令、故障对照都在那里，聊天被压缩后以它为准。
 
@@ -14,6 +14,10 @@
 - 设置页去掉所有没后端的假项（面板密码/2FA/通知/备份/API 令牌），用户名与版本读后端，退出登录走 /api/logout
 - 安全修复：真实站点清单从 web 根挪到数据目录，服务端对 *.local.* 一律 404，公网该路径已验证 404；登录后 /api/sites 仍带 305 站与标题
 - 检查：smoke 22 / audit 0 / adapter 18 / security 2 / api 37 全绿
+
+- cookie 保存后能看到结果：页签显示「服务端已保存 + 更新时间」，自检结果保留；修了两个没挂 data-act 导致点了没反应的按钮（cookie 自检、确认预设）
+- 「干跑」统一改名「演练」，内部仍用 dryRun；一轮抓多少条可选 5/10/20/100 并记住，站点覆盖的「每天抓几次」注明不是条数
+- 「未满 7 天」显示剩余天数，标记筛选带说明：标题关键词 / 站点发布时间，只打标不过滤
 
 ## 现在是什么状态
 
@@ -88,14 +92,14 @@ Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html
 | GET /api/queue/:id | 单条详情 |
 | POST /api/queue/:id/action | approve / reject / publish，带状态机校验与发布前置校验（缺标题/预设/下载器时 409 PUBLISH_BLOCKED） |
 | DELETE /api/queue/:id | 删除条目 |
-| POST /api/tasks | 提交干跑任务（只接 dryRun，不访问外部站点）；带 plan：页数/并发/分类组/预估查询数/警告 |
+| POST /api/tasks | 提交演练任务（只接 dryRun，不访问外部站点）；带 plan：页数/并发/分类组/预估查询数/警告 |
 | GET /api/tasks | 最近 50 条任务，`?state=active` 只看在跑的 |
 | GET /api/tasks/:id | 单条任务与步骤进度 |
 | POST /api/tasks/:id/cancel | 取消排队/运行中的任务 |
 | GET /api/logs | 最近事件，支持 level/src/since/limit 过滤 |
 | GET /api/logs/stream | SSE，断线按 id 补历史 |
 
-事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、改搜索预设、待审核条目增删与状态变更、干跑任务新建与完成、任务取消。
+事件会写进 `data/events.log`：服务启动、登录成功/失败、退出、改配置、改站点配置、改搜索预设、待审核条目增删与状态变更、演练任务新建与完成、任务取消。
 
 数据文件（都在 `data/` 下，0600）：`config.json` 面板配置、`site-config.json` 站点配置（密码类字段不落盘）、
 `queue.json` 待审核条目、`downloaders.json` 下载器（密码只写不读）、`site-search.local.json` 搜索预设（在 `pta/data/`，不入库）。

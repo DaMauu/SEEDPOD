@@ -881,7 +881,7 @@ async function probeDownloader(d) {
   }
 }
 
-/* ---------- 任务：干跑队列（只走本地步骤，不访问任何外部站点） ---------- */
+/* ---------- 任务：演练队列（只走本地步骤，不访问任何外部站点） ---------- */
 const TASKS = new Map();
 const TASK_TYPES = ['crawl', 'check', 'publish'];
 const TASK_STEPS = ['准备', '读取面板配置', '读取站点配置与搜索预设', '生成待抓取清单', '汇总'];
@@ -925,10 +925,10 @@ function runDryTask(t) {
       t.progress = 100;
       t.finishedAt = new Date().toISOString();
       t.result = {
-        dryRun: true, steps: t.steps.length, note: '干跑：没有访问任何站点',
+        dryRun: true, steps: t.steps.length, note: '演练：没有访问任何站点',
         plan: t.plan, warnings: (t.plan && t.plan.warnings) || []
       };
-      logEvent('info', '任务', '干跑完成 · ' + t.siteHost + ' · ' + t.steps.length + ' 步');
+      logEvent('info', '任务', '演练完成 · ' + t.siteHost + ' · ' + t.steps.length + ' 步');
     }
   }, 260);
   if (tick.unref) tick.unref();
@@ -1003,7 +1003,7 @@ async function sessionCheckOnce(host) {
   try {
     const res = await fetch(base + probePath, {
       headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-      redirect: 'manual', signal: AbortSignal.timeout(15000)
+      redirect: 'manual', signal: AbortSignal.timeout(12000)
     });
     let html = await res.text().catch(function () { return ''; });
     let v = judge(res, html);
@@ -1013,7 +1013,7 @@ async function sessionCheckOnce(host) {
         const t1 = Date.now();
         const res2 = await fetch(base + browsePath, {
           headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-          redirect: 'manual', signal: AbortSignal.timeout(15000)
+          redirect: 'manual', signal: AbortSignal.timeout(12000)
         });
         const html2 = await res2.text().catch(function () { return ''; });
         const v2 = judge(res2, html2);
@@ -1049,7 +1049,7 @@ function readSiteDef(host) {
   }
 }
 
-/* 干跑计划：只读本地配置和清单，不访问任何站点 */
+/* 演练计划：只读本地配置和清单，不访问任何站点 */
 function buildDryPlan(host) {
   const cfg = readConfig();
   const site = (readSiteCfg().sites || {})[host] || {};
@@ -1130,7 +1130,7 @@ function createTask(body) {
     return { err: { code: 'BAD_HOST', message: 'siteHost 不合法' } };
   }
   if (body.dryRun === false) {
-    return { err: { code: 'DRY_RUN_ONLY', message: '真抓取还没接入，目前只支持干跑（dryRun: true）' } };
+    return { err: { code: 'DRY_RUN_ONLY', message: '真抓取还没接入，目前只支持演练（dryRun: true）' } };
   }
   const busy = activeTaskFor(host);
   if (busy) return { err: { code: 'BUSY', message: '这个站点已经有任务在跑', extra: { id: busy.id, state: busy.state } } };
@@ -1143,7 +1143,7 @@ function createTask(body) {
   };
   TASKS.set(t.id, t);
   trimTasks();
-  logEvent('info', '任务', '新建干跑任务 · ' + type + ' · ' + host + ' · ' + t.id);
+  logEvent('info', '任务', '新建演练任务 · ' + type + ' · ' + host + ' · ' + t.id);
   runDryTask(t);
   return { task: t };
 }

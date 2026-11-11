@@ -911,7 +911,7 @@ async function main() {
     need(sk.ok && sk.data.status === 'skipped', '跳过没落到服务端：' + JSON.stringify(sk).slice(0, 140));
   });
 
-  await check('干跑任务能提交并跑完', async () => {
+  await check('演练任务能提交并跑完', async () => {
     const r = await fetchA(BASE + '/api/tasks', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ type: 'crawl', siteHost: 'task.example', dryRun: true })
@@ -919,18 +919,18 @@ async function main() {
     const j = await r.json();
     need(r.ok, '提交失败 ' + JSON.stringify(j));
     need(/^t_/.test(j.data.id), '任务 id 不合法：' + j.data.id);
-    need(j.data.dryRun === true, '任务没有被标成干跑');
+    need(j.data.dryRun === true, '任务没有被标成演练');
     need(Array.isArray(j.data.steps) && j.data.steps.length >= 3, 'steps 结构不对');
     const done = await waitTask(j.data.id, 6000);
     need(done.state === 'done', '任务最终状态是 ' + done.state);
     need(done.progress === 100, '完成时进度是 ' + done.progress);
     need(done.steps.every(s => s.state === 'done'), '还有没走完的步骤');
-    need(done.result && done.result.dryRun === true, '没有标注干跑结果');
+    need(done.result && done.result.dryRun === true, '没有标注演练结果');
     const list = await (await fetchA(BASE + '/api/tasks')).json();
     need(Array.isArray(list.data) && list.data.some(t => t.id === j.data.id), '任务列表里找不到刚提交的任务');
   });
 
-  await check('干跑计划随配置变化', async () => {
+  await check('演练计划随配置变化', async () => {
     const host = 'plan.example';
     /* 给这台临时实例塞一份站点定义，验证搜索 URL 是按定义拼出来的 */
     const defDir = path.join(DATA, 'site-defs');
@@ -986,7 +986,7 @@ async function main() {
     need(cancel.ok && cj.data.state === 'canceled', '取消没有生效：' + JSON.stringify(cj));
   });
 
-  await check('非干跑任务被拒绝', async () => {
+  await check('非演练任务被拒绝', async () => {
     const r = await fetchA(BASE + '/api/tasks', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ type: 'crawl', siteHost: 'real.example', dryRun: false })
