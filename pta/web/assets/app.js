@@ -2604,7 +2604,6 @@
           location.hash = "#sites";
           return;
         }
-        toast("「" + bname + "」在流程设置的卡片里改");
         return;
       }
       var row = e.target.closest(".rule-row");
