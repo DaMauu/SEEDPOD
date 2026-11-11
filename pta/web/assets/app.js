@@ -2925,10 +2925,10 @@
           { t: "单独设置本站", type: "switch", k: "override", on: s.override, hint: s.override ? "只影响这个站" : "关闭即跟随流程页" }
         ]) + "</div>" +
         '<div class="set-fields' + (s.override ? "" : " is-off") + '">' + setRowsHtml([
-          { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"] },
+          { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"], hint: "这个站的两次抓取间隔，最短 30 秒" },
           { t: "每天抓几次", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值", hint: "这是次数上限，不是条数；一轮多少条在流程页「抓一页」左边选" },
-          { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail },
-          { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" } }
+          { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail, hint: "详情页解析还没接，先把开关记下来" },
+          { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" }, hint: "先存配置，抓取暂不按优先级排序" }
         ]) + "</div>" +
         '<div class="set-fields">' + setRowsHtml([
           { t: "分类映射", type: "button", cls: "map-row", v: (catMapCount(s.name) ? "已配 " + catMapCount(s.name) + " 条" : "配置映射"), hint: "站点自己的分类对到库内分类，不受上面的开关影响" }

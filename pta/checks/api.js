@@ -655,6 +655,17 @@ async function main() {
       need(plan.ok && /torrents\.php/.test(plan.data.url), '抓取计划没生成：' + JSON.stringify(plan).slice(0, 160));
       need(plan.data.minGapMs === 30000 && plan.data.dailyMax === 20, '抓取节奏约束不对：' + JSON.stringify({ gap: plan.data.minGapMs, max: plan.data.dailyMax }));
 
+      /* 站点单独设置：间隔与每天次数按站点覆盖走，且被全局上限压住 */
+      await fetchA(BASE + '/api/site-config/' + chost, {
+        method: 'PUT', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ override: true, ovDaily: 2, ovInterval: '1 分钟' })
+      });
+      const plan2 = await (await fetchA(BASE + '/api/crawl/plan', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
+      })).json();
+      need(plan2.data.minGapMs === 60000 && plan2.data.dailyMax === 2, '站点覆盖没生效：' + JSON.stringify(plan2.data).slice(0, 160));
+      await fetchA(BASE + '/api/site-config/' + chost, { method: 'DELETE' });
+
       const run = await (await fetchA(BASE + '/api/crawl/run', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: chost })
       })).json();

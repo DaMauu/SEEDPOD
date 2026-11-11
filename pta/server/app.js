@@ -113,9 +113,10 @@ const SITE_FIELDS = [
   'enabled', 'url', 'arch', 'tfa', 'interval', 'pages', 'concurrency', 'dupeCheck', 'note',
   'cats', 'fullDiscOnly', 'minRes', 'minSize', 'exclude', 'queueMode', 'window',
   'mode', 'stopAtKnown', 'fullCycle', 'trigger', 'dailyAt', 'everyMin',
-  'timeWindow', 'winStart', 'winEnd', 'jitter', 'loginMethod', 'username'
+  'timeWindow', 'winStart', 'winEnd', 'jitter', 'loginMethod', 'username',
+  'override', 'ovInterval', 'ovDaily', 'ovDetail', 'priority'
 ];
-const SITE_RANGES = { interval: [1, 1440], pages: [1, 20], concurrency: [1, 8], everyMin: [5, 1440], jitter: [0, 120] };
+const SITE_RANGES = { interval: [1, 1440], pages: [1, 20], concurrency: [1, 8], everyMin: [5, 1440], jitter: [0, 120], ovDaily: [1, 20] };
 const SITE_SECRETS = ['password', 'cookie', 'totp'];
 
 function readSiteCfg() {
@@ -377,7 +378,18 @@ function crawlPlan(host, opts) {
   const url = adapters.buildSearchUrl(def, '', first);
   return { host: host, engine: def.engine, url: url, categories: cats.length, categoryId: first[0] || '',
     catIdx: idx,
-    requestDelay: (def.limits && def.limits.requestDelay) || 3, minGapMs: CRAWL_MIN_GAP_MS, dailyMax: CRAWL_DAILY_MAX };
+    requestDelay: (def.limits && def.limits.requestDelay) || 3,
+    minGapMs: siteLimits(host).minGapMs, dailyMax: siteLimits(host).dailyMax };
+}
+
+const OV_INTERVAL_MS = { '1 分钟': 60000, '5 分钟': 300000, '15 分钟': 900000, '1 小时': 3600000 };
+/* 站点配置里「单独设置本站」打开时，间隔和每天次数按站点走；都被全局硬上限压住 */
+function siteLimits(host) {
+  const cfg = (readSiteCfg().sites || {})[host] || {};
+  if (!cfg.override) return { minGapMs: CRAWL_MIN_GAP_MS, dailyMax: CRAWL_DAILY_MAX };
+  const gap = Math.max(CRAWL_MIN_GAP_MS, OV_INTERVAL_MS[String(cfg.ovInterval || '')] || 0);
+  const daily = Math.max(1, Math.min(CRAWL_DAILY_MAX, Number(cfg.ovDaily) || CRAWL_DAILY_MAX));
+  return { minGapMs: gap, dailyMax: daily };
 }
 
 const CRAWL_BUSY = new Set();          /* 同一个站同一时间只允许一次抓取 */
@@ -404,12 +416,12 @@ async function crawlOnceInner(host, opts) {
   const today = new Date().toISOString().slice(0, 10);
   const rec = state[host] || { lastAt: 0, day: today, count: 0, page: 0 };
   if (rec.day !== today) { rec.day = today; rec.count = 0; rec.page = 0; }
-  if (now - (rec.lastAt || 0) < CRAWL_MIN_GAP_MS) {
-    return { err: { code: 'TOO_SOON', message: '距上次抓取不到 30 秒，等一下再抓',
-      extra: { waitMs: CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0)) } } };
+  if (now - (rec.lastAt || 0) < plan.minGapMs) {
+    return { err: { code: 'TOO_SOON', message: '距上次抓取不到 ' + Math.round(plan.minGapMs / 1000) + ' 秒，等一下再抓',
+      extra: { waitMs: plan.minGapMs - (now - (rec.lastAt || 0)) } } };
   }
-  if (rec.count >= CRAWL_DAILY_MAX) {
-    return { err: { code: 'DAILY_LIMIT', message: '这个站今天已经抓够 ' + CRAWL_DAILY_MAX + ' 次了', extra: { count: rec.count } } };
+  if (rec.count >= plan.dailyMax) {
+    return { err: { code: 'DAILY_LIMIT', message: '这个站今天已经抓够 ' + plan.dailyMax + ' 次了', extra: { count: rec.count, max: plan.dailyMax } } };
   }
   /* 翻页续抓：默认接着上次的下一页；到底了（上次 0 行）就从头来 */
   const page = Math.max(1, Math.min(50, Number((opts && opts.page) || 0) || ((rec.page || 0) + 1)));
@@ -480,7 +492,7 @@ async function crawlOnceInner(host, opts) {
     host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
     categoryId: plan.categoryId, categories: plan.categories,
     added: out.added, updated: out.updated, skipped: out.skipped, nextPage: rows.length ? page + 1 : 1,
-    daily: { day: rec.day, count: rec.count, max: CRAWL_DAILY_MAX }, nextAllowedMs: CRAWL_MIN_GAP_MS
+    daily: { day: rec.day, count: rec.count, max: plan.dailyMax }, nextAllowedMs: plan.minGapMs
   };
 }
 
@@ -1800,12 +1812,13 @@ const server = http.createServer(async (req, res) => {
       if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
       const rec = readCrawlState()[host] || { lastAt: 0, day: '', count: 0, page: 0 };
       const now = Date.now();
+      const lim = siteLimits(host);
       return send(res, 200, { ok: true, data: {
         host: host, lastAt: rec.lastAt || 0, day: rec.day || '', count: rec.count || 0,
         page: rec.page || 0, lastRows: rec.lastRows || 0, catIdx: rec.catIdx || 0, catId: rec.catId || '',
-        dailyMax: CRAWL_DAILY_MAX, minGapMs: CRAWL_MIN_GAP_MS,
-        waitMs: Math.max(0, CRAWL_MIN_GAP_MS - (now - (rec.lastAt || 0))),
-        leftToday: Math.max(0, CRAWL_DAILY_MAX - (rec.day === new Date().toISOString().slice(0, 10) ? (rec.count || 0) : 0))
+        dailyMax: lim.dailyMax, minGapMs: lim.minGapMs,
+        waitMs: Math.max(0, lim.minGapMs - (now - (rec.lastAt || 0))),
+        leftToday: Math.max(0, lim.dailyMax - (rec.day === new Date().toISOString().slice(0, 10) ? (rec.count || 0) : 0))
       } });
     }
     if (p === '/api/crawl/run' && req.method === 'POST') {
