@@ -362,7 +362,8 @@
     "enabled", "url", "arch", "tfa", "interval", "pages", "concurrency", "dupeCheck", "note",
     "cats", "fullDiscOnly", "minRes", "minSize", "exclude", "queueMode", "window",
     "mode", "stopAtKnown", "fullCycle", "trigger", "dailyAt", "everyMin",
-    "timeWindow", "winStart", "winEnd", "jitter", "loginMethod", "username"
+    "timeWindow", "winStart", "winEnd", "jitter", "loginMethod", "username",
+    "override", "ovInterval", "ovDaily", "ovDetail", "priority"
   ];
   function serverMode() {
     return !!window.fetch && /^https?:$/.test(location.protocol);
@@ -1884,8 +1885,9 @@
   }
 
   /* ---------- 流程页：抓取 / 发布 ---------- */
-  function swChip(on) {
-    return '<button type="button" class="cat-chip sw-chip' + (on ? " on" : "") + '" data-switch="1">' + (on ? "开" : "关") + "</button>";
+  function swChip(on, key) {
+    return '<button type="button" class="cat-chip sw-chip' + (on ? " on" : "") + '" data-switch="' +
+      escapeHtml(key || "1") + '">' + (on ? "开" : "关") + "</button>";
   }
 
   function chipRow(items, active, single) {
@@ -1949,7 +1951,7 @@
     return rows.map(function (r) {
       return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
         '<div class="lbl"><span>' + r.t + "</span>" + (r.hint ? "<i>" + r.hint + "</i>" : "") + "</div>" +
-        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single) : (r.type === "switch" ? swChip(r.on) : setControl(r))) + "</div>" +
+        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single) : (r.type === "switch" ? swChip(r.on, r.k) : setControl(r))) + "</div>" +
       "</div>";
     }).join("");
   }
@@ -3089,7 +3091,7 @@
         var k = el.getAttribute("data-switch");
         if (k) s[k] = el.classList.contains("on");
       });
-      var chips = detail.querySelectorAll(".cat-chip.on");
+      var chips = detail.querySelectorAll(".cat-chip.on:not(.sw-chip)");
       if (chips.length) s.cats = [].map.call(chips, function (c) { return c.getAttribute("data-cat"); });
       return s;
     }
@@ -3367,6 +3369,7 @@
       var sw = e.target.closest("button[data-switch]");
       if (sw) {
         sw.classList.toggle("on");
+        if (sw.classList.contains("sw-chip")) sw.textContent = sw.classList.contains("on") ? "开" : "关";
         var sk = sw.getAttribute("data-switch");
         if (sk === "override" || sk === "timeWindow") {
           var cs = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
