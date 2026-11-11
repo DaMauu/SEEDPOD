@@ -3702,6 +3702,9 @@
       if (!b) return;
       state.page += Number(b.getAttribute("data-pg"));
       paint();
+      /* 翻页后回到列表顶部，别停在上一页的底部 */
+      var lb = $("#sites-list");
+      if (lb && lb.scrollIntoView) lb.scrollIntoView({ block: "start", behavior: "smooth" });
     });
 
     var bToggle = $("#bulk-toggle"), bOpen = $("#bulk-open"), bAll = null, bNone = null;
