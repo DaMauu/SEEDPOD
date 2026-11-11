@@ -229,6 +229,7 @@
     return {
       id: String(it.id), title: it.title || "", cn: it.cn || "", year: it.year || "", res: it.res || "",
       size: it.size || "", imdb: it.imdb || "—", site: it.site || "", targetSite: it.targetSite || "", status: it.status || "pending",
+      intro: it.intro || "", anonymous: !!it.anonymous, imageHost: it.imageHost || "站内",
       check: it.check || "未查", checkCls: it.checkCls || "gray", reason: it.reason || "",
       shots: (it.shots || []).map(function (s, i) {
         /* 服务端现在存 {name,url}；老数据可能是字符串 */
@@ -899,8 +900,10 @@
       var list = (MOCK.sitesList || []).slice().sort(function (a, b) {
         return String(a.title || a.name).localeCompare(String(b.title || b.name));
       });
-      if (cur && !list.some(function (x) { return x.name === cur; })) cur = "";
-      return '<option value="">未选择</option>' + list.map(function (x) {
+      var extra = (cur && !list.some(function (x) { return x.name === cur; }))
+        ? '<option value="' + escapeHtml(cur) + '" selected>' + escapeHtml(cur) + "</option>"
+        : "";
+      return '<option value="">未选择</option>' + extra + list.map(function (x) {
         return '<option value="' + escapeHtml(x.name) + '"' + (x.name === cur ? " selected" : "") + ">" +
           escapeHtml(x.title || x.name) + "</option>";
       }).join("");
@@ -921,6 +924,7 @@
     }
 
     function introText(it) {
+      if (it.intro) return it.intro;
       var p2 = subParts(it);
       var tail = [p2.audio, "中文字幕"].filter(Boolean).join("，");
       var year = it.year ? "（" + it.year + "）" : "";

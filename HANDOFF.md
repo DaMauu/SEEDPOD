@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-11 15:00（当前部署 18m / commit 待发）
+最后更新：2026-11-11 15:35（当前部署 18p / commit 待发）
 
 先读 [AGENTS.md](AGENTS.md)；成熟工具的定义格式与可借鉴点见 [docs/PRIOR-ART.md](docs/PRIOR-ART.md)：铁律、必须一起发的文件、发版命令、故障对照都在那里，聊天被压缩后以它为准。
 
