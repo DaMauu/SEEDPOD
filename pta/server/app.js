@@ -378,7 +378,10 @@ function crawlPlan(host, opts) {
   const url = adapters.buildSearchUrl(def, '', first);
   const catHit = (def.catMap || []).filter(function (x) { return String(x.id) === String(first[0] || ''); })[0];
   return { host: host, engine: def.engine, url: url, categories: cats.length, categoryId: first[0] || '',
-    categoryLabel: (catHit && catHit.label) || '',
+    categoryLabel: (function (lb) {
+      lb = String(lb || '');
+      return /[\u4e00-\u9fa5]/.test(lb) ? lb.replace(/\s+/g, '') : lb;
+    })(catHit && catHit.label),
     catIdx: idx,
     requestDelay: (def.limits && def.limits.requestDelay) || 3,
     minGapMs: siteLimits(host).minGapMs, dailyMax: siteLimits(host).dailyMax };
