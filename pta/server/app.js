@@ -269,9 +269,9 @@ function readFlow() {
     return null;
   }
 }
-function writeFlow(sets) {
+function writeFlow(sets, rx) {
   try {
-    fs.writeFileSync(FLOW_FILE, JSON.stringify({ updatedAt: new Date().toISOString(), sets }, null, 1), { mode: 0o600 });
+    fs.writeFileSync(FLOW_FILE, JSON.stringify({ updatedAt: new Date().toISOString(), sets, rx: rx || {} }, null, 1), { mode: 0o600 });
   } catch (e) {
     const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入流程规则失败：" + e.message);
     err.code = "STORAGE_FAILED";
@@ -507,11 +507,12 @@ async function crawlOnceInner(host, opts) {
    0 分辨率要求 / 1 体积范围 / 2 最大体积 / 3 地区版本 / 4 必须有简介 / 5 必须带中字 */
 function flowScreenRules() {
   const flow = readFlow();
+  const rx = (flow && flow.rx) || {};
   const rows = (flow && flow.sets && Array.isArray(flow.sets.dedupe) && Array.isArray(flow.sets.dedupe[0]))
     ? flow.sets.dedupe[0] : [];
   const val = function (i) { return rows[i] ? String(rows[i].v || '') : ''; };
   const on = function (i) { return !!(rows[i] && rows[i].on); };
-  const out = { res: [], minSizeGB: 0, maxSizeGB: 0, requireChinese: false };
+  const out = { res: [], minSizeGB: 0, maxSizeGB: 0, requireChinese: false, deny: rx.deny || '', allow: rx.allow || '' };
   const rv = val(0);
   if (/2160|4k/i.test(rv)) out.res = ['2160p'];
   else if (/1080/.test(rv)) out.res = ['1080p', '2160p'];
@@ -554,7 +555,13 @@ function screenCatalog(opts) {
     const res = String(it.res || '').toLowerCase() || (match.resOf(title) || '');
     const bytes = Number(it.sizeBytes) || match.sizeBytesOf({ size: it.size }) || 0;
     let reason = '';
-    if (resAllow.length && res && resAllow.indexOf(res) < 0) reason = '分辨率不符 ' + res;
+    const hitRx = function (src) {
+      if (!src) return false;
+      try { return new RegExp(src, 'i').test(title); } catch (e) { return title.toLowerCase().indexOf(String(src).toLowerCase()) >= 0; }
+    };
+    if (rules.deny && hitRx(rules.deny)) reason = '命中排除规则';
+    else if (rules.allow && !hitRx(rules.allow)) reason = '白名单未命中';
+    else if (resAllow.length && res && resAllow.indexOf(res) < 0) reason = '分辨率不符 ' + res;
     else if (minBytes && bytes && bytes < minBytes) reason = '体积偏小';
     else if (maxBytes && bytes && bytes > maxBytes) reason = '体积偏大';
     else if (needChinese && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(title)) reason = '没有中字';
@@ -1479,7 +1486,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/flow' && req.method === 'GET') {
       const flow = readFlow();
-      return send(res, 200, { ok: true, data: flow || { sets: null, updatedAt: null } });
+      return send(res, 200, { ok: true, data: flow || { sets: null, rx: {}, updatedAt: null } });
     }
     if (p === '/api/flow' && (req.method === 'PUT' || req.method === 'POST')) {
       const body = await readBody(req);
@@ -1489,10 +1496,16 @@ const server = http.createServer(async (req, res) => {
       if (r.err) return fail(res, 400, r.err.code, r.err.message);
       const prev = readFlow();
       const merged = Object.assign({}, (prev && prev.sets) || {}, r.sets);
-      try { writeFlow(merged); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
+      let rx = Object.assign({}, (prev && prev.rx) || {});
+      if (body.rx && typeof body.rx === 'object') {
+        if (body.rx.deny !== undefined) rx.deny = String(body.rx.deny || '').slice(0, 200);
+        if (body.rx.allow !== undefined) rx.allow = String(body.rx.allow || '').slice(0, 200);
+        if (body.rx.scope !== undefined) rx.scope = String(body.rx.scope || '').slice(0, 40);
+      }
+      try { writeFlow(merged, rx); } catch (e) { return fail(res, 500, e.code || 'INTERNAL', e.message); }
       const keys = Object.keys(r.sets || {});
       logEvent('info', '流程', '保存流程规则 · ' + (keys.join('/') || '空'));
-      return send(res, 200, { ok: true, data: { sets: merged, updatedAt: new Date().toISOString() } });
+      return send(res, 200, { ok: true, data: { sets: merged, rx: rx, updatedAt: new Date().toISOString() } });
     }
     if (p === '/api/site-search' && req.method === 'GET') {
       const sites = readSearchPresets();

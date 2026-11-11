@@ -1207,6 +1207,30 @@ async function main() {
     if (libId) await fetchA(BASE + '/api/library/' + libId, { method: 'DELETE' });
   });
 
+  await check('排除/白名单正则真的参与筛选', async () => {
+    await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: {}, rx: { deny: '枪版|CAM', allow: '' } })
+    });
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [
+        { site: 'rx.example', siteId: '1', title: 'Rx Fixture 2024 1080p BluRay 枪版', res: '1080p', sizeBytes: 21474836480 },
+        { site: 'rx.example', siteId: '2', title: 'Rx Fixture 2024 1080p BluRay 中字', res: '1080p', sizeBytes: 21474836480 }
+      ] })
+    });
+    const run = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'rx.example', limit: 10 })
+    })).json();
+    need(run.ok && /命中排除规则/.test(JSON.stringify(run.data.byReason)), '排除正则没生效：' + JSON.stringify(run.data).slice(0, 200));
+    need(run.data.selected === 1, '排除正则组合后应该只剩一条：' + JSON.stringify(run.data));
+    const flow = await (await fetchA(BASE + '/api/flow')).json();
+    need(flow.data.rx && flow.data.rx.deny === '枪版|CAM', '正则没存进流程配置：' + JSON.stringify(flow.data.rx));
+    await fetchA(BASE + '/api/flow', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sets: {}, rx: { deny: '', allow: '' } }) });
+    const cat = await (await fetchA(BASE + '/api/catalog?site=rx.example')).json();
+    for (const r of cat.data.items) await fetchA(BASE + '/api/catalog/' + r.id, { method: 'DELETE' });
+  });
+
   child.kill();
   await new Promise(r => setTimeout(r, 200));
   try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}

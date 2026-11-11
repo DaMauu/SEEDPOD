@@ -1981,7 +1981,13 @@
       });
     });
     try { localStorage.setItem(FLOW_KEY, JSON.stringify(data)); } catch (e) {}
-    flowRequest("PUT", { sets: data }).then(function (res) {
+    var rxBody = {};
+    var dEn = $("#rx-deny"), aEn = $("#rx-allow"), scEn = $("#rx-scope");
+    if (dEn) rxBody.deny = String(dEn.value || "").slice(0, 200);
+    if (aEn) rxBody.allow = String(aEn.value || "").slice(0, 200);
+    if (scEn) rxBody.scope = String(scEn.value || "").slice(0, 40);
+    try { localStorage.setItem("pta.rx", JSON.stringify(rxBody)); } catch (e) {}
+    flowRequest("PUT", { sets: data, rx: rxBody }).then(function (res) {
       if (res && res.j && res.j.ok) window.__ptaFlowSynced = true;
     });
   }
@@ -2015,10 +2021,18 @@
     }).catch(function () { return null; });
   }
 
+  function applyRx(rx) {
+    if (!rx) return;
+    var d = $("#rx-deny"), a = $("#rx-allow");
+    if (d && rx.deny !== undefined) d.value = rx.deny || "";
+    if (a && rx.allow !== undefined) a.value = rx.allow || "";
+  }
   function loadFlowState() {
-    var data = null;
+    var data = null, rx = null;
     try { data = JSON.parse(localStorage.getItem(FLOW_KEY) || "null"); } catch (e) {}
+    try { rx = JSON.parse(localStorage.getItem("pta.rx") || "null"); } catch (e) {}
     applyFlowData(data);
+    applyRx(rx);
   }
 
   function initCrawlSettings() {
@@ -2323,6 +2337,10 @@
         var data = res.j.data.sets;
         try { localStorage.setItem(FLOW_KEY, JSON.stringify(data)); } catch (e) {}
         applyFlowData(data);
+        if (res.j.data.rx) {
+          applyRx(res.j.data.rx);
+          try { localStorage.setItem("pta.rx", JSON.stringify(res.j.data.rx)); } catch (e) {}
+        }
         syncFlowDom();
         renderTpl();
         return true;
