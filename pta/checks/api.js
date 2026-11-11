@@ -71,6 +71,8 @@ async function main() {
     need(r.headers.get('x-content-type-options') === 'nosniff', '缺少 nosniff：' + r.headers.get('x-content-type-options'));
     need(r.headers.get('x-frame-options') === 'DENY', '缺少 X-Frame-Options：' + r.headers.get('x-frame-options'));
     need(r.headers.get('referrer-policy') === 'no-referrer', '缺少 Referrer-Policy：' + r.headers.get('referrer-policy'));
+    const csp = r.headers.get('content-security-policy') || '';
+    need(/default-src .self./.test(csp) && /frame-ancestors .none./.test(csp), '缺少 CSP：' + csp);
   });
   await check('health 结构', async () => {
     const j = await (await fetch(BASE + '/api/health')).json();
