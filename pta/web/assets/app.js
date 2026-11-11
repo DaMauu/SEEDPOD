@@ -1176,7 +1176,10 @@
               var chips = Object.keys(tgs).filter(function (k) { return tgs[k] && !seenTag[tgs[k]] && (seenTag[tgs[k]] = 1); }).map(function (k) {
                 return '<em class="chip np">' + escapeHtml(tgs[k]) + "</em>";
               }).join("");
-              tagBox.innerHTML = chips || '<span class="soft">没有识别出可用标签</span>';
+              var warnHtml = (d.warnings && d.warnings.length)
+                ? '<div class="qd-warn">缺项：' + d.warnings.map(escapeHtml).join('；') + "</div>"
+                : "";
+              tagBox.innerHTML = (chips || '<span class="soft">没有识别出可用标签</span>') + warnHtml;
             }
             var hint = d.categoryHint && d.categoryHint.mapped ? "，分类建议 " + d.categoryHint.purpose + "（" + d.categoryHint.ids.join(",") + "）" : "";
             toast((d.ready ? "草稿齐了" : "草稿有缺项：" + d.warnings.join(" · ")) + hint);
