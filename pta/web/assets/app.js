@@ -1486,9 +1486,9 @@
       bulk.disabled = true;
       fetch("/api/catalog/bulk", {
         method: "POST", credentials: "same-origin",
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ fromStatus: "skipped", status: "archived" })
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ fromStatus: "skipped", status: "archived", includeDup: true, host: state.site || "" })
       }).then(function (r) { return r.json(); }).then(function (j) {
-        toast(j && j.ok ? ("已归档 " + j.data.changed + " 条跳过项") : ((j && j.error && j.error.message) || "批量归档失败"));
+        toast(j && j.ok ? ("已归档 " + j.data.changed + " 条（跳过 + 标已有的）") : ((j && j.error && j.error.message) || "批量归档失败"));
         bulk.disabled = false;
         loadCatalog();
       }).catch(function () { bulk.disabled = false; toast("批量归档请求发不出去"); });

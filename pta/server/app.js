@@ -1857,9 +1857,17 @@ const server = http.createServer(async (req, res) => {
       const ids = Array.isArray(body && body.ids) ? body.ids.map(String) : [];
       const from = String((body && body.fromStatus) || '');
       const host = String((body && body.host) || '').trim().toLowerCase();
-      if (!ids.length && !from) return fail(res, 400, 'BAD_REQUEST', '要么给 ids，要么给 fromStatus');
-      const all = catalogStore.list({ status: from || '', limit: 5000 }).items;
-      const want = ids.length ? ids : all.filter(function (x) { return !host || x.site === host; }).map(function (x) { return x.id; });
+      const includeDup = !!(body && body.includeDup);
+      if (!ids.length && !from && !includeDup) return fail(res, 400, 'BAD_REQUEST', '要么给 ids，要么给 fromStatus，要么 includeDup');
+      /* 只给 includeDup 时基座为空，只收标了已有的 new 词条，别把其它状态的也收进来 */
+      const all = from ? catalogStore.list({ status: from, limit: 5000 }).items : [];
+      let want = ids.length ? ids : all.filter(function (x) { return !host || x.site === host; }).map(function (x) { return x.id; });
+      if (includeDup) {
+        const dup = catalogStore.list({ status: 'new', limit: 5000 }).items.filter(function (x) {
+          return x.marks && x.marks.existing && (!host || x.site === host);
+        }).map(function (x) { return x.id; });
+        want = Array.from(new Set(want.concat(dup)));
+      }
       let changed = 0;
       want.slice(0, 1000).forEach(function (id) {
         const r = catalogStore.setStatus(id, status);

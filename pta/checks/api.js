@@ -1195,6 +1195,14 @@ async function main() {
     need(rows.some(x => x.siteId === '11' && x.marks && x.marks.existing === true), '重复词条没标已有');
     need(rows.some(x => x.siteId === '11' && /Dup Fixture 2023/.test(String(x.dupNote || ''))), '没记下撞到哪条');
     need(rows.some(x => x.siteId === '12' && !(x.marks && x.marks.existing)), '不重复的词条被标了已有');
+    const bulk = await (await fetchA(BASE + '/api/catalog/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'archived', includeDup: true, host: 'dup.example' })
+    })).json();
+    need(bulk.ok && bulk.data.changed === 1, '批量归档已有项数量不对：' + JSON.stringify(bulk.data));
+    const cat2 = await (await fetchA(BASE + '/api/catalog?site=dup.example')).json();
+    need(cat2.data.items.some(x => x.siteId === '11' && x.status === 'archived'), '已有项没被归档');
+    need(cat2.data.items.some(x => x.siteId === '12' && x.status === 'new'), '不重复的项被误归档');
     for (const r of rows) await fetchA(BASE + '/api/catalog/' + r.id, { method: 'DELETE' });
     if (libId) await fetchA(BASE + '/api/library/' + libId, { method: 'DELETE' });
   });
