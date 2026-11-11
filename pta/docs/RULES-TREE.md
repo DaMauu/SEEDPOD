@@ -1,6 +1,6 @@
 # 流程页规则树（类目 / 手风琴 / 里面的每一条）
 
-由 `pta/web/assets/data.js` 直接生成，改数据后重跑 `.tmp-tree.js` 即可。行末的 [类型] 是控件形态，右边是选项或默认值。
+由 `pta/web/assets/data.js` 直接生成：`node pta/scripts/gen-rules-tree.js`。行末的 [类型] 是控件形态，后面是选项或默认值。
 
 ## 抓取（fetch，4 个手风琴）
 

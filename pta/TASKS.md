@@ -113,6 +113,10 @@ pta\checks\run.cmd
 | done | 站点抽屉显示 cookie 状态 | 启动时读一次 `/api/credentials`（只拿 hasCookie），概览里直接显示「已保存/未保存」 |
 | done | 文案统一 | 界面上不再出现单独「词条库」说法，统一叫数据清单 / 词条 |
 | done | 安全修复：真实站点清单不再公开 | 真实清单移到数据目录 `data/sites-data.local.js`，web 根不再引用；服务端对 `*.local.*` 一律 404；线上验证该路径 404、登录后 `/api/sites` 仍返回 305 站与标题 |
+| done | 仓库结构收进 pta/ | server/scripts/docs/checks/styles/package.json/Docker 文件全部移到 pta/ 下，仓库根只留 README/LICENSE/AGENTS/.github；服务端默认数据目录仍是仓库根 data，测试机 /opt/seedpod/data |
+| done | 第二步改名查重并有按钮 | 流程页「筛选」改「查重」；数据清单加「查重」按钮，调 /api/catalog/check 与队列/本地库/已送审已发布比对，重复的标「已有」不改状态；标记筛选加「已有（重复）」 |
+| done | 发布卡片精简 | 去掉「发布顺序」「只在时段内发布」「免审直接发的分类」；「自动发布总开关」移到「发布模式」前面；「发布前必须人工点通过」改成文字按钮单选 |
+| done | 规则树文档 | node pta/scripts/gen-rules-tree.js 从 data.js 生成 pta/docs/RULES-TREE.md，类目/手风琴/每一行带类型和选项 |
 | done | cookie 保存后看得见 | 保存后显示「服务端已保存 + 更新时间」，自检结果保留在页签上，重开抽屉仍在；输入框改成「不回显，要换就整段覆盖」的占位提示 |
 | done | 修两个点了没反应的按钮 | 登录页签「cookie 自检」和搜索预设「确认这个预设」之前没挂 data-act，被点击分发提前 return；现在都走 act 分派，smoke 补了断言 |
 | done | 演练改名 | 界面与日志把「干跑」统一改成「演练 / 本地演练（不发请求）」，内部仍用 dryRun |

@@ -3,6 +3,24 @@
 最后更新：2026-11-11 12:35（前端 17y 待发）
 本文件是「计划清单 + 进度明细」，每轮开发后更新；TASKS.md 记已完成项，HANDOFF.md 记交接状态。
 
+## 零、仓库结构（2026-11-11 起）
+
+仓库根只留 README、LICENSE、AGENTS.md、.github 等仓库级文件；pta 项目本身全部在 `pta/`：
+
+```
+pta/
+  server/    零依赖后端（app.js、adapters、secretbox、catalog、match）
+  web/       无构建前端（index.html、assets/app.js|app.css|data.js）
+  checks/    smoke / audit / adapter / api / security
+  scripts/   采样、生成 site-def、规则树等开发脚本
+  docs/      API、架构、部署、规则树等文档
+  fixtures/  离线解析测试夹具
+  data/      采样产物（非运行时数据）
+  package.json, Dockerfile, HANDOFF.md, TASKS.md, PLAN.md
+```
+
+运行时数据不在仓库里：本地默认 `<repo>/data`，测试机 `/opt/seedpod/data`。
+
 ## 一、当前进度总览
 
 | 层 | 内容 | 状态 |
@@ -11,7 +29,7 @@
 | 站点适配 | NexusPHP / UNIT3D / Gazelle / 兜底 四个解析器 + site-def + 搜索预设 | 可用，分类名与发布时间仍在补 |
 | 三步流水线 | 抓取 → 数据清单（筛选/标记/送审/归档）→ 待审核（发布记账） | 可用，真实发布未接（按铁律不做自动发帖） |
 | 前端 | 7 页 + 登录页，无构建，全部交互可点 | 可用 |
-| 检查 | smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 37 | 全绿 |
+| 检查 | smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 38 | 全绿 |
 | 部署 | systemd `seedpod`，公网经 Cloudflare 到 nginx 反代，数据 `/opt/seedpod/data` | 运行中 |
 
 ## 二、后端接口清单（已实现）
