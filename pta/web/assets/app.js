@@ -2288,42 +2288,66 @@
 
     /* 看地址：只调 /api/crawl/plan 读本地配置拼 URL，不发任何请求 */
     var planBtn = $("#crawl-plan-btn");
-    if (planBtn) planBtn.addEventListener("click", function () {
+    var planNav = { host: "", idx: 0, total: 0 };
+    function renderPlan(p) {
+      planNav.host = p.host || "";
+      planNav.idx = Number(p.catIdx) || 0;
+      planNav.total = Number(p.categories) || 0;
+      var label = p.categoryLabel ? p.categoryLabel + "（" + p.categoryId + "）" : (p.categoryId || "全部");
+      var box = $("#crawl-dry-box");
+      var meta = $("#crawl-dry-meta");
+      if (meta) meta.textContent = "下一抓 · 分类 " + label;
+      if (!box) return;
+      box.hidden = false;
+      box.innerHTML = '<div class="dl-dry-head"><b>下一抓 · ' + escapeHtml(p.host || "") + "</b>" +
+          '<span class="dl-dry-p">分类 ' + escapeHtml(label) + "</span></div>" +
+        '<div class="dl-dry-note" style="word-break:break-all">GET ' + escapeHtml(p.url || "") + "</div>" +
+        '<div class="dl-dry-note">间隔至少 ' + Math.round((p.minGapMs || 0) / 1000) + " 秒 · 单站每天最多 " +
+          (p.dailyMax || 0) + " 次 · 请求里带的等待 " + (p.requestDelay || 0) + " 秒</div>" +
+        '<div class="dl-dry-note dl-plan-nav">' +
+          '<button class="btn ghost slim" type="button" data-planstep="-1">上一类</button>' +
+          '<span>第 ' + (planNav.idx + 1) + " / " + (planNav.total || 1) + " 类</span>" +
+          '<button class="btn ghost slim" type="button" data-planstep="1">下一类</button>' +
+        "</div>" +
+        '<div class="dl-dry-note" id="crawl-plan-today">今日情况读取中…</div>' +
+        "<em>只是读出本地配置拼的地址，没有发请求</em>";
+      fetch("/api/crawl/status?host=" + encodeURIComponent(p.host || ""), { credentials: "same-origin" })
+        .then(function (r) { return r.json(); }).then(function (k) {
+          var el = $("#crawl-plan-today");
+          if (!el || !k || !k.ok) return;
+          var d = k.data || {};
+          var wait = Math.max(0, Math.round((d.waitMs || 0) / 1000));
+          el.textContent = "今天已抓 " + (d.count || 0) + "/" + (d.dailyMax || 0) + " 次" +
+            (wait ? " · 还要等 " + wait + " 秒" : " · 现在可以抓") +
+            " · 上次 " + (d.lastAt ? new Date(d.lastAt).toLocaleString("zh-CN", { hour12: false }).slice(5, 16) : "还没抓过");
+        }).catch(function () {});
+    }
+    function fetchPlan(host, idx) {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
-      var h0 = (crawlSiteSel && crawlSiteSel.value) || "";
-      if (!h0) { toast("先在右上角「选来源站」里挑一个站"); return; }
-      planBtn.disabled = true;
+      if (planBtn) planBtn.disabled = true;
       fetch("/api/crawl/plan", {
         method: "POST", credentials: "same-origin",
-        headers: { "content-type": "application/json" }, body: JSON.stringify({ host: h0 })
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ host: host, catIdx: idx })
       }).then(function (r) { return r.json(); }).then(function (j) {
-        planBtn.disabled = false;
+        if (planBtn) planBtn.disabled = false;
         if (!j || !j.ok) { toast((j && j.error && j.error.message) || "拿不到抓取计划"); return; }
-        var p = j.data || {};
-        var box = $("#crawl-dry-box");
-        var meta = $("#crawl-dry-meta");
-        if (meta) meta.textContent = "下一抓 · 分类 " + (p.categoryLabel ? p.categoryLabel + "（" + p.categoryId + "）" : (p.categoryId || "全部"));
-        if (box) {
-          box.hidden = false;
-          box.innerHTML = '<div class="dl-dry-head"><b>下一抓 · ' + escapeHtml(p.host || "") + "</b>" +
-              '<span class="dl-dry-p">分类 ' + escapeHtml(p.categoryLabel ? p.categoryLabel + "（" + p.categoryId + "）" : (p.categoryId || "全部")) + "</span></div>" +
-            '<div class="dl-dry-note" style="word-break:break-all">GET ' + escapeHtml(p.url || "") + "</div>" +
-            '<div class="dl-dry-note">间隔至少 ' + Math.round((p.minGapMs || 0) / 1000) + " 秒 · 单站每天最多 " +
-              (p.dailyMax || 0) + " 次 · 请求里带的等待 " + (p.requestDelay || 0) + " 秒</div>" +
-            '<div class="dl-dry-note" id="crawl-plan-today">今日情况读取中…</div>' +
-            "<em>只是读出本地配置拼的地址，没有发请求</em>";
-          fetch("/api/crawl/status?host=" + encodeURIComponent(p.host || ""), { credentials: "same-origin" })
-            .then(function (r) { return r.json(); }).then(function (k) {
-              var el = $("#crawl-plan-today");
-              if (!el || !k || !k.ok) return;
-              var d = k.data || {};
-              var wait = Math.max(0, Math.round((d.waitMs || 0) / 1000));
-              el.textContent = "今天已抓 " + (d.count || 0) + "/" + (d.dailyMax || 0) + " 次" +
-                (wait ? " · 还要等 " + wait + " 秒" : " · 现在可以抓") +
-                " · 上次 " + (d.lastAt ? new Date(d.lastAt).toLocaleString("zh-CN", { hour12: false }).slice(5, 16) : "还没抓过");
-            }).catch(function () {});
-        }
-      }).catch(function () { planBtn.disabled = false; toast("计划请求发不出去"); });
+        renderPlan(j.data || {});
+      }).catch(function () { if (planBtn) planBtn.disabled = false; toast("计划请求发不出去"); });
+    }
+    if (planBtn) planBtn.addEventListener("click", function () {
+      var h0 = (crawlSiteSel && crawlSiteSel.value) || "";
+      if (!h0) { toast("先在右上角「选来源站」里挑一个站"); return; }
+      fetchPlan(h0, 0);
+    });
+    var planBox = $("#crawl-dry-box");
+    if (planBox) planBox.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-planstep]");
+      if (!b || !planNav.host) return;
+      var total = planNav.total || 1;
+      var next = planNav.idx + Number(b.getAttribute("data-planstep"));
+      if (next < 0) next = total - 1;
+      if (next >= total) next = 0;
+      fetchPlan(planNav.host, next);
     });
 
     /* 真抓一页：只发一次 GET，服务端守住 30 秒间隔与每日上限；失败按错误码说人话 */
