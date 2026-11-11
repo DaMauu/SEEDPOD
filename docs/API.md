@@ -244,7 +244,8 @@ cookie 失效（302 到登录页，或页面出现「请登录」）时 `pass: f
 
 ## POST /api/queue
 
-新增条目，`title` 必填（不超过 300 字），可选 `cn/year/res/size/imdb/site/check/checkCls/note/shots`。
+新增条目，`title` 必填（不超过 300 字），可选 `cn/year/res/size/imdb/site/targetSite/check/checkCls/note/catalogId/shots`。
+`targetSite` 是要发到哪个站（转载的目标站），`site` 是来源站；`shots` 是 `[{name,url}]` 数组，最多 12 张，单张 400KB、整组 2.5MB 上限。
 新条目状态一律是 `pending`。抓取执行器没接之前，这就是造数据的入口。
 
 ## GET /api/library
@@ -278,15 +279,17 @@ cookie 失效（302 到登录页，或页面出现「请登录」）时 `pass: f
 
 ## POST /api/queue/:id/action
 
-请求 `{ "action": "approve" | "reject" | "publish", "reason": "..." }`，返回该条新数据。
+请求 `{ "action": "approve" | "reject" | "publish" | "skip", "reason": "..." }`，返回该条新数据。
+发布动作可以顺带把表单字段写回去：`anonymous`、`imageHost`、`cn`、`intro`、`targetSite`、`shots`。
 
-状态机：`pending → approved / rejected`，`approved → published / rejected`，`rejected`、`published` 是终态。
+状态机：`pending → approved / rejected / skipped`，`approved → published / rejected / skipped`，`rejected`、`published`、`skipped` 是终态。
 越级（例如 pending 直接 publish）返回 409 `BAD_STATE`，附带当前状态与允许的目标；驳回必须写 reason，空理由 400。
 
 发布前还有前置校验，缺任何一项都返回 409 `PUBLISH_BLOCKED`，`error.blockers` 列出缺什么：
 
 - 条目缺标题
-- 条目 `site` 是域名但该站还没有搜索预设（`engine` 为空）
+- 来源站像真域名但没单独选目标站（`targetSite` 为空）
+- 目标站是域名但该站还没有搜索预设（`engine` 为空）
 - 服务端还没有配置任何下载器
 
 ## DELETE /api/queue/:id
