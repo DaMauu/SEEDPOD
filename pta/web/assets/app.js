@@ -957,6 +957,7 @@
           '<section class="sd-card qd-desc-card"><h3>简介</h3>' +
             '<textarea class="input sd-note" id="qd-desc" rows="3">' +
               escapeHtml(introText(it)) + "</textarea>" +
+            '<div class="qd-tags" id="qd-tags"><span class="soft">点「生成草稿」后显示发布标签</span></div>' +
           "</section>" +
           '<section class="sd-card qd-shots"><h3>截图</h3>' +
             '<div class="shots">' + shotHtml(it, 1) + shotHtml(it, 2) + shotHtml(it, 3) +
@@ -1153,6 +1154,15 @@
             if ($("#qd-title")) $("#qd-title").value = d.title;
             if ($("#qd-sub")) $("#qd-sub").value = d.subtitle;
             if ($("#qd-desc")) $("#qd-desc").value = d.intro;
+            var tagBox = $("#qd-tags");
+            if (tagBox) {
+              var tgs = d.tags || {};
+              var seenTag = {};
+              var chips = Object.keys(tgs).filter(function (k) { return tgs[k] && !seenTag[tgs[k]] && (seenTag[tgs[k]] = 1); }).map(function (k) {
+                return '<em class="chip np">' + escapeHtml(tgs[k]) + "</em>";
+              }).join("");
+              tagBox.innerHTML = chips || '<span class="soft">没有识别出可用标签</span>';
+            }
             var hint = d.categoryHint && d.categoryHint.mapped ? "，分类建议 " + d.categoryHint.purpose + "（" + d.categoryHint.ids.join(",") + "）" : "";
             toast((d.ready ? "草稿齐了" : "草稿有缺项：" + d.warnings.join(" · ")) + hint);
           })
