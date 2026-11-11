@@ -2339,8 +2339,8 @@
       if (!h0) { toast("先在右上角「选来源站」里挑一个站"); return; }
       fetchPlan(h0, 0);
     });
-    var planBox = $("#crawl-dry-box");
-    if (planBox) planBox.addEventListener("click", function (e) {
+    /* 计划框会被重绘，用事件委托，别把监听挂在会被换掉的节点上 */
+    document.addEventListener("click", function (e) {
       var b = e.target.closest("[data-planstep]");
       if (!b || !planNav.host) return;
       var total = planNav.total || 1;
