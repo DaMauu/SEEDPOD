@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-11 14:15（当前部署 18i / commit c09a19c）
+最后更新：2026-11-11 15:00（当前部署 18m / commit 待发）
 
 先读 [AGENTS.md](AGENTS.md)；成熟工具的定义格式与可借鉴点见 [docs/PRIOR-ART.md](docs/PRIOR-ART.md)：铁律、必须一起发的文件、发版命令、故障对照都在那里，聊天被压缩后以它为准。
 
@@ -14,6 +14,8 @@
 - 排除/白名单正则存进流程配置（rx）并真正参与送审筛选，语法错退回纯文本
 - 站点抽屉：基本信息并进登录、备注去掉、站点地址进登录页签、架构缩成小选择放抓取按钮右边、启用开关挨着抓取按钮
 - 规则树文档 pta/docs/RULES-TREE.md（node pta/scripts/gen-rules-tree.js 生成）
+- 修抽屉文字开关丢值：芯片带原 data-switch 键，分类 chips 选择器排除开关芯片
+- 待审核「生成草稿」后在简介下面显示去重后的发布标签
 - 检查：smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 39 全绿
 
 ## 2026-11-11 上午的改动（按用户反馈）

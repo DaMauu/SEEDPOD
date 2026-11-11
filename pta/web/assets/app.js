@@ -1360,7 +1360,7 @@
           (it.seeders ? '<i class="cat-site">做种 ' + it.seeders + "</i>" : "") +
           (it.marks && it.marks.existing ? '<em class="chip warn" title="' + escapeHtml(it.dupNote || '跟队列/本地库/已发布里的某条重复') + '">已有</em>' : "") + toggles + "</span></span>" +
           '<span>' + (function () {
-            var t = it.type || catNameFromDef(it.site, it.cat);
+            var t = it.type || catNameFromDef(it.site, it.cat) || it.catName || "";
             return t ? '<em class="chip np">' + escapeHtml(t) + "</em>" : '<span class="soft">—</span>';
           })() + "</span>" +
           '<span class="soft">' + escapeHtml(it.res) + "</span>" +
