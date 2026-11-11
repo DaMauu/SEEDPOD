@@ -1367,10 +1367,12 @@
           '<span class="soft">' + escapeHtml(it.size) + "</span>" +
           '<span class="soft">' + escapeHtml(it.time) + "</span>" +
           '<span><span class="badge ' + (it.status === "published" ? "green" : it.status === "selected" ? "amber" : "") + '">' + escapeHtml(ST_TXT[it.status] || it.status) + "</span></span>" +
-          '<span class="dl-ops">' + (it.status === "archived" || it.status === "published" || it.status === "selected"
-            ? '<span class="soft">' + (it.status === "archived" ? "已归档" : it.status === "published" ? "已发布" : "已送审") + "</span>"
-            : '<button class="link-btn" data-send="1" data-cid="' + it.id + '">送审</button>' +
-              '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
+          '<span class="dl-ops">' + (it.status === "archived"
+            ? '<span class="soft">已归档</span><button class="link-btn" data-restore="1" data-cid="' + it.id + '">恢复</button>'
+            : it.status === "published" || it.status === "selected"
+              ? '<span class="soft">' + (it.status === "published" ? "已发布" : "已送审") + "</span>"
+              : '<button class="link-btn" data-send="1" data-cid="' + it.id + '">送审</button>' +
+                '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
         "</div>";
       }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "数据清单还是空的，去流程页点「抓一页」") + "</div>";
       var c = $("#dl-count");
@@ -1440,6 +1442,19 @@
         }).catch(function () { send.disabled = false; toast("送审请求发不出去"); });
         return;
       }
+      var back = e.target.closest("button[data-restore]");
+      if (back) {
+        var bid = back.getAttribute("data-cid");
+        back.disabled = true;
+        fetch("/api/catalog/" + encodeURIComponent(bid) + "/status", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "new" })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.ok) { toast("已恢复为待筛选"); loadCatalog(); }
+          else { back.disabled = false; toast((j && j.error && j.error.message) || "恢复失败"); }
+        }).catch(function () { back.disabled = false; toast("恢复请求发不出去"); });
+        return;
+      }
       var arc = e.target.closest("button[data-archive]");
       if (!arc) return;
       var cid = arc.getAttribute("data-cid");
@@ -1494,6 +1509,7 @@
     var bulk = $("#dl-archive");
     if (bulk) bulk.addEventListener("click", function () {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
+      ptaConfirm("归档跳过/已有", (state.site ? "只处理「" + state.site + "」的" : "") + "跳过项和查重标了「已有」的新词条会一起归档，之后可在行内点「恢复」退回待筛选。继续？", function () {
       bulk.disabled = true;
       fetch("/api/catalog/bulk", {
         method: "POST", credentials: "same-origin",
@@ -1503,6 +1519,7 @@
         bulk.disabled = false;
         loadCatalog();
       }).catch(function () { bulk.disabled = false; toast("批量归档请求发不出去"); });
+      });
     });
     var ex = $("#dl-export");
     if (ex) ex.addEventListener("click", function () {
