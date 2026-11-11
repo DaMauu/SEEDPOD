@@ -1119,8 +1119,8 @@ async function main() {
     const hit = rec.data.items.filter(x => x.queueId === qid)[0];
     need(hit && hit.anonymous === true && hit.imageHost === 'Imgbox', '发布记录字段没带上：' + JSON.stringify(hit || {}).slice(0, 160));
     need(hit.site === '主站' && hit.sourceSite === 'source.example', '发布记录的站点应该是目标站：' + JSON.stringify({ site: hit.site, from: hit.sourceSite }));
-    const qAfter = await (await fetchA(BASE + '/api/queue')).json();
-    const qHit = qAfter.data.items.filter(x => x.id === qid)[0];
+    const qAfter = await (await fetchA(BASE + '/api/queue/' + qid)).json();
+    const qHit = qAfter.data;
     need(qHit && Array.isArray(qHit.shots) && qHit.shots.length === 3 && qHit.shots[0].url, '截图没存进条目：' + JSON.stringify((qHit || {}).shots).slice(0, 160));
 
     const cat = await (await fetchA(BASE + '/api/catalog?status=published')).json();
@@ -1267,6 +1267,13 @@ async function main() {
     const j = await add.json();
     need(j.data && Array.isArray(j.data.shots) && j.data.shots.length === 3, '截图没存全：' + JSON.stringify((j.data || {}).shots && j.data.shots.length));
     const id = j.data && j.data.id;
+    if (id) {
+      const list = await (await fetchA(BASE + '/api/queue?limit=5')).json();
+      const row = list.data.items.filter(x => x.id === id)[0];
+      need(row && row.shots === undefined && row.shotsCount === 3, '列表把截图去掉了但数量不对：' + JSON.stringify(row && { has: !!row.shots, n: row.shotsCount }));
+      const one = await (await fetchA(BASE + '/api/queue/' + id)).json();
+      need(one.data && one.data.shots && one.data.shots.length === 3, '详情接口没给截图');
+    }
     if (id) await fetchA(BASE + '/api/queue/' + id, { method: 'DELETE' });
   });
 

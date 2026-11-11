@@ -231,6 +231,7 @@
       size: it.size || "", imdb: it.imdb || "—", site: it.site || "", targetSite: it.targetSite || "", status: it.status || "pending",
       intro: it.intro || "", anonymous: !!it.anonymous, imageHost: it.imageHost || "站内",
       check: it.check || "未查", checkCls: it.checkCls || "gray", reason: it.reason || "",
+      shotsCount: Number(it.shotsCount) || (it.shots || []).length,
       shots: (it.shots || []).map(function (s, i) {
         /* 服务端现在存 {name,url}；老数据可能是字符串 */
         if (s && typeof s === "object") return { name: s.name || ("shot" + (i + 1)), url: s.url || "" };
@@ -996,6 +997,16 @@
       if (cnt) cnt.textContent = "共 " + list.length + " 条";
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (detail) detail.innerHTML = detailHtml(it);
+      if (it && it.server && !it.shotsLoaded && it.shotsCount > 0) {
+        it.shotsLoaded = true;
+        window.__ptaQueue.req("/" + encodeURIComponent(it.id)).then(function (res) {
+          if (!res || !res.j || !res.j.ok || !res.j.data) return;
+          it.shots = (res.j.data.shots || []).map(function (s, i) {
+            return s && typeof s === "object" ? { name: s.name || ("shot" + (i + 1)), url: s.url || "" } : { name: "shot" + (i + 1), url: s };
+          }).filter(function (x) { return x.url; });
+          paint();
+        });
+      }
     }
 
     listBox.addEventListener("click", function (e) {

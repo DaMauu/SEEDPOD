@@ -1959,7 +1959,13 @@ const server = http.createServer(async (req, res) => {
       const status = u.searchParams.get('status') || '';
       const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);
       const q = readQueue();
-      const items = q.items.filter(function (x) { return !status || x.status === status; }).slice(0, limit);
+      const items = q.items.filter(function (x) { return !status || x.status === status; }).slice(0, limit)
+        .map(function (x) {
+          const c = Object.assign({}, x);
+          c.shotsCount = (x.shots || []).length;
+          delete c.shots;                 /* 截图 base64 很大，列表里只要数量，详情接口再取 */
+          return c;
+        });
       return send(res, 200, { ok: true, data: { items: items, counts: queueCounts(q.items) } });
     }
     if (p === '/api/queue' && req.method === 'POST') {
