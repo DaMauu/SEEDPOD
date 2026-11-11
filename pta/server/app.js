@@ -799,6 +799,7 @@ function queueAction(id, body) {
   if (body.imageHost !== undefined) item.imageHost = String(body.imageHost).slice(0, 40);
   if (body.cn !== undefined) item.cn = String(body.cn).slice(0, 120);
   if (body.intro !== undefined) item.intro = String(body.intro).slice(0, 4000);
+  if (body.targetSite !== undefined) item.targetSite = String(body.targetSite).slice(0, 120);
   if (action === 'reject' && !reason.trim()) return { err: { code: 'BAD_REQUEST', message: '驳回必须写理由' } };
   if (action === 'publish') {
     const blockers = [];
@@ -1976,11 +1977,12 @@ const server = http.createServer(async (req, res) => {
       if (action === 'reject' && !reason.trim()) return fail(res, 400, 'BAD_REQUEST', '批量驳回要写理由');
       const ids = Array.isArray(body && body.ids) ? body.ids.map(String) : [];
       const fromStatus = String((body && body.fromStatus) || 'pending');
+      const bulkTarget = String((body && body.targetSite) || '').slice(0, 120);
       const q = readQueue();
       const want = ids.length ? ids : q.items.filter(function (x) { return x.status === fromStatus; }).map(function (x) { return x.id; });
       let changed = 0, skipped = 0;
       want.slice(0, 200).forEach(function (id) {
-        const r = queueAction(id, { action: action, reason: reason });
+        const r = queueAction(id, { action: action, reason: reason, targetSite: action === 'publish' ? bulkTarget : '' });
         if (r.err) { skipped++; return; }
         changed++;
       });

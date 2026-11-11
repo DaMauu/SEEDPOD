@@ -1207,6 +1207,31 @@ async function main() {
     if (libId) await fetchA(BASE + '/api/library/' + libId, { method: 'DELETE' });
   });
 
+  await check('批量发布能带默认目标站', async () => {
+    const dl = await (await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '批量目标站用', url: 'http://127.0.0.1:9' })
+    })).json();
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Bulk Target Fixture 2023 1080p', site: 'bulk.example' })
+    })).json();
+    const qid = add.data.id;
+    await fetchA(BASE + '/api/queue/' + qid + '/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'approve' }) });
+    const noTarget = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish', ids: [qid] })
+    })).json();
+    need(noTarget.data.changed === 0 && noTarget.data.skipped === 1, '没选目标站却被发布：' + JSON.stringify(noTarget.data));
+    const withTarget = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish', ids: [qid], targetSite: '主站' })
+    })).json();
+    need(withTarget.data.changed === 1, '带目标站批量发布失败：' + JSON.stringify(withTarget.data));
+    const item = await (await fetchA(BASE + '/api/queue/' + qid)).json();
+    need(item.data.targetSite === '主站', '目标站没写进条目：' + JSON.stringify(item.data.targetSite));
+    if (dl.data) await fetchA(BASE + '/api/downloaders/' + dl.data.id, { method: 'DELETE' });
+    await fetchA(BASE + '/api/queue/' + qid, { method: 'DELETE' });
+  });
+
   await check('排除/白名单正则真的参与筛选', async () => {
     await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },

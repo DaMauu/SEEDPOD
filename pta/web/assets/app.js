@@ -1080,11 +1080,11 @@
         bulkPublish.disabled = true;
         fetch("/api/queue/bulk", {
           method: "POST", credentials: "same-origin",
-          headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "publish", fromStatus: "approved" })
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "publish", fromStatus: "approved", targetSite: (function () { try { return localStorage.getItem("pta.target") || ""; } catch (e) { return ""; } })() })
         }).then(function (r) { return r.json(); }).then(function (j) {
           bulkPublish.disabled = false;
           if (!j || !j.ok) { toast((j && j.error && j.error.message) || "批量发布失败"); return; }
-          toast("已发布 " + j.data.changed + " 条" + (j.data.skipped ? "，跳过 " + j.data.skipped + " 条" : ""));
+          toast("已发布 " + j.data.changed + " 条" + (j.data.skipped ? "，跳过 " + j.data.skipped + " 条（没选目标站或缺下载器）" : ""));
           if (loadServer) loadServer();
           if (window.__ptaLoadOverview) window.__ptaLoadOverview();
         }).catch(function () { bulkPublish.disabled = false; toast("批量发布请求发不出去"); });
