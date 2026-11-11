@@ -1855,7 +1855,7 @@
       toast("已下载 " + MOCK.logs.length + " 行");
     });
     var clr = $("#log-clear");
-    if (clr) clr.addEventListener("click", function () { host.innerHTML = ""; toast("已清屏（假数据）"); });
+    if (clr) clr.addEventListener("click", function () { host.innerHTML = ""; toast("已清屏：只清这一页，服务端日志还在"); });
     paint();
   }
 
@@ -2432,7 +2432,7 @@
           location.hash = "#sites";
           return;
         }
-        toast(bname + "（假数据）");
+        toast("「" + bname + "」在流程设置的卡片里改");
         return;
       }
       var row = e.target.closest(".rule-row");
@@ -3411,7 +3411,7 @@
         });
         return;
       }
-      if (act === "login") { toast("重新登录：" + (s.title || s.name) + "（假数据）"); return; }
+      /* 登录页签只走 cookie 保存 + 自检，没有单独的重登录动作 */
 
       if (act === "save") {
         collect(s);
