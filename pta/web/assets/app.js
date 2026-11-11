@@ -2241,11 +2241,11 @@
         var p = j.data || {};
         var box = $("#crawl-dry-box");
         var meta = $("#crawl-dry-meta");
-        if (meta) meta.textContent = "下一抓 · 分类 " + (p.categoryId || "全部");
+        if (meta) meta.textContent = "下一抓 · 分类 " + (p.categoryLabel ? p.categoryLabel + "（" + p.categoryId + "）" : (p.categoryId || "全部"));
         if (box) {
           box.hidden = false;
           box.innerHTML = '<div class="dl-dry-head"><b>下一抓 · ' + escapeHtml(p.host || "") + "</b>" +
-              '<span class="dl-dry-p">分类 ' + escapeHtml(p.categoryId || "全部") + "</span></div>" +
+              '<span class="dl-dry-p">分类 ' + escapeHtml(p.categoryLabel ? p.categoryLabel + "（" + p.categoryId + "）" : (p.categoryId || "全部")) + "</span></div>" +
             '<div class="dl-dry-note" style="word-break:break-all">GET ' + escapeHtml(p.url || "") + "</div>" +
             '<div class="dl-dry-note">间隔至少 ' + Math.round((p.minGapMs || 0) / 1000) + " 秒 · 单站每天最多 " +
               (p.dailyMax || 0) + " 次 · 请求里带的等待 " + (p.requestDelay || 0) + " 秒</div>" +

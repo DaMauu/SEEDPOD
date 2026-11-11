@@ -376,7 +376,9 @@ function crawlPlan(host, opts) {
   const idx = Math.max(0, Math.min(Math.max(0, cats.length - 1), Number((opts && opts.catIdx) || 0)));
   const first = cats.length ? [cats[idx]] : [];
   const url = adapters.buildSearchUrl(def, '', first);
+  const catHit = (def.catMap || []).filter(function (x) { return String(x.id) === String(first[0] || ''); })[0];
   return { host: host, engine: def.engine, url: url, categories: cats.length, categoryId: first[0] || '',
+    categoryLabel: (catHit && catHit.label) || '',
     catIdx: idx,
     requestDelay: (def.limits && def.limits.requestDelay) || 3,
     minGapMs: siteLimits(host).minGapMs, dailyMax: siteLimits(host).dailyMax };
