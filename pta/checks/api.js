@@ -1232,6 +1232,23 @@ async function main() {
     await fetchA(BASE + '/api/queue/' + qid, { method: 'DELETE' });
   });
 
+  await check('抓取计划能按 catIdx 切分类', async () => {
+    const host = 'plan.example';
+    const defFile = path.join(DATA, 'site-defs', host + '.json');
+    fs.mkdirSync(path.dirname(defFile), { recursive: true });
+    fs.writeFileSync(defFile, JSON.stringify({ host: host, base: 'http://127.0.0.1:9', engine: 'nexusphp',
+      searchPath: '/torrents.php', params: { search: 'search', cat: '{cats}' }, catMode: 'single', catSlot: 1,
+      catMap: [{ id: '401', label: '电影', purpose: 'movie' }, { id: '402', label: '剧集', purpose: 'tv' }] }));
+    await fetchA(BASE + '/api/credentials/' + host, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'x=1' }) });
+    const p0 = await (await fetchA(BASE + '/api/crawl/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: host, catIdx: 0 }) })).json();
+    const p1 = await (await fetchA(BASE + '/api/crawl/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: host, catIdx: 1 }) })).json();
+    need(p0.data.categoryId === '401' && p1.data.categoryId === '402', 'catIdx 没切分类：' + JSON.stringify([p0.data.categoryId, p1.data.categoryId]));
+    need(p1.data.categoryLabel === '剧集', '分类标签不对：' + p1.data.categoryLabel);
+    need(/cat=402/.test(p1.data.url), 'URL 没带对应分类：' + p1.data.url);
+    fs.unlinkSync(defFile);
+    await fetchA(BASE + '/api/credentials/' + host, { method: 'DELETE' });
+  });
+
   await check('排除/白名单正则真的参与筛选', async () => {
     await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },

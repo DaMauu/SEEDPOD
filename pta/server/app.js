@@ -1829,7 +1829,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const host = String((body && body.host) || '').trim().toLowerCase();
       if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
-      const plan = crawlPlan(host);
+      const plan = crawlPlan(host, { catIdx: body && body.catIdx });
       if (plan.err) return fail(res, plan.err.code === 'NO_COOKIE' ? 409 : 400, plan.err.code, plan.err.message);
       return send(res, 200, { ok: true, data: plan });
     }
