@@ -121,6 +121,8 @@ pta\checks\run.cmd
 | done | 未满 7 天只打标记 | 抓取时读行里的 data-added/data-time，7 天内的打 limitedDays（带剩余天数），数据清单可看可筛可手动开关 |
 | done | 站点抽屉可抓一页 | 抽屉里「抓一页」带二次确认，抓完自动刷新数据清单与总览 |
 | done | 流程页「看地址」 | 只读本地配置，显示下一抓的 URL、分类、间隔与每日上限，不发任何请求 |
+| done | 看地址可翻分类 | 计划框里加了上一类/下一类，直接调 /api/crawl/plan 的 catIdx 预览每个分类的 URL（仍不发真实请求） |
+| done | 修计划接口忽略 catIdx | /api/crawl/plan 原来没把 body.catIdx 传给 crawlPlan，翻分类看起来没反应；已透传，生产实测 401/402/404 出电影/电视剧/纪录片，api 补断言 |
 | done | 截图随发布落库 | 上传时压到 1600px / jpeg，服务端按 {name,url} 存，单组 2.5MB 上限；读取兼容老字符串格式 |
 | done | 待审核条目可选目标站 | 发布记录区分 `site`（目标站）与 `sourceSite`（来源站）；跳过动作改走服务端 `skipped` 状态 |
 | done | 发布记账 | 发布成功把词条标 published、写 `published.json` 记录（含匿名/图床），`/api/published` 可查；首页已发布列表读它 |
