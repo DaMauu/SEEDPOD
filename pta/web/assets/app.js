@@ -2308,6 +2308,7 @@
           '<button class="btn ghost slim" type="button" data-planstep="-1">上一类</button>' +
           '<span>第 ' + (planNav.idx + 1) + " / " + (planNav.total || 1) + " 类</span>" +
           '<button class="btn ghost slim" type="button" data-planstep="1">下一类</button>' +
+          '<button class="btn slim" type="button" data-plancrawl="1">抓这一类</button>' +
         "</div>" +
         '<div class="dl-dry-note" id="crawl-plan-today">今日情况读取中…</div>' +
         "<em>只是读出本地配置拼的地址，没有发请求；抓一页会按类目轮转，不是这里预览的这一类</em>";
@@ -2342,12 +2343,34 @@
     /* 计划框会被重绘，用事件委托，别把监听挂在会被换掉的节点上 */
     document.addEventListener("click", function (e) {
       var b = e.target.closest("[data-planstep]");
-      if (!b || !planNav.host) return;
-      var total = planNav.total || 1;
-      var next = planNav.idx + Number(b.getAttribute("data-planstep"));
-      if (next < 0) next = total - 1;
-      if (next >= total) next = 0;
-      fetchPlan(planNav.host, next);
+      if (b && planNav.host) {
+        var total = planNav.total || 1;
+        var next = planNav.idx + Number(b.getAttribute("data-planstep"));
+        if (next < 0) next = total - 1;
+        if (next >= total) next = 0;
+        fetchPlan(planNav.host, next);
+        return;
+      }
+      var c = e.target.closest("[data-plancrawl]");
+      if (!c || !planNav.host) return;
+      var lim = 100;
+      try { lim = Number(localStorage.getItem("pta.crawlLimit") || 100) || 100; } catch (err) {}
+      ptaConfirm("抓这一类", "会对 " + planNav.host + " 发一次 GET，抓第 " + (planNav.idx + 1) + " 类，最多 " + lim + " 条入库。确认？", function () {
+        c.disabled = true;
+        fetch("/api/crawl/run", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ host: planNav.host, catIdx: planNav.idx, limit: lim })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          c.disabled = false;
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "抓取失败"); return; }
+          var d = j.data || {};
+          toast("第 " + d.page + " 页 · " + (d.categoryId || "") + " · 抓回 " + d.rows + " 行 · 新增 " + d.added);
+          if (window.__ptaLoadSources) window.__ptaLoadSources();
+          if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+          fetchPlan(planNav.host, planNav.idx);
+        }).catch(function () { c.disabled = false; toast("抓取请求发不出去"); });
+      });
     });
 
     /* 真抓一页：只发一次 GET，服务端守住 30 秒间隔与每日上限；失败按错误码说人话 */

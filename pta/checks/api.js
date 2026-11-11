@@ -1249,6 +1249,36 @@ async function main() {
     await fetchA(BASE + '/api/credentials/' + host, { method: 'DELETE' });
   });
 
+  await check('抓一页能指定分类', async () => {
+    const http = require('http');
+    const page = fs.readFileSync(path.join(ROOT, 'fixtures', 'nexusphp-browse.html'), 'utf8');
+    let lastUrl = '';
+    const mock = http.createServer((rq, rs) => {
+      lastUrl = rq.url || '';
+      if ((rq.headers.cookie || '').indexOf('c_secure_uid=good') < 0) { rs.writeHead(302, { location: '/takelogin.php' }); rs.end(); return; }
+      rs.writeHead(200, { 'content-type': 'text/html' });
+      rs.end(page);
+    });
+    await new Promise(r => mock.listen(0, '127.0.0.1', r));
+    const port = mock.address().port;
+    const host = 'runcat.example';
+    const defFile = path.join(DATA, 'site-defs', host + '.json');
+    fs.mkdirSync(path.dirname(defFile), { recursive: true });
+    fs.writeFileSync(defFile, JSON.stringify({ host: host, base: 'http://127.0.0.1:' + port, engine: 'nexusphp',
+      searchPath: '/torrents.php', params: { search: 'search', cat: '{cats}' }, catMode: 'single', catSlot: 1,
+      catMap: [{ id: '401', label: '电影', purpose: 'movie' }, { id: '402', label: '剧集', purpose: 'tv' }] }));
+    await fetchA(BASE + '/api/credentials/' + host, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'c_secure_uid=good' }) });
+    const run = await (await fetchA(BASE + '/api/crawl/run', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: host, catIdx: 1, limit: 5 })
+    })).json();
+    need(run.ok && run.data.rows > 0, '指定分类抓取失败：' + JSON.stringify(run).slice(0, 180));
+    need(/cat=402/.test(lastUrl), '请求没带指定分类：' + lastUrl);
+    need(run.data.categoryId === '402', '返回的分类不对：' + run.data.categoryId);
+    await new Promise(r => mock.close(r));
+    fs.unlinkSync(defFile);
+    await fetchA(BASE + '/api/credentials/' + host, { method: 'DELETE' });
+  });
+
   await check('排除/白名单正则真的参与筛选', async () => {
     await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },

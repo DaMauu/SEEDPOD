@@ -1851,7 +1851,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const host = String((body && body.host) || '').trim().toLowerCase();
       if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
-      const out = await crawlOnce(host, { page: body && body.page, limit: body && body.limit });
+      const out = await crawlOnce(host, { page: body && body.page, limit: body && body.limit, catIdx: body && body.catIdx });
       if (out.err) {
         const code = out.err.code;
         const status = code === 'TOO_SOON' || code === 'DAILY_LIMIT' ? 429 : (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED' || code === 'BUSY') ? 409 : 400;
