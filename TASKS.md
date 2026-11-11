@@ -122,6 +122,7 @@ pta\checks\run.cmd
 | done | 站点抽屉可抓一页 | 抽屉里「抓一页」带二次确认，抓完自动刷新数据清单与总览 |
 | done | 流程页「看地址」 | 只读本地配置，显示下一抓的 URL、分类、间隔与每日上限，不发任何请求 |
 | done | 看地址可翻分类 | 计划框里加了上一类/下一类，直接调 /api/crawl/plan 的 catIdx 预览每个分类的 URL（仍不发真实请求） |
+| done | 批量设置落本地 | 客户端 store.set 的覆盖字段补 override/ovInterval/ovDaily/ovDetail/priority，批量设置和抽屉保存都会留在本地，没后端时也不丢 |
 | done | 抓取接口挡非法 host | plan/run/status 统一校验 host（长度与字符集），挡住 ../、斜杠与空值，避免站点定义路径被穿越；api 补 8 次非法请求断言 |
 | done | 使用说明 | pta/docs/USAGE.md 按现在的界面写了准备、抓取、查重、发布四段操作与常见问题 |
 | done | 翻页回列表顶部 | 站点页翻页后滚回站点列表顶部，不再停在上一页的底部；缓存 19d |

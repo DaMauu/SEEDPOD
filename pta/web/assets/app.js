@@ -117,6 +117,7 @@
           mode: s.mode, stopAtKnown: s.stopAtKnown, fullCycle: s.fullCycle,
           trigger: s.trigger, dailyAt: s.dailyAt, everyMin: s.everyMin,
           timeWindow: s.timeWindow, winStart: s.winStart, winEnd: s.winEnd, jitter: s.jitter,
+          override: s.override, ovInterval: s.ovInterval, ovDaily: s.ovDaily, ovDetail: s.ovDetail, priority: s.priority,
           loginMethod: "cookie"
         };
         save();
