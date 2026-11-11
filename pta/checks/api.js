@@ -1231,6 +1231,20 @@ async function main() {
     for (const r of cat.data.items) await fetchA(BASE + '/api/catalog/' + r.id, { method: 'DELETE' });
   });
 
+  await check('带大截图的请求不会把连接弄挂', async () => {
+    const big = 'data:image/jpeg;base64,' + 'A'.repeat(450000);
+    const add = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Big Shot Fixture 2024 2160p Blu-ray 中字', res: '2160p', size: '60.00 GB', site: 'src.example',
+        shots: [{ name: 'a.jpg', url: big }, { name: 'b.jpg', url: big }, { name: 'c.jpg', url: big }] })
+    });
+    need(add.ok, '带截图的请求失败了：' + add.status);
+    const j = await add.json();
+    need(j.data && Array.isArray(j.data.shots) && j.data.shots.length === 3, '截图没存全：' + JSON.stringify((j.data || {}).shots && j.data.shots.length));
+    const id = j.data && j.data.id;
+    if (id) await fetchA(BASE + '/api/queue/' + id, { method: 'DELETE' });
+  });
+
   child.kill();
   await new Promise(r => setTimeout(r, 200));
   try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}

@@ -1240,13 +1240,20 @@ function fail(res, code, errCode, message, extra) {
   send(res, code, { ok: false, error: Object.assign({ code: errCode, message: message }, extra || {}) });
 }
 
+const BODY_MAX = 8 * 1024 * 1024;   /* 截图 base64 会超过 1MB，别再把请求弄挂 */
 function readBody(req) {
   return new Promise(resolve => {
-    let buf = '';
-    req.on('data', c => { buf += c; if (buf.length > 1e6) req.destroy(); });
+    let buf = '', tooBig = false;
+    req.on('data', c => {
+      if (tooBig) return;
+      buf += c;
+      if (buf.length > BODY_MAX) { tooBig = true; buf = ''; }
+    });
     req.on('end', () => {
+      if (tooBig) return resolve(null);
       try { resolve(JSON.parse(buf || '{}')); } catch (e) { resolve(null); }
     });
+    req.on('error', () => resolve(null));
   });
 }
 
