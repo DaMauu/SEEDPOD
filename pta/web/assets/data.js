@@ -88,45 +88,80 @@
       "rows": [
         {
           "t": "非电影跳过",
-          "type": "switch",
-          "on": true,
-          "hint": "剧集、综艺、动漫、音乐都算非电影"
+          "type": "custom",
+          "hint": "剧集、综艺、动漫、音乐都算非电影",
+          "chips": [
+            "跳过",
+            "保留"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "非纯原盘跳过",
-          "type": "switch",
-          "on": true,
-          "hint": "标题里没有原盘特征、或者带 Remux/编码的，一律跳"
+          "type": "custom",
+          "hint": "标题里没有原盘特征、或者带 Remux/编码的，一律跳",
+          "chips": [
+            "跳过",
+            "保留"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "DIY 跳过",
-          "type": "switch",
-          "on": true,
-          "hint": "只打标记，是否跳过交给第二步筛选"
+          "type": "custom",
+          "hint": "只打标记，是否跳过交给第二步筛选",
+          "chips": [
+            "跳过",
+            "只打标"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "禁转跳过",
-          "type": "switch",
-          "on": true,
-          "hint": "只打标记，是否跳过交给第二步筛选"
+          "type": "custom",
+          "hint": "只打标记，是否跳过交给第二步筛选",
+          "chips": [
+            "跳过",
+            "只打标"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "独占跳过",
-          "type": "switch",
-          "on": true,
-          "hint": "只打标记，是否跳过交给第二步筛选"
+          "type": "custom",
+          "hint": "只打标记，是否跳过交给第二步筛选",
+          "chips": [
+            "跳过",
+            "只打标"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "限转未满 7 天跳过",
-          "type": "switch",
-          "on": true,
-          "hint": "满 7 天的限转放行，并在行上标出来"
+          "type": "custom",
+          "hint": "满 7 天的限转放行，并在行上标出来",
+          "chips": [
+            "跳过",
+            "放行"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "仅 DIY 时标可发",
-          "type": "switch",
-          "on": true,
-          "hint": "B 站只有 DIY 版时，可以发纯原盘，标「复核」"
+          "type": "custom",
+          "hint": "B 站只有 DIY 版时，可以发纯原盘，标「复核」",
+          "chips": [
+            "标可发",
+            "不标"
+          ],
+          "sel": [],
+          "single": true
         },
         {
           "t": "排除关键词",

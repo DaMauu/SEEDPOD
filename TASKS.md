@@ -122,6 +122,7 @@ pta\checks\run.cmd
 | done | 站点抽屉可抓一页 | 抽屉里「抓一页」带二次确认，抓完自动刷新数据清单与总览 |
 | done | 流程页「看地址」 | 只读本地配置，显示下一抓的 URL、分类、间隔与每日上限，不发任何请求 |
 | done | 看地址可翻分类 | 计划框里加了上一类/下一类，直接调 /api/crawl/plan 的 catIdx 预览每个分类的 URL（仍不发真实请求） |
+| done | 抓取标记改文字按钮 | 抓取标记里 7 个开关行改成 custom 单选文字按钮（跳过/保留、跳过/只打标、跳过/放行、标可发/不标），规则树同步重生成；缓存 19j |
 | done | 加 CSP | 响应加 Content-Security-Policy（default-src self、img data/blob、frame-ancestors none 等），api 断言覆盖 |
 | done | 基础安全响应头 | 所有响应加 nosniff、X-Frame-Options: DENY、Referrer-Policy: no-referrer；api 检查覆盖 |
 | done | 批量设置落本地 | 客户端 store.set 的覆盖字段补 override/ovInterval/ovDaily/ovDetail/priority，批量设置和抽屉保存都会留在本地，没后端时也不丢 |
