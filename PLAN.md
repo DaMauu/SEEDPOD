@@ -1,0 +1,93 @@
+# PLAN · SEEDPOD 开发计划与进度明细
+
+最后更新：2026-11-11 12:35（前端 17y 待发）
+本文件是「计划清单 + 进度明细」，每轮开发后更新；TASKS.md 记已完成项，HANDOFF.md 记交接状态。
+
+## 一、当前进度总览
+
+| 层 | 内容 | 状态 |
+| --- | --- | --- |
+| 后端 | 零依赖 Node 单文件服务（会话、配置、站点、凭据、抓取、词条、队列、发布、日志、SSE、静态托管） | 可用 |
+| 站点适配 | NexusPHP / UNIT3D / Gazelle / 兜底 四个解析器 + site-def + 搜索预设 | 可用，分类名与发布时间仍在补 |
+| 三步流水线 | 抓取 → 数据清单（筛选/标记/送审/归档）→ 待审核（发布记账） | 可用，真实发布未接（按铁律不做自动发帖） |
+| 前端 | 7 页 + 登录页，无构建，全部交互可点 | 可用 |
+| 检查 | smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 37 | 全绿 |
+| 部署 | systemd `seedpod`，公网经 Cloudflare 到 nginx 反代，数据 `/opt/seedpod/data` | 运行中 |
+
+## 二、后端接口清单（已实现）
+
+- 会话与账号：`POST /api/login`、`POST /api/logout`、`GET /api/session`（cookie 与 Basic 都认）
+- 健康与统计：`GET /api/health`、`GET /api/stats/overview`
+- 配置：`GET/PATCH /api/config`、`GET /api/config/user`、`GET/PUT /api/flow`
+- 站点：`GET /api/sites`（清单来自数据目录 `sites-data.local.js`）、`GET/PUT/DELETE /api/site-config/:host`
+- 站点定义与预设：`GET /api/site-defs`、`GET /api/site-def/:host`、`GET/PUT/DELETE /api/sites/:host/search`、`GET /api/site-search`
+- 凭据：`GET /api/credentials`、`PUT/DELETE /api/credentials/:host`、`POST /api/credentials/import`、`POST /api/sites/:host/session-test`
+- 抓取：`POST /api/crawl/plan`（只拼 URL）、`POST /api/crawl/run`（单次 GET，30 秒间隔/单站每日 20 次/并发锁）、`GET /api/crawl/status`
+- 词条：`GET/POST /api/catalog`、`POST /api/catalog/:id/status`、`POST /api/catalog/:id/marks`、`POST /api/catalog/bulk`、`POST /api/catalog/screen`（支持 `host` 与 `ids`）、`DELETE /api/catalog/:id`
+- 待审核：`GET/POST /api/queue`、`GET/DELETE /api/queue/:id`、`POST /api/queue/:id/action`（approve/reject/publish/skip）、`POST /api/queue/bulk`、`POST /api/queue/:id/check`
+- 草稿与记账：`GET /api/publish/preview`、`GET /api/published`
+- 本地库与下载器：`/api/library`、`/api/downloaders`（探测只连用户自己填的地址）
+- 任务与日志：`POST/GET /api/tasks`（只接演练 dryRun）、`GET /api/logs`、`GET /api/logs/stream`
+
+## 三、三步流水线明细
+
+### 第一步 抓取
+- [x] 按搜索预设类目轮转、页码续抓，进度记在 `data/crawl-state.json`
+- [x] 单次 GET，同站间隔 30 秒、单站每日 20 次、同站并发锁；没 cookie 直接 NO_COOKIE
+- [x] 流程页可选来源站，没选不发请求；「看地址」只读本地配置显示下一抓 URL
+- [x] 站点抽屉也能直接抓一页（带二次确认，条数用流程页选的 5/10/20/100）
+- [x] 抓取标记：禁转/独占/DIY/限转 按标题关键词；未满 7 天按行里的发布时间（data-added/data-time/time datetime），只打标不过滤
+- [ ] 分类名补齐：老词条只有分类 id，重抓一次会带 catName
+- [ ] 详情页解析（种子大小、原盘判定）未接，目前只用列表页字段
+
+### 第二步 筛选
+- [x] 数据清单就是词条列表：站点/类型/状态/标记四个筛选、分页每页 100（一次读 2000）
+- [x] 行内可手动开关五个标记、单条送审、单条归档；标题可点开原站详情页
+- [x] 工具栏「按条件送审」按当前站点筛，二次确认后调 `/api/catalog/screen`
+- [x] 筛选规则取自流程页「筛选」卡片（分辨率/体积/中字/已有判重）
+- [x] 批量「归档已跳过」；送审后同步刷新待审核计数与总览
+- [ ] 跨站同一部片的「已有」提示目前只在筛选时判定，列表里没有显式「撞了哪条」
+
+### 第三步 发布
+- [x] 待审核页：目标站单独选（默认流程页目标站）、标题/副标题/简介/图床/匿名
+- [x] 截图上传：浏览器先压到 1600px jpeg，服务端按 `{name,url}` 存，单组 2.5MB 上限
+- [x] 草稿预览：`/api/publish/preview` 拼标签与分类建议；通过并发布、全部批准、全部发布
+- [x] 发布记账：队列置 published、词条标 published、`published.json` 记目标站与来源站
+- [ ] 真正的站点发帖不做（按铁律不自动操作真实站点），只把草稿与记账做完整
+
+## 四、前端页面状态
+
+| 页面 | 状态 | 备注 |
+| --- | --- | --- |
+| 总览 | 真数据 | 今日抓取/登录正常/下载器/磁盘余量来自后端，30 秒自刷 |
+| 站点 | 真数据 | 305 站、架构/预设/登录/上次抓取；抽屉含概览/基本信息/登录/搜索预设/站点覆盖 |
+| 流程 | 真数据 | 三步卡片 + 本地演练 + 来源站 + 看地址 + 目标站 |
+| 待审核 | 真数据 | 列表/详情/草稿/批准/驳回/跳过/批量 |
+| 数据清单 | 真数据 | 筛选/标记/送审/归档/分页/导出 |
+| 日志 | 真数据 | SSE 实时，level/src 过滤，下载/清屏 |
+| 设置 | 真数据 | 抓取节奏写服务端；面板账号只读（环境变量）；退出登录 |
+
+## 五、安全与硬约束执行情况
+
+- [x] 真实站点清单从 web 根移到数据目录，服务端对 `*.local.*` 与点开头路径一律 404；公网已验证 404
+- [x] 凭据 AES-256-GCM 加密，接口只回 `hasCookie`/`updatedAt`，不回明文
+- [x] 面板账号密码只在测试机 systemd 环境变量，不进代码与日志
+- [x] 真实 PT 站点只做一次性采样，不做并发/压测/UA 轮换，不自行找 cookie
+- [ ] 采样补齐（登录墙站点要用户自己在浏览器登录后给 cookie）
+
+## 六、下一批任务（按顺序做）
+
+1. [done] cookie 保存反馈：保存后显示「已保存 + 更新时间 + 自检结果」，重开页签仍能看到
+2. [done] 站点覆盖里「每天抓几次」与「一轮多少条」分开：流程页 5/10/20/100 并记住，抽屉抓一页也用它
+3. [done] 标记判断依据在界面可见（剩余天数 + title 说明）
+4. 数据清单里显示「已有」判定来源（撞了哪一条）
+5. 分类名补齐：抓取后把 catName 写进词条，旧数据重抓刷新
+6. 待审核列表分页与搜索体验（条数多时）
+7. 详情页解析（大小/原盘判定）评估，仍守一次性配额
+
+## 七、每轮固定动作
+
+1. 只改最小范围，改完 `pta\checks` 全绿再提交
+2. commit/push 后部署测试机（代码 tar 到 `/opt/seedpod`，数据放 `/opt/seedpod/data`，然后 `systemctl restart seedpod`）
+3. 更新本文件、TASKS.md、HANDOFF.md
+4. 公网验证：页面 200、`*.local.*` 404、接口未登录 401

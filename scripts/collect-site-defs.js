@@ -1,0 +1,234 @@
+/* 把离线分析结果整理成「站点定义」（pta/data/site-defs/<host>.json）与「搜索预设」（pta/data/site-search.local.json）。
+   输入只有 pta/data/analysis.json（由 scripts/analyze-samples.js 生成），不联网。
+   已有人工确认的搜索预设不会被覆盖：只有 source 是 auto 的条目才会重写。
+   用法：node scripts/collect-site-defs.js [--dry] */
+const fs = require('fs');
+const path = require('path');
+const ROOT = path.resolve(__dirname, '..');
+const DATA = path.join(ROOT, 'pta', 'data');
+const OUT = path.join(DATA, 'site-defs');
+const PRESETS = path.join(DATA, 'site-search.local.json');
+const dry = process.argv.indexOf('--dry') > 0;
+
+function readJson(p, fb) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return fb; } }
+
+/* 分类标签 → 用途。中英文都认，顺序有意义：先匹配具体的，再落到 other */
+const RULES = [
+  /* 先判专门的类型，再判影视大类；顺序错了就全掉进 other */
+  ['anime', /(动漫|动画|番剧|剧场版|anime|animation|cartoon)/i],
+  ['doc', /(纪录|记录片|纪录片|documentar|docs?\b|docu\b)/i],
+  ['sport', /(体育|體\s*育|赛事|sport)/i],
+  ['adult', /(\bxxx\b|adult|18\+|amateur|softcore|hardcore|hentai|成人|色情)/i],
+  ['music', /(音乐|音樂|无损|演唱会|演唱|ost\b|classical|muzica|mv\b|music|concert|audio|flac|mp3|lossless)/i],
+  ['book', /(电子书|电子书|书籍|图书|杂志|资料|有声书|学习|教程|漫画|book|ebook|audiobook|comic|magazine|tutorial|manga)/i],
+  ['game', /(游戏|遊戲|jocuri|game|playstation|nintendo|xbox|\bps[2-5]\b|\bpc\s*games?\b)/i],
+  ['software', /(软件|軟體|apps?\b|programs?\b|programe|mobile|android|linux|windows|macos|imagini)/i],
+  ['tv', /(剧集|劇集|电视剧|连续剧|短剧|美剧|英剧|日剧|韩剧|国产剧|综艺|episode|series|\btv\b|shows?\b|sitcom|anime.?series)/i],
+  ['movie', /(电影|電影|影视|影視|影片|filme?|movie|blu-?ray|uhd|4k|1080p|720p|remux|web-?dl|dvd-?r|dvdrip|bdrip|rips?\b|untouched|encoded|sdr|hdr)/i],
+  ['other', /(其他|其它|misc|others?\b|all\b|categories|pack|unknown)/i]
+];
+/* 人工兜底：pta/data/cat-overrides.local.json 里可以按站点把某个分类名钉到指定用途，
+   形如 {"52pt.site": {"电 影": "movie", "演唱会": "music"}}，键支持分类名或分类 id。 */
+const OVERRIDES = (function () {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(DATA, 'cat-overrides.local.json'), 'utf8')) || {};
+  } catch (e) {
+    return {};
+  }
+})();
+
+function purposeOf(label, host, id) {
+  const s = String(label || '').replace(/[\s\u3000]+/g, '');     /* 「电 影」这种拆字写法先拼回去 */
+  const o = host && OVERRIDES[host];
+  if (o) {
+    const hit = o[String(label || '').trim()] || o[String(id || '').trim()] || (s ? o[s] : '');
+    if (hit) return String(hit);
+  }
+  for (const r of RULES) if (r[1].test(s)) return r[0];
+  return 'other';
+}
+
+const DEFAULTS = {
+  nexusphp: { searchPath: '/torrents.php', params: { search: '{q}', cat: '{cats}' }, catMode: 'single' },
+  unit3d: { searchPath: '/torrents', params: { name: '{q}', 'categories[0]': '{cats}' }, catMode: 'multi' },
+  gazelle: { searchPath: '/torrents.php', params: { searchstr: '{q}', 'filter_cat[1]': '{cats}' }, catMode: 'multi' }
+};
+
+const analysis = readJson(path.join(DATA, 'analysis.json'), null);
+if (!analysis) { console.log('缺少 pta/data/analysis.json，先跑 node scripts/analyze-samples.js'); process.exit(1); }
+
+/* 清单里的站：没采样到的也要有一份「按架构推断」的定义，保证 300 多个站都有配置可用 */
+const ARCH_ENGINE = { NP: 'nexusphp', UNIT3D: 'unit3d', GZ: 'gazelle', OTHER: 'custom' };
+const listed = [];
+const archMap = {};
+try {
+  fs.readFileSync(path.join(DATA, 'site-arch.local.csv'), 'utf8').split(/\r?\n/).slice(1).forEach(function (l) {
+    const c = l.split(',');
+    if (c[0]) archMap[c[0].trim()] = (c[2] || '').trim();
+  });
+} catch (e) {}
+const seenHost = {};
+(readJson(path.join(DATA, 'sites-bookmark.local.json'), []) || []).forEach(function (it) {
+  if (!/内站|外站/.test(it.path || '')) return;
+  const host = String(it.url || '').replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+  if (!host || seenHost[host]) return;
+  seenHost[host] = 1;
+  listed.push({ host: host, arch: archMap[host] || '?' });
+});
+
+const presets = readJson(PRESETS, { sites: {} });
+presets.sites = presets.sites || {};
+
+let defs = 0, presetsAdded = 0, noCats = 0, unknown = 0;
+const now = new Date().toISOString();
+
+fs.mkdirSync(OUT, { recursive: true });
+
+Object.keys(analysis).sort().forEach(function (host) {
+  const a = analysis[host];
+  if (!a.engine) { unknown++; return; }
+  const dflt = DEFAULTS[a.engine] || DEFAULTS.nexusphp;
+
+  /* 分类：id → 用途 */
+  const cats = {};
+  const catMap = [];
+  const ids = {};
+  (a.catList || []).forEach(function (c) {
+    if (ids[c.id]) return;
+    ids[c.id] = 1;
+    const p = purposeOf(c.label, host, c.id);
+    (cats[p] = cats[p] || []).push(String(c.id));
+    catMap.push({ id: String(c.id), label: c.label, purpose: p });
+  });
+  if (!catMap.length) noCats++;
+
+  const params = Object.assign({}, dflt.params, a.params || {});
+  /* 分类参数必须有：采样时没认出来就按引擎默认补一个，否则搜索不会按分类过滤 */
+  const hasCatParam = Object.keys(params).some(function (k) { return /cat/i.test(k); });
+  if (!hasCatParam && Object.keys(catMap).length !== 0) {
+    const key = a.engine === 'unit3d' ? 'categories[0]' : a.engine === 'gazelle' ? 'filter_cat[1]' : 'cat';
+    params[key] = '{cats}';
+  }
+  const def = {
+    host: host,
+    base: 'https://' + host,
+    engine: a.engine,
+    login: Object.assign(
+      a.engine === 'unit3d'
+        ? { method: 'POST', path: '/login', fields: { username: 'username', password: 'password' } }
+        : a.engine === 'gazelle'
+          ? { method: 'POST', path: '/login.php', fields: { username: 'username', password: 'password' } }
+          : { method: 'POST', path: '/takelogin.php', fields: { username: 'username', password: 'password' } },
+      /* 会话自检用：借 Cardigann 的 test 写法（请求哪个页面、页面里出现哪个链接算已登录） */
+      {
+        test: a.engine === 'unit3d'
+          ? { path: '/', selector: 'a[href*="/logout"]' }
+          : { path: '/index.php', selector: 'a[href*="logout.php"]' }
+      }
+    ),
+    limits: { requestDelay: 3, retryDelay: 30, maxErrors: 3, maxRetryCount: 5 },
+    /* 下载链接模板，借 Vertex 的 downloadLink 写法（{ID} 占位） */
+    downloadLink: a.engine === 'unit3d' ? '/torrents/{ID}/download'
+      : a.engine === 'gazelle' ? 'torrents.php?action=download&id={ID}'
+        : a.engine === 'nexusphp' ? 'download.php?id={ID}'
+          : '',
+    refreshCron: '0 */4 * * *',
+    searchPath: (a.searchPath || dflt.searchPath),
+    params: params,
+    catMode: a.catMode || dflt.catMode,
+    catSlot: a.catParam && /\[(\d+)\]/.test(a.catParam) ? Number(/\[(\d+)\]/.exec(a.catParam)[1]) : 1,
+    cats: cats,
+    catMap: catMap,
+    rate: { minGapMs: 1200, jitterMs: 900, maxPerRun: 20 },
+    source: { kind: a.engineSource === 'shell' ? 'shell' : 'sample', analyzedAt: a.analyzedAt || now, rows: a.rows, sizeRows: a.rowsWithSize, cats: catMap.length },
+    list: a.list || { anchor: '', sizeStrategy: 'none', rows: 0, sizeRows: 0, dlRows: 0 },
+    /* 下面两块按 Cardigann 的叫法留兼容位，方便以后直接吃别人写的定义 */
+    caps: { categorymappings: catMap.map(function (c) { return { id: c.id, desc: c.label, purpose: c.purpose }; }) },
+    search: { rows: { selector: (a.list && a.list.anchor) || '' }, paths: [{ path: (a.searchPath || dflt.searchPath), inputs: params }] },
+    note: a.engineSource === 'shell'
+      ? '页面是 JS 空壳，引擎按资源特征判断（' + a.engine + '），分类还没采到'
+      : a.rows ? ('采样解析：' + a.rows + ' 行，' + catMap.length + ' 个分类') : '采样页没有解析出列表，只有分类'
+  };
+  if (!dry) fs.writeFileSync(path.join(OUT, host + '.json'), JSON.stringify(def, null, 1), 'utf8');
+  defs++;
+
+  /* 搜索预设：只补自动生成的，人工确认过的（source 不是 auto）保持不动 */
+  const cur = presets.sites[host];
+  if (cur && cur.source && ['auto', 'arch'].indexOf(cur.source) < 0) return;   /* 人工确认过的不动，arch 的可以被更准的结果覆盖 */
+  presets.sites[host] = {
+    engine: a.engine,
+    searchPath: def.searchPath,
+    browsePath: def.searchPath,
+    params: params,
+    catMode: def.catMode,
+    cats: cats,
+    source: 'auto',
+    confirmed: false,
+    updatedAt: now,
+    note: catMap.length
+      ? '自动生成：' + (a.rows || 0) + ' 行样本，' + catMap.length + ' 个分类'
+      : '自动生成：解析出引擎，但还没认出分类 id'
+  };
+  presetsAdded++;
+});
+
+/* 没采到的站：按清单架构推断一份定义，标注来源，避免面板上这些站完全没配置 */
+let inferred = 0;
+listed.forEach(function (t) {
+  const prev = analysis[t.host];
+  if (prev && prev.engine) return;                      /* 已识别引擎的上面处理过 */
+  const engine = ARCH_ENGINE[t.arch] || 'custom';   /* 架构未知就按兜底引擎配，先保证有定义可用 */
+  const dflt = DEFAULTS[engine] || DEFAULTS.nexusphp;
+  const def = {
+    host: t.host,
+    base: 'https://' + t.host,
+    engine: engine,
+    login: engine === 'unit3d'
+      ? { method: 'POST', path: '/login', fields: { username: 'username', password: 'password' } }
+      : engine === 'gazelle'
+        ? { method: 'POST', path: '/login.php', fields: { username: 'username', password: 'password' } }
+        : { method: 'POST', path: '/takelogin.php', fields: { username: 'username', password: 'password' } },
+    searchPath: dflt.searchPath,
+    params: dflt.params,
+    catMode: dflt.catMode,
+    catSlot: 1,
+    cats: {},
+    catMap: [],
+    rate: { minGapMs: 1500, jitterMs: 1000, maxPerRun: 10 },
+    source: { kind: 'arch', analyzedAt: null, rows: 0, sizeRows: 0, cats: 0 },
+    list: {
+      anchor: engine === 'unit3d' ? 'a[href*="/torrents/"]'
+        : engine === 'gazelle' ? 'a[href*="action=download"]'
+          : engine === 'nexusphp' ? 'a[href*="details.php?id="]' : 'a[href*="details.php?id="]',
+      sizeStrategy: 'unknown', rows: 0, sizeRows: 0, dlRows: 0
+    },
+    note: prev
+      ? '采样到了但没解析出引擎（可能是登录墙 / 挑战页 / 域名失效），引擎按清单架构（' + t.arch + '）推断'
+      : '还没采样：引擎按清单架构（' + t.arch + '）推断，参数用该引擎默认值，分类待确认'
+  };
+  if (!dry) fs.writeFileSync(path.join(OUT, t.host + '.json'), JSON.stringify(def, null, 1), 'utf8');
+  /* 预设也补一条：引擎和默认参数先能拼出搜索 URL，分类等采样后再说 */
+  if (!presets.sites[t.host]) {
+    presets.sites[t.host] = {
+      engine: engine,
+      searchPath: dflt.searchPath,
+      browsePath: dflt.searchPath,
+      params: dflt.params,
+      catMode: dflt.catMode,
+      cats: {},
+      source: 'arch',
+      confirmed: false,
+      updatedAt: now,
+      note: '按清单架构推断，还没采样确认'
+    };
+  }
+  inferred++;
+  defs++;
+});
+
+if (!dry) {
+  fs.writeFileSync(PRESETS, JSON.stringify(presets, null, 1), 'utf8');
+}
+
+console.log('站定义 ' + defs + ' 份（采样 ' + (defs - inferred) + ' + 按架构推断 ' + inferred + '；无分类 ' + noCats + '，引擎未识别 ' + unknown + '），' +
+  '自动搜索预设 ' + presetsAdded + ' 条，预设文件共 ' + Object.keys(presets.sites).length + ' 条' + (dry ? '（dry run，未写盘）' : ''));

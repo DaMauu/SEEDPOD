@@ -8,7 +8,7 @@
 个人 PT 转载/交叉做种面板：无构建静态 SPA + 零依赖 Node 后端。
 
 - 前端 `pta/web/index.html` + `pta/web/assets/{app.js,app.css,data.js}`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`
-- 后端单文件 `pta/server/app.js`（只依赖 http/fs/path/crypto/vm/fetch）+ `pta/server/adapters/nexusphp.js` + `pta/server/secretbox.js`
+- 后端单文件 `pta/pta/server/app.js`（只依赖 http/fs/path/crypto/vm/fetch）+ `pta/pta/server/adapters/nexusphp.js` + `pta/pta/server/secretbox.js`
 - 线上跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，监听 8080，数据在 `/opt/seedpod/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 
@@ -26,9 +26,9 @@
 必须一起发的文件，少一个就起不来或白屏：
 
 ```
-pta/server/app.js
-pta/server/adapters/nexusphp.js
-pta/server/secretbox.js
+pta/pta/server/app.js
+pta/pta/server/adapters/nexusphp.js
+pta/pta/server/secretbox.js
 pta/web/index.html
 pta/web/assets/app.js
 pta/web/assets/app.css
@@ -38,12 +38,12 @@ pta/web/assets/data.js
 发版走 base64 过 ssh（scp 在 22 端口抖动时经常整条失败），发完比 md5 再重启：
 
 ```
-for f in pta/server/app.js pta/server/adapters/nexusphp.js pta/server/secretbox.js \
+for f in pta/pta/server/app.js pta/pta/server/adapters/nexusphp.js pta/pta/server/secretbox.js \
          pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css pta/web/assets/data.js; do
   base64 -w0 "$f" | ssh pta "base64 -d > /opt/seedpod/$f"
 done
-md5sum pta/server/app.js pta/web/assets/app.js
-ssh pta 'md5sum /opt/seedpod/pta/server/app.js /opt/seedpod/pta/web/assets/app.js'
+md5sum pta/pta/server/app.js pta/web/assets/app.js
+ssh pta 'md5sum /opt/seedpod/pta/pta/server/app.js /opt/seedpod/pta/web/assets/app.js'
 ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
 ```
 
@@ -83,6 +83,6 @@ ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
 3. 怎么算成功：能验证的现象（某个检查通过、某个接口返回、页面某个状态）
 4. 什么不许动：明确否定项
 
-例：把站点页的登录方式改成只存 cookie，改 `pta/web/assets/app.js` 的登录设置页和 `pta/server/app.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
+例：把站点页的登录方式改成只存 cookie，改 `pta/web/assets/app.js` 的登录设置页和 `pta/pta/server/app.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
 
 改主意时直接说「现在以 X 为准」，不要让我从多条里推断哪条是最新的。
