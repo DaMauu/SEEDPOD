@@ -1,7 +1,30 @@
 # PLAN · SEEDPOD 开发计划与进度明细
 
-最后更新：2026-11-11 12:35（前端 17y 待发）
+最后更新：2026-11-11 13:30（部署版本 18d 待发）
 本文件是「计划清单 + 进度明细」，每轮开发后更新；TASKS.md 记已完成项，HANDOFF.md 记交接状态。
+
+## 文件放置硬规定（长期有效）
+
+pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根。
+
+- 进 pta/ 的：`pta/server`、`pta/web`、`pta/checks`、`pta/fixtures`、`pta/data`（采样产物）、`pta/docs`（面板规则树等）、`pta/scripts`（面板专用脚本），以及以后新增的 pta 代码/文档/脚本。
+- 留仓库根的：README、LICENSE、AGENTS.md、.github、项目级 scripts/docs/styles、package.json、Docker 与 compose、HANDOFF.md、TASKS.md、PLAN.md。
+- 两条方向都守：pta 文件不许出 pta；非 pta 文件也不许塞进 pta。
+
+## 仓库结构（2026-11-11 起）
+
+```
+pta/
+  server/    零依赖后端（app.js、adapters、secretbox、catalog、match）
+  web/       无构建前端（index.html、assets/app.js|app.css|data.js）
+  checks/    smoke / audit / adapter / api / security
+  fixtures/  离线解析测试夹具
+  data/      采样产物（非运行时数据）
+  docs/      面板专用文档（RULES-TREE.md）
+  scripts/   面板专用脚本（gen-rules-tree.js）
+```
+
+运行时数据不在仓库里：本地默认 `<repo>/data`，测试机 `/opt/seedpod/data`。
 
 ## 一、当前进度总览
 
@@ -11,7 +34,7 @@
 | 站点适配 | NexusPHP / UNIT3D / Gazelle / 兜底 四个解析器 + site-def + 搜索预设 | 可用，分类名与发布时间仍在补 |
 | 三步流水线 | 抓取 → 数据清单（筛选/标记/送审/归档）→ 待审核（发布记账） | 可用，真实发布未接（按铁律不做自动发帖） |
 | 前端 | 7 页 + 登录页，无构建，全部交互可点 | 可用 |
-| 检查 | smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 37 | 全绿 |
+| 检查 | smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 38 | 全绿 |
 | 部署 | systemd `seedpod`，公网经 Cloudflare 到 nginx 反代，数据 `/opt/seedpod/data` | 运行中 |
 
 ## 二、后端接口清单（已实现）
@@ -74,6 +97,14 @@
 - [x] 面板账号密码只在测试机 systemd 环境变量，不进代码与日志
 - [x] 真实 PT 站点只做一次性采样，不做并发/压测/UA 轮换，不自行找 cookie
 - [ ] 采样补齐（登录墙站点要用户自己在浏览器登录后给 cookie）
+
+## 五之二、2026-11-11 下午已完成
+
+- 第二步「筛选」改名「查重」：数据清单加「查重」按钮，调 `/api/catalog/check` 跟待审核/本地库/已送审已发布比对，重复的标「已有」并记下撞到哪条（dupNote），只打标不改状态
+- 发布卡片精简：去掉发布顺序/只在时段内发布/免审直接发的分类；自动发布总开关移到发布模式前；人工点通过改成文字按钮单选
+- 流程页规则里的开关统一改成可点击文字按钮（开/关），不再画独立开关
+- 站点抽屉：基本信息并进登录、备注去掉、站点地址进登录、架构缩成小选择放抓取按钮右边、启用开关挨着抓取按钮
+- 仓库结构收敛：pta 自己的代码只在 pta/，非 pta 文件退回仓库根
 
 ## 六、下一批任务（按顺序做）
 

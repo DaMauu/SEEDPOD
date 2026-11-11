@@ -1884,6 +1884,10 @@
   }
 
   /* ---------- 流程页：抓取 / 发布 ---------- */
+  function swChip(on) {
+    return '<button type="button" class="cat-chip sw-chip' + (on ? " on" : "") + '" data-switch="1">' + (on ? "开" : "关") + "</button>";
+  }
+
   function chipRow(items, active, single) {
     return '<div class="cat-row pick-row"' + (single ? ' data-single="1"' : "") + ">" + items.map(function (c) {
       var on = (active || []).indexOf(c) >= 0;
@@ -1945,7 +1949,7 @@
     return rows.map(function (r) {
       return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
         '<div class="lbl"><span>' + r.t + "</span>" + (r.hint ? "<i>" + r.hint + "</i>" : "") + "</div>" +
-        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single) : setControl(r)) + "</div>" +
+        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single) : (r.type === "switch" ? swChip(r.on) : setControl(r))) + "</div>" +
       "</div>";
     }).join("");
   }
@@ -2374,7 +2378,7 @@
           return;
         }
         if (r.type === "switch") {
-          if (f.querySelector(".switch.on")) parts.push(r.t);
+          if (f.querySelector("[data-switch].on")) parts.push(r.t);
           return;
         }
         if (r.type === "custom" || r.type === "button") return;
@@ -2453,7 +2457,12 @@
         return;
       }
       var sw = e.target.closest("button[data-switch]");
-      if (sw) { sw.classList.toggle("on"); refreshSums(); return; }
+      if (sw) {
+        sw.classList.toggle("on");
+        if (sw.classList.contains("sw-chip")) sw.textContent = sw.classList.contains("on") ? "开" : "关";
+        refreshSums();
+        return;
+      }
       var btn = e.target.closest("button[data-btn]");
       if (btn) {
         var bname = btn.getAttribute("data-btn") || "";
