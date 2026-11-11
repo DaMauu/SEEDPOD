@@ -1182,6 +1182,7 @@ async function main() {
     const cat = await (await fetchA(BASE + '/api/catalog?site=dup.example')).json();
     const rows = cat.data.items;
     need(rows.some(x => x.siteId === '11' && x.marks && x.marks.existing === true), '重复词条没标已有');
+    need(rows.some(x => x.siteId === '11' && /Dup Fixture 2023/.test(String(x.dupNote || ''))), '没记下撞到哪条');
     need(rows.some(x => x.siteId === '12' && !(x.marks && x.marks.existing)), '不重复的词条被标了已有');
     for (const r of rows) await fetchA(BASE + '/api/catalog/' + r.id, { method: 'DELETE' });
     if (libId) await fetchA(BASE + '/api/library/' + libId, { method: 'DELETE' });

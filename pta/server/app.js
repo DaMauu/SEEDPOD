@@ -593,8 +593,13 @@ function checkCatalog(opts) {
     if (hit) {
       marks.existing = true;
       dup++;
+      const note = [hit.source || '', hit.site || '', hit.title || ''].filter(Boolean).join(' · ').slice(0, 200);
+      catalogStore.update(it.id, { dupNote: note });
       items.push({ id: it.id, title: it.title, site: it.site, hit: { source: hit.source || '', site: hit.site || '', title: hit.title || '', reason: hit.reason || '' } });
-    } else if (marks.existing) delete marks.existing;
+    } else {
+      if (marks.existing) delete marks.existing;
+      catalogStore.update(it.id, { dupNote: '' });
+    }
     catalogStore.setMarks(it.id, marks);
   });
   logEvent('info', '查重', '检查 ' + checked + ' 条 · 已有 ' + dup + ' 条');

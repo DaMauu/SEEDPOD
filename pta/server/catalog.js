@@ -6,7 +6,7 @@ const path = require('path');
 
 const STATUSES = ['new', 'selected', 'archived', 'published', 'skipped'];
 const MARKS = ['noRedistribute', 'exclusive', 'diy', 'limited', 'limitedDays', 'existing'];
-const FIELDS = ['site', 'siteId', 'title', 'subtitle', 'size', 'res', 'cat', 'catName', 'addedAt', 'infohash', 'detailsUrl', 'downloadUrl', 'seeders', 'leechers'];
+const FIELDS = ['site', 'siteId', 'title', 'subtitle', 'size', 'res', 'cat', 'catName', 'addedAt', 'dupNote', 'infohash', 'detailsUrl', 'downloadUrl', 'seeders', 'leechers'];
 
 function createStore(file) {
   function read() {
@@ -113,6 +113,18 @@ function createStore(file) {
     write(store);
     return { ok: true };
   }
+  function update(id, patch) {
+    const store = read();
+    const it = store.items.find(function (x) { return x.id === id; });
+    if (!it) return { err: u8bcdu6761u4e0du5b58u5728 };
+    Object.keys(patch || {}).forEach(function (k) {
+      if (FIELDS.indexOf(k) >= 0) it[k] = patch[k];
+    });
+    it.updatedAt = new Date().toISOString();
+    write(store);
+    const c = Object.assign({}, it); delete c._key;
+    return { item: c };
+  }
   function summary() {
     const store = read();
     const byStatus = {};
@@ -120,7 +132,7 @@ function createStore(file) {
     store.items.forEach(function (x) { byStatus[x.status] = (byStatus[x.status] || 0) + 1; });
     return { total: store.items.length, byStatus: byStatus };
   }
-  return { add: add, list: list, setStatus: setStatus, setMarks: setMarks, remove: remove, summary: summary, STATUSES: STATUSES, MARKS: MARKS };
+  return { add: add, list: list, setStatus: setStatus, setMarks: setMarks, update: update, remove: remove, summary: summary, STATUSES: STATUSES, MARKS: MARKS };
 }
 
 module.exports = { createStore: createStore, STATUSES: STATUSES, MARKS: MARKS };
