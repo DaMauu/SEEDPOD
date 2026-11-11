@@ -66,6 +66,12 @@ async function main() {
     process.exit(2);
   }
 
+  await check('静态响应带基础安全头', async () => {
+    const r = await fetchA(BASE + '/');
+    need(r.headers.get('x-content-type-options') === 'nosniff', '缺少 nosniff：' + r.headers.get('x-content-type-options'));
+    need(r.headers.get('x-frame-options') === 'DENY', '缺少 X-Frame-Options：' + r.headers.get('x-frame-options'));
+    need(r.headers.get('referrer-policy') === 'no-referrer', '缺少 Referrer-Policy：' + r.headers.get('referrer-policy'));
+  });
   await check('health 结构', async () => {
     const j = await (await fetch(BASE + '/api/health')).json();
     need(j.ok === true, 'ok 不为 true');

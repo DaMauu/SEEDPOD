@@ -1371,6 +1371,12 @@ function basicAuthOk(req) {
 }
 
 const server = http.createServer(async (req, res) => {
+  /* 基础安全头：不允许被嵌框、不嗅探类型、不带 referrer */
+  try {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+  } catch (e) {}
   const u = new URL(req.url, 'http://local');
   const p = u.pathname;
 
