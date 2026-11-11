@@ -66,16 +66,15 @@
 
 测试机上 `/opt/seedpod` **不是 git 仓库**，发版是复制文件（发前先备份到 `/opt/seedpod/backup-时间戳/`）：
 
-22 端口时通时断，scp 经常整条失败，用 base64 走 ssh 更稳（发完务必比 md5）：
+22 端口时通时断，用 tar 走 ssh 最省事（发完核对 md5）：
 
 ```
-for f in pta/server/app.js pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css; do
-  base64 -w0 "$f" | ssh pta "base64 -d > /opt/seedpod/$f"
-done
+tar czf - package.json pta/server pta/web pta/checks | ssh pta "cd /opt/seedpod && tar xzf - && systemctl restart seedpod && systemctl is-active seedpod"
 md5sum pta/server/app.js pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css
-ssh pta 'md5sum /opt/seedpod/pta/pta/server/app.js /opt/seedpod/pta/web/index.html /opt/seedpod/pta/web/assets/app.js /opt/seedpod/pta/web/assets/app.css'
-ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
+ssh pta 'md5sum /opt/seedpod/pta/server/app.js /opt/seedpod/pta/web/index.html /opt/seedpod/pta/web/assets/app.js /opt/seedpod/pta/web/assets/app.css'
 ```
+
+不要覆盖 `/opt/seedpod/data/`（凭据、词条、队列、日志、真实站点清单都在里面）。换 js 一定要同步改 `pta/web/index.html` 里的 `?v=`，Cloudflare 会缓存。
 
 发版要带上的文件（少一个就起不来或页面白屏）：
 
