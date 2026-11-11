@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-11 17:30（当前部署 19e）
+最后更新：2026-11-11 17:40（当前部署 19f）
 
 先读 [AGENTS.md](AGENTS.md)；成熟工具的定义格式与可借鉴点见 [docs/PRIOR-ART.md](docs/PRIOR-ART.md)：铁律、必须一起发的文件、发版命令、故障对照都在那里，聊天被压缩后以它为准。
 
@@ -17,6 +17,7 @@
 - 站点页分页：每页 60 个站，带页码与上下页；分页容器之前漏进 DOM，已补上；翻页会滚回列表顶部
 - 新增 pta/docs/USAGE.md：按界面写了准备、抓取、查重、发布四段操作与常见问题
 - 抓取接口统一校验 host（长度/字符集），挡住 ../ 与斜杠，防站点定义路径穿越；api 补断言
+- 批量设置验证可用；本地 store 补 override/ovInterval/ovDaily/ovDetail/priority 五个字段
 - 检查：smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 43 全绿
 
 ## 2026-11-11 下午的改动
