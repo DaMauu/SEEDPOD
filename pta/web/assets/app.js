@@ -994,7 +994,7 @@
       }
       listBox.innerHTML = list.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的条目</div>';
       var cnt = $("#queue-count");
-      if (cnt) cnt.textContent = "共 " + list.length + " 条";
+      if (cnt) cnt.textContent = "共 " + list.length + " 条" + (list.length >= 500 ? "（只显示最近 500）" : "");
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (detail) detail.innerHTML = detailHtml(it);
       if (it && it.server && !it.shotsLoaded && it.shotsCount > 0) {
@@ -1235,7 +1235,7 @@
 
 
     function loadServer() {
-      return window.__ptaQueue.req("?limit=200").then(function (res) {
+      return window.__ptaQueue.req("?limit=500").then(function (res) {
         if (!res || !res.j || !res.j.ok || !res.j.data || !Array.isArray(res.j.data.items)) return false;
         MOCK.queue = res.j.data.items.map(window.__ptaQueue.map);
         var pendingN = (res.j.data.counts && res.j.data.counts.pending) || 0;
