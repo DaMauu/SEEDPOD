@@ -1279,6 +1279,16 @@ async function main() {
     await fetchA(BASE + '/api/credentials/' + host, { method: 'DELETE' });
   });
 
+  await check('抓取接口挡住非法 host', async () => {
+    const bads = ['../config', 'a/b', '..\\x', ''];
+    for (const h of bads) {
+      const plan = await fetchA(BASE + '/api/crawl/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: h }) });
+      need(plan.status === 400, 'plan 没收住非法 host ' + JSON.stringify(h) + '：' + plan.status);
+      const run = await fetchA(BASE + '/api/crawl/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: h }) });
+      need(run.status === 400, 'run 没收住非法 host ' + JSON.stringify(h) + '：' + run.status);
+    }
+  });
+
   await check('排除/白名单正则真的参与筛选', async () => {
     await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },

@@ -366,6 +366,11 @@ function marksOf(title) {
   return m;
 }
 
+const HOST_RE = /^[a-z0-9][a-z0-9.-]*$/i;
+function badHost(h) {
+  return !h || String(h).length > 200 || !HOST_RE.test(String(h));
+}
+
 function crawlPlan(host, opts) {
   const def = readSiteDef(host);
   if (!def) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
@@ -1828,14 +1833,14 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/crawl/plan' && req.method === 'POST') {
       const body = await readBody(req);
       const host = String((body && body.host) || '').trim().toLowerCase();
-      if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
+      if (badHost(host)) return fail(res, 400, 'BAD_REQUEST', 'host 不合法');
       const plan = crawlPlan(host, { catIdx: body && body.catIdx });
       if (plan.err) return fail(res, plan.err.code === 'NO_COOKIE' ? 409 : 400, plan.err.code, plan.err.message);
       return send(res, 200, { ok: true, data: plan });
     }
     if (p === '/api/crawl/status' && req.method === 'GET') {
       const host = String(u.searchParams.get('host') || '').trim().toLowerCase();
-      if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
+      if (badHost(host)) return fail(res, 400, 'BAD_REQUEST', 'host 不合法');
       const rec = readCrawlState()[host] || { lastAt: 0, day: '', count: 0, page: 0 };
       const now = Date.now();
       const lim = siteLimits(host);
@@ -1850,7 +1855,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/crawl/run' && req.method === 'POST') {
       const body = await readBody(req);
       const host = String((body && body.host) || '').trim().toLowerCase();
-      if (!host) return fail(res, 400, 'BAD_REQUEST', '缺少 host');
+      if (badHost(host)) return fail(res, 400, 'BAD_REQUEST', 'host 不合法');
       const out = await crawlOnce(host, { page: body && body.page, limit: body && body.limit, catIdx: body && body.catIdx });
       if (out.err) {
         const code = out.err.code;
