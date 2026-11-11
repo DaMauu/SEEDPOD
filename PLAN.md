@@ -24,7 +24,7 @@ pta/
   scripts/   面板专用脚本（gen-rules-tree.js）
 ```
 
-运行时数据不在仓库里：本地默认 `<repo>/data`，测试机 `/opt/seedpod/data`。
+操作说明见 pta/docs/USAGE.md；运行时数据不在仓库里：本地默认 `<repo>/data`，测试机 `/opt/seedpod/data`。
 
 ## 一、当前进度总览
 
