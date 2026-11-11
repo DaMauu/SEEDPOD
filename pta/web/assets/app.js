@@ -2310,7 +2310,7 @@
           '<button class="btn ghost slim" type="button" data-planstep="1">下一类</button>' +
         "</div>" +
         '<div class="dl-dry-note" id="crawl-plan-today">今日情况读取中…</div>' +
-        "<em>只是读出本地配置拼的地址，没有发请求</em>";
+        "<em>只是读出本地配置拼的地址，没有发请求；抓一页会按类目轮转，不是这里预览的这一类</em>";
       fetch("/api/crawl/status?host=" + encodeURIComponent(p.host || ""), { credentials: "same-origin" })
         .then(function (r) { return r.json(); }).then(function (k) {
           var el = $("#crawl-plan-today");
