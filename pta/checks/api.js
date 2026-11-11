@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..', '..');
+const ROOT = path.resolve(__dirname, '..');
 const PORT = Number(process.env.PTA_CHECK_PORT || 8099);
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-api-'));
 const BASE = 'http://127.0.0.1:' + PORT;
@@ -49,7 +49,7 @@ async function main() {
   const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'app.js')], {
     cwd: ROOT,
     env: Object.assign({}, process.env, {
-      PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'pta', 'web'),
+      PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web'),
       PTA_USER: 'check', PTA_PASS: 'check-pass', PTA_LOG_MAX: '1500'
     }),
     stdio: ['ignore', 'pipe', 'pipe']
@@ -628,7 +628,7 @@ async function main() {
 
   await check('抓取：一次 GET 入库，并守住 30 秒间隔', async () => {
     const http = require('http');
-    const page = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'nexusphp-browse.html'), 'utf8');
+    const page = fs.readFileSync(path.join(ROOT, 'fixtures', 'nexusphp-browse.html'), 'utf8');
     let hits = 0;
     const mock = http.createServer((rq, rs) => {
       hits++;
@@ -1159,6 +1159,32 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'other.example', limit: 10 })
     })).json();
     need(run2.ok && run2.data.selected === 0 && /已有/.test(JSON.stringify(run2.data.byReason)), '已送审的词条被重复入选：' + JSON.stringify(run2.data));
+  });
+
+  await check('查重接口把重复词条标成已有', async () => {
+    const lib = await (await fetchA(BASE + '/api/library', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Dup Fixture 2023 1080p Blu-ray AVC DTS-HD MA 5.1-GRP', site: 'lib.example', size: '21.50 GB' })
+    })).json();
+    const libId = lib.data && lib.data.id;
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [
+        { site: 'dup.example', siteId: '11', title: 'Dup Fixture 2023 1080p Blu-ray AVC DTS-HD MA 5.1-GRP', res: '1080p', size: '21.50 GB' },
+        { site: 'dup.example', siteId: '12', title: 'Dup Fixture Unique 2024 2160p WEB-DL HDR', res: '2160p', size: '18.00 GB' }
+      ] })
+    });
+    const out = await (await fetchA(BASE + '/api/catalog/check', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'dup.example' })
+    })).json();
+    need(out.ok && out.data.checked === 2 && out.data.dup === 1, '查重结果不对：' + JSON.stringify(out).slice(0, 200));
+    need(/Dup Fixture 2023/.test(out.data.items[0].hit.title), '查重没指到撞的那条：' + JSON.stringify(out.data.items[0]));
+    const cat = await (await fetchA(BASE + '/api/catalog?site=dup.example')).json();
+    const rows = cat.data.items;
+    need(rows.some(x => x.siteId === '11' && x.marks && x.marks.existing === true), '重复词条没标已有');
+    need(rows.some(x => x.siteId === '12' && !(x.marks && x.marks.existing)), '不重复的词条被标了已有');
+    for (const r of rows) await fetchA(BASE + '/api/catalog/' + r.id, { method: 'DELETE' });
+    if (libId) await fetchA(BASE + '/api/library/' + libId, { method: 'DELETE' });
   });
 
   child.kill();

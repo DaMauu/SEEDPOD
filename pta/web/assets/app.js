@@ -1346,7 +1346,8 @@
               : escapeHtml(it.title);
           })() + "</b>" +
           '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") +
-          (it.seeders ? '<i class="cat-site">做种 ' + it.seeders + "</i>" : "") + toggles + "</span></span>" +
+          (it.seeders ? '<i class="cat-site">做种 ' + it.seeders + "</i>" : "") +
+          (it.marks && it.marks.existing ? '<em class="chip warn">已有</em>' : "") + toggles + "</span></span>" +
           '<span>' + (function () {
             var t = it.type || catNameFromDef(it.site, it.cat);
             return t ? '<em class="chip np">' + escapeHtml(t) + "</em>" : '<span class="soft">—</span>';
@@ -1441,17 +1442,33 @@
       }).catch(function () { arc.disabled = false; toast("归档请求发不出去"); });
     });
     loadCatalog();
+    var checkBtn = $("#dl-check");
+    if (checkBtn) checkBtn.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
+      checkBtn.disabled = true;
+      fetch("/api/catalog/check", {
+        method: "POST", credentials: "same-origin",
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 500, host: state.site || "" })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        checkBtn.disabled = false;
+        if (!j || !j.ok) { toast((j && j.error && j.error.message) || "查重失败"); return; }
+        var d = j.data || {};
+        var sample = (d.items || [])[0];
+        toast("查重 " + d.checked + " 条 · 已有 " + d.dup + " 条" + (sample && sample.hit ? "（例：" + sample.hit.title.slice(0, 30) + "）" : ""));
+        loadCatalog();
+      }).catch(function () { checkBtn.disabled = false; toast("查重请求发不出去"); });
+    });
     var screenBtn = $("#dl-screen");
     if (screenBtn) screenBtn.addEventListener("click", function () {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
-      ptaConfirm("按条件送审", (state.site ? "只处理「" + state.site + "」的待筛选词条，" : "") + "会按流程页「筛选」里的条件送去待审核，不符合的标成跳过。继续？", function () {
+      ptaConfirm("按条件送审", (state.site ? "只处理「" + state.site + "」的待筛选词条，" : "") + "会先查重，再按流程页「查重」里的条件送去待审核，不符合的标成跳过。继续？", function () {
         screenBtn.disabled = true;
         fetch("/api/catalog/screen", {
           method: "POST", credentials: "same-origin",
           headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 200, host: state.site || "" })
         }).then(function (r) { return r.json(); }).then(function (j) {
           screenBtn.disabled = false;
-          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "送审失败"); return; }
           var d = j.data || {};
           var rs = Object.keys(d.byReason || {}).map(function (k) { return k + " " + d.byReason[k]; }).join(" · ");
           var rl = d.rules || {};
@@ -1867,8 +1884,8 @@
   }
 
   /* ---------- 流程页：抓取 / 发布 ---------- */
-  function chipRow(items, active) {
-    return '<div class="cat-row pick-row">' + items.map(function (c) {
+  function chipRow(items, active, single) {
+    return '<div class="cat-row pick-row"' + (single ? ' data-single="1"' : "") + ">" + items.map(function (c) {
       var on = (active || []).indexOf(c) >= 0;
       return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '">' + c + "</button>";
     }).join("") + "</div>";
@@ -1928,7 +1945,7 @@
     return rows.map(function (r) {
       return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
         '<div class="lbl"><span>' + r.t + "</span>" + (r.hint ? "<i>" + r.hint + "</i>" : "") + "</div>" +
-        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel) : setControl(r)) + "</div>" +
+        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single) : setControl(r)) + "</div>" +
       "</div>";
     }).join("");
   }
@@ -2060,7 +2077,7 @@
         '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
       "</section>" +
       sectionHtml({ name: "抓取", desc: "按搜索预设的类目直接把词条抓进本地库，命中禁转/独占/DIY/限转的只打标记不过滤。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "筛选", desc: "从本地词条里挑出符合条件的，标出已有/已发布/跳过，归档不需要的。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
+      sectionHtml({ name: "查重", desc: "跟待审核、本地库、已送审/已发布的词条比对，重复的标「已有」并跳过；剩下的按条件送去待审核，不需要的归档。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
       sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub") +
       '';
 
@@ -2123,7 +2140,7 @@
           headers: { "content-type": "application/json" }, body: JSON.stringify({ limit: 50, rules: {} })
         }).then(function (r) { return r.json(); }).then(function (j) {
           b.disabled = false;
-          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "筛选失败"); return; }
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "送审失败"); return; }
           var d = j.data;
           var rs = Object.keys(d.byReason || {}).map(function (k) { return k + " " + d.byReason[k]; }).join(" · ");
           toast("检查 " + d.checked + " 条 · 入选 " + d.selected + " · 跳过 " + d.skipped + (rs ? "（" + rs + "）" : ""));
@@ -2426,7 +2443,15 @@
       var rxBtn = e.target.closest("#rx-run");
       if (rxBtn) { runRx(); return; }
       var pick = e.target.closest(".pick-row .cat-chip");
-      if (pick) { pick.classList.toggle("on"); refreshSums(); return; }
+      if (pick) {
+        var prow = pick.closest(".pick-row");
+        if (prow && prow.getAttribute("data-single")) {
+          [].forEach.call(prow.querySelectorAll(".cat-chip"), function (c) { if (c !== pick) c.classList.remove("on"); });
+        }
+        pick.classList.toggle("on");
+        refreshSums();
+        return;
+      }
       var sw = e.target.closest("button[data-switch]");
       if (sw) { sw.classList.toggle("on"); refreshSums(); return; }
       var btn = e.target.closest("button[data-btn]");
@@ -2480,7 +2505,7 @@
         var bad = checkNums(save.closest(".drawer") || host);
         if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
         saveFlowState();
-        var label = { fetch: "抓取", dedupe: "筛选", pub: "发布" }[sKey] || sKey;
+        var label = { fetch: "抓取", dedupe: "查重", pub: "发布" }[sKey] || sKey;
         toast(label + "设置已保存");
       }
     });

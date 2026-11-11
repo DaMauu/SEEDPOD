@@ -1,6 +1,6 @@
 /* 安全相关检查：TOTP（RFC 6238 向量）与凭据加密，全程离线。 */
 const path = require('path');
-const ROOT = path.resolve(__dirname, '..', '..');
+const ROOT = path.resolve(__dirname, '..');
 const box = require(path.join(ROOT, 'server', 'secretbox.js'));
 const crypto = require('crypto');
 

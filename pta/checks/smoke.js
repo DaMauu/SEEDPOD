@@ -19,8 +19,8 @@ function loadPlaywright() {
 }
 const { chromium } = loadPlaywright();
 
-const ROOT = path.resolve(__dirname, '..', '..');
-const WEB = path.join(ROOT, 'pta', 'web');
+const ROOT = path.resolve(__dirname, '..');
+const WEB = path.join(ROOT, 'web');
 const BASE = 'file:///' + WEB.replace(/\\/g, '/') + '/index.html';
 const STUB = 'window.SITE_URLS=["https://demo-a.example/index.php","https://demo-b.example/index.php","https://demo-c.example/index.php"];' +
   'window.PT_ARCH={"demo-a.example":"NP","demo-b.example":"UNIT3D","demo-c.example":"NP"};';

@@ -2,7 +2,7 @@
    用法：node pta/checks/adapter.js，退出码 0 = 全绿。 */
 const fs = require('fs');
 const path = require('path');
-const ROOT = path.resolve(__dirname, '..', '..');
+const ROOT = path.resolve(__dirname, '..');
 const adapter = require(path.join(ROOT, 'server', 'adapters', 'nexusphp.js'));
 
 const results = [];
@@ -12,7 +12,7 @@ function check(name, fn) {
 }
 function need(cond, msg) { if (!cond) throw new Error(msg); }
 
-const html = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'nexusphp-browse.html'), 'utf8');
+const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'nexusphp-browse.html'), 'utf8');
 
 check('识别 NexusPHP 页面', () => {
   need(adapter.detect(html) === true, '没有识别出 NexusPHP');
@@ -69,8 +69,8 @@ check('解析登录表单', () => {
 const unit3d = require(path.join(ROOT, 'server', 'adapters', 'unit3d.js'));
 const gazelle = require(path.join(ROOT, 'server', 'adapters', 'gazelle.js'));
 const adapters = require(path.join(ROOT, 'server', 'adapters', 'index.js'));
-const u3dHtml = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'unit3d-browse.html'), 'utf8');
-const gzHtml = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'gazelle-browse.html'), 'utf8');
+const u3dHtml = fs.readFileSync(path.join(ROOT, 'fixtures', 'unit3d-browse.html'), 'utf8');
+const gzHtml = fs.readFileSync(path.join(ROOT, 'fixtures', 'gazelle-browse.html'), 'utf8');
 
 check('识别 UNIT3D 且不误判成别的引擎', () => {
   need(unit3d.detect(u3dHtml) === true, '没有识别出 UNIT3D');
@@ -141,7 +141,7 @@ check('反推搜索参数', () => {
 
 check('兜底适配：认不出的 tracker 也能列出条目', () => {
   const custom = require(path.join(ROOT, 'server', 'adapters', 'generic.js'));
-  const gHtml = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'custom-browse.html'), 'utf8');
+  const gHtml = fs.readFileSync(path.join(ROOT, 'fixtures', 'custom-browse.html'), 'utf8');
   need(adapters.detectEngine(gHtml) === 'custom', '兜底引擎没接上：' + adapters.detectEngine(gHtml));
   const rows = custom.parseList(gHtml);
   need(rows.length === 3, '兜底行数不对：' + rows.length);
@@ -154,8 +154,8 @@ check('兜底适配：认不出的 tracker 也能列出条目', () => {
 });
 
 check('JS 空壳页也能认出引擎', () => {
-  const u3Shell = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'unit3d-shell.html'), 'utf8');
-  const gzShell = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'gazelle-shell.html'), 'utf8');
+  const u3Shell = fs.readFileSync(path.join(ROOT, 'fixtures', 'unit3d-shell.html'), 'utf8');
+  const gzShell = fs.readFileSync(path.join(ROOT, 'fixtures', 'gazelle-shell.html'), 'utf8');
   need(adapters.detectEngine(u3Shell) === '', '空壳页不该被解析型适配器认出来：' + adapters.detectEngine(u3Shell));
   need(adapters.detectShellEngine(u3Shell) === 'unit3d', 'UNIT3D 空壳页没认出来：' + adapters.detectShellEngine(u3Shell));
   need(adapters.detectShellEngine(gzShell) === 'gazelle', 'Gazelle 空壳页没认出来：' + adapters.detectShellEngine(gzShell));
@@ -164,7 +164,7 @@ check('JS 空壳页也能认出引擎', () => {
 
 check('从首页导航里找种子页路径', () => {
   const nav = require(path.join(ROOT, 'server', 'adapters', 'nav.js'));
-  const home = fs.readFileSync(path.join(ROOT, 'pta', 'fixtures', 'home-nav.html'), 'utf8');
+  const home = fs.readFileSync(path.join(ROOT, 'fixtures', 'home-nav.html'), 'utf8');
   const cands = nav.findTorrentLinks(home);
   need(cands.length > 0, '首页导航里没找到候选');
   need(cands[0].path === '/torrents.php', '首选路径不对：' + cands[0].path);
