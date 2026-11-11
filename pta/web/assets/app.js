@@ -3323,9 +3323,20 @@
       var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
       var groups = {};
       rows.forEach(function (s) { groups[s.name] = s; });
-      list.innerHTML = rows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
+      var SITE_PAGE = 60;
+      var pages = Math.max(1, Math.ceil(rows.length / SITE_PAGE));
+      if (state.page > pages) state.page = pages;
+      if (state.page < 1) state.page = 1;
+      var pageRows = rows.slice((state.page - 1) * SITE_PAGE, state.page * SITE_PAGE);
+      list.innerHTML = pageRows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
       var pager = $("#sites-pager");
-      if (pager) pager.innerHTML = "";
+      if (pager) {
+        pager.innerHTML = rows.length > SITE_PAGE
+          ? '<button class="btn ghost slim" data-pg="-1"' + (state.page <= 1 ? " disabled" : "") + ">上一页</button>" +
+            '<span>第 ' + state.page + " / " + pages + " 页 · 共 " + rows.length + " 个</span>" +
+            '<button class="btn ghost slim" data-pg="1"' + (state.page >= pages ? " disabled" : "") + ">下一页</button>"
+          : "";
+      }
       var cnt = $("#sites-count");
       if (cnt) cnt.textContent = MOCK.sitesList.length;
       var hint = $("#sites-hint");
