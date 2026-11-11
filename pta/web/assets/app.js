@@ -2263,7 +2263,18 @@
             '<div class="dl-dry-note" style="word-break:break-all">GET ' + escapeHtml(p.url || "") + "</div>" +
             '<div class="dl-dry-note">间隔至少 ' + Math.round((p.minGapMs || 0) / 1000) + " 秒 · 单站每天最多 " +
               (p.dailyMax || 0) + " 次 · 请求里带的等待 " + (p.requestDelay || 0) + " 秒</div>" +
+            '<div class="dl-dry-note" id="crawl-plan-today">今日情况读取中…</div>' +
             "<em>只是读出本地配置拼的地址，没有发请求</em>";
+          fetch("/api/crawl/status?host=" + encodeURIComponent(p.host || ""), { credentials: "same-origin" })
+            .then(function (r) { return r.json(); }).then(function (k) {
+              var el = $("#crawl-plan-today");
+              if (!el || !k || !k.ok) return;
+              var d = k.data || {};
+              var wait = Math.max(0, Math.round((d.waitMs || 0) / 1000));
+              el.textContent = "今天已抓 " + (d.count || 0) + "/" + (d.dailyMax || 0) + " 次" +
+                (wait ? " · 还要等 " + wait + " 秒" : " · 现在可以抓") +
+                " · 上次 " + (d.lastAt ? new Date(d.lastAt).toLocaleString("zh-CN", { hour12: false }).slice(5, 16) : "还没抓过");
+            }).catch(function () {});
         }
       }).catch(function () { planBtn.disabled = false; toast("计划请求发不出去"); });
     });

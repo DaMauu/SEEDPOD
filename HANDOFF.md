@@ -1,10 +1,22 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-11（当前部署 17y）
+最后更新：2026-11-11 14:15（当前部署 18i / commit c09a19c）
 
 先读 [AGENTS.md](AGENTS.md)；成熟工具的定义格式与可借鉴点见 [docs/PRIOR-ART.md](docs/PRIOR-ART.md)：铁律、必须一起发的文件、发版命令、故障对照都在那里，聊天被压缩后以它为准。
 
-## 2026-11-11 这一轮的改动（按用户反馈）
+## 2026-11-11 下午的改动
+
+- 仓库结构收敛：pta 自己的代码只在 `pta/`（server/web/checks/fixtures/data/docs/scripts），仓库根保留 README/LICENSE/AGENTS/.github/项目级 scripts/docs/styles/package.json/Docker/HANDOFF/TASKS/PLAN；这条已写进 PLAN.md 与 AGENTS.md
+- 第二步「筛选」改名「查重」：数据清单加「查重」按钮，调 `/api/catalog/check` 跟队列/本地库/已送审已发布比对，重复的标「已有」并记 dupNote（悬浮可见），只打标不改状态；标记筛选加「已有（重复）」
+- 归档按钮改成「归档已跳过/已有」：把跳过项与标了已有的新词条一起归档，includeDup 不碰已送审/已发布
+- 站点覆盖真正生效：白名单补 override/ovInterval/ovDaily/ovDetail/priority，打开「单独设置本站」后间隔与每天次数按站点走，仍被全局 30 秒与每天 20 次压住
+- 流程页规则里的开关全部换成可点击文字按钮（开/关）；发布卡片删掉发布顺序/只在时段内发布/免审直接发的分类，自动发布总开关前移，人工点通过改文字按钮
+- 排除/白名单正则存进流程配置（rx）并真正参与送审筛选，语法错退回纯文本
+- 站点抽屉：基本信息并进登录、备注去掉、站点地址进登录页签、架构缩成小选择放抓取按钮右边、启用开关挨着抓取按钮
+- 规则树文档 pta/docs/RULES-TREE.md（node pta/scripts/gen-rules-tree.js 生成）
+- 检查：smoke 23 / audit 0 问题 / adapter 18 / security 2 / api 39 全绿
+
+## 2026-11-11 上午的改动（按用户反馈）
 
 - 去掉流程页单独的「词条库」块：词条只在数据清单页看，筛选/标记/送审/归档都在那一页
 - 数据清单：站点/类型/状态/标记四个筛选，全部来自真实数据；行内可送审、归档、点标题开站点详情页；分页每页 100（一次读 2000）
