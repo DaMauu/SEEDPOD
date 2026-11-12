@@ -2322,13 +2322,12 @@
     var st = Vue.reactive({
       interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3,
       detail: (function () { try { return localStorage.getItem("pta.detail") === "1"; } catch (e) { return false; } })(),
-      groups: [preset], saving: false, sum: "跟随默认", note: "读取服务端配置…"
+      limits: { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] },
+      groups: [preset], saving: false, sum: "", note: "读取服务端配置…"
     });
 
     function syncNote() {
-      var lim = Number((document.getElementById("crawl-limit") || {}).value || 10) || 10;
-      st.note = "每 " + st.interval + " 秒最多发一次 · " + st.windowMinutes + " 分钟内最多 " + st.maxPerWindow +
-        " 次请求 · 本次大约 " + Math.max(1, Math.ceil(lim / 50)) + " 次";
+      st.note = "每 " + st.interval + " 秒最多一次 · " + st.windowMinutes + " 分钟内最多 " + st.maxPerWindow + " 次请求";
     }
     function syncSum() {
       var on = 0;
@@ -2341,6 +2340,10 @@
         if (!j || !j.ok || !j.data || !j.data.user) return;
         var u = j.data.user;
         ["interval", "windowMinutes", "maxPerWindow", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
+        if (j.data.limits) ["interval", "windowMinutes", "maxPerWindow", "breaker"].forEach(function (k) {
+          var L = j.data.limits[k];
+          if (Array.isArray(L) && L.length === 2) st.limits[k] = [Number(L[0]), Number(L[1])];
+        });
         if (u.detail != null) st.detail = !!u.detail;
         syncNote();
       }).catch(function () {});
@@ -2375,19 +2378,26 @@
       }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
     }
 
-    function limitRow(label, hint, key, min, max) {
-      return h("div", { class: "set-field" }, [
-        h("div", { class: "lbl" }, [h("span", null, label)]),
-        h("div", { class: "ctl" }, [h("input", {
-          class: "input num", type: "number", value: String(st[key]), min: String(min), max: String(max),
-          onInput: function (e) { st[key] = Number(e.target.value) || 0; syncNote(); }
-        })])
+    function limitItem(key, label) {
+      var L = st.limits[key] || [0, 999999];
+      return h("div", { class: "limit-item" }, [
+        h("div", { class: "lbl" }, label),
+        h("input", {
+          class: "input num", type: "number", value: String(st[key]), min: String(L[0]), max: String(L[1]),
+          onInput: function (e) { st[key] = Number(e.target.value) || 0; syncNote(); },
+          onChange: function (e) {
+            var v = Number(e.target.value) || L[0];
+            st[key] = Math.min(L[1], Math.max(L[0], v));
+            e.target.value = String(st[key]);
+            syncNote();
+          }
+        })
       ]);
     }
     function presetRow(r) {
-      return h("div", { class: "set-field preset-field", key: r.t }, [
-        h("div", { class: "lbl" }, [h("span", null, r.t)]),
-        h("div", { class: "ctl" }, [h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
+      return h("div", { class: "preset-row", key: r.t }, [
+        h("div", { class: "lbl" }, r.t),
+        h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
           var on = (r.sel || []).indexOf(c) >= 0;
           return h("button", {
             class: "cat-chip" + (on ? " on" : ""), type: "button",
@@ -2398,7 +2408,7 @@
               syncSum();
             }
           }, c);
-        }))])
+        }))
       ]);
     }
 
@@ -2416,16 +2426,19 @@
             ])
           ]),
           h("div", { class: "drawer-body" }, [
-            h("div", { class: "set-fields" }, (g.rows || []).map(presetRow)),
-            h("div", { class: "set-fields" }, [h("div", { class: "compact-grid" }, [
-              limitRow("请求间隔", "两次请求之间至少隔这么多秒", "interval", 8, 600),
-              limitRow("窗口分钟", "执行一次的时间窗口，单位分钟", "windowMinutes", 1, 1440),
-              limitRow("窗口内最多", "这个窗口里最多发几次请求", "maxPerWindow", 1, 1000),
-              limitRow("连续失败暂停", "连续失败这么多次就自动暂停", "breaker", 1, 10),
-              h("div", { class: "set-field" }, [
-                h("div", { class: "lbl" }, [h("span", null, "抓详情页")]),
-                h("div", { class: "ctl" }, [h("button", {
-                  class: "switch" + (st.detail ? " on" : ""), type: "button",
+            h("div", { class: "preset-block" }, (g.rows || []).map(presetRow)),
+            h("div", { class: "limits-panel" }, [
+              limitItem("interval", "请求间隔（秒）"),
+              limitItem("windowMinutes", "窗口（分钟）"),
+              limitItem("maxPerWindow", "窗口内最多"),
+              limitItem("breaker", "连续失败暂停")
+            ]),
+            h("div", { class: "crawl-foot" }, [
+              h("div", { class: "crawl-note" }, st.note),
+              h("label", { class: "detail-sw" }, [
+                h("span", null, "抓详情页"),
+                h("button", {
+                  class: "switch" + (st.detail ? " on" : ""), type: "button", role: "switch", "aria-checked": String(!!st.detail),
                   onClick: function () {
                     st.detail = !st.detail;
                     try { localStorage.setItem("pta.detail", st.detail ? "1" : "0"); } catch (e) {}
@@ -2436,16 +2449,16 @@
                       toast(j && j.ok ? (st.detail ? "已开启抓详情页：每条多一次请求" : "已关闭抓详情页") : "开关没存上");
                     }).catch(function () { toast("开关没存上"); });
                   }
-                }, [h("i")])])
+                }, [h("i")])
               ])
-            ])])
+            ])
           ])
         ]);
       }
     }).mount(box);
-    var limitSel = document.getElementById("crawl-limit");
-    if (limitSel) limitSel.addEventListener("change", syncNote);
     load();
+    syncSum();
+    syncNote();
   }
 
   /* 查重卡：自动查重开关 + 筛选条件 + 词条数据，一张卡里 */

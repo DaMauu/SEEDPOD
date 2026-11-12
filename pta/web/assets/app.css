@@ -2347,22 +2347,25 @@ body::after {
 .changelog-body p{margin:6px 0}
 @media (max-width:900px){.changelog-body{padding:14px}}
 
-/* 抓取卡：紧凑版。预设一行一条、限制两列，压缩纵向空白；其它卡片不受影响 */
+/* 抓取卡：预设一行一条、限制四列浅底面板、底栏放说明与抓详情页；只影响本卡 */
 .compact-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 18px}
-.crawl-card .drawer-head{padding:8px 18px;gap:10px}
-.crawl-card .drawer-title{font-size:14px}
-.crawl-card .drawer-body{padding:0 18px 6px}
-.crawl-card .drawer-body .set-fields .set-field:first-child{padding-top:1px}
-.crawl-card .set-fields{margin-top:0}
-.crawl-card .set-field{padding:3px 0;gap:10px;border-bottom:0}
-.crawl-card .set-field .lbl span{font-size:12px}
-.crawl-card .cat-row{padding:0;gap:4px}
-.crawl-card .cat-chip{padding:2px 8px;border-radius:5px;font-size:11px;line-height:1.4}
-.crawl-card .ctl .input{width:88px;height:26px;font-size:12px;padding:0 6px}
-.crawl-card .preset-field{justify-content:flex-start}
-.crawl-card .preset-field .lbl{flex:0 0 64px}
-.crawl-card .preset-field .ctl{flex:1 1 auto;min-width:0}
-.crawl-card .preset-field .ctl .cat-row{justify-content:flex-start}
-.crawl-card .set-field:has(.switch){grid-column:1 / -1;padding-top:2px}
-@media (max-width:1200px){.compact-grid{grid-template-columns:1fr 1fr}.crawl-card .set-field:has(.switch){grid-column:auto}}
+.crawl-card .drawer-head{padding:12px 20px;gap:10px}
+.crawl-card .drawer-title{font-size:15px}
+.crawl-card .drawer-body{padding:4px 20px 18px}
+.crawl-card .preset-block{display:flex;flex-direction:column;gap:2px}
+.crawl-card .preset-row{display:grid;grid-template-columns:68px minmax(0,1fr);align-items:center;gap:14px;padding:7px 0}
+.crawl-card .preset-row .lbl{font-size:12.5px;color:var(--muted,#6b7280);min-width:0}
+.crawl-card .preset-row .cat-row{display:flex;flex-wrap:wrap;gap:6px;padding:0}
+.crawl-card .preset-row .cat-chip{height:28px;padding:0 12px;border-radius:6px;font-size:12px;line-height:28px}
+.crawl-card .limits-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px;margin-top:16px;padding:14px 16px;background:var(--panel-2,#f9fafb);border:1px solid var(--line,#eef0f4);border-radius:10px}
+.crawl-card .limit-item{display:flex;flex-direction:column;gap:6px;min-width:0}
+.crawl-card .limit-item .lbl{font-size:12px;color:var(--muted,#6b7280)}
+.crawl-card .limit-item .input{width:100%;height:32px;padding:0 10px;font-size:13px}
+.crawl-card .crawl-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line,#eef0f4)}
+.crawl-card .crawl-note{font-size:12px;color:var(--muted-2,#9ca3af);line-height:1.5}
+.crawl-card .detail-sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted,#6b7280);cursor:pointer}
+.crawl-card .detail-sw .switch{flex:0 0 auto}
+@media (max-width:1100px){.crawl-card .limits-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.crawl-card .preset-row{grid-template-columns:1fr;gap:6px}.crawl-card .limits-panel{grid-template-columns:1fr}.crawl-card .crawl-foot{flex-direction:column;align-items:flex-start;gap:10px}}
+@media (max-width:1200px){.compact-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:700px){.compact-grid{grid-template-columns:1fr}}
