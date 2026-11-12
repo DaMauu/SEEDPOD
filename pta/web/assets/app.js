@@ -968,6 +968,87 @@
         "</div>";
     }
 
+    /* 右侧详情交给 Vue：保留原有 id 与 data-qact，事件仍由 detail 上的委托处理 */
+    var qdState = window.Vue ? window.Vue.reactive({ item: null }) : null;
+    function qdVNode(it) {
+      var h = window.Vue.h;
+      if (!qdState) return null;
+      if (!it) return h("div", { class: "sites-empty" }, "选一条看发布预览");
+      var st = STATUS[it.status] || ["未知", "gray"];
+      var cur = String(it.targetSite || "");
+      if (!cur) { try { cur = localStorage.getItem("pta.target") || ""; } catch (e) {} }
+      var hostList = (MOCK.sitesList || []).slice().sort(function (a, b) {
+        return String(a.title || a.name).localeCompare(String(b.title || b.name));
+      });
+      var opts = [h("option", { value: "" }, "未选择")];
+      if (cur && !hostList.some(function (x) { return x.name === cur; })) opts.push(h("option", { value: cur }, cur));
+      hostList.forEach(function (x) {
+        opts.push(h("option", { value: x.name, selected: x.name === cur }, x.title || x.name));
+      });
+      var hosts = ["站内", "Pixhost", "Imgbox", "本地图床"];
+      var imgs = [1, 2, 3].map(function (n) {
+        var shot = it.shots ? it.shots[n - 1] : null;
+        return shot
+          ? h("div", { class: "shot has" }, [h("img", { src: shot.url, alt: "" }), h("span", null, String(n))])
+          : h("div", { class: "shot" }, [h("span", null, String(n))]);
+      });
+      function field(label, ctrl) { return h("div", { class: "qd-field" }, [h("span", null, label), ctrl]); }
+      var statusLine = it.status === "publishing"
+        ? h("div", { class: "qd-status warn" }, "正在发布到主站…")
+        : it.pubMsg ? h("div", { class: "qd-status " + (it.status === "failed" ? "bad" : "ok") }, it.pubMsg) : null;
+      return h("div", null, [
+        h("div", { class: "qd-head" }, [
+          h("div", { class: "qd-id" }, [
+            h("div", { class: "qd-title-row" }, [h("h2", null, it.cn || it.title), h("span", { class: "badge " + st[1] }, st[0])]),
+            h("span", { class: "sd-url" }, it.title || "")
+          ]),
+          h("div", { class: "qd-meta" }, [
+            h("span", null, ["来源站", h("b", null, it.site || "—")]),
+            h("span", null, ["分辨率", h("b", null, it.res || "")]),
+            h("span", null, ["大小", h("b", null, it.size || "")]),
+            h("span", null, ["年份", h("b", null, (it.year || "—") + " · " + (it.imdb || ""))])
+          ])
+        ]),
+        h("div", { class: "qd-grid" }, [
+          h("section", { class: "sd-card qd-pubinfo" }, [
+            h("h3", null, "发布信息"),
+            field("目标站", h("select", { class: "input", id: "qd-target" }, opts)),
+            field("标题", h("input", { class: "input", id: "qd-title", value: String(it.title || "").replace(/\s+/g, " ").trim() })),
+            field("副标题", h("input", { class: "input", id: "qd-sub", value: subTitle(it) })),
+            field("图床", h("select", { class: "input", id: "qd-host" }, hosts.map(function (x) {
+              return h("option", { selected: (it.imageHost || "站内") === x }, x);
+            }))),
+            field("匿名发布", h("input", { type: "checkbox", id: "qd-anon", checked: !!it.anonymous })),
+            field("查重", h("b", { class: (it.checkCls || "") + "-t" }, it.check || ""))
+          ]),
+          h("section", { class: "sd-card qd-desc-card" }, [
+            h("h3", null, "简介"),
+            h("textarea", { class: "input sd-note", id: "qd-desc", rows: 3 }, introText(it)),
+            h("div", { class: "qd-tags", id: "qd-tags" }, [h("span", { class: "soft" }, "点「生成草稿」后显示发布标签")])
+          ]),
+          h("section", { class: "sd-card qd-shots" }, [
+            h("h3", null, "截图"),
+            h("div", { class: "shots" }, imgs.concat([h("button", { class: "shot add", id: "qd-addshot" }, "上传")]))
+          ])
+        ]),
+        statusLine,
+        h("div", { class: "qd-actions" }, [
+          h("button", { class: "btn primary slim", "data-qact": it.status === "failed" ? "retry" : "publish" }, it.status === "failed" ? "重试发布" : "通过并发布"),
+          h("button", { class: "btn ghost slim", "data-qact": "reject" }, "驳回"),
+          h("button", { class: "btn ghost slim", "data-qact": "draft" }, "草稿预览"),
+          h("div", { class: "spacer" }),
+          h("input", { class: "input slim", id: "qd-reason", placeholder: "驳回理由（可留空）", style: "width:200px" }),
+          h("button", { class: "btn ghost slim", "data-qact": "skip" }, "跳过")
+        ])
+      ]);
+    }
+
+    if (qdState) {
+      window.Vue.createApp({
+        render: function () { return qdVNode(qdState.item); }
+      }).mount(detail);
+    }
+
     function paint() {
       var filtered = rows();
       var total = serverMode ? state.matched : filtered.length;
@@ -988,7 +1069,8 @@
       if (prevBtn) prevBtn.disabled = state.page <= 1;
       if (nextBtn) nextBtn.disabled = state.page >= pages;
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
-      if (detail) detail.innerHTML = detailHtml(it);
+      if (qdState) qdState.item = it || null;
+      else if (detail) detail.innerHTML = detailHtml(it);
       if (it && it.server && !it.shotsLoaded && it.shotsCount > 0) {
         it.shotsLoaded = true;
         window.__ptaQueue.req("/" + encodeURIComponent(it.id)).then(function (res) {
