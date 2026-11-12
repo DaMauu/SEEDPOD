@@ -4259,6 +4259,8 @@
       if (e.target.checked) { if (state.picks.indexOf(h) < 0) state.picks.push(h); }
       else state.picks = state.picks.filter(function (x) { return x !== h; });
       refreshBulk();
+      /* 复选框由 Vue 渲染，勾选后按 state.picks 重绘一次，保证显示与状态一致 */
+      paint();
     });
 
     var pager = $("#sites-pager");
@@ -4315,35 +4317,64 @@
       step();
     });
 
+    /* 批量设置弹窗同样交给 Vue，字段值与打开时的选中数都在组件状态里 */
     function initBulkModal() {
       var mask = $("#bulk-modal");
       if (!mask) return;
+      var Vue = window.Vue, h = Vue.h;
+      var st = Vue.reactive({ count: 0, ovr: "keep", iv: "keep", daily: "", det: "keep", prio: "keep" });
+      function close() { mask.hidden = true; }
       if (bOpen) bOpen.addEventListener("click", function () {
-        $("#bulk-count").textContent = state.picks.length;
+        st.count = state.picks.length;
+        st.ovr = "keep"; st.iv = "keep"; st.daily = ""; st.det = "keep"; st.prio = "keep";
         mask.hidden = false;
       });
-      $("#bulk-x").addEventListener("click", function () { mask.hidden = true; });
-      $("#bulk-cancel").addEventListener("click", function () { mask.hidden = true; });
-      mask.addEventListener("click", function (e) { if (e.target === mask) mask.hidden = true; });
-      $("#bulk-ok").addEventListener("click", function () {
-        var ovr = $("#bm-ovr").value, iv = $("#bm-iv").value;
-        var daily = $("#bm-daily").value.trim(), det = $("#bm-det").value, prio = $("#bm-prio").value;
+      mask.addEventListener("click", function (e) { if (e.target === mask) close(); });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !mask.hidden) close(); });
+
+      function apply() {
         var list2 = pickedSites();
         list2.forEach(function (x) {
-          if (ovr !== "keep") x.override = ovr === "on";
-          if (iv !== "keep") x.ovInterval = iv;
-          if (daily) x.ovDaily = daily;
-          if (det !== "keep") x.ovDetail = det === "on";
-          if (prio !== "keep") x.priority = prio;
+          if (st.ovr !== "keep") x.override = st.ovr === "on";
+          if (st.iv !== "keep") x.ovInterval = st.iv;
+          if (String(st.daily || "").trim()) x.ovDaily = String(st.daily).trim();
+          if (st.det !== "keep") x.ovDetail = st.det === "on";
+          if (st.prio !== "keep") x.priority = st.prio;
           window.__ptaStore.set(x.name, x);
         });
         window.__ptaStore.save();
-        mask.hidden = true;
+        close();
         state.picks = [];
         refreshBulk();
         paint();
         toast("已应用到 " + list2.length + " 个站点");
-      });
+      }
+
+      function sel(id, model, opts) {
+        return h("select", { class: "select", id: id, value: st[model], onChange: function (e) { st[model] = e.target.value; } },
+          opts.map(function (o) { return h("option", { value: o[0] }, o[1]); }));
+      }
+      window.__ptaBulkModalApp = Vue.createApp({
+        render: function () {
+          return h("div", { class: "modal wide" }, [
+            h("div", { class: "modal-head" }, [h("h2", null, "批量设置"),
+              h("button", { class: "btn ghost slim", id: "bulk-x", type: "button", onClick: close }, "关闭")]),
+            h("p", { class: "modal-sub" }, ["只改已选中的项，其余保持原样。应用到已选中的 ", h("b", { id: "bulk-count" }, String(st.count)), " 个站点。"]),
+            h("div", { class: "modal-scroll" }, [
+              h("div", { class: "sd-field" }, [h("span", null, "覆盖全量抓取"), sel("bm-ovr", "ovr", [["keep", "保持"], ["on", "开启"], ["off", "关闭"]])]),
+              h("div", { class: "sd-field" }, [h("span", null, "抓取间隔"), sel("bm-iv", "iv", [["keep", "保持"], ["抓完全部"], ["1 分钟"], ["5 分钟"], ["15 分钟"], ["1 小时"]])]),
+              h("div", { class: "sd-field" }, [h("span", null, "每站每日上限"),
+                h("input", { class: "input", id: "bm-daily", placeholder: "留空则不改", value: st.daily, onInput: function (e) { st.daily = e.target.value; } })]),
+              h("div", { class: "sd-field" }, [h("span", null, "抓取详情页"), sel("bm-det", "det", [["keep", "保持"], ["on", "开启"], ["off", "关闭"]])]),
+              h("div", { class: "sd-field" }, [h("span", null, "站点优先级"), sel("bm-prio", "prio", [["keep", "保持"], ["high", "高（先抓）"], ["normal", "普通"], ["low", "低（最后抓）"]])])
+            ]),
+            h("div", { class: "modal-foot" }, [
+              h("button", { class: "btn ghost slim", id: "bulk-cancel", type: "button", onClick: close }, "取消"),
+              h("button", { class: "btn primary slim", id: "bulk-ok", type: "button", onClick: apply }, "应用到已选")
+            ])
+          ]);
+        }
+      }).mount(mask);
     }
 
     window.__ptaRefresh = function (host) {
