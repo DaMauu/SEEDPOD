@@ -2579,8 +2579,10 @@
         st.groups.forEach(function (g, gi) {
           var rows = saved[gi];
           if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
+          var byT = {};
+          rows.forEach(function (v) { if (v && v.t) byT[v.t] = v; });
           g.rows.forEach(function (r, ri) {
-            var v = rows[ri] || {};
+            var v = byT[r.t] || rows[ri] || {};
             if (v.v !== undefined) r.v = v.v;
             if (v.on !== undefined) r.on = v.on;
             if (v.sel) r.sel = v.sel;
