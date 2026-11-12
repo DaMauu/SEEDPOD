@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/styles-1-8c796a?style=flat-square" />
   <img src="https://img.shields.io/badge/build-none%20%C2%B7%20single--file-success?style=flat-square" />
   <img src="https://img.shields.io/badge/branch-main-8957e5?style=flat-square" />
+  <a href="https://dsh-plugin.org/plugins/dshplugin/dsh-plugin-hub"><img src="https://dsh-plugin.org/badges/listed.svg" alt="Listed on dsh-plugin.org" /></a>
 </p>
 
 <p align="center">
