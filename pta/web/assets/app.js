@@ -3477,49 +3477,6 @@
       return (sameDay ? "今日 " : p2(t.getMonth() + 1) + "-" + p2(t.getDate()) + " ") + p2(t.getHours()) + ":" + p2(t.getMinutes());
     }
 
-    function itemHtml(s) {
-      var a = archOf(s);
-      var picked = state.picks.indexOf(s.name) >= 0;
-      var loginTxt = s.login === "ok" ? "可用" : s.login === "fail" ? "失效" : "未自检";
-      var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量+定期" : "增量";
-      return '<div class="site-item' + (state.sel === s.name ? " on" : "") + '" data-host="' + escapeHtml(s.name) + '">' +
-        '<input type="checkbox" class="site-pick" data-host="' + escapeHtml(s.name) + '"' + (picked ? " checked" : "") + ">" +
-        '<span class="st ' + dotCls(s) + '"><i></i></span>' +
-        '<span class="si-txt"><b>' + escapeHtml(s.title || s.name) + "</b></span>" +
-        '<span class="si-arch"><em class="chip ' + a[0] + '">' + a[1] + "</em></span>" +
-        '<span class="si-login ' + dotCls(s) + '">' + loginTxt + "</span>" +
-        '<span class="si-preset ' + (presetOf(s.name) ? "on" : "") + '">' + escapeHtml(presetTxt(s.name)) + "</span>" +
-        '<span class="si-mode">' + modeTxt + "</span>" +
-        '<span class="si-last">' + escapeHtml(lastCrawlTxt(s)) + "</span>" +
-      "</div>";
-    }
-
-    function headHtml(s) {
-      var a = archOf(s);
-      var archOpts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
-        return '<option value="' + k + '"' + ((s.arch || "?") === k ? " selected" : "") + ">" + ACH[k][1] + "</option>";
-      }).join("");
-      return '<div class="sd-top">' +
-          '<em class="ava lg ' + a[0] + '">' + escapeHtml(initials(s)) + "</em>" +
-          '<div class="sd-id"><div class="sd-title-row"><h2>' + escapeHtml(s.title || s.name) + "</h2>" +
-            '<span class="pill2 ' + (s.enabled ? "on" : "off") + '">' + (s.enabled ? "启用中" : "已停用") + "</span>" +
-            '<span class="chip ' + (presetOf(s.name) ? "np" : "unk") + '">搜索预设 ' + (presetOf(s.name) ? "已确认" : "未确认") + "</span></div>" +
-            '<span class="sd-selfcheck" id="sd-selfcheck">' + (s.checkAt ? "上次自检 " + escapeHtml(s.checkAt) + " · " + escapeHtml(s.checkMsg || "") : "还没做过连接自检") + "</span></div>" +
-          '<div class="sd-actions">' +
-            '<button class="switch sm' + (s.enabled ? " on" : "") + '" data-switch="enabled" title="启用或停用这个站的抓取"><i></i></button>' +
-            '<button class="btn slim" data-act="crawl-one" title="按搜索预设抓这个站一页，只发一次 GET">抓一页</button>' +
-            '<select class="select slim sd-arch-sel" id="sd-arch" title="站点架构">' + archOpts + "</select>" +
-            '<button class="btn slim" data-act="selfcheck" title="演练：只读本地配置，不访问真实站点">连接自检</button>' +
-            '<button class="btn slim tabbtn' + (state.tab === "overview" ? " active" : "") + '" data-tab="overview">概览</button>' +
-            SET_TABS.map(function (t) {
-              var on = state.tab === "settings" && state.setTab === t[0];
-              return '<button class="btn slim tabbtn' + (on ? " active" : "") + '" data-settab="' + t[0] + '">' + t[1] + "</button>";
-            }).join("") +
-          "</div>" +
-          '<button class="sheet-x" data-act="close-sheet" aria-label="关闭">✕</button>' +
-        "</div>";
-    }
-
     function overviewHtml(s) {
       var cr = s.defCrawl || null;
       var cat = s.defCatalog || null;
@@ -3803,15 +3760,6 @@
       var chips = dv.querySelectorAll(".cat-chip.on:not(.sw-chip)");
       if (chips.length) s.cats = [].map.call(chips, function (c) { return c.getAttribute("data-cat"); });
       return s;
-    }
-
-    function actionsHtml() {
-      return '<div class="sd-form-actions">' +
-        '<button class="btn primary slim" data-act="save">保存设置</button>' +
-        '<button class="btn ghost slim" data-act="reset">恢复默认</button>' +
-        '<div class="spacer"></div>' +
-        '<button class="btn ghost slim danger" data-act="remove">移除站点</button>' +
-      "</div>";
     }
 
     function paintDetail() {
