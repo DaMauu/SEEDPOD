@@ -1662,6 +1662,47 @@
 
   function initNodes() {
     var host = $("#nodes-grid");
+    /* 下载器卡片与分类条交给 Vue：模型在 paint / renderCats 里更新 */
+    var nodesState = window.Vue ? window.Vue.reactive({ rows: [], empty: false, mounted: false }) : null;
+    var catsState = window.Vue ? window.Vue.reactive({ rows: [], mounted: false }) : null;
+    function mountNodes() {
+      if (!nodesState || nodesState.mounted) return;
+      nodesState.mounted = true;
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          if (nodesState.empty) return h("div", { class: "empty" }, "还没有下载器，点右上角「添加下载器」，填 qBittorrent 的地址和账号密码。");
+          return nodesState.rows.map(function (nd) {
+            return h("div", { class: "node-row " + nd.tone, key: nd.i }, [
+              h("div", { class: "nr-name" }, [h("b", null, nd.name), nd.ctrl ? h("span", { class: "nr-tag" }, "控制机") : null]),
+              h("div", { class: "nr-host mono" }, nd.hostline),
+              h("div", { class: "nr-disk" }, [h("span", { class: "nr-cap" }, nd.disk)].concat(nd.total ? [
+                h("div", { class: "nr-bar" }, [h("i", { style: "width:" + nd.pct.toFixed(0) + "%" })]),
+                h("span", { class: "nr-pct" }, "已用 " + nd.pctText)
+              ] : [])),
+              nd.online ? h("span", { class: "badge green" }, "在线") : h("span", { class: "badge red" }, "离线"),
+              h("button", { class: "link-btn nr-set", "data-nset": String(nd.i), type: "button" }, "设置")
+            ]);
+          });
+        }
+      }).mount(host);
+    }
+    function mountCats() {
+      if (!catsState || catsState.mounted) return;
+      var list = $("#nd-cat-list");
+      if (!list) return;
+      catsState.mounted = true;
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          return catsState.rows.map(function (c) {
+            return h("button", { class: "cat-chip" + (c.on ? " on" : ""), type: "button", "data-ndcat": c.name, key: c.name },
+              [c.name, h("i", null, String(c.count))]);
+          });
+        }
+      }).mount(list);
+    }
+
     if (!host) return;
 
     function storage() {
@@ -1781,11 +1822,15 @@
         ? (onlineAll + " / " + nodes.length + " 在线" + (freeAll ? " · 余量 " + fmtBytes(freeAll) : ""))
         : "还没有下载器";
 
+      if (!nodesState) return;
+      mountNodes();
       if (!nodes.length) {
-        host.innerHTML = '<div class="empty">还没有下载器，点右上角「添加下载器」，填 qBittorrent 的地址和账号密码。</div>';
+        nodesState.rows = [];
+        nodesState.empty = true;
         return;
       }
-      host.innerHTML = nodes.map(function (nd, i) {
+      nodesState.empty = false;
+      nodesState.rows = nodes.map(function (nd, i) {
         var isCtrl = nd.role && nd.role.indexOf("编排") === 0;
         var pct = 0;
         if (isCtrl) {
@@ -1795,17 +1840,10 @@
           pct = nd.used / nd.total * 100;
         }
         var tone = !nd.online ? "off" : pct > 85 ? "warn" : "ok";
-        return '<div class="node-row ' + tone + '">' +
-          '<div class="nr-name"><b>' + escapeHtml(nd.name) + "</b>" +
-            (isCtrl ? '<span class="nr-tag">控制机</span>' : "") + "</div>" +
-          '<div class="nr-host mono">' + escapeHtml(nd.host) + "</div>" +
-          '<div class="nr-disk"><span class="nr-cap">' + escapeHtml(nd.disk) + "</span>" +
-            (nd.total ? '<div class="nr-bar"><i style="width:' + Math.max(0, Math.min(100, pct)).toFixed(0) + '%"></i></div>' +
-              '<span class="nr-pct">已用 ' + (pct ? pct.toFixed(0) + "%" : "—") + "</span>" : "") + "</div>" +
-          (nd.online ? '<span class="badge green">在线</span>' : '<span class="badge red">离线</span>') +
-          '<button class="link-btn nr-set" data-nset="' + i + '">设置</button>' +
-        "</div>";
-      }).join("");
+        return { i: i, name: nd.name, hostline: nd.host, ctrl: !!isCtrl, disk: nd.disk, total: !!nd.total,
+          pct: Math.max(0, Math.min(100, pct)), pctText: pct ? pct.toFixed(0) + "%" : "—",
+          tone: tone, online: !!nd.online };
+      });
     }
 
     /* ---- 设置弹窗 ---- */
@@ -1828,16 +1866,17 @@
       var list = $("#nd-cat-list");
       var st = $("#nd-cat-status");
       if (!list) return;
+      if (!catsState) return;
+      mountCats();
       if (!curCats.length) {
-        list.innerHTML = "";
+        catsState.rows = [];
         if (st) st.textContent = "未拉取";
         return;
       }
       if (st) st.textContent = "已拉取 " + curCats.length + " 个";
-      list.innerHTML = curCats.map(function (c) {
-        return '<button type="button" class="cat-chip' + (c.name === curCat ? " on" : "") + '" data-ndcat="' + escapeHtml(c.name) + '">' +
-          escapeHtml(c.name) + "<i>" + (c.count || 0) + "</i></button>";
-      }).join("");
+      catsState.rows = curCats.map(function (c) {
+        return { name: c.name, count: c.count || 0, on: c.name === curCat };
+      });
     }
     function loadCats(node, btn) {
       if (!node || !node.serverId) { toast("先保存下载器，再读它的分类"); return; }
