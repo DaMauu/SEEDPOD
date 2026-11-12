@@ -2726,30 +2726,26 @@
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
       var meta = $("#crawl-dry-meta");
-      if (!box) return;
-      box.hidden = false;
+      if (!planState) return;
+      mountPlan();
+      if (box) box.hidden = false;
       if (meta) meta.textContent = t.state === "done" ? "已完成" : (t.progress || 0) + "%";
-      box.innerHTML = '<div class="dl-dry-head"><b>演练 · ' + escapeHtml(t.siteHost) + "</b>" +
-          '<span class="dl-dry-p">' + (t.progress || 0) + "%</span></div>" +
-        "<ul>" + (t.steps || []).map(function (s) {
-          return '<li class="' + (s.state === "done" ? "done" : "wait") + '"><i></i>' + escapeHtml(s.name) + "</li>";
-        }).join("") + "</ul>" +
-        '<em>只跑本地步骤，不访问任何真实站点</em>' + dryNotes(t);
+      planState.dryOn = true;
+      planState.dryHost = t.siteHost || "";
+      planState.dryProgress = t.progress || 0;
+      planState.dryDone = t.state === "done";
+      planState.drySteps = (t.steps || []).map(function (s2) { return { name: s2.name, state: s2.state }; });
+      planState.dryPlan = "";
+      planState.dryWarns = [];
+      if (t.state === "done" && t.result) {
+        var p = t.result.plan || {};
+        planState.dryPlan = "计划：" + (p.pages || "-") + " 页 · 并发 " + (p.concurrency || "-") +
+          " · 分类 " + (p.catGroups || 0) + " 组 / " + (p.catIds || 0) + " 个 id · 预估 " + (p.estimatedQueries || 0) + " 次查询" +
+          ((p.searchUrls && p.searchUrls.length) ? " · 会请求 " + p.searchUrls.length + " 个地址" : "");
+        planState.dryWarns = (t.result.warnings || []).slice();
+      }
     }
 
-    function dryNotes(t) {
-      if (t.state !== "done" || !t.result) return "";
-      var p = t.result.plan || {};
-      var head = '<div class="dl-dry-note">计划：' + (p.pages || "-") + " 页 · 并发 " + (p.concurrency || "-") +
-        " · 分类 " + (p.catGroups || 0) + " 组 / " + (p.catIds || 0) + " 个 id · 预估 " + (p.estimatedQueries || 0) + " 次查询" +
-        ((p.searchUrls && p.searchUrls.length) ? " · 会请求 " + p.searchUrls.length + " 个地址" : "") +
-        (nc && nc.categoryId ? " · 下次抓分类 " + escapeHtml(nc.categoryId) + " 第 " + nc.page + " 页（今日已 " + nc.runsToday + " 次）" : "") +
-        "</div>";
-      var warns = (t.result.warnings || []).map(function (w) {
-        return "<li>" + escapeHtml(w) + "</li>";
-      }).join("");
-      return head + (warns ? '<ul class="dl-dry-warn">' + warns + "</ul>" : "");
-    }
     var dryRunBtn = $("#crawl-dry-run");
     if (dryRunBtn) dryRunBtn.addEventListener("click", function () {
       var host0 = (crawlSiteSel && crawlSiteSel.value) || target || "";
@@ -2867,7 +2863,8 @@
     var planBtn = $("#crawl-plan-btn");
     var planNav = { host: "", idx: 0, total: 0 };
     /* 看地址的结果框由 Vue 渲染，翻类/抓这一类仍走 document 上的委托 */
-    var planState = window.Vue ? window.Vue.reactive({ on: false, host: "", label: "", url: "", gap: 0, dailyMax: 0, delay: 0, idx: 0, total: 0, today: "今日情况读取中…" }) : null;
+    var planState = window.Vue ? window.Vue.reactive({ on: false, host: "", label: "", url: "", gap: 0, dailyMax: 0, delay: 0, idx: 0, total: 0, today: "今日情况读取中…",
+      dryOn: false, dryHost: "", dryProgress: 0, dryDone: false, drySteps: [], dryPlan: "", dryWarns: [] }) : null;
     var planMounted = false;
     function mountPlan() {
       if (!planState || planMounted) return;
@@ -2878,6 +2875,17 @@
       window.Vue.createApp({
         render: function () {
           var st = planState;
+          if (st.dryOn) {
+            return h("div", { class: "dl-dry" }, [
+              h("div", { class: "dl-dry-head" }, [h("b", null, "演练 · " + st.dryHost), h("span", { class: "dl-dry-p" }, st.dryProgress + "%")]),
+              h("ul", null, st.drySteps.map(function (s2, i) {
+                return h("li", { class: s2.state === "done" ? "done" : "wait", key: i }, [h("i"), s2.name]);
+              })),
+              h("em", null, "只跑本地步骤，不访问任何真实站点"),
+              st.dryDone && st.dryPlan ? h("div", { class: "dl-dry-note" }, st.dryPlan) : null,
+              st.dryWarns.length ? h("ul", { class: "dl-dry-warn" }, st.dryWarns.map(function (w, i) { return h("li", { key: i }, w); })) : null
+            ]);
+          }
           return h("div", { class: "dl-dry" }, [
             h("div", { class: "dl-dry-head" }, [h("b", null, "下一抓 · " + st.host), h("span", { class: "dl-dry-p" }, "分类 " + st.label)]),
             h("div", { class: "dl-dry-note", style: "word-break:break-all" }, "GET " + st.url),
@@ -2914,6 +2922,7 @@
       planState.total = planNav.total;
       planState.today = "今日情况读取中…";
       planState.on = true;
+      planState.dryOn = false;
       if (box) box.hidden = false;
       fetch("/api/crawl/status?host=" + encodeURIComponent(p.host || ""), { credentials: "same-origin" })
         .then(function (r) { return r.json(); }).then(function (k) {
