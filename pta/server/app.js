@@ -615,25 +615,34 @@ async function dupeCheckItems(host, ids, limit) {
 }
 
 /* ---------- 第二步筛选：从词条库挑出可发的，送进待审核 ---------- */
-/* 筛选参数优先用请求里的，其次用面板「筛选条件」那一组配置。
-   flow 里只存了每行的 {v,on,sel}，没有标题，所以按 data.js 里的行顺序取：
-   0 分辨率要求 / 1 体积范围 / 2 最大体积 / 3 地区版本 / 4 必须有简介 / 5 必须带中字 */
+/* 筛选参数优先用请求里的，其次用面板流程页里存的条件。
+   sets 里每行带 t（标题）时按标题取值；老数据没有 t，回落到 dedupe[0] 的行序。 */
 function flowScreenRules() {
   const flow = readFlow();
   const rx = (flow && flow.rx) || {};
-  const rows = (flow && flow.sets && Array.isArray(flow.sets.dedupe) && Array.isArray(flow.sets.dedupe[0]))
-    ? flow.sets.dedupe[0] : [];
-  const val = function (i) { return rows[i] ? String(rows[i].v || '') : ''; };
-  const on = function (i) { return !!(rows[i] && rows[i].on); };
+  const sets = (flow && flow.sets) || {};
+  const allRows = [];
+  ['dedupe', 'pub'].forEach(function (k) {
+    const arr = Array.isArray(sets[k]) ? sets[k] : [];
+    arr.forEach(function (g) { if (Array.isArray(g)) g.forEach(function (r) { if (r) allRows.push(r); }); });
+  });
+  const byTitle = {};
+  allRows.forEach(function (r) { if (r && r.t && byTitle[r.t] === undefined) byTitle[r.t] = r; });
+  const legacy = (Array.isArray(sets.dedupe) && Array.isArray(sets.dedupe[0])) ? sets.dedupe[0] : [];
+  const pick = function (t, i) {
+    if (byTitle[t]) return byTitle[t];
+    if (legacy[i] && !legacy[i].t) return legacy[i];
+    return {};
+  };
   const out = { res: [], minSizeGB: 0, maxSizeGB: 0, requireChinese: false, deny: rx.deny || '', allow: rx.allow || '' };
-  const rv = val(0);
+  const rv = String(pick('分辨率要求', 0).v || '');
   if (/2160|4k/i.test(rv)) out.res = ['2160p'];
   else if (/1080/.test(rv)) out.res = ['1080p', '2160p'];
-  const lo = /([\d.]+)\s*GB/.exec(val(1));
+  const lo = /([\d.]+)\s*GB/.exec(String(pick('体积范围', 1).v || ''));
   if (lo) out.minSizeGB = Number(lo[1]) || 0;
-  const hi = /([\d.]+)\s*GB/.exec(val(2));
+  const hi = /([\d.]+)\s*GB/.exec(String(pick('最大体积', 2).v || ''));
   if (hi) out.maxSizeGB = Number(hi[1]) || 0;
-  if (on(5)) out.requireChinese = true;
+  out.requireChinese = !!pick('必须带中字', 5).on;
   return out;
 }
 

@@ -2249,7 +2249,7 @@
     Object.keys(RULE_SETS).forEach(function (k) {
       if (!RULE_SETS[k] || !RULE_SETS[k].length) return;   /* 搜索预设已由 Vue 卡片单独保存，这里不覆盖 */
       data[k] = RULE_SETS[k].map(function (g) {
-        return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; });
+        return g.rows.map(function (r) { return { t: r.t, v: r.v, on: r.on, sel: r.sel }; });
       });
     });
     try { localStorage.setItem(FLOW_KEY, JSON.stringify(data)); } catch (e) {}
@@ -2366,7 +2366,7 @@
         }).then(function (r) { return r.json(); }),
         fetch("api/flow", {
           method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ sets: { fetch: st.groups.map(function (g) { return (g.rows || []).map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) } })
+          body: JSON.stringify({ sets: { fetch: st.groups.map(function (g) { return (g.rows || []).map(function (r) { return { t: r.t, v: r.v, on: r.on, sel: r.sel }; }); }) } })
         }).then(function (r) { return r.json(); })
       ]).then(function (a) {
         st.saving = false;
@@ -2385,7 +2385,7 @@
       ]);
     }
     function presetRow(r) {
-      return h("div", { class: "set-field", key: r.t }, [
+      return h("div", { class: "set-field preset-field", key: r.t }, [
         h("div", { class: "lbl" }, [h("span", null, r.t)]),
         h("div", { class: "ctl" }, [h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
           var on = (r.sel || []).indexOf(c) >= 0;
@@ -2417,7 +2417,6 @@
           ]),
           h("div", { class: "drawer-body" }, [
             h("div", { class: "set-fields" }, (g.rows || []).map(presetRow)),
-            h("div", { class: "crawl-note" }, st.note),
             h("div", { class: "set-fields" }, [h("div", { class: "compact-grid" }, [
               limitRow("请求间隔", "两次请求之间至少隔这么多秒", "interval", 8, 600),
               limitRow("窗口分钟", "执行一次的时间窗口，单位分钟", "windowMinutes", 1, 1440),
@@ -2458,7 +2457,7 @@
     (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
 
     var src = JSON.parse(JSON.stringify(window.PTA_RULES.dedupe || []));
-    var st = Vue.reactive({ groups: src, rx: { deny: "", allow: "" }, sample: "", out: "未测试", autoDupe: false, saving: false });
+    var st = Vue.reactive({ groups: src, autoDupe: false, saving: false });
 
     function load() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
@@ -2470,7 +2469,6 @@
           if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
           g.rows.forEach(function (r, ri) { var v = rows[ri] || {}; if (v.v !== undefined) r.v = v.v; if (v.on !== undefined) r.on = v.on; if (v.sel) r.sel = v.sel; });
         });
-        if (d.rx) { st.rx.deny = d.rx.deny || ""; st.rx.allow = d.rx.allow || ""; }
       }).catch(function () {});
       fetch("api/config", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
         if (j && j.ok && j.data && j.data.user) st.autoDupe = !!j.data.user.autoDupe;
@@ -2483,8 +2481,7 @@
         fetch("api/flow", {
           method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            sets: { dedupe: st.groups.map(function (g) { return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) },
-            rx: { deny: st.rx.deny, allow: st.rx.allow }
+            sets: { dedupe: st.groups.map(function (g) { return g.rows.map(function (r) { return { t: r.t, v: r.v, on: r.on, sel: r.sel }; }); }) }
           })
         }).then(function (r) { return r.json(); }),
         fetch("api/config/user", {
@@ -2496,15 +2493,6 @@
         var bad = a.filter(function (j) { return !j || !j.ok; })[0];
         toast(bad ? ((bad && bad.error && bad.error.message) || "服务端拒绝了这次保存") : "查重设置已保存");
       }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
-    }
-    function testRx() {
-      function hit(src, text) {
-        if (!src) return false;
-        try { return new RegExp(src, "i").test(text); } catch (e) { return text.toLowerCase().indexOf(String(src).toLowerCase()) >= 0; }
-      }
-      var t = String(st.sample || "");
-      if (!t) { st.out = "先粘一条标题"; return; }
-      st.out = hit(st.rx.deny, t) ? "排除命中，不转载" : (String(st.rx.allow || "").trim() && !hit(st.rx.allow, t) ? "白名单未命中，不转载" : "通过，可以转载");
     }
     function ctl(r) {
       if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
@@ -2522,7 +2510,7 @@
           h("button", { class: "btn ghost slim", type: "button", onClick: testRx }, "测试"),
           h("em", null, st.out)
         ]);
-        return h("span", { class: "soft" }, "—");
+        return h("div", { innerHTML: r.html || "" });
       }
       return h("input", { class: "input", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
     }
@@ -2556,7 +2544,7 @@
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
               h("div", { class: "drawer-title" }, "查重"),
-              h("div", { class: "drawer-desc" }, "怎么判定可发、关键词怎么排除、词条数据怎么留，都在这一张卡里。")
+              h("div", { class: "drawer-desc" }, "只看这条是不是已经有了：先比 infohash，再比标题、年份和体积；不决定发不发。")
             ]),
             h("div", { class: "drawer-head-right" }, [
               h("span", { class: "drawer-meta" }, st.autoDupe ? "自动查重已开" : "自动查重已关"),
@@ -2577,7 +2565,7 @@
     var box = document.createElement("div");
     var anchor = host.querySelector('.drawer[data-name="发布"]');
     (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
-    var st = Vue.reactive({ groups: JSON.parse(JSON.stringify(window.PTA_RULES.pub || [])), saving: false, target: "" });
+    var st = Vue.reactive({ groups: JSON.parse(JSON.stringify(window.PTA_RULES.pub || [])), rx: { deny: "", allow: "" }, sample: "", out: "未测试", saving: false, target: "" });
 
     function load() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
@@ -2595,14 +2583,24 @@
             if (v.sel) r.sel = v.sel;
           });
         });
+        if (d.rx) { st.rx.deny = d.rx.deny || ""; st.rx.allow = d.rx.allow || ""; }
       }).catch(function () {});
+    }
+    function testRx() {
+      function hit(src, text) {
+        if (!src) return false;
+        try { return new RegExp(src, "i").test(text); } catch (e) { return text.toLowerCase().indexOf(String(src).toLowerCase()) >= 0; }
+      }
+      var t = String(st.sample || "");
+      if (!t) { st.out = "先粘一条标题"; return; }
+      st.out = hit(st.rx.deny, t) ? "排除命中，不转载" : (String(st.rx.allow || "").trim() && !hit(st.rx.allow, t) ? "白名单未命中，不转载" : "通过，可以转载");
     }
     function save() {
       if (st.saving) return;
       st.saving = true;
       fetch("api/flow", {
         method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sets: { pub: st.groups.map(function (g) { return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) } })
+        body: JSON.stringify({ sets: { pub: st.groups.map(function (g) { return g.rows.map(function (r) { return { t: r.t, v: r.v, on: r.on, sel: r.sel }; }); }) }, rx: { deny: st.rx.deny, allow: st.rx.allow } })
       }).then(function (r) { return r.json(); }).then(function (j) {
         st.saving = false;
         toast(j && j.ok ? "发布设置已保存" : ((j && j.error && j.error.message) || "服务端拒绝了这次保存"));
@@ -2641,7 +2639,7 @@
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
               h("div", { class: "drawer-title" }, "发布"),
-              h("div", { class: "drawer-desc" }, "目标站、标题副标题、简介图床、发布字段与失败兜底；只管怎么发，不再做排除判断。")
+              h("div", { class: "drawer-desc" }, "目标站、标题副标题、简介图床、发布字段；发布前的条件、标题匹配与失败兜底也在这里。")
             ]),
             h("div", { class: "drawer-head-right" }, [
               h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")

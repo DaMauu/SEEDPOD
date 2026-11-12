@@ -85,119 +85,48 @@
   ],
   "dedupe": [
     {
-      "name": "筛选条件",
-      "sum": "按条件挑出可发的词条",
+      "name": "查重范围",
+      "sum": "比什么、比到哪一层",
       "rows": [
         {
-          "t": "分辨率要求",
-          "type": "select",
-          "v": "1080p 及以上",
-          "opts": [
-            "不限",
-            "1080p 及以上",
-            "2160p 及以上"
-          ],
-          "hint": "抓的时候全抓，发之前按这个卡"
+          "t": "本地词条",
+          "type": "switch",
+          "on": true,
+          "hint": "已有、已跳过、已发布的词条都算重复"
         },
         {
-          "t": "体积范围",
+          "t": "待审核队列",
+          "type": "switch",
+          "on": true,
+          "hint": "队列里还没发的也算，避免同时发两条"
+        },
+        {
+          "t": "目标站搜索",
+          "type": "switch",
+          "on": false,
+          "hint": "开启后手动查重会请求一次目标站，受窗口额度限制"
+        },
+        {
+          "t": "判定强度",
           "type": "select",
-          "v": "5 GB 起",
+          "v": "infohash 优先，其次标题+年份+体积",
           "opts": [
-            "不限",
-            "5 GB 起",
-            "10 GB 起",
-            "20 GB 起"
+            "infohash 优先，其次标题+年份+体积",
+            "只比 infohash",
+            "标题相似也提示"
           ]
         },
         {
-          "t": "最大体积",
-          "type": "select",
-          "v": "不限",
-          "opts": [
-            "不限",
-            "50 GB",
-            "80 GB",
-            "120 GB"
-          ]
-        },
-        {
-          "t": "地区版本",
-          "type": "switch",
-          "on": true,
-          "hint": "识别出 US/HKG/TWN 这类版本，写进副标题的地区段"
-        },
-        {
-          "t": "必须有简介",
-          "type": "switch",
-          "on": true,
-          "hint": "抓不到中文简介就不自动发"
-        },
-        {
-          "t": "必须带中字",
-          "type": "switch",
-          "on": true,
-          "hint": "成品没有中文字幕就不发"
-        },
-        {
-          "t": "BDInfo",
-          "type": "select",
-          "v": "必须存在且校验通过",
-          "opts": [
-            "必须存在且校验通过",
-            "有就行，不校验",
-            "不要求"
-          ]
-        },
-        {
-          "t": "截图至少几张",
+          "t": "体积容差",
           "type": "text",
-          "v": "3",
-          "hint": "不够就不自动发"
-        },
-        {
-          "t": "下载完成再发布",
-          "type": "switch",
-          "on": true,
-          "hint": "种子还没下完就发，容易被删"
-        },
-        {
-          "t": "种子完整性校验",
-          "type": "switch",
-          "on": true,
-          "hint": "qB 校验通过才算完成"
-        },
-        {
-          "t": "不满足时",
-          "type": "select",
-          "v": "转待确认",
-          "opts": [
-            "转待确认",
-            "直接跳过"
-          ]
-        },
-        {
-          "t": "排除匹配",
-          "type": "custom",
-          "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
-          "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
-        },
-        {
-          "t": "白名单匹配",
-          "type": "custom",
-          "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
-          "hint": "和排除同时命中时，排除优先"
-        },
-        {
-          "t": "测试匹配",
-          "type": "custom",
-          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
+          "v": "2",
+          "hint": "体积差在这个百分比内算同一条"
         }
       ]
     },
     {
-      "name": "词条数据",
-      "sum": "查重结论有效期与归档",
+      "name": "有效期与失败",
+      "sum": "查过多久算过期",
       "rows": [
         {
           "t": "查重有效期",
@@ -226,24 +155,6 @@
             "7 天",
             "30 天",
             "永久"
-          ]
-        },
-        {
-          "t": "目标站已有原盘",
-          "type": "select",
-          "v": "跳过不收",
-          "opts": [
-            "跳过不收",
-            "标重复后仍收"
-          ]
-        },
-        {
-          "t": "目标站只有 DIY",
-          "type": "select",
-          "v": "可发（标复核）",
-          "opts": [
-            "可发（标复核）",
-            "跳过"
           ]
         },
         {
@@ -655,6 +566,153 @@
             "固定 C",
             "固定 D",
             "固定 E"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "发布条件",
+      "sum": "发之前按这些卡",
+      "rows": [
+        {
+          "t": "分辨率要求",
+          "type": "select",
+          "v": "1080p 及以上",
+          "opts": [
+            "不限",
+            "1080p 及以上",
+            "2160p 及以上"
+          ],
+          "hint": "抓的时候全抓，发之前按这个卡"
+        },
+        {
+          "t": "体积范围",
+          "type": "select",
+          "v": "5 GB 起",
+          "opts": [
+            "不限",
+            "5 GB 起",
+            "10 GB 起",
+            "20 GB 起"
+          ]
+        },
+        {
+          "t": "最大体积",
+          "type": "select",
+          "v": "不限",
+          "opts": [
+            "不限",
+            "50 GB",
+            "80 GB",
+            "120 GB"
+          ]
+        },
+        {
+          "t": "地区版本",
+          "type": "switch",
+          "on": true,
+          "hint": "识别出 US/HKG/TWN 这类版本，写进副标题的地区段"
+        },
+        {
+          "t": "必须有简介",
+          "type": "switch",
+          "on": true,
+          "hint": "抓不到中文简介就不自动发"
+        },
+        {
+          "t": "必须带中字",
+          "type": "switch",
+          "on": true,
+          "hint": "成品没有中文字幕就不发"
+        },
+        {
+          "t": "BDInfo",
+          "type": "select",
+          "v": "必须存在且校验通过",
+          "opts": [
+            "必须存在且校验通过",
+            "有就行，不校验",
+            "不要求"
+          ]
+        },
+        {
+          "t": "截图至少几张",
+          "type": "text",
+          "v": "3",
+          "hint": "不够就不自动发"
+        }
+      ]
+    },
+    {
+      "name": "发布时机",
+      "sum": "下完、校验过才发",
+      "rows": [
+        {
+          "t": "下载完成再发布",
+          "type": "switch",
+          "on": true,
+          "hint": "种子还没下完就发，容易被删"
+        },
+        {
+          "t": "种子完整性校验",
+          "type": "switch",
+          "on": true,
+          "hint": "qB 校验通过才算完成"
+        },
+        {
+          "t": "不满足时",
+          "type": "select",
+          "v": "转待确认",
+          "opts": [
+            "转待确认",
+            "直接跳过"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "标题匹配",
+      "sum": "正则决定转不转",
+      "rows": [
+        {
+          "t": "排除匹配",
+          "type": "custom",
+          "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
+          "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
+        },
+        {
+          "t": "白名单匹配",
+          "type": "custom",
+          "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
+          "hint": "和排除同时命中时，排除优先"
+        },
+        {
+          "t": "测试匹配",
+          "type": "custom",
+          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
+        }
+      ]
+    },
+    {
+      "name": "目标站状态",
+      "sum": "目标站已有什么",
+      "rows": [
+        {
+          "t": "目标站已有原盘",
+          "type": "select",
+          "v": "跳过不收",
+          "opts": [
+            "跳过不收",
+            "标重复后仍收"
+          ]
+        },
+        {
+          "t": "目标站只有 DIY",
+          "type": "select",
+          "v": "可发（标复核）",
+          "opts": [
+            "可发（标复核）",
+            "跳过"
           ]
         }
       ]

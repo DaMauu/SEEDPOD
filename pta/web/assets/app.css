@@ -2359,7 +2359,10 @@ body::after {
 .crawl-card .cat-row{padding:0;gap:4px}
 .crawl-card .cat-chip{padding:2px 8px;border-radius:5px;font-size:11px;line-height:1.4}
 .crawl-card .ctl .input{width:88px;height:26px;font-size:12px;padding:0 6px}
-.crawl-card .crawl-note{margin:1px 0 1px;padding:0;font-size:10.5px;line-height:1.45}
+.crawl-card .preset-field{justify-content:flex-start}
+.crawl-card .preset-field .lbl{flex:0 0 64px}
+.crawl-card .preset-field .ctl{flex:1 1 auto;min-width:0}
+.crawl-card .preset-field .ctl .cat-row{justify-content:flex-start}
 .crawl-card .set-field:has(.switch){grid-column:1 / -1;padding-top:2px}
 @media (max-width:1200px){.compact-grid{grid-template-columns:1fr 1fr}.crawl-card .set-field:has(.switch){grid-column:auto}}
 @media (max-width:700px){.compact-grid{grid-template-columns:1fr}}
