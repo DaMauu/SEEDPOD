@@ -2371,17 +2371,17 @@ body::after {
 @media (max-width:700px){.compact-grid{grid-template-columns:1fr}}
 
 /* 发布卡：每组整行，字段标签在上、控件在下，避免标签被挤成竖排 */
-.flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:10px;padding:13px 16px 15px;margin:0 0 12px}
-.flow-group .flow-ttl{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 4px}
-.flow-group .set-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 22px}
-.flow-group .set-field{display:block;padding:8px 0;border-bottom:0;min-width:0}
-.flow-group .set-field .lbl{margin-bottom:5px}
+.flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
+.flow-group .flow-ttl{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 1px}
+.flow-group .set-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 18px}
+.flow-group .set-field{display:block;padding:5px 0;border-bottom:0;min-width:0}
+.flow-group .set-field .lbl{margin-bottom:3px}
 .flow-group .set-field .lbl span{font-size:12.5px;line-height:1.35}
 .flow-group .set-field .ctl,
 .flow-group .set-field .ctl > .input,
 .flow-group .set-field .ctl > .select{width:100%}
 .dedupe-card .drawer-body,
-.drawer-body.compact{padding:12px 20px 14px}
+.drawer-body.compact{padding:8px 16px 10px}
 @media (max-width:700px){.flow-group .set-fields{grid-template-columns:1fr}}
 /* 本地演练外壳：没内容时不要撑出一块空白 */
 .crawl-dry .drawer-body:empty{display:none}
