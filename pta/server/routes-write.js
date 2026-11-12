@@ -142,7 +142,7 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false };
+  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, detail: false };
   const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] };
   function readCfg() {
     const row = one("SELECT v FROM meta WHERE k = 'config'");
@@ -162,6 +162,7 @@ module.exports = function (app, ctx) {
     if (b.autoDupe !== undefined) next.autoDupe = !!b.autoDupe;
     if (b.realCrawl !== undefined) next.realCrawl = !!b.realCrawl;
     if (b.realPublish !== undefined) next.realPublish = !!b.realPublish;
+    if (b.detail !== undefined) next.detail = !!b.detail;
     ['interval', 'windowMinutes', 'maxPerWindow', 'breaker'].forEach(function (k) { if (b[k] !== undefined) next[k] = Number(b[k]); });
     db.prepare("INSERT INTO meta(k, v) VALUES('config', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(next));
     return ok(reply, next);

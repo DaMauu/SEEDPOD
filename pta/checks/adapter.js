@@ -209,6 +209,25 @@ check('判同一个种子：标题/年份/分辨率/体积/infohash', () => {
   need(match.normTitle('【某站】Some Movie 2020 1080p WEB-DL DDP5.1-GRP') === 'some movie 2020', '标题归一把站点前缀/编码/组名没清干净：' + match.normTitle('【某站】Some Movie 2020 1080p WEB-DL DDP5.1-GRP'));
 });
 
+check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const dhtml = fs.readFileSync(path.join(ROOT, 'fixtures', 'nexusphp-details.html'), 'utf8');
+  const d = adapters.parseDetail(dhtml);
+  need(d.sizeText === '22.10 GB', '大小文本不对：' + d.sizeText);
+  need(Math.round(d.sizeBytes / 1024 / 1024 / 1024) === 22, '大小字节不对：' + d.sizeBytes);
+  need(d.category === '电 影' || d.category === '电影', '分类不对：' + d.category);
+  need(/Blu-ray/.test(d.medium), '媒介不对：' + d.medium);
+  need(/DTS-HD/.test(d.tags), '标签不对：' + d.tags);
+  need(d.subtitle === '中英字幕', '副标题不对：' + d.subtitle);
+  need(d.infohash === 'abcdef0123456789abcdef0123456789abcdef01', 'infohash 没转小写：' + d.infohash);
+  need(/夹具/.test(d.descr) && /DTS-HD/.test(d.descr), '简介不对：' + d.descr);
+  need(/\/p\/1001\.jpg/.test(d.poster), '海报不对：' + d.poster);
+  need(d.fullDisc === true, '原盘判定不对');
+  need(/Fixture Movie/.test(d.pageTitle), '页面标题不对：' + d.pageTitle);
+  const empty = adapters.parseDetail('<html><body><p>nothing</p></body></html>');
+  need(empty.sizeBytes === undefined && empty.medium === undefined, '空页面不该编出字段：' + JSON.stringify(empty));
+});
+
 check('翻页地址拼接', () => {
   const adapters = require(path.join(ROOT, 'server', 'adapters'));
   const base = 'https://x.example/torrents.php?search=&cat=401';

@@ -1,8 +1,17 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-11 18:00（当前部署 19i / 全部检查通过）
+最后更新：2026-11-13 02:05（当前部署 v0.7.38 / adapter 19 通过 / 线上探活正常）
 
 先读 [AGENTS.md](AGENTS.md)；成熟工具的定义格式与可借鉴点见 [docs/PRIOR-ART.md](docs/PRIOR-ART.md)：铁律、必须一起发的文件、发版命令、故障对照都在那里，聊天被压缩后以它为准。
+
+## 2026-11-13 详情页抓取（v0.7.38）
+
+- 新增 `pta/server/adapters/details.js`：纯函数解析详情页（rowhead 表格优先，dt/dd 与全文正则兜底），取大小/字节数/分类/媒介/标签/副标题/infohash/发布者/简介/海报/原盘标记/页面标题；认不出留空不猜。
+- `crawl.js`：列表入库前按开关抓详情，最多 10 条；每条都计入窗口次数与最小间隔，预算 = 窗口上限 − 已用 − 列表那一次；返回体带 detail {want,tried,ok,failed,stopped}，失败只写 detailNote 不中断。
+- 开关存服务端 `config.detail`（默认 false），站点覆盖 ovDetail 优先；`/api/crawl/run` 支持 detail、detailLimit；前端开关点击即 PATCH 并 toast。
+- 夹具 `pta/fixtures/nexusphp-details.html` + adapter 检查 19 项全绿；真抓取仍默认关，本次未向任何真实站发请求。
+- 部署 v0.7.38 到 /opt/seedpod，health 正常；实测开关 false→true 落库、复原 false，页面无 JS 报错。
+- 待做：详情页解析只按 NexusPHP 版式验证过夹具，真实站点版式差异要等开关打开后再抽样确认。
 
 ## 2026-11-11 下午第二波（18n → 18z）
 

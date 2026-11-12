@@ -36,7 +36,7 @@ module.exports = function (app, ctx) {
     if (!dryRun) {
       if (!ctx.allowReal('realCrawl')) return bad(reply, 'REAL_CRAWL_DISABLED', '真抓取还没打开：把配置 realCrawl 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
       if (!host) return bad(reply, 'BAD_REQUEST', '要指定 siteHost');
-      const r = await ctx.crawl.crawlOnce(host, { catIdx: b.catIdx, page: b.page, limit: b.limit });
+      const r = await ctx.crawl.crawlOnce(host, { catIdx: b.catIdx, page: b.page, limit: b.limit, detail: b.detail, detailLimit: b.detailLimit });
       if (r && r.err) {
         const http = (r.err.code === 'TOO_SOON' || r.err.code === 'DAILY_LIMIT') ? 429 : 502;
         return bad(reply, r.err.code, r.err.message, http);

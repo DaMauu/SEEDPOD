@@ -9,6 +9,7 @@ const adapters = require('./adapters');
 const BUSY = new Set();
 
 function nowISO() { return new Date().toISOString(); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
 
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
@@ -125,8 +126,57 @@ function makeCrawl(ctx) {
         seeders: Number(r.seeders) || 0, marks: {}, addedAt: r.addedAt || ''
       };
     }).filter(function (x) { return x.title && x.siteId; });
+    /* 抓详情页：受开关与窗口预算双重约束，最多 10 条，每条都算一次请求 */
+    let detail = { want: false, tried: 0, ok: 0, failed: 0, stopped: '' };
+    let lastReqAt = nowMs;
+    if (items.length) {
+      const siteRow = one('SELECT data FROM sites WHERE host = ?', host);
+      const site = siteRow ? (jparse(siteRow.data) || {}) : {};
+      let want = !!(cfg() && cfg().detail);
+      if (opts.detail === true) want = true;
+      else if (opts.detail === false) want = false;
+      if (site.override) want = !!site.ovDetail;
+      detail.want = want;
+      if (want) {
+        const cap = Math.max(1, Math.min(10, Number(opts.detailLimit) || 10));
+        const budget = Math.max(0, lim.maxPerWindow - rec.times.length - 1);
+        const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget));
+        if (!picks.length) detail.stopped = 'WINDOW_LIMIT';
+        for (const it of picks) {
+          const elapsed = Date.now() - (rec.lastAt || 0);
+          if (rec.lastAt && elapsed < lim.minGapMs) await sleep(lim.minGapMs - elapsed);
+          if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
+          detail.tried++;
+          try {
+            const res2 = await fetch(it.detailsUrl, {
+              headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+              redirect: 'manual', signal: AbortSignal.timeout(15000)
+            });
+            rec.lastAt = Date.now(); lastReqAt = rec.lastAt;
+            rec.times.push(rec.lastAt);
+            if (res2.status !== 200) { detail.failed++; it.detailNote = 'HTTP ' + res2.status; continue; }
+            const dh = await res2.text().catch(function () { return ''; });
+            const d = adapters.parseDetail(dh);
+            if (d.sizeBytes) { it.sizeBytes = d.sizeBytes; it.size = d.sizeText || it.size; }
+            if (d.category && !it.catName) it.catName = d.category;
+            if (d.medium) it.medium = d.medium;
+            if (d.subtitle) it.subtitle = d.subtitle;
+            if (d.infohash && !it.infohash) it.infohash = d.infohash;
+            if (d.descr) it.descr = d.descr;
+            if (d.poster) it.poster = d.poster;
+            if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
+            it.detailAt = nowISO();
+            detail.ok++;
+          } catch (e) {
+            detail.failed++;
+            it.detailNote = '详情请求失败';
+            rec.lastAt = Date.now(); lastReqAt = rec.lastAt;
+          }
+        }
+      }
+    }
     const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0 };
-    rec.lastAt = nowMs;
+    rec.lastAt = lastReqAt;
     rec.times = (rec.times || []).filter(function (t) { return t > nowMs - lim.windowMs; });
     rec.times.push(nowMs);
     rec.count = rec.times.length;
@@ -138,7 +188,7 @@ function makeCrawl(ctx) {
     saveState(state);
     return { host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
       categoryId: ids[0] || '', categories: catMap.length, added: out.added, updated: out.updated, skipped: out.skipped,
-      nextPage: rows.length ? page + 1 : 1, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs };
+      nextPage: rows.length ? page + 1 : 1, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };
   }
 
   return { crawlOnce: crawlOnce };

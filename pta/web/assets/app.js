@@ -2341,6 +2341,7 @@
         if (!j || !j.ok || !j.data || !j.data.user) return;
         var u = j.data.user;
         ["interval", "windowMinutes", "maxPerWindow", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
+        if (u.detail != null) st.detail = !!u.detail;
         syncNote();
       }).catch(function () {});
       fetch("api/flow", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
@@ -2361,7 +2362,7 @@
       Promise.all([
         fetch("api/config/user", {
           method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ interval: st.interval, windowMinutes: st.windowMinutes, maxPerWindow: st.maxPerWindow, breaker: st.breaker })
+          body: JSON.stringify({ interval: st.interval, windowMinutes: st.windowMinutes, maxPerWindow: st.maxPerWindow, breaker: st.breaker, detail: !!st.detail })
         }).then(function (r) { return r.json(); }),
         fetch("api/flow", {
           method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
@@ -2427,7 +2428,16 @@
                 h("div", { class: "lbl" }, [h("span", null, "抓详情页"), h("i", null, "每条多一次请求，先把详情取回来，后面查重和发布用本地数据对比")]),
                 h("div", { class: "ctl" }, [h("button", {
                   class: "switch" + (st.detail ? " on" : ""), type: "button",
-                  onClick: function () { st.detail = !st.detail; try { localStorage.setItem("pta.detail", st.detail ? "1" : "0"); } catch (e) {} }
+                  onClick: function () {
+                    st.detail = !st.detail;
+                    try { localStorage.setItem("pta.detail", st.detail ? "1" : "0"); } catch (e) {}
+                    fetch("api/config/user", {
+                      method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
+                      body: JSON.stringify({ detail: !!st.detail })
+                    }).then(function (r) { return r.json(); }).then(function (j) {
+                      toast(j && j.ok ? (st.detail ? "已开启抓详情页：每条多一次请求" : "已关闭抓详情页") : "开关没存上");
+                    }).catch(function () { toast("开关没存上"); });
+                  }
                 }, [h("i")])])
               ])
             ])])

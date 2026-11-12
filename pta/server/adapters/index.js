@@ -4,6 +4,7 @@ const nexusphp = require('./nexusphp');
 const generic = require('./generic');
 const unit3d = require('./unit3d');
 const gazelle = require('./gazelle');
+const details = require('./details');
 
 const ADAPTERS = [unit3d, gazelle, nexusphp, generic];      /* 先认特征更强的，NexusPHP 的检测最宽松放到最后 */
 const BY_NAME = { nexusphp: nexusphp, unit3d: unit3d, gazelle: gazelle, custom: generic, generic: generic };
@@ -49,6 +50,9 @@ function withPage(url, page) {
 }
 function parseList(html, engine) { const a = byName(engine) || detectAdapter(html); return a ? a.parseList(html) : []; }
 function parseCategories(html, engine) { const a = byName(engine) || detectAdapter(html); return a ? a.parseCategories(html) : []; }
+
+/* 详情页解析：三种引擎共用同一套表格/正则提取，认不出就留空 */
+function parseDetail(html) { return details.parse(html); }
 
 /* 登录态判定：先看跨引擎都成立的特征，再看各引擎自己的判断。
    返回 true 已登录 / false 未登录 / null 判断不了。 */
@@ -133,6 +137,7 @@ module.exports = {
   withPage: withPage,
   parseList: parseList,
   parseCategories: parseCategories,
+  parseDetail: parseDetail,
   isLoggedIn: isLoggedIn,
   nexusphp: nexusphp,
   unit3d: unit3d,
