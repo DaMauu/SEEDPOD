@@ -13,8 +13,15 @@ module.exports = function (app, ctx) {
   /* ---- 日志：写库并推 SSE ---- */
   function logEvent(level, src, msg) {
     const ts = now();
-    try { db.prepare('INSERT INTO logs(ts, level, src, msg) VALUES(?, ?, ?, ?)').run(ts, level || 'info', src || '', String(msg || '').slice(0, 2000)); } catch (e) {}
-    const line = JSON.stringify({ ts: ts.slice(11, 19), level: level, src: src, msg: msg });
+    let id = 0;
+    try {
+      const r = db.prepare('INSERT INTO logs(ts, level, src, msg) VALUES(?, ?, ?, ?)').run(ts, level || 'info', src || '', String(msg || '').slice(0, 2000));
+      id = Number(r.lastInsertRowid) || 0;
+    } catch (e) {}
+    pushOne({ id: id, t: ts.slice(11, 19), lvl: level || 'info', tag: src || '', msg: msg });
+  }
+  function pushOne(row) {
+    const line = JSON.stringify(row);
     SSE.forEach(function (res) { try { res.write('data: ' + line + '\n\n'); } catch (e) { SSE.delete(res); } });
   }
   ctx.logEvent = logEvent;
@@ -25,12 +32,22 @@ module.exports = function (app, ctx) {
     const rows = level
       ? all('SELECT * FROM logs WHERE level = ? ORDER BY id DESC LIMIT ?', level, limit).reverse()
       : all('SELECT * FROM logs ORDER BY id DESC LIMIT ?', limit).reverse();
-    return ok(rows.map(function (r) { return { ts: String(r.ts).slice(11, 19), level: r.level, src: r.src, msg: r.msg }; }));
+    return ok(rows.map(function (r) { return { id: r.id, t: String(r.ts).slice(11, 19), lvl: r.level, tag: r.src, msg: r.msg }; }));
   });
 
   app.get('/api/logs/stream', async (req, reply) => {
     reply.raw.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
     reply.raw.write('retry: 3000\n\n');
+    /* 先补最近 60 条历史，前端日志页靠这个回填 */
+    const last = Number(req.query.last) || 0;
+    try {
+      const rows = last
+        ? all('SELECT id, ts, level, src, msg FROM logs WHERE id > ? ORDER BY id ASC LIMIT 200', last)
+        : all('SELECT id, ts, level, src, msg FROM logs ORDER BY id DESC LIMIT 60').reverse();
+      rows.forEach(function (r) {
+        reply.raw.write('data: ' + JSON.stringify({ id: r.id, t: String(r.ts).slice(11, 19), lvl: r.level, tag: r.src, msg: r.msg }) + '\n\n');
+      });
+    } catch (e) {}
     SSE.add(reply.raw);
     const ping = setInterval(function () { try { reply.raw.write(': ping\n\n'); } catch (e) {} }, 15000);
     req.raw.on('close', function () { clearInterval(ping); SSE.delete(reply.raw); });

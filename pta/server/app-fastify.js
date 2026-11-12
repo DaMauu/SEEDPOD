@@ -48,6 +48,8 @@ function sessionOk(req) {
   return true;
 }
 
+let logEvent = null;
+
 async function build() {
   const app = Fastify({ logger: false, bodyLimit: 8 * 1024 * 1024 });
 
@@ -59,6 +61,7 @@ async function build() {
     const tok = crypto.randomBytes(24).toString('hex');
     SESSIONS.set(tok, Date.now() + SESSION_TTL);
     reply.header('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (SESSION_TTL / 1000));
+    if (logEvent) logEvent('info', '登录', '登录成功 · 用户 ' + PTA_USER);
     return ok(reply, { user: PTA_USER, token: tok });
   });
   app.get('/api/session', async (req, reply) => (sessionOk(req) ? ok(reply, { user: PTA_USER }) : reply.code(401).send({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } })));
@@ -161,6 +164,7 @@ async function build() {
   const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR };
   require('./routes-write')(app, ctx);
   require('./routes-data')(app, ctx);
+  logEvent = ctx.logEvent || null;
   require('./routes-qb')(app, ctx);
   require('./routes-probe')(app, ctx);
   require('./routes-crawl')(app, ctx);

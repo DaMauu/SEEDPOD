@@ -24,3 +24,11 @@
 3. 已定稿的样式与布局不乱改，只有作者明确要求调整细节/顺序/样式时才动。
 4. 每轮改完部署测试机、截图核对、更新版本号与 CHANGELOG。
 5. 无人干预时继续自动推进，不停工。
+
+## 十、技术策略 v2（2026-11-13）
+
+前端 Vue 3；后端 Node.js + Fastify；存储 SQLite（node:sqlite），词条/队列/站点/下载器/日志/账号与 cookie 全部入库，密文列保持 AES-256-GCM；迁移期间接口路径不变，搬完再切服务。细节见 PLAN.md。
+
+## 十一、运行时（2026-11-13 切换）
+
+生产 systemd 单元 seedpod 现在执行 `pta/server/app-fastify.js`（Node + Fastify 5 + SQLite），数据在 /opt/seedpod/data（seedpod.db，JSON 为迁移前备份）。回滚步骤：`cp /opt/seedpod/seedpod.service.bak /etc/systemd/system/seedpod.service && systemctl daemon-reload && systemctl restart seedpod`，旧数据在 data-backup-* 目录。真抓取与真发帖仍返回 501，只做演练。
