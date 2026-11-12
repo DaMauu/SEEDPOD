@@ -3883,6 +3883,27 @@
 
     /* 站点行交给 Vue；抽屉作为行间元素由 Vue 放在选中行后面 */
     var siteState = window.Vue ? window.Vue.reactive({ rows: [], open: false, sel: null, empty: "没有匹配的站点", tick: 0 }) : null;
+    /* 翻页器交给 Vue，按钮仍用 data-pg 让 pager 上的委托读到 */
+    var pagerState = window.Vue ? window.Vue.reactive({ show: false, page: 1, pages: 1, total: 0 }) : null;
+    var pagerMounted = false;
+    function mountPager() {
+      if (!pagerState || pagerMounted) return;
+      var pager = $("#sites-pager");
+      if (!pager) return;
+      pagerMounted = true;
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          if (!pagerState.show) return null;
+          return [
+            h("button", { class: "btn ghost slim", "data-pg": "-1", disabled: pagerState.page <= 1 }, "上一页"),
+            h("span", null, "第 " + pagerState.page + " / " + pagerState.pages + " 页 · 共 " + pagerState.total + " 个"),
+            h("button", { class: "btn ghost slim", "data-pg": "1", disabled: pagerState.page >= pagerState.pages }, "下一页")
+          ];
+        }
+      }).mount(pager);
+    }
+
     function paintSiteRows(pageRows, rowsAll) {
       if (!siteState) return;
       siteState.open = !!state.open;
@@ -3987,13 +4008,12 @@
       if (state.page < 1) state.page = 1;
       var pageRows = rows.slice((state.page - 1) * SITE_PAGE, state.page * SITE_PAGE);
       paintSiteRows(pageRows, rows);
-      var pager = $("#sites-pager");
-      if (pager) {
-        pager.innerHTML = rows.length > SITE_PAGE
-          ? '<button class="btn ghost slim" data-pg="-1"' + (state.page <= 1 ? " disabled" : "") + ">上一页</button>" +
-            '<span>第 ' + state.page + " / " + pages + " 页 · 共 " + rows.length + " 个</span>" +
-            '<button class="btn ghost slim" data-pg="1"' + (state.page >= pages ? " disabled" : "") + ">下一页</button>"
-          : "";
+      if (pagerState) {
+        mountPager();
+        pagerState.show = rows.length > SITE_PAGE;
+        pagerState.page = state.page;
+        pagerState.pages = pages;
+        pagerState.total = rows.length;
       }
       var cnt = $("#sites-count");
       if (cnt) cnt.textContent = MOCK.sitesList.length;
