@@ -2377,7 +2377,7 @@
 
     function limitRow(label, hint, key, min, max) {
       return h("div", { class: "set-field" }, [
-        h("div", { class: "lbl" }, [h("span", null, label), h("i", null, hint)]),
+        h("div", { class: "lbl" }, [h("span", null, label)]),
         h("div", { class: "ctl" }, [h("input", {
           class: "input num", type: "number", value: String(st[key]), min: String(min), max: String(max),
           onInput: function (e) { st[key] = Number(e.target.value) || 0; syncNote(); }
@@ -2386,7 +2386,7 @@
     }
     function presetRow(r) {
       return h("div", { class: "set-field", key: r.t }, [
-        h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+        h("div", { class: "lbl" }, [h("span", null, r.t)]),
         h("div", { class: "ctl" }, [h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
           var on = (r.sel || []).indexOf(c) >= 0;
           return h("button", {
@@ -2408,8 +2408,7 @@
         return h("section", { class: "drawer open vue-card crawl-card" }, [
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
-              h("div", { class: "drawer-title" }, "抓取"),
-              h("div", { class: "drawer-desc" }, "请求限制决定发多少、多久发一次；搜索预设决定抓什么。只记录事实，过滤留到查重。")
+              h("div", { class: "drawer-title" }, "抓取")
             ]),
             h("div", { class: "drawer-head-right" }, [
               h("span", { class: "drawer-meta" }, st.sum),
@@ -2425,7 +2424,7 @@
               limitRow("窗口内最多", "这个窗口里最多发几次请求", "maxPerWindow", 1, 1000),
               limitRow("连续失败暂停", "连续失败这么多次就自动暂停", "breaker", 1, 10),
               h("div", { class: "set-field" }, [
-                h("div", { class: "lbl" }, [h("span", null, "抓详情页"), h("i", null, "每条多一次请求，先把详情取回来，后面查重和发布用本地数据对比")]),
+                h("div", { class: "lbl" }, [h("span", null, "抓详情页")]),
                 h("div", { class: "ctl" }, [h("button", {
                   class: "switch" + (st.detail ? " on" : ""), type: "button",
                   onClick: function () {
