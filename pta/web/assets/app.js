@@ -4575,15 +4575,18 @@
       pills: ""
     }
   };
+  /* 顶栏状态条：只产出数据，渲染交给 Vue */
   function statusPills() {
     var h = (typeof API !== "undefined" && API && API.mode === "live" && API.health) || null;
     var on = h && h.nodesOnline != null ? h.nodesOnline : MOCK.nodes.filter(function (n) { return n.online; }).length;
     var totalNodes = h && h.nodesTotal != null ? h.nodesTotal : MOCK.nodes.length;
     var fail = h && h.loginFail != null ? h.loginFail : (MOCK.sites.loginFail || 0);
     var live = !!h;
-    return '<span class="pill"><span class="dot ' + (live ? "ok" : "idle") + '"></span>' + (live ? "服务运行中" : "本地演示") + '</span>' +
-      '<span class="pill"><span class="dot warn"></span>' + fail + ' 个站登录失效</span>' +
-      '<span class="pill"><span class="dot ok"></span>节点 ' + on + " / " + totalNodes + "</span>";
+    return [
+      { dot: live ? "ok" : "idle", text: live ? "服务运行中" : "本地演示" },
+      { dot: "warn", text: fail + " 个站登录失效" },
+      { dot: "ok", text: "节点 " + on + " / " + totalNodes }
+    ];
   }
   Object.keys(VIEW_META).forEach(function (k) { VIEW_META[k].pills = statusPills; });
 
@@ -4602,7 +4605,29 @@
     var pills = typeof meta.pills === "function" ? meta.pills() : meta.pills;
     var t = $("#page-title"); if (t) t.textContent = title;
     var sb = $("#page-sub"); if (sb) sb.textContent = sub || "";
-    var p = $("#page-pills"); if (p) p.innerHTML = pills || "";
+    var p = $("#page-pills");
+    if (p) {
+      var model = Array.isArray(pills) ? pills : [];
+      if (window.Vue) {
+        if (!window.__ptaPillState) window.__ptaPillState = window.Vue.reactive({ pills: [] });
+        window.__ptaPillState.pills = model;
+        if (!p.getAttribute("data-vue")) {
+          p.setAttribute("data-vue", "1");
+          window.Vue.createApp({
+            render: function () {
+              var hh = window.Vue.h;
+              return window.__ptaPillState.pills.map(function (x, i) {
+                return hh("span", { class: "pill", key: i }, [hh("span", { class: "dot " + x.dot }), x.text]);
+              });
+            }
+          }).mount(p);
+        }
+      } else {
+        p.innerHTML = model.map(function (x) {
+          return '<span class="pill"><span class="dot ' + x.dot + '"></span>' + escapeHtml(x.text) + "</span>";
+        }).join("");
+      }
+    }
     document.title = title + " · 媒体资料库";
   }
 
@@ -4702,6 +4727,12 @@
     if (!pills) return;
     var live = API.mode === "live";
     pills.title = live ? "已连接后端，数据实时" : "未检测到后端，当前为本地演示数据";
+    if (window.__ptaPillState) {
+      var model = statusPills();
+      model[0] = { dot: live ? "ok" : "idle", text: live ? "服务运行中" : "本地演示" };
+      window.__ptaPillState.pills = model;
+      return;
+    }
     var first = pills.querySelector(".pill");
     if (first) {
       var dot = first.querySelector(".dot");
