@@ -166,6 +166,7 @@ async function build() {
   require('./routes-crawl')(app, ctx);
   require('./routes-tasks')(app, ctx);
   require('./routes-misc')(app, ctx);
+  require('./routes-publish')(app, ctx);
 
   return app;
 }

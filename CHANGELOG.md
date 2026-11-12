@@ -159,3 +159,8 @@
 
 ### 新增
 - Fastify 剩余只读与业务接口：/api/sites/:host/search、/api/site-search、/api/catalog/check（本地查重不发请求）、/api/catalog/screen（按流程规则挑可发进队列）、/api/published、/api/library、/api/crawl/status，全部实测返回正常。
+
+## v0.7.9 · 2026-11-13
+
+### 新增
+- Fastify 截图与发布：/api/queue/:id/shots 上传 data URL 截图（最多 6 张、单张 3MB）、删除单张、/api/publish/:id 演练发布（校验标题与目标站、记账 published，不发真实请求）；真发帖按铁律先不开，返回 501。实测上传→演练发布→清理全通。
