@@ -3528,6 +3528,199 @@
         "</div>";
     }
 
+    /* 设置页签（登录 / 搜索预设 / 站点覆盖）用 vnode 渲染，字段仍是 data-k / data-switch，collect 照旧读得到 */
+    function setCtlVNode(r) {
+      var h = window.Vue.h;
+      if (r.type === "switch") {
+        return h("button", { class: "switch" + ((r.on || r.v) ? " on" : ""), "data-switch": r.k || "", type: "button" }, [h("i")]);
+      }
+      if (r.type === "select") {
+        var cur = r.v || "";
+        var opts = [];
+        if (cur === "") opts.push(h("option", { value: "", selected: true }, "未选择"));
+        (r.opts || []).forEach(function (o) {
+          var label = r.labels && r.labels[o] !== undefined ? r.labels[o] : o;
+          opts.push(h("option", { value: o, selected: String(o) === String(cur) }, label));
+        });
+        return h("select", { class: "select", "data-k": r.k || undefined }, opts);
+      }
+      if (r.type === "textarea") {
+        return h("textarea", { class: "input sd-note", "data-k": r.k, placeholder: r.ph || undefined, value: r.v || "" });
+      }
+      if (r.type === "num") {
+        return h("span", null, [
+          h("input", { class: "input num", "data-k": r.k, value: r.v === undefined ? "" : String(r.v),
+            "data-min": r.range ? String(r.range[0]) : undefined, "data-max": r.range ? String(r.range[1]) : undefined,
+            inputmode: "numeric", placeholder: r.ph || "" }),
+          h("em", { class: "num-warn" })
+        ]);
+      }
+      if (r.type === "fixed") {
+        return h("span", { class: "fixed-val" + (r.noTag ? " ref" : ""), "data-k": r.k || undefined },
+          r.noTag ? (r.v || "系统锁定") : [r.v || "系统锁定", h("i", null, "系统固定")]);
+      }
+      if (r.type === "button") {
+        return h("button", { class: "btn ghost slim", "data-btn": r.t, type: "button" }, r.v);
+      }
+      return h("input", { class: "input", "data-k": r.k, value: r.v === undefined ? "" : String(r.v),
+        disabled: !!r.disabled, placeholder: r.ph || "" });
+    }
+    function setRowsVNode(rows) {
+      var h = window.Vue.h;
+      return rows.map(function (r) {
+        return h("div", { class: "set-field" + (r.cls ? " " + r.cls : "") }, [
+          h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+          h("div", { class: "ctl" }, [setCtlVNode(r)])
+        ]);
+      });
+    }
+    function settingsVNode(s) {
+      var h = window.Vue.h;
+      var tab = state.setTab || "login";
+      if (tab === "override") {
+        return h("div", { class: "sd-form" }, [
+          h("div", { class: "set-fields" }, setRowsVNode([
+            { t: "单独设置本站", type: "switch", k: "override", on: !!s.override,
+              hint: s.override ? "已开启：下面几项只对这个站生效" : "已关闭：这个站跟随流程页「请求限制」" }
+          ])),
+          h("div", { class: "set-fields" + (s.override ? "" : " is-off") }, setRowsVNode([
+            { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval == null ? "" : String(s.ovInterval),
+              opts: ["", "1", "5", "15", "60", "180"],
+              labels: { "": "跟随全局", "1": "1 分钟", "5": "5 分钟", "15": "15 分钟", "60": "1 小时", "180": "3 小时" },
+              hint: "这个站两次抓取之间隔多少分钟；服务端仍会按下限压一次" },
+            { t: "每天抓几次", type: "num", k: "ovDaily", v: s.ovDaily == null ? "" : String(s.ovDaily), range: [1, 20],
+              ph: "留空＝跟随全局", hint: "次数上限，不是条数；一轮多少条在流程页「抓多少条」里选" },
+            { t: "抓详情页", type: "switch", k: "ovDetail", on: !!s.ovDetail, hint: "这个站要不要每条再进一次详情页" },
+            { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"],
+              labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" }, hint: "先存配置，抓取暂不按优先级排序" }
+          ])),
+          h("div", { class: "set-fields" }, setRowsVNode([
+            { t: "分类映射", type: "button", cls: "map-row",
+              v: (catMapCount(s.name) ? "已配 " + catMapCount(s.name) + " 条" : "配置映射"),
+              hint: "站点自己的分类对到库内分类，不受上面的开关影响" }
+          ]))
+        ]);
+      }
+      if (tab === "search") {
+        var pdetail = s.presetDetail;
+        var psum = presetOf(s.name) || {};
+        var dfn = defOf(s.name);
+        var sEng = (pdetail && pdetail.engine) || psum.engine || "";
+        var catGroups = (pdetail && pdetail.cats) || (psum && psum.cats) || (dfn && dfn.cats) || null;
+        function firstCatId(v) {
+          var a = Array.isArray(v) ? v : String(v || "").split(",");
+          return a.filter(function (x) { return x !== "" && x !== null && x !== undefined; })[0] || "";
+        }
+        function cleanUrl(u) { return String(u || "").split("%7Bq%7D").join("").split("%7bq%7d").join("").split("{q}").join(""); }
+        function previewUrls() {
+          if (s.presetUrls && s.presetUrls.length) {
+            return s.presetUrls.map(function (u) { return { group: u.group, catId: u.catId, url: cleanUrl(u.url) }; });
+          }
+          var d = dfn || {};
+          var base = String(d.base || s.url || "").replace(/\/+$/, "");
+          var sp = (d.search && d.search.searchPath) || "";
+          var params = d.search && d.search.params;
+          if (!base || !sp || !params) return [];
+          var out = [];
+          Object.keys(catGroups || {}).forEach(function (g) {
+            var cid = firstCatId((catGroups || {})[g]);
+            if (!cid) return;
+            var qs = Object.keys(params).map(function (k) {
+              var v = String(params[k]).split("{cats}").join(cid).split("{q}").join("");
+              return encodeURIComponent(k) + "=" + encodeURIComponent(v);
+            }).join("&");
+            out.push({ group: g, catId: cid, url: base + sp + "?" + qs });
+          });
+          return out;
+        }
+        var srcTxt = (function () {
+          var src = (pdetail && pdetail.source) || (psum && psum.source) || "";
+          if (!src) return "还没有预设";
+          if (src === "auto") return "采样自动生成，还没人工确认";
+          if (src === "arch") return "按清单架构推断，还没采样";
+          if (src === "manual") return "人工确认过的";
+          return src;
+        })();
+        var paramTxt = (function () {
+          var mode = (pdetail && pdetail.catMode) || (dfn && dfn.search && dfn.search.catMode) || "";
+          var param = (pdetail && pdetail.catParam) || (dfn && dfn.search && dfn.search.params
+            ? Object.keys(dfn.search.params).filter(function (k) { return String(dfn.search.params[k]).indexOf("{cats}") >= 0; })[0] : "");
+          if (!mode && !param) return (catGroups && Object.keys(catGroups).length) ? "cat（按分类 id 筛）" : "—";
+          return (mode || "—") + (param ? " · " + param : "");
+        })();
+        var crawlTxt = (function () {
+          var c = s.defCrawl;
+          if (!c || !c.at) return "还没抓过";
+          var when = new Date(c.at).toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
+          return "上次 " + when + " · 今日 " + (c.count || 0) + " 次 · 分类 " + ((c.catIdx || 0) + 1) + " · 下一页 " + ((c.page || 0) + 1);
+        })();
+        var catTxt2 = (function () {
+          var c = s.defCatalog;
+          if (!c || !c.total) return "这个站还没有词条";
+          var b = c.byStatus || {};
+          return "共 " + c.total + " 条 · 待筛选 " + (b.new || 0) + " · 已送审 " + (b.selected || 0) + " · 已发 " + (b.published || 0);
+        })();
+        var catRows = catGroups && Object.keys(catGroups).length
+          ? Object.keys(catGroups).map(function (g) {
+            return h("div", { class: "sd-row" }, [h("span", null, g), h("b", null, (catGroups[g] || []).join(", ") || "—")]);
+          })
+          : [h("div", { class: "sd-row" }, [h("span", null, "状态"), h("b", null, "还没有分类映射")])];
+        var urls = previewUrls();
+        var out = [
+          h("div", { class: "set-fields" }, setRowsVNode([
+            { t: "引擎", type: "fixed", v: sEng ? (engCode(sEng) + " · " + sEng) : "未识别", noTag: true },
+            { t: "预设来源", type: "fixed", v: srcTxt, noTag: true },
+            { t: "分类参数", type: "fixed", v: paramTxt, noTag: true },
+            { t: "抓取状态", type: "fixed", v: crawlTxt, noTag: true },
+            { t: "词条", type: "fixed", v: catTxt2, noTag: true }
+          ])),
+          h("div", { class: "set-fields" }, [h("div", { class: "sd-block" }, [h("h4", null, "分类 id")].concat(catRows))])
+        ];
+        if (urls.length) {
+          out.push(h("div", { class: "set-fields" }, [h("div", { class: "sd-block" }, [h("h4", null, "搜索链接预览")].concat(
+            urls.slice(0, 6).map(function (u) {
+              var tag = (u.group || "全部") + (u.catId ? " · " + u.catId : "");
+              return h("a", { class: "sd-preset-url", href: u.url, target: "_blank", rel: "noopener noreferrer" },
+                tag + " → " + String(u.url).replace(/^https?:\/\//, ""));
+            }),
+            [h("div", { class: "sd-row" }, [h("span", null, "说明"), h("b", null, "点开就是该站真实搜索页，确认分类对不对")])]
+          ))]));
+        }
+        out.push(h("div", { class: "sd-cookie-bar" }, [
+          (pdetail && pdetail.confirmed) ? null : h("button", { class: "btn ghost slim", id: "sd-preset-confirm", "data-act": "preset-confirm", type: "button" }, "确认这个预设"),
+          h("span", { class: "sd-cookie-res", id: "sd-preset-res" },
+            pdetail ? ((pdetail.confirmed ? "已人工确认 · " : "更新于 ") + (pdetail.updatedAt || "—")) : "打开这个页签时读一次服务端预设")
+        ]));
+        out.push(h("div", { class: "sd-cookie-bar" }, [h("span", { class: "sd-cookie-res" },
+          (!catGroups || !Object.keys(catGroups).length)
+            ? (dfn && dfn.kind === "shell"
+              ? "这个站的列表由脚本渲染，源码里没有分类：在浏览器登录后把种子页存到 pta/data/manual 再跑 ingest-manual"
+              : "还没采到分类 id：登录后存种子页到 pta/data/manual，或等下次补采")
+            : "分类来自采样，对照站点没问题就点确认，来源会改成手动")]));
+        return h("div", { class: "sd-form" }, out);
+      }
+      var savedWhen = "";
+      if (s.cookieSaved && s.cookieUpdatedAt) {
+        var ct = new Date(s.cookieUpdatedAt);
+        if (!isNaN(ct.getTime())) savedWhen = " · " + ct.toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
+      }
+      var savedTxt = s.cookieSaved ? ("已保存" + savedWhen) : "未保存";
+      var checkTxt = s.cookieCheckMsg || "还没自检";
+      return h("div", { class: "sd-form" }, [
+        h("div", { class: "set-fields" }, setRowsVNode([
+          { t: "站点地址", type: "text", k: "url", v: s.url || "", ph: "https://站点域名/index.php" }
+        ])),
+        h("div", { class: "set-fields" }, setRowsVNode([
+          { t: "Cookie（" + savedTxt + "）", type: "textarea", k: "cookie", v: s.cookie || "",
+            ph: s.cookieSaved ? "已保存的 cookie 不回显；要换就整段粘贴覆盖再保存" : "粘贴 name1=value1; name2=value2" }
+        ])),
+        h("div", { class: "sd-cookie-bar" }, [
+          h("button", { class: "btn ghost slim", id: "sd-cookie-test", "data-act": "cookie-test", type: "button" }, "自检"),
+          h("span", { class: "sd-cookie-res", id: "sd-cookie-res" }, checkTxt)
+        ])
+      ]);
+    }
+
     /* 概览页签用 vnode 渲染，结构照旧；设置页签仍暂用原字符串 */
     function ovVNode(s) {
       var h = window.Vue.h;
@@ -3955,7 +4148,7 @@
             sth("button", { class: "sheet-x", "data-act": "close-sheet", "aria-label": "关闭", type: "button" }, "✕")
           ]),
           drawerState.isSettings
-            ? sth("div", { class: "sd-scroll", innerHTML: drawerState.body })
+            ? sth("div", { class: "sd-scroll" }, [settingsVNode(s2)])
             : sth("div", { class: "sd-scroll" }, [ovVNode(s2)]),
           drawerState.isSettings ? sth("div", { class: "sd-form-actions" }, [
             sth("button", { class: "btn primary slim", "data-act": "save", type: "button" }, "保存设置"),
