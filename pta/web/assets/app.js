@@ -753,55 +753,10 @@
     if (window.__ptaDashSync) window.__ptaDashSync();
   }
 
-  function renderSiteHealth() {
-    var host = $("#site-health");
-    var bars = $("#site-bars");
-    if (!host) return;
-    var o = window.__ptaOverview;
-    var s = o ? o.sites : { total: 0, enabled: 0, loginOk: 0, loginFail: 0, loginUnknown: 0 };
-    host.innerHTML =
-      '<div class="mini"><span>已启用</span><b>' + s.enabled + " / " + s.total + "</b></div>" +
-      '<div class="mini"><span>cookie 可用</span><b>' + s.loginOk + "</b></div>" +
-      '<div class="mini' + (s.loginFail ? " warn" : "") + '"><span>登录失效</span><b>' + s.loginFail + "</b></div>" +
-      '<div class="mini"><span>还没自检</span><b>' + s.loginUnknown + "</b></div>";
-    if (bars) {
-      var counts = window.__ptaSiteCounts || null;
-      var np = counts && counts.NP ? counts.NP : 0;
-      var u3d = counts && counts.UNIT3D ? counts.UNIT3D : 0;
-      var sum = np + u3d;
-      bars.innerHTML =
-        '<div class="arch-bar"><i style="width:' + (sum ? Math.round(np / sum * 100) : 0) + '%"></i>' +
-        '<i class="u3d" style="width:' + (sum ? Math.round(u3d / sum * 100) : 0) + '%"></i></div>' +
-        '<div class="arch-legend">NexusPHP ' + np + " · UNIT3D " + u3d + "</div>";
-    }
-  }
-
-  function renderNodeCapacity() {
-    var host = $("#dash-nodes");
-    if (!host) return;
-    var o = window.__ptaOverview;
-    var d = o ? o.downloaders : null;
-    if (!d || !d.total) {
-      host.innerHTML = '<div class="node-sum-line"><span>未接下载器</span><span class="mono">—</span></div>' +
-        '<div class="progress" style="margin-top:8px"><i style="width:0%"></i></div>';
-      return;
-    }
-    var free = fmtBytes(d.freeSpace) || "未知";
-    host.innerHTML =
-      '<div class="node-sum-line"><span>' + d.online + " / " + d.total + " 在线" + (d.version ? " · " + escapeHtml(d.version) : "") + "</span>" +
-      '<span class="mono">剩余 ' + free + "</span></div>" +
-      '<div class="progress" style="margin-top:8px"><i style="width:' + (d.total ? Math.round(d.online / d.total * 100) : 0) + '%"></i></div>';
-  }
-
-  function renderRecentSources() {
-    var host = $("#dash-recent");
-    if (!host) return;
-    host.innerHTML = MOCK.sources.slice(0, 3).map(function (it) {
-      return '<div class="list-item"><div style="flex:1;min-width:0">' +
-        '<div class="t-main">' + escapeHtml(it.title) + '</div>' +
-        '<div class="t-sub">' + escapeHtml(it.res) + " · " + escapeHtml(it.size) + " · " + escapeHtml(it.time) + "</div></div></div>";
-    }).join("");
-  }
+  /* 总览这些块由 initDashboardVue 直接渲染，旧的字符串版本已经没人调用了 */
+  function renderSiteHealth() {}
+  function renderNodeCapacity() {}
+  function renderRecentSources() {}
 
   function renderPending() {
     if (window.__ptaDashSync) window.__ptaDashSync();
