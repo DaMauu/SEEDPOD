@@ -805,10 +805,7 @@
     /* 左列交给 Vue 渲染；右列内容仍由原函数生成，事件委托不变 */
     var qState = (window.Vue ? window.Vue.reactive({ rows: [], sel: null }) : null);
     function paintQueueList(list) {
-      if (!qState) {
-        listBox.innerHTML = (list || []).map(itemHtml).join("") || '<div class="sites-empty">没有匹配的条目</div>';
-        return;
-      }
+      if (!qState) return;
       qState.sel = state.sel;
       qState.rows = (list || []).map(function (it) {
         var st = STATUS[it.status] || ["未知", "gray"];
@@ -860,15 +857,6 @@
       });
     }
 
-    function itemHtml(it) {
-      var st = STATUS[it.status] || ["未知", "gray"];
-      return '<button class="q-item' + (state.sel === it.id ? " on" : "") + '" data-id="' + it.id + '">' +
-        '<span class="q-title"><b>' + escapeHtml(it.title) + "</b>" +
-          "<i>" + (it.cn ? escapeHtml(it.cn) + " · " : "") + escapeHtml(it.res) + " · " + escapeHtml(it.size) + (it.targetSite ? " · 目标 " + escapeHtml(it.targetSite) : "") + "</i></span>" +
-        '<span class="badge ' + st[1] + '">' + st[0] + "</span>" +
-      "</button>";
-    }
-
     function shotHtml(it, n) {
       var shot = it && it.shots ? it.shots[n - 1] : null;
       if (shot) return '<div class="shot has"><img src="' + shot.url + '" alt=""><span>' + n + "</span></div>";
@@ -913,62 +901,7 @@
       return (it.title || it.cn) + year + (it.res || "") + " 原盘" + (tail ? "，" + tail : "") + "。";
     }
 
-    function detailHtml(it) {
-      if (!it) return '<div class="sites-empty">选一条看发布预览</div>';
-      var st = STATUS[it.status] || ["未知", "gray"];
-      var titleTpl = String(it.title || "").replace(/\s+/g, " ").trim();
-      return '<div class="qd-head">' +
-          '<div class="qd-id"><div class="qd-title-row"><h2>' + escapeHtml(it.cn || it.title) + "</h2>" +
-            '<span class="badge ' + st[1] + '">' + st[0] + "</span></div>" +
-            '<span class="sd-url">' + escapeHtml(it.title) + "</span></div>" +
-          '<div class="qd-meta">' +
-            "<span>来源站<b>" + escapeHtml(it.site || "—") + "</b></span>" +
-            "<span>分辨率<b>" + escapeHtml(it.res) + "</b></span>" +
-            "<span>大小<b>" + escapeHtml(it.size) + "</b></span>" +
-            "<span>年份<b>" + (it.year || "—") + " · " + escapeHtml(it.imdb) + "</b></span>" +
-          "</div>" +
-        "</div>" +
-        '<div class="qd-grid">' +
-          '<section class="sd-card qd-pubinfo"><h3>发布信息</h3>' +
-            '<div class="qd-field"><span>目标站</span><select class="input" id="qd-target">' + targetOptions(it) + "</select></div>" +
-            '<div class="qd-field"><span>标题</span><input class="input" id="qd-title" value="' + escapeHtml(titleTpl) + '"></div>' +
-            '<div class="qd-field"><span>副标题</span><input class="input" id="qd-sub" value="' + escapeHtml(subTitle(it)) + '"></div>' +
-            '<div class="qd-field"><span>图床</span><select class="input" id="qd-host">' +
-              ["站内", "Pixhost", "Imgbox", "本地图床"].map(function (h) {
-                return '<option' + ((it.imageHost || "站内") === h ? " selected" : "") + ">" + h + "</option>";
-              }).join("") + "</select></div>" +
-            '<div class="qd-field"><span>匿名发布</span><input type="checkbox" id="qd-anon"' + (it.anonymous ? " checked" : "") + "></div>" +
-            '<div class="qd-field"><span>查重</span><b class="' + (it.checkCls || "") + '-t">' + escapeHtml(it.check) + "</b></div>" +
-          "</section>" +
-          '<section class="sd-card qd-desc-card"><h3>简介</h3>' +
-            '<textarea class="input sd-note" id="qd-desc" rows="3">' +
-              escapeHtml(introText(it)) + "</textarea>" +
-            '<div class="qd-tags" id="qd-tags"><span class="soft">点「生成草稿」后显示发布标签</span></div>' +
-          "</section>" +
-          '<section class="sd-card qd-shots"><h3>截图</h3>' +
-            '<div class="shots">' + shotHtml(it, 1) + shotHtml(it, 2) + shotHtml(it, 3) +
-              '<button class="shot add" id="qd-addshot">上传</button></div>' +
-          "</section>" +
-        "</div>" +
-        "</div>" +
-        (it.status === "publishing"
-          ? '<div class="qd-status warn">正在发布到主站…</div>'
-          : it.pubMsg
-            ? '<div class="qd-status ' + (it.status === "failed" ? "bad" : "ok") + '">' + escapeHtml(it.pubMsg) + "</div>"
-            : "") +
-        '<div class="qd-actions">' +
-          (it.status === "failed"
-            ? '<button class="btn primary slim" data-qact="retry">重试发布</button>'
-            : '<button class="btn primary slim" data-qact="publish">通过并发布</button>') +
-          '<button class="btn ghost slim" data-qact="reject">驳回</button>' +
-          '<button class="btn ghost slim" data-qact="draft">草稿预览</button>' +
-          '<div class="spacer"></div>' +
-          '<input class="input slim" id="qd-reason" placeholder="驳回理由（可留空）" style="width:200px">' +
-          '<button class="btn ghost slim" data-qact="skip">跳过</button>' +
-        "</div>";
-    }
-
-    /* 右侧详情交给 Vue：保留原有 id 与 data-qact，事件仍由 detail 上的委托处理 */
+    /* 右侧详情交给 Vue，事件仍由 detail 上的委托处理 */
     var qdState = window.Vue ? window.Vue.reactive({ item: null }) : null;
     function qdVNode(it) {
       var h = window.Vue.h;
@@ -1070,7 +1003,6 @@
       if (nextBtn) nextBtn.disabled = state.page >= pages;
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (qdState) qdState.item = it || null;
-      else if (detail) detail.innerHTML = detailHtml(it);
       if (it && it.server && !it.shotsLoaded && it.shotsCount > 0) {
         it.shotsLoaded = true;
         window.__ptaQueue.req("/" + encodeURIComponent(it.id)).then(function (res) {
@@ -3477,58 +3409,6 @@
       return (sameDay ? "今日 " : p2(t.getMonth() + 1) + "-" + p2(t.getDate()) + " ") + p2(t.getHours()) + ":" + p2(t.getMinutes());
     }
 
-    function overviewHtml(s) {
-      var cr = s.defCrawl || null;
-      var cat = s.defCatalog || null;
-      var todayNew = cr ? "+" + (cr.count || 0) : "—";
-      var next = s.enabled ? "手动触发（点「抓一页」）" : "已停用";
-      var lastRes = cr && cr.at ? ["已抓取", "ok"] : ["未抓取", "idle"];
-      var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量 + 定期全量" : "增量";
-      var recs = s.recentItems || [];
-      var loginTxt = s.login === "ok" ? "cookie 可用" : s.login === "fail" ? "cookie 失效" : "还没自检";
-      var catTxt = dresCatTxt(s);
-      var dres = defOf(s.name);
-      var pres = presetOf(s.name);
-      var engRaw = (pres && pres.engine) || (dres && dres.engine) || "";
-      var engTxt = engRaw ? engCode(engRaw) + " · " + engRaw : "未识别";
-      var sampleTxt = dres ? (dres.rows || 0) + " 行 · " + (dres.groups || 0) + " 组分类" : "还没采样";
-      var KIND_TXT = { sample: "采样确认", shell: "引擎按页面特征确认，分类待补", arch: "按清单架构推断，还没采样" };
-      var kindTxt = !dres ? "没有定义" : (KIND_TXT[dres.kind] || (dres.engine ? "引擎已确认，分类待补" : "按清单架构推断，还没采样"));
-      return '<div class="sd-ov">' +
-        '<div class="sd-strip">' +
-          "<span>已收录<b>" + (cat && cat.total ? cat.total : "—") + "</b></span>" +
-          "<span>今日<b>" + todayNew + "</b></span>" +
-          "<span>上次<b>" + escapeHtml(cr && cr.at ? lastCrawlTxt(s) : "未抓取") + "</b></span>" +
-          "<span>下次<b>" + escapeHtml(next) + "</b></span>" +
-        "</div>" +
-        '<div class="sd-compact">' +
-          '<div class="sd-col">' +
-          '<div class="sd-block"><h4>登录</h4>' +
-            '<div class="sd-row"><span>状态</span><b class="' + dotCls(s) + '-t">' + loginTxt + "</b></div>" +
-            '<div class="sd-row"><span>方式</span><b>Cookie</b></div>' +
-            '<div class="sd-row"><span>登录凭据</span><b>' + (s.cookieSaved ? "已保存" : "未保存") + "</b></div>" +
-            '<div class="sd-row"><span>引擎</span><b>' + escapeHtml(engTxt) + "</b></div>" +
-            '<div class="sd-row"><span>采样</span><b>' + escapeHtml(sampleTxt) + "</b></div>" +
-            '<div class="sd-row"><span>来源</span><b>' + escapeHtml(kindTxt) + "</b></div>" +
-          "</div>" +
-          '<div class="sd-block"><h4>抓取</h4>' +
-            '<div class="sd-row"><span>上次结果</span><b class="' + lastRes[1] + '-t">' + lastRes[0] + "</b></div>" +
-            '<div class="sd-row"><span>今日已跑</span><b>' + (cr ? (cr.count || 0) : 0) + " 次</b></div>" +
-            '<div class="sd-row"><span>方式</span><b>' + modeTxt + "</b></div>" +
-            '<div class="sd-row"><span>范围</span><b>' + escapeHtml(catTxt) + "</b></div>" +
-          "</div>" +
-          "</div>" +
-          '<div class="sd-recent-wrap"><h4>最近收录</h4>' +
-            (recs.length ? recs.map(function (r) {
-              return '<div class="sd-recent"><span class="t-main">' + escapeHtml(r.title) + "</span>" +
-                '<span class="soft">' + escapeHtml(r.size || "") + "</span>" +
-                '<span class="soft">' + escapeHtml(String(r.createdAt || "").slice(5, 16).replace("T", " ")) + "</span></div>";
-            }).join("") : '<div class="sd-row"><span>状态</span><b>这个站还没有词条</b></div>') +
-          "</div>" +
-        "</div>";
-    }
-
-    /* 设置页签（登录 / 搜索预设 / 站点覆盖）用 vnode 渲染，字段仍是 data-k / data-switch，collect 照旧读得到 */
     function setCtlVNode(r) {
       var h = window.Vue.h;
       if (r.type === "switch") {
@@ -3796,149 +3676,6 @@
 
     var SET_TABS = [["login", "登录"], ["search", "搜索预设"], ["override", "站点覆盖"]];
 
-    function settingsHtml(s) {
-      var opts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
-        return '<option value="' + k + '"' + ((s.arch || "?") === k ? " selected" : "") + ">" + ACH[k][1] + "</option>";
-      }).join("");
-      var method = s.loginMethod || "password";
-      var mode = s.mode || "incr";
-      var tab = state.setTab || "login";
-      var body = "";
-
-      if (tab === "override") {
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "单独设置本站", type: "switch", k: "override", on: !!s.override, hint: s.override ? "已开启：下面几项只对这个站生效" : "已关闭：这个站跟随流程页「请求限制」" }
-        ]) + "</div>" +
-        '<div class="set-fields' + (s.override ? "" : " is-off") + '">' + setRowsHtml([
-          { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval == null ? "" : String(s.ovInterval),
-            opts: ["", "1", "5", "15", "60", "180"],
-            labels: { "": "跟随全局", "1": "1 分钟", "5": "5 分钟", "15": "15 分钟", "60": "1 小时", "180": "3 小时" },
-            hint: "这个站两次抓取之间隔多少分钟；服务端仍会按下限压一次" },
-          { t: "每天抓几次", type: "num", k: "ovDaily", v: s.ovDaily == null ? "" : String(s.ovDaily), range: [1, 20],
-            ph: "留空＝跟随全局", hint: "次数上限，不是条数；一轮多少条在流程页「抓多少条」里选" },
-          { t: "抓详情页", type: "switch", k: "ovDetail", on: !!s.ovDetail, hint: "这个站要不要每条再进一次详情页" },
-          { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" }, hint: "先存配置，抓取暂不按优先级排序" }
-        ]) + "</div>" +
-        '<div class="set-fields">' + setRowsHtml([
-          { t: "分类映射", type: "button", cls: "map-row", v: (catMapCount(s.name) ? "已配 " + catMapCount(s.name) + " 条" : "配置映射"), hint: "站点自己的分类对到库内分类，不受上面的开关影响" }
-        ]) + "</div>";
-      } else if (tab === "search") {
-        var pdetail = s.presetDetail;
-        var psum = presetOf(s.name) || {};
-        var dfn = defOf(s.name);
-        var sEng = (pdetail && pdetail.engine) || psum.engine || "";
-        var catGroups = (pdetail && pdetail.cats) || (psum && psum.cats) || (dfn && dfn.cats) || null;
-        /* 服务端的按站查询偶尔给不出 url；用预设里的分类 + 站点定义自己拼一份，保证这块不空 */
-        function firstCatId(v) {
-          var a = Array.isArray(v) ? v : String(v || "").split(",");
-          return a.filter(function (x) { return x !== "" && x !== null && x !== undefined; })[0] || "";
-        }
-        function cleanUrl(u) {
-          /* 服务端拼的是带 {q} 占位的模板：预览里去掉占位，点开就是干净的分类浏览页 */
-          return String(u || "").split("%7Bq%7D").join("").split("%7bq%7d").join("").split("{q}").join("");
-        }
-        function previewUrls() {
-          if (s.presetUrls && s.presetUrls.length) {
-            return s.presetUrls.map(function (u) { return { group: u.group, catId: u.catId, url: cleanUrl(u.url) }; });
-          }
-          var d = dfn || {};
-          var base = String(d.base || s.url || "").replace(/\/+$/, "");
-          var sp = (d.search && d.search.searchPath) || "";
-          var params = d.search && d.search.params;
-          if (!base || !sp || !params) return [];
-          var out = [];
-          Object.keys(catGroups || {}).forEach(function (g) {
-            var cid = firstCatId((catGroups || {})[g]);
-            if (!cid) return;
-            var qs = Object.keys(params).map(function (k) {
-              var v = String(params[k]).split("{cats}").join(cid).split("{q}").join("");
-              return encodeURIComponent(k) + "=" + encodeURIComponent(v);
-            }).join("&");
-            out.push({ group: g, catId: cid, url: base + sp + "?" + qs });
-          });
-          return out;
-        }
-        var catLines = catGroups ? Object.keys(catGroups).map(function (g) {
-          return '<div class="sd-row"><span>' + escapeHtml(g) + "</span><b>" + escapeHtml((catGroups[g] || []).join(", ") || "—") + "</b></div>";
-        }).join("") : "";
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "引擎", type: "fixed", v: sEng ? (engCode(sEng) + " · " + sEng) : "未识别", noTag: true },
-          { t: "预设来源", type: "fixed", v: (function () {
-            var src = (pdetail && pdetail.source) || (psum && psum.source) || "";
-            if (!src) return "还没有预设";
-            if (src === "auto") return "采样自动生成，还没人工确认";
-            if (src === "arch") return "按清单架构推断，还没采样";
-            if (src === "manual") return "人工确认过的";
-            return src;
-          })(), noTag: true },
-          { t: "分类参数", type: "fixed", v: (function () {
-            var mode = (pdetail && pdetail.catMode) || (dfn && dfn.search && dfn.search.catMode) || "";
-            var param = (pdetail && pdetail.catParam) || (dfn && dfn.search && dfn.search.params ? Object.keys(dfn.search.params).filter(function (k) { return String(dfn.search.params[k]).indexOf("{cats}") >= 0; })[0] : "");
-            if (!mode && !param) return (catGroups && Object.keys(catGroups).length) ? "cat（按分类 id 筛）" : "—";
-            return (mode || "—") + (param ? " · " + param : "");
-          })(), noTag: true },
-          { t: "抓取状态", type: "fixed", noTag: true, v: (function () {
-            var c = s.defCrawl;
-            if (!c || !c.at) return "还没抓过";
-            var when = new Date(c.at).toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
-            return "上次 " + when + " · 今日 " + (c.count || 0) + " 次 · 分类 " + ((c.catIdx || 0) + 1) + " · 下一页 " + ((c.page || 0) + 1);
-          })() },
-          { t: "词条", type: "fixed", noTag: true, v: (function () {
-            var c = s.defCatalog;
-            if (!c || !c.total) return "这个站还没有词条";
-            var b = c.byStatus || {};
-            return "共 " + c.total + " 条 · 待筛选 " + (b.new || 0) + " · 已送审 " + (b.selected || 0) + " · 已发 " + (b.published || 0);
-          })() }
-        ]) + "</div>" +
-        '<div class="set-fields"><div class="sd-block"><h4>分类 id</h4>' +
-          (catLines || '<div class="sd-row"><span>状态</span><b>还没有分类映射</b></div>') +
-        "</div></div>" +
-        (function () {
-          var urls = previewUrls();
-          if (!urls.length) return "";
-          return '<div class="set-fields"><div class="sd-block"><h4>搜索链接预览</h4>' +
-            urls.slice(0, 6).map(function (u) {
-              var tag = (u.group || "全部") + (u.catId ? " · " + u.catId : "");
-              return '<a class="sd-preset-url" href="' + escapeHtml(u.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(tag) + " → " + escapeHtml(u.url.replace(/^https?:\/\//, "")) + "</a>";
-            }).join("") +
-            '<div class="sd-row"><span>说明</span><b>点开就是该站真实搜索页，确认分类对不对</b></div>' +
-          "</div></div>";
-        })() +
-        '<div class="sd-cookie-bar">' +
-          (pdetail && pdetail.confirmed ? "" : '<button class="btn ghost slim" id="sd-preset-confirm" data-act="preset-confirm">确认这个预设</button>') +
-          '<span class="sd-cookie-res" id="sd-preset-res">' +
-          (pdetail ? (pdetail.confirmed ? "已人工确认 · " : "更新于 ") + escapeHtml(pdetail.updatedAt || "—") : "打开这个页签时读一次服务端预设") +
-        "</span></div>" +
-        '<div class="sd-cookie-bar"><span class="sd-cookie-res">' +
-          (!catGroups || !Object.keys(catGroups).length
-            ? (dfn && dfn.kind === "shell"
-              ? "这个站的列表由脚本渲染，源码里没有分类：在浏览器登录后把种子页存到 pta/data/manual 再跑 ingest-manual"
-              : "还没采到分类 id：登录后存种子页到 pta/data/manual，或等下次补采")
-            : "分类来自采样，对照站点没问题就点确认，来源会改成手动") +
-        "</span></div>";
-      } else {
-        var savedWhen = "";
-        if (s.cookieSaved && s.cookieUpdatedAt) {
-          var ct = new Date(s.cookieUpdatedAt);
-          if (!isNaN(ct.getTime())) savedWhen = " · " + ct.toLocaleString("zh-CN", { hour12: false }).slice(5, 16);
-        }
-        var savedTxt = s.cookieSaved ? ("已保存" + savedWhen) : "未保存";
-        var checkTxt = s.cookieCheckMsg || "还没自检";
-        body = '<div class="set-fields">' + setRowsHtml([
-          { t: "站点地址", type: "text", k: "url", v: s.url || "", ph: "https://站点域名/index.php" }
-        ]) + "</div>" +
-        '<div class="set-fields">' + setRowsHtml([
-          { t: "Cookie（" + savedTxt + "）", type: "textarea", k: "cookie", v: s.cookie || "", ph: (s.cookieSaved
-            ? "已保存的 cookie 不回显；要换就整段粘贴覆盖再保存"
-            : "粘贴 name1=value1; name2=value2") }
-        ]) + "</div>" +
-        '<div class="sd-cookie-bar"><button class="btn ghost slim" id="sd-cookie-test" data-act="cookie-test">自检</button>' +
-        '<span class="sd-cookie-res" id="sd-cookie-res">' + escapeHtml(checkTxt) + "</span></div>";
-      }
-
-      return '<div class="sd-form">' + body + "</div>";
-    }
-
     function collect(s) {
       var dv = document.getElementById("site-detail") || detail;
       dv.querySelectorAll("[data-k]").forEach(function (el) {
@@ -4003,7 +3740,6 @@
       drawerSt.on = true;
       drawerSt.site = s;
       drawerSt.isSettings = state.tab === "settings";
-      drawerSt.body = state.tab === "settings" ? settingsHtml(s) : overviewHtml(s);
       detail = document.getElementById("site-detail") || detail;
       siteState.tick++;
     }
