@@ -672,10 +672,6 @@
           }));
         }
       }).mount(root);
-    } else if (root) {
-      root.innerHTML = '<nav class="dock">' + items.map(function (it) {
-        return '<a class="dock-item' + (it.key === PAGE ? " active" : "") + '" href="' + it.href + '" data-view="' + it.key + '" title="' + it.label + '">' + (it.icon || "") + '<span class="dock-label">' + it.label + "</span></a>";
-      }).join("") + "</nav>";
     }
     var right = $(".topbar-right");
     if (right && !$("#menu-btn") && st) {
@@ -4702,10 +4698,6 @@
             }
           }).mount(p);
         }
-      } else {
-        p.innerHTML = model.map(function (x) {
-          return '<span class="pill"><span class="dot ' + x.dot + '"></span>' + escapeHtml(x.text) + "</span>";
-        }).join("");
       }
     }
     document.title = title + " · 媒体资料库";
@@ -4837,15 +4829,8 @@
       MOCK.logs.unshift(line);
       if (MOCK.logs.length > 80) MOCK.logs.length = 80;
       if (window.__ptaRepaintLogs) window.__ptaRepaintLogs();
-      var dash = document.querySelector("#dash-logs");
-      if (dash && typeof renderDashboard === "function" && !document.querySelector('.view[data-view="logs"].active')) {
-        var lg = document.querySelector("#dash-logs");
-        if (lg) {
-          lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
-            return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
-          }).join("");
-        }
-      }
+      /* 总览那四条由 initDashboardVue 渲染，这里只通知它同步 */
+      if (typeof window.__ptaDashSync === "function") window.__ptaDashSync();
     },
     start: function () {
       var self = this;
@@ -5088,13 +5073,11 @@
           " · 待审 " + (c.queue || 0) + " · 下载器 " + (c.downloaders || 0),
         "已运行 " + upTxt(d.uptime)
       ];
-      if (footState) { footState.lines = lines; return; }
-      el.innerHTML = lines.map(function (t) { return "<span>" + t + "</span>"; }).join("");
+      footState.lines = lines;
     }
     function load() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) {
-        if (footState) { footState.lines = ["本地预览 · 没有后端，统计不可用"]; return; }
-        el.innerHTML = "<span>本地预览 · 没有后端，统计不可用</span>";
+        footState.lines = ["本地预览 · 没有后端，统计不可用"];
         return;
       }
       fetch("api/dev", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; })
