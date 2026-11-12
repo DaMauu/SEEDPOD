@@ -227,29 +227,8 @@
       "rows": [
           {
             "t": "种子标题",
-            "type": "fixed-btn",
-            "v": "原生转载不修改"
-          },
-          {
-            "t": "匹配范围",
-            "type": "select",
-            "v": "",
-            "opts": [
-              "标题",
-              "标题 + 副标题",
-              "标题 + 简介首段"
-            ],
-            "hint": "只读这段文本，不改任何字段"
-          },
-          {
-            "t": "写错时",
-            "type": "select",
-            "v": "",
-            "opts": [
-              "回退成纯文本匹配",
-              "整条跳过等人工"
-            ],
-            "hint": "语法错、超时、超长都走这条"
+            "type": "fixed",
+            "v": "原样照搬，不修改"
           },
           {
             "t": "中文副标题模板",
@@ -259,13 +238,8 @@
           },
           {
             "t": "副标题语言",
-            "type": "select",
-            "v": "中文",
-            "opts": [
-              "中文",
-              "中英双语",
-              "只用英文"
-            ]
+            "type": "fixed",
+            "v": "中文"
           }
         ]
     },
@@ -426,55 +400,7 @@
         }
       ]
     },
-    {
-      "name": "自动发布",
-      "sum": "半自动 · 间隔 60 秒 · 每天 20 条",
-      "rows": [
-        {
-          "t": "自动发布总开关",
-          "type": "switch",
-          "on": true,
-          "hint": "关掉只抓不发，全部留给人"
-        },
-        {
-          "t": "发布模式",
-          "type": "select",
-          "v": "半自动（先转待审核）",
-          "opts": [
-            "全自动（过了就直接发）",
-            "半自动（先转待审核）",
-            "仅准备（不碰目标站）"
-          ]
-        },
-        {
-          "t": "发布前必须人工点通过",
-          "type": "custom",
-          "chips": [
-            "必须人工点通过",
-            "不拦，直接发"
-          ],
-          "sel": [],
-          "single": true,
-          "hint": "点一下选中，和搜索预设里的类型按钮一样"
-        },
-        {
-          "t": "两条之间间隔（秒）",
-          "type": "text",
-          "v": "60",
-          "hint": "别把目标站刷爆"
-        },
-        {
-          "t": "每天最多自动发几条",
-          "type": "text",
-          "v": "20"
-        },
-        {
-          "t": "单站每天最多发几条",
-          "type": "text",
-          "v": "10"
-        }
-      ]
-    },
+    
     {
       "name": "失败与兜底",
       "sum": "重复转审核 · 限制分发丢弃",
@@ -673,24 +599,45 @@
       "name": "标题匹配",
       "sum": "正则决定转不转",
       "rows": [
-        {
-          "t": "排除匹配",
-          "type": "custom",
-          "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
-          "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
-        },
-        {
-          "t": "白名单匹配",
-          "type": "custom",
-          "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
-          "hint": "和排除同时命中时，排除优先"
-        },
-        {
-          "t": "测试匹配",
-          "type": "custom",
-          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
-        }
-      ]
+          {
+            "t": "匹配范围",
+            "type": "select",
+            "v": "",
+            "opts": [
+              "标题",
+              "标题 + 副标题",
+              "标题 + 简介首段"
+            ],
+            "hint": "只读这段文本，不改任何字段"
+          },
+          {
+            "t": "写错时",
+            "type": "select",
+            "v": "",
+            "opts": [
+              "回退成纯文本匹配",
+              "整条跳过等人工"
+            ],
+            "hint": "语法错、超时、超长都走这条"
+          },
+          {
+            "t": "排除匹配",
+            "type": "custom",
+            "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
+            "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
+          },
+          {
+            "t": "白名单匹配",
+            "type": "custom",
+            "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
+            "hint": "和排除同时命中时，排除优先"
+          },
+          {
+            "t": "测试匹配",
+            "type": "custom",
+            "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
+          }
+        ]
     },
     {
       "name": "目标站状态",

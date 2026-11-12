@@ -2633,6 +2633,7 @@
         return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
       }
       if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
+      if (r.type === "fixed") return h("span", { class: "tpl-fixed" }, r.v || "");
       if (r.type === "fixed-btn") return h("div", { class: "fixed-row" }, [
         h("span", { class: "tpl-fixed" }, r.v || "原生转载不修改"),
         h("button", {
