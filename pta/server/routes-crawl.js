@@ -37,7 +37,7 @@ module.exports = function (app, ctx) {
   const KEYRING = secretbox.loadKey(DATA_DIR);
   const now = () => new Date().toISOString();
   const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
-  const readPresets = () => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; } catch (e) { return {}; } };
+  const readPresets = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
   const readCookie = (host) => {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
     if (!r || !r.cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie，查不了' } };

@@ -147,3 +147,10 @@
 
 ### 新增
 - Fastify 查重与抓取计划：/api/crawl/plan（只读本地配置拼搜索 URL，不发请求）、/api/dupe/check（按标题真搜一次，判定 可发/仅DIY可发/已有原盘，结果回写 SQLite）。实测 52pt 计划可出、查重一条真实请求成功。
+
+## v0.7.7 · 2026-11-13
+
+### 新增
+- Fastify 演练任务与发布预览：/api/tasks（只走本地步骤，不发请求）、/api/tasks/:id、/api/publish/preview。
+### 修复
+- 抓取计划读不到搜索预设：site-search.local.json 外层是 {updatedAt, sites}，改成解包 sites；52pt 现在能给出 5 组分类、5 条搜索地址。
