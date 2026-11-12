@@ -2514,17 +2514,7 @@
         return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
       }
       if (r.type === "num") return h("input", { class: "input num", type: "number", value: String(r.v || ""), onInput: function (e) { r.v = e.target.value; } });
-      if (r.type === "custom") {
-        var html = String(r.html || "");
-        if (html.indexOf("rx-deny") >= 0) return h("input", { class: "input", value: st.rx.deny, placeholder: "命中就不转载，例：DVDRip|枪版|CAM", onInput: function (e) { st.rx.deny = e.target.value; } });
-        if (html.indexOf("rx-allow") >= 0) return h("input", { class: "input", value: st.rx.allow, placeholder: "留空不限，命中才转载", onInput: function (e) { st.rx.allow = e.target.value; } });
-        if (html.indexOf("rx-sample") >= 0) return h("div", { class: "rx-test" }, [
-          h("input", { class: "input", value: st.sample, placeholder: "粘贴一条标题试一下", onInput: function (e) { st.sample = e.target.value; } }),
-          h("button", { class: "btn ghost slim", type: "button", onClick: testRx }, "测试"),
-          h("em", null, st.out)
-        ]);
-        return h("div", { innerHTML: r.html || "" });
-      }
+      if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
       return h("input", { class: "input", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
     }
     function curNodes(r) {
@@ -2553,7 +2543,7 @@
           h("div", { class: "lbl" }, [h("span", null, "自动查重"), h("i", null, "关闭时不主动向目标站发请求，只在数据清单里手动查")]),
           h("div", { class: "ctl" }, [h("button", { class: "switch" + (st.autoDupe ? " on" : ""), type: "button", onClick: function () { st.autoDupe = !st.autoDupe; } }, [h("i")])])
         ]));
-        return h("section", { class: "drawer open vue-card" }, [
+        return h("section", { class: "drawer open vue-card dedupe-card" }, [
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
               h("div", { class: "drawer-title" }, "查重"),
