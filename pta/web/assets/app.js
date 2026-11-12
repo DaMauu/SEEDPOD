@@ -330,22 +330,38 @@
   }
   window.__ptaLoadOverview = loadOverview;
 
-  /* 顶栏三个状态：后端连通、待审核条数、下载器数量；没有数据就不显示次数 */
+  /* 顶栏三个状态：内容交给 Vue，显隐仍用 hidden 属性控制 */
+  var pillState = window.Vue ? window.Vue.reactive({ online: false, pending: 0, downloaders: undefined }) : null;
+  function mountPills() {
+    if (!pillState || !window.Vue) return;
+    var h = window.Vue.h;
+    function mountOne(id, renderFn) {
+      var el = $("#" + id);
+      if (!el || el.getAttribute("data-vue") === "1") return;
+      el.setAttribute("data-vue", "1");
+      window.Vue.createApp({ render: function () { return renderFn(h); } }).mount(el);
+    }
+    mountOne("pill-service", function (h2) {
+      return [h2("span", { class: "dot " + (pillState.online ? "ok" : "") }), pillState.online ? "后端已连接" : "未连接后端"];
+    });
+    mountOne("pill-pending", function (h2) {
+      return [h2("span", { class: "dot warn" }), pillState.pending + " 条待审核"];
+    });
+    mountOne("pill-nodes", function (h2) {
+      return [h2("span", { class: "dot ok" }), "下载器 " + (pillState.downloaders || 0)];
+    });
+  }
   function paintTopbar() {
-    var svc = $("#pill-service"), pend = $("#pill-pending"), nodes = $("#pill-nodes");
+    var svc = $("#pill-service");
     if (!svc) return;
-    var online = window.__ptaSiteSource === "api";
-    svc.innerHTML = '<span class="dot ' + (online ? "ok" : "") + '"></span>' + (online ? "后端已连接" : "未连接后端");
-    var pn = (window.__ptaQueueCounts && window.__ptaQueueCounts.pending) || 0;
-    if (pend) {
-      pend.hidden = !pn;
-      pend.innerHTML = '<span class="dot warn"></span>' + pn + " 条待审核";
+    if (pillState) {
+      pillState.online = window.__ptaSiteSource === "api";
+      pillState.pending = (window.__ptaQueueCounts && window.__ptaQueueCounts.pending) || 0;
+      pillState.downloaders = window.__ptaDownloaderCount;
     }
-    var dn = window.__ptaDownloaderCount;
-    if (nodes) {
-      nodes.hidden = dn === undefined;
-      nodes.innerHTML = '<span class="dot ok"></span>下载器 ' + (dn || 0);
-    }
+    var pend = $("#pill-pending"), nodes = $("#pill-nodes");
+    if (pend) pend.hidden = !pillState.pending;
+    if (nodes) nodes.hidden = pillState.downloaders === undefined;
   }
   window.__ptaPaintTopbar = paintTopbar;
 
@@ -516,57 +532,70 @@
   }
   function catMapCount(host) { return Object.keys(loadCatMap()[host] || {}).length; }
 
+  /* 分类映射弹窗：由 Vue 渲染，状态在 catMapState 里 */
+  var catMapState = window.Vue ? window.Vue.reactive({ title: "分类映射", sub: "", rows: [], host: "", after: null }) : null;
+  var catMapMask = null;
+  function ensureCatMap() {
+    if (catMapMask || !catMapState) return;
+    catMapMask = el("div", "modal-mask");
+    catMapMask.id = "catmap-modal";
+    catMapMask.hidden = true;
+    document.body.appendChild(catMapMask);
+    catMapMask.addEventListener("click", function (e) { if (e.target === catMapMask) catMapMask.hidden = true; });
+    var h = window.Vue.h;
+    window.Vue.createApp({
+      render: function () {
+        var self = catMapState;
+        function close() { catMapMask.hidden = true; }
+        function guess() {
+          catMapState.rows = catMapState.rows.map(function (r) { return { src: r.src, pick: guessLibCat(r.src) }; });
+        }
+        function save() {
+          var m = loadCatMap();
+          var map = {};
+          catMapState.rows.forEach(function (r) { if (r.pick) map[r.src] = r.pick; });
+          m[catMapState.host] = map;
+          saveCatMap(m);
+          catMapMask.hidden = true;
+          toast("已保存 " + Object.keys(map).length + " 条映射");
+          if (catMapState.after) catMapState.after(map);
+        }
+        return h("div", { class: "modal wide" }, [
+          h("div", { class: "modal-head" }, [h("h2", { id: "cm-title" }, self.title),
+            h("button", { class: "btn ghost slim", id: "cm-x", type: "button", onClick: close }, "关闭")]),
+          h("p", { class: "modal-sub", id: "cm-sub" }, self.sub),
+          h("div", { class: "cm-list", id: "cm-list" }, self.rows.map(function (r) {
+            return h("div", { class: "cm-row" }, [
+              h("span", { class: "cm-src" }, r.src),
+              h("select", { class: "select", "data-src": r.src, value: r.pick, onChange: function (e) { r.pick = e.target.value; } },
+                [h("option", { value: "" }, "忽略")].concat(LIB_CATS.map(function (c) {
+                  return h("option", { value: c }, c);
+                })))
+            ]);
+          })),
+          h("div", { class: "modal-foot" }, [
+            h("button", { class: "btn ghost slim", id: "cm-guess", type: "button", onClick: guess }, "按名字自动猜"),
+            h("div", { class: "spacer" }),
+            h("button", { class: "btn ghost slim", id: "cm-cancel", type: "button", onClick: close }, "取消"),
+            h("button", { class: "btn primary slim", id: "cm-ok", type: "button", onClick: save }, "保存映射")
+          ])
+        ]);
+      }
+    }).mount(catMapMask);
+  }
+
   function openCatMap(opts) {
-    var mask = $("#catmap-modal");
-    if (!mask) {
-      mask = el("div", "modal-mask");
-      mask.id = "catmap-modal";
-      mask.hidden = true;
-      mask.innerHTML = '<div class="modal wide">' +
-        '<div class="modal-head"><h2 id="cm-title">分类映射</h2><button class="btn ghost slim" id="cm-x">关闭</button></div>' +
-        '<p class="modal-sub" id="cm-sub"></p>' +
-        '<div class="cm-list" id="cm-list"></div>' +
-        '<div class="modal-foot"><button class="btn ghost slim" id="cm-guess">按名字自动猜</button>' +
-          '<div class="spacer"></div>' +
-          '<button class="btn ghost slim" id="cm-cancel">取消</button>' +
-          '<button class="btn primary slim" id="cm-ok">保存映射</button></div></div>';
-      document.body.appendChild(mask);
-      mask.addEventListener("click", function (e) { if (e.target === mask) mask.hidden = true; });
-      $("#cm-x", mask).addEventListener("click", function () { mask.hidden = true; });
-      $("#cm-cancel", mask).addEventListener("click", function () { mask.hidden = true; });
-      $("#cm-guess", mask).addEventListener("click", function () {
-        $$("#cm-list select", mask).forEach(function (sel) { sel.value = guessLibCat(sel.getAttribute("data-src")); });
-      });
-      $("#cm-ok", mask).addEventListener("click", function () {
-        var m = loadCatMap();
-        var map = {};
-        $$("#cm-list select", mask).forEach(function (sel) {
-          var src = sel.getAttribute("data-src");
-          if (sel.value) map[src] = sel.value;
-        });
-        m[mask._host] = map;
-        saveCatMap(m);
-        mask.hidden = true;
-        toast("已保存 " + Object.keys(map).length + " 条映射");
-        if (mask._after) mask._after(map);
-      });
-    }
+    if (!catMapState) return;
+    ensureCatMap();
     var host = opts.host || "__target__";
     var saved = loadCatMap()[host] || {};
     var names = opts.cats && opts.cats.length ? opts.cats : siteCatNames(null);
-    mask._host = host;
-    mask._after = opts.after || null;
-    $("#cm-title", mask).textContent = "分类映射 · " + (opts.label || host);
-    $("#cm-sub", mask).textContent = opts.sub || "站点自己的分类对到库里的分类，没对上的会跳过；只影响收录和发布，不影响请求。";
-    $("#cm-list", mask).innerHTML = names.map(function (n) {
-      var pick = saved[n] || "";
-      var inner = ['<option value="">忽略</option>'].concat(LIB_CATS.map(function (c) {
-        return '<option value="' + c + '"' + (c === pick ? " selected" : "") + ">" + c + "</option>";
-      })).join("");
-      return '<div class="cm-row"><span class="cm-src">' + escapeHtml(n) + "</span>" +
-        '<select class="select" data-src="' + escapeHtml(n) + '">' + inner + "</select></div>";
-    }).join("");
-    mask.hidden = false;
+    catMapState.host = host;
+    catMapState.after = opts.after || null;
+    catMapState.title = "分类映射 · " + (opts.label || host);
+    catMapState.sub = opts.sub || "站点自己的分类对到库里的分类，没对上的会跳过；只影响收录和发布，不影响请求。";
+    catMapState.rows = names.map(function (n) { return { src: n, pick: saved[n] || "" }; });
+    catMapMask.hidden = false;
   }
   window.PTA.openCatMap = openCatMap;
 
@@ -668,6 +697,7 @@
         }
       }).mount(host);
     }
+    mountPills();
   }
 
   function initNav() {
