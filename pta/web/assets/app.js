@@ -625,31 +625,48 @@
   }
   window.__ptaSetNavCount = setNavCount;
 
+  /* 导航交给 Vue：图标是内联 SVG，用 innerHTML 注入，CSP 允许 */
   function initChrome() {
     var root = $("#dock-root");
-    if (root) {
-      root.innerHTML = '<nav class="dock">' + navItems().map(function (it) {
-        var active = it.key === PAGE ? " active" : "";
-        var count = "";
-        return '<a class="dock-item' + active + '" href="' + it.href + '" data-view="' + it.key + '" title="' + it.label + '">' + (it.icon || "") + '<span class="dock-label">' + it.label + '</span>' + count + "</a>";
+    var items = navItems();
+    var st = window.Vue ? window.Vue.reactive({ active: PAGE, items: items }) : null;
+    window.__ptaNavState = st;
+    if (root && st) {
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          return h("nav", { class: "dock" }, st.items.map(function (it) {
+            return h("a", { class: "dock-item" + (it.key === st.active ? " active" : ""), href: it.href, "data-view": it.key, title: it.label }, [
+              it.icon ? h("span", { innerHTML: it.icon }) : null,
+              h("span", { class: "dock-label" }, it.label)
+            ]);
+          }));
+        }
+      }).mount(root);
+    } else if (root) {
+      root.innerHTML = '<nav class="dock">' + items.map(function (it) {
+        return '<a class="dock-item' + (it.key === PAGE ? " active" : "") + '" href="' + it.href + '" data-view="' + it.key + '" title="' + it.label + '">' + (it.icon || "") + '<span class="dock-label">' + it.label + "</span></a>";
       }).join("") + "</nav>";
     }
     var right = $(".topbar-right");
-    if (right && !$("#menu-btn")) {
-      var navLinks = navItems().map(function (it) {
-        var active = it.key === PAGE ? " active" : "";
-        var count = "";
-        return '<a class="menu-link' + active + '" href="' + it.href + '" data-view="' + it.key + '">' + it.label + count + "</a>";
-      }).join("");
-      right.insertAdjacentHTML("beforeend",
-        '<div class="menu-wrap">' +
-          '<button class="btn menu-btn" id="menu-btn" aria-label="菜单">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' +
-          "</button>" +
-          '<div class="menu" id="menu">' + navLinks +
-            '<button type="button" class="menu-link menu-logout" id="menu-logout">退出登录</button>' +
-          "</div>" +
-        "</div>");
+    if (right && !$("#menu-btn") && st) {
+      var h2 = window.Vue.h;
+      var host = document.createElement("div");
+      right.appendChild(host);
+      window.Vue.createApp({
+        render: function () {
+          return h2("div", { class: "menu-wrap" }, [
+            h2("button", { class: "btn menu-btn", id: "menu-btn", "aria-label": "菜单" }, [
+              h2("span", { innerHTML: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' })
+            ]),
+            h2("div", { class: "menu", id: "menu" }, st.items.map(function (it) {
+              return h2("a", { class: "menu-link" + (it.key === st.active ? " active" : ""), href: it.href, "data-view": it.key }, it.label);
+            }).concat([
+              h2("button", { type: "button", class: "menu-link menu-logout", id: "menu-logout" }, "退出登录")
+            ]))
+          ]);
+        }
+      }).mount(host);
     }
   }
 
@@ -678,46 +695,8 @@
   }
 
   function renderDashboard() {
-    /* 首页数字只用后端真实数据：队列、词条库、本地去重库；没有后端时显示 0，不编造 */
-    var ov = window.__ptaOverview;
-    var qc = (ov && ov.queue && ov.queue.counts) || {};
-    var pending = qc.pending || 0;
-    var published = qc.published || 0;
-    var fail = qc.rejected || 0;
-    var cat = (ov && ov.catalog) || { total: 0, byStatus: {} };
-    var lib = (ov && ov.library && ov.library.total) || 0;
-
-    function set(id, v) { var el = $(id); if (el) el.textContent = v; }
-    set("#hero-num", String(published));
-    set("#hero-delta", "累计已发布");
-    set("#stat-month", String(published));
-    set("#stat-total", published.toLocaleString());
-    set("#stat-db", cat.total.toLocaleString());
-
-    var t = $("#today-stats");
-    if (t) {
-      t.innerHTML = [
-        "词条 <b>" + cat.total.toLocaleString() + "</b>",
-        "待发 <b>" + ((cat.byStatus && cat.byStatus.selected) || 0) + "</b>",
-        "已发布 <b>" + published + "</b>",
-        "跳过 <b>" + ((cat.byStatus && cat.byStatus.skipped) || 0) + "</b>",
-        "本地库 <b>" + lib.toLocaleString() + "</b>",
-        "待审核 <b>" + pending + "</b>"
-      ].join("　·　");
-    }
-
-    renderPending();
-    renderPublished();
-    renderHealth();
-    if (window.__ptaLoadDashLists) window.__ptaLoadDashLists();
-
-    var lg = $("#dash-logs");
-    if (lg) {
-      lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
-        return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
-      }).join("");
-    }
-    return { pending: pending, pub: published, fail: fail };
+    if (window.__ptaDashSync) window.__ptaDashSync();
+    return { pending: 0, pub: 0, fail: 0 };
   }
 
   function kpi(label, value, delta, cls) {
@@ -726,15 +705,7 @@
   }
 
   function paintDashLogs() {
-    var lg = $("#dash-logs");
-    if (!lg) return;
-    if (!MOCK.logs.length) {
-      lg.innerHTML = '<div class="dash-log-empty">还没有日志，连上后端后这里会实时刷新</div>';
-      return;
-    }
-    lg.innerHTML = MOCK.logs.slice(0, 4).map(function (l) {
-      return '<div class="list-item ' + l.lvl + '"><span class="time">' + l.t + '</span><span class="msg">' + escapeHtml(l.msg) + "</span></div>";
-    }).join("");
+    if (window.__ptaDashSync) window.__ptaDashSync();
   }
 
   window.__ptaPaintHealth = function () { renderDashboard(); renderSiteHealth(); renderNodeCapacity(); };
@@ -749,29 +720,7 @@
 
   /* 系统状态用的都是后端真实数据：站点数来自清单，登录结果来自自检记录，磁盘余量来自下载器探测 */
   function renderHealth() {
-    var host = $("#health-strip");
-    if (!host) return;
-    var o = window.__ptaOverview;
-    var loginOk = o ? o.sites.loginOk : 0;
-    var enabled = o ? o.sites.enabled : 0;
-    var loginFail = o ? o.sites.loginFail : 0;
-    var unchecked = o ? o.sites.loginUnknown : 0;
-    var dls = o ? o.downloaders : null;
-    var free = dls ? fmtBytes(dls.freeSpace) : "";
-    var list = [
-      { label: "登录失效", value: String(loginFail), warn: loginFail > 0 },
-      { label: "还没自检", value: String(unchecked), warn: false },
-      { label: "下载器在线", value: dls ? (dls.online + " / " + dls.total) : "—", warn: !!(dls && dls.total && dls.online < dls.total) },
-      { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接"), warn: !!(dls && dls.total && !free) }
-    ];
-    var crawlTxt = o && o.crawl ? (o.crawl.runsToday + " 次 / " + (o.crawl.hostsToday || 0) + " 站") : "—";
-    host.innerHTML =
-      '<div class="status-hero"><span>cookie 可用</span><b class="' + (loginFail ? "warn" : "") + '">' +
-      loginOk + "</b><i>共启用 " + enabled + " 个" + (o ? "" : "（未连接后端）") + "</i>" +
-      '<div class="hero-sub"><span>今日抓取</span><b>' + crawlTxt + "</b></div></div>" +
-      '<div class="status-list">' + list.map(function (it) {
-        return '<div class="hstat' + (it.warn ? " warn" : "") + '"><span>' + it.label + "</span><b>" + it.value + "</b></div>";
-      }).join("") + "</div>";
+    if (window.__ptaDashSync) window.__ptaDashSync();
   }
 
   function renderSiteHealth() {
@@ -825,33 +774,11 @@
   }
 
   function renderPending() {
-    var host = $("#dash-pending");
-    if (!host) return;
-    var rows = (window.__ptaQueuePending || []).slice(0, 3);
-    if (!rows.length) { host.innerHTML = '<div class="empty">没有待审核的条目</div>'; return; }
-    host.innerHTML = rows.map(function (it) {
-      return '<div class="list-item"><div style="flex:1;min-width:0">' +
-        '<div class="t-main">' + escapeHtml(it.cn || it.title) + '</div>' +
-        '<div class="t-sub">' + escapeHtml(it.res || "") + " · " + escapeHtml(it.size || "") + " · " + escapeHtml(it.site || "") + "</div></div>" +
-        '<a class="btn ghost sm" href="#queue">审核</a></div>';
-    }).join("");
+    if (window.__ptaDashSync) window.__ptaDashSync();
   }
 
   function renderPublished() {
-    var host = $("#dash-published");
-    if (!host) return;
-    var list = window.__ptaPublished || [];
-    if (!list.length) {
-      host.innerHTML = '<div class="empty">还没有发布记录</div>';
-      return;
-    }
-    host.innerHTML = list.slice(0, 3).map(function (p) {
-      var t = p.at ? String(p.at).slice(5, 16).replace("T", " ") : "";
-      return '<div class="list-item">' +
-        '<div style="flex:1;min-width:0"><div class="t-main">' + escapeHtml(p.cn || p.title) + "</div>" +
-        '<div class="t-sub">' + escapeHtml(p.site || "未选站点") + " · " + escapeHtml(p.size || "") + "</div></div>" +
-        '<span class="t-sub">' + escapeHtml(t) + '</span><span class="badge green">已发布</span></div>';
-    }).join("");
+    if (window.__ptaDashSync) window.__ptaDashSync();
   }
 
   /* 首页列表用真实数据：待审核读 /api/queue，已发布读 /api/published */
@@ -875,6 +802,37 @@
     var listBox = $("#queue-items");
     var detail = $("#queue-detail");
     if (!listBox) return;
+    /* 左列交给 Vue 渲染；右列内容仍由原函数生成，事件委托不变 */
+    var qState = (window.Vue ? window.Vue.reactive({ rows: [], sel: null }) : null);
+    function paintQueueList(list) {
+      if (!qState) {
+        listBox.innerHTML = (list || []).map(itemHtml).join("") || '<div class="sites-empty">没有匹配的条目</div>';
+        return;
+      }
+      qState.sel = state.sel;
+      qState.rows = (list || []).map(function (it) {
+        var st = STATUS[it.status] || ["未知", "gray"];
+        return { id: String(it.id), title: it.title, cn: it.cn || "", res: it.res || "", size: it.size || "",
+          targetSite: it.targetSite || "", status: st[0], tone: st[1], on: String(it.id) === String(state.sel) };
+      });
+    }
+    if (qState && window.Vue) {
+      var QVue = window.Vue, qh = QVue.h;
+      QVue.createApp({
+        render: function () {
+          if (!qState.rows.length) return qh("div", { class: "sites-empty" }, "没有匹配的条目");
+          return qState.rows.map(function (r) {
+            return qh("button", { class: "q-item" + (r.on ? " on" : ""), "data-id": r.id, key: r.id }, [
+              qh("span", { class: "q-title" }, [
+                qh("b", null, r.title),
+                qh("i", null, (r.cn ? r.cn + " · " : "") + r.res + " · " + r.size + (r.targetSite ? " · 目标 " + r.targetSite : ""))
+              ]),
+              qh("span", { class: "badge " + r.tone }, r.status)
+            ]);
+          });
+        }
+      }).mount(listBox);
+    }
 
     var state = { tab: "all", q: "", sel: null, page: 1, pages: 1, matched: 0 };
     var PAGE_SIZE = 100;
@@ -1021,7 +979,7 @@
       if (!list.some(function (x) { return x.id === state.sel; })) {
         state.sel = list.length ? list[0].id : null;
       }
-      listBox.innerHTML = list.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的条目</div>';
+      paintQueueList(list);
       var cnt = $("#queue-count");
       if (cnt) cnt.textContent = "共 " + total + " 条";
       var info = $("#queue-page-info");
@@ -1423,55 +1381,8 @@
       var pages0 = Math.max(1, Math.ceil(rows.length / PAGE));
       if (state.page > pages0 - 1) state.page = pages0 - 1;
       var pageRows = rows.slice(state.page * PAGE, state.page * PAGE + PAGE);
-      body.innerHTML = pageRows.map(function (it) {
-        var toggles = Object.keys(MK).map(function (k) {
-          var v = it.marks && it.marks[k];
-          var on = !!v;
-          var label = MK[k];
-          var tip = "点一下手动加 / 去这个标记";
-          if (k === "limitedDays") {
-            tip = "按站上发布时间算：7 天内的只打「未满 7 天」标记，不过滤；点一下可手动加 / 去";
-            if (typeof v === "number" && v > 0) label = "未满7天·剩" + v + "天";
-          }
-          return '<button class="mark-btn' + (on ? " on" : "") + '" title="' + tip + '" data-mark="' + k + '" data-cid="' + it.id +
-            '" data-marks="' + escapeHtml(JSON.stringify(it.marks || {})) + '">' + label + "</button>";
-        }).join("");
-        return '<div class="dl-row' + (it.status === "archived" ? " is-archived" : "") + '">' +
-          '<span class="dl-title"><b>' + (function () {
-            var href = absUrl(it.site, it.detailsUrl);
-            return href ? '<a class="t-link" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.title) + "</a>"
-              : escapeHtml(it.title);
-          })() + "</b>" +
-          '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") +
-          (it.seeders ? '<i class="cat-site">做种 ' + it.seeders + "</i>" : "") +
-          (it.marks && it.marks.existing ? '<em class="chip warn" title="' + escapeHtml(it.dupNote || '跟队列/本地库/已发布里的某条重复') + '">已有</em>' : "") +
-          (function () {
-            if (!it.dupe) return "";
-            var map = { clean: ["np", "可发"], diy: ["warn", "仅DIY可发"], dupe: ["warn", "已有原盘"], error: ["warn", "没查成"] };
-            var m = map[it.dupe] || ["np", it.dupe];
-            var tip = "向 " + (it.dupeTarget || "目标站") + " 查过 · " + String(it.dupeAt || "").slice(0, 16).replace("T", " ") +
-              (it.dupeTitle ? " · 命中：" + it.dupeTitle : "");
-            var inner = m[1] + (it.dupeSizeGB ? " " + it.dupeSizeGB + "GB" : "");
-            return it.dupeUrl
-              ? '<a class="chip ' + m[0] + '" href="' + escapeHtml(it.dupeUrl) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(tip) + '">' + escapeHtml(inner) + "</a>"
-              : '<em class="chip ' + m[0] + '" title="' + escapeHtml(tip) + '">' + escapeHtml(inner) + "</em>";
-          })() + toggles + "</span></span>" +
-          '<span>' + (function () {
-            var t = it.type || catNameFromDef(it.site, it.cat) || it.catName || "";
-            return t ? '<em class="chip np">' + escapeHtml(t) + "</em>" : '<span class="soft">—</span>';
-          })() + "</span>" +
-          '<span class="soft">' + escapeHtml(it.res) + "</span>" +
-          '<span class="soft">' + escapeHtml(it.size) + "</span>" +
-          '<span class="soft">' + escapeHtml(it.time) + "</span>" +
-          '<span><span class="badge ' + (it.status === "published" ? "green" : it.status === "selected" ? "amber" : "") + '">' + escapeHtml(ST_TXT[it.status] || it.status) + "</span></span>" +
-          '<span class="dl-ops">' + (it.status === "archived"
-            ? '<span class="soft">已归档</span><button class="link-btn" data-restore="1" data-cid="' + it.id + '">恢复</button>'
-            : it.status === "published" || it.status === "selected"
-              ? '<span class="soft">' + (it.status === "published" ? "已发布" : "已送审") + "</span>"
-              : '<button class="link-btn" data-send="1" data-cid="' + it.id + '">送审</button>' +
-                '<button class="link-btn" data-archive="1" data-cid="' + it.id + '">归档</button>') + "</span>" +
-        "</div>";
-      }).join("") || '<div class="sites-empty">' + (all.length ? "没有匹配的条目" : "数据清单还是空的，去流程页点「抓一页」") + "</div>";
+      paintSourcesList(pageRows, all);
+
       var c = $("#dl-count");
       if (c) c.textContent = rows.length + (window.__ptaSourcesTotal && rows.length !== window.__ptaSourcesTotal ? " / " + window.__ptaSourcesTotal : "");
       var pages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -1484,6 +1395,83 @@
       if (window.__ptaSourcesTotal > LOAD_MAX) {
         if (c) c.textContent += "（只读了前 " + LOAD_MAX + " 条）";
       }
+    }
+
+    /* 数据清单的行交给 Vue：字段与标记按状态渲染，操作按钮仍走 data-* 委托 */
+    var srcState = window.Vue ? window.Vue.reactive({ rows: [], empty: "数据清单还是空的，去流程页点「抓一页」" }) : null;
+    function paintSourcesList(pageRows, all) {
+      if (!srcState) return;
+      srcState.empty = (all && all.length) ? "没有匹配的条目" : "数据清单还是空的，去流程页点「抓一页」";
+      srcState.rows = (pageRows || []).map(function (it) {
+        var marks = it.marks || {};
+        return {
+          id: it.id, title: it.title, href: absUrl(it.site, it.detailsUrl),
+          site: it.site || "", seeders: Number(it.seeders) || 0,
+          existing: !!marks.existing, dupNote: it.dupNote || "", marks: marks,
+          marksJson: JSON.stringify(marks),
+          dupe: it.dupe || "", dupeUrl: it.dupeUrl || "", dupeTarget: it.dupeTarget || "",
+          dupeAt: String(it.dupeAt || "").slice(0, 16).replace("T", " "), dupeTitle: it.dupeTitle || "",
+          dupeSizeGB: it.dupeSizeGB || 0,
+          type: it.type || catNameFromDef(it.site, it.cat) || it.catName || "",
+          res: it.res || "", size: it.size || "", time: it.time || "",
+          status: it.status || "", statusTxt: ST_TXT[it.status] || it.status || ""
+        };
+      });
+    }
+    if (srcState) {
+      var SVue = window.Vue, sh = SVue.h;
+      var MKL = { noRedistribute: "禁转", exclusive: "独占", diy: "DIY", limited: "限转", limitedDays: "未满 7 天" };
+      function markCell(r) {
+        return Object.keys(MKL).map(function (k) {
+          var v = r.marks[k];
+          var label = MKL[k];
+          if (k === "limitedDays" && typeof v === "number" && v > 0) label = "未满7天·剩" + v + "天";
+          return sh("button", { class: "mark-btn" + (v ? " on" : ""), "data-mark": k, "data-cid": r.id, "data-marks": r.marksJson, key: k }, label);
+        });
+      }
+      function dupeChip(r) {
+        if (!r.dupe) return null;
+        var map = { clean: ["np", "可发"], diy: ["warn", "仅DIY可发"], dupe: ["warn", "已有原盘"], error: ["warn", "没查成"] };
+        var m = map[r.dupe] || ["np", r.dupe];
+        var tip = "向 " + (r.dupeTarget || "目标站") + " 查过 · " + (r.dupeAt || "") + (r.dupeTitle ? " · 命中：" + r.dupeTitle : "");
+        var text = m[1] + (r.dupeSizeGB ? " " + r.dupeSizeGB + "GB" : "");
+        return r.dupeUrl
+          ? sh("a", { class: "chip " + m[0], href: r.dupeUrl, target: "_blank", rel: "noopener noreferrer", title: tip }, text)
+          : sh("em", { class: "chip " + m[0], title: tip }, text);
+      }
+      function opsCell(r) {
+        if (r.status === "archived") return [sh("span", { class: "soft" }, "已归档"), sh("button", { class: "link-btn", "data-restore": "1", "data-cid": r.id }, "恢复")];
+        if (r.status === "published" || r.status === "selected") return [sh("span", { class: "soft" }, r.status === "published" ? "已发布" : "已送审")];
+        return [sh("button", { class: "link-btn", "data-send": "1", "data-cid": r.id }, "送审"),
+          sh("button", { class: "link-btn", "data-archive": "1", "data-cid": r.id }, "归档")];
+      }
+      function rowDom(r) {
+        return sh("div", { class: "dl-row" + (r.status === "archived" ? " is-archived" : ""), key: r.id }, [
+          sh("span", { class: "dl-title" }, [
+            sh("b", null, r.href
+              ? sh("a", { class: "t-link", href: r.href, target: "_blank", rel: "noopener noreferrer" }, r.title)
+              : r.title),
+            sh("span", { class: "mark-row" }, [
+              r.site ? sh("i", { class: "cat-site" }, r.site) : null,
+              r.seeders ? sh("i", { class: "cat-site" }, "做种 " + r.seeders) : null,
+              r.existing ? sh("em", { class: "chip warn", title: r.dupNote || "跟队列/本地库/已发布里的某条重复" }, "已有") : null,
+              dupeChip(r)
+            ].concat(markCell(r)))
+          ]),
+          sh("span", null, r.type ? sh("em", { class: "chip np" }, r.type) : sh("span", { class: "soft" }, "—")),
+          sh("span", { class: "soft" }, r.res),
+          sh("span", { class: "soft" }, r.size),
+          sh("span", { class: "soft" }, r.time),
+          sh("span", null, sh("span", { class: "badge " + (r.status === "published" ? "green" : r.status === "selected" ? "amber" : "") }, r.statusTxt)),
+          sh("span", { class: "dl-ops" }, opsCell(r))
+        ]);
+      }
+      SVue.createApp({
+        render: function () {
+          if (!srcState.rows.length) return sh("div", { class: "sites-empty" }, srcState.empty);
+          return srcState.rows.map(rowDom);
+        }
+      }).mount(body);
     }
 
     window.__ptaRepaintSources = paint;
@@ -2059,32 +2047,40 @@
   function initLogs() {
     var host = $("#log-lines");
     if (!host) return;
-    var state = { lvl: "all" };
+    if (!window.Vue) { host.textContent = "Vue 运行时没加载"; return; }
+    var Vue = window.Vue, h = Vue.h;
+    var state = Vue.reactive({ lvl: "all", rows: [] });
 
-    function paint() {
-      var rows = MOCK.logs.filter(function (l) {
-        return state.lvl === "all" || l.lvl === state.lvl;
+    function sync() {
+      var list = (MOCK.logs || []).filter(function (l) { return state.lvl === "all" || l.lvl === state.lvl; });
+      state.rows = list.map(function (l, i) {
+        return { k: i, t: l.t, lvl: l.lvl, tag: l.tag, msg: l.msg };
       });
-      host.innerHTML = rows.map(function (l) {
-        var tag = l.lvl === "error" ? "ERROR" : l.lvl === "warn" ? "WARN" : "INFO";
-        return '<div class="log-row ' + l.lvl + '">' +
-          '<span class="log-ts">' + escapeHtml(l.t) + "</span>" +
-          '<span class="log-tag">' + tag + "</span>" +
-          '<span class="log-src">' + escapeHtml(l.tag) + "</span>" +
-          '<span class="log-msg">' + escapeHtml(l.msg) + "</span>" +
-        "</div>";
-      }).join("") || '<div class="sites-empty">还没有日志，连上后端后这里会实时刷新</div>';
       host.scrollTop = host.scrollHeight;
     }
+    window.__ptaRepaintLogs = sync;
 
-    window.__ptaRepaintLogs = paint;
+    Vue.createApp({
+      render: function () {
+        if (!state.rows.length) return h("div", { class: "sites-empty" }, "还没有日志，连上后端后这里会实时刷新");
+        return h("div", { class: "log-rows" }, state.rows.map(function (r) {
+          return h("div", { class: "log-row " + r.lvl, key: r.k }, [
+            h("span", { class: "log-ts" }, r.t),
+            h("span", { class: "log-tag" }, r.lvl === "error" ? "ERROR" : r.lvl === "warn" ? "WARN" : "INFO"),
+            h("span", { class: "log-src" }, r.tag),
+            h("span", { class: "log-msg" }, r.msg)
+          ]);
+        }));
+      }
+    }).mount(host);
+
     var tabs = $("#log-tabs");
     if (tabs) tabs.addEventListener("click", function (e) {
       var b = e.target.closest("button[data-lvl]");
       if (!b) return;
       state.lvl = b.getAttribute("data-lvl");
       $$("button", tabs).forEach(function (x) { x.classList.toggle("active", x === b); });
-      paint();
+      sync();
     });
     var dl = $("#log-dl");
     if (dl) dl.addEventListener("click", function () {
@@ -2098,8 +2094,11 @@
       toast("已下载 " + MOCK.logs.length + " 行");
     });
     var clr = $("#log-clear");
-    if (clr) clr.addEventListener("click", function () { host.innerHTML = ""; toast("已清屏：只清这一页，服务端日志还在"); });
-    paint();
+    if (clr) clr.addEventListener("click", function () {
+      state.rows = [];
+      toast("已清屏：只清这一页，服务端日志还在");
+    });
+    sync();
   }
 
   /* ---------- 流程页：抓取 / 发布 ---------- */
@@ -2179,7 +2178,7 @@
   var DEDUPE_RULES = window.PTA_RULES.dedupe;
 
   /* fetch 组由 Vue 的搜索预设卡独占，这里不再持有，免得保存查重/发布时把预设冲回默认 */
-  var RULE_SETS = { dedupe: DEDUPE_RULES, pub: PUB_RULES };
+  var RULE_SETS = {};
 
   /* 默认全部留空：不预选、不开启，避免看起来像已经配好了 */
   Object.keys(RULE_SETS).forEach(function (k) {
@@ -2260,18 +2259,19 @@
   }
 
   /* 请求限制卡片：Vue 组件。间隔、每日上限、熔断次数都写到服务端 /api/config，前端不各存一份 */
-  function mountLimitsCard(host) {
+  /* 流程页三张卡：抓取（请求限制 + 搜索预设）、查重、发布。都用 Vue 渲染，保持原来一张卡一组的结构 */
+  function mountCrawlCard(host) {
     if (!window.Vue) return;
     var Vue = window.Vue, h = Vue.h;
     var box = document.createElement("div");
-    var anchor = host.querySelector('.drawer[data-name="抓取"]');
+    var anchor = host.querySelector('.drawer[data-name="发布"]');
     (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
 
+    var preset = JSON.parse(JSON.stringify((window.PTA_RULES && window.PTA_RULES.fetch || [])[0] || { name: "搜索预设", rows: [] }));
     var st = Vue.reactive({
       runMode: "test", interval: 60, dailySite: 20, dailyAll: 100, breaker: 3,
       detail: (function () { try { return localStorage.getItem("pta.detail") === "1"; } catch (e) { return false; } })(),
-      saving: false,
-      note: "读取服务端配置…"
+      groups: [preset], saving: false, sum: "跟随默认", note: "读取服务端配置…"
     });
 
     function syncNote() {
@@ -2279,255 +2279,335 @@
       st.note = "每 " + st.interval + " 秒发一次请求 · " + (st.runMode === "prod" ? "正式模式" : "测试模式") +
         " · 本次大约 " + Math.max(1, Math.ceil(lim / 50)) + " 次请求";
     }
-    function numRow(label, hint, key, min, max) {
-      return h("div", { class: "set-field" }, [
-        h("div", { class: "lbl" }, [h("span", null, label), h("i", null, hint)]),
-        h("div", { class: "ctl" }, [
-          h("input", {
-            class: "input num", type: "number", min: String(min), max: String(max), value: String(st[key]),
-            "data-k": key, "data-min": String(min), "data-max": String(max),
-            onInput: function (e) { st[key] = Number(e.target.value) || 0; syncNote(); }
-          }),
-          h("em", { class: "num-warn" })
-        ])
-      ]);
-    }
-    function checkLimits() {
-      var bounds = {
-        interval: st.runMode === "prod" ? [8, 120] : [30, 120],
-        dailySite: [1, 300], dailyAll: [50, 2000], breaker: [1, 10]
-      };
-      var bad = null;
-      box.querySelectorAll("input.num[data-k]").forEach(function (el) {
-        var k = el.getAttribute("data-k"), r = bounds[k] || [0, 9999];
-        var n = Number(el.value), msg = "";
-        if (el.value !== "" && (!/^\d+$/.test(el.value) || n < r[0])) msg = "低于下限 " + r[0] + "，不允许保存，也不会执行";
-        else if (el.value !== "" && n > r[1]) msg = "超过上限 " + r[1] + "，不允许保存";
-        var w = el.parentNode.querySelector(".num-warn");
-        if (w) w.textContent = msg;
-        el.classList.toggle("is-bad", !!msg);
-        if (msg && !bad) bad = el;
-      });
-      return bad;
-    }
-    function switchRow(label, hint, key) {
-      return h("div", { class: "set-field" }, [
-        h("div", { class: "lbl" }, [h("span", null, label), h("i", null, hint)]),
-        h("div", { class: "ctl" }, [h("button", {
-          class: "switch" + (st[key] ? " on" : ""), type: "button",
-          onClick: function () {
-            st[key] = !st[key];
-            try { localStorage.setItem("pta.detail", st[key] ? "1" : "0"); } catch (e) {}
-          }
-        }, [h("i")])])
-      ]);
-    }
-    function load() {
-      if (!window.fetch || !/^https?:$/.test(location.protocol)) { syncNote(); return; }
-      fetch("api/config", { credentials: "same-origin" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          if (!j || !j.ok || !j.data || !j.data.user) return;
-          var u = j.data.user;
-          if (u.runMode) st.runMode = u.runMode;
-          ["interval", "dailySite", "dailyAll", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
-          syncNote();
-        })
-        .catch(function () {});
-    }
-    function save() {
-      if (st.saving) return;
-      var bad = checkLimits();
-      if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
-      st.saving = true;
-      fetch("api/config/user", {
-        method: "PATCH", credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ runMode: st.runMode, interval: st.interval, dailySite: st.dailySite, dailyAll: st.dailyAll, breaker: st.breaker })
-      }).then(function (r) { return r.json(); }).then(function (j) {
-        st.saving = false;
-        if (!j || !j.ok) { toast((j && j.error && j.error.message) || "服务端拒绝了这次保存"); return; }
-        toast("请求限制已保存到服务端");
-      }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
-    }
-
-    Vue.createApp({
-      render: function () {
-        var runSelect = h("select", { class: "select", "data-k": "runMode", value: st.runMode, onChange: function (e) { st.runMode = e.target.value; syncNote(); } },
-          [h("option", { value: "test" }, "测试（按人手速度）"), h("option", { value: "prod" }, "正式")]);
-        return h("section", { class: "drawer open vue-card" }, [
-          h("div", { class: "drawer-head" }, [
-            h("div", { class: "drawer-t" }, [
-              h("div", { class: "drawer-title" }, "请求限制"),
-              h("div", { class: "drawer-desc" }, "请求间隔、每日上限与熔断次数；只在这一处配，服务端按范围再校验一次。")
-            ]),
-            h("div", { class: "drawer-head-right" }, [
-              h("button", { class: "btn primary slim limits-save", type: "button", disabled: st.saving, onClick: save },
-                st.saving ? "保存中…" : "保存")
-            ])
-          ]),
-          h("div", { class: "drawer-body" }, [
-            h("div", { class: "set-fields" }, [
-              numRow("请求间隔", "两次请求之间至少等这么久（秒）", "interval", 8, 120),
-              numRow("每站每天", "单个站点一天最多发几次请求", "dailySite", 1, 300),
-              numRow("全站每天", "所有站加起来一天最多发几次", "dailyAll", 50, 2000),
-              numRow("连续失败", "连续失败这么多次就自动暂停", "breaker", 1, 10),
-              h("div", { class: "set-field" }, [
-                h("div", { class: "lbl" }, [h("span", null, "运行模式"), h("i", null, "测试模式最低 30 秒")]),
-                h("div", { class: "ctl" }, [runSelect])
-              ]),
-              switchRow("抓详情页", "每条详情多一次请求，配额翻倍；默认关", "detail")
-            ]),
-            h("div", { class: "crawl-note" }, st.note)
-          ])
-        ]);
-      }
-    }).mount(box);
-
-    /* 「抓多少条」变了，小字里的请求数跟着变 */
-    var limitSel = document.getElementById("crawl-limit");
-    if (limitSel) limitSel.addEventListener("change", syncNote);
-    load();
-  }
-
-  /* 搜索预设卡片：Vue 组件。只管「抓什么」的类目条件，保存写 /api/flow 的 fetch 组 */
-  function mountPresetCard(host) {
-    if (!window.Vue) return;
-    var Vue = window.Vue, h = Vue.h;
-    var box = document.createElement("div");
-    var anchor = host.querySelector('.drawer[data-name="查重"]');
-    (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
-
-    var src = (window.PTA_RULES && window.PTA_RULES.fetch || [])[0] || { name: "搜索预设", desc: "", rows: [] };
-    var st = Vue.reactive({ groups: JSON.parse(JSON.stringify([src])), saving: false, sum: "跟随默认" });
-
     function syncSum() {
       var on = 0;
-      st.groups.forEach(function (g) { g.rows.forEach(function (r) { on += (r.sel || []).length; }); });
+      st.groups.forEach(function (g) { (g.rows || []).forEach(function (r) { on += (r.sel || []).length; }); });
       st.sum = on ? on + " 项条件" : "跟随默认";
     }
     function load() {
-      if (!window.fetch || !/^https?:$/.test(location.protocol)) { syncSum(); return; }
-      fetch("api/flow", { credentials: "same-origin" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          var sets = j && j.ok && j.data && j.data.sets;
-          var saved = sets && Array.isArray(sets.fetch) ? sets.fetch : null;
-          if (!saved) { syncSum(); return; }
-          st.groups.forEach(function (g, gi) {
-            var rows = saved[gi];
-            if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
-            g.rows.forEach(function (r, ri) {
-              var v = rows[ri] || {};
-              if (v.sel) r.sel = v.sel;
-              if (v.v !== undefined) r.v = v.v;
-            });
-          });
-          syncSum();
-        })
-        .catch(function () {});
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { syncNote(); syncSum(); return; }
+      fetch("api/config", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (!j || !j.ok || !j.data || !j.data.user) return;
+        var u = j.data.user;
+        if (u.runMode) st.runMode = u.runMode;
+        ["interval", "dailySite", "dailyAll", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
+        syncNote();
+      }).catch(function () {});
+      fetch("api/flow", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        var d = j && j.ok && j.data;
+        var saved = d && d.sets && Array.isArray(d.sets.fetch) ? d.sets.fetch : null;
+        if (!saved) { syncSum(); return; }
+        st.groups.forEach(function (g, gi) {
+          var rows = saved[gi];
+          if (!Array.isArray(rows) || rows.length !== (g.rows || []).length) return;
+          g.rows.forEach(function (r, ri) { var v = rows[ri] || {}; if (v.sel) r.sel = v.sel; if (v.v !== undefined) r.v = v.v; });
+        });
+        syncSum();
+      }).catch(function () {});
     }
     function save() {
       if (st.saving) return;
       st.saving = true;
-      var payload = { sets: { fetch: st.groups.map(function (g) { return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) } };
-      fetch("api/flow", { method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          st.saving = false;
-          toast(j && j.ok ? "搜索预设已保存" : ((j && j.error && j.error.message) || "服务端拒绝了这次保存"));
-        })
-        .catch(function () { st.saving = false; toast("保存请求没发出去"); });
+      Promise.all([
+        fetch("api/config/user", {
+          method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ runMode: st.runMode, interval: st.interval, dailySite: st.dailySite, dailyAll: st.dailyAll, breaker: st.breaker })
+        }).then(function (r) { return r.json(); }),
+        fetch("api/flow", {
+          method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ sets: { fetch: st.groups.map(function (g) { return (g.rows || []).map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) } })
+        }).then(function (r) { return r.json(); })
+      ]).then(function (a) {
+        st.saving = false;
+        var bad = a.filter(function (j) { return !j || !j.ok; })[0];
+        toast(bad ? ((bad && bad.error && bad.error.message) || "服务端拒绝了这次保存") : "抓取设置已保存");
+      }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
+    }
+
+    function limitRow(label, hint, key, min, max) {
+      return h("div", { class: "set-field" }, [
+        h("div", { class: "lbl" }, [h("span", null, label), h("i", null, hint)]),
+        h("div", { class: "ctl" }, [h("input", {
+          class: "input num", type: "number", value: String(st[key]), min: String(min), max: String(max),
+          onInput: function (e) { st[key] = Number(e.target.value) || 0; syncNote(); }
+        })])
+      ]);
+    }
+    function presetRow(r) {
+      return h("div", { class: "set-field", key: r.t }, [
+        h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+        h("div", { class: "ctl" }, [h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
+          var on = (r.sel || []).indexOf(c) >= 0;
+          return h("button", {
+            class: "cat-chip" + (on ? " on" : ""), type: "button",
+            onClick: function () {
+              var i = (r.sel || []).indexOf(c);
+              r.sel = (r.sel || []).slice();
+              if (i >= 0) r.sel.splice(i, 1); else r.sel.push(c);
+              syncSum();
+            }
+          }, c);
+        }))])
+      ]);
     }
 
     Vue.createApp({
       render: function () {
+        var g = st.groups[0] || { rows: [] };
         return h("section", { class: "drawer open vue-card" }, [
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
-              h("div", { class: "drawer-title" }, "搜索预设"),
-              h("div", { class: "drawer-desc" }, "决定去站点抓什么：类型、媒介、分辨率、优惠。改变的是搜索本身，不是事后过滤。")
+              h("div", { class: "drawer-title" }, "抓取"),
+              h("div", { class: "drawer-desc" }, "请求限制决定发多少、多久发一次；搜索预设决定抓什么。只记录事实，过滤留到查重。")
             ]),
             h("div", { class: "drawer-head-right" }, [
               h("span", { class: "drawer-meta" }, st.sum),
               h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")
             ])
           ]),
-          h("div", { class: "drawer-body" }, st.groups.map(function (g) {
-            return h("div", { class: "set-fields", key: g.name }, g.rows.map(function (r) {
-              return h("div", { class: "set-field", key: r.t }, [
-                h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
-                h("div", { class: "ctl" }, [
-                  h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
-                    var on = (r.sel || []).indexOf(c) >= 0;
-                    return h("button", {
-                      class: "cat-chip" + (on ? " on" : ""), type: "button",
-                      onClick: function () {
-                        var i = (r.sel || []).indexOf(c);
-                        r.sel = (r.sel || []).slice();
-                        if (i >= 0) r.sel.splice(i, 1); else r.sel.push(c);
-                        syncSum();
-                      }
-                    }, c);
-                  }))
-                ])
-              ]);
-            }));
-          }))
+          h("div", { class: "drawer-body" }, [
+            h("div", { class: "set-fields" }, [h("div", { class: "compact-grid" }, [
+              limitRow("请求间隔", "两次请求之间至少等这么久（秒）", "interval", 8, 120),
+              limitRow("每站每天", "单个站点一天最多发几次请求", "dailySite", 1, 300),
+              limitRow("全站每天", "所有站加起来一天最多发几次", "dailyAll", 50, 2000),
+              limitRow("连续失败", "连续失败这么多次就自动暂停", "breaker", 1, 10),
+              h("div", { class: "set-field" }, [
+                h("div", { class: "lbl" }, [h("span", null, "运行模式"), h("i", null, "测试模式最低 30 秒")]),
+                h("div", { class: "ctl" }, [h("select", { class: "select", value: st.runMode, onChange: function (e) { st.runMode = e.target.value; syncNote(); } },
+                  [h("option", { value: "test" }, "测试（按人手速度）"), h("option", { value: "prod" }, "正式")])])
+              ]),
+              h("div", { class: "set-field" }, [
+                h("div", { class: "lbl" }, [h("span", null, "抓详情页"), h("i", null, "每条详情多一次请求，配额翻倍；默认关")]),
+                h("div", { class: "ctl" }, [h("button", {
+                  class: "switch" + (st.detail ? " on" : ""), type: "button",
+                  onClick: function () { st.detail = !st.detail; try { localStorage.setItem("pta.detail", st.detail ? "1" : "0"); } catch (e) {} }
+                }, [h("i")])])
+              ])
+            ])]),
+            h("div", { class: "crawl-note" }, st.note),
+            h("div", { class: "set-fields" }, (g.rows || []).map(presetRow))
+          ])
         ]);
       }
     }).mount(box);
-    syncSum();
+    var limitSel = document.getElementById("crawl-limit");
+    if (limitSel) limitSel.addEventListener("change", syncNote);
     load();
   }
 
-  /* 自动查重开关：默认关。关着的时候只有手动点按钮才会向目标站发请求 */
-  function mountAutoDupeCard(host) {
+  /* 查重卡：自动查重开关 + 筛选条件 + 词条数据，一张卡里 */
+  function mountDedupeCard(host) {
     if (!window.Vue) return;
     var Vue = window.Vue, h = Vue.h;
     var box = document.createElement("div");
-    var anchor = host.querySelector('.drawer[data-name="查重"]');
+    var anchor = host.querySelector('.drawer[data-name="发布"]');
     (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
-    var st = Vue.reactive({ on: false, saving: false, loaded: false });
 
-    function save(next) {
-      st.on = next;
+    var src = JSON.parse(JSON.stringify(window.PTA_RULES.dedupe || []));
+    var st = Vue.reactive({ groups: src, rx: { deny: "", allow: "" }, sample: "", out: "未测试", autoDupe: false, saving: false });
+
+    function load() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
+      fetch("api/flow", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        var d = j && j.ok && j.data; if (!d) return;
+        var saved = d.sets && Array.isArray(d.sets.dedupe) ? d.sets.dedupe : null;
+        if (saved) st.groups.forEach(function (g, gi) {
+          var rows = saved[gi];
+          if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
+          g.rows.forEach(function (r, ri) { var v = rows[ri] || {}; if (v.v !== undefined) r.v = v.v; if (v.on !== undefined) r.on = v.on; if (v.sel) r.sel = v.sel; });
+        });
+        if (d.rx) { st.rx.deny = d.rx.deny || ""; st.rx.allow = d.rx.allow || ""; }
+      }).catch(function () {});
+      fetch("api/config", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (j && j.ok && j.data && j.data.user) st.autoDupe = !!j.data.user.autoDupe;
+      }).catch(function () {});
+    }
+    function save() {
+      if (st.saving) return;
       st.saving = true;
-      fetch("api/config/user", {
-        method: "PATCH", credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ autoDupe: next })
+      Promise.all([
+        fetch("api/flow", {
+          method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            sets: { dedupe: st.groups.map(function (g) { return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) },
+            rx: { deny: st.rx.deny, allow: st.rx.allow }
+          })
+        }).then(function (r) { return r.json(); }),
+        fetch("api/config/user", {
+          method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ autoDupe: st.autoDupe })
+        }).then(function (r) { return r.json(); })
+      ]).then(function (a) {
+        st.saving = false;
+        var bad = a.filter(function (j) { return !j || !j.ok; })[0];
+        toast(bad ? ((bad && bad.error && bad.error.message) || "服务端拒绝了这次保存") : "查重设置已保存");
+      }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
+    }
+    function testRx() {
+      function hit(src, text) {
+        if (!src) return false;
+        try { return new RegExp(src, "i").test(text); } catch (e) { return text.toLowerCase().indexOf(String(src).toLowerCase()) >= 0; }
+      }
+      var t = String(st.sample || "");
+      if (!t) { st.out = "先粘一条标题"; return; }
+      st.out = hit(st.rx.deny, t) ? "排除命中，不转载" : (String(st.rx.allow || "").trim() && !hit(st.rx.allow, t) ? "白名单未命中，不转载" : "通过，可以转载");
+    }
+    function ctl(r) {
+      if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
+      if (r.type === "select") {
+        var nodes = curNodes(r);
+        return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
+      }
+      if (r.type === "num") return h("input", { class: "input num", type: "number", value: String(r.v || ""), onInput: function (e) { r.v = e.target.value; } });
+      if (r.type === "custom") {
+        var html = String(r.html || "");
+        if (html.indexOf("rx-deny") >= 0) return h("input", { class: "input", value: st.rx.deny, placeholder: "命中就不转载，例：DVDRip|枪版|CAM", onInput: function (e) { st.rx.deny = e.target.value; } });
+        if (html.indexOf("rx-allow") >= 0) return h("input", { class: "input", value: st.rx.allow, placeholder: "留空不限，命中才转载", onInput: function (e) { st.rx.allow = e.target.value; } });
+        if (html.indexOf("rx-sample") >= 0) return h("div", { class: "rx-test" }, [
+          h("input", { class: "input", value: st.sample, placeholder: "粘贴一条标题试一下", onInput: function (e) { st.sample = e.target.value; } }),
+          h("button", { class: "btn ghost slim", type: "button", onClick: testRx }, "测试"),
+          h("em", null, st.out)
+        ]);
+        return h("span", { class: "soft" }, "—");
+      }
+      return h("input", { class: "input", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
+    }
+    function curNodes(r) {
+      var nodes = [];
+      if (!r.v) nodes.push(h("option", { value: "" }, "未选择"));
+      (r.opts || []).forEach(function (o) {
+        var label = r.labels && r.labels[o] !== undefined ? r.labels[o] : o;
+        nodes.push(h("option", { value: o }, label));
+      });
+      return nodes;
+    }
+
+    Vue.createApp({
+      render: function () {
+        var rows = [];
+        st.groups.forEach(function (g, gi) {
+          if (gi > 0) rows.push(h("div", { class: "set-group-title", key: "g" + gi }, g.name));
+          (g.rows || []).forEach(function (r) {
+            rows.push(h("div", { class: "set-field", key: g.name + r.t }, [
+              h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+              h("div", { class: "ctl" }, [ctl(r)])
+            ]));
+          });
+        });
+        rows.unshift(h("div", { class: "set-field" }, [
+          h("div", { class: "lbl" }, [h("span", null, "自动查重"), h("i", null, "关闭时不主动向目标站发请求，只在数据清单里手动查")]),
+          h("div", { class: "ctl" }, [h("button", { class: "switch" + (st.autoDupe ? " on" : ""), type: "button", onClick: function () { st.autoDupe = !st.autoDupe; } }, [h("i")])])
+        ]));
+        return h("section", { class: "drawer open vue-card" }, [
+          h("div", { class: "drawer-head" }, [
+            h("div", { class: "drawer-t" }, [
+              h("div", { class: "drawer-title" }, "查重"),
+              h("div", { class: "drawer-desc" }, "怎么判定可发、关键词怎么排除、词条数据怎么留，都在这一张卡里。")
+            ]),
+            h("div", { class: "drawer-head-right" }, [
+              h("span", { class: "drawer-meta" }, st.autoDupe ? "自动查重已开" : "自动查重已关"),
+              h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")
+            ])
+          ]),
+          h("div", { class: "drawer-body" }, [h("div", { class: "set-fields" }, rows)])
+        ]);
+      }
+    }).mount(box);
+    load();
+  }
+
+  /* 发布卡：Vue 渲染。自定义 html 行原样注入，按钮仍靠 host 上的事件委托处理 */
+  function mountPubCard(host) {
+    if (!window.Vue) return;
+    var Vue = window.Vue, h = Vue.h;
+    var box = document.createElement("div");
+    var anchor = host.querySelector('.drawer[data-name="发布"]');
+    (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
+    var st = Vue.reactive({ groups: JSON.parse(JSON.stringify(window.PTA_RULES.pub || [])), saving: false, target: "" });
+
+    function load() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
+      fetch("api/flow", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        var d = j && j.ok && j.data; if (!d) return;
+        var saved = d.sets && Array.isArray(d.sets.pub) ? d.sets.pub : null;
+        if (!saved) return;
+        st.groups.forEach(function (g, gi) {
+          var rows = saved[gi];
+          if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
+          g.rows.forEach(function (r, ri) {
+            var v = rows[ri] || {};
+            if (v.v !== undefined) r.v = v.v;
+            if (v.on !== undefined) r.on = v.on;
+            if (v.sel) r.sel = v.sel;
+          });
+        });
+      }).catch(function () {});
+    }
+    function save() {
+      if (st.saving) return;
+      st.saving = true;
+      fetch("api/flow", {
+        method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sets: { pub: st.groups.map(function (g) { return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) } })
       }).then(function (r) { return r.json(); }).then(function (j) {
         st.saving = false;
-        if (!j || !j.ok) { st.on = !next; toast((j && j.error && j.error.message) || "服务端拒绝了这次保存"); return; }
-        toast(next ? "已开启自动查重" : "已关闭自动查重");
-      }).catch(function () { st.saving = false; st.on = !next; toast("保存请求没发出去"); });
+        toast(j && j.ok ? "发布设置已保存" : ((j && j.error && j.error.message) || "服务端拒绝了这次保存"));
+      }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
     }
-    fetch("api/config", { credentials: "same-origin" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { if (j && j.ok && j.data && j.data.user) st.on = !!j.data.user.autoDupe; })
-      .catch(function () {});
+    function ctl(r) {
+      if (r.chips) return h("div", { class: "cat-row pick-row" }, r.chips.map(function (c) {
+        var on = (r.sel || []).indexOf(c) >= 0;
+        return h("button", {
+          class: "cat-chip" + (on ? " on" : ""), type: "button",
+          onClick: function () {
+            var i = (r.sel || []).indexOf(c);
+            r.sel = (r.sel || []).slice();
+            if (i >= 0) r.sel.splice(i, 1); else r.sel.push(c);
+          }
+        }, c);
+      }));
+      if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
+      if (r.type === "select") {
+        var nodes = [];
+        if (!r.v) nodes.push(h("option", { value: "" }, "未选择"));
+        (r.opts || []).forEach(function (o) {
+          nodes.push(h("option", { value: o }, r.labels && r.labels[o] !== undefined ? r.labels[o] : o));
+        });
+        return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
+      }
+      if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
+      if (r.type === "button") return h("button", { class: "btn ghost slim", type: "button", "data-btn": r.t }, r.v || r.t);
+      var isNum = r.type === "num";
+      return h("input", { class: "input" + (isNum ? " num" : ""), type: isNum ? "number" : "text", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
+    }
 
     Vue.createApp({
       render: function () {
         return h("section", { class: "drawer open vue-card" }, [
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
-              h("div", { class: "drawer-title" }, "自动查重"),
-              h("div", { class: "drawer-desc" }, "关闭时不会自己向目标站发请求，只在数据清单里手动点「向目标站查重」。")
+              h("div", { class: "drawer-title" }, "发布"),
+              h("div", { class: "drawer-desc" }, "目标站、标题副标题、简介图床、发布字段与失败兜底；只管怎么发，不再做排除判断。")
             ]),
             h("div", { class: "drawer-head-right" }, [
-              h("span", { class: "drawer-meta" }, st.saving ? "保存中…" : (st.on ? "已开启" : "已关闭")),
-              h("button", {
-                class: "switch" + (st.on ? " on" : ""), type: "button",
-                title: st.on ? "点一下关闭自动查重" : "点一下开启自动查重",
-                onClick: function () { if (!st.saving) save(!st.on); }
-              }, [h("i")])
+              h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")
             ])
-          ])
+          ]),
+          h("div", { class: "drawer-body compact" }, st.groups.map(function (g, gi) {
+            return h("div", { class: "set-fields", key: g.name }, [
+              h("div", { class: "set-group-title" }, g.name),
+              h("div", { class: "compact-grid" }, g.rows.map(function (r) {
+                return h("div", { class: "set-field", key: r.t }, [
+                  h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+                  h("div", { class: "ctl" }, [ctl(r)])
+                ]);
+              }))
+            ]);
+          }))
         ]);
       }
     }).mount(box);
+    load();
   }
 
   function initCrawlSettings() {
@@ -2590,14 +2670,12 @@
         "</div>" +
         '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
       "</section>" +
-      sectionHtml({ name: "查重", desc: "跟待审核、本地库、已送审/已发布的词条比对，重复的标「已有」。关键词（排除/白名单）也在这里，只决定转不转，不影响请求。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
-      sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub") +
       '';
 
     /* 请求限制用 Vue 卡片单独渲染，放在抓取卡前面 */
-    mountLimitsCard(host);
-    mountPresetCard(host);
-    mountAutoDupeCard(host);
+    mountCrawlCard(host);
+    mountDedupeCard(host);
+    mountPubCard(host);
 
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
@@ -3571,16 +3649,17 @@
     }
 
     function collect(s) {
-      detail.querySelectorAll("[data-k]").forEach(function (el) {
+      var dv = document.getElementById("site-detail") || detail;
+      dv.querySelectorAll("[data-k]").forEach(function (el) {
         var k = el.getAttribute("data-k");
         if (!k || k === "undefined") return;
         s[k] = (el.value !== undefined ? el.value : el.textContent).trim();
       });
-      detail.querySelectorAll("[data-switch]").forEach(function (el) {
+      dv.querySelectorAll("[data-switch]").forEach(function (el) {
         var k = el.getAttribute("data-switch");
         if (k) s[k] = el.classList.contains("on");
       });
-      var chips = detail.querySelectorAll(".cat-chip.on:not(.sw-chip)");
+      var chips = dv.querySelectorAll(".cat-chip.on:not(.sw-chip)");
       if (chips.length) s.cats = [].map.call(chips, function (c) { return c.getAttribute("data-cat"); });
       return s;
     }
@@ -3636,13 +3715,15 @@
           if (state.sel === s.name) paint();
         });
       }
-      if (!detail) return;
-      if (!s || !state.open) { detail.hidden = true; detail.innerHTML = ""; return; }
-      detail.hidden = false;
-      detail.innerHTML = headHtml(s) +
-        (state.tab === "settings"
-          ? '<div class="sd-scroll">' + settingsHtml(s) + "</div>" + actionsHtml()
-          : '<div class="sd-scroll">' + overviewHtml(s) + "</div>");
+      var drawerSt = window.__ptaDrawerState;
+      if (!drawerSt) return;
+      if (!s || !state.open) { drawerSt.on = false; drawerSt.site = null; drawerSt.body = ""; siteState.tick++; return; }
+      drawerSt.on = true;
+      drawerSt.site = s;
+      drawerSt.isSettings = state.tab === "settings";
+      drawerSt.body = state.tab === "settings" ? settingsHtml(s) : overviewHtml(s);
+      detail = document.getElementById("site-detail") || detail;
+      siteState.tick++;
     }
 
     function presetStats() {
@@ -3715,6 +3796,98 @@
         })();
     }
 
+    /* 站点行交给 Vue；抽屉作为行间元素由 Vue 放在选中行后面 */
+    var siteState = window.Vue ? window.Vue.reactive({ rows: [], open: false, sel: null, empty: "没有匹配的站点", tick: 0 }) : null;
+    function paintSiteRows(pageRows, rowsAll) {
+      if (!siteState) return;
+      siteState.open = !!state.open;
+      siteState.sel = state.sel;
+      siteState.empty = rowsAll.length ? "没有匹配的站点" : "清单里还没有站点";
+      siteState.rows = (pageRows || []).map(function (s) {
+        var a = archOf(s);
+        return {
+          host: s.name, title: s.title || s.name, archCls: a[0], archTxt: a[1],
+          dot: dotCls(s), loginTxt: s.login === "ok" ? "可用" : s.login === "fail" ? "失效" : "未自检",
+          presetOn: !!presetOf(s.name), presetTxt: presetTxt(s.name),
+          mode: s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量+定期" : "增量",
+          last: lastCrawlTxt(s), picked: state.picks.indexOf(s.name) >= 0,
+          on: state.sel === s.name
+        };
+      });
+    }
+    if (siteState) {
+      var StVue = window.Vue, sth = StVue.h;
+      function siteRow(r) {
+        return sth("div", { class: "site-item" + (r.on ? " on" : ""), "data-host": r.host, key: r.host }, [
+          sth("input", { type: "checkbox", class: "site-pick", "data-host": r.host, checked: r.picked }),
+          sth("span", { class: "st " + r.dot }, [sth("i")]),
+          sth("span", { class: "si-txt" }, [sth("b", null, r.title)]),
+          sth("span", { class: "si-arch" }, [sth("em", { class: "chip " + r.archCls }, r.archTxt)]),
+          sth("span", { class: "si-login " + r.dot }, r.loginTxt),
+          sth("span", { class: "si-preset" + (r.presetOn ? " on" : "") }, r.presetTxt),
+          sth("span", { class: "si-mode" }, r.mode),
+          sth("span", { class: "si-last" }, r.last)
+        ]);
+      }
+      /* 抽屉也由同一个 Vue app 渲染：头部与操作栏用 vnode，页签正文暂复用原字符串注入 */
+      var drawerState = { on: false, site: null, body: "", isSettings: false };
+      window.__ptaDrawerState = drawerState;
+      function drawerVNode() {
+        var s2 = drawerState.site;
+        var st = siteState;
+        if (!st.open || !s2) return null;
+        var a = archOf(s2);
+        var archOpts = ["NP", "UNIT3D", "GZ", "OTHER", "?"].map(function (k) {
+          return sth("option", { value: k, selected: (s2.arch || "?") === k }, ACH[k][1]);
+        });
+        var tabBtns = SET_TABS.map(function (t) {
+          var on = state.tab === "settings" && state.setTab === t[0];
+          return sth("button", { class: "btn slim tabbtn" + (on ? " active" : ""), "data-settab": t[0], type: "button" }, t[1]);
+        });
+        return sth("div", { class: "site-expand", id: "site-detail", key: "detail" }, [
+          sth("div", { class: "sd-top" }, [
+            sth("em", { class: "ava lg " + a[0] }, initials(s2)),
+            sth("div", { class: "sd-id" }, [
+              sth("div", { class: "sd-title-row" }, [
+                sth("h2", null, s2.title || s2.name),
+                sth("span", { class: "pill2 " + (s2.enabled ? "on" : "off") }, s2.enabled ? "启用中" : "已停用"),
+                sth("span", { class: "chip " + (presetOf(s2.name) ? "np" : "unk") }, "搜索预设 " + (presetOf(s2.name) ? "已确认" : "未确认"))
+              ]),
+              sth("span", { class: "sd-selfcheck", id: "sd-selfcheck" }, s2.checkAt ? ("上次自检 " + s2.checkAt + " · " + (s2.checkMsg || "")) : "还没做过连接自检")
+            ]),
+            sth("div", { class: "sd-actions" }, [
+              sth("button", { class: "switch sm" + (s2.enabled ? " on" : ""), "data-switch": "enabled", type: "button", title: "启用或停用这个站的抓取" }, [sth("i")]),
+              sth("button", { class: "btn slim", "data-act": "crawl-one", type: "button", title: "按搜索预设抓这个站一页，只发一次 GET" }, "抓一页"),
+              sth("select", { class: "select slim sd-arch-sel", id: "sd-arch", title: "站点架构" }, archOpts),
+              sth("button", { class: "btn slim", "data-act": "selfcheck", type: "button", title: "演练：只读本地配置，不访问真实站点" }, "连接自检"),
+              sth("button", { class: "btn slim tabbtn" + (state.tab === "overview" ? " active" : ""), "data-tab": "overview", type: "button" }, "概览"),
+              tabBtns
+            ]),
+            sth("button", { class: "sheet-x", "data-act": "close-sheet", "aria-label": "关闭", type: "button" }, "✕")
+          ]),
+          sth("div", { class: "sd-scroll", innerHTML: drawerState.body }),
+          drawerState.isSettings ? sth("div", { class: "sd-form-actions" }, [
+            sth("button", { class: "btn primary slim", "data-act": "save", type: "button" }, "保存设置"),
+            sth("button", { class: "btn ghost slim", "data-act": "reset", type: "button" }, "恢复默认"),
+            sth("div", { class: "spacer" }),
+            sth("button", { class: "btn ghost slim danger", "data-act": "remove", type: "button" }, "移除站点")
+          ]) : null
+        ]);
+      }
+      StVue.createApp({
+        render: function () {
+          siteState.tick;
+          if (!siteState.rows.length) return sth("div", { class: "sites-empty" }, siteState.empty);
+          var out = [];
+          siteState.rows.forEach(function (r) {
+            out.push(siteRow(r));
+            if (siteState.open && r.host === siteState.sel) out.push(drawerVNode());
+          });
+          return out;
+        }
+      }).mount(list);
+    }
+
     function paint() {
       var rows = filtered();
       var order = ["NP", "UNIT3D", "GZ", "OTHER", "?"];
@@ -3726,7 +3899,7 @@
       if (state.page > pages) state.page = pages;
       if (state.page < 1) state.page = 1;
       var pageRows = rows.slice((state.page - 1) * SITE_PAGE, state.page * SITE_PAGE);
-      list.innerHTML = pageRows.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的站点</div>';
+      paintSiteRows(pageRows, rows);
       var pager = $("#sites-pager");
       if (pager) {
         pager.innerHTML = rows.length > SITE_PAGE
@@ -3740,14 +3913,8 @@
       var hint = $("#sites-hint");
       if (hint) hint.textContent = rows.length === MOCK.sitesList.length ? "全部" : "匹配 " + rows.length + " 个";
       renderStats();
-      if (state.open && state.sel) {
-        var row = list.querySelector('.site-item[data-host="' + String(state.sel).replace(/"/g, '\\"') + '"]');
-        if (row) { row.insertAdjacentElement("afterend", detail); detail.hidden = false; }
-        else { state.open = false; list.appendChild(detail); detail.hidden = true; }
-      } else {
-        list.appendChild(detail);
-        detail.hidden = true;
-      }
+      detail = document.getElementById("site-detail") || detail;
+      if (detail) detail.hidden = !(state.open && state.sel);
       paintDetail();
       refreshBulk();
     }
@@ -3816,7 +3983,7 @@
     if (crawlSel) crawlSel.addEventListener("change", function (e) { state.crawl = e.target.value; state.page = 1; paint(); });
 
     /* ---- 详情交互 ---- */
-    if (detail) detail.addEventListener("change", function (e) {
+    list.addEventListener("change", function (e) {
       var dk = e.target.getAttribute && e.target.getAttribute("data-k");
       if (dk === "loginMethod" || dk === "mode" || dk === "trigger") {
         var cur = MOCK.sitesList.filter(function (x) { return x.name === state.sel; })[0];
@@ -3833,7 +4000,7 @@
         }
       }
     });
-    if (detail) detail.addEventListener("click", function (e) {
+    list.addEventListener("click", function (e) {
       if (e.target.closest('[data-act="close-sheet"]')) {
         state.open = false;
         paint();
@@ -4300,6 +4467,7 @@
   window.__ptaSetActive = function (k) { setActive(k); };
 
   function setActive(key) {
+    if (window.__ptaNavState) window.__ptaNavState.active = key;
     $$(".dock-item, .menu-link").forEach(function (a) {
       if (a.getAttribute("data-view") === key) a.classList.add("active");
       else a.classList.remove("active");
@@ -4651,11 +4819,20 @@
       if (sec < 86400) return Math.floor(sec / 3600) + " 小时";
       return Math.floor(sec / 86400) + " 天";
     }
+    /* 页脚同样交给 Vue：只做数据到文案的映射 */
+    var footState = window.Vue ? window.Vue.reactive({ lines: ["加载中…"] }) : null;
+    if (footState) {
+      window.Vue.createApp({
+        render: function () {
+          return footState.lines.map(function (t, i) { return window.Vue.h("span", { key: i }, t); });
+        }
+      }).mount(el);
+    }
     function paint(j) {
       var d = j && j.data;
       if (!d) return;
       var c = d.counts || {};
-      el.innerHTML = [
+      var lines = [
         "SEEDPOD v" + escapeHtml(d.version || "—"),
         "开发 " + escapeHtml(d.devDate || "—"),
         "前端 " + escapeHtml((d.stack && d.stack.front) || "—"),
@@ -4664,10 +4841,13 @@
         "站点 " + (c.sites || 0) + " · 预设 " + (c.presets || 0) + " · 词条 " + (c.catalog || 0) +
           " · 待审 " + (c.queue || 0) + " · 下载器 " + (c.downloaders || 0),
         "已运行 " + upTxt(d.uptime)
-      ].map(function (t) { return "<span>" + t + "</span>"; }).join("");
+      ];
+      if (footState) { footState.lines = lines; return; }
+      el.innerHTML = lines.map(function (t) { return "<span>" + t + "</span>"; }).join("");
     }
     function load() {
       if (!window.fetch || !/^https?:$/.test(location.protocol)) {
+        if (footState) { footState.lines = ["本地预览 · 没有后端，统计不可用"]; return; }
         el.innerHTML = "<span>本地预览 · 没有后端，统计不可用</span>";
         return;
       }
@@ -4676,6 +4856,115 @@
     }
     load();
     setInterval(load, 60000);
+  }
+
+  /* 总览：五块内容都用 Vue 渲染，布局照旧（统计/实时日志/系统状态/最近发布/待审核） */
+  /* 总览：五块内容都用 Vue 渲染，卡片外壳与标题保持原样，只替换内容区 */
+  function initDashboardVue() {
+    if (!window.Vue) return;
+    var Vue = window.Vue, h = Vue.h;
+    var st = Vue.reactive({ ov: null, logs: [], pend: [], pub: [], tick: 0 });
+
+    function statApp() {
+      var ov = st.ov;
+      var qc = (ov && ov.queue && ov.queue.counts) || {};
+      var pub = qc.published || 0;
+      var cat = (ov && ov.catalog) || { total: 0, byStatus: {} };
+      return [
+        h("div", { class: "stat-hero" }, [
+          h("span", null, "今日已发"),
+          h("b", null, String(pub)),
+          h("i", null, "累计已发布")
+        ]),
+        h("div", { class: "stat-list" }, [
+          h("div", { class: "hstat" }, [h("span", null, "本月已发"), h("b", null, String(pub)), h("i", null, "目标 120")]),
+          h("div", { class: "hstat" }, [h("span", null, "总发布数"), h("b", null, pub.toLocaleString()), h("i", null, "历史累计")]),
+          h("div", { class: "hstat" }, [h("span", null, "抓取总数"), h("b", null, (cat.total || 0).toLocaleString()), h("i", null, "词条库累计")])
+        ])
+      ];
+    }
+    function healthApp() {
+      var o = st.ov;
+      var loginOk = o ? o.sites.loginOk : 0;
+      var enabled = o ? o.sites.enabled : 0;
+      var loginFail = o ? o.sites.loginFail : 0;
+      var unchecked = o ? o.sites.loginUnknown : 0;
+      var dls = o ? o.downloaders : null;
+      var free = dls ? fmtBytes(dls.freeSpace) : "";
+      var crawlTxt = o && o.crawl ? (o.crawl.runsToday + " 次 / " + (o.crawl.hostsToday || 0) + " 站") : "—";
+      var list = [
+        { label: "登录失效", value: String(loginFail), warn: loginFail > 0 },
+        { label: "还没自检", value: String(unchecked), warn: false },
+        { label: "下载器在线", value: dls ? (dls.online + " / " + dls.total) : "—", warn: !!(dls && dls.total && dls.online < dls.total) },
+        { label: "磁盘余量", value: free || (dls && dls.total ? "未知" : "未接"), warn: !!(dls && dls.total && !free) }
+      ];
+      return [
+        h("div", { class: "status-hero" }, [
+          h("span", null, "cookie 可用"),
+          h("b", { class: loginFail ? "warn" : "" }, String(loginOk)),
+          h("i", null, "共启用 " + enabled + " 个" + (o ? "" : "（未连接后端）")),
+          h("div", { class: "hero-sub" }, [h("span", null, "今日抓取"), h("b", null, crawlTxt)])
+        ]),
+        h("div", { class: "status-list" }, list.map(function (it, i) {
+          return h("div", { class: "hstat" + (it.warn ? " warn" : ""), key: i }, [h("span", null, it.label), h("b", null, it.value)]);
+        }))
+      ];
+    }
+    function logsApp() {
+      if (!st.logs.length) return h("div", { class: "empty" }, "还没有日志，连上后端后这里会实时刷新");
+      return st.logs.slice(0, 4).map(function (l, i) {
+        return h("div", { class: "list-item " + l.lvl, key: i }, [
+          h("span", { class: "time" }, l.t), h("span", { class: "msg" }, l.msg)
+        ]);
+      });
+    }
+    function pubApp() {
+      if (!st.pub.length) return h("div", { class: "empty" }, "还没有发布记录");
+      return st.pub.slice(0, 3).map(function (p, i) {
+        var t = p.at ? String(p.at).slice(5, 16).replace("T", " ") : "";
+        return h("div", { class: "list-item", key: i }, [
+          h("div", { style: "flex:1;min-width:0" }, [
+            h("div", { class: "t-main" }, p.cn || p.title || ""),
+            h("div", { class: "t-sub" }, (p.site || "未选站点") + " · " + (p.size || ""))
+          ]),
+          h("span", { class: "t-sub" }, t),
+          h("span", { class: "badge green" }, "已发布")
+        ]);
+      });
+    }
+    function pendApp() {
+      if (!st.pend.length) return h("div", { class: "empty" }, "没有待审核的条目");
+      return st.pend.slice(0, 3).map(function (it, i) {
+        return h("div", { class: "list-item", key: i }, [
+          h("div", { style: "flex:1;min-width:0" }, [
+            h("div", { class: "t-main" }, it.cn || it.title || ""),
+            h("div", { class: "t-sub" }, (it.res || "") + " · " + (it.size || "") + " · " + (it.site || ""))
+          ]),
+          h("a", { class: "btn ghost sm", href: "#queue" }, "审核")
+        ]);
+      });
+    }
+
+    function mount(sel, render) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      Vue.createApp({ render: function () { return render(); } }).mount(el);
+    }
+    mount("#dash-logs", logsApp);
+    mount("#health-strip", healthApp);
+    mount("#dash-published", pubApp);
+    mount("#dash-pending", pendApp);
+    mount(".stat-grid", statApp);
+
+    window.__ptaDashSync = function () {
+      st.ov = window.__ptaOverview || null;
+      st.logs = (MOCK.logs || []).slice(0, 4);
+      st.pub = window.__ptaPublished || [];
+      st.pend = window.__ptaQueuePending || [];
+      st.tick++;
+    };
+    window.__ptaDashSync();
+    if (window.__ptaLoadDashLists) window.__ptaLoadDashLists();
   }
 
   function boot() {
@@ -4694,6 +4983,7 @@
     renderDashboard();
     initRuntime();
     initDevFoot();
+    initDashboardVue();
     if (typeof loadSitesFromApi === "function") loadSitesFromApi();
     /* 停在总览页时每 30 秒刷一次真实状态，别让数字一直停在进页面那一刻 */
     setInterval(function () {
