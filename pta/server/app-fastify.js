@@ -162,6 +162,7 @@ async function build() {
   require('./routes-write')(app, ctx);
   require('./routes-data')(app, ctx);
   require('./routes-qb')(app, ctx);
+  require('./routes-probe')(app, ctx);
 
   return app;
 }

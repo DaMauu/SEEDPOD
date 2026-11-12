@@ -137,3 +137,8 @@
 
 ### 新增
 - Fastify 下载器接口：增删改、/probe、/:id/test（探测并回写 lastProbe）、/:id/cats；密码读写走 AES-GCM 密文，qB 4.x/5.x 登录都兼容。实测 dl_002 探测通过（v5.1.2）并读出分类。
+
+## v0.7.5 · 2026-11-13
+
+### 新增
+- Fastify 会话与凭据接口：/api/sites/:host/session-test（用已存 cookie 探一次并写 site-status）、/api/site-status、/api/credentials/import（批量导入，密文入库）。实测 52pt.site 自检 200 通过、导入可写。
