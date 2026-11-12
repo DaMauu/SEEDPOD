@@ -162,6 +162,13 @@
       for (var k in o) site[k] = o[k];
     });
     list = list.filter(function (x) { return store.data.hidden.indexOf(x.name) < 0; });
+    /* 登录列始终以最近一次 cookie 自检为准，配置二次加载也不会被冲回「未自检」 */
+    var stMap = window.__ptaSiteStatus || {};
+    list.forEach(function (s) {
+      var rec = stMap[s.name];
+      s.login = rec ? (rec.pass ? "ok" : "fail") : "none";
+      s.loginAt = rec ? rec.at : null;
+    });
     var defs = {};
     list.forEach(function (x) { defs[x.name] = JSON.parse(JSON.stringify(x)); });
     window.__ptaDefaults = defs;
@@ -351,6 +358,9 @@
         if (!j || !j.ok || !j.data || !Array.isArray(j.data.sites) || !j.data.sites.length) return false;
         window.__ptaSiteCounts = j.data.counts || null;
         applySites(j.data.sites, "api");
+        /* 登录列只反映最近一次 cookie 自检：通过=可用，失败=失效，没探过=未自检 */
+        window.__ptaSiteStatus = j.data.status || {};
+        if (typeof window.__ptaRepaintSites === "function") window.__ptaRepaintSites();
         if (window.__ptaPaintTopbar) window.__ptaPaintTopbar();
         if (typeof loadSiteCfgFromApi === "function") loadSiteCfgFromApi();
         loadCredsOnce();
@@ -580,7 +590,15 @@
     { key: "sources", label: "数据清单", href: "#sources", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h5l2 3h2l2-3h5\"/><path d=\"M5 5h14l2 7v7H3v-7l2-7z\"/></svg>" },
     { key: "logs", label: "日志", href: "#logs", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6h12M9 12h12M9 18h12\"/><path d=\"M4 6h.01M4 12h.01M4 18h.01\"/></svg>" },
     { key: "settings", label: "设置", href: "#settings", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7h16M4 12h16M4 17h16\"/><circle cx=\"9\" cy=\"7\" r=\"2\"/><circle cx=\"15\" cy=\"12\" r=\"2\"/><circle cx=\"8\" cy=\"17\" r=\"2\"/></svg>" },
+    { key: "changelog", label: "更新日志", href: "#changelog", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 4h11l3 3v13H5z\"/><path d=\"M8 9h7M8 13h7M8 17h4\"/></svg>" },
   ];
+  /* 基础版 / 开发版：开发版多出「更新日志」和调试信息，选择存在这台浏览器里 */
+  function uiMode() {
+    try { return localStorage.getItem("pta.mode") === "dev" ? "dev" : "basic"; } catch (e) { return "basic"; }
+  }
+  function navItems() {
+    return uiMode() === "dev" ? NAV_ITEMS : NAV_ITEMS.filter(function (it) { return it.key !== "changelog"; });
+  }
 
   function initMenu() {
     var btn = $("#menu-btn");
@@ -610,7 +628,7 @@
   function initChrome() {
     var root = $("#dock-root");
     if (root) {
-      root.innerHTML = '<nav class="dock">' + NAV_ITEMS.map(function (it) {
+      root.innerHTML = '<nav class="dock">' + navItems().map(function (it) {
         var active = it.key === PAGE ? " active" : "";
         var count = "";
         return '<a class="dock-item' + active + '" href="' + it.href + '" data-view="' + it.key + '" title="' + it.label + '">' + (it.icon || "") + '<span class="dock-label">' + it.label + '</span>' + count + "</a>";
@@ -618,7 +636,7 @@
     }
     var right = $(".topbar-right");
     if (right && !$("#menu-btn")) {
-      var navLinks = NAV_ITEMS.map(function (it) {
+      var navLinks = navItems().map(function (it) {
         var active = it.key === PAGE ? " active" : "";
         var count = "";
         return '<a class="menu-link' + active + '" href="' + it.href + '" data-view="' + it.key + '">' + it.label + count + "</a>";
@@ -748,7 +766,7 @@
     ];
     var crawlTxt = o && o.crawl ? (o.crawl.runsToday + " 次 / " + (o.crawl.hostsToday || 0) + " 站") : "—";
     host.innerHTML =
-      '<div class="status-hero"><span>登录正常</span><b class="' + (loginFail ? "warn" : "") + '">' +
+      '<div class="status-hero"><span>cookie 可用</span><b class="' + (loginFail ? "warn" : "") + '">' +
       loginOk + "</b><i>共启用 " + enabled + " 个" + (o ? "" : "（未连接后端）") + "</i>" +
       '<div class="hero-sub"><span>今日抓取</span><b>' + crawlTxt + "</b></div></div>" +
       '<div class="status-list">' + list.map(function (it) {
@@ -764,7 +782,7 @@
     var s = o ? o.sites : { total: 0, enabled: 0, loginOk: 0, loginFail: 0, loginUnknown: 0 };
     host.innerHTML =
       '<div class="mini"><span>已启用</span><b>' + s.enabled + " / " + s.total + "</b></div>" +
-      '<div class="mini"><span>登录正常</span><b>' + s.loginOk + "</b></div>" +
+      '<div class="mini"><span>cookie 可用</span><b>' + s.loginOk + "</b></div>" +
       '<div class="mini' + (s.loginFail ? " warn" : "") + '"><span>登录失效</span><b>' + s.loginFail + "</b></div>" +
       '<div class="mini"><span>还没自检</span><b>' + s.loginUnknown + "</b></div>";
     if (bars) {
@@ -858,7 +876,10 @@
     var detail = $("#queue-detail");
     if (!listBox) return;
 
-    var state = { tab: "all", q: "", sel: null };
+    var state = { tab: "all", q: "", sel: null, page: 1, pages: 1, matched: 0 };
+    var PAGE_SIZE = 100;
+    var QSTATUS = { all: "", pending: "pending", approved: "approved,published", failed: "failed" };
+    var serverMode = !!(window.fetch && /^https?:$/.test(location.protocol));
     MOCK.queue.forEach(function (x) { x.id = String(x.id); });
     var STATUS = {
       pending: ["待确认", "amber"],
@@ -872,6 +893,7 @@
 
     function rows() {
       return MOCK.queue.filter(function (it) {
+        if (serverMode) return true;      /* 服务端已按 tab / 搜索词过滤，这里只分页 */
         if (state.tab === "pending" && it.status !== "pending") return false;
         if (state.tab === "approved" && it.status !== "approved" && it.status !== "published") return false;
         if (state.tab === "failed" && it.status !== "failed") return false;
@@ -989,13 +1011,24 @@
     }
 
     function paint() {
-      var list = rows();
+      var filtered = rows();
+      var total = serverMode ? state.matched : filtered.length;
+      var pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      state.pages = pages;
+      if (state.page > pages) state.page = pages;
+      if (state.page < 1) state.page = 1;
+      var list = serverMode ? filtered : filtered.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
       if (!list.some(function (x) { return x.id === state.sel; })) {
         state.sel = list.length ? list[0].id : null;
       }
       listBox.innerHTML = list.map(itemHtml).join("") || '<div class="sites-empty">没有匹配的条目</div>';
       var cnt = $("#queue-count");
-      if (cnt) cnt.textContent = "共 " + list.length + " 条" + (list.length >= 500 ? "（只显示最近 500）" : "");
+      if (cnt) cnt.textContent = "共 " + total + " 条";
+      var info = $("#queue-page-info");
+      if (info) info.textContent = "第 " + state.page + " / " + pages + " 页";
+      var prevBtn = $("#queue-prev"), nextBtn = $("#queue-next");
+      if (prevBtn) prevBtn.disabled = state.page <= 1;
+      if (nextBtn) nextBtn.disabled = state.page >= pages;
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
       if (detail) detail.innerHTML = detailHtml(it);
       if (it && it.server && !it.shotsLoaded && it.shotsCount > 0) {
@@ -1022,12 +1055,32 @@
       var b = e.target.closest("button[data-qtab]");
       if (!b) return;
       state.tab = b.getAttribute("data-qtab");
+      state.page = 1;
       $$("button", tabs).forEach(function (x) { x.classList.toggle("active", x === b); });
-      paint();
+      if (serverMode) loadServer(1); else paint();
     });
 
+    var qTimer = null;
     var q = $("#queue-q");
-    if (q) q.addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); paint(); });
+    if (q) q.addEventListener("input", function (e) {
+      state.q = e.target.value.trim().toLowerCase();
+      state.page = 1;
+      if (!serverMode) { paint(); return; }
+      clearTimeout(qTimer);
+      qTimer = setTimeout(function () { loadServer(1); }, 250);
+    });
+
+    var prevBtn = $("#queue-prev"), nextBtn = $("#queue-next");
+    if (prevBtn) prevBtn.addEventListener("click", function () {
+      if (state.page <= 1) return;
+      state.page--;
+      if (serverMode) loadServer(state.page); else paint();
+    });
+    if (nextBtn) nextBtn.addEventListener("click", function () {
+      if (state.page >= state.pages) return;
+      state.page++;
+      if (serverMode) loadServer(state.page); else paint();
+    });
 
     var filePick = el("input");
     filePick.type = "file"; filePick.accept = "image/*"; filePick.multiple = true; filePick.style.display = "none";
@@ -1238,12 +1291,24 @@
     });
 
 
-    function loadServer() {
-      return window.__ptaQueue.req("?limit=500").then(function (res) {
+    function loadServer(page) {
+      var p = Math.max(1, Number(page) || state.page || 1);
+      state.page = p;
+      var qs = "?limit=" + PAGE_SIZE + "&offset=" + ((p - 1) * PAGE_SIZE);
+      var st = QSTATUS[state.tab] != null ? QSTATUS[state.tab] : "";
+      if (st) qs += "&status=" + encodeURIComponent(st);
+      if (state.q) qs += "&q=" + encodeURIComponent(state.q);
+      return window.__ptaQueue.req(qs).then(function (res) {
         if (!res || !res.j || !res.j.ok || !res.j.data || !Array.isArray(res.j.data.items)) return false;
-        MOCK.queue = res.j.data.items.map(window.__ptaQueue.map);
-        var pendingN = (res.j.data.counts && res.j.data.counts.pending) || 0;
-        window.__ptaQueueCounts = res.j.data.counts || null;
+        var d = res.j.data;
+        var matched = Number(d.matched);
+        if (!isFinite(matched) || matched < 0) matched = d.items.length;
+        state.matched = matched;
+        state.pages = Math.max(1, Math.ceil(matched / PAGE_SIZE));
+        if (p > state.pages) { state.page = state.pages; return loadServer(state.pages); }
+        MOCK.queue = d.items.map(window.__ptaQueue.map);
+        var pendingN = (d.counts && d.counts.pending) || 0;
+        window.__ptaQueueCounts = d.counts || null;
         if (window.__ptaPaintTopbar) window.__ptaPaintTopbar();
         if (window.__ptaSetNavCount) window.__ptaSetNavCount("queue", pendingN);
         var allLink = $("#dash-pending-all");
@@ -1280,7 +1345,9 @@
               id: it.id, title: it.title, site: it.site || "", res: it.res || matchResOf(it.title),
               size: it.size || "", time: it.createdAt ? String(it.createdAt).slice(5, 16).replace("T", " ") : "",
               status: it.status, marks: it.marks || {}, type: it.catName || "", cat: it.cat || "",
-              detailsUrl: it.detailsUrl || "", seeders: Number(it.seeders) || 0
+              detailsUrl: it.detailsUrl || "", seeders: Number(it.seeders) || 0,
+              dupe: it.dupe || "", dupeUrl: it.dupeUrl || "", dupeTitle: it.dupeTitle || "",
+              dupeTarget: it.dupeTarget || "", dupeAt: it.dupeAt || "", dupeSizeGB: it.dupeSizeGB || 0
             };
           });
           window.__ptaSourcesTotal = j.data.total;
@@ -1377,7 +1444,18 @@
           })() + "</b>" +
           '<span class="mark-row">' + (it.site ? '<i class="cat-site">' + escapeHtml(it.site) + "</i>" : "") +
           (it.seeders ? '<i class="cat-site">做种 ' + it.seeders + "</i>" : "") +
-          (it.marks && it.marks.existing ? '<em class="chip warn" title="' + escapeHtml(it.dupNote || '跟队列/本地库/已发布里的某条重复') + '">已有</em>' : "") + toggles + "</span></span>" +
+          (it.marks && it.marks.existing ? '<em class="chip warn" title="' + escapeHtml(it.dupNote || '跟队列/本地库/已发布里的某条重复') + '">已有</em>' : "") +
+          (function () {
+            if (!it.dupe) return "";
+            var map = { clean: ["np", "可发"], diy: ["warn", "仅DIY可发"], dupe: ["warn", "已有原盘"], error: ["warn", "没查成"] };
+            var m = map[it.dupe] || ["np", it.dupe];
+            var tip = "向 " + (it.dupeTarget || "目标站") + " 查过 · " + String(it.dupeAt || "").slice(0, 16).replace("T", " ") +
+              (it.dupeTitle ? " · 命中：" + it.dupeTitle : "");
+            var inner = m[1] + (it.dupeSizeGB ? " " + it.dupeSizeGB + "GB" : "");
+            return it.dupeUrl
+              ? '<a class="chip ' + m[0] + '" href="' + escapeHtml(it.dupeUrl) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(tip) + '">' + escapeHtml(inner) + "</a>"
+              : '<em class="chip ' + m[0] + '" title="' + escapeHtml(tip) + '">' + escapeHtml(inner) + "</em>";
+          })() + toggles + "</span></span>" +
           '<span>' + (function () {
             var t = it.type || catNameFromDef(it.site, it.cat) || it.catName || "";
             return t ? '<em class="chip np">' + escapeHtml(t) + "</em>" : '<span class="soft">—</span>';
@@ -1416,6 +1494,46 @@
     if (siteSel) siteSel.addEventListener("change", function (e) { state.site = e.target.value; state.page = 0; paint(); });
     var typeSel = $("#dl-type");
     if (typeSel) typeSel.addEventListener("change", function (e) { state.type = e.target.value; state.page = 0; paint(); });
+    /* 目标站查重：下拉只列存过 cookie 的站，没 cookie 查不了 */
+    (function initDupeTarget() {
+      var sel = $("#dl-target");
+      if (!sel) return;
+      fetch("/api/credentials", { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.ok || !Array.isArray(j.data)) return;
+          var hosts = j.data.filter(function (c) { return c.hasCookie; }).map(function (c) { return c.host; }).sort();
+          sel.innerHTML = '<option value="">选目标站</option>' + hosts.map(function (h) {
+            return '<option value="' + escapeHtml(h) + '">' + escapeHtml(h) + "</option>";
+          }).join("");
+        }).catch(function () {});
+      var btn = $("#dl-dupe");
+      if (!btn) return;
+      btn.addEventListener("click", function () {
+        var host = sel.value;
+        if (!host) { toast("先在左边选一个目标站（要有 cookie）"); return; }
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = "查重中…";
+        fetch("/api/dupe/check", {
+          method: "POST", credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ host: host, limit: 3 })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          btn.disabled = false;
+          btn.textContent = "向目标站查重";
+          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "查重失败"); return; }
+          var d = j.data;
+          var s = Object.keys(d.byStatus || {}).map(function (k) { return k + " " + d.byStatus[k]; }).join(" · ");
+          toast("查了 " + d.checked + " 条 · " + (s || "无结果"));
+          loadCatalog();
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = "向目标站查重";
+          toast("查重请求发不出去");
+        });
+      });
+    })();
     var markSel = $("#dl-mark");
     if (markSel) markSel.addEventListener("change", function (e) { state.mark = e.target.value; state.page = 0; paint(); });
     var statusSel = $("#dl-status");
@@ -1578,7 +1696,7 @@
         /* 服务端删掉的下载器，本地列表也要清掉，不留假节点 */
         MOCK.nodes = MOCK.nodes.filter(function (x) { return x.serverId && ids[x.serverId]; });
         res.j.data.forEach(function (d) {
-          var h = String(d.url || "").replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
+          var h = String(d.url || "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
           var lp = d.lastProbe || null;
           var free = lp && lp.freeSpace ? lp.freeSpace : 0;
           var nd = MOCK.nodes.filter(function (x) { return x.serverId === d.id || x.name === d.name; })[0];
@@ -1596,7 +1714,10 @@
           nd.online = !!(lp && lp.pass);
           nd.qb = (lp && lp.version) || "—";
           nd.freeSpace = free;
-          nd.disk = free ? fmtBytes(free) + " 剩余" : "—";
+          var tot = Number(lp && lp.totalSpace) || 0;
+          nd.total = tot;
+          nd.used = tot && free ? Math.max(0, tot - free) : 0;
+          nd.disk = free ? fmtBytes(free) + " 剩余" + (tot ? " / 共 " + fmtBytes(tot) : "") : "—";
           nd.probedAt = lp && lp.at ? lp.at : "";
           if (lp && lp.savePath) nd.path = lp.savePath;
         });
@@ -1609,8 +1730,11 @@
     }
     window.__ptaLoadDownloaders = loadServer;
 
-    function pushNode(nd) {
-      if (!nd || !window.__ptaDl || !/^https?:$/.test(location.protocol)) return;
+    function pushNode(nd, afterProbe) {
+      if (!nd || !window.__ptaDl || !/^https?:$/.test(location.protocol)) {
+        if (afterProbe) toast("本地预览没有后端，下载器只存在这一页");
+        return;
+      }
       var body = {
         name: nd.name,
         url: nd.qbUrl || ("http://" + nd.host + ":8080"),
@@ -1628,10 +1752,33 @@
           nd.hasPass = !!res.j.data.hasPass;
           save();
           toast("已保存到服务端：" + nd.name);
+          if (afterProbe) probeAfterSave(nd);
         } else {
           toast((res && res.j && res.j.error && res.j.error.message) || "服务端没写进去，已存在本地");
         }
       });
+    }
+
+    /* 存完马上探一次：容量、版本、分类都要真实值，不能拿占位数字顶上 */
+    function probeAfterSave(nd) {
+      if (!nd.serverId || !window.fetch) return;
+      fetch("/api/downloaders/" + encodeURIComponent(nd.serverId) + "/test", { method: "POST", credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.ok) return;
+          var d = j.data || {};
+          nd.online = !!d.pass;
+          nd.freeSpace = Number(d.freeSpace) || 0;
+          nd.total = Number(d.totalSpace) || 0;
+          nd.used = nd.total && nd.freeSpace ? Math.max(0, nd.total - nd.freeSpace) : 0;
+          nd.disk = nd.freeSpace ? fmtBytes(nd.freeSpace) + " 剩余" + (nd.total ? " / 共 " + fmtBytes(nd.total) : "") : "—";
+          nd.qb = d.version || "—";
+          if (d.savePath) nd.path = d.savePath;
+          save(); paint();
+          if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+          if (nd.online) loadCats(nd);
+        })
+        .catch(function () {});
     }
 
     function paint() {
@@ -1666,8 +1813,8 @@
             (isCtrl ? '<span class="nr-tag">控制机</span>' : "") + "</div>" +
           '<div class="nr-host mono">' + escapeHtml(nd.host) + "</div>" +
           '<div class="nr-disk"><span class="nr-cap">' + escapeHtml(nd.disk) + "</span>" +
-            '<div class="nr-bar"><i style="width:' + Math.max(3, Math.min(100, pct)).toFixed(0) + '%"></i></div>' +
-            '<span class="nr-pct">' + (pct ? pct.toFixed(0) + "%" : "—") + "</span></div>" +
+            (nd.total ? '<div class="nr-bar"><i style="width:' + Math.max(0, Math.min(100, pct)).toFixed(0) + '%"></i></div>' +
+              '<span class="nr-pct">已用 ' + (pct ? pct.toFixed(0) + "%" : "—") + "</span>" : "") + "</div>" +
           (nd.online ? '<span class="badge green">在线</span>' : '<span class="badge red">离线</span>') +
           '<button class="link-btn nr-set" data-nset="' + i + '">设置</button>' +
         "</div>";
@@ -1677,22 +1824,19 @@
     /* ---- 设置弹窗 ---- */
     var mask = $("#node-modal");
     var editing = -1;
-    var CAT_POOL = ["原盘", "Remux", "1080p", "2160p", "剧集", "动漫", "音乐", "综艺", "纪录", "体育"];
-    function catsFromNode(nd) {
-      var seed = hashStr((nd && (nd.host || nd.name)) || "qb");
-      var n = 3 + (seed % 4);
-      var off = seed % CAT_POOL.length;
-      var out = [];
-      for (var i = 0; i < CAT_POOL.length && out.length < n; i++) {
-        var name = CAT_POOL[(off + i * 3) % CAT_POOL.length];
-        out.push([name, 12 + ((seed >>> (i * 5 + 1)) % 400)]);
-      }
-      out.sort(function (a, b) { return b[1] - a[1]; });
-      return out;
-    }
     var curCats = [];
     var curCat = "";
 
+    /* 分类只认下载器里真实存在的那些，面板不自己编 */
+    function normUrl(raw) {
+      var s = String(raw || "").trim();
+      if (!s) return "";
+      if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) s = "http://" + s;
+      return s.replace(/\/+$/, "");
+    }
+    function hostOf(url) {
+      return String(url || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+    }
     function renderCats() {
       var list = $("#nd-cat-list");
       var st = $("#nd-cat-status");
@@ -1704,17 +1848,41 @@
       }
       if (st) st.textContent = "已拉取 " + curCats.length + " 个";
       list.innerHTML = curCats.map(function (c) {
-        return '<button type="button" class="cat-chip' + (c[0] === curCat ? " on" : "") + '" data-ndcat="' + escapeHtml(c[0]) + '">' +
-          escapeHtml(c[0]) + '<i>' + c[1] + "</i></button>";
+        return '<button type="button" class="cat-chip' + (c.name === curCat ? " on" : "") + '" data-ndcat="' + escapeHtml(c.name) + '">' +
+          escapeHtml(c.name) + "<i>" + (c.count || 0) + "</i></button>";
       }).join("");
+    }
+    function loadCats(node, btn) {
+      if (!node || !node.serverId) { toast("先保存下载器，再读它的分类"); return; }
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端，读不了分类"); return; }
+      if (btn) { btn.disabled = true; btn.textContent = "读取中…"; }
+      var done = function (t) { if (btn) { btn.disabled = false; btn.textContent = t; } };
+      fetch("/api/downloaders/" + encodeURIComponent(node.serverId) + "/cats", { credentials: "same-origin" })
+        .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }, function () { return { status: r.status, j: null }; }); })
+        .then(function (out) {
+          done("重新拉取");
+          if (!out.j || !out.j.ok) {
+            var msg = (out.j && out.j.error && out.j.error.message) || ("读取失败 " + out.status);
+            var st = $("#nd-cat-status");
+            if (st) st.textContent = msg;
+            toast(msg);
+            return;
+          }
+          curCats = (out.j.data.cats || []).map(function (c) { return { name: c.name, count: c.count || 0 }; });
+          if (!curCat || !curCats.some(function (c) { return c.name === curCat; })) curCat = curCats.length ? curCats[0].name : "";
+          node.cats = curCats;
+          node.cat = curCat;
+          renderCats();
+          toast(curCats.length ? ("这台下载器有 " + curCats.length + " 个分类") : "下载器里还没有分类");
+        })
+        .catch(function () { done("重新拉取"); toast("分类请求发不出去"); });
     }
     function openModal(i) {
       editing = i;
       var nd = i >= 0 ? MOCK.nodes[i] : null;
       $("#node-modal-title").textContent = nd ? "下载器设置" : "新增下载器";
-      $("#nd-name").value = nd ? nd.name : "";
-      $("#nd-host").value = nd ? nd.host : "";
-      $("#nd-qb").value = nd ? (nd.qbUrl || ("http://" + nd.host + ":8080")) : "";
+      $("#nd-name").value = nd ? (nd.name || "") : "";
+      $("#nd-host").value = nd ? (nd.qbUrl || nd.host || "") : "";
       $("#nd-user").value = nd && nd.qbUser ? nd.qbUser : "";
       $("#nd-pass").value = nd && nd.qbPass ? nd.qbPass : "";
       $("#nd-down").value = nd && nd.maxDown ? nd.maxDown : "3";
@@ -1730,7 +1898,9 @@
       renderCats();
       $("#node-del").style.display = nd ? "" : "none";
       mask.hidden = false;
-      setTimeout(function () { $("#nd-name").focus(); }, 30);
+      setTimeout(function () { $("#nd-host").focus(); }, 30);
+      /* 已存的下载器，打开就把它自己的分类读出来 */
+      if (nd && nd.serverId) loadCats(nd);
     }
     function closeModal() { mask.hidden = true; }
 
@@ -1740,14 +1910,15 @@
       mask.addEventListener("click", function (e) { if (e.target === mask) closeModal(); });
 
       $("#node-ok").addEventListener("click", function () {
-        var name = $("#nd-name").value.trim();
-        if (!name) { toast("先填名称"); return; }
-        var host = $("#nd-host").value.trim();
-        if (!host) { toast("先填地址（下载器的 Web 地址）"); return; }
+        var raw = $("#nd-host").value.trim();
+        if (!raw) { toast("先填地址（下载器 Web 地址）"); return; }
+        var url = normUrl(raw);
+        if (!/^https?:\/\/[^\s/]+/i.test(url)) { toast("地址要像 http://主机:端口"); return; }
+        var name = $("#nd-name").value.trim() || hostOf(url);
         var data = {
           name: name,
           role: editing >= 0 ? (MOCK.nodes[editing].role || "下载 / 做种") : "下载 / 做种",
-          host: host,
+          host: hostOf(url),
           path: editing >= 0 ? MOCK.nodes[editing].path : "/data/pt",
           qb: editing >= 0 ? (MOCK.nodes[editing].qb || "") : "",
           qbUser: $("#nd-user").value.trim(),
@@ -1767,71 +1938,82 @@
           nd.name = data.name; nd.role = data.role; nd.host = data.host;
           nd.maxDown = data.maxDown; nd.seedLimit = data.seedLimit;
           nd.qbUser = data.qbUser; nd.qbPass = data.qbPass;
-          nd.qbUrl = ($("#nd-qb").value || "").trim() || nd.qbUrl || ("http://" + data.host + ":8080");
+          nd.qbUrl = url;
           nd.dlLimit = data.dlLimit; nd.ulLimit = data.ulLimit; nd.ratioDel = data.ratioDel;
           nd.seedDays = data.seedDays; nd.dlPath = data.dlPath; nd.lowDisk = data.lowDisk;
           nd.cats = curCats; nd.cat = curCat;
           target = nd;
         } else {
           target = {
-            name: data.name, role: data.role, host: data.host, online: true,
-            disk: "0 / 16 TB", used: 0, total: 16, qb: data.qb,
+            name: data.name, role: data.role, host: data.host, online: false,
+            disk: "—", used: 0, total: 0, qb: data.qb,
             seeding: "0", path: data.path, maxDown: data.maxDown, seedLimit: data.seedLimit,
             cats: curCats, cat: curCat, qbUser: data.qbUser, qbPass: data.qbPass,
-            qbUrl: ($("#nd-qb").value || "").trim() || ("http://" + data.host + ":8080")
+            qbUrl: url, freeSpace: 0
           };
           MOCK.nodes.push(target);
         }
         save(); paint(); closeModal();
         toast(editing >= 0 ? "已保存：" + data.name : "已新增：" + data.name);
-        pushNode(target);
+        pushNode(target, true);
       });
 
       var testBtn = $("#nd-test");
       if (testBtn) testBtn.addEventListener("click", function () {
         var res = $("#nd-test-res");
-        var url = ($("#nd-qb").value || "").trim();
+        var url = normUrl($("#nd-host").value);
         var user = ($("#nd-user").value || "").trim();
         var pass = $("#nd-pass").value || "";
-        if (!url) { toast("先填 qB 地址"); return; }
-        if (!/^https?:\/\//i.test(url)) { toast("地址要以 http:// 或 https:// 开头"); return; }
+        if (!url) { toast("先填地址"); return; }
+        if (!/^https?:\/\/[^\s/]+/i.test(url)) { toast("地址要像 http://主机:端口"); return; }
         if (!window.fetch || !/^https?:$/.test(location.protocol)) {
           toast("本地预览没有后端，连接测试不可用");
           if (res) res.textContent = "本地预览没有后端，连接测试不可用";
           return;
         }
+        /* 密码不回显：没重新填就说明用服务端存的那份，走 id 探测，不再拿空密码去撞 401 */
+        var saved = editing >= 0 ? MOCK.nodes[editing] : null;
+        var useStored = !pass && saved && saved.serverId;
         testBtn.disabled = true;
         if (res) res.textContent = "正在连接…";
-        fetch("/api/downloaders", {
-          method: "POST", credentials: "same-origin",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name: ($("#nd-name").value || "").trim() || "下载器", url: url, user: user, pass: pass })
-        }).then(function (r) {
+        var req = useStored
+          ? fetch("/api/downloaders/" + encodeURIComponent(saved.serverId) + "/test", { method: "POST", credentials: "same-origin" })
+          : fetch("/api/downloaders/probe", {
+              method: "POST", credentials: "same-origin",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ url: url, user: user, pass: pass })
+            });
+        req.then(function (r) {
           return r.json().then(function (j) { return { status: r.status, j: j }; },
             function () { return { status: r.status, j: null }; });
         }).then(function (out) {
           if (!out.j || !out.j.ok) {
-            var msg = (out.j && out.j.error && out.j.error.message) || ("保存失败 " + out.status);
+            var msg = (out.j && out.j.error && out.j.error.message) || ("探测失败 " + out.status);
             if (res) res.textContent = msg;
             toast(msg);
-            return null;
+            return;
           }
-          var id = out.j.data.id;
-          return fetch("/api/downloaders/" + encodeURIComponent(id) + "/test", { method: "POST", credentials: "same-origin" })
-            .then(function (r) { return r.json(); })
-            .then(function (tj) {
-              if (!tj || !tj.ok) { if (res) res.textContent = "探测失败"; toast("探测失败"); return; }
-              var d = tj.data;
-              var pass2 = d.pass === true;
-              var lines = (d.steps || []).map(function (s) {
-                return s.step + ":" + (s.status || "—") + (s.error ? "(" + s.error + ")" : "") + " " + (s.ms || 0) + "ms";
-              }).join(" · ");
-              if (res) res.textContent = (pass2 ? "通过 · " + d.version : "不通") + (lines ? " · " + lines : "");
-              toast(pass2 ? "连接通过 · " + d.version : "连接失败");
-              return fetch("/api/downloaders/" + encodeURIComponent(id), { method: "DELETE", credentials: "same-origin" }).catch(function () {});
-            });
+          var d = out.j.data || {};
+          var lines = (d.steps || []).map(function (s) {
+            return s.step + ":" + (s.status || "—") + (s.error ? "(" + s.error + ")" : "") + " " + (s.ms || 0) + "ms";
+          }).join(" · ");
+          var space = d.freeSpace ? " · 剩余 " + fmtBytes(d.freeSpace) : "";
+          if (res) res.textContent = (d.pass ? "通过 · " + d.version + space : "不通" + space) + (lines ? " · " + lines : "");
+          toast(d.pass ? ("连接通过 · " + d.version) : "连接失败");
+          /* 探测结果直接回写到这张卡片，列表上的在线状态、余量跟着变，不用再手动刷新 */
+          if (saved) {
+            saved.online = !!d.pass;
+            saved.freeSpace = Number(d.freeSpace) || 0;
+            saved.total = Number(d.totalSpace) || 0;
+            saved.used = saved.total && saved.freeSpace ? Math.max(0, saved.total - saved.freeSpace) : 0;
+            saved.disk = saved.freeSpace ? fmtBytes(saved.freeSpace) + " 剩余" + (saved.total ? " / 共 " + fmtBytes(saved.total) : "") : "—";
+            if (d.version) saved.qb = d.version;
+            if (d.savePath) saved.path = d.savePath;
+            save(); paint();
+            if (window.__ptaLoadOverview) window.__ptaLoadOverview();
+          }
         }).catch(function () {
-          if (res) res.textContent = "本地预览没有后端，连接测试不可用";
+          if (res) res.textContent = "请求发不出去";
           toast("连接测试不可用");
         }).then(function () {
           testBtn.disabled = false;
@@ -1839,20 +2021,10 @@
       });
 
       $("#nd-fetch").addEventListener("click", function () {
-        var b = this;
-        b.disabled = true;
-        b.textContent = "拉取中…";
-        var node = editing >= 0 ? MOCK.nodes[editing] : { host: $("#nd-host").value.trim(), name: $("#nd-name").value.trim() };
-        setTimeout(function () {
-          curCats = catsFromNode(node);
-          if (!curCat || !curCats.some(function (c) { return c[0] === curCat; })) curCat = curCats.length ? curCats[0][0] : "";
-          renderCats();
-          b.disabled = false;
-          b.textContent = "重新拉取";
-          toast("已拉取 " + curCats.length + " 个分类");
-        }, 700);
+        var node = editing >= 0 ? MOCK.nodes[editing] : null;
+        if (!node || !node.serverId) { toast("先保存下载器，再读它的分类"); return; }
+        loadCats(node, this);
       });
-
       $("#nd-cat-list").addEventListener("click", function (e) {
         var chip = e.target.closest("[data-ndcat]");
         if (!chip) return;
@@ -1936,10 +2108,11 @@
       escapeHtml(key || "1") + '">' + (on ? "开" : "关") + "</button>";
   }
 
-  function chipRow(items, active, single) {
-    return '<div class="cat-row pick-row"' + (single ? ' data-single="1"' : "") + ">" + items.map(function (c) {
+  function chipRow(items, active, single, tips) {
+    return '<div class="cat-row pick-row"' + (single ? ' data-single="1"' : "") + ">" + items.map(function (c, i) {
       var on = (active || []).indexOf(c) >= 0;
-      return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '">' + c + "</button>";
+      var tip = tips && tips[i] ? ' title="' + escapeHtml(tips[i]) + '"' : "";
+      return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '"' + tip + ">" + c + "</button>";
     }).join("") + "</div>";
   }
 
@@ -1997,16 +2170,16 @@
     return rows.map(function (r) {
       return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
         '<div class="lbl"><span>' + r.t + "</span>" + (r.hint ? "<i>" + r.hint + "</i>" : "") + "</div>" +
-        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single) : (r.type === "switch" ? swChip(r.on, r.k) : setControl(r))) + "</div>" +
+        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single, r.tips) : setControl(r)) + "</div>" +
       "</div>";
     }).join("");
   }
 
-  var FETCH_RULES = window.PTA_RULES.fetch;
   var PUB_RULES = window.PTA_RULES.pub;
   var DEDUPE_RULES = window.PTA_RULES.dedupe;
 
-  var RULE_SETS = { fetch: FETCH_RULES, dedupe: DEDUPE_RULES, pub: PUB_RULES };
+  /* fetch 组由 Vue 的搜索预设卡独占，这里不再持有，免得保存查重/发布时把预设冲回默认 */
+  var RULE_SETS = { dedupe: DEDUPE_RULES, pub: PUB_RULES };
 
   /* 默认全部留空：不预选、不开启，避免看起来像已经配好了 */
   Object.keys(RULE_SETS).forEach(function (k) {
@@ -2024,6 +2197,7 @@
   function saveFlowState() {
     var data = {};
     Object.keys(RULE_SETS).forEach(function (k) {
+      if (!RULE_SETS[k] || !RULE_SETS[k].length) return;   /* 搜索预设已由 Vue 卡片单独保存，这里不覆盖 */
       data[k] = RULE_SETS[k].map(function (g) {
         return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; });
       });
@@ -2045,6 +2219,8 @@
       (data[k] || []).forEach(function (grp, gi) {
         var g = RULE_SETS[k][gi];
         if (!g) return;
+        /* 行数对不上说明规则表改过了，这份存档按行号套会串位，整组丢掉 */
+        if (!Array.isArray(grp) || grp.length !== g.rows.length) return;
         (grp || []).forEach(function (vals, ri) {
           var r = g.rows[ri];
           if (!r || !vals) return;
@@ -2083,6 +2259,277 @@
     applyRx(rx);
   }
 
+  /* 请求限制卡片：Vue 组件。间隔、每日上限、熔断次数都写到服务端 /api/config，前端不各存一份 */
+  function mountLimitsCard(host) {
+    if (!window.Vue) return;
+    var Vue = window.Vue, h = Vue.h;
+    var box = document.createElement("div");
+    var anchor = host.querySelector('.drawer[data-name="抓取"]');
+    (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
+
+    var st = Vue.reactive({
+      runMode: "test", interval: 60, dailySite: 20, dailyAll: 100, breaker: 3,
+      detail: (function () { try { return localStorage.getItem("pta.detail") === "1"; } catch (e) { return false; } })(),
+      saving: false,
+      note: "读取服务端配置…"
+    });
+
+    function syncNote() {
+      var lim = Number((document.getElementById("crawl-limit") || {}).value || 10) || 10;
+      st.note = "每 " + st.interval + " 秒发一次请求 · " + (st.runMode === "prod" ? "正式模式" : "测试模式") +
+        " · 本次大约 " + Math.max(1, Math.ceil(lim / 50)) + " 次请求";
+    }
+    function numRow(label, hint, key, min, max) {
+      return h("div", { class: "set-field" }, [
+        h("div", { class: "lbl" }, [h("span", null, label), h("i", null, hint)]),
+        h("div", { class: "ctl" }, [
+          h("input", {
+            class: "input num", type: "number", min: String(min), max: String(max), value: String(st[key]),
+            "data-k": key, "data-min": String(min), "data-max": String(max),
+            onInput: function (e) { st[key] = Number(e.target.value) || 0; syncNote(); }
+          }),
+          h("em", { class: "num-warn" })
+        ])
+      ]);
+    }
+    function checkLimits() {
+      var bounds = {
+        interval: st.runMode === "prod" ? [8, 120] : [30, 120],
+        dailySite: [1, 300], dailyAll: [50, 2000], breaker: [1, 10]
+      };
+      var bad = null;
+      box.querySelectorAll("input.num[data-k]").forEach(function (el) {
+        var k = el.getAttribute("data-k"), r = bounds[k] || [0, 9999];
+        var n = Number(el.value), msg = "";
+        if (el.value !== "" && (!/^\d+$/.test(el.value) || n < r[0])) msg = "低于下限 " + r[0] + "，不允许保存，也不会执行";
+        else if (el.value !== "" && n > r[1]) msg = "超过上限 " + r[1] + "，不允许保存";
+        var w = el.parentNode.querySelector(".num-warn");
+        if (w) w.textContent = msg;
+        el.classList.toggle("is-bad", !!msg);
+        if (msg && !bad) bad = el;
+      });
+      return bad;
+    }
+    function switchRow(label, hint, key) {
+      return h("div", { class: "set-field" }, [
+        h("div", { class: "lbl" }, [h("span", null, label), h("i", null, hint)]),
+        h("div", { class: "ctl" }, [h("button", {
+          class: "switch" + (st[key] ? " on" : ""), type: "button",
+          onClick: function () {
+            st[key] = !st[key];
+            try { localStorage.setItem("pta.detail", st[key] ? "1" : "0"); } catch (e) {}
+          }
+        }, [h("i")])])
+      ]);
+    }
+    function load() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { syncNote(); return; }
+      fetch("api/config", { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || !j.ok || !j.data || !j.data.user) return;
+          var u = j.data.user;
+          if (u.runMode) st.runMode = u.runMode;
+          ["interval", "dailySite", "dailyAll", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
+          syncNote();
+        })
+        .catch(function () {});
+    }
+    function save() {
+      if (st.saving) return;
+      var bad = checkLimits();
+      if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
+      st.saving = true;
+      fetch("api/config/user", {
+        method: "PATCH", credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ runMode: st.runMode, interval: st.interval, dailySite: st.dailySite, dailyAll: st.dailyAll, breaker: st.breaker })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        st.saving = false;
+        if (!j || !j.ok) { toast((j && j.error && j.error.message) || "服务端拒绝了这次保存"); return; }
+        toast("请求限制已保存到服务端");
+      }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
+    }
+
+    Vue.createApp({
+      render: function () {
+        var runSelect = h("select", { class: "select", "data-k": "runMode", value: st.runMode, onChange: function (e) { st.runMode = e.target.value; syncNote(); } },
+          [h("option", { value: "test" }, "测试（按人手速度）"), h("option", { value: "prod" }, "正式")]);
+        return h("section", { class: "drawer open vue-card" }, [
+          h("div", { class: "drawer-head" }, [
+            h("div", { class: "drawer-t" }, [
+              h("div", { class: "drawer-title" }, "请求限制"),
+              h("div", { class: "drawer-desc" }, "请求间隔、每日上限与熔断次数；只在这一处配，服务端按范围再校验一次。")
+            ]),
+            h("div", { class: "drawer-head-right" }, [
+              h("button", { class: "btn primary slim limits-save", type: "button", disabled: st.saving, onClick: save },
+                st.saving ? "保存中…" : "保存")
+            ])
+          ]),
+          h("div", { class: "drawer-body" }, [
+            h("div", { class: "set-fields" }, [
+              numRow("请求间隔", "两次请求之间至少等这么久（秒）", "interval", 8, 120),
+              numRow("每站每天", "单个站点一天最多发几次请求", "dailySite", 1, 300),
+              numRow("全站每天", "所有站加起来一天最多发几次", "dailyAll", 50, 2000),
+              numRow("连续失败", "连续失败这么多次就自动暂停", "breaker", 1, 10),
+              h("div", { class: "set-field" }, [
+                h("div", { class: "lbl" }, [h("span", null, "运行模式"), h("i", null, "测试模式最低 30 秒")]),
+                h("div", { class: "ctl" }, [runSelect])
+              ]),
+              switchRow("抓详情页", "每条详情多一次请求，配额翻倍；默认关", "detail")
+            ]),
+            h("div", { class: "crawl-note" }, st.note)
+          ])
+        ]);
+      }
+    }).mount(box);
+
+    /* 「抓多少条」变了，小字里的请求数跟着变 */
+    var limitSel = document.getElementById("crawl-limit");
+    if (limitSel) limitSel.addEventListener("change", syncNote);
+    load();
+  }
+
+  /* 搜索预设卡片：Vue 组件。只管「抓什么」的类目条件，保存写 /api/flow 的 fetch 组 */
+  function mountPresetCard(host) {
+    if (!window.Vue) return;
+    var Vue = window.Vue, h = Vue.h;
+    var box = document.createElement("div");
+    var anchor = host.querySelector('.drawer[data-name="查重"]');
+    (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
+
+    var src = (window.PTA_RULES && window.PTA_RULES.fetch || [])[0] || { name: "搜索预设", desc: "", rows: [] };
+    var st = Vue.reactive({ groups: JSON.parse(JSON.stringify([src])), saving: false, sum: "跟随默认" });
+
+    function syncSum() {
+      var on = 0;
+      st.groups.forEach(function (g) { g.rows.forEach(function (r) { on += (r.sel || []).length; }); });
+      st.sum = on ? on + " 项条件" : "跟随默认";
+    }
+    function load() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { syncSum(); return; }
+      fetch("api/flow", { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          var sets = j && j.ok && j.data && j.data.sets;
+          var saved = sets && Array.isArray(sets.fetch) ? sets.fetch : null;
+          if (!saved) { syncSum(); return; }
+          st.groups.forEach(function (g, gi) {
+            var rows = saved[gi];
+            if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
+            g.rows.forEach(function (r, ri) {
+              var v = rows[ri] || {};
+              if (v.sel) r.sel = v.sel;
+              if (v.v !== undefined) r.v = v.v;
+            });
+          });
+          syncSum();
+        })
+        .catch(function () {});
+    }
+    function save() {
+      if (st.saving) return;
+      st.saving = true;
+      var payload = { sets: { fetch: st.groups.map(function (g) { return g.rows.map(function (r) { return { v: r.v, on: r.on, sel: r.sel }; }); }) } };
+      fetch("api/flow", { method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          st.saving = false;
+          toast(j && j.ok ? "搜索预设已保存" : ((j && j.error && j.error.message) || "服务端拒绝了这次保存"));
+        })
+        .catch(function () { st.saving = false; toast("保存请求没发出去"); });
+    }
+
+    Vue.createApp({
+      render: function () {
+        return h("section", { class: "drawer open vue-card" }, [
+          h("div", { class: "drawer-head" }, [
+            h("div", { class: "drawer-t" }, [
+              h("div", { class: "drawer-title" }, "搜索预设"),
+              h("div", { class: "drawer-desc" }, "决定去站点抓什么：类型、媒介、分辨率、优惠。改变的是搜索本身，不是事后过滤。")
+            ]),
+            h("div", { class: "drawer-head-right" }, [
+              h("span", { class: "drawer-meta" }, st.sum),
+              h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")
+            ])
+          ]),
+          h("div", { class: "drawer-body" }, st.groups.map(function (g) {
+            return h("div", { class: "set-fields", key: g.name }, g.rows.map(function (r) {
+              return h("div", { class: "set-field", key: r.t }, [
+                h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+                h("div", { class: "ctl" }, [
+                  h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
+                    var on = (r.sel || []).indexOf(c) >= 0;
+                    return h("button", {
+                      class: "cat-chip" + (on ? " on" : ""), type: "button",
+                      onClick: function () {
+                        var i = (r.sel || []).indexOf(c);
+                        r.sel = (r.sel || []).slice();
+                        if (i >= 0) r.sel.splice(i, 1); else r.sel.push(c);
+                        syncSum();
+                      }
+                    }, c);
+                  }))
+                ])
+              ]);
+            }));
+          }))
+        ]);
+      }
+    }).mount(box);
+    syncSum();
+    load();
+  }
+
+  /* 自动查重开关：默认关。关着的时候只有手动点按钮才会向目标站发请求 */
+  function mountAutoDupeCard(host) {
+    if (!window.Vue) return;
+    var Vue = window.Vue, h = Vue.h;
+    var box = document.createElement("div");
+    var anchor = host.querySelector('.drawer[data-name="查重"]');
+    (anchor && anchor.parentNode ? anchor.parentNode : host).insertBefore(box, anchor || null);
+    var st = Vue.reactive({ on: false, saving: false, loaded: false });
+
+    function save(next) {
+      st.on = next;
+      st.saving = true;
+      fetch("api/config/user", {
+        method: "PATCH", credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ autoDupe: next })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        st.saving = false;
+        if (!j || !j.ok) { st.on = !next; toast((j && j.error && j.error.message) || "服务端拒绝了这次保存"); return; }
+        toast(next ? "已开启自动查重" : "已关闭自动查重");
+      }).catch(function () { st.saving = false; st.on = !next; toast("保存请求没发出去"); });
+    }
+    fetch("api/config", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.ok && j.data && j.data.user) st.on = !!j.data.user.autoDupe; })
+      .catch(function () {});
+
+    Vue.createApp({
+      render: function () {
+        return h("section", { class: "drawer open vue-card" }, [
+          h("div", { class: "drawer-head" }, [
+            h("div", { class: "drawer-t" }, [
+              h("div", { class: "drawer-title" }, "自动查重"),
+              h("div", { class: "drawer-desc" }, "关闭时不会自己向目标站发请求，只在数据清单里手动点「向目标站查重」。")
+            ]),
+            h("div", { class: "drawer-head-right" }, [
+              h("span", { class: "drawer-meta" }, st.saving ? "保存中…" : (st.on ? "已开启" : "已关闭")),
+              h("button", {
+                class: "switch" + (st.on ? " on" : ""), type: "button",
+                title: st.on ? "点一下关闭自动查重" : "点一下开启自动查重",
+                onClick: function () { if (!st.saving) save(!st.on); }
+              }, [h("i")])
+            ])
+          ])
+        ]);
+      }
+    }).mount(box);
+  }
+
   function initCrawlSettings() {
     var host = $("#crawl-panel");
     if (!host) return;
@@ -2109,6 +2556,7 @@
       }).join("") + "</div>";
     }
 
+
     function sectionHtml(g, i, setKey) {
       return '<section class="drawer open" data-i="' + i + '" data-name="' + g.name + '">' +
         '<div class="drawer-head">' +
@@ -2132,8 +2580,8 @@
           '<div class="drawer-head-right">' +
             '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
             '<select class="input slim" id="crawl-site" title="从哪个站抓"><option value="">选来源站</option></select>' +
-            '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条">' +
-              [[5,'5 条（试）'],[10,'10 条'],[20,'20 条'],[100,'100 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+            '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条（是条数，不是页数）">' +
+              [[5,'5 条（试）'],[10,'10 条'],[50,'50 条'],[100,'100 条'],[200,'200 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
             '</select>' +
             '<button class="btn ghost slim" id="crawl-plan-btn" title="只读本地配置，不发请求">看地址</button>' +
             '<button class="btn slim" id="crawl-live-run">抓一页</button>' +
@@ -2142,10 +2590,14 @@
         "</div>" +
         '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
       "</section>" +
-      sectionHtml({ name: "抓取", desc: "按搜索预设的类目直接把词条抓进本地库，命中禁转/独占/DIY/限转的只打标记不过滤。", sum: "跟随默认", rules: FETCH_RULES }, 0, "fetch") +
-      sectionHtml({ name: "查重", desc: "跟待审核、本地库、已送审/已发布的词条比对，重复的标「已有」并跳过；剩下的按条件送去待审核，不需要的归档。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
+      sectionHtml({ name: "查重", desc: "跟待审核、本地库、已送审/已发布的词条比对，重复的标「已有」。关键词（排除/白名单）也在这里，只决定转不转，不影响请求。", sum: "跟随默认", rules: DEDUPE_RULES }, 1, "dedupe") +
       sectionHtml({ name: "发布", desc: "处理标题、副标题、简介、图片与图床、发布标签，然后发到目标站。", sum: "跟随默认", rules: PUB_RULES }, 2, "pub") +
       '';
+
+    /* 请求限制用 Vue 卡片单独渲染，放在抓取卡前面 */
+    mountLimitsCard(host);
+    mountPresetCard(host);
+    mountAutoDupeCard(host);
 
     function paintCrawlDry(t) {
       var box = $("#crawl-dry-box");
@@ -2547,6 +2999,7 @@
         if (el) el.textContent = domSum(item);
       });
       host.querySelectorAll(".drawer").forEach(function (sec) {
+        if (sec.classList.contains("vue-card")) return;   /* Vue 卡片自己管 meta */
         var meta = sec.querySelector(".drawer-meta");
         if (!meta) return;
         var first = "";
@@ -2616,6 +3069,7 @@
         return;
       }
       var save = e.target.closest(".sec-save");
+      if (save && save.closest(".vue-card")) return;
       if (save) {
         var sKey = save.getAttribute("data-set");
         host.querySelectorAll('.rule-item[data-set="' + sKey + '"]').forEach(function (item) {
@@ -2648,7 +3102,9 @@
       if (scope) checkNums(scope);
       refreshSums();
     });
-    host.addEventListener("change", refreshSums);
+    host.addEventListener("change", function (e) {
+      refreshSums();
+    });
 
     document.addEventListener("click", function (e) {
       if (!e.target.closest || !e.target.closest("#save-crawl")) return;
@@ -2675,177 +3131,114 @@
     });
   }
 
+  /* 设置页：Vue 3 组件渲染。用 render 函数（不跑模板编译）以符合 CSP。 */
   function initSettings() {
     var panel = $("#set-panel");
     if (!panel) return;
-    var GROUPS = [
-      { name: "抓取节奏", desc: "请求层由程序固定，只有速度在安全区间里可调；越界只提醒，不会保存也不会执行。", rows: [
-        { t: "运行模式", type: "select", k: "runMode", v: "test", opts: ["test", "prod"], labels: { test: "测试（按人手速度）", prod: "正式" }, hint: "测试模式一分钟一次，用来验证流程" },
-        { t: "请求间隔", type: "num", k: "paceSec", v: "60", range: [30, 120], ph: "30–120", hint: "测试模式最低 30 秒，按人手速度跑" },
-        { t: "并发", type: "fixed", v: "1", hint: "固定单线程，不开放调整" },
-        { t: "单站每日上限", type: "num", k: "dailySite", v: "20", range: [1, 300], hint: "程序按站规再压一次，最多到站规的 1/3" },
-        { t: "全站每日上限", type: "num", k: "dailyAll", v: "100", range: [50, 2000] },
-        { t: "最小间隔", type: "fixed", v: "测试 30 秒 / 正式 8 秒", hint: "低于这个值一律不执行" },
-        { t: "失败重试", type: "fixed", v: "3 次 · 退避 30 秒起" },
-        { t: "连续失败熔断", type: "fixed", v: "3 次 4xx 暂停 15 分钟", hint: "429/403 直接停，遵守 Retry-After" },
-        { t: "请求审计", type: "fixed", v: "全量记日志", hint: "每次请求可追溯到时间、站点、路径" }
-      ] },
-      { name: "面板账号", desc: "面板账号由服务器环境变量决定，面板里不改密码，也不存明文。", save: false, rows: [
-        { t: "面板用户名", type: "fixed", noTag: true, k: "panelUser", v: "读取中…" },
-        { t: "面板密码", type: "fixed", noTag: true, v: "只放在测试机的 systemd 环境变量 PTA_PASS，面板读不到也不回显；要改就去测试机改环境变量后重启服务" },
-        { t: "会话", type: "fixed", noTag: true, v: "HttpOnly cookie，服务进程内存里保存，重启服务需要重新登录" },
-        { t: "退出登录", type: "button", v: "退出", hint: "清掉当前浏览器的会话 cookie" }
-      ] },
-      { name: "系统", desc: "版本、存储和这台浏览器里的数据。", save: false, rows: [
-        { t: "当前版本", type: "fixed", noTag: true, k: "sysVersion", v: "读取中…" },
-        { t: "数据目录", type: "fixed", noTag: true, v: "由服务端 PTA_DATA 指定，站点定义、词条库、队列、日志都在里面" },
-        { t: "日志上限", type: "fixed", noTag: true, v: "2 MB，超过自动轮转一份旧日志" },
-        { t: "清空本地缓存", type: "button", v: "清空", hint: "只会清掉浏览器里的设置，不动服务器数据" }
-      ] }
-    ];
-    panel.innerHTML = '<div class="set-stack">' + GROUPS.map(function (g, i) {
-      return '<section class="set-card' + (i === 0 ? " first" : "") + '">' +
-        '<div class="set-card-head">' +
-          '<div class="set-card-t"><h2 class="set-h2">' + g.name + "</h2>" +
-          '<p class="set-desc">' + g.desc + "</p></div>" +
-          (g.save === false ? "" : '<button type="button" class="btn primary slim set-save">保存</button>') +
-        "</div>" +
-        '<div class="set-fields">' + setRowsHtml(g.rows) + "</div></section>";
-    }).join("") + "</div>";
-    /* 面板用户名和版本都从后端读，读不到就显示占位，不编一个 */
-    (function loadMeta() {
-      if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
-      fetch("api/health", { credentials: "same-origin" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          var el = panel.querySelector('[data-k="sysVersion"]');
-          if (el && j && j.ok && j.data && j.data.version) el.textContent = "v" + j.data.version;
-        })
-        .catch(function () {});
-      fetch("api/session", { credentials: "same-origin" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          var el = panel.querySelector('[data-k="panelUser"]');
-          if (el && j && j.ok && j.data && j.data.user) el.textContent = j.data.user;
-        })
-        .catch(function () {});
-    })();
-    panel.addEventListener("click", function (e) {
-      var sw = e.target.closest("button[data-switch]");
-      if (sw) { sw.classList.toggle("on"); return; }
-      var btn = e.target.closest("button[data-btn]");
-      if (btn) {
-        var lbl = btn.getAttribute("data-btn");
-        if (lbl === "清空本地缓存") {
-          ptaConfirm("清空本地缓存", "会清掉浏览器里存的站点设置、流程设置和分类映射，服务器数据不动。确定？", function () {
-            try { localStorage.clear(); } catch (err) {}
-            toast("本地缓存已清空，正在刷新");
-            setTimeout(function () { location.reload(); }, 700);
-          });
-          return;
-        }
-        if (lbl === "退出登录") {
-          ptaConfirm("退出登录", "会清掉当前浏览器的会话 cookie，下次要重新登录。退出？", function () {
-            fetch("api/logout", { method: "POST", credentials: "same-origin" })
-              .then(function () { toast("已退出，正在刷新"); setTimeout(function () { location.reload(); }, 500); })
-              .catch(function () { toast("退出请求发不出去"); });
-          });
-          return;
-        }
-        toast(lbl);
-      }
-    });
-    /* 已连后端时，抓取节奏以服务端为准 */
-    function loadServerPace() {
-      if (typeof API === "undefined" || API.mode !== "live" || !API.getConfig) return;
-      API.getConfig().then(function (j) {
-        if (!j || !j.ok) return;
-        var u = (j.data && j.data.user) || {};
-        var card = panel.querySelector(".set-card");
-        var sel = card.querySelector('select[data-k="runMode"]');
-        var pace = card.querySelector('input[data-k="paceSec"]');
-        var ds = card.querySelector('input[data-k="dailySite"]');
-        var da = card.querySelector('input[data-k="dailyAll"]');
-        if (sel && u.runMode) sel.value = u.runMode;
-        var test = !sel || sel.value !== "prod";
-        if (pace) {
-          pace.setAttribute("data-min", test ? "30" : "8");
-          pace.setAttribute("placeholder", test ? "30–120" : "8–120");
-          if (u.interval != null) pace.value = u.interval;
-        }
-        if (ds && u.dailySite != null) ds.value = u.dailySite;
-        if (da && u.dailyAll != null) da.value = u.dailyAll;
-        checkNums(card);
-      }).catch(function () {});
+    if (!window.Vue) { panel.textContent = "Vue 运行时没加载"; return; }
+    var h = window.Vue.h;
+
+    function fixedRow(t, v, hint, ref) {
+      return h("div", { class: "set-field" }, [
+        h("div", { class: "lbl" }, [h("span", null, t), hint ? h("i", null, hint) : null]),
+        h("div", { class: "ctl" }, [h("span", { class: "fixed-val" + (ref ? " ref" : "") }, v)])
+      ]);
     }
-    window.__ptaAfterProbe = loadServerPace;
-    setTimeout(loadServerPace, 300);
-    setTimeout(loadServerPace, 1600);
-    setTimeout(loadServerPace, 3600);
+    function btnRow(t, label, hint, onClick) {
+      return h("div", { class: "set-field" }, [
+        h("div", { class: "lbl" }, [h("span", null, t), hint ? h("i", null, hint) : null]),
+        h("div", { class: "ctl" }, [h("button", { class: "btn ghost slim", type: "button", "data-btn": t, onClick: onClick }, label)])
+      ]);
+    }
+    function card(title, desc, headExtra, rows) {
+      return h("section", { class: "set-card" }, [
+        h("div", { class: "set-card-head" }, [
+          h("div", { class: "set-card-t" }, [h("h2", { class: "set-h2" }, title), h("p", { class: "set-desc" }, desc)]),
+          headExtra || null
+        ]),
+        h("div", { class: "set-fields" }, rows)
+      ]);
+    }
 
-    (function restoreSettings() {
-      var data = null;
-      try { data = JSON.parse(localStorage.getItem("pta.settings2") || "null"); } catch (e) {}
-      if (!data) return;
-      var fields = panel.querySelectorAll(".set-field");
-      [].forEach.call(fields, function (f, i) {
-        if (data[i] === undefined) return;
-        var sw = f.querySelector("[data-switch]");
-        if (sw) { if (data[i]) sw.classList.add("on"); else sw.classList.remove("on"); return; }
-        var ctl = f.querySelector(".input, .select");
-        if (ctl && typeof data[i] === "string") ctl.value = data[i];
-      });
-    })();
-
-    panel.addEventListener("input", function (e) {
-      if (e.target && e.target.classList.contains("num")) checkNums(e.target.closest(".set-card"));
-    });
-    panel.addEventListener("change", function (e) {
-      var sel = e.target.closest && e.target.closest('select[data-k="runMode"]');
-      if (!sel) return;
-      var test = sel.value !== "prod";
-      var pace = panel.querySelector('input[data-k="paceSec"]');
-      if (pace) {
-        pace.setAttribute("data-min", test ? "30" : "8");
-        pace.setAttribute("placeholder", test ? "30–120" : "8–120");
-        if (Number(pace.value || 0) < Number(pace.getAttribute("data-min"))) pace.value = test ? "60" : "30";
-        var hintEl = pace.closest(".set-field").querySelector(".lbl i");
-        if (hintEl) hintEl.textContent = test ? "测试模式最低 30 秒，按人手速度跑" : "正式模式最低 8 秒，最高 120 秒";
-      }
-      checkNums(sel.closest(".set-card"));
-      toast(test ? "已切到测试模式：一分钟一次" : "已切到正式模式");
-    });
-
-    document.addEventListener("click", function (e) {
-      if (!e.target.closest || !e.target.closest(".set-save")) return;
-      var bad = checkNums(e.target.closest(".set-card") || panel);
-      if (bad) { toast("超出安全范围，已拦下不保存"); bad.focus(); return; }
-      var vals = [];
-      panel.querySelectorAll(".set-field").forEach(function (f) {
-        var sw = f.querySelector("[data-switch]");
-        if (sw) { vals.push(sw.classList.contains("on")); return; }
-        var ctl = f.querySelector(".input, .select");
-        vals.push(ctl ? ctl.value : "");
-      });
-      try { localStorage.setItem("pta.settings2", JSON.stringify(vals)); } catch (err) {}
-
-      var card = e.target.closest(".set-card");
-      var rmSel = card && card.querySelector('select[data-k="runMode"]');
-      if (rmSel && typeof API !== "undefined" && API.mode === "live" && API.patchConfig) {
-        var pack = {
-          runMode: rmSel.value,
-          interval: Number(card.querySelector('input[data-k="paceSec"]').value),
-          dailySite: Number(card.querySelector('input[data-k="dailySite"]').value),
-          dailyAll: Number(card.querySelector('input[data-k="dailyAll"]').value)
+    function loadMeta() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) return Promise.resolve({});
+      return Promise.all([
+        fetch("api/health", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+        fetch("api/session", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      ]).then(function (a) {
+        var health = a[0], sess = a[1];
+        return {
+          version: health && health.ok && health.data && health.data.version ? "v" + health.data.version : "—",
+          user: sess && sess.ok && sess.data && sess.data.user ? sess.data.user : "—"
         };
-        API.patchConfig(pack).then(function (j) {
-          if (!j || !j.ok) { toast((j && j.error && j.error.message) || "服务端拒绝保存"); return; }
-          toast("已保存到服务端");
-        }).catch(function () { toast("服务端没有响应，已存本地"); });
-        return;
-      }
-      toast("设置已保存");
-    });
+      });
+    }
+
+    function mount() {
+      var Vue = window.Vue;
+      var state = Vue.reactive({
+        mode: (typeof uiMode === "function" ? uiMode() : "basic"),
+        version: "读取中…",
+        user: "读取中…"
+      });
+      Vue.createApp({
+        methods: {
+          saveMode: function () {
+            try { localStorage.setItem("pta.mode", state.mode === "dev" ? "dev" : "basic"); } catch (e) {}
+            toast("已切到" + (state.mode === "dev" ? "开发版" : "基础版") + "，正在刷新");
+            setTimeout(function () { location.reload(); }, 500);
+          },
+          logout: function () {
+            ptaConfirm("退出登录", "会清掉当前浏览器的会话 cookie，下次要重新登录。退出？", function () {
+              fetch("api/logout", { method: "POST", credentials: "same-origin" })
+                .then(function () { toast("已退出，正在刷新"); setTimeout(function () { location.reload(); }, 500); })
+                .catch(function () { toast("退出请求发不出去"); });
+            });
+          },
+          clearCache: function () {
+            ptaConfirm("清空本地缓存", "会清掉浏览器里存的站点设置、流程设置和分类映射，服务器数据不动。确定？", function () {
+              try { localStorage.clear(); } catch (e) {}
+              toast("本地缓存已清空，正在刷新");
+              setTimeout(function () { location.reload(); }, 700);
+            });
+          }
+        },
+        render: function () {
+          var self = this;
+          var modeSelect = h("select", {
+            class: "select", value: state.mode,
+            onChange: function (e) { state.mode = e.target.value; }
+          }, [h("option", { value: "basic" }, "基础版"), h("option", { value: "dev" }, "开发版")]);
+          var modeRow = h("div", { class: "set-field" }, [
+            h("div", { class: "lbl" }, [h("span", null, "界面模式"), h("i", null, "开发版才显示更新日志")]),
+            h("div", { class: "ctl" }, [modeSelect])
+          ]);
+          return h("div", { class: "set-stack" }, [
+            card("版本模式", "基础版只留日常要用的；开发版多出更新日志页。切换后自动刷新。",
+              h("button", { class: "btn primary slim set-save", type: "button", onClick: self.saveMode }, "保存"),
+              [modeRow]),
+            card("面板账号", "面板账号由服务器环境变量决定，面板里不改密码，也不存明文。", null, [
+              fixedRow("面板用户名", state.user, null, true),
+              fixedRow("面板密码", "只放在测试机的 systemd 环境变量 PTA_PASS，面板读不到也不回显；要改就去测试机改环境变量后重启服务", null, true),
+              fixedRow("会话", "HttpOnly cookie，服务进程内存里保存，重启服务需要重新登录", null, true),
+              btnRow("退出登录", "退出", "清掉当前浏览器的会话 cookie", self.logout)
+            ]),
+            card("系统", "版本、存储和这台浏览器里的数据。", null, [
+              fixedRow("当前版本", state.version, null, true),
+              fixedRow("数据目录", "由服务端 PTA_DATA 指定，站点定义、词条库、队列、日志都在里面", null, true),
+              fixedRow("日志上限", "2 MB，超过自动轮转一份旧日志", null, true),
+              btnRow("清空本地缓存", "清空", "只会清掉浏览器里的设置，不动服务器数据", self.clearCache)
+            ])
+          ]);
+        }
+      }).mount(panel);
+      loadMeta().then(function (meta) {
+        state.version = meta.version || "—";
+        state.user = meta.user || "—";
+      });
+    }
+
+    mount();
   }
 
   function initSites() {
@@ -2927,7 +3320,7 @@
     function itemHtml(s) {
       var a = archOf(s);
       var picked = state.picks.indexOf(s.name) >= 0;
-      var loginTxt = s.login === "ok" ? "正常" : s.login === "fail" ? "失效" : "未登录";
+      var loginTxt = s.login === "ok" ? "可用" : s.login === "fail" ? "失效" : "未自检";
       var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量+定期" : "增量";
       return '<div class="site-item' + (state.sel === s.name ? " on" : "") + '" data-host="' + escapeHtml(s.name) + '">' +
         '<input type="checkbox" class="site-pick" data-host="' + escapeHtml(s.name) + '"' + (picked ? " checked" : "") + ">" +
@@ -2975,7 +3368,7 @@
       var lastRes = cr && cr.at ? ["已抓取", "ok"] : ["未抓取", "idle"];
       var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量 + 定期全量" : "增量";
       var recs = s.recentItems || [];
-      var loginTxt = s.login === "ok" ? "登录正常" : s.login === "fail" ? "登录失效" : "未登录";
+      var loginTxt = s.login === "ok" ? "cookie 可用" : s.login === "fail" ? "cookie 失效" : "还没自检";
       var catTxt = dresCatTxt(s);
       var dres = defOf(s.name);
       var pres = presetOf(s.name);
@@ -3045,12 +3438,16 @@
 
       if (tab === "override") {
         body = '<div class="set-fields">' + setRowsHtml([
-          { t: "单独设置本站", type: "switch", k: "override", on: s.override, hint: s.override ? "只影响这个站" : "关闭即跟随流程页" }
+          { t: "单独设置本站", type: "switch", k: "override", on: !!s.override, hint: s.override ? "已开启：下面几项只对这个站生效" : "已关闭：这个站跟随流程页「请求限制」" }
         ]) + "</div>" +
         '<div class="set-fields' + (s.override ? "" : " is-off") + '">' + setRowsHtml([
-          { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval || "跟随全局", opts: ["跟随全局", "1 分钟", "5 分钟", "15 分钟", "1 小时"], hint: "这个站的两次抓取间隔，最短 30 秒" },
-          { t: "每天抓几次", type: "text", k: "ovDaily", v: s.ovDaily || "", ph: "留空＝用全局值", hint: "这是次数上限，不是条数；一轮多少条在流程页「抓一页」左边选" },
-          { t: "抓详情页", type: "switch", k: "ovDetail", on: s.ovDetail, hint: "详情页解析还没接，先把开关记下来" },
+          { t: "抓取间隔", type: "select", k: "ovInterval", v: s.ovInterval == null ? "" : String(s.ovInterval),
+            opts: ["", "1", "5", "15", "60", "180"],
+            labels: { "": "跟随全局", "1": "1 分钟", "5": "5 分钟", "15": "15 分钟", "60": "1 小时", "180": "3 小时" },
+            hint: "这个站两次抓取之间隔多少分钟；服务端仍会按下限压一次" },
+          { t: "每天抓几次", type: "num", k: "ovDaily", v: s.ovDaily == null ? "" : String(s.ovDaily), range: [1, 20],
+            ph: "留空＝跟随全局", hint: "次数上限，不是条数；一轮多少条在流程页「抓多少条」里选" },
+          { t: "抓详情页", type: "switch", k: "ovDetail", on: !!s.ovDetail, hint: "这个站要不要每条再进一次详情页" },
           { t: "优先级", type: "select", k: "priority", v: s.priority || "normal", opts: ["high", "normal", "low"], labels: { high: "高（先抓）", normal: "普通", low: "低（最后抓）" }, hint: "先存配置，抓取暂不按优先级排序" }
         ]) + "</div>" +
         '<div class="set-fields">' + setRowsHtml([
@@ -3291,7 +3688,7 @@
           '<div><span>总站点</span><b>' + st.total + "</b></div>" +
           '<div><span>启用</span><b>' + st.enabled + "</b></div>" +
           '<div><span>登录失效</span><b class="warn">' + st.loginFail + "</b></div>" +
-          '<div><span>未自检</span><b>' + st.unknown + "</b></div>" +
+          '<div><span>还没自检</span><b>' + st.unknown + "</b></div>" +
         "</div>" +
         '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
           '<div class="ss-legend">' + legend + "</div></div>" +
@@ -3719,6 +4116,38 @@
     if (bAll) bAll.addEventListener("click", function () {});
     if (bNone) bNone.addEventListener("click", function () { state.picks = []; refreshBulk(); paint(); });
 
+    /* 有 cookie 的站逐个跑一次自检：只发一次 GET，直接决定「可用/失效」，不猜 */
+    var selfCheck = $("#site-selfcheck");
+    if (selfCheck) selfCheck.addEventListener("click", function () {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) { toast("本地预览没有后端"); return; }
+      var hosts = (MOCK.sitesList || []).filter(function (s) { return s.cookieSaved; }).map(function (s) { return s.name; });
+      if (!hosts.length) { toast("还没有站点存过 cookie"); return; }
+      if (selfCheck.disabled) return;
+      selfCheck.disabled = true;
+      var i = 0, ok = 0, bad = 0;
+      function step() {
+        if (i >= hosts.length) {
+          selfCheck.disabled = false;
+          toast("自检完成：可用 " + ok + " · 失效 " + bad);
+          if (window.__ptaLoadSites) window.__ptaLoadSites();
+          return;
+        }
+        var h = hosts[i++];
+        selfCheck.textContent = "自检中 " + i + "/" + hosts.length;
+        fetch("/api/sites/" + encodeURIComponent(h) + "/session-test", { method: "POST", credentials: "same-origin" })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            var s = (MOCK.sitesList || []).filter(function (x) { return x.name === h; })[0];
+            var pass = !!(j && j.ok && j.data && j.data.pass);
+            if (s) { s.login = pass ? "ok" : "fail"; }
+            if (pass) ok++; else bad++;
+          })
+          .catch(function () { bad++; })
+          .then(function () { setTimeout(step, 400); });
+      }
+      step();
+    });
+
     function initBulkModal() {
       var mask = $("#bulk-modal");
       if (!mask) return;
@@ -3849,6 +4278,10 @@
     settings: {
       title: "设置", sub: "面板账号、通知与系统",
       pills: ""
+    },
+    changelog: {
+      title: "更新日志", sub: "删除 / 新增 / 优化 / 调整 / 重排",
+      pills: ""
     }
   };
   function statusPills() {
@@ -3883,6 +4316,7 @@
 
   function go(key, opts) {
     opts = opts || {};
+    if (key === "changelog" && uiMode() !== "dev") key = "dashboard";
     if (!VIEW_META[key]) key = "dashboard";
     if (key === current && !opts.force) {
       if (location.hash !== "#" + key) history.pushState({ view: key }, "", "#" + key);
@@ -3900,6 +4334,7 @@
     /* 进列表页时重新拉一次，别拿上次打开时的旧数据 */
     if (key === "sources" && typeof window.__ptaLoadSources === "function") window.__ptaLoadSources();
     if (key === "queue" && typeof window.__ptaLoadQueue === "function") window.__ptaLoadQueue();
+    if (key === "changelog" && typeof renderChangelog === "function") renderChangelog();
     if (!opts.pop) {
       if (opts.replace) history.replaceState({ view: key }, "", "#" + key);
       else history.pushState({ view: key }, "", "#" + key);
@@ -4161,6 +4596,88 @@
     location.reload();
   }
 
+  /* 更新日志：Vue 3 渲染。用 render 函数而不是模板字符串，避免运行时编译被 CSP 拦掉 */
+  function parseChangelog(text) {
+    var blocks = [], cur = null;
+    String(text || "").split(/\r?\n/).forEach(function (line) {
+      var t = line.trim();
+      if (!t) { cur = null; return; }
+      if (/^###\s+/.test(t)) blocks.push({ type: "h3", text: t.replace(/^###\s+/, "") });
+      else if (/^##\s+/.test(t)) blocks.push({ type: "h2", text: t.replace(/^##\s+/, "") });
+      else if (/^#\s+/.test(t)) blocks.push({ type: "h2", text: t.replace(/^#\s+/, "") });
+      else if (/^[-*]\s+/.test(t)) {
+        var item = t.replace(/^[-*]\s+/, "");
+        if (!cur || cur.type !== "ul") { cur = { type: "ul", items: [] }; blocks.push(cur); }
+        cur.items.push(item);
+      } else { blocks.push({ type: "p", text: t }); cur = null; }
+    });
+    return blocks;
+  }
+  function renderChangelog() {
+    var box = document.getElementById("changelog-body");
+    if (!box || box.getAttribute("data-vue") === "1") return;
+    if (!window.Vue) { box.textContent = "Vue 运行时没加载"; return; }
+    fetch("api/changelog", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.ok) { box.textContent = "读不到更新日志"; return; }
+        var blocks = parseChangelog(j.data.text);
+        var Vue = window.Vue, h = Vue.h;
+        Vue.createApp({
+          data: function () { return { blocks: blocks, version: j.data.version || "" }; },
+          render: function () {
+            var self = this;
+            return h("div", { class: "cl-list" }, self.blocks.map(function (b) {
+              if (b.type === "h2") return h("h3", null, b.text);
+              if (b.type === "h3") return h("h4", null, b.text);
+              if (b.type === "ul") return h("ul", null, b.items.map(function (li) { return h("li", null, li); }));
+              return h("p", null, b.text);
+            }));
+          }
+        }).mount(box);
+        box.setAttribute("data-vue", "1");
+      })
+      .catch(function () { box.textContent = "读不到更新日志"; });
+  }
+
+  /* 页脚：版本 / 技术栈 / 开发日期 / 实时统计。数字全来自 /api/dev，不写死 */
+  function initDevFoot() {
+    var el = document.getElementById("dev-foot");
+    if (!el) return;
+    function upTxt(sec) {
+      sec = Number(sec) || 0;
+      if (sec < 60) return sec + " 秒";
+      if (sec < 3600) return Math.floor(sec / 60) + " 分钟";
+      if (sec < 86400) return Math.floor(sec / 3600) + " 小时";
+      return Math.floor(sec / 86400) + " 天";
+    }
+    function paint(j) {
+      var d = j && j.data;
+      if (!d) return;
+      var c = d.counts || {};
+      el.innerHTML = [
+        "SEEDPOD v" + escapeHtml(d.version || "—"),
+        "开发 " + escapeHtml(d.devDate || "—"),
+        "前端 " + escapeHtml((d.stack && d.stack.front) || "—"),
+        "后端 " + escapeHtml((d.stack && d.stack.back) || "—"),
+        "页面 " + (c.pages || 0) + " · 接口 " + (c.endpoints || 0),
+        "站点 " + (c.sites || 0) + " · 预设 " + (c.presets || 0) + " · 词条 " + (c.catalog || 0) +
+          " · 待审 " + (c.queue || 0) + " · 下载器 " + (c.downloaders || 0),
+        "已运行 " + upTxt(d.uptime)
+      ].map(function (t) { return "<span>" + t + "</span>"; }).join("");
+    }
+    function load() {
+      if (!window.fetch || !/^https?:$/.test(location.protocol)) {
+        el.innerHTML = "<span>本地预览 · 没有后端，统计不可用</span>";
+        return;
+      }
+      fetch("api/dev", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { if (j && j.ok) paint(j); }).catch(function () {});
+    }
+    load();
+    setInterval(load, 60000);
+  }
+
   function boot() {
     initChrome();
     initNav();
@@ -4176,6 +4693,7 @@
     initRouter();
     renderDashboard();
     initRuntime();
+    initDevFoot();
     if (typeof loadSitesFromApi === "function") loadSitesFromApi();
     /* 停在总览页时每 30 秒刷一次真实状态，别让数字一直停在进页面那一刻 */
     setInterval(function () {

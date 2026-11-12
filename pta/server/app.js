@@ -14,6 +14,8 @@ const TOKEN = process.env.PTA_TOKEN || '';
 const PTA_USER = process.env.PTA_USER || '';
 const PTA_PASS = process.env.PTA_PASS || '';
 const VERSION = require('../../package.json').version;
+/* 每次交付手动改这一行：页脚与开发说明都用它，避免「这是哪一版」说不清 */
+const DEV_DATE = '2026-11-12';
 const adapters = require('./adapters');
 const nexusphp = adapters.nexusphp;
 const secretbox = require('./secretbox');
@@ -21,12 +23,29 @@ const match = require('./match');
 const catalog = require('./catalog');
 const KEYRING = secretbox.loadKey(DATA_DIR);
 const STARTED = Date.now();
+/* 页脚那两个数不手填：页面数从 index.html 的 data-view 数，接口数从本文件的路由表数 */
+const PAGE_COUNT = (function () {
+  try {
+    const html = fs.readFileSync(path.join(WEB_DIR, 'index.html'), 'utf8');
+    return (html.match(/data-view="/g) || []).length;
+  } catch (e) { return 0; }
+})();
+const ENDPOINT_COUNT = (function () {
+  try {
+    const src = fs.readFileSync(__filename, 'utf8');
+    const set = {};
+    const re = /p (?:===|\.startsWith\()\s*'(\/api\/[^']*)'/g;
+    let m;
+    while ((m = re.exec(src))) set[m[1]] = 1;
+    return Object.keys(set).length;
+  } catch (e) { return 0; }
+})();
 
 const LIMITS = {
-  test: { interval: [30, 120], dailySite: [1, 300], dailyAll: [50, 2000] },
-  prod: { interval: [8, 120], dailySite: [1, 300], dailyAll: [50, 2000] }
+  test: { interval: [30, 120], dailySite: [1, 300], dailyAll: [50, 2000], breaker: [1, 10] },
+  prod: { interval: [8, 120], dailySite: [1, 300], dailyAll: [50, 2000], breaker: [1, 10] }
 };
-const DEFAULTS = { runMode: 'test', interval: 60, dailySite: 20, dailyAll: 100 };
+const DEFAULTS = { runMode: 'test', interval: 60, dailySite: 20, dailyAll: 100, breaker: 3, autoDupe: false };
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const CFG_FILE = path.join(DATA_DIR, 'config.json');
@@ -506,6 +525,95 @@ async function crawlOnceInner(host, opts) {
   };
 }
 
+/* ---------- 向目标站查重：拿词条标题去目标站搜一次，判断站里是不是已有这张原盘 ---------- */
+/* 判定沿用旧油猴脚本的规则：
+   - 只认「原盘」条目：标题带 UHD／Blu-ray／BDMV／原盘，且不是 Remux／Encode／WEB／HDTV
+   - 分辨率档要一致（4K 对 4K，1080p 对 1080p）
+   - 体积差 ≤2.5GB 或 ≤5% 才算同一条
+   - 命中的全是 DIY 版 → 记「仅有 DIY」，可发但要复核 */
+const DUPE_DISC_RE = /(?:UHD|Blu-?Ray|BluRay|BDMV|Full\s*Disc|原盘|ISO\b)/i;
+const DUPE_SKIP_RE = /(?:Remux|Encode|WEB-?DL|WEBRip|HDTV|DVDRip|x264|x265|H\.?264|H\.?265|AVC|HEVC)/i;
+const DUPE_DIY_RE = /\bDIY\b/i;
+const DUPE_4K_RE = /(?:2160p|\b4K\b|\bUHD\b)/i;
+
+function dupeKeyword(title) {
+  let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const cut = s.search(/\b(?:1080p|2160p|1080i|720p|576p|480p|UHD|Blu-?Ray|REMUX|WEB-?DL|WEBRip|HDTV|AVC|HEVC|x264|x265|DTS|TrueHD|LPCM|Atmos)\b/i);
+  if (cut > 0) s = s.slice(0, cut).trim();
+  return s.split(/\s+/).slice(0, 8).join(' ');
+}
+function dupeClassify(sourceTitle, sourceSizeGB, rows) {
+  const src4k = DUPE_4K_RE.test(sourceTitle);
+  let diy = null;
+  for (const r of rows || []) {
+    const t = String(r.title || '');
+    if (!t) continue;
+    if (!DUPE_DISC_RE.test(t)) continue;
+    if (DUPE_SKIP_RE.test(t)) continue;
+    if (DUPE_4K_RE.test(t) !== src4k) continue;
+    const candGB = Number(r.sizeBytes) ? Number(r.sizeBytes) / 1073741824 : 0;
+    const sizeOk = !(sourceSizeGB > 0 && candGB > 0) ||
+      Math.abs(candGB - sourceSizeGB) <= 2.5 || Math.abs(candGB - sourceSizeGB) / sourceSizeGB <= 0.05;
+    if (!sizeOk) continue;
+    if (DUPE_DIY_RE.test(t)) { if (!diy) diy = r; continue; }
+    return { status: 'dupe', row: r };
+  }
+  if (diy) return { status: 'diy', row: diy };
+  return { status: 'clean', row: null };
+}
+async function dupeCheckItems(host, ids, limit) {
+  const all = readCreds();
+  const c = all[host];
+  if (!c || !c.cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie，查不了' } };
+  const cookie = decryptField(c.cookie);
+  if (!cookie) return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } };
+  const def = readSiteDef(host);
+  if (!def || !def.base) return { err: { code: 'NO_DEF', message: '这个站没有站点定义，拼不出搜索地址' } };
+  const engine = def.engine || '';
+  const cfg = readConfig();
+  const gap = Math.max(8, Math.min(Number(cfg.interval) || 30, 20)) * 1000;
+  const pool = catalogStore.list({ status: 'new', limit: 5000 }).items;
+  const want = ids && ids.length ? pool.filter(function (x) { return ids.indexOf(x.id) >= 0; })
+    : pool.filter(function (x) { return x.dupe !== 'dupe'; });
+  const n = Math.max(1, Math.min(10, Number(limit) || 3));
+  const picked = want.slice(0, n);
+  const out = [];
+  for (let i = 0; i < picked.length; i++) {
+    const it = picked[i];
+    const kw = dupeKeyword(it.title);
+    const url = adapters.buildSearchUrl(def, kw, null);
+    let rec = { id: it.id, title: it.title, keyword: kw, url: url, status: 'error', rows: 0 };
+    try {
+      const t0 = Date.now();
+      const res = await fetch(url, {
+        headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        redirect: 'manual', signal: AbortSignal.timeout(15000)
+      });
+      const html = await res.text().catch(function () { return ''; });
+      const rows = res.status === 200 ? adapters.parseList(html, engine) : [];
+      const sizeGB = Number(it.sizeBytes) ? Number(it.sizeBytes) / 1073741824 : 0;
+      const verdict = dupeClassify(it.title, sizeGB, rows);
+      rec.status = verdict.status;
+      rec.rows = rows.length;
+      rec.ms = Date.now() - t0;
+      rec.matched = verdict.row ? String(verdict.row.title || '').slice(0, 160) : '';
+      rec.matchedGB = verdict.row && verdict.row.sizeBytes ? Math.round(Number(verdict.row.sizeBytes) / 107374182.4) / 10 : 0;
+      catalogStore.update(it.id, {
+        dupe: verdict.status, dupeUrl: url, dupeAt: new Date().toISOString(),
+        dupeTitle: rec.matched, dupeSizeGB: rec.matchedGB, dupeTarget: host
+      });
+    } catch (e) {
+      rec.error = String(e && e.message || e).slice(0, 80);
+      catalogStore.update(it.id, { dupe: 'error', dupeAt: new Date().toISOString(), dupeTarget: host });
+    }
+    logEvent(rec.status === 'dupe' ? 'warn' : 'info', '查重',
+      host + ' · ' + String(it.title).slice(0, 50) + ' · ' + rec.status + (rec.matched ? ' · ' + rec.matched.slice(0, 40) : ''));
+    out.push(rec);
+    if (i < picked.length - 1) await new Promise(function (r) { setTimeout(r, gap); });
+  }
+  return { host: host, engine: engine, checked: out.length, results: out, byStatus: out.reduce(function (a, x) { a[x.status] = (a[x.status] || 0) + 1; return a; }, {}) };
+}
+
 /* ---------- 第二步筛选：从词条库挑出可发的，送进待审核 ---------- */
 /* 筛选参数优先用请求里的，其次用面板「筛选条件」那一组配置。
    flow 里只存了每行的 {v,on,sel}，没有标题，所以按 data.js 里的行顺序取：
@@ -869,8 +977,13 @@ function publicDl(d) {
     lastProbe: d.lastProbe || null };
 }
 function normDlUrl(raw) {
-  const s = String(raw || '').trim().replace(/\/+$/, '');
-  if (!/^https?:\/\/[^\s]+$/i.test(s)) return null;
+  let s = String(raw || '').trim();
+  if (!s) return null;
+  /* 只填 host:port 也认，统一补成 http:// */
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) s = 'http://' + s;
+  s = s.replace(/\/+$/, '');
+  if (!/^https?:\/\/[^\s/@]+/i.test(s)) return null;
+  if (/\s/.test(s) || s.indexOf('@') >= 0) return null;
   return s;
 }
 function sanitizeDl(body, prev) {
@@ -886,9 +999,22 @@ function sanitizeDl(body, prev) {
     out.url = u;
   }
   if (body.user !== undefined) out.user = String(body.user).slice(0, 100);
-  if (body.pass !== undefined) out.pass = body.pass ? String(body.pass).slice(0, 200) : '';
+  if (body.pass !== undefined) {
+    /* 密码只存密文，和站点 cookie 用同一套 AES-256-GCM；空串表示清掉 */
+    out.pass = body.pass ? secretbox.encrypt(String(body.pass).slice(0, 200), KEYRING.key) : '';
+  }
   if (body.disableAuth !== undefined) out.disableAuth = !!body.disableAuth;
   return { dl: out };
+}
+
+/* 老数据里可能是明文密码，读到明文就原样用，下次保存自然换成密文 */
+function dlPass(d) {
+  const v = String((d && d.pass) || '');
+  if (!v) return '';
+  if (v.slice(0, 3) === 'v1:') {
+    try { return secretbox.decrypt(v, KEYRING.key); } catch (e) { return ''; }
+  }
+  return v;
 }
 
 async function probeDownloader(d) {
@@ -912,22 +1038,24 @@ async function probeDownloader(d) {
       const t0 = Date.now();
       const login = await fetch(base + '/api/v2/auth/login', {
         method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded', referer: base },
-        body: 'username=' + encodeURIComponent(d.user || '') + '&password=' + encodeURIComponent(d.pass || ''),
+        headers: { 'content-type': 'application/x-www-form-urlencoded', referer: base, origin: base },
+        body: 'username=' + encodeURIComponent(d.user || '') + '&password=' + encodeURIComponent(dlPass(d)),
         redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT)
       });
       const setCookie = login.headers.get('set-cookie') || '';
-      const m = /SID=([^;]+)/.exec(setCookie);
-      if (m) cookie.value = 'SID=' + m[1];
+      /* qBittorrent 4.x 用 SID，5.x 改成 QBT_SID_<端口>，而且 5.x 成功时返回 204 无正文 */
+      const m = /((?:QBT_)?SID[^=;\s]*)=([^;]+)/i.exec(setCookie);
+      if (m) cookie.value = m[1] + '=' + m[2];
       const text = await login.text().catch(function () { return ''; });
-      steps.push({ step: 'login', status: login.status, ms: ms(t0), ok: /ok/i.test(text) });
+      const okLogin = !!m && (login.status === 200 || login.status === 204 || login.status === 303) && !/fails/i.test(text);
+      steps.push({ step: 'login', status: login.status, ms: ms(t0), ok: okLogin });
       r = await hit('/api/v2/app/version');
       steps.push({ step: 'version', status: r.res.status, ms: r.ms });
     }
     const version = (await r.res.text().catch(function () { return ''; })).trim().slice(0, 40);
     const pass = r.res.status === 200 && !!version;
     /* 顺手问一下磁盘余量：qBittorrent 在 sync/maindata 的 server_state 里给 */
-    let freeSpace = 0, savePath = '';
+    let freeSpace = 0, savePath = '', totalSpace = 0;
     if (pass) {
       try {
         const t1 = Date.now();
@@ -940,11 +1068,73 @@ async function probeDownloader(d) {
       } catch (e) {
         steps.push({ step: 'space', status: 0, ms: 0, error: '拿不到磁盘余量：' + String(e && e.message || e).slice(0, 80) });
       }
+      /* qB 只给剩余空间，不给总量；远端下载器更没法知道它的盘有多大。
+         所以只回 qB 上报的真实剩余，总量留空，页面不画百分比进度条，也不拿本机盘去顶。 */
     }
-    return { pass: pass, version: pass ? version : '', freeSpace: freeSpace, savePath: savePath, steps: steps };
+    return { pass: pass, version: pass ? version : '', freeSpace: freeSpace, totalSpace: totalSpace, savePath: savePath, steps: steps };
   } catch (e) {
     steps.push({ step: 'connect', status: 0, ms: 0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e && e.message || e).slice(0, 160) });
-    return { pass: false, version: '', steps: steps };
+    return { pass: false, version: '', freeSpace: 0, totalSpace: 0, steps: steps };
+  }
+}
+
+/* qBittorrent 的 cookie 会话：401/403 时用账号登一次再重试 */
+async function qbLoginCookie(d) {
+  try {
+    const res = await fetch(d.url + '/api/v2/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', referer: d.url, origin: d.url },
+      body: 'username=' + encodeURIComponent(d.user || '') + '&password=' + encodeURIComponent(dlPass(d)),
+      redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT)
+    });
+    const sc = res.headers.get('set-cookie') || '';
+    const m = /((?:QBT_)?SID[^=;\s]*)=([^;]+)/i.exec(sc);
+    const txt = await res.text().catch(function () { return ''; });
+    if (/fails/i.test(txt)) return '';
+    /* 4.x 回 200 "Ok."，5.x 回 204 且正文为空，认 cookie 更稳 */
+    return m && (res.status === 200 || res.status === 204 || res.status === 303) ? m[1] + '=' + m[2] : '';
+  } catch (e) {
+    return '';
+  }
+}
+async function qbGet(d, path, cookie) {
+  const opt = { redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT), headers: cookie ? { cookie: cookie } : {} };
+  let res = await fetch(d.url + path, opt);
+  let ck = cookie;
+  if (res.status === 401 || res.status === 403) {
+    const got = await qbLoginCookie(d);
+    if (got) {
+      ck = got;
+      res = await fetch(d.url + path, { redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT), headers: { cookie: ck } });
+    }
+  }
+  return { res: res, cookie: ck };
+}
+
+/* 分类只认下载器里真实存在的那些，数量按种子归到分类上 */
+async function qbCategories(d) {
+  try {
+    const c = await qbGet(d, '/api/v2/torrents/categories', '');
+    if (c.res.status !== 200) {
+      return { pass: false, error: c.res.status === 403 ? 'qB 拒绝访问（IP 可能没在白名单或账号不对）' : 'qB 返回 ' + c.res.status };
+    }
+    const obj = await c.res.json().catch(function () { return null; });
+    const counts = {};
+    const info = await qbGet(d, '/api/v2/torrents/info', c.cookie);
+    if (info.res.status === 200) {
+      const list = await info.res.json().catch(function () { return []; });
+      (Array.isArray(list) ? list : []).forEach(function (t) {
+        const k = String((t && t.category) || '');
+        counts[k] = (counts[k] || 0) + 1;
+      });
+    }
+    const cats = Object.keys(obj || {}).map(function (k) {
+      const v = obj[k] || {};
+      return { name: String(v.name || k).slice(0, 60), savePath: String(v.savePath || '').slice(0, 200), count: counts[k] || 0 };
+    });
+    return { pass: true, cats: cats };
+  } catch (e) {
+    return { pass: false, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e && e.message || e).slice(0, 160) };
   }
 }
 
@@ -1267,7 +1457,7 @@ function validate(cfg, patch) {
   const mode = patch.runMode || cfg.runMode;
   if (!LIMITS[mode]) return { code: 'BAD_REQUEST', message: 'runMode 只能是 test 或 prod' };
   const lim = LIMITS[mode];
-  for (const key of ['interval', 'dailySite', 'dailyAll']) {
+  for (const key of ['interval', 'dailySite', 'dailyAll', 'breaker']) {
     if (patch[key] === undefined) continue;
     const n = Number(patch[key]);
     if (!Number.isInteger(n)) return { code: 'BAD_REQUEST', message: key + ' 必须是整数' };
@@ -1387,6 +1577,33 @@ const server = http.createServer(async (req, res) => {
       db: 'file', loginFail: 0, nodesOnline: 0, nodesTotal: 0
     } });
   }
+  /* 更新日志：直接读仓库根的 CHANGELOG.md，开发版页面展示用 */
+  if (p === '/api/changelog') {
+    let text = '';
+    try { text = fs.readFileSync(path.join(__dirname, '..', '..', 'CHANGELOG.md'), 'utf8').slice(0, 40000); } catch (e) {}
+    return send(res, 200, { ok: true, data: { text: text, version: VERSION } });
+  }
+  /* 页脚 / 开发说明：全是实时数，不写死；页面数、接口数从代码里数出来 */
+  if (p === '/api/dev') {
+    const cat = catalogStore.list({ limit: 5000 }).items;
+    const st = {};
+    cat.forEach(function (x) { st[x.status || 'new'] = (st[x.status || 'new'] || 0) + 1; });
+    return send(res, 200, { ok: true, data: {
+      version: VERSION, devDate: DEV_DATE, node: process.version,
+      startedAt: new Date(STARTED).toISOString(),
+      uptime: Math.round((Date.now() - STARTED) / 1000),
+      stack: { front: 'Vue 3 + 原生 CSS（无构建）', back: 'Node ' + process.version.split('.')[0].replace('v', '') + ' 零依赖 http' },
+      counts: {
+        sites: loadSiteList().length,
+        presets: Object.keys(readSearchPresets() || {}).length,
+        catalog: cat.length,
+        queue: readQueue().items.length,
+        downloaders: readDl().items.length,
+        pages: PAGE_COUNT, endpoints: ENDPOINT_COUNT
+      },
+      catalog: st
+    } });
+  }
 
   const authConfigured = !!(PTA_USER || TOKEN);
   if (authConfigured && p.startsWith('/api/') && p !== '/api/health' && p !== '/api/login') {
@@ -1431,7 +1648,8 @@ const server = http.createServer(async (req, res) => {
         else if (x.arch === 'OTHER') counts.other++;
         else counts.unknown++;
       });
-      return send(res, 200, { ok: true, data: { counts: counts, sites: list } });
+      /* 站点状态只看「最近一次 cookie 自检」的结论，不猜：pass=true 可用，false 失效，没记录=未自检 */
+      return send(res, 200, { ok: true, data: { counts: counts, sites: list, status: readSiteStatus() } });
     }
     if (p === '/api/credentials' && req.method === 'GET') {
       const all = readCreds();
@@ -1723,7 +1941,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/config' && req.method === 'GET') {
       return send(res, 200, { ok: true, data: { sys: {
-        concurrency: 1, minInterval: 8, retry: 3, backoff: 30, breaker: 15, audit: true
+        concurrency: 1, minInterval: 8, retry: 3, backoff: 30, breakerMinutes: 15, audit: true
       }, user: readConfig(), limits: LIMITS } });
     }
     if (p === '/api/config/user' && (req.method === 'PATCH' || req.method === 'POST')) {
@@ -1734,7 +1952,8 @@ const server = http.createServer(async (req, res) => {
       if (err) return fail(res, 400, err.code, err.message);
       const next = Object.assign({}, cfg);
       if (body.runMode) next.runMode = body.runMode;
-      ["interval", "dailySite", "dailyAll"].forEach(function (k) {
+      if (body.autoDupe !== undefined) next.autoDupe = !!body.autoDupe;
+      ["interval", "dailySite", "dailyAll", "breaker"].forEach(function (k) {
         if (body[k] !== undefined) next[k] = Number(body[k]);
       });
       const changes = Object.keys(next).filter(function (k) { return cfg[k] !== next[k]; })
@@ -1764,10 +1983,19 @@ const server = http.createServer(async (req, res) => {
       logEvent('info', '下载器', '新增下载器 · ' + (item.name || item.url));
       return send(res, 200, { ok: true, data: publicDl(item) });
     }
+    if (p === '/api/downloaders/probe' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const u = normDlUrl(body.url || '');
+      if (!u) return fail(res, 400, 'BAD_URL', '地址要填成 http://主机:端口');
+      const r = await probeDownloader({ url: u, user: body.user, pass: body.pass });
+      return send(res, 200, { ok: true, data: r });
+    }
     if (p.startsWith('/api/downloaders/')) {
       const rest = p.slice('/api/downloaders/'.length).replace(/\/+$/, '');
       const test = /\/test$/.test(rest);
-      const id = decodeURIComponent(test ? rest.replace(/\/test$/, '') : rest);
+      const catsReq = /\/cats$/.test(rest);
+      const id = decodeURIComponent(test ? rest.replace(/\/test$/, '') : catsReq ? rest.replace(/\/cats$/, '') : rest);
       const store = readDl();
       const idx = store.items.findIndex(function (x) { return x.id === id; });
       if (idx < 0) return fail(res, 404, 'NOT_FOUND', '下载器不存在');
@@ -1777,11 +2005,18 @@ const server = http.createServer(async (req, res) => {
         /* 探测结果落盘：磁盘余量这类实时数据下次打开面板就能显示，不用再探一次 */
         store.items[idx].lastProbe = {
           at: new Date().toISOString(), pass: !!r.pass, version: r.version || '',
-          freeSpace: Number(r.freeSpace) || 0, savePath: r.savePath || ''
+          freeSpace: Number(r.freeSpace) || 0, totalSpace: Number(r.totalSpace) || 0, savePath: r.savePath || ''
         };
         try { writeDl(store); } catch (e) {}
         logEvent(r.pass ? 'info' : 'warn', '下载器', '连通性探测 · ' + (store.items[idx].name || store.items[idx].url) + ' · ' + (r.pass ? '通过 ' + r.version : '失败'));
         return send(res, 200, { ok: true, data: r });
+      }
+      if (catsReq) {
+        if (req.method !== 'GET') return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET');
+        const c = await qbCategories(store.items[idx]);
+        if (!c.pass) return fail(res, 502, 'QB_CATS_FAILED', c.error || '读不到下载器里的分类');
+        logEvent('info', '下载器', '读分类 · ' + (store.items[idx].name || store.items[idx].url) + ' · ' + c.cats.length + ' 个');
+        return send(res, 200, { ok: true, data: { cats: c.cats } });
       }
       if (req.method === 'PUT' || req.method === 'POST') {
         const body = await readBody(req);
@@ -1914,6 +2149,16 @@ const server = http.createServer(async (req, res) => {
       const out = screenCatalog(body || {});
       return send(res, 200, { ok: true, data: out });
     }
+    if (p === '/api/dupe/check' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (!body) return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON');
+      const host = String(body.host || '').trim().toLowerCase();
+      if (badHost(host)) return fail(res, 400, 'BAD_HOST', '目标站域名不合法');
+      const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+      const out = await dupeCheckItems(host, ids, body.limit);
+      if (out.err) return fail(res, out.err.code === 'NO_COOKIE' ? 409 : 400, out.err.code, out.err.message);
+      return send(res, 200, { ok: true, data: out });
+    }
     if (p === '/api/catalog/check' && req.method === 'POST') {
       const body = await readBody(req);
       return send(res, 200, { ok: true, data: checkCatalog(body || {}) });
@@ -1968,17 +2213,26 @@ const server = http.createServer(async (req, res) => {
       return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 POST /status 或 DELETE');
     }
     if (p === '/api/queue' && req.method === 'GET') {
-      const status = u.searchParams.get('status') || '';
-      const limit = Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500);
+      const statuses = String(u.searchParams.get('status') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+      const qq = String(u.searchParams.get('q') || '').trim().toLowerCase();
+      const limit = Math.max(1, Math.min(Number(u.searchParams.get('limit') || 100) || 100, 500));
+      const offset = Math.max(0, Number(u.searchParams.get('offset') || 0) || 0);
       const q = readQueue();
-      const items = q.items.filter(function (x) { return !status || x.status === status; }).slice(0, limit)
-        .map(function (x) {
-          const c = Object.assign({}, x);
-          c.shotsCount = (x.shots || []).length;
-          delete c.shots;                 /* 截图 base64 很大，列表里只要数量，详情接口再取 */
-          return c;
-        });
-      return send(res, 200, { ok: true, data: { items: items, counts: queueCounts(q.items) } });
+      const matched = q.items.filter(function (x) {
+        if (statuses.length && statuses.indexOf(x.status) < 0) return false;
+        if (!qq) return true;
+        return ((x.title || '') + ' ' + (x.cn || '') + ' ' + (x.site || '')).toLowerCase().indexOf(qq) >= 0;
+      });
+      const items = matched.slice(offset, offset + limit).map(function (x) {
+        const c = Object.assign({}, x);
+        c.shotsCount = (x.shots || []).length;
+        delete c.shots;                 /* 截图 base64 很大，列表里只要数量，详情接口再取 */
+        return c;
+      });
+      return send(res, 200, { ok: true, data: {
+        items: items, counts: queueCounts(q.items),
+        total: q.items.length, matched: matched.length, offset: offset, limit: limit
+      } });
     }
     if (p === '/api/queue' && req.method === 'POST') {
       const body = await readBody(req);
@@ -2116,6 +2370,18 @@ const server = http.createServer(async (req, res) => {
 });
 
 LOG_RING.push.apply(LOG_RING, loadRecentLogs(200));
+/* 老版本的下载器密码是明文，启动时统一换成密文，和站点 cookie 用同一套密钥 */
+try {
+  const st = readDl();
+  let enc = 0;
+  st.items.forEach(function (it) {
+    if (it.pass && String(it.pass).slice(0, 3) !== 'v1:') {
+      it.pass = secretbox.encrypt(String(it.pass), KEYRING.key);
+      enc++;
+    }
+  });
+  if (enc) { writeDl(st); logEvent('info', '下载器', '密码改为密文存储 · ' + enc + ' 条'); }
+} catch (e) {}
 logEvent('info', '服务', '服务启动 v' + VERSION + ' · 端口 ' + PORT + ' · 数据目录 ' + DATA_DIR);
 try {
   const q = readQueue();

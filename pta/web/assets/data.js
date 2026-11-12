@@ -81,198 +81,6 @@
           "hint": "按站点优惠状态筛，BHD 这类站点没有免费选项时会自动跳过"
         }
       ]
-    },
-    {
-      "name": "抓取标记",
-      "sum": "抓回来先打标记，不在这里过滤",
-      "rows": [
-        {
-          "t": "非电影跳过",
-          "type": "custom",
-          "hint": "剧集、综艺、动漫、音乐都算非电影",
-          "chips": [
-            "跳过",
-            "保留"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "非纯原盘跳过",
-          "type": "custom",
-          "hint": "标题里没有原盘特征、或者带 Remux/编码的，一律跳",
-          "chips": [
-            "跳过",
-            "保留"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "DIY 跳过",
-          "type": "custom",
-          "hint": "只打标记，是否跳过交给第二步筛选",
-          "chips": [
-            "跳过",
-            "只打标"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "禁转跳过",
-          "type": "custom",
-          "hint": "只打标记，是否跳过交给第二步筛选",
-          "chips": [
-            "跳过",
-            "只打标"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "独占跳过",
-          "type": "custom",
-          "hint": "只打标记，是否跳过交给第二步筛选",
-          "chips": [
-            "跳过",
-            "只打标"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "限转未满 7 天跳过",
-          "type": "custom",
-          "hint": "满 7 天的限转放行，并在行上标出来",
-          "chips": [
-            "跳过",
-            "放行"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "仅 DIY 时标可发",
-          "type": "custom",
-          "hint": "B 站只有 DIY 版时，可以发纯原盘，标「复核」",
-          "chips": [
-            "标可发",
-            "不标"
-          ],
-          "sel": [],
-          "single": true
-        },
-        {
-          "t": "排除关键词",
-          "type": "text",
-          "v": "DVDRip, 枪版, TS",
-          "hint": "标题命中直接跳"
-        },
-        {
-          "t": "白名单关键词",
-          "type": "text",
-          "v": "",
-          "ph": "只收含这些词的（留空不限）",
-          "hint": "只打标记，是否跳过交给第二步筛选"
-        }
-      ]
-    },
-    {
-      "name": "拉取",
-      "sum": "逐页翻 · 断点续抓",
-      "rows": [
-        {
-          "t": "请求间隔",
-          "type": "fixed",
-          "v": "跟随设置",
-          "noTag": true,
-          "hint": "只可在「设置 › 抓取节奏」里调，区间 8–120 秒"
-        },
-        {
-          "t": "并发",
-          "type": "fixed",
-          "v": "1",
-          "hint": "固定单线程，程序写死"
-        },
-        {
-          "t": "每轮最多翻页",
-          "type": "num",
-          "k": "maxPage",
-          "range": [
-            1,
-            20
-          ],
-          "ph": "1–20"
-        },
-        {
-          "t": "抓取方式",
-          "type": "select",
-          "v": "增量（只抓新页）",
-          "opts": [
-            "增量（只抓新页）",
-            "全量（扫全部页）",
-            "增量 + 定期全量"
-          ]
-        },
-        {
-          "t": "断点续抓",
-          "type": "switch",
-          "on": true,
-          "hint": "记到第几页、哪些种子已处理，停了下轮接着来"
-        },
-        {
-          "t": "抓详情页",
-          "type": "switch",
-          "on": true,
-          "hint": "BDInfo、截图、简介都要进详情页"
-        },
-        {
-          "t": "失败重试",
-          "type": "fixed",
-          "v": "3 次 · 退避 30 秒起"
-        },
-        {
-          "t": "连续失败自动停",
-          "type": "fixed",
-          "v": "5 次"
-        },
-        {
-          "t": "单站每日最多抓",
-          "type": "fixed",
-          "v": "跟随设置",
-          "noTag": true,
-          "hint": "程序按站规再压一次，最多到站规的 1/3"
-        },
-        {
-          "t": "全站每日最多抓",
-          "type": "fixed",
-          "v": "跟随设置",
-          "noTag": true
-        }
-      ]
-    },
-    {
-      "name": "站点分类映射",
-      "sum": "各站分类 → 库内分类",
-      "rows": [
-        {
-          "t": "站点分类",
-          "type": "button",
-          "v": "配置映射",
-          "hint": "把每个站自己的分类（如 Movies/Blu-ray）对到库内类型"
-        },
-        {
-          "t": "映射不到时",
-          "type": "select",
-          "v": "按标题猜",
-          "opts": [
-            "按标题猜",
-            "跳过不抓",
-            "落到其他"
-          ]
-        }
-      ]
     }
   ],
   "dedupe": [
@@ -367,13 +175,42 @@
             "转待确认",
             "直接跳过"
           ]
+        },
+        {
+          "t": "排除匹配",
+          "type": "custom",
+          "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
+          "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
+        },
+        {
+          "t": "白名单匹配",
+          "type": "custom",
+          "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
+          "hint": "和排除同时命中时，排除优先"
+        },
+        {
+          "t": "测试匹配",
+          "type": "custom",
+          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
         }
       ]
     },
     {
-      "name": "已有与归档",
-      "sum": "已有 / 已发 / 跳过 的标记方式",
+      "name": "词条数据",
+      "sum": "查重结论有效期与归档",
       "rows": [
+        {
+          "t": "查重有效期",
+          "type": "select",
+          "v": "30 天",
+          "opts": [
+            "7 天",
+            "15 天",
+            "30 天",
+            "90 天"
+          ],
+          "hint": "超过这个天数就当作没查过，需要重查"
+        },
         {
           "t": "查本地词库",
           "type": "switch",
@@ -489,18 +326,6 @@
           "hint": "只读这段文本，不改任何字段"
         },
         {
-          "t": "排除匹配",
-          "type": "custom",
-          "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
-          "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
-        },
-        {
-          "t": "白名单匹配",
-          "type": "custom",
-          "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
-          "hint": "和排除同时命中时，排除优先"
-        },
-        {
           "t": "写错时",
           "type": "select",
           "v": "",
@@ -509,11 +334,6 @@
             "整条跳过等人工"
           ],
           "hint": "语法错、超时、超长都走这条"
-        },
-        {
-          "t": "测试匹配",
-          "type": "custom",
-          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
         },
         {
           "t": "发布标题",

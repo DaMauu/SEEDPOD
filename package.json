@@ -1,6 +1,6 @@
 {
   "name": "seedpods-panel",
-  "version": "0.4.0",
+  "version": "0.5.5",
   "private": true,
   "description": "PT 原盘转载面板：抓取、查重、准备、发布",
   "engines": {

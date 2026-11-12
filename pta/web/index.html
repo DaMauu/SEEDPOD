@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
-<link rel="stylesheet" href="assets/app.css?v=20261119j">
+<link rel="stylesheet" href="assets/app.css?v=20261112v">
 </head>
 <body data-page="dashboard">
 <div class="layout">
@@ -92,10 +92,10 @@
             <option value="?">未确认</option>
           </select>
           <select class="select slim" id="site-login">
-            <option value="all">全部登录</option>
-            <option value="ok">登录正常</option>
-            <option value="fail">登录失效</option>
-            <option value="none">未登录</option>
+            <option value="all">全部状态</option>
+            <option value="ok">可用</option>
+            <option value="fail">失效</option>
+            <option value="none">未自检</option>
           </select>
           <select class="select slim" id="site-preset">
             <option value="all">全部预设</option>
@@ -110,6 +110,7 @@
             <option value="never">还没抓过</option>
           </select>
           <button class="btn ghost slim" id="bulk-open" disabled>批量设置</button>
+          <button class="btn ghost slim" id="site-selfcheck" title="对有 cookie 的站点逐个跑一次会话自检；只发一次 GET，不抓列表">自检有 cookie 的站</button>
           <button class="btn primary slim" data-act="new-site">添加站点</button>
         </div>
 
@@ -174,6 +175,11 @@
       <div class="queue-split">
         <aside class="queue-list">
           <div class="queue-items" id="queue-items"></div>
+          <div class="queue-page">
+            <button class="btn ghost slim" type="button" id="queue-prev" disabled>上一页</button>
+            <span class="t-sub" id="queue-page-info">第 1 / 1 页</span>
+            <button class="btn ghost slim" type="button" id="queue-next" disabled>下一页</button>
+          </div>
         </aside>
         <div class="queue-detail" id="queue-detail"></div>
       </div>
@@ -204,7 +210,11 @@
             <option value="limitedDays">未满 7 天</option>
             <option value="existing">已有（重复）</option>
           </select>
+          <select class="select slim" id="dl-target" title="向这个目标站查：站里是不是已经有这张原盘">
+            <option value="">选目标站</option>
+          </select>
           <div class="spacer"></div>
+          <button class="btn slim" id="dl-dupe" title="用词条标题去目标站搜一次，判定 可发／仅DIY可发／已有原盘">向目标站查重</button>
           <button class="btn slim" id="dl-check">查重</button>
           <button class="btn slim" id="dl-screen">按条件送审</button>
           <button class="btn ghost slim" id="dl-archive">归档已跳过/已有</button>
@@ -242,10 +252,22 @@
       </div>
     </section>
 
+    <!-- ===== 更新日志（开发版可见） ===== -->
+    <section class="view" data-view="changelog" hidden>
+      <div class="changelog-wrap">
+        <div class="changelog-body" id="changelog-body"></div>
+      </div>
+    </section>
+
     <!-- ===== 设置 ===== -->
     <section class="view" data-view="settings" hidden>
       <div class="set-panel" id="set-panel"></div>
     </section>
+
+    <!-- 开发说明：版本、技术栈、开发日期、实时统计，所有页面共用一行 -->
+    <footer class="dev-foot" id="dev-foot">
+      <span>加载中…</span>
+    </footer>
   </main>
 </div>
 
@@ -317,9 +339,8 @@
 <div class="modal-mask" id="node-modal" hidden>
   <div class="modal">
     <div class="modal-head"><h2 id="node-modal-title">下载器设置</h2></div>
-    <label class="field"><span>名称</span><input class="input" id="nd-name" placeholder="下载节点 F"></label>
-    <label class="field"><span>地址</span><input class="input" id="nd-host" placeholder="192.0.2.15"></label>
-    <label class="field"><span>qB Web API</span><input class="input" id="nd-qb" placeholder="http://192.0.2.15:8080"></label>
+    <label class="field"><span>名称</span><input class="input" id="nd-name" placeholder="留空就用地址"></label>
+    <label class="field"><span>地址</span><input class="input" id="nd-host" placeholder="http://主机:端口，qB 的 Web 地址就是它的 API 地址"></label>
     <div class="modal-two">
       <label class="field"><span>qB 用户名</span><input class="input" id="nd-user" placeholder="admin"></label>
       <label class="field"><span>qB 密码</span><input class="input" type="password" id="nd-pass" placeholder="留空表示不设置" autocomplete="new-password"></label>
@@ -375,7 +396,8 @@
 </div>
 <div id="dock-root"></div>
 <script src="assets/sites-data.js"></script>
-<script src="assets/data.js?v=20261119j"></script>
-<script src="assets/app.js?v=20261119j"></script>
+<script src="assets/data.js?v=20261112v"></script>
+<script src="assets/vue.global.prod.js"></script>
+<script src="assets/app.js?v=20261112v"></script>
 </body>
 </html>
