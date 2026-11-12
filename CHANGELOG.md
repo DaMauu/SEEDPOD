@@ -142,3 +142,8 @@
 
 ### 新增
 - Fastify 会话与凭据接口：/api/sites/:host/session-test（用已存 cookie 探一次并写 site-status）、/api/site-status、/api/credentials/import（批量导入，密文入库）。实测 52pt.site 自检 200 通过、导入可写。
+
+## v0.7.6 · 2026-11-13
+
+### 新增
+- Fastify 查重与抓取计划：/api/crawl/plan（只读本地配置拼搜索 URL，不发请求）、/api/dupe/check（按标题真搜一次，判定 可发/仅DIY可发/已有原盘，结果回写 SQLite）。实测 52pt 计划可出、查重一条真实请求成功。

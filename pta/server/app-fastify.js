@@ -163,6 +163,7 @@ async function build() {
   require('./routes-data')(app, ctx);
   require('./routes-qb')(app, ctx);
   require('./routes-probe')(app, ctx);
+  require('./routes-crawl')(app, ctx);
 
   return app;
 }
