@@ -108,3 +108,12 @@
 
 ### 调整
 - 站点页列表行改成 Vue 渲染：站点名、架构标签、登录状态、预设、抓取方式、上次抓取都由响应式数据驱动；抽屉仍在选中行后原位展开（Vue 负责放置，内容仍走原渲染），翻页与复选框行为不变。
+
+## v0.7.0 · 2026-11-13
+
+### 新增
+- 后端 v2 起步：Node + Fastify 5 + SQLite（node:sqlite，无编译）。新增 pta/server/db.js 数据层、scripts/migrate-json-to-sqlite.js 迁移脚本、pta/server/app-fastify.js 骨架（/api/health、/api/dev、静态文件），在 8090 端口实测通过。
+- JSON→SQLite 迁移已跑通：词条 230、下载器 2、站点配置 2、凭据 8 条入库；旧 JSON 只读保留。
+
+### 调整
+- 站点抽屉的头部、开关、页签与操作栏改由 Vue 渲染；修复抽屉重建后事件监听失效导致页签点不动的问题。
