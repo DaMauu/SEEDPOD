@@ -3489,6 +3489,65 @@
         "</div>";
     }
 
+    /* 概览页签用 vnode 渲染，结构照旧；设置页签仍暂用原字符串 */
+    function ovVNode(s) {
+      var h = window.Vue.h;
+      var cr = s.defCrawl || null;
+      var cat = s.defCatalog || null;
+      var next = s.enabled ? "手动触发（点「抓一页」）" : "已停用";
+      var lastRes = cr && cr.at ? ["已抓取", "ok"] : ["未抓取", "idle"];
+      var modeTxt = s.mode === "full" ? "全量" : s.mode === "mixed" ? "增量 + 定期全量" : "增量";
+      var recs = s.recentItems || [];
+      var loginTxt = s.login === "ok" ? "cookie 可用" : s.login === "fail" ? "cookie 失效" : "还没自检";
+      var dres = defOf(s.name);
+      var pres = presetOf(s.name);
+      var engRaw = (pres && pres.engine) || (dres && dres.engine) || "";
+      var engTxt = engRaw ? engCode(engRaw) + " · " + engRaw : "未识别";
+      var sampleTxt = dres ? (dres.rows || 0) + " 行 · " + (dres.groups || 0) + " 组分类" : "还没采样";
+      var KIND_TXT = { sample: "采样确认", shell: "引擎按页面特征确认，分类待补", arch: "按清单架构推断，还没采样" };
+      var kindTxt = !dres ? "没有定义" : (KIND_TXT[dres.kind] || (dres.engine ? "引擎已确认，分类待补" : "按清单架构推断，还没采样"));
+      function row(label, value, cls) {
+        return h("div", { class: "sd-row" }, [h("span", null, label), cls ? h("b", { class: cls }, value) : h("b", null, value)]);
+      }
+      return h("div", { class: "sd-ov" }, [
+        h("div", { class: "sd-strip" }, [
+          h("span", null, ["已收录", h("b", null, cat && cat.total ? String(cat.total) : "—")]),
+          h("span", null, ["今日", h("b", null, cr ? "+" + (cr.count || 0) : "—")]),
+          h("span", null, ["上次", h("b", null, cr && cr.at ? lastCrawlTxt(s) : "未抓取")]),
+          h("span", null, ["下次", h("b", null, next)])
+        ]),
+        h("div", { class: "sd-compact" }, [
+          h("div", { class: "sd-col" }, [
+            h("div", { class: "sd-block" }, [
+              h("h4", null, "登录"),
+              row("状态", loginTxt, dotCls(s) + "-t"),
+              row("方式", "Cookie"),
+              row("登录凭据", s.cookieSaved ? "已保存" : "未保存"),
+              row("引擎", engTxt),
+              row("采样", sampleTxt),
+              row("来源", kindTxt)
+            ]),
+            h("div", { class: "sd-block" }, [
+              h("h4", null, "抓取"),
+              row("上次结果", lastRes[0], lastRes[1] + "-t"),
+              row("今日已跑", (cr ? (cr.count || 0) : 0) + " 次"),
+              row("方式", modeTxt),
+              row("范围", dresCatTxt(s))
+            ])
+          ]),
+          h("div", { class: "sd-recent-wrap" }, [
+            h("h4", null, "最近收录")
+          ].concat(recs.length ? recs.map(function (r) {
+            return h("div", { class: "sd-recent" }, [
+              h("span", { class: "t-main" }, r.title || ""),
+              h("span", { class: "soft" }, r.size || ""),
+              h("span", { class: "soft" }, String(r.createdAt || "").slice(5, 16).replace("T", " "))
+            ]);
+          }) : [row("状态", "这个站还没有词条")]))
+        ])
+      ]);
+    }
+
     /* 分类范围文案：优先用预设里的分类组，没有就说没采到 */
     function dresCatTxt(s) {
       var pres = presetOf(s.name);
@@ -3865,7 +3924,9 @@
             ]),
             sth("button", { class: "sheet-x", "data-act": "close-sheet", "aria-label": "关闭", type: "button" }, "✕")
           ]),
-          sth("div", { class: "sd-scroll", innerHTML: drawerState.body }),
+          drawerState.isSettings
+            ? sth("div", { class: "sd-scroll", innerHTML: drawerState.body })
+            : sth("div", { class: "sd-scroll" }, [ovVNode(s2)]),
           drawerState.isSettings ? sth("div", { class: "sd-form-actions" }, [
             sth("button", { class: "btn primary slim", "data-act": "save", type: "button" }, "保存设置"),
             sth("button", { class: "btn ghost slim", "data-act": "reset", type: "button" }, "恢复默认"),
