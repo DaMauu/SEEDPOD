@@ -2371,33 +2371,17 @@ body::after {
 @media (max-width:700px){.compact-grid{grid-template-columns:1fr}}
 
 /* 发布卡：每组整行，字段标签在上、控件在下，避免标签被挤成竖排 */
-.drawer-body.compact{display:block}
-.drawer-body.compact .set-fields{margin-top:14px}
-.drawer-body.compact .set-fields + .set-fields{margin-top:20px}
-.drawer-body.compact .set-group-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
-.drawer-body.compact .compact-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:4px 20px}
-.drawer-body.compact .set-field{display:block;padding:8px 0;border-bottom:0;min-width:0}
-.drawer-body.compact .set-field .lbl{margin-bottom:5px;min-width:0}
-.drawer-body.compact .set-field .lbl span{white-space:normal;font-size:12.5px;line-height:1.35}
-.drawer-body.compact .set-field .lbl i{font-size:11px;margin-top:2px;line-height:1.4}
-.drawer-body.compact .set-field .ctl{width:100%;flex:none;min-width:0}
-.drawer-body.compact .set-field .ctl > .input,
-.drawer-body.compact .set-field .ctl > .select{width:100%;max-width:100%}
-.drawer-body.compact .set-field .ctl > .switch{width:auto}
-.drawer-body.compact .set-field .ctl .cat-row{max-width:100%}
-@media (max-width:700px){.drawer-body.compact .compact-grid{grid-template-columns:1fr}}
-
-/* 查重卡：与发布卡同一套上下布局，两列，别留大片空白 */
-.dedupe-card .drawer-body{padding:4px 20px 14px}
-.dedupe-card .set-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2px 20px}
-.dedupe-card .set-group-title{grid-column:1/-1;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 2px}
-.dedupe-card .set-field{display:block;padding:8px 0;border-bottom:0;min-width:0}
-.dedupe-card .set-field .lbl{margin-bottom:5px}
-.dedupe-card .set-field .lbl span{font-size:12.5px;line-height:1.35}
-.dedupe-card .set-field .lbl i{font-size:11px;margin-top:2px;line-height:1.4}
-.dedupe-card .set-field .ctl{width:100%}
-.dedupe-card .set-field .ctl > .input,
-.dedupe-card .set-field .ctl > .select{width:100%}
-@media (max-width:700px){.dedupe-card .set-fields{grid-template-columns:1fr}}
+.flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:10px;padding:13px 16px 15px;margin:0 0 12px}
+.flow-group .flow-ttl{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 4px}
+.flow-group .set-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 22px}
+.flow-group .set-field{display:block;padding:8px 0;border-bottom:0;min-width:0}
+.flow-group .set-field .lbl{margin-bottom:5px}
+.flow-group .set-field .lbl span{font-size:12.5px;line-height:1.35}
+.flow-group .set-field .ctl,
+.flow-group .set-field .ctl > .input,
+.flow-group .set-field .ctl > .select{width:100%}
+.dedupe-card .drawer-body,
+.drawer-body.compact{padding:12px 20px 14px}
+@media (max-width:700px){.flow-group .set-fields{grid-template-columns:1fr}}
 /* 本地演练外壳：没内容时不要撑出一块空白 */
 .crawl-dry .drawer-body:empty{display:none}

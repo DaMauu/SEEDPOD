@@ -2219,7 +2219,7 @@
   function setRowsHtml(rows) {
     return rows.map(function (r) {
       return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
-        '<div class="lbl"><span>' + r.t + "</span>" + (r.hint ? "<i>" + r.hint + "</i>" : "") + "</div>" +
+        '<div class="lbl"><span>' + r.t + "</span>" +  + "</div>" +
         '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single, r.tips) : setControl(r)) + "</div>" +
       "</div>";
     }).join("");
@@ -2527,34 +2527,34 @@
       return nodes;
     }
 
+    function field(r, key) {
+      return h("div", { class: "set-field", key: key }, [
+        h("div", { class: "lbl" }, [h("span", null, r.t)]),
+        h("div", { class: "ctl" }, [ctl(r)])
+      ]);
+    }
+
     Vue.createApp({
       render: function () {
-        var rows = [];
-        st.groups.forEach(function (g, gi) {
-          if (gi > 0) rows.push(h("div", { class: "set-group-title", key: "g" + gi }, g.name));
-          (g.rows || []).forEach(function (r) {
-            rows.push(h("div", { class: "set-field", key: g.name + r.t }, [
-              h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
-              h("div", { class: "ctl" }, [ctl(r)])
-            ]));
-          });
-        });
-        rows.unshift(h("div", { class: "set-field" }, [
-          h("div", { class: "lbl" }, [h("span", null, "自动查重"), h("i", null, "关闭时不主动向目标站发请求，只在数据清单里手动查")]),
-          h("div", { class: "ctl" }, [h("button", { class: "switch" + (st.autoDupe ? " on" : ""), type: "button", onClick: function () { st.autoDupe = !st.autoDupe; } }, [h("i")])])
-        ]));
         return h("section", { class: "drawer open vue-card dedupe-card" }, [
           h("div", { class: "drawer-head" }, [
-            h("div", { class: "drawer-t" }, [
-              h("div", { class: "drawer-title" }, "查重"),
-              h("div", { class: "drawer-desc" }, "只看这条是不是已经有了：先比 infohash，再比标题、年份和体积；不决定发不发。")
-            ]),
+            h("div", { class: "drawer-t" }, [h("div", { class: "drawer-title" }, "查重")]),
             h("div", { class: "drawer-head-right" }, [
               h("span", { class: "drawer-meta" }, st.autoDupe ? "自动查重已开" : "自动查重已关"),
               h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")
             ])
           ]),
-          h("div", { class: "drawer-body" }, [h("div", { class: "set-fields" }, rows)])
+          h("div", { class: "drawer-body" }, st.groups.map(function (g, gi) {
+            var rows = (g.rows || []).map(function (r) { return field(r, g.name + r.t); });
+            if (gi === 0) rows.unshift(h("div", { class: "set-field", key: "auto" }, [
+              h("div", { class: "lbl" }, [h("span", null, "自动查重")]),
+              h("div", { class: "ctl" }, [h("button", { class: "switch" + (st.autoDupe ? " on" : ""), type: "button", onClick: function () { st.autoDupe = !st.autoDupe; } }, [h("i")])])
+            ]));
+            return h("div", { class: "flow-group", key: g.name }, [
+              h("div", { class: "flow-ttl" }, g.name),
+              h("div", { class: "set-fields" }, rows)
+            ]);
+          }))
         ]);
       }
     }).mount(box);
@@ -2640,20 +2640,17 @@
       render: function () {
         return h("section", { class: "drawer open vue-card" }, [
           h("div", { class: "drawer-head" }, [
-            h("div", { class: "drawer-t" }, [
-              h("div", { class: "drawer-title" }, "发布"),
-              h("div", { class: "drawer-desc" }, "目标站、标题副标题、简介图床、发布字段；发布前的条件、标题匹配与失败兜底也在这里。")
-            ]),
+            h("div", { class: "drawer-t" }, [h("div", { class: "drawer-title" }, "发布")]),
             h("div", { class: "drawer-head-right" }, [
               h("button", { class: "btn primary slim", type: "button", disabled: st.saving, onClick: save }, st.saving ? "保存中…" : "保存")
             ])
           ]),
-          h("div", { class: "drawer-body compact" }, st.groups.map(function (g, gi) {
-            return h("div", { class: "set-fields", key: g.name }, [
-              h("div", { class: "set-group-title" }, g.name),
-              h("div", { class: "compact-grid" }, g.rows.map(function (r) {
+          h("div", { class: "drawer-body" }, st.groups.map(function (g, gi) {
+            return h("div", { class: "flow-group", key: g.name }, [
+              h("div", { class: "flow-ttl" }, g.name),
+              h("div", { class: "set-fields" }, g.rows.map(function (r) {
                 return h("div", { class: "set-field", key: r.t }, [
-                  h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+                  h("div", { class: "lbl" }, [h("span", null, r.t)]),
                   h("div", { class: "ctl" }, [ctl(r)])
                 ]);
               }))
@@ -3522,7 +3519,7 @@
       var h = window.Vue.h;
       return rows.map(function (r) {
         return h("div", { class: "set-field" + (r.cls ? " " + r.cls : "") }, [
-          h("div", { class: "lbl" }, [h("span", null, r.t), r.hint ? h("i", null, r.hint) : null]),
+          h("div", { class: "lbl" }, [h("span", null, r.t)]),
           h("div", { class: "ctl" }, [setCtlVNode(r)])
         ]);
       });
