@@ -3816,51 +3816,69 @@
       return { total: hosts.length, verified: verified, eng: eng };
     }
 
-    function renderStats() {
+    /* 站点统计条交给 Vue：数字、架构分段、图例、覆盖说明都由状态驱动 */
+    var statsState = window.Vue ? window.Vue.reactive({ nums: { total: 0, enabled: 0, loginFail: 0, unknown: 0 }, segs: [], legend: [], cov: "" }) : null;
+    var statsMounted = false;
+    function mountStats() {
+      if (!statsState || statsMounted) return;
       var host = $("#sites-stats");
       if (!host) return;
+      statsMounted = true;
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          var st = statsState;
+          return [
+            h("div", { class: "ss-nums" }, [
+              h("div", null, [h("span", null, "总站点"), h("b", null, String(st.nums.total))]),
+              h("div", null, [h("span", null, "启用"), h("b", null, String(st.nums.enabled))]),
+              h("div", null, [h("span", null, "登录失效"), h("b", { class: "warn" }, String(st.nums.loginFail))]),
+              h("div", null, [h("span", null, "还没自检"), h("b", null, String(st.nums.unknown))])
+            ]),
+            h("div", { class: "ss-arch" }, [
+              h("div", { class: "ss-bar" }, st.segs.map(function (x, i) {
+                return h("i", { class: "seg", key: i, style: "width:" + x.w + "%;background:" + x.color });
+              })),
+              h("div", { class: "ss-legend" }, st.legend.map(function (x, i) {
+                return h("span", { key: i }, [h("i", { class: "dot", style: "background:" + x.color }), x.name + " " + x.count]);
+              }))
+            ]),
+            st.cov ? h("div", { class: "ss-cov" }, st.cov) : null
+          ];
+        }
+      }).mount(host);
+    }
+    function renderStats() {
+      if (!statsState) return;
+      mountStats();
       var st = siteStats(MOCK.sitesList);
       var order = ["NP", "UNIT3D", "GZ", "OTHER", "?"];
       var names = { NP: "NexusPHP", UNIT3D: "UNIT3D", GZ: "Gazelle", OTHER: "其它", "?": "未确认" };
       var count = { NP: st.np, UNIT3D: st.unit3d, GZ: st.gz, OTHER: st.oth, "?": st.unk };
       var total = st.total || 1;
       var colors = { NP: "#4f46e5", UNIT3D: "#6b62e8", GZ: "#8b84ee", OTHER: "#b3adf3", "?": "#c9cedb" };
-      var segs = order.filter(function (k) { return count[k]; }).map(function (k) {
-        return '<i class="seg" style="width:' + (count[k] / total * 100).toFixed(2) + '%;background:' + colors[k] + '"></i>';
-      }).join("");
-      var legend = order.filter(function (k) { return count[k]; }).map(function (k) {
-        return '<span><i class="dot" style="background:' + colors[k] + '"></i>' + names[k] + " " + count[k] + "</span>";
-      }).join("");
-      host.innerHTML =
-        '<div class="ss-nums">' +
-          '<div><span>总站点</span><b>' + st.total + "</b></div>" +
-          '<div><span>启用</span><b>' + st.enabled + "</b></div>" +
-          '<div><span>登录失效</span><b class="warn">' + st.loginFail + "</b></div>" +
-          '<div><span>还没自检</span><b>' + st.unknown + "</b></div>" +
-        "</div>" +
-        '<div class="ss-arch"><div class="ss-bar">' + segs + "</div>" +
-          '<div class="ss-legend">' + legend + "</div></div>" +
-        (function () {
-          var cov = coverageStats();
-          if (!cov.total) return "";
-          return '<div class="ss-cov">已适配 ' + cov.total + ' 站 · 采样成功 ' + cov.verified +
-            ' 站（NP ' + (cov.eng.nexusphp || 0) + ' · U3D ' + (cov.eng.unit3d || 0) +
-            ' · GZ ' + (cov.eng.gazelle || 0) + ' · 兜底 ' + (cov.eng.custom || 0) + '）' +
-            (function () {
-              var ps = presetStats();
-              if (!ps.total) return "";
-              return ' · 预设：已确认 ' + ps.confirmed + ' · 有分类 ' + ps.withCats + ' · 待补 ' + (ps.total - ps.withCats);
-            })() +
-            (function () {
-              var defs = window.__ptaDefs || {};
-              var crawled = 0, today = 0;
-              Object.keys(defs).forEach(function (h) {
-                if (defs[h] && defs[h].crawled) crawled++;
-                if (defs[h] && defs[h].crawlCount) today += defs[h].crawlCount;
-              });
-              return crawled ? ' · 已抓过 ' + crawled + ' 站（今日 ' + today + ' 次）' : ' · 还没抓过';
-            })() + "</div>";
-        })();
+      statsState.nums = { total: st.total, enabled: st.enabled, loginFail: st.loginFail, unknown: st.unknown };
+      statsState.segs = order.filter(function (k) { return count[k]; }).map(function (k) {
+        return { w: (count[k] / total * 100).toFixed(2), color: colors[k] };
+      });
+      statsState.legend = order.filter(function (k) { return count[k]; }).map(function (k) {
+        return { color: colors[k], name: names[k], count: count[k] };
+      });
+      var cov = coverageStats();
+      if (!cov.total) { statsState.cov = ""; return; }
+      var covText = "已适配 " + cov.total + " 站 · 采样成功 " + cov.verified +
+        " 站（NP " + (cov.eng.nexusphp || 0) + " · U3D " + (cov.eng.unit3d || 0) +
+        " · GZ " + (cov.eng.gazelle || 0) + " · 兜底 " + (cov.eng.custom || 0) + "）";
+      var ps = presetStats();
+      if (ps.total) covText += " · 预设：已确认 " + ps.confirmed + " · 有分类 " + ps.withCats + " · 待补 " + (ps.total - ps.withCats);
+      var defs = window.__ptaDefs || {};
+      var crawled = 0, today = 0;
+      Object.keys(defs).forEach(function (h2) {
+        if (defs[h2] && defs[h2].crawled) crawled++;
+        if (defs[h2] && defs[h2].crawlCount) today += defs[h2].crawlCount;
+      });
+      covText += crawled ? " · 已抓过 " + crawled + " 站（今日 " + today + " 次）" : " · 还没抓过";
+      statsState.cov = covText;
     }
 
     /* 站点行交给 Vue；抽屉作为行间元素由 Vue 放在选中行后面 */
