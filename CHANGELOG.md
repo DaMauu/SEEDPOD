@@ -122,3 +122,8 @@
 
 ### 新增
 - Fastify 版新增只读接口：登录/会话/登出、/api/catalog（筛选+分页）、/api/queue、/api/queue/:id、/api/downloaders、/api/stats/overview，全部走 SQLite；在 8090 端口联调通过（词条 230、下载器 2、统计口径正确）。
+
+## v0.7.2 · 2026-11-13
+
+### 新增
+- Fastify 写接口：词条库增删改与批量状态、队列新增/动作/删除、流程规则 GET/PUT、配置读写（含范围校验），全部对接 SQLite；实测入队→发布→删除、流程合并、配置改 interval 均通过。

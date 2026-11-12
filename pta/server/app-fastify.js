@@ -157,6 +157,9 @@ async function build() {
     return reply.sendFile('index.html');
   });
 
+  /* 写接口：词条库、队列、流程规则、配置 */
+  require('./routes-write')(app, { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse });
+
   return app;
 }
 
