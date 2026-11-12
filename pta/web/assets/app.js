@@ -4371,42 +4371,74 @@
   }
 
   /* ---------- 站点：新增弹窗 + 本地保存 ---------- */
+  /* 新增站点弹窗用 Vue：卡片由组件渲染，显隐仍由外层 mask 控制 */
   function initSiteModal() {
     var mask = $("#site-modal");
     if (!mask) return;
-    var url = $("#ns-url"), arch = $("#ns-arch"), note = $("#ns-note");
-
-    function open() {
-      url.value = ""; note.value = ""; arch.value = "auto";
+    var Vue = window.Vue, h = Vue.h;
+    var st = Vue.reactive({ url: "", arch: "auto", note: "" });
+    window.__ptaOpenSiteModal = function () {
+      st.url = ""; st.note = ""; st.arch = "auto";
       mask.hidden = false;
-      setTimeout(function () { url.focus(); }, 30);
-    }
+      setTimeout(function () { var i = document.getElementById("ns-url"); if (i) i.focus(); }, 30);
+    };
     function close() { mask.hidden = true; }
-
-    $$("[data-act='new-site']").forEach(function (b) { b.addEventListener("click", open); });
-    $("#site-modal-x").addEventListener("click", close);
-    $("#site-modal-cancel").addEventListener("click", close);
+    window.__ptaCloseSiteModal = close;
+    document.querySelectorAll("[data-act='new-site']").forEach(function (b) {
+      b.addEventListener("click", function () { window.__ptaOpenSiteModal(); });
+    });
     mask.addEventListener("click", function (e) { if (e.target === mask) close(); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !mask.hidden) close(); });
 
-    $("#site-modal-ok").addEventListener("click", function () {
-      var raw = url.value.trim();
+    function submit() {
+      var raw = String(st.url || "").trim();
       if (!raw) { toast("先填站点地址"); return; }
       if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
       var host;
       try { host = new URL(raw).hostname.replace(/^www\./, ""); } catch (e) { toast("地址格式不对"); return; }
-      if (MOCK.sitesList.some(function (s) { return s.name === host; })) { toast("这个站点已经在列表里了"); return; }
-      var a = arch.value === "auto" ? (/index\.php/.test(raw) ? "NP" : "?") : arch.value;
+      if (MOCK.sitesList.some(function (x) { return x.name === host; })) { toast("这个站点已经在列表里了"); return; }
+      var a = st.arch === "auto" ? (/index\.php/.test(raw) ? "NP" : "?") : st.arch;
       var site = window.__ptaStore.add({
         url: raw, host: host, brand: host.replace(/^pt\./, "").replace(/[^a-z0-9]/gi, "").slice(0, 2),
-        name: host, arch: a, note: note.value.trim()
+        name: host, arch: a, note: String(st.note || "").trim()
       });
       MOCK.sitesList.push(site);
       window.__ptaStore.set(site.name, site);
       if (window.__ptaRefresh) window.__ptaRefresh(site.name);
       close();
       toast("已添加：" + host);
+    }
+
+    var app = Vue.createApp({
+      render: function () {
+        return h("div", { class: "modal" }, [
+          h("div", { class: "modal-head" }, [
+            h("h2", null, "添加站点"),
+            h("button", { class: "btn ghost slim", id: "site-modal-x", type: "button", onClick: close }, "关闭")
+          ]),
+          h("label", { class: "field" }, [h("span", null, "站点地址"),
+            h("input", { class: "input", id: "ns-url", placeholder: "https://example.com/index.php", autocomplete: "off",
+              value: st.url, onInput: function (e) { st.url = e.target.value; } })]),
+          h("label", { class: "field" }, [h("span", null, "架构"),
+            h("select", { class: "select", id: "ns-arch", value: st.arch, onChange: function (e) { st.arch = e.target.value; } }, [
+              h("option", { value: "auto" }, "自动判断"),
+              h("option", { value: "NP" }, "NexusPHP"),
+              h("option", { value: "UNIT3D" }, "UNIT3D"),
+              h("option", { value: "GZ" }, "Gazelle"),
+              h("option", { value: "OTHER" }, "其它"),
+              h("option", { value: "?" }, "未确认")
+            ])]),
+          h("label", { class: "field" }, [h("span", null, "备注（可选）"),
+            h("input", { class: "input", id: "ns-note", placeholder: "例如：需要邀请、只收原盘", value: st.note,
+              onInput: function (e) { st.note = e.target.value; } })]),
+          h("div", { class: "modal-foot" }, [
+            h("button", { class: "btn ghost slim", id: "site-modal-cancel", type: "button", onClick: close }, "取消"),
+            h("button", { class: "btn primary slim", id: "site-modal-ok", type: "button", onClick: submit }, "添加")
+          ])
+        ]);
+      }
     });
+    app.mount(mask);
   }
 
   /* ---------- 无刷新路由：同一文档内切换视图 ---------- */
