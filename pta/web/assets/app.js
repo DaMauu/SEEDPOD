@@ -4707,47 +4707,58 @@
     ok: function () { return !!AUTH.read(); }
   };
 
+  /* 登录浮层用 Vue：状态在组件里，成功后卸载再继续 boot */
   function showLogin(next) {
     var mask = el("div", "login-mask");
     mask.id = "login-mask";
-    mask.innerHTML =
-      '<form class="login-card" id="login-form" autocomplete="on">' +
-        '<div class="login-brand"><img src="assets/whale.png" alt=""><b>SEEDPOD</b><span>原盘转载面板</span></div>' +
-        '<h2>登录</h2>' +
-        '<label class="login-field"><span>用户名</span>' +
-          '<input class="input" id="login-user" autocomplete="username" placeholder="admin"></label>' +
-        '<label class="login-field"><span>密码</span>' +
-          '<input class="input" id="login-pass" type="password" autocomplete="current-password" placeholder="">' +
-        '</label>' +
-        '<div class="login-row">' +
-          '<button type="button" class="switch on" id="login-remember"><i></i></button>' +
-          '<span>记住登录状态</span><em class="login-err" id="login-err"></em>' +
-        '</div>' +
-        '<button class="btn primary login-btn" type="submit" id="login-submit">登录</button>' +
-      '</form>';
     document.body.appendChild(mask);
-    var userEl = $("#login-user"), passEl = $("#login-pass"), errEl = $("#login-err");
-    var remember = $("#login-remember");
-    remember.addEventListener("click", function () { remember.classList.toggle("on"); });
-
-    $("#login-form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var u = (userEl.value || "").trim();
-      var p = passEl.value || "";
-      if (!u || !p) { errEl.textContent = "用户名和密码都要填"; return; }
-      errEl.textContent = "登录中…";
-      var btn = $("#login-submit");
-      btn.disabled = true;
-      AUTH.login(u, p, remember.classList.contains("on")).then(function (res) {
-        btn.disabled = false;
-        if (res.ok) { mask.remove(); next(); return; }
-        errEl.textContent = res.msg || "用户名或密码不对";
-        mask.classList.remove("shake");
-        void mask.offsetWidth;
-        mask.classList.add("shake");
-      });
+    var Vue = window.Vue, h = Vue.h;
+    var app = Vue.createApp({
+      data: function () { return { user: "", pass: "", remember: true, err: "", busy: false, shake: false }; },
+      mounted: function () { var self = this; setTimeout(function () { if (self.$refs.u) self.$refs.u.focus(); }, 60); },
+      methods: {
+        submit: function () {
+          var self = this;
+          var u = String(this.user || "").trim(), p = String(this.pass || "");
+          if (!u || !p) { this.err = "用户名和密码都要填"; return; }
+          if (this.busy) return;
+          this.busy = true; this.err = "登录中…";
+          AUTH.login(u, p, this.remember).then(function (res) {
+            self.busy = false;
+            if (res.ok) { app.unmount(); mask.remove(); next(); return; }
+            self.err = res.msg || "用户名或密码不对";
+            self.shake = false; void mask.offsetWidth; self.shake = true;
+          }).catch(function () { self.busy = false; self.err = "网络不通，稍后再试"; });
+        }
+      },
+      render: function () {
+        var self = this;
+        return h("form", {
+          class: "login-card", id: "login-form", autocomplete: "on",
+          onSubmit: function (e) { e.preventDefault(); self.shake = false; self.submit(); }
+        }, [
+          h("div", { class: "login-brand" }, [h("img", { src: "assets/whale.png", alt: "" }), h("b", null, "SEEDPOD"), h("span", null, "原盘转载面板")]),
+          h("h2", null, "登录"),
+          h("label", { class: "login-field" }, [h("span", null, "用户名"),
+            h("input", { class: "input", id: "login-user", ref: "u", autocomplete: "username", placeholder: "admin",
+              value: this.user, onInput: function (e) { self.user = e.target.value; } })]),
+          h("label", { class: "login-field" }, [h("span", null, "密码"),
+            h("input", { class: "input", id: "login-pass", type: "password", autocomplete: "current-password",
+              value: this.pass, onInput: function (e) { self.pass = e.target.value; } })]),
+          h("div", { class: "login-row" }, [
+            h("button", { type: "button", class: "switch" + (this.remember ? " on" : ""), id: "login-remember",
+              onClick: function () { self.remember = !self.remember; } }, [h("i")]),
+            h("span", null, "记住登录状态"),
+            h("em", { class: "login-err", id: "login-err" }, this.err)
+          ]),
+          h("button", { class: "btn primary login-btn", type: "submit", id: "login-submit", disabled: this.busy }, this.busy ? "登录中…" : "登录")
+        ]);
+      }
     });
-    setTimeout(function () { userEl.focus(); }, 60);
+    app.mount(mask);
+    var watchShake = setInterval(function () {
+      if (!document.body.contains(mask)) { clearInterval(watchShake); return; }
+    }, 1000);
   }
 
   function initAuth(next) {
