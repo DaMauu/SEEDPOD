@@ -2858,6 +2858,34 @@
     /* 看地址：只调 /api/crawl/plan 读本地配置拼 URL，不发任何请求 */
     var planBtn = $("#crawl-plan-btn");
     var planNav = { host: "", idx: 0, total: 0 };
+    /* 看地址的结果框由 Vue 渲染，翻类/抓这一类仍走 document 上的委托 */
+    var planState = window.Vue ? window.Vue.reactive({ on: false, host: "", label: "", url: "", gap: 0, dailyMax: 0, delay: 0, idx: 0, total: 0, today: "今日情况读取中…" }) : null;
+    var planMounted = false;
+    function mountPlan() {
+      if (!planState || planMounted) return;
+      var box = $("#crawl-dry-box");
+      if (!box) return;
+      planMounted = true;
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          var st = planState;
+          return h("div", { class: "dl-dry" }, [
+            h("div", { class: "dl-dry-head" }, [h("b", null, "下一抓 · " + st.host), h("span", { class: "dl-dry-p" }, "分类 " + st.label)]),
+            h("div", { class: "dl-dry-note", style: "word-break:break-all" }, "GET " + st.url),
+            h("div", { class: "dl-dry-note" }, "间隔至少 " + st.gap + " 秒 · 单站每天最多 " + st.dailyMax + " 次 · 请求里带的等待 " + st.delay + " 秒"),
+            h("div", { class: "dl-dry-note dl-plan-nav" }, [
+              h("button", { class: "btn ghost slim", type: "button", "data-planstep": "-1" }, "上一类"),
+              h("span", null, "第 " + (st.idx + 1) + " / " + (st.total || 1) + " 类"),
+              h("button", { class: "btn ghost slim", type: "button", "data-planstep": "1" }, "下一类"),
+              h("button", { class: "btn slim", type: "button", "data-plancrawl": "1" }, "抓这一类")
+            ]),
+            h("div", { class: "dl-dry-note", id: "crawl-plan-today" }, st.today),
+            h("em", null, "只是读出本地配置拼的地址，没有发请求；抓一页会按类目轮转，不是这里预览的这一类")
+          ]);
+        }
+      }).mount(box);
+    }
     function renderPlan(p) {
       planNav.host = p.host || "";
       planNav.idx = Number(p.catIdx) || 0;
@@ -2866,28 +2894,25 @@
       var box = $("#crawl-dry-box");
       var meta = $("#crawl-dry-meta");
       if (meta) meta.textContent = "下一抓 · 分类 " + label;
-      if (!box) return;
-      box.hidden = false;
-      box.innerHTML = '<div class="dl-dry-head"><b>下一抓 · ' + escapeHtml(p.host || "") + "</b>" +
-          '<span class="dl-dry-p">分类 ' + escapeHtml(label) + "</span></div>" +
-        '<div class="dl-dry-note" style="word-break:break-all">GET ' + escapeHtml(p.url || "") + "</div>" +
-        '<div class="dl-dry-note">间隔至少 ' + Math.round((p.minGapMs || 0) / 1000) + " 秒 · 单站每天最多 " +
-          (p.dailyMax || 0) + " 次 · 请求里带的等待 " + (p.requestDelay || 0) + " 秒</div>" +
-        '<div class="dl-dry-note dl-plan-nav">' +
-          '<button class="btn ghost slim" type="button" data-planstep="-1">上一类</button>' +
-          '<span>第 ' + (planNav.idx + 1) + " / " + (planNav.total || 1) + " 类</span>" +
-          '<button class="btn ghost slim" type="button" data-planstep="1">下一类</button>' +
-          '<button class="btn slim" type="button" data-plancrawl="1">抓这一类</button>' +
-        "</div>" +
-        '<div class="dl-dry-note" id="crawl-plan-today">今日情况读取中…</div>' +
-        "<em>只是读出本地配置拼的地址，没有发请求；抓一页会按类目轮转，不是这里预览的这一类</em>";
+      if (!planState) return;
+      mountPlan();
+      planState.host = p.host || "";
+      planState.label = label;
+      planState.url = p.url || "";
+      planState.gap = Math.round((p.minGapMs || 0) / 1000);
+      planState.dailyMax = p.dailyMax || 0;
+      planState.delay = p.requestDelay || 0;
+      planState.idx = planNav.idx;
+      planState.total = planNav.total;
+      planState.today = "今日情况读取中…";
+      planState.on = true;
+      if (box) box.hidden = false;
       fetch("/api/crawl/status?host=" + encodeURIComponent(p.host || ""), { credentials: "same-origin" })
         .then(function (r) { return r.json(); }).then(function (k) {
-          var el = $("#crawl-plan-today");
-          if (!el || !k || !k.ok) return;
+          if (!k || !k.ok) return;
           var d = k.data || {};
           var wait = Math.max(0, Math.round((d.waitMs || 0) / 1000));
-          el.textContent = "今天已抓 " + (d.count || 0) + "/" + (d.dailyMax || 0) + " 次" +
+          planState.today = "今天已抓 " + (d.count || 0) + "/" + (d.dailyMax || 0) + " 次" +
             (wait ? " · 还要等 " + wait + " 秒" : " · 现在可以抓") +
             " · 上次 " + (d.lastAt ? new Date(d.lastAt).toLocaleString("zh-CN", { hour12: false }).slice(5, 16) : "还没抓过");
         }).catch(function () {});
