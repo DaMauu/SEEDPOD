@@ -458,10 +458,9 @@
 
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
-  function el(tag, cls, html) {
+  function el(tag, cls) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
-    if (html != null) n.innerHTML = html;
     return n;
   }
   /* 下拉选项交给 Vue：同一个 select 只挂一次，之后换数据即可 */
@@ -2704,25 +2703,7 @@
     }
 
     loadFlowState();
-    host.innerHTML =
-      '<section class="drawer open crawl-dry">' +
-        '<div class="drawer-head">' +
-          '<div class="drawer-t"><div class="drawer-title">本地演练（不发请求）</div>' +
-            '<div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div></div>' +
-          '<div class="drawer-head-right">' +
-            '<span class="drawer-meta" id="crawl-dry-meta">未运行</span>' +
-            '<select class="input slim" id="crawl-site" title="从哪个站抓"><option value="">选来源站</option></select>' +
-            '<select class="input slim" id="crawl-limit" title="这一轮抓多少条词条（是条数，不是页数）">' +
-              [[5,'5 条（试）'],[10,'10 条'],[50,'50 条'],[100,'100 条'],[200,'200 条']].map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
-            '</select>' +
-            '<button class="btn ghost slim" id="crawl-plan-btn" title="只读本地配置，不发请求">看地址</button>' +
-            '<button class="btn slim" id="crawl-live-run">抓一页</button>' +
-            '<button class="btn primary slim" id="crawl-dry-run">开始演练</button>' +
-          "</div>" +
-        "</div>" +
-        '<div class="drawer-body" id="crawl-dry-body" hidden><div class="dl-dry" id="crawl-dry-box"></div></div>' +
-      "</section>" +
-      '';
+    /* 「本地演练」外壳已经在 index.html 里，动态部分由下方的 Vue 组件与下拉选项接管 */
 
     /* 请求限制用 Vue 卡片单独渲染，放在抓取卡前面 */
     mountCrawlCard(host);
