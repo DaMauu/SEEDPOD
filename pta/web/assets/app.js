@@ -464,6 +464,20 @@
     if (html != null) n.innerHTML = html;
     return n;
   }
+  /* 下拉选项交给 Vue：同一个 select 只挂一次，之后换数据即可 */
+  function vueOptions(sel, items) {
+    if (!sel || !window.Vue) return;
+    if (sel.__vueOpts) { sel.__vueOpts.items = items; return; }
+    var st = window.Vue.reactive({ items: items });
+    sel.__vueOpts = st;
+    window.Vue.createApp({
+      render: function () {
+        var h = window.Vue.h;
+        return st.items.map(function (o, i) { return h("option", { value: o.value, key: i }, o.label); });
+      }
+    }).mount(sel);
+  }
+
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -1347,9 +1361,7 @@
           if (v && !seen[v]) { seen[v] = 1; list.push(v); }
         });
         list.sort();
-        sel.innerHTML = '<option value="">' + pair[2] + "</option>" + list.map(function (v) {
-          return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + "</option>";
-        }).join("");
+        vueOptions(sel, [{ value: "", label: pair[2] }].concat(list.map(function (v) { return { value: v, label: v }; })));
         if (state[pair[1]] && !seen[state[pair[1]]]) state[pair[1]] = "";
         sel.value = state[pair[1]] || "";
       });
@@ -1494,9 +1506,7 @@
         .then(function (j) {
           if (!j || !j.ok || !Array.isArray(j.data)) return;
           var hosts = j.data.filter(function (c) { return c.hasCookie; }).map(function (c) { return c.host; }).sort();
-          sel.innerHTML = '<option value="">选目标站</option>' + hosts.map(function (h) {
-            return '<option value="' + escapeHtml(h) + '">' + escapeHtml(h) + "</option>";
-          }).join("");
+          vueOptions(sel, [{ value: "", label: "选目标站" }].concat(hosts.map(function (h) { return { value: h, label: h }; })));
         }).catch(function () {});
       var btn = $("#dl-dupe");
       if (!btn) return;
@@ -2837,9 +2847,8 @@
       var cur = "";
       try { cur = localStorage.getItem(CKEY) || ""; } catch (e) {}
       if (!cur || !list.some(function (x) { return x.name === cur; })) cur = "";
-      crawlSiteSel.innerHTML = '<option value="">选来源站</option>' + list.map(function (x) {
-        return '<option value="' + escapeHtml(x.name) + '"' + (x.name === cur ? " selected" : "") + ">" + escapeHtml(x.title || x.name) + "</option>";
-      }).join("");
+      vueOptions(crawlSiteSel, [{ value: "", label: "选来源站" }].concat(list.map(function (x) { return { value: x.name, label: x.title || x.name }; })));
+      crawlSiteSel.value = cur;
     }
     window.__ptaFillCrawlSites = fillCrawlSites;
     fillCrawlSites();
