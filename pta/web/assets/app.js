@@ -2405,7 +2405,7 @@
     Vue.createApp({
       render: function () {
         var g = st.groups[0] || { rows: [] };
-        return h("section", { class: "drawer open vue-card" }, [
+        return h("section", { class: "drawer open vue-card crawl-card" }, [
           h("div", { class: "drawer-head" }, [
             h("div", { class: "drawer-t" }, [
               h("div", { class: "drawer-title" }, "抓取"),
