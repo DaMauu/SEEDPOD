@@ -2320,15 +2320,15 @@
 
     var preset = JSON.parse(JSON.stringify((window.PTA_RULES && window.PTA_RULES.fetch || [])[0] || { name: "搜索预设", rows: [] }));
     var st = Vue.reactive({
-      runMode: "test", interval: 60, dailySite: 20, dailyAll: 100, breaker: 3,
+      interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3,
       detail: (function () { try { return localStorage.getItem("pta.detail") === "1"; } catch (e) { return false; } })(),
       groups: [preset], saving: false, sum: "跟随默认", note: "读取服务端配置…"
     });
 
     function syncNote() {
       var lim = Number((document.getElementById("crawl-limit") || {}).value || 10) || 10;
-      st.note = "每 " + st.interval + " 秒发一次请求 · " + (st.runMode === "prod" ? "正式模式" : "测试模式") +
-        " · 本次大约 " + Math.max(1, Math.ceil(lim / 50)) + " 次请求";
+      st.note = "每 " + st.interval + " 秒最多发一次 · " + st.windowMinutes + " 分钟内最多 " + st.maxPerWindow +
+        " 次请求 · 本次大约 " + Math.max(1, Math.ceil(lim / 50)) + " 次";
     }
     function syncSum() {
       var on = 0;
@@ -2340,8 +2340,7 @@
       fetch("api/config", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
         if (!j || !j.ok || !j.data || !j.data.user) return;
         var u = j.data.user;
-        if (u.runMode) st.runMode = u.runMode;
-        ["interval", "dailySite", "dailyAll", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
+        ["interval", "windowMinutes", "maxPerWindow", "breaker"].forEach(function (k) { if (u[k] != null) st[k] = u[k]; });
         syncNote();
       }).catch(function () {});
       fetch("api/flow", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
@@ -2362,7 +2361,7 @@
       Promise.all([
         fetch("api/config/user", {
           method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ runMode: st.runMode, interval: st.interval, dailySite: st.dailySite, dailyAll: st.dailyAll, breaker: st.breaker })
+          body: JSON.stringify({ interval: st.interval, windowMinutes: st.windowMinutes, maxPerWindow: st.maxPerWindow, breaker: st.breaker })
         }).then(function (r) { return r.json(); }),
         fetch("api/flow", {
           method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" },
@@ -2417,26 +2416,21 @@
             ])
           ]),
           h("div", { class: "drawer-body" }, [
+            h("div", { class: "set-fields" }, (g.rows || []).map(presetRow)),
+            h("div", { class: "crawl-note" }, st.note),
             h("div", { class: "set-fields" }, [h("div", { class: "compact-grid" }, [
-              limitRow("请求间隔", "两次请求之间至少等这么久（秒）", "interval", 8, 120),
-              limitRow("每站每天", "单个站点一天最多发几次请求", "dailySite", 1, 300),
-              limitRow("全站每天", "所有站加起来一天最多发几次", "dailyAll", 50, 2000),
-              limitRow("连续失败", "连续失败这么多次就自动暂停", "breaker", 1, 10),
+              limitRow("请求间隔", "两次请求之间至少隔这么多秒", "interval", 8, 600),
+              limitRow("窗口分钟", "执行一次的时间窗口，单位分钟", "windowMinutes", 1, 1440),
+              limitRow("窗口内最多", "这个窗口里最多发几次请求", "maxPerWindow", 1, 1000),
+              limitRow("连续失败暂停", "连续失败这么多次就自动暂停", "breaker", 1, 10),
               h("div", { class: "set-field" }, [
-                h("div", { class: "lbl" }, [h("span", null, "运行模式"), h("i", null, "测试模式最低 30 秒")]),
-                h("div", { class: "ctl" }, [h("select", { class: "select", value: st.runMode, onChange: function (e) { st.runMode = e.target.value; syncNote(); } },
-                  [h("option", { value: "test" }, "测试（按人手速度）"), h("option", { value: "prod" }, "正式")])])
-              ]),
-              h("div", { class: "set-field" }, [
-                h("div", { class: "lbl" }, [h("span", null, "抓详情页"), h("i", null, "每条详情多一次请求，配额翻倍；默认关")]),
+                h("div", { class: "lbl" }, [h("span", null, "抓详情页"), h("i", null, "每条多一次请求，先把详情取回来，后面查重和发布用本地数据对比")]),
                 h("div", { class: "ctl" }, [h("button", {
                   class: "switch" + (st.detail ? " on" : ""), type: "button",
                   onClick: function () { st.detail = !st.detail; try { localStorage.setItem("pta.detail", st.detail ? "1" : "0"); } catch (e) {} }
                 }, [h("i")])])
               ])
-            ])]),
-            h("div", { class: "crawl-note" }, st.note),
-            h("div", { class: "set-fields" }, (g.rows || []).map(presetRow))
+            ])])
           ])
         ]);
       }
@@ -2957,7 +2951,7 @@
         fetch("/api/crawl/run", {
           method: "POST", credentials: "same-origin",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ host: planNav.host, catIdx: planNav.idx, limit: lim })
+          body: JSON.stringify({ host: planNav.host, catIdx: planNav.idx, limit: lim, dryRun: false })
         }).then(function (r) { return r.json(); }).then(function (j) {
           c.disabled = false;
           if (!j || !j.ok) { toast((j && j.error && j.error.message) || "抓取失败"); return; }
@@ -2982,7 +2976,7 @@
       fetch("/api/crawl/run", {
         method: "POST", credentials: "same-origin",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ host: h, limit: Number(($("#crawl-limit") && $("#crawl-limit").value) || 100) })
+        body: JSON.stringify({ host: h, limit: Number(($("#crawl-limit") && $("#crawl-limit").value) || 100), dryRun: false })
       }).then(function (r) {
         return r.json().then(function (j) { return { status: r.status, j: j }; }, function () { return { status: r.status, j: null }; });
       }).then(function (out) {
@@ -4260,7 +4254,7 @@
         fetch("/api/crawl/run", {
           method: "POST", credentials: "same-origin",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ host: s.name, limit: cLim })
+          body: JSON.stringify({ host: s.name, limit: cLim, dryRun: false })
         }).then(function (r) { return r.json(); }).then(function (j) {
           btn.disabled = false;
           btn.textContent = oldT;

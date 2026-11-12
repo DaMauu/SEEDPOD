@@ -117,8 +117,21 @@ module.exports = function (app, ctx) {
     return ok(reply, entry);
   });
 
-  app.get('/api/crawl/status', async () => {
+  app.get('/api/crawl/status', async (req) => {
     const row = one("SELECT v FROM meta WHERE k = 'crawl-state'");
-    return ok({ state: JSON.parse(row ? row.v : 'null') || {} });
+    const state = JSON.parse(row ? row.v : 'null') || {};
+    const host = String(req.query.host || '').trim().toLowerCase();
+    if (!host) return ok({ state: state });
+    const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+    const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+    const winMs = Math.max(1, Math.min(Number(cfg.windowMinutes) || 60, 1440)) * 60000;
+    const maxWin = Math.max(1, Math.min(Number(cfg.maxPerWindow) || 20, 1000));
+    const gapMs = Math.max(8, Math.min(Number(cfg.interval) || 60, 600)) * 1000;
+    const rec = state[host] || {};
+    const nowMs = Date.now();
+    const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - winMs; }) : [];
+    const waitMs = Math.max(0, (Number(rec.lastAt) || 0) + gapMs - nowMs);
+    return ok({ host: host, count: times.length, dailyMax: maxWin, windowMinutes: Math.round(winMs / 60000),
+      waitMs: waitMs, lastAt: rec.lastAt || 0, lastError: rec.lastError || '', page: rec.page || 0, catIdx: rec.catIdx || 0 });
   });
 };

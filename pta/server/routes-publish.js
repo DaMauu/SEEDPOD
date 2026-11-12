@@ -45,7 +45,8 @@ module.exports = function (app, ctx) {
     return ok(reply, { id: cur.id, count: shots.length });
   });
 
-  /* 发布：dryRun 默认 true，只走本地校验与记账，不碰真实站点 */
+  /* 发布：dryRun 默认 true（只校验不落账）；real 模式走真实状态流转并写 published。
+     真发帖（POST 站点表单）不在这一步，按作者要求还没开始。 */
   app.post('/api/publish/:id', async (req, reply) => {
     const cur = load(req.params.id);
     if (!cur) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
@@ -54,13 +55,32 @@ module.exports = function (app, ctx) {
     const it = cur.data;
     if (!it.title) return bad(reply, 'BAD_ITEM', '条目没有标题，发不了');
     if (!it.targetSite) return bad(reply, 'NO_TARGET', '还没选目标站');
-    if (!dryRun) return bad(reply, 'NOT_IMPLEMENTED', '真发帖还没接（要等站点表单适配验证），先用 dryRun 演练', 501);
+    if (dryRun) {
+      it.pubMsg = '演练：已按 ' + it.targetSite + ' 的表单准备标题、副标题、简介、' + (it.shots || []).length + ' 张图，没有发出真实请求';
+      return ok(reply, { id: it.id, dryRun: true, published: false, msg: it.pubMsg });
+    }
+    if (!ctx.allowReal('realPublish')) {
+      return bad(reply, 'REAL_PUBLISH_DISABLED', '真发布还没打开：把配置 realPublish 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
+    }
+    if (it.status !== 'pending' && it.status !== 'approved' && it.status !== 'failed') {
+      return bad(reply, 'BAD_STATE', '当前状态 ' + it.status + ' 不能发布');
+    }
     it.status = 'published';
     it.publishedAt = now();
-    it.pubMsg = '演练：已按 ' + it.targetSite + ' 的表单准备标题、副标题、简介、' + (it.shots || []).length + ' 张图，没有发出真实请求';
+    it.approvedAt = it.approvedAt || now();
+    it.pubMsg = '已通过并发布（记账）；真发帖未开始';
     save(it);
     db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
       .run(it.id, JSON.stringify(it), it.publishedAt);
-    return ok(reply, { id: it.id, dryRun: true, published: true, msg: it.pubMsg });
+    if (it.catalogId) {
+      const c = one('SELECT data FROM catalog WHERE id = ?', String(it.catalogId));
+      if (c) {
+        const cd = jparse(c.data) || {};
+        cd.status = 'published';
+        cd.updatedAt = now();
+        db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
+      }
+    }
+    return ok(reply, { id: it.id, dryRun: false, published: true, msg: it.pubMsg });
   });
 };

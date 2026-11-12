@@ -27,13 +27,22 @@ module.exports = function (app, ctx) {
     return ok(reply, { changed: changed, status: target });
   });
 
-  /* 抓取执行：按铁律只允许演练，真抓尚未接入 */
+  /* 抓取执行：演练默认；真抓需显式打开 realCrawl（或 PTA_ALLOW_REAL=1） */
   app.post('/api/crawl/run', async (req, reply) => {
     const b = req.body || {};
     const dryRun = b.dryRun !== false;
-    if (!dryRun) return bad(reply, 'NOT_IMPLEMENTED', '真抓取还没接（要过站点适配验证），先用演练', 501);
     const host = String(b.siteHost || b.host || '').trim().toLowerCase();
     if (host && !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', 'siteHost 不合法');
+    if (!dryRun) {
+      if (!ctx.allowReal('realCrawl')) return bad(reply, 'REAL_CRAWL_DISABLED', '真抓取还没打开：把配置 realCrawl 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
+      if (!host) return bad(reply, 'BAD_REQUEST', '要指定 siteHost');
+      const r = await ctx.crawl.crawlOnce(host, { catIdx: b.catIdx, page: b.page, limit: b.limit });
+      if (r && r.err) {
+        const http = (r.err.code === 'TOO_SOON' || r.err.code === 'DAILY_LIMIT') ? 429 : 502;
+        return bad(reply, r.err.code, r.err.message, http);
+      }
+      return ok(reply, r);
+    }
     return ok(reply, { dryRun: true, siteHost: host, startedAt: now(), steps: ['准备', '读取配置', '生成清单', '汇总'], note: '演练：没有发出真实请求' });
   });
 

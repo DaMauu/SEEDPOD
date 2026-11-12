@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const Fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
 const { openDB } = require('./db');
+const { makeCrawl } = require('./crawl');
 
 const PORT = Number(process.env.PTA_PORT || 8090);
 const DATA_DIR = path.resolve(process.env.PTA_DATA || path.join(__dirname, '..', '..', 'data'));
@@ -161,7 +162,14 @@ async function build() {
   });
 
   /* 写接口：词条库、队列、流程规则、配置 */
-  const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR };
+  const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR,
+    allowReal: function (key) {
+      if (String(process.env.PTA_ALLOW_REAL || '') === '1') return true;
+      const r = one("SELECT v FROM meta WHERE k = 'config'");
+      const cfg = JSON.parse(r ? r.v : 'null') || {};
+      return cfg[key] === true;
+    } };
+  ctx.crawl = makeCrawl(ctx);
   require('./routes-write')(app, ctx);
   require('./routes-data')(app, ctx);
   logEvent = ctx.logEvent || null;

@@ -142,8 +142,8 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', interval: 60, dailySite: 20, dailyAll: 100, breaker: 3, autoDupe: false };
-  const LIM = { test: { interval: [30, 120], dailySite: [1, 300], dailyAll: [50, 2000], breaker: [1, 10] }, prod: { interval: [8, 120], dailySite: [1, 300], dailyAll: [50, 2000], breaker: [1, 10] } };
+  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false };
+  const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] };
   function readCfg() {
     const row = one("SELECT v FROM meta WHERE k = 'config'");
     return Object.assign({}, DEF, JSON.parse(row ? row.v : 'null') || {});
@@ -152,19 +152,17 @@ module.exports = function (app, ctx) {
   app.patch('/api/config/user', async (req, reply) => {
     const b = req.body || {};
     const cfg = readCfg();
-    const mode = b.runMode || cfg.runMode;
-    if (!LIM[mode]) return bad(reply, 'BAD_REQUEST', 'runMode 只能是 test 或 prod');
-    const lim = LIM[mode];
-    for (const k of ['interval', 'dailySite', 'dailyAll', 'breaker']) {
+    for (const k of ['interval', 'windowMinutes', 'maxPerWindow', 'breaker']) {
       if (b[k] === undefined) continue;
       const n = Number(b[k]);
       if (!Number.isInteger(n)) return bad(reply, 'BAD_REQUEST', k + ' 必须是整数');
-      if (n < lim[k][0] || n > lim[k][1]) return bad(reply, 'OUT_OF_RANGE', k + ' 必须在 ' + lim[k][0] + '–' + lim[k][1] + ' 之间');
+      if (n < LIM[k][0] || n > LIM[k][1]) return bad(reply, 'OUT_OF_RANGE', k + ' 必须在 ' + LIM[k][0] + '–' + LIM[k][1] + ' 之间');
     }
     const next = Object.assign({}, cfg);
-    if (b.runMode) next.runMode = b.runMode;
     if (b.autoDupe !== undefined) next.autoDupe = !!b.autoDupe;
-    ['interval', 'dailySite', 'dailyAll', 'breaker'].forEach(function (k) { if (b[k] !== undefined) next[k] = Number(b[k]); });
+    if (b.realCrawl !== undefined) next.realCrawl = !!b.realCrawl;
+    if (b.realPublish !== undefined) next.realPublish = !!b.realPublish;
+    ['interval', 'windowMinutes', 'maxPerWindow', 'breaker'].forEach(function (k) { if (b[k] !== undefined) next[k] = Number(b[k]); });
     db.prepare("INSERT INTO meta(k, v) VALUES('config', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(next));
     return ok(reply, next);
   });
