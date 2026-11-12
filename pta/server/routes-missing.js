@@ -46,6 +46,32 @@ module.exports = function (app, ctx) {
     return ok(reply, { version: version, text: text.slice(0, 200000) });
   });
 
+
+  /* 发布预览：前端用 GET ?id=，与 POST 版本等价 */
+  app.get('/api/publish/preview', async (req, reply) => {
+    const id = String(req.query.id || '');
+    const row = one('SELECT data FROM queue WHERE id = ?', id);
+    if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
+    const it = jparse(row.data) || {};
+    const title = String(it.title || '').replace(/\s+/g, ' ').trim();
+    return ok(reply, { id: id, target: it.targetSite || '', title: title,
+      subtitle: [it.cn, it.res, it.size].filter(Boolean).join(' · '),
+      description: [title, it.res ? it.res + ' 原盘' : '', it.site ? '来源 ' + it.site : ''].filter(Boolean).join('，') + '。',
+      shots: (it.shots || []).length });
+  });
+
+  /* 单条查重：先按本地规则判，不发真实请求（真搜走 /api/dupe/check） */
+  app.post('/api/queue/:id/check', async (req, reply) => {
+    const row = one('SELECT data FROM queue WHERE id = ?', req.params.id);
+    if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
+    const it = jparse(row.data) || {};
+    const hash = String(it.infohash || '').toLowerCase();
+    let hit = null;
+    if (hash) hit = one('SELECT id FROM catalog WHERE infohash = ? LIMIT 1', hash);
+    const verdict = hit ? 'dupe' : 'clean';
+    return ok(reply, { id: it.id, status: verdict, matched: hit ? hit.id : '', note: hit ? '词条库里已有同一个种子' : '本地库里没有重复' });
+  });
+
   /* 事件流别名：前端日志面板用的是 /api/logs/stream，这里提供 /api/events 兼容 */
   app.get('/api/events', async (req, reply) => {
     reply.raw.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
