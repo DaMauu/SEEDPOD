@@ -158,7 +158,9 @@ async function build() {
   });
 
   /* 写接口：词条库、队列、流程规则、配置 */
-  require('./routes-write')(app, { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse });
+  const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR };
+  require('./routes-write')(app, ctx);
+  require('./routes-data')(app, ctx);
 
   return app;
 }

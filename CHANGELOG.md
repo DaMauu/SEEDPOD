@@ -127,3 +127,8 @@
 
 ### 新增
 - Fastify 写接口：词条库增删改与批量状态、队列新增/动作/删除、流程规则 GET/PUT、配置读写（含范围校验），全部对接 SQLite；实测入队→发布→删除、流程合并、配置改 interval 均通过。
+
+## v0.7.3 · 2026-11-13
+
+### 新增
+- Fastify 接口补齐站点与日志：/api/sites（305 站与架构统计）、/api/site-config 读写、/api/credentials 列表与写入（cookie 仍 AES-GCM 密文）、/api/site-def(s)、/api/logs 与 /api/logs/stream（SSE）；写操作会落库并广播日志。实测站点配置写入、日志产生与读取均通。
