@@ -2631,7 +2631,10 @@
         return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
       }
       if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
-      if (r.type === "button") return h("button", { class: "btn ghost slim", type: "button", "data-btn": r.t }, r.v || r.t);
+      if (r.type === "button") return h("button", {
+        class: "btn ghost slim", type: "button", "data-btn": r.t,
+        onClick: function () { if (r.t === "发布标题") toast("标题按源站原样发布，不改字"); }
+      }, r.v || r.t);
       var isNum = r.type === "num";
       return h("input", { class: "input" + (isNum ? " num" : ""), type: isNum ? "number" : "text", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
     }
