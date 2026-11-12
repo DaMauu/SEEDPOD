@@ -1260,7 +1260,9 @@ html, body { overflow-x: hidden; }
 .rule-body .tpl-wrap .input { width: 100%; }
 .rule-body .tpl-eg { text-align: left; }
 .rule-actions { display: flex; justify-content: flex-end; padding-top: 10px; }
-.tpl-fixed { font-size: 12.5px; color: var(--muted); }
+.tpl-fixed { font-size: 12.5px; color: var(--muted); line-height:1.4; }
+.fixed-row{display:flex;align-items:center;gap:10px;min-height:34px}
+.fixed-row .btn{flex:0 0 auto}
 
 /* ============ 数据清单 ============ */
 .view[data-view="sources"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }

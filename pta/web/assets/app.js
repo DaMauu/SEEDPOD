@@ -2631,6 +2631,13 @@
         return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
       }
       if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
+      if (r.type === "fixed-btn") return h("div", { class: "fixed-row" }, [
+        h("span", { class: "tpl-fixed" }, r.v || "原生转载不修改"),
+        h("button", {
+          class: "btn ghost slim", type: "button", disabled: !!r.on,
+          onClick: function () { r.on = true; toast("已设为原生转载，标题按源站原样发布"); }
+        }, r.on ? "已应用" : "应用")
+      ]);
       if (r.type === "button") return h("button", {
         class: "btn ghost slim", type: "button", "data-btn": r.t,
         onClick: function () { if (r.t === "发布标题") toast("标题按源站原样发布，不改字"); }
