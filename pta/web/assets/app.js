@@ -887,7 +887,8 @@
     }
 
     /* 右侧详情交给 Vue，事件仍由 detail 上的委托处理 */
-    var qdState = window.Vue ? window.Vue.reactive({ item: null }) : null;
+    var qdState = window.Vue ? window.Vue.reactive({ item: null, tags: null, lastId: null }) : null;
+    window.__ptaQdTags = function (t) { if (qdState) qdState.tags = t; };
     function qdVNode(it) {
       var h = window.Vue.h;
       if (!qdState) return null;
@@ -942,7 +943,15 @@
           h("section", { class: "sd-card qd-desc-card" }, [
             h("h3", null, "简介"),
             h("textarea", { class: "input sd-note", id: "qd-desc", rows: 3 }, introText(it)),
-            h("div", { class: "qd-tags", id: "qd-tags" }, [h("span", { class: "soft" }, "点「生成草稿」后显示发布标签")])
+            h("div", { class: "qd-tags", id: "qd-tags" }, (function () {
+              var t = qdState.tags;
+              if (!t) return [h("span", { class: "soft" }, "点「生成草稿」后显示发布标签")];
+              var out = t.chips && t.chips.length
+                ? t.chips.map(function (c) { return h("em", { class: "chip np" }, c); })
+                : [h("span", { class: "soft" }, "没有识别出可用标签")];
+              if (t.warnings && t.warnings.length) out.push(h("div", { class: "qd-warn" }, "缺项：" + t.warnings.join("；")));
+              return out;
+            })())
           ]),
           h("section", { class: "sd-card qd-shots" }, [
             h("h3", null, "截图"),
@@ -987,7 +996,11 @@
       if (prevBtn) prevBtn.disabled = state.page <= 1;
       if (nextBtn) nextBtn.disabled = state.page >= pages;
       var it = MOCK.queue.filter(function (x) { return x.id === state.sel; })[0];
-      if (qdState) qdState.item = it || null;
+      if (qdState) {
+        var nid = it ? String(it.id) : null;
+        if (nid !== qdState.lastId) { qdState.lastId = nid; qdState.tags = null; }
+        qdState.item = it || null;
+      }
       if (it && it.server && !it.shotsLoaded && it.shotsCount > 0) {
         it.shotsLoaded = true;
         window.__ptaQueue.req("/" + encodeURIComponent(it.id)).then(function (res) {
@@ -1180,17 +1193,12 @@
             if ($("#qd-title")) $("#qd-title").value = d.title;
             if ($("#qd-sub")) $("#qd-sub").value = d.subtitle;
             if ($("#qd-desc")) $("#qd-desc").value = d.intro;
-            var tagBox = $("#qd-tags");
-            if (tagBox) {
+            if (window.__ptaQdTags) {
               var tgs = d.tags || {};
               var seenTag = {};
-              var chips = Object.keys(tgs).filter(function (k) { return tgs[k] && !seenTag[tgs[k]] && (seenTag[tgs[k]] = 1); }).map(function (k) {
-                return '<em class="chip np">' + escapeHtml(tgs[k]) + "</em>";
-              }).join("");
-              var warnHtml = (d.warnings && d.warnings.length)
-                ? '<div class="qd-warn">缺项：' + d.warnings.map(escapeHtml).join('；') + "</div>"
-                : "";
-              tagBox.innerHTML = (chips || '<span class="soft">没有识别出可用标签</span>') + warnHtml;
+              var chips = Object.keys(tgs).filter(function (k) { return tgs[k] && !seenTag[tgs[k]] && (seenTag[tgs[k]] = 1); })
+                .map(function (k) { return tgs[k]; });
+              window.__ptaQdTags({ chips: chips, warnings: (d.warnings || []).slice() });
             }
             var hint = d.categoryHint && d.categoryHint.mapped ? "，分类建议 " + d.categoryHint.purpose + "（" + d.categoryHint.ids.join(",") + "）" : "";
             toast((d.ready ? "草稿齐了" : "草稿有缺项：" + d.warnings.join(" · ")) + hint);
@@ -3049,20 +3057,37 @@
     syncFlowFromServer();
 
     var mask = $("#target-modal");
-    function renderTargetList(qv) {
+    var targetState = window.Vue ? window.Vue.reactive({ rows: [], empty: false, mounted: false }) : null;
+    function mountTargetList() {
+      if (!targetState || targetState.mounted) return;
       var box = $("#target-list");
       if (!box) return;
+      targetState.mounted = true;
+      var h = window.Vue.h;
+      window.Vue.createApp({
+        render: function () {
+          if (targetState.empty) return h("div", { class: "sites-empty" }, "没有匹配的站点");
+          return targetState.rows.map(function (x) {
+            return h("button", { class: "target-item" + (x.on ? " on" : ""), "data-host": x.host, type: "button", key: x.host }, [
+              h("span", { class: "ti-name" }, x.title),
+              h("span", { class: "ti-host" }, x.host)
+            ]);
+          });
+        }
+      }).mount(box);
+    }
+    function renderTargetList(qv) {
+      if (!targetState) return;
+      mountTargetList();
       var rows = MOCK.sitesList.filter(function (x) {
         if (!x.enabled || x.login !== "ok") return false;
         if (qv && ((x.title || "") + " " + x.name).toLowerCase().indexOf(qv) === -1) return false;
         return true;
       }).slice(0, 60);
-      box.innerHTML = rows.map(function (x) {
-        return '<button class="target-item' + (x.name === target ? " on" : "") + '" data-host="' + escapeHtml(x.name) + '">' +
-          '<span class="ti-name">' + escapeHtml(x.title || x.name) + "</span>" +
-          '<span class="ti-host">' + escapeHtml(x.name) + "</span>" +
-        "</button>";
-      }).join("") || '<div class="sites-empty">没有匹配的站点</div>';
+      targetState.empty = !rows.length;
+      targetState.rows = rows.map(function (x) {
+        return { host: x.name, title: x.title || x.name, on: x.name === target };
+      });
     }
 
     if (mask) {
