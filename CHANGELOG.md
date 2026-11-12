@@ -132,3 +132,8 @@
 
 ### 新增
 - Fastify 接口补齐站点与日志：/api/sites（305 站与架构统计）、/api/site-config 读写、/api/credentials 列表与写入（cookie 仍 AES-GCM 密文）、/api/site-def(s)、/api/logs 与 /api/logs/stream（SSE）；写操作会落库并广播日志。实测站点配置写入、日志产生与读取均通。
+
+## v0.7.4 · 2026-11-13
+
+### 新增
+- Fastify 下载器接口：增删改、/probe、/:id/test（探测并回写 lastProbe）、/:id/cats；密码读写走 AES-GCM 密文，qB 4.x/5.x 登录都兼容。实测 dl_002 探测通过（v5.1.2）并读出分类。

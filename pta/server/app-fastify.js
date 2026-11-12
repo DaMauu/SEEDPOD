@@ -161,6 +161,7 @@ async function build() {
   const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR };
   require('./routes-write')(app, ctx);
   require('./routes-data')(app, ctx);
+  require('./routes-qb')(app, ctx);
 
   return app;
 }
