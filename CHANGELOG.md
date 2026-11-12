@@ -154,3 +154,8 @@
 - Fastify 演练任务与发布预览：/api/tasks（只走本地步骤，不发请求）、/api/tasks/:id、/api/publish/preview。
 ### 修复
 - 抓取计划读不到搜索预设：site-search.local.json 外层是 {updatedAt, sites}，改成解包 sites；52pt 现在能给出 5 组分类、5 条搜索地址。
+
+## v0.7.8 · 2026-11-13
+
+### 新增
+- Fastify 剩余只读与业务接口：/api/sites/:host/search、/api/site-search、/api/catalog/check（本地查重不发请求）、/api/catalog/screen（按流程规则挑可发进队列）、/api/published、/api/library、/api/crawl/status，全部实测返回正常。
