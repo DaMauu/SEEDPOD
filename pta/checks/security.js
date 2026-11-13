@@ -3,6 +3,8 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const box = require(path.join(ROOT, 'server', 'secretbox.js'));
 const crypto = require('crypto');
+const fs = require('fs');
+const os = require('os');
 
 const results = [];
 function check(name, fn) {
@@ -32,6 +34,25 @@ check('密钥解析', () => {
   need(box.parseKey(crypto.randomBytes(32).toString('base64')).length === 32, 'base64 密钥没解对');
   need(box.parseKey('short') === null, '短密钥应判为无效');
   need(box.parseKey('') === null, '空密钥应判为无效');
+});
+
+check('密钥可从独立文件读取', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-key-'));
+  const key = crypto.randomBytes(32);
+  const file = path.join(dir, 'secret');
+  fs.writeFileSync(file, key.toString('hex') + '\n', { mode: 0o600 });
+  const prevFile = process.env.PTA_SECRET_FILE, prevEnv = process.env.PTA_SECRET;
+  delete process.env.PTA_SECRET;
+  process.env.PTA_SECRET_FILE = file;
+  try {
+    const got = box.loadKey(dir);
+    need(got.source === 'secret-file', '来源不对：' + got.source);
+    need(got.key.equals(key), 'key 不一致');
+  } finally {
+    if (prevFile === undefined) delete process.env.PTA_SECRET_FILE; else process.env.PTA_SECRET_FILE = prevFile;
+    if (prevEnv !== undefined) process.env.PTA_SECRET = prevEnv;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));

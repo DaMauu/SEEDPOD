@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.97 · 2026-11-14
+
+### 安全
+- 加密密钥支持 `PTA_SECRET_FILE`；线上 key 移到 `/etc/seedpod.secret`（0600 seedpod），`data/.secret` 已移除。
+- `scripts/load-cookies.js` 在未显式设置时默认读 `/etc/seedpod.secret`，避免手工脚本生成新 key。
+- security 检查新增“密钥从独立文件读取”，3/3。
+
 ## v0.7.96 · 2026-11-14
 
 ### 调整

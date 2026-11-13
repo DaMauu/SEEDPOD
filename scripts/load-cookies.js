@@ -6,6 +6,10 @@ const ROOT = path.resolve(__dirname, '..');
 const box = require(path.join(ROOT, 'pta', 'server', 'secretbox.js'));
 const { openDB } = require(path.join(ROOT, 'pta', 'server', 'db.js'));
 const DATA_DIR = path.resolve(process.env.PTA_DATA || path.join(ROOT, 'pta', 'data'));
+/* 密钥已移出 data 时，默认用服务器上的独立密钥文件 */
+if (!process.env.PTA_SECRET && !process.env.PTA_SECRET_FILE && fs.existsSync('/etc/seedpod.secret')) {
+  process.env.PTA_SECRET_FILE = '/etc/seedpod.secret';
+}
 
 const src = process.argv[2];
 if (!src || !fs.existsSync(src)) { console.log('用法：node scripts/load-cookies.js <cookies.json>'); process.exit(1); }

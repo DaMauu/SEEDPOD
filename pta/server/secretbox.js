@@ -1,4 +1,4 @@
-/* 凭据加密：AES-256-GCM。密钥来源优先级：环境变量 PTA_SECRET → data/.secret（自动生成，0600）。
+/* 凭据加密：AES-256-GCM。密钥来源优先级：PTA_SECRET → PTA_SECRET_FILE → data/.secret（自动生成，0600）。
    密钥与密文都不入库；解密接口永不回显明文。 */
 const crypto = require('crypto');
 const fs = require('fs');
@@ -19,6 +19,13 @@ function parseKey(raw) {
 function loadKey(dataDir) {
   const fromEnv = parseKey(process.env.PTA_SECRET);
   if (fromEnv) return { key: fromEnv, source: 'env' };
+  const secretFile = String(process.env.PTA_SECRET_FILE || '').trim();
+  if (secretFile) {
+    try {
+      const k = parseKey(fs.readFileSync(secretFile, 'utf8'));
+      if (k) return { key: k, source: 'secret-file' };
+    } catch (e) {}
+  }
   const file = path.join(dataDir, '.secret');
   try {
     const k = parseKey(fs.readFileSync(file, 'utf8'));
