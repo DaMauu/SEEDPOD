@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.91 · 2026-11-14
+
+### 新增
+- qB `torrents/add`：`qb.addTorrent` 用 multipart 把种子加进 qB，cookie 失效自动重登。
+- 发布接口 `POST /api/publish/:id` 真模式：取来源站 cookie → 下载种子 → 加 qB → 状态 published 并记录 `qb`；dryRun 仍不发请求。
+- `pta/checks/publish.js`：本地 mock qB + mock 种子源，3 条端到端断言。
+
+### 说明
+- 真发布仍默认关闭（`realPublish`）；目标站表单提交与发布后校验未开始。
+
 ## v0.7.90 · 2026-11-14
 
 ### 修复

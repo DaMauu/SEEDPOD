@@ -142,7 +142,8 @@ module.exports = function (app, ctx) {
         continue;
       }
       const item = { id: 'q_' + String(++seq).padStart(4, '0'), status: 'pending', createdAt: now(), title: title,
-        res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id };
+        res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
+        downloadUrl: it.downloadUrl || '', siteId: it.siteId || '' };
       db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
         .run(item.id, 'pending', title, JSON.stringify(item), item.createdAt, now());
       seenTitles.add(norm(title));

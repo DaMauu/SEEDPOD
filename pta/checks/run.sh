@@ -20,6 +20,7 @@ run audit audit.js
 run adapter adapter.js
 run security security.js
 run api api-v2.js
+run publish publish.js
 
 echo
 echo "==== build (Vite) ===="

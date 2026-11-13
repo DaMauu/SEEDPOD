@@ -187,6 +187,46 @@ async function qbCategories(d) {
   }
 }
 
-return { probeDownloader, qbCategories, dlPass, publicDl, normDlUrl, sanitizeDl };
+/* 把 .torrent 加进 qB。cookie 失效会重登一次；成功返回 Ok. */
+async function addTorrent(d, buf, opts) {
+  const o = opts || {};
+  if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
+  if (!buf || !buf.length) return { ok: false, error: 'EMPTY_TORRENT', message: '种子是空文件' };
+  const base = d.url;
+  function form() {
+    const f = new FormData();
+    f.append('torrents', new Blob([buf], { type: 'application/x-bittorrent' }), String(o.filename || 'upload.torrent'));
+    if (o.savePath) f.append('savepath', String(o.savePath));
+    if (o.category) f.append('category', String(o.category));
+    if (o.tags) f.append('tags', String(o.tags));
+    f.append('paused', o.paused ? 'true' : 'false');
+    f.append('autoTMM', 'false');
+    return f;
+  }
+  async function post(cookie) {
+    const headers = { referer: base, origin: base };
+    if (cookie) headers.cookie = cookie;
+    const res = await fetch(base + '/api/v2/torrents/add', {
+      method: 'POST', headers: headers, body: form(), redirect: 'manual', signal: AbortSignal.timeout(20000)
+    });
+    const text = (await res.text().catch(function () { return ''; })).trim();
+    return { res: res, text: text };
+  }
+  try {
+    let cookie = await qbLoginCookie(d);
+    let r = await post(cookie);
+    if ((r.res.status === 401 || r.res.status === 403) && cookie) {
+      cookie = await qbLoginCookie(d);
+      if (cookie) r = await post(cookie);
+    }
+    const okAdd = r.res.status === 200 && /^ok\.?$/i.test(r.text);
+    if (!okAdd) return { ok: false, error: 'QB_ADD_FAILED', status: r.res.status, message: r.text.slice(0, 200) || ('HTTP ' + r.res.status) };
+    return { ok: true, status: r.res.status, message: 'Ok.', authed: !!cookie };
+  } catch (e) {
+    return { ok: false, error: e && e.name === 'TimeoutError' ? 'TIMEOUT' : 'QB_ADD_FAILED', message: e && e.name === 'TimeoutError' ? '连接 qB 超时' : String(e && e.message || e).slice(0, 160) };
+  }
+}
+
+return { probeDownloader, qbCategories, addTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
 }
 module.exports = { makeQb };

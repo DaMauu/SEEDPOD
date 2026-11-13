@@ -60,7 +60,7 @@
 
 ### M2 · 发布与调度
 
-- [ ] qB `add torrent` 真发布，dryRun 只演练
+- [x] qB `add torrent` 真发布，dryRun 只演练
 - [ ] 发布后校验目标站
 - [ ] 调度器 + 暂停/恢复 + 失败记录
 
