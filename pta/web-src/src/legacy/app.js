@@ -2158,18 +2158,19 @@
       escapeHtml(key || "1") + '">' + (on ? "开" : "关") + "</button>";
   }
 
-  function chipRow(items, active, single, tips) {
+  function chipRow(items, active, single, tips, disabled) {
     return '<div class="cat-row pick-row"' + (single ? ' data-single="1"' : "") + ">" + items.map(function (c, i) {
       var on = (active || []).indexOf(c) >= 0;
       var tip = tips && tips[i] ? ' title="' + escapeHtml(tips[i]) + '"' : "";
-      return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '"' + tip + ">" + c + "</button>";
+      return '<button type="button" class="cat-chip' + (on ? " on" : "") + '" data-pick="' + c + '"' + tip + (disabled ? " disabled" : "") + ">" + c + "</button>";
     }).join("") + "</div>";
   }
 
   function setControl(r) {
     var k = r.k ? ' data-k="' + r.k + '"' : "";
+    var dis = r.todo ? " disabled" : "";
     if (r.type === "switch") {
-      return '<button class="switch' + ((r.on || r.v) ? " on" : "") + '" data-switch="' + (r.k || "") + '"><i></i></button>';
+      return '<button class="switch' + ((r.on || r.v) ? " on" : "") + '" data-switch="' + (r.k || "") + '"' + dis + '><i></i></button>';
     }
     if (r.type === "select") {
       var cur = r.v || "";
@@ -2177,24 +2178,24 @@
         var label = r.labels && r.labels[o] !== undefined ? r.labels[o] : o;
         return '<option value="' + o + '"' + (o === cur ? " selected" : "") + ">" + label + "</option>";
       }).join("");
-      return '<select class="select"' + k + ">" + opts + "</select>";
+      return '<select class="select"' + k + dis + ">" + opts + "</select>";
     }
     if (r.type === "textarea") {
-      return '<textarea class="input sd-note"' + k + (r.ph ? ' placeholder="' + escapeHtml(r.ph) + '"' : "") + ">" + escapeHtml(r.v || "") + "</textarea>";
+      return '<textarea class="input sd-note"' + k + dis + (r.ph ? ' placeholder="' + escapeHtml(r.ph) + '"' : "") + ">" + escapeHtml(r.v || "") + "</textarea>";
     }
     if (r.type === "num") {
       return '<input class="input num"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' +
         (r.range ? ' data-min="' + r.range[0] + '" data-max="' + r.range[1] + '"' : "") +
-        ' inputmode="numeric" placeholder="' + escapeHtml(r.ph || "") + '"><em class="num-warn"></em>';
+        ' inputmode="numeric" placeholder="' + escapeHtml(r.ph || "") + '"' + dis + '><em class="num-warn"></em>';
     }
     if (r.type === "fixed") {
       return '<span class="fixed-val' + (r.noTag ? " ref" : "") + '"' + k + ">" + escapeHtml(r.v || "系统锁定") + (r.noTag ? "" : "<i>系统固定</i>") + "</span>";
     }
     if (r.type === "custom") return r.html || "";
     if (r.type === "button") {
-      return '<button class="btn ghost slim" data-btn="' + escapeHtml(r.t) + '">' + escapeHtml(r.v) + "</button>";
+      return '<button class="btn ghost slim" data-btn="' + escapeHtml(r.t) + '"' + dis + '>' + escapeHtml(r.v) + "</button>";
     }
-    return '<input class="input"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' + (r.disabled ? " disabled" : "") + ' placeholder="' + escapeHtml(r.ph || "") + '">';
+    return '<input class="input"' + k + ' value="' + escapeHtml(r.v === undefined ? "" : r.v) + '"' + (r.disabled || r.todo ? " disabled" : "") + ' placeholder="' + escapeHtml(r.ph || "") + '">';
   }
 
   /* 请求层参数只在安全区间内允许，越界直接拦下，不做静默钳制 */
@@ -2218,9 +2219,10 @@
 
   function setRowsHtml(rows) {
     return rows.map(function (r) {
-      return '<div class="set-field' + (r.cls ? " " + r.cls : "") + '">' +
-        '<div class="lbl"><span>' + r.t + "</span>" +  + "</div>" +
-        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single, r.tips) : setControl(r)) + "</div>" +
+      var todo = !!r.todo;
+      return '<div class="set-field' + (r.cls ? " " + r.cls : "") + (todo ? " todo" : "") + '">' +
+        '<div class="lbl"><span>' + r.t + (todo ? ' <em class="todo-badge">未接</em>' : '') + "</span></div>" +
+        '<div class="ctl">' + (r.chips ? chipRow(r.chips, r.sel, r.single, r.tips, todo) : setControl(r)) + "</div>" +
       "</div>";
     }).join("");
   }
@@ -3165,6 +3167,7 @@
       [].forEach.call(item.querySelectorAll(".set-field"), function (f, m) {
         var r = rows[m];
         if (!r) return;
+        if (r.todo) return;
         if (r.chips) {
           var on = [].map.call(f.querySelectorAll(".cat-chip.on"), function (c) { return c.textContent; });
           if (on.length) parts.push(on.join("/"));
@@ -3297,6 +3300,7 @@
           [].forEach.call(body.querySelectorAll(".set-field"), function (f, m) {
             var r = set[idx].rows[m];
             if (!r) return;
+            if (r.todo) return;
             var s2 = f.querySelector("[data-switch]");
             if (s2) { r.on = s2.classList.contains("on"); return; }
             var pk = f.querySelector(".pick-row");
@@ -3333,6 +3337,7 @@
         [].forEach.call(body.querySelectorAll(".set-field"), function (f, m) {
           var r = set[idx].rows[m];
           if (!r) return;
+          if (r.todo) return;
           var s2 = f.querySelector("[data-switch]");
           if (s2) { r.on = s2.classList.contains("on"); return; }
           var pk = f.querySelector(".pick-row");

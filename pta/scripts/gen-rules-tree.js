@@ -32,6 +32,7 @@ Object.keys(TITLE).forEach(function (key) {
       else if (r.v) desc += ' 默认：' + r.v;
       if (r.ph) desc += ' 提示：' + r.ph;
       if (r.hint) desc += ' 说明：' + r.hint;
+      if (r.todo) desc += ' （未接）';
       lines.push(stem + (lastRow ? '└─ ' : '├─ ') + r.t + ' ' + desc);
     });
     lines.push('');

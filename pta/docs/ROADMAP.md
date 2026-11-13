@@ -55,8 +55,8 @@
 - [x] `catIdx` 到底后轮转，page 归零
 - [x] 每日上限服务端硬顶，界面只能调低
 - [x] 67 条规则逐条分诊：保留 8 / 标未接 50 / 删除 9（见 RULES-TRIAGE.md）
-- [ ] 按分诊表改 data.js + 界面禁用/删除
-- [ ] 分诊后 `audit-rules.js --fail` 进闸门
+- [x] 按分诊表改 data.js + 界面禁用/删除
+- [x] 分诊后 `audit-rules.js --fail` 进闸门
 
 ### M2 · 发布与调度
 

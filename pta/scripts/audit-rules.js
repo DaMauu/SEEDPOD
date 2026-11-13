@@ -1,6 +1,7 @@
 /* 扫流程页规则：data.js 里的每条 t，在 v2 服务端出现几次。
-   用法：node pta/scripts/audit-rules.js [--fail]
-   默认只报告；带 --fail 时存在 0 命中的规则就退出 1。 */
+   - todo:true 表示未接，不参与“缺读者”判定
+   - 别名：有些规则用字段名落地（发布到→targetSite，排除→rx.deny）
+   用法：node pta/scripts/audit-rules.js [--fail] */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -22,22 +23,25 @@ Object.keys(R).forEach(function (cat) {
   (R[cat] || []).forEach(function (g) {
     (g.rows || []).forEach(function (r) {
       if (!r || !r.t || r.type === 'section') return;
-      const name = String(r.t);
-      const n = text.split(name).length - 1;
-      rows.push({ cat: cat, group: g.name, name: name, n: n });
+      rows.push({ cat: cat, group: g.name, name: String(r.t), todo: !!r.todo });
     });
   });
 });
 
-const dead = rows.filter(r => r.n === 0);
-const weak = rows.filter(r => r.n > 0 && r.n < 2);
-console.log('规则总数 ' + rows.length + '，v2 服务端 0 命中 ' + dead.length + '，仅 1 次命中 ' + weak.length);
-if (dead.length) {
-  console.log('\n0 命中：');
-  dead.forEach(r => console.log('  [' + r.cat + '] ' + r.group + ' · ' + r.name));
-}
-if (weak.length) {
-  console.log('\n仅 1 次（可能只在注释/日志里出现）：');
-  weak.forEach(r => console.log('  [' + r.cat + '] ' + r.group + ' · ' + r.name + '（' + r.n + '）'));
-}
-if (process.argv.includes('--fail') && dead.length) process.exit(1);
+const ALIAS = { '发布到': ['targetSite'], '排除匹配': ['rx.deny'], '白名单匹配': ['rx.allow'] };
+const UI_ONLY = new Set(['测试匹配']);
+const count = name => text.split(name).length - 1;
+
+const keep = rows.filter(r => !r.todo);
+const todo = rows.filter(r => r.todo);
+const missing = keep.filter(function (r) {
+  if (UI_ONLY.has(r.name)) return false;
+  let n = count(r.name);
+  (ALIAS[r.name] || []).forEach(a => { n += count(a); });
+  return n === 0;
+});
+
+console.log('规则总数 ' + rows.length + '，保留 ' + keep.length + '，未接 ' + todo.length);
+console.log('保留规则缺读者 ' + missing.length);
+missing.forEach(r => console.log('  [' + r.cat + '] ' + r.group + ' · ' + r.name));
+if (process.argv.includes('--fail') && missing.length) process.exit(1);
