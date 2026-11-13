@@ -87,6 +87,16 @@ async function main() {
     });
   }
 
+  await check('总览数据块渲染', async () => {
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(700);
+    const stats = await page.locator('.stat-card').innerText();
+    need(/统计/.test(stats) && /抓取总数/.test(stats), '统计卡没渲染：' + stats.slice(0, 60));
+    need(await page.locator('#dash-logs').count() === 1, '实时日志块缺失');
+    need(await page.locator('#health-strip .status-hero').count() === 1, '系统状态没渲染');
+    need(await page.locator('#dash-pending').count() === 1, '待审核块缺失');
+  });
+
   await check('站点抽屉只有一个 #site-detail', async () => {
     await page.evaluate(() => { location.hash = '#sites'; });
     await page.waitForTimeout(500);

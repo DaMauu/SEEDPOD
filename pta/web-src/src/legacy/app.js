@@ -5306,7 +5306,6 @@
     renderDashboard();
     initRuntime();
     initDevFoot();
-    initDashboardVue();
     if (typeof loadSitesFromApi === "function") loadSitesFromApi();
     /* 停在总览页时每 30 秒刷一次真实状态，别让数字一直停在进页面那一刻 */
     setInterval(function () {

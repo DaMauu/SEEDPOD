@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.102 · 2026-11-15
+
+### 调整
+- 总览页拆进 `views/Dashboard.vue`：统计、实时日志、系统状态、最近发布、待审核；legacy 的 `initDashboardVue` 不再初始化。
+- 在线冒烟增加“总览数据块渲染”，smoke-live 17/17。
+
+### 检查
+- `run.sh` 全绿：smoke-live 17/17、adapter 21/21、security 3/3、api-v2 16/16、publish 4/4、scheduler 5/5、detect 5/5、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.101 · 2026-11-15
 
 ### 调整
