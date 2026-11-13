@@ -20,7 +20,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
 - 阶段：`pta/web` 当前是前端 demo/原型，用来快速验证交互与流程，不是终稿；前端定稿后按目标架构整体搬迁一次，不在 demo 上做大规模重构
-- 前端搬迁进行中：源码在 `pta/web-src`（Vite + Vue 3 + SFC 壳），`pta/web` 是旧版回退；迁移期改前端只改 `web-src`，`npm run build` 出 `pta/web/dist`
+- 前端已切到 Vite 构建：源码在 `pta/web-src`，线上服务 `pta/web/dist`；`pta/web` 只作旧版回退，不再改
 - 开发环境：Linux 为准；Windows 只用于聊天与备用，`run.cmd` 不是主入口
 
 ## 铁律（违反即为错误，不要协商）
@@ -73,7 +73,7 @@ git pull --ff-only && bash deploy.sh
 
 ## 干活方式
 
-- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（5 段：adapter 19 / smoke 23（5 条 demo 期遗留待重写）/ audit 全部交互点 / security 2 / api-v2 15）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（5 段：adapter 19 / smoke 23（5 条 demo 期遗留待重写）/ audit 全部交互点 / security 2 / api-v2 15 / web 构建 7 路由）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断

@@ -22,6 +22,17 @@ run security security.js
 run api api-v2.js
 
 echo
+echo "==== build (Vite) ===="
+if npm run build >/tmp/pta-build.log 2>&1; then
+  echo "构建通过"
+  run web build.js
+else
+  tail -5 /tmp/pta-build.log
+  echo "构建失败"
+  fail=1
+fi
+
+echo
 if [ "$fail" -eq 0 ]; then
   echo "ALL CHECKS PASSED"
 else

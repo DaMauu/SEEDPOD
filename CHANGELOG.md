@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.75 · 2026-11-14
+
+### 新增
+- `pta/checks/build.js`：起临时 v2 后端，用 dist 验证登录与七个路由。
+
+### 调整
+- 线上改为服务 `pta/web/dist`；`deploy.sh` 部署前自动 `npm ci && npm run build`。
+- `run.sh` 增加构建与 `build.js` 检查。
+- 旧 `pta/web` 保留回退，不再修改。
+
 ## v0.7.74 · 2026-11-14
 
 ### 新增

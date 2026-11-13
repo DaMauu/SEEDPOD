@@ -221,10 +221,12 @@ pta\checks\run.cmd
   现象：Dockerfile 的 `CMD` 还是 `server/app.js`，构建没装 fastify。
   验收：`docker compose up` 后 `/api/health` 回 `db: "sqlite"`，数据卷 `/data` 持久化。
 
-- [ ] **前端整体搬迁**（不用 root，进行中）
-  第一阶段已做：Vite 7 + Vue 3 工程、8 个页面 SFC、构建通过、临时 v2 后端实测七路由可切换。
-  第二阶段：逐页把 `src/legacy/app.js` 的逻辑换成 Vue（先 dashboard/logs，再 sites/queue，最后 crawl/sources/settings）；每页验收后切一页。
-  收尾：Fastify 静态根切到 `pta/web/dist`、Docker 两阶段构建、旧 `pta/web` 归档。
+- [x] **前端整体搬迁（结构 + 上线）**（不用 root）
+  已做：Vite 7 + Vue 3 工程、8 个页面 SFC、构建检查 7 路由、线上切到 `pta/web/dist`、deploy 自动构建。
+- [ ] **页面逻辑拆进 SFC**（不用 root，可选，逐步做）
+  现状：页面是 SFC 壳，逻辑仍在 `src/legacy/app.js`。后续修哪页就把那页逻辑搬进对应 SFC/组件，不再新写 legacy。
+- [ ] **Docker 两阶段构建**（不用 root）
+  构建阶段跑 `npm ci && npm run build`，运行阶段只带 dist + server + 生产依赖。
 
 ### P2
 

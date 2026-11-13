@@ -3,6 +3,10 @@
 # 排除：运行数据 data/、站点本地覆盖 sites-data.local.js、日志
 set -euo pipefail
 SRC=$(cd "$(dirname "$0")" && pwd)
+# 前端构建：有 web-src 就先装依赖再出 dist，失败直接停
+if [ -d "$SRC/pta/web-src" ]; then
+  ( cd "$SRC" && npm ci --no-audit --no-fund && npm run build )
+fi
 rsync -rc --delete \
   --exclude "data/" \
   --exclude "web/assets/sites-data.local.js" \

@@ -10,7 +10,11 @@ const { makeCrawl } = require('./crawl');
 
 const PORT = Number(process.env.PTA_PORT || 8090);
 const DATA_DIR = path.resolve(process.env.PTA_DATA || path.join(__dirname, '..', '..', 'data'));
-const WEB_DIR = path.resolve(process.env.PTA_WEB || path.join(__dirname, '..', 'web'));
+const WEB_DIR = (function () {
+  if (process.env.PTA_WEB) return path.resolve(process.env.PTA_WEB);
+  const dist = path.join(__dirname, '..', 'web', 'dist');
+  return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', 'web');
+})();
 const VERSION = require('../../package.json').version;
 const DEV_DATE = '2026-11-13';
 const PTA_USER = process.env.PTA_USER || '';
