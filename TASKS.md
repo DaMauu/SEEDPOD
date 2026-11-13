@@ -187,29 +187,26 @@ pta\checks\run.cmd
 
 ### P0
 
-- [ ] **筛选条件接进 v2**（不用 root）
-  现象：流程页的分辨率 / 体积 / 地区 / 简介 / 中字条件，线上 `/api/catalog/screen` 不生效，只认 `rx.deny/allow`。
-  位置：`pta/server/routes-misc.js` 的 screen 接口；逻辑参考旧 `pta/server/app.js` 的 `flowScreenRules()`。
-  验收：api 检查新增用例，构造条件不符的词条，确认进 skipped 并写 reason。
-- [ ] **package.json 补依赖**（不用 root）
-  现象：仓库没声明 `fastify` / `@fastify/static`，`start` 仍指向旧 `app.js`，没有 lock。
-  验收：清空 `node_modules` 后 `npm ci --omit=dev` 能起 `app-fastify.js`；`npm start` 起 v2。
-- [ ] **unit 安全**（root）
-  现象：`/etc/systemd/system/seedpod.service` 是 644，面板密码明文写在里面，且无 `User=`（root 运行）。
-  验收：密码移到 `/etc/seedpod.env`（0600），服务改专用用户，重启后 `/api/health` 正常。
+- [x] **筛选条件接进 v2**（不用 root）
+  已做：`routes-misc.js` 的 screen 接口读取 flow 的 `分辨率要求 / 体积范围 / 最大体积 / 必须带中字`，加上排除/白名单与同片去重；临时库实测 5 条词条 → 1 条进队列、4 条按分辨率/中字/体积/重复跳过。
+- [x] **package.json 补依赖**（不用 root）
+  已做：声明 `fastify` / `@fastify/static`，`start` 指向 `app-fastify.js`，`engines` 改 Node >=22，lock 已提交。
+- [x] **unit 安全**（root）
+  已做：密码移到 `/etc/seedpod.env`（0600 root:root），unit 用 `EnvironmentFile`，服务改 `seedpod` 用户；重启后 health 正常、登录 200。
 
-- [ ] **api 检查切到 v2**（不用 root）
-  现象：`pta/checks/api.js` 启动的是 `server/app.js`，45 条契约检查测的是旧后端，不是线上 v2。
-  验收：检查默认起 `app-fastify.js`，`/api/health` 回 `db: "sqlite"` 且 45 条全过；旧后端不再被检查引用。
-- [ ] **cookie 导入改走 SQLite**（不用 root）
-  现象：`scripts/load-cookies.js` 还在写 `credentials.json`，v2 只读 SQLite 的 credentials 表；按现有文档导入 cookie，线上看不到。
-  验收：脚本改为写库或调 `/api/credentials`；导入一条测试 cookie 后站点页显示 `hasCookie`，且不再写 JSON。
+- [ ] **api 检查切到 v2**（不用 root，下一批）
+  现象：`pta/checks/api.js` 启动的是 `server/app.js`，45 条契约检查测的是旧后端；它还依赖 Basic auth，v2 是 cookie 会话，`config / logs / tasks` 等接口行为也不同。
+  做法：另建 `api-v2.js`，覆盖 health、登录/会话/退出、401、词条读写、flow 读写、screen 条件、凭据不回显；`run.sh` 改跑 v2，旧 `api.js` 标 legacy。
+- [ ] **v2 补安全响应头**（不用 root，下一批）
+  现象：`app-fastify.js` 没有旧后端的 `nosniff / X-Frame-Options / Referrer-Policy / CSP`，api 检查里这条在 v2 会红。
+  验收：静态页与 API 响应带四项头，公网页面正常。
+- [x] **cookie 导入改走 SQLite**（不用 root）
+  已做：`load-cookies.js` 改为加密后 upsert `credentials` 表；临时库实测写入 1 条、解密值一致，不再写 JSON。
 
 ### P1
 
-- [ ] **部署权限与版本对齐**（root）
-  现象：`/opt/seedpod/pta` 归 `197609`、`package.json` 归 root；`deploy.sh` 里 `systemctl` 没 sudo；线上停在 0.7.64。
-  验收：`ocbot` 能跑 `bash deploy.sh`，线上版本与仓库一致。
+- [x] **部署权限与版本对齐**（root）
+  已做：`/opt/seedpod/pta` 与 `package.json` 改归 `ocbot`，`deploy.sh` 用 `sudo -n systemctl restart seedpod`；已部署到 0.7.70。
 - [ ] **旧 app.js 退休**（不用 root）
   现象：12 万字节仍在仓库，文件头还写着“生产仍跑旧服务”。
   验收：移到 `pta/server/legacy/` 或删除，`git grep app.js` 只剩文档引用；检查全绿。

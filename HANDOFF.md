@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-14 02:30（当前 v0.7.70 / 检查环境已迁到 Linux；smoke 还有 5 条 demo 期遗留断言）
+最后更新：2026-11-14 04:00（当前 v0.7.71 / unit 已降权、筛选与 cookie 已进 v2、线上已部署）
 
 ## 2026-11-14 检查环境迁到 Linux（v0.7.70）
 
@@ -10,6 +10,15 @@
 - 安全检查：`AUTH_DEMO` 改为 `demo-pass`，真实面板密码已从仓库与检查脚本移除；旧值仍在 git 历史，需轮换（见 TASKS）。
 - smoke 目前 18/23：5 条与当前 demo UI 不同步，已列进 TASKS，待前端搬迁时重写。
 - 线上仍是 0.7.64，部署未执行。
+
+## 2026-11-14 unit 降权与 v2 功能补齐（v0.7.71）
+
+- `seedpod.service` 改为 `User=seedpod` + `EnvironmentFile=/etc/seedpod.env`（0600），密码不再写在 unit；重启后 health 正常、登录 200。
+- `/opt/seedpod/data` 归 `seedpod`；`/opt/seedpod/pta`、`package.json` 归 `ocbot`，`deploy.sh` 用 `sudo -n systemctl restart seedpod`，已部署 0.7.70/0.7.71。
+- v2 `/api/catalog/screen` 接上分辨率、体积、中字、排除/白名单与同片去重；临时库实测 1 选 4 跳。
+- `scripts/load-cookies.js` 改为写 SQLite `credentials` 表，加密后 upsert，不再写 JSON。
+- `package.json` 声明 fastify/@fastify/static，`start` 指向 `app-fastify.js`，Node >=22。
+- 待做：v2 安全响应头、api-v2 契约检查、smoke 5 条遗留、Docker、前端搬迁。
 
 ## 架构与交付约束（长期有效，改之前先看）
 

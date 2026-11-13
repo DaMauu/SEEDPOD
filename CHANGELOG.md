@@ -1,5 +1,19 @@
 # 更新日志
 
+## v0.7.71 · 2026-11-14
+
+### 新增
+- v2 `/api/catalog/screen` 接入流程页的分辨率、体积、必须带中字条件，并补同片去重。
+- `scripts/load-cookies.js` 改为写 SQLite `credentials` 表（AES-256-GCM 密文）。
+
+### 调整
+- `package.json` 声明 `fastify` / `@fastify/static`，`start` 指向 `app-fastify.js`，`engines` 改 Node >=22。
+- unit 改用 `User=seedpod` + `/etc/seedpod.env`（0600）；`deploy.sh` 用 sudo 重启。
+- `/opt/seedpod` 代码目录归还部署账号，已部署 0.7.71。
+
+### 说明
+- v2 还缺安全响应头；api 检查仍测旧后端；smoke 18/23。均已在 TASKS 列明。
+
 ## v0.7.70 · 2026-11-14
 
 ### 新增
