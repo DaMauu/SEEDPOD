@@ -4996,6 +4996,7 @@
         if (res.status === 200 && res.body && res.body.ok) { AUTH.save(u, remember); return { ok: true }; }
         if (res.status === 503) return { ok: false, msg: "服务端还没有设置面板账号" };
         if (res.status === 401) return { ok: false, msg: "用户名或密码不对" };
+        if (res.status === 429) return { ok: false, msg: (res.body && res.body.error && res.body.error.message) || "尝试太多，稍后再试" };
         return { ok: false, msg: "登录失败，稍后再试" };
       }).catch(function () {
         if (u === AUTH_DEMO.user && p === AUTH_DEMO.pass) { AUTH.save(u, remember); return { ok: true }; }

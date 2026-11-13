@@ -98,6 +98,17 @@ async function main() {
     need(r.status === 401, '状态码是 ' + r.status);
   });
 
+  await check('连续失败会被限速', async () => {
+    let last = null;
+    for (let i = 0; i < 6; i++) {
+      last = await fetch(BASE + '/api/login', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ user: 'nobody', pass: 'wrong' })
+      });
+    }
+    need(last.status === 429, '第 6 次状态码是 ' + last.status);
+  });
+
   await check('登录发 HttpOnly 会话 cookie', async () => {
     const r = await login();
     need(r.ok, '登录失败 ' + r.status);

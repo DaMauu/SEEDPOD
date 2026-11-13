@@ -27,7 +27,7 @@ const PTA_USER = process.env.PTA_USER || '';
 const PTA_PASS = process.env.PTA_PASS || '';
 
 const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
-const SESSIONS = new Map();
+const LOGIN_FAILS = new Map();
 const SESSION_TTL = 12 * 3600 * 1000;
 
 function one(sql, ...args) { try { return db.prepare(sql).get(...args); } catch (e) { return null; } }
@@ -54,9 +54,17 @@ function parseCookies(req) {
 function sessionOk(req) {
   const tok = parseCookies(req).pta_sid;
   if (!tok) return false;
-  const exp = SESSIONS.get(tok);
-  if (!exp || exp < Date.now()) { SESSIONS.delete(tok); return false; }
+  const row = db.prepare('SELECT expires_at FROM sessions WHERE token = ?').get(tok);
+  if (!row) return false;
+  if (Number(row.expires_at) < Date.now()) {
+    db.prepare('DELETE FROM sessions WHERE token = ?').run(tok);
+    return false;
+  }
   return true;
+}
+function cookieSecure(req) {
+  return process.env.PTA_COOKIE_SECURE === '1' ||
+    String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
 }
 
 let logEvent = null;
@@ -77,18 +85,36 @@ async function build() {
   app.post('/api/login', async (req, reply) => {
     if (!PTA_USER || !PTA_PASS) return bad(reply, 'NO_ACCOUNT', '服务端还没有设置面板账号', 503);
     const b = body(req);
-    if (!b || b.user !== PTA_USER || b.pass !== PTA_PASS) return bad(reply, 'BAD_CREDENTIALS', '用户名或密码不对', 401);
+    const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || '').trim();
+    const key = ip + '|' + String((b && b.user) || '').slice(0, 60);
+    const nowMs = Date.now();
+    const rec = LOGIN_FAILS.get(key);
+    if (rec && rec.lockUntil > nowMs) {
+      return bad(reply, 'RATE_LIMITED', '尝试太多，' + Math.ceil((rec.lockUntil - nowMs) / 1000) + ' 秒后再试', 429);
+    }
+    if (!b || b.user !== PTA_USER || b.pass !== PTA_PASS) {
+      const r = rec && nowMs - rec.firstAt < 10 * 60000 ? rec : { count: 0, firstAt: nowMs, lockUntil: 0 };
+      r.count += 1;
+      if (r.count >= 5) { r.lockUntil = nowMs + 10 * 60000; r.count = 0; }
+      LOGIN_FAILS.set(key, r);
+      if (r.lockUntil > nowMs) return bad(reply, 'RATE_LIMITED', '尝试太多，10 分钟后再试', 429);
+      return bad(reply, 'BAD_CREDENTIALS', '用户名或密码不对', 401);
+    }
+    LOGIN_FAILS.delete(key);
     const tok = crypto.randomBytes(24).toString('hex');
-    SESSIONS.set(tok, Date.now() + SESSION_TTL);
-    reply.header('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (SESSION_TTL / 1000));
+    db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(nowMs);
+    db.prepare('INSERT INTO sessions(token, user, expires_at) VALUES(?, ?, ?)').run(tok, PTA_USER, nowMs + SESSION_TTL);
+    const secure = cookieSecure(req) ? '; Secure' : '';
+    reply.header('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax' + secure + '; Max-Age=' + (SESSION_TTL / 1000));
     if (logEvent) logEvent('info', '登录', '登录成功 · 用户 ' + PTA_USER);
     return ok(reply, { user: PTA_USER, token: tok });
   });
   app.get('/api/session', async (req, reply) => (sessionOk(req) ? ok(reply, { user: PTA_USER }) : reply.code(401).send({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } })));
   app.post('/api/logout', async (req, reply) => {
     const tok = parseCookies(req).pta_sid;
-    if (tok) SESSIONS.delete(tok);
-    reply.header('set-cookie', 'pta_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax');
+    if (tok) db.prepare('DELETE FROM sessions WHERE token = ?').run(tok);
+    const secure = cookieSecure(req) ? '; Secure' : '';
+    reply.header('set-cookie', 'pta_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax' + secure);
     return ok(reply, {});
   });
 

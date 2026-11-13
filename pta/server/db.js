@@ -27,6 +27,8 @@ function openDB(file) {
     CREATE INDEX IF NOT EXISTS idx_queue_status ON queue(status);
     CREATE TABLE IF NOT EXISTS published (id TEXT PRIMARY KEY, data TEXT NOT NULL, created_at TEXT);
     CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, level TEXT, src TEXT, msg TEXT);
+    CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user TEXT, expires_at INTEGER);
+    CREATE INDEX IF NOT EXISTS idx_sessions_exp ON sessions(expires_at);
     CREATE INDEX IF NOT EXISTS idx_logs_ts ON logs(ts);
   `);
   return db;

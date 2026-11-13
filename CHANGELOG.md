@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.95 · 2026-11-14
+
+### 安全
+- 登录失败限速：同一 IP+用户名 5 次失败锁 10 分钟，返回 429；前端显示服务端提示。
+- 会话落 SQLite `sessions` 表，重启服务不再全员掉线；过期会话自动清理。
+- cookie 支持 `Secure`：`PTA_COOKIE_SECURE=1` 或 `X-Forwarded-Proto: https` 时加。
+
+### 检查
+- api-v2 增加连续失败限速断言，16/16；publish 4/4；scheduler 5/5；adapter 21/21；security 2/2；build 7/7。
+
 ## v0.7.94 · 2026-11-14
 
 ### 新增

@@ -67,9 +67,9 @@
 
 ### M3 · 安全与部署
 
-- [ ] 登录限速与失败锁定
-- [ ] 会话落库
-- [ ] cookie Secure
+- [x] 登录限速与失败锁定
+- [x] 会话落库
+- [x] cookie Secure（env 或 X-Forwarded-Proto 触发）
 - [ ] 密钥与数据分离
 - [ ] Docker 两阶段构建 + compose 验证
 
