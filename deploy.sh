@@ -14,3 +14,10 @@ sleep 1
 systemctl is-active seedpod
 curl -s -m 5 http://127.0.0.1:8080/api/health || true
 echo
+
+# 部署完成推一条 Telegram；没配凭据就静默跳过
+if [ -f "$SRC/scripts/notify-tg.sh" ] && [ -f /etc/opencode-telegram-bot.env ]; then
+  VER=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' /opt/seedpod/package.json | head -1)
+  REV=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo "?")
+  bash "$SRC/scripts/notify-tg.sh" "SEEDPOD 已部署 v$VER ($REV)" >/dev/null 2>&1 || true
+fi

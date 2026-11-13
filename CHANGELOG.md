@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.62 · 2026-11-13
+
+### 调整
+- 出正式的双机流程：Windows 与 VPS 共用 main，开工前 `bash scripts/sync-check.sh` 对本地 / GitHub / VPS 三方提交，一致才 ff 拉取。
+- VPS 配好部署密钥，origin 改成 SSH，可直接 pull / push；仓库补回 deploy.sh（rsync 到 /opt/seedpod + 重启），部署完成推一条 Telegram。
+- AGENTS.md 的发版说明从 base64 逐个文件上传改成 pull + deploy.sh。
+
 ## v0.7.61 · 2026-11-13
 
 ### 调整

@@ -25,34 +25,26 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 5. 提交前必须 `pta\checks\run.cmd` 全绿（adapter / smoke / audit / security / api）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 
-## 发版（测试机 `/opt/seedpod` 不是 git 仓库）
+## 发版与同步（/opt/seedpod 是运行目录，/opt/seedpod-git 是仓库检出）
 
-必须一起发的文件，少一个就起不来或白屏：
-
-```
-pta/pta/server/app.js
-pta/pta/server/adapters/nexusphp.js
-pta/pta/server/secretbox.js
-pta/web/index.html
-pta/web/assets/app.js
-pta/web/assets/app.css
-pta/web/assets/data.js
-```
-
-发版走 base64 过 ssh（scp 在 22 端口抖动时经常整条失败），发完比 md5 再重启：
+两边同一套流程，全程只用 main，不新建分支：
 
 ```
-for f in pta/pta/server/app.js pta/pta/server/adapters/nexusphp.js pta/pta/server/secretbox.js \
-         pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css pta/web/assets/data.js; do
-  base64 -w0 "$f" | ssh pta "base64 -d > /opt/seedpod/$f"
-done
-md5sum pta/pta/server/app.js pta/web/assets/app.js
-ssh pta 'md5sum /opt/seedpod/pta/pta/server/app.js /opt/seedpod/pta/web/assets/app.js'
-ssh pta 'systemctl restart seedpod && systemctl is-active seedpod'
+# 开工前：对一遍本地 / GitHub / VPS 三方提交，一致才 ff 拉取
+bash scripts/sync-check.sh
+
+# 改完：提交并推送
+git add -A && git commit -m "0.7.xx 一句话说清改了什么" && git push origin main
+
+# 发版（在 /opt/seedpod-git 里跑）
+git pull --ff-only && bash deploy.sh
 ```
 
-改前端静态资源必须同步升 `pta/web/index.html` 里的 `?v=`（当前 `?v=20261110q`），否则 Cloudflare 继续发旧 js。
-不要覆盖 `pta/web/assets/sites-data.local.js`、`pta/data/*.local.*`、`data/` 下任何文件。
+- Windows 推 GitHub 要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
+- VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
+- `deploy.sh` 用 rsync 把 pta/ 同步到 /opt/seedpod 并重启服务，排除 `data/`、`web/assets/sites-data.local.js`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
+- 改前端静态资源必须同步升 `pta/web/index.html` 里的 `?v=`
+- 两边同时改会 push 失败（non-fast-forward），此时先 pull 再推，不要 force
 
 ## 常见故障对照
 
