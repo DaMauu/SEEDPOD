@@ -224,7 +224,7 @@
         },
         {
           "t": "分辨率要求",
-          "type": "select",
+          "type": "pick",
           "v": "1080p 及以上",
           "opts": [
             "不限",
@@ -235,7 +235,7 @@
         },
         {
           "t": "体积范围",
-          "type": "select",
+          "type": "pick",
           "v": "5 GB 起",
           "opts": [
             "不限",
@@ -262,7 +262,7 @@
         },
         {
           "t": "最大体积",
-          "type": "select",
+          "type": "pick",
           "v": "不限",
           "opts": [
             "不限",
@@ -291,7 +291,7 @@
         },
         {
           "t": "BDInfo",
-          "type": "select",
+          "type": "pick",
           "v": "必须存在且校验通过",
           "opts": [
             "必须存在且校验通过",
@@ -303,7 +303,8 @@
           "t": "截图至少几张",
           "type": "text",
           "v": "3",
-          "hint": "不够就不自动发"
+          "hint": "不够就不自动发",
+          "inline": true
         },
         {
           "t": "重复与失败",
@@ -311,7 +312,7 @@
         },
         {
           "t": "主站已有同片",
-          "type": "select",
+          "type": "pick",
           "v": "直接跳过（标记目标站已有）",
           "opts": [
             "直接跳过（标记目标站已有）",
@@ -321,7 +322,7 @@
         },
         {
           "t": "站点标限制分发",
-          "type": "select",
+          "type": "pick",
           "v": "标记禁转/限转，不发布",
           "opts": [
             "标记禁转/限转，不发布",
@@ -332,7 +333,7 @@
         },
         {
           "t": "不满足时",
-          "type": "select",
+          "type": "pick",
           "v": "转待确认",
           "opts": [
             "转待确认",
@@ -343,17 +344,20 @@
         {
           "t": "图片上传重试",
           "type": "text",
-          "v": "2 次"
+          "v": "2 次",
+          "inline": true
         },
         {
           "t": "发布失败重试",
           "type": "text",
-          "v": "2 次，间隔 5 分钟"
+          "v": "2 次，间隔 5 分钟",
+          "inline": true
         },
         {
           "t": "连续失败几次暂停该站",
           "type": "text",
-          "v": "5"
+          "v": "5",
+          "inline": true
         },
         {
           "t": "失败时推送通知",
@@ -428,7 +432,8 @@
         {
           "t": "测试匹配",
           "type": "custom",
-          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
+          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>",
+          "wide": true
         }
       ]
     },
@@ -562,11 +567,12 @@
           "t": "制作组",
           "type": "text",
           "v": "",
-          "ph": "留空按目标站默认"
+          "ph": "留空按目标站默认",
+          "inline": true
         },
         {
           "t": "来源",
-          "type": "select",
+          "type": "pick",
           "v": "Blu-ray",
           "opts": [
             "Blu-ray",
@@ -578,7 +584,7 @@
         },
         {
           "t": "媒介",
-          "type": "select",
+          "type": "pick",
           "v": "Blu-ray",
           "opts": [
             "Blu-ray",
@@ -591,7 +597,7 @@
         },
         {
           "t": "编码",
-          "type": "select",
+          "type": "pick",
           "v": "AVC",
           "opts": [
             "AVC",
@@ -605,11 +611,12 @@
           "t": "音轨",
           "type": "text",
           "v": "",
-          "ph": "留空按源种自动填"
+          "ph": "留空按源种自动填",
+          "inline": true
         },
         {
           "t": "字幕类型",
-          "type": "select",
+          "type": "pick",
           "v": "中文字幕",
           "opts": [
             "中文字幕",
@@ -626,7 +633,7 @@
       "rows": [
         {
           "t": "做种数至少",
-          "type": "select",
+          "type": "pick",
           "v": "5",
           "opts": [
             "不限",
@@ -640,7 +647,7 @@
         },
         {
           "t": "免费/优惠",
-          "type": "select",
+          "type": "pick",
           "v": "免费优先",
           "opts": [
             "不限制",
@@ -654,11 +661,12 @@
           "t": "单站同时下载",
           "type": "text",
           "v": "2",
-          "hint": "同一个站并行任务数，别把站刷爆"
+          "hint": "同一个站并行任务数，别把站刷爆",
+          "inline": true
         },
         {
           "t": "只在此机器下载",
-          "type": "select",
+          "type": "pick",
           "v": "自动挑磁盘最多的",
           "opts": [
             "自动挑磁盘最多的",

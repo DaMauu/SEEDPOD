@@ -2639,6 +2639,12 @@
         }, c);
       }));
       if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
+      if (r.type === "pick") return h("div", { class: "cat-row pick-row" }, (r.opts || []).map(function (o) {
+        return h("button", {
+          class: "cat-chip" + (r.v === o ? " on" : ""), type: "button",
+          onClick: function () { r.v = o; }
+        }, o);
+      }));
       if (r.type === "chips") return h("div", { class: "chip-row" }, (r.items || []).map(function (it) {
         return h("button", {
           class: "chip" + (it.on ? " on" : ""), type: "button",
@@ -2698,7 +2704,7 @@
                 }));
                 var r = c.rows[0];
                 if (r.type === "section") return h("div", { class: "set-field sec", key: r.t }, [h("div", { class: "sec-ttl" }, r.t)]);
-                return h("div", { class: "set-field" + (r.wide ? " wide" : ""), key: r.t }, [
+                return h("div", { class: "set-field" + (r.wide ? " wide" : "") + (r.type === "pick" || r.inline ? " pick" : ""), key: r.t }, [
                   h("div", { class: "lbl" }, [h("span", null, r.t)]),
                   h("div", { class: "ctl" }, [ctl(r)])
                 ]);
