@@ -1,5 +1,19 @@
 # 更新日志
 
+## v0.7.94 · 2026-11-14
+
+### 新增
+- `pta/server/scheduler.js`：定时抓取 → 送审 → 发布；默认关，间隔 30–1440 分钟（默认 60），可暂停，失败写 `lastError/lastResult`。
+- `GET/PATCH /api/scheduler`、`POST /api/scheduler/run`；设置页增加「调度」卡（开关、间隔、立即跑一次、上次结果）。
+- `pta/checks/scheduler.js`：开关、间隔校验、送审复用、发布失败记录，5 条断言。
+
+### 调整
+- 送审与发布核心抽成 `pta/server/screen.js` / `pta/server/publish.js`，路由和调度器共用，避免两份实现。
+- `run.sh` 增加 scheduler 检查；AGENTS 检查清单同步。
+
+### 检查
+- scheduler 5/5；publish 4/4；api-v2 15/15；adapter 21/21；security 2/2；build 7/7；规则体检 0 缺读者。
+
 ## v0.7.93 · 2026-11-14
 
 ### 新增

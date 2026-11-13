@@ -3409,8 +3409,32 @@
       var state = Vue.reactive({
         mode: (typeof uiMode === "function" ? uiMode() : "basic"),
         version: "读取中…",
-        user: "读取中…"
+        user: "读取中…",
+        sched: { on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: "", lastResult: null }
       });
+      function loadSched() {
+        if (!window.fetch || !/^https?:$/.test(location.protocol)) return;
+        fetch("api/scheduler", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+          if (j && j.ok && j.data) Object.assign(state.sched, j.data);
+        }).catch(function () {});
+      }
+      function saveSched() {
+        fetch("api/scheduler", {
+          method: "PATCH", credentials: "same-origin", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ on: !!state.sched.on, everyMinutes: Number(state.sched.everyMinutes) || 60 })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.ok) { Object.assign(state.sched, j.data); toast("调度设置已保存"); }
+          else toast((j && j.error && j.error.message) || "调度设置保存失败");
+        }).catch(function () { toast("调度设置保存失败"); });
+      }
+      function runSched() {
+        if (state.sched.running) return;
+        state.sched.running = true;
+        fetch("api/scheduler/run", { method: "POST", credentials: "same-origin" })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { state.sched.running = false; toast(j && j.ok ? "调度已跑完一轮" : ((j && j.error && j.error.message) || "调度跑失败")); loadSched(); })
+          .catch(function () { state.sched.running = false; toast("调度请求发不出去"); });
+      }
       Vue.createApp({
         methods: {
           saveMode: function () {
@@ -3453,6 +3477,19 @@
               fixedRow("会话", "HttpOnly cookie，服务进程内存里保存，重启服务需要重新登录", null, true),
               btnRow("退出登录", "退出", "清掉当前浏览器的会话 cookie", self.logout)
             ]),
+            card("调度", "按间隔自动跑一轮抓取/送审/发布；默认关，真抓真发仍受各自开关约束。",
+              h("button", { class: "btn primary slim set-save", type: "button", disabled: state.sched.running, onClick: self.runSched }, state.sched.running ? "跑着呢…" : "立即跑一次"), [
+              h("div", { class: "set-field" }, [
+                h("div", { class: "lbl" }, [h("span", null, "定时任务"), h("i", null, "关掉就是暂停")]),
+                h("div", { class: "ctl" }, [h("button", { class: "switch" + (state.sched.on ? " on" : ""), type: "button", onClick: function () { state.sched.on = !state.sched.on; self.saveSched(); } }, [h("i")])])
+              ]),
+              h("div", { class: "set-field" }, [
+                h("div", { class: "lbl" }, [h("span", null, "间隔")]),
+                h("div", { class: "ctl" }, [h("select", { class: "select", value: String(state.sched.everyMinutes), onChange: function (e) { state.sched.everyMinutes = Number(e.target.value) || 60; self.saveSched(); } },
+                  [30, 60, 120, 240].map(function (n) { return h("option", { value: String(n) }, n + " 分钟"); }))])
+              ]),
+              fixedRow("上次结果", state.sched.lastRunAt ? new Date(state.sched.lastRunAt).toLocaleString() + (state.sched.lastError ? " · " + state.sched.lastError : "") : "还没跑过", null, true)
+            ]),
             card("系统", "版本、存储和这台浏览器里的数据。", null, [
               fixedRow("当前版本", state.version, null, true),
               fixedRow("数据目录", "由服务端 PTA_DATA 指定，站点定义、词条库、队列、日志都在里面", null, true),
@@ -3466,6 +3503,7 @@
         state.version = meta.version || "—";
         state.user = meta.user || "—";
       });
+      loadSched();
     }
 
     mount();

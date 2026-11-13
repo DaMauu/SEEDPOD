@@ -200,6 +200,15 @@ async function build() {
   require('./routes-publish')(app, ctx);
   require('./routes-missing')(app, ctx);
 
+  const publisher = require('./publish').makePublisher(ctx);
+  ctx.publisher = publisher;
+  ctx.scheduler = require('./scheduler').makeScheduler(ctx, {
+    crawl: ctx.crawl,
+    screen: require('./screen'),
+    publish: publisher
+  });
+  ctx.scheduler.start();
+
   return app;
 }
 

@@ -21,6 +21,7 @@ run adapter adapter.js
 run security security.js
 run api api-v2.js
 run publish publish.js
+run scheduler scheduler.js
 
 echo
 echo "==== build (Vite) ===="
