@@ -198,6 +198,13 @@ pta\checks\run.cmd
   现象：`/etc/systemd/system/seedpod.service` 是 644，面板密码明文写在里面，且无 `User=`（root 运行）。
   验收：密码移到 `/etc/seedpod.env`（0600），服务改专用用户，重启后 `/api/health` 正常。
 
+- [ ] **api 检查切到 v2**（不用 root）
+  现象：`pta/checks/api.js` 启动的是 `server/app.js`，45 条契约检查测的是旧后端，不是线上 v2。
+  验收：检查默认起 `app-fastify.js`，`/api/health` 回 `db: "sqlite"` 且 45 条全过；旧后端不再被检查引用。
+- [ ] **cookie 导入改走 SQLite**（不用 root）
+  现象：`scripts/load-cookies.js` 还在写 `credentials.json`，v2 只读 SQLite 的 credentials 表；按现有文档导入 cookie，线上看不到。
+  验收：脚本改为写库或调 `/api/credentials`；导入一条测试 cookie 后站点页显示 `hasCookie`，且不再写 JSON。
+
 ### P1
 
 - [ ] **部署权限与版本对齐**（root）

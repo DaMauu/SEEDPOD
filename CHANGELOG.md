@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.68 · 2026-11-14
+
+### 调整
+- `TASKS.md` P0 追加两条搬迁遗留：api 检查仍起旧 `app.js`（45 条测的不是 v2）、`load-cookies.js` 仍写 `credentials.json`（v2 不读）。
+- `HANDOFF.md` 更新当前版本。
+
 ## v0.7.67 · 2026-11-14
 
 ### 新增
