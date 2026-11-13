@@ -42,6 +42,8 @@ const level = ref('all')
 const lastId = ref(0)
 const panel = ref(null)
 let es = null
+let timer = null
+let loaded = false
 
 const shown = computed(() => level.value === 'all' ? rows.value : rows.value.filter(r => r.lvl === level.value))
 
@@ -56,18 +58,30 @@ function push(r) {
   if (rows.value.length > 200) rows.value.splice(0, rows.value.length - 200)
   scrollDown()
 }
+function loggedIn() {
+  return !document.querySelector('#login-mask')
+}
+function visible() {
+  const v = document.querySelector('[data-view="logs"]')
+  return !!(v && !v.hidden)
+}
 async function load() {
+  if (loaded || !loggedIn()) return
   try {
-    const j = await (await fetch('/api/logs?limit=100')).json()
+    const r = await fetch('/api/logs?limit=100')
+    if (!r.ok) return
+    const j = await r.json()
     if (j.ok) {
       rows.value = (j.data || []).map(x => ({ id: x.id, t: x.t, lvl: x.lvl, tag: x.tag, msg: x.msg }))
       lastId.value = rows.value.length ? rows.value[rows.value.length - 1].id : 0
+      loaded = true
       scrollDown()
+      connect()
     }
   } catch (e) {}
 }
 function connect() {
-  if (!window.EventSource) return
+  if (es || !window.EventSource) return
   es = new EventSource('/api/logs/stream?last=' + lastId.value)
   es.onmessage = ev => {
     try {
@@ -81,6 +95,12 @@ function connect() {
       })
     } catch (e) {}
   }
+  es.onerror = () => { if (es) { es.close(); es = null } }
+}
+function ensure() {
+  if (!visible() || !loggedIn()) return
+  if (!loaded) load()
+  else connect()
 }
 function download() {
   const txt = rows.value.map(r => r.t + ' [' + r.lvl + '] ' + r.tag + ' ' + r.msg).join('\n')
@@ -93,6 +113,14 @@ function download() {
 }
 function clear() { rows.value = [] }
 
-onMounted(async () => { await load(); connect() })
-onUnmounted(() => { if (es) es.close() })
+onMounted(() => {
+  window.addEventListener('hashchange', ensure)
+  timer = setInterval(ensure, 1500)
+  ensure()
+})
+onUnmounted(() => {
+  window.removeEventListener('hashchange', ensure)
+  if (timer) clearInterval(timer)
+  if (es) es.close()
+})
 </script>
