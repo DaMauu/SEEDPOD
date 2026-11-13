@@ -6,6 +6,7 @@ const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const marksMod = require('./marks');
+const cursor = require('./cursor');
 
 const BUSY = new Set();
 
@@ -186,15 +187,16 @@ function makeCrawl(ctx) {
     rec.times = (rec.times || []).filter(function (t) { return t > nowMs - lim.windowMs; });
     rec.times.push(nowMs);
     rec.count = rec.times.length;
-    rec.page = rows.length ? page : 0;
+    const nc = cursor.nextCursor({ catCount: catMap.length, catIdx: catIdx, page: page, rows: rows.length, rotate: opts.rotate !== false });
+    rec.page = nc.page;
     rec.lastRows = rows.length;
-    rec.catIdx = catIdx;
+    rec.catIdx = nc.catIdx;
     rec.catId = ids[0] || '';
     state[host] = rec;
     saveState(state);
     return { host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
       categoryId: ids[0] || '', categories: catMap.length, added: out.added, updated: out.updated, skipped: out.skipped,
-      nextPage: rows.length ? page + 1 : 1, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };
+      nextPage: nc.page + 1, nextCategoryId: catMap.length ? catMap[Math.min(catMap.length - 1, nc.catIdx)].id : '', rotated: nc.rotated, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };
   }
 
   return { crawlOnce: crawlOnce };

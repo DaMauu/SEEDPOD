@@ -3013,7 +3013,7 @@
         fetch("/api/crawl/run", {
           method: "POST", credentials: "same-origin",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ host: planNav.host, catIdx: planNav.idx, limit: lim, dryRun: false })
+          body: JSON.stringify({ host: planNav.host, catIdx: planNav.idx, limit: lim, dryRun: false, rotate: false })
         }).then(function (r) { return r.json(); }).then(function (j) {
           c.disabled = false;
           if (!j || !j.ok) { toast((j && j.error && j.error.message) || "抓取失败"); return; }

@@ -19,7 +19,7 @@
 | # | 问题 | 位置 | 影响 | 修法 |
 | --- | --- | --- | --- | --- |
 | 1 | 禁转/限转不参与筛选 | `crawl.js:126` 写 `marks:{}`；`routes-misc.js` screen 不读 marks | 标了禁转的种子照样送审/发布，合规风险 | 抓取时按标题/标签写 marks；screen 先拦禁转/限转未满 7 天 |
-| 2 | 分类不轮转 | `crawl.js:79-83,185` | `catIdx` 原样回存、page 一直加，等于顺一个分类往深翻 | 一页到底后 `catIdx=(catIdx+1)%catMap.length`，page 归零 |
+| 2 | ✅ 分类不轮转 | 0.7.85 已修 | 到底轮转、末类回第一类；抓这一类不串类 |
 | 3 | 每日上限退化成每小时 | `routes-write.js:146-166` | `maxPerWindow` 可到 1000、`windowMinutes` 可到 1，默认一天 480 次 | 服务端按站规再压一层，界面只能调低不能调高 |
 | 4 | 发布只记账 | `routes-publish.js:54-84`；`qb.js` 只有探测/登录/分类 | real 模式只改状态写 published，没有 `add torrent` | 接 qB `torrents/add`，dryRun 只演练 |
 | 5 | 30+ 空开关 | `data.js`；`audit-rules.js` 首跑 59/67 零命中 | 页面像能配，后台不读，用户白配 | 逐条分诊：保留/实现/删除/标未接并禁用 |

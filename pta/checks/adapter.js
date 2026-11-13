@@ -236,6 +236,20 @@ check('翻页地址拼接', () => {
   need(adapters.withPage('https://x.example/torrents?name=a', 3).indexOf('page=3') > 0, '不带路面的地址也要能拼 page');
 });
 
+check('分类游标会轮转', () => {
+  const { nextCursor } = require(path.join(ROOT, 'server', 'cursor'));
+  let r = nextCursor({ catCount: 3, catIdx: 0, page: 2, rows: 50 });
+  need(r.catIdx === 0 && r.page === 2 && !r.rotated, '有下一页时不该换分类：' + JSON.stringify(r));
+  r = nextCursor({ catCount: 3, catIdx: 0, page: 5, rows: 0 });
+  need(r.catIdx === 1 && r.page === 0 && r.rotated, '空页应换到下一类：' + JSON.stringify(r));
+  r = nextCursor({ catCount: 3, catIdx: 2, page: 5, rows: 0 });
+  need(r.catIdx === 0 && r.page === 0, '最后一类应回到第一类：' + JSON.stringify(r));
+  r = nextCursor({ catCount: 3, catIdx: 1, page: 5, rows: 0, rotate: false });
+  need(r.catIdx === 1 && r.page === 0 && !r.rotated, '抓这一类不该换分类：' + JSON.stringify(r));
+  r = nextCursor({ catCount: 1, catIdx: 0, page: 5, rows: 0 });
+  need(r.catIdx === 0 && r.page === 0, '只有一类时原地归零：' + JSON.stringify(r));
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');
