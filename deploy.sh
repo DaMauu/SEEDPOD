@@ -19,5 +19,9 @@ echo
 if [ -f "$SRC/scripts/notify-tg.sh" ] && [ -f /etc/opencode-telegram-bot.env ]; then
   VER=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' /opt/seedpod/package.json | head -1)
   REV=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo "?")
-  bash "$SRC/scripts/notify-tg.sh" "SEEDPOD 已部署 v$VER ($REV)" >/dev/null 2>&1 || true
+  OUT=$(bash "$SRC/scripts/notify-tg.sh" "SEEDPOD 已部署 v$VER ($REV)" 2>&1 || true)
+  case "$OUT" in
+    *'"ok":true'*) echo "TG 通知已发 v$VER ($REV)" ;;
+    *) echo "TG 通知失败：$(printf '%s' "$OUT" | head -c 120)" ;;
+  esac
 fi
