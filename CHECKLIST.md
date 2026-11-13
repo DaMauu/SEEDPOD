@@ -10,9 +10,18 @@
    - 本地落后 → 脚本会自己 `pull --ff-only`
 2. 读 `HANDOFF.md` 的「现在是什么状态」，确认线上版本与最近改动。
 
+## 每轮自查四问（写在改完之前）
+
+1. 这条规则谁会读？服务端哪个文件、哪一行？
+2. 什么时候读？请求时、发布前、还是只存配置？
+3. 不设置会怎样？默认值是什么？
+4. 当前体量/结构是否越过切换线（单文件 2000 行、同文件改 3 次、契约对不上）？
+
+答不上来就不动代码；`node pta/scripts/audit-rules.js` 能查出服务端 0 命中的规则。
+
 ## 改完（在开发机）
 
-1. 前端改动同步升 `package.json` 版本与 `pta/web/index.html` 的 `?v=`
+1. 前端只改 `pta/web-src`，升 `package.json` 版本；Vite 产物带 hash，不再手改 `?v=`
 2. `CHANGELOG.md` 记一条（删除 / 新增 / 优化 / 调整 / 重排）
 3. `git add -A && git commit -m "0.7.xx 一句话" && git push origin main`
    - 只有 Windows 推送才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`

@@ -33,6 +33,10 @@ else
 fi
 
 echo
+echo "==== 规则体检（只报告，不拦） ===="
+node pta/scripts/audit-rules.js | head -5
+
+echo
 if [ "$fail" -eq 0 ]; then
   echo "ALL CHECKS PASSED"
 else
