@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.92 · 2026-11-14
+
+### 新增
+- qB 发布后校验：解析 `.torrent` 的 `info.name` 与 infohash，回查 `torrents/info`，把 `hash/state/progress/verified` 记到队列条目。
+- `publish.js` 增加第 4 条断言：mock qB 能查到种子并记录状态。
+
+### 修复
+- `parseTorrent` 加越界保护，修掉畸形 bencode 导致的死循环。
+
+### 检查
+- publish 4/4；api-v2 15/15；adapter 21/21；security 2/2；build 7/7；规则体检 0 缺读者。
+
 ## v0.7.91 · 2026-11-14
 
 ### 新增

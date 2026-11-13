@@ -114,11 +114,17 @@ module.exports = function (app, ctx) {
       save(it);
       return bad(reply, add.error || 'QB_ADD_FAILED', add.message || 'qB 添加失败', 502);
     }
+    const meta = qb.parseTorrent(got.buf);
+    const chk = await qb.findTorrent(dl, meta.hash, meta.name);
     it.status = 'published';
     it.publishedAt = now();
     it.approvedAt = it.approvedAt || now();
-    it.qb = { id: dl.id, name: dl.name || '', at: it.publishedAt, message: add.message || 'Ok.' };
-    it.pubMsg = '已加入 qB（' + (dl.name || dl.id) + '）；目标站提交未开始';
+    it.qb = { id: dl.id, name: dl.name || '', at: it.publishedAt, message: add.message || 'Ok.',
+      hash: meta.hash || '', torrentName: meta.name || '', state: chk.state || '',
+      progress: Number(chk.progress) || 0, verified: !!chk.found };
+    it.pubMsg = chk.found
+      ? '已加入 qB 并校验到种子（' + (chk.state || '未知') + '）'
+      : '已加入 qB，但列表里还没找到（可能延迟）';
     save(it);
     db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
       .run(it.id, JSON.stringify(it), it.publishedAt);
@@ -131,6 +137,6 @@ module.exports = function (app, ctx) {
         db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
       }
     }
-    return ok(reply, { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.' }, msg: it.pubMsg });
+    return ok(reply, { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' }, msg: it.pubMsg });
   });
 };

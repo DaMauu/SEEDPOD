@@ -2,6 +2,7 @@
    用法：node pta/checks/publish.js  退出码 0/1/2 */
 const { spawn } = require('child_process');
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -12,7 +13,9 @@ const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-pub-'));
 const BASE = 'http://127.0.0.1:' + PORT;
 const USER = 'check';
 const PASS = 'check-pass';
-const TORRENT = Buffer.from('d8:announce14:http://mock/ann4:infod4:name4:test6:lengthi1eee');
+const INFO = Buffer.from('d4:name4:test6:lengthi1ee');
+const HASH = crypto.createHash('sha1').update(INFO).digest('hex');
+const TORRENT = Buffer.concat([Buffer.from('d8:announce15:http://mock/ann4:info'), INFO, Buffer.from('e')]);
 
 const results = [];
 let cookie = '';
@@ -67,6 +70,11 @@ async function main() {
       return;
     }
     if (url === '/api/v2/app/version') { res.writeHead(200); res.end('v5.0.0'); return; }
+    if (url === '/api/v2/torrents/info') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify([{ hash: HASH, name: 'test', state: 'downloading', progress: 0 }]));
+      return;
+    }
     res.writeHead(404); res.end('');
   });
   const src = await listen(function (req, res) {
@@ -145,6 +153,8 @@ async function main() {
     need(/multipart\/form-data/i.test(lastAddType), 'qB 收到的不是 multipart：' + lastAddType);
     need(lastAddLen > 0, 'qB 收到的 body 为空');
     need(lastAddCookie.indexOf('SID=test-sid') >= 0, 'qB add 没带登录 cookie：' + lastAddCookie);
+    need(j.data.qb && j.data.qb.verified === true, '响应没有 qb.verified');
+    need(j.data.qb.hash === HASH, 'qb.hash 不对：' + j.data.qb.hash);
   });
 
   await check('发布后状态是 published 且带 qB 信息', async () => {
@@ -153,6 +163,13 @@ async function main() {
     need(j.data.status === 'published', '状态不是 published：' + j.data.status);
     need(j.data.qb && j.data.qb.id, '没有记录 qB 下载器');
     need(/已加入 qB/.test(j.data.pubMsg || ''), 'pubMsg 不对：' + j.data.pubMsg);
+  });
+
+  await check('发布后校验到 qB 种子', async () => {
+    const j = await (await fetchA(BASE + '/api/queue/' + item.data.id)).json();
+    need(j.data.qb && j.data.qb.verified === true, 'qb.verified 不是 true');
+    need(j.data.qb.hash === HASH, 'qb.hash 不对：' + j.data.qb.hash);
+    need(j.data.qb.state === 'downloading', 'qb.state 不对：' + j.data.qb.state);
   });
 
   child.kill();

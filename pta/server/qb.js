@@ -1,5 +1,6 @@
 /* qBittorrent 适配：探测、登录（4.x SID / 5.x QBT_SID_端口）、分类读取。从旧服务搬过来复用。 */
 const secretbox = require('./secretbox');
+const crypto = require('crypto');
 const path = require('path');
 function makeQb(DATA_DIR) {
 const KEYRING = secretbox.loadKey(DATA_DIR);
@@ -187,6 +188,76 @@ async function qbCategories(d) {
   }
 }
 
+/* 解析 .torrent 的 info.name 与 infohash（SHA-1 of info dict）。 */
+function parseTorrent(buf) {
+  let infoStart = -1, infoEnd = -1;
+  function parseAt(i) {
+    const c = String.fromCharCode(buf[i]);
+    if (c === 'i') {
+      const e = buf.indexOf(0x65, i);
+      if (e < 0) throw new Error('bad bencode');
+      return { v: Number(buf.slice(i + 1, e).toString()), end: e + 1 };
+    }
+    if (c === 'l') {
+      let p = i + 1; const a = [];
+      while (buf[p] !== 0x65) {
+        const r = parseAt(p);
+        if (r.end <= p) throw new Error('bad bencode');
+        a.push(r.v); p = r.end;
+      }
+      return { v: a, end: p + 1 };
+    }
+    if (c === 'd') {
+      let p = i + 1; const o = {};
+      while (buf[p] !== 0x65) {
+        const kr = parseAt(p); const vr = parseAt(kr.end);
+        if (vr.end <= p) throw new Error('bad bencode');
+        if (kr.v === 'info') { infoStart = kr.end; infoEnd = vr.end; }
+        o[kr.v] = vr.v; p = vr.end;
+      }
+      return { v: o, end: p + 1 };
+    }
+    const colon = buf.indexOf(0x3a, i);
+    if (colon < 0) throw new Error('bad bencode');
+    const len = Number(buf.slice(i, colon).toString());
+    if (!Number.isFinite(len) || len < 0) throw new Error('bad bencode');
+    const end = colon + 1 + len;
+    if (end > buf.length || end <= i) throw new Error('bad bencode');
+    return { v: buf.slice(colon + 1, end).toString('utf8'), end: end };
+  }
+  try {
+    const top = parseAt(0);
+    const info = (top.v && top.v.info) || {};
+    const hash = infoStart >= 0 ? crypto.createHash('sha1').update(buf.slice(infoStart, infoEnd)).digest('hex') : '';
+    return { name: info.name ? String(info.name) : '', hash: hash, size: Number(info.length) || 0 };
+  } catch (e) {
+    return { name: '', hash: '', size: 0 };
+  }
+}
+
+/* 在 qB 里找刚加的种子：先按 infohash，找不到再按名字。 */
+async function findTorrent(d, hash, name) {
+  try {
+    if (hash) {
+      const r = await qbGet(d, '/api/v2/torrents/info?hashes=' + encodeURIComponent(hash), '');
+      if (r.res.status === 200) {
+        const list = await r.res.json().catch(function () { return []; });
+        const t = Array.isArray(list) ? list[0] : null;
+        if (t) return { found: true, hash: t.hash || hash, name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0 };
+      }
+    }
+    const all = await qbGet(d, '/api/v2/torrents/info', '');
+    if (all.res.status === 200) {
+      const list = await all.res.json().catch(function () { return []; });
+      const t = (Array.isArray(list) ? list : []).filter(function (x) { return (hash && x.hash === hash) || (name && x.name === name); })[0];
+      if (t) return { found: true, hash: t.hash || hash || '', name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0 };
+    }
+    return { found: false };
+  } catch (e) {
+    return { found: false, error: String(e && e.message || e).slice(0, 120) };
+  }
+}
+
 /* 把 .torrent 加进 qB。cookie 失效会重登一次；成功返回 Ok. */
 async function addTorrent(d, buf, opts) {
   const o = opts || {};
@@ -227,6 +298,6 @@ async function addTorrent(d, buf, opts) {
   }
 }
 
-return { probeDownloader, qbCategories, addTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
+return { probeDownloader, qbCategories, addTorrent, parseTorrent, findTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
 }
 module.exports = { makeQb };
