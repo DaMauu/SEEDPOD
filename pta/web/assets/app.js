@@ -2680,9 +2680,23 @@
             ])
           ]),
           h("div", { class: "drawer-body" }, st.groups.map(function (g, gi) {
+            var cells = [];
+            (g.rows || []).forEach(function (r) {
+              var last = cells[cells.length - 1];
+              if (r.same && last && last.same === r.same) { last.rows.push(r); return; }
+              cells.push({ same: r.same || null, rows: [r] });
+            });
             return h("div", { class: "flow-group", key: g.name }, [
               h("div", { class: "flow-ttl" }, g.name),
-              h("div", { class: "set-fields" }, g.rows.map(function (r) {
+              h("div", { class: "set-fields" }, cells.map(function (c) {
+                if (c.rows.length > 1) return h("div", { class: "set-field pair", key: c.same }, c.rows.map(function (r) {
+                  if (r.type === "switch") return h("div", { class: "pair-item" }, [
+                    h("span", { class: "pair-lbl" }, r.t),
+                    h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")])
+                  ]);
+                  return h("div", { class: "pair-item grow" }, [ctl(r)]);
+                }));
+                var r = c.rows[0];
                 if (r.type === "section") return h("div", { class: "set-field sec", key: r.t }, [h("div", { class: "sec-ttl" }, r.t)]);
                 return h("div", { class: "set-field", key: r.t }, [
                   h("div", { class: "lbl" }, [h("span", null, r.t)]),

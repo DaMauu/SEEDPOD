@@ -168,6 +168,31 @@
         }
       ]
     }
+,
+    {
+      "name": "目标站状态",
+      "sum": "目标站已有什么",
+      "rows": [
+        {
+          "t": "目标站已有原盘",
+          "type": "select",
+          "v": "跳过不收",
+          "opts": [
+            "跳过不收",
+            "标重复后仍收"
+          ]
+        },
+        {
+          "t": "目标站只有 DIY",
+          "type": "select",
+          "v": "可发（标复核）",
+          "opts": [
+            "可发（标复核）",
+            "跳过"
+          ]
+        }
+      ]
+    }
   ],
   "pub": [
     {
@@ -175,18 +200,16 @@
       "sum": "发到哪 · 满足条件才发",
       "rows": [
         {
-          "t": "发到哪",
-          "type": "section"
-        },
-        {
           "t": "发布到",
           "type": "custom",
+          "same": "tgt",
           "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
           "hint": "所有库内资源都归到这个站"
         },
         {
           "t": "多目标站",
           "type": "switch",
+          "same": "tgt",
           "on": false,
           "hint": "还没接：先只支持一个目标站，这个开关先存配置"
         },
@@ -637,30 +660,6 @@
             "固定 C",
             "固定 D",
             "固定 E"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "目标站状态",
-      "sum": "目标站已有什么",
-      "rows": [
-        {
-          "t": "目标站已有原盘",
-          "type": "select",
-          "v": "跳过不收",
-          "opts": [
-            "跳过不收",
-            "标重复后仍收"
-          ]
-        },
-        {
-          "t": "目标站只有 DIY",
-          "type": "select",
-          "v": "可发（标复核）",
-          "opts": [
-            "可发（标复核）",
-            "跳过"
           ]
         }
       ]
