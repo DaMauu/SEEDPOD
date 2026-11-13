@@ -2405,6 +2405,18 @@ body::after {
 .flow-group .set-field.wide .rx-test{width:100%}
 .flow-group .set-field.wide .rx-test .input{width:auto;flex:1 1 auto;min-width:200px;height:28px;font-size:12px}
 .flow-group .set-field.wide .rx-test em{white-space:nowrap}
+/* 发布条件：去掉外框，行改成两列标签+控件 */
+.flow-group.cond{background:transparent;border:0;padding:0;margin:0 0 4px}
+.flow-group.cond .set-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+.flow-group.cond .set-field{grid-column:auto;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid #f3f5f8}
+.flow-group.cond .set-field .lbl{margin:0}
+.flow-group.cond .set-field.sec{grid-column:1/-1;padding:9px 0 3px;margin-top:2px;border-top:1px solid #e9ebef;border-bottom:0}
+.flow-group.cond .set-field.sec .sec-ttl{font-size:11px;color:#98a1ad}
+.flow-group.cond .set-field.pair{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+.flow-group.cond .set-field.wide{grid-column:1/-1}
+.flow-group.cond .set-field.pick{grid-column:auto}
+.flow-group.cond .set-field.pick .cat-chip{height:24px;padding:0 9px;line-height:24px}
+.flow-group.cond .set-field .ctl>.input{height:26px;max-width:180px}
 .flow-group .set-field.pick{grid-column:1/-1;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:10px;padding:3px 0}
 .flow-group .set-field.pick .lbl{margin:0}
 .flow-group .set-field.pick .ctl{width:100%}

@@ -2562,7 +2562,7 @@
               h("div", { class: "lbl" }, [h("span", null, "自动查重")]),
               h("div", { class: "ctl" }, [h("button", { class: "switch" + (st.autoDupe ? " on" : ""), type: "button", onClick: function () { st.autoDupe = !st.autoDupe; } }, [h("i")])])
             ]));
-            return h("div", { class: "flow-group", key: g.name }, [
+            return h("div", { class: "flow-group" + (g.cls ? " " + g.cls : ""), key: g.name }, [
               h("div", { class: "flow-ttl" }, g.name),
               h("div", { class: "set-fields" }, rows)
             ]);
@@ -2692,7 +2692,7 @@
               if (r.same && last && last.same === r.same) { last.rows.push(r); return; }
               cells.push({ same: r.same || null, rows: [r] });
             });
-            return h("div", { class: "flow-group", key: g.name }, [
+            return h("div", { class: "flow-group" + (g.cls ? " " + g.cls : ""), key: g.name }, [
               h("div", { class: "flow-ttl" }, g.name),
               h("div", { class: "set-fields" }, cells.map(function (c) {
                 if (c.rows.length > 1) return h("div", { class: "set-field pair", key: c.same }, c.rows.map(function (r) {
