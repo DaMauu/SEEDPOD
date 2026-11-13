@@ -19,6 +19,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 - 线上跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，监听 8080，数据在 `/opt/seedpod/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
+- 阶段：`pta/web` 当前是前端 demo/原型，用来快速验证交互与流程，不是终稿；前端定稿后按目标架构整体搬迁一次，不在 demo 上做大规模重构
 
 ## 铁律（违反即为错误，不要协商）
 

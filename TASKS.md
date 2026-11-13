@@ -220,6 +220,10 @@ pta\checks\run.cmd
   现象：Dockerfile 的 `CMD` 还是 `server/app.js`，构建没装 fastify。
   验收：`docker compose up` 后 `/api/health` 回 `db: "sqlite"`，数据卷 `/data` 持久化。
 
+- [ ] **前端定稿后整体搬迁**（不用 root）
+  范围：把 demo 验证过的页面与交互搬进目标架构；后端沿用 v2，交付走 Docker；前端是否引入构建工具（Vite / SFC）在搬迁前先写 `docs/DECISIONS.md`。
+  验收：七个路由功能对齐、检查全绿、`docker compose up` 能起、demo 遗留文件删除或归档。
+
 ### P2
 
 - [ ] **旧 JSON 归档**（不用 root）
