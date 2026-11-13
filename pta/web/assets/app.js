@@ -2477,11 +2477,21 @@
       fetch("api/flow", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
         var d = j && j.ok && j.data; if (!d) return;
         var saved = d.sets && Array.isArray(d.sets.dedupe) ? d.sets.dedupe : null;
-        if (saved) st.groups.forEach(function (g, gi) {
-          var rows = saved[gi];
-          if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
-          g.rows.forEach(function (r, ri) { var v = rows[ri] || {}; if (v.v !== undefined) r.v = v.v; if (v.on !== undefined) r.on = v.on; if (v.sel) r.sel = v.sel; });
-        });
+        if (saved) {
+          var byT = {};
+          saved.forEach(function (rows) {
+            if (!Array.isArray(rows)) return;
+            rows.forEach(function (v) { if (v && v.t) byT[v.t] = v; });
+          });
+          st.groups.forEach(function (g) {
+            g.rows.forEach(function (r) {
+              var v = byT[r.t]; if (!v) return;
+              if (v.v !== undefined) r.v = v.v;
+              if (v.on !== undefined) r.on = v.on;
+              if (v.sel) r.sel = v.sel;
+            });
+          });
+        }
       }).catch(function () {});
       fetch("api/config", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
         if (j && j.ok && j.data && j.data.user) st.autoDupe = !!j.data.user.autoDupe;
@@ -2576,13 +2586,14 @@
         var d = j && j.ok && j.data; if (!d) return;
         var saved = d.sets && Array.isArray(d.sets.pub) ? d.sets.pub : null;
         if (!saved) return;
-        st.groups.forEach(function (g, gi) {
-          var rows = saved[gi];
-          if (!Array.isArray(rows) || rows.length !== g.rows.length) return;
-          var byT = {};
+        var byT = {};
+        saved.forEach(function (rows) {
+          if (!Array.isArray(rows)) return;
           rows.forEach(function (v) { if (v && v.t) byT[v.t] = v; });
-          g.rows.forEach(function (r, ri) {
-            var v = byT[r.t] || rows[ri] || {};
+        });
+        st.groups.forEach(function (g) {
+          g.rows.forEach(function (r) {
+            var v = byT[r.t]; if (!v) return;
             if (v.v !== undefined) r.v = v.v;
             if (v.on !== undefined) r.on = v.on;
             if (v.sel) r.sel = v.sel;
