@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.83 · 2026-11-14
+
+### 新增
+- `scripts/goal-autoresume.py`：检查当前会话 goal，仅在“达到轮次上限”暂停时自动发 `resume`。
+- systemd timer `opencode-goal-resume.timer`，每 3 分钟一次；手动暂停/完成不动。
+
 ## v0.7.82 · 2026-11-14
 
 ### 新增
