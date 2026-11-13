@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.74 · 2026-11-14
+
+### 新增
+- `pta/web-src`：Vite 7 + Vue 3 工程，8 个页面 SFC（dashboard/sites/crawl/queue/sources/logs/changelog/settings）。
+- `npm run dev/build/preview` 脚本；构建输出 `pta/web/dist`（gitignore）。
+
+### 调整
+- 旧 `pta/web/index.html` 的页面结构机械搬进 SFC，样式与图片放 `web-src/public/assets`。
+- 迁移期逻辑仍走 `src/legacy/app.js`，页面壳先保持静态；旧版 `pta/web` 保留回退。
+
 ## v0.7.73 · 2026-11-14
 
 ### 新增

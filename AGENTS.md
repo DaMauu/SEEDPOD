@@ -20,6 +20,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
 - 阶段：`pta/web` 当前是前端 demo/原型，用来快速验证交互与流程，不是终稿；前端定稿后按目标架构整体搬迁一次，不在 demo 上做大规模重构
+- 前端搬迁进行中：源码在 `pta/web-src`（Vite + Vue 3 + SFC 壳），`pta/web` 是旧版回退；迁移期改前端只改 `web-src`，`npm run build` 出 `pta/web/dist`
 - 开发环境：Linux 为准；Windows 只用于聊天与备用，`run.cmd` 不是主入口
 
 ## 铁律（违反即为错误，不要协商）

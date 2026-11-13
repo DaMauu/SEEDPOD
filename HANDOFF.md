@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-14 05:10（当前 v0.7.73 / api-v2 15 条全过，smoke 5 条遗留仍在 TASKS）
+最后更新：2026-11-14 06:30（当前 v0.7.74 / Vite 工程与 8 个页面 SFC 已落地，逻辑仍走旧 app.js）
 
 ## 2026-11-14 检查环境迁到 Linux（v0.7.70）
 
@@ -19,6 +19,14 @@
 - `scripts/load-cookies.js` 改为写 SQLite `credentials` 表，加密后 upsert，不再写 JSON。
 - `package.json` 声明 fastify/@fastify/static，`start` 指向 `app-fastify.js`，Node >=22。
 - 待做：v2 安全响应头、api-v2 契约检查、smoke 5 条遗留、Docker、前端搬迁。
+
+## 2026-11-14 Vite + SFC 第一阶段（v0.7.74）
+
+- 新增 `pta/web-src`：Vite 7 + Vue 3，8 个页面组件（dashboard/sites/crawl/queue/sources/logs/changelog/settings）已从 `index.html` 机械拆分，样式与图片走 `public/assets`。
+- `npm run build` 输出 `pta/web/dist`（已 gitignore）；`npm run dev` 起 5173 并代理 `/api`。
+- 逻辑暂时仍由 `src/legacy/app.js` 驱动，页面 SFC 目前是静态壳；已用临时 v2 后端实测七个路由可切换、登录正常。
+- `pta/web` 旧版保留作回退，迁移期改前端只改 `web-src`；线上暂未切到 dist。
+- 下一步：逐页把 legacy 逻辑换成 Vue（先 dashboard/logs，再 sites/queue，最后 crawl/sources/settings）。
 
 ## 架构与交付约束（长期有效，改之前先看）
 
