@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.98 · 2026-11-14
+
+### 新增
+- `pta/server/detect.js`：按页面特征识别 NexusPHP / UNIT3D / Gazelle，特征不足回退 generic，不猜。
+- `pta/checks/detect.js`：5 条离线夹具（三引擎 + 不足 + 仅 URL 提示）。
+- `pta/docs/ADAPTERS.md`：引擎/站点实例/私有站点包三层结构，识别与上传表单映射流程。
+
+### 检查
+- detect 5/5；api-v2 16/16；adapter 21/21；security 3/3；publish 4/4；scheduler 5/5；build 7/7。
+
 ## v0.7.97 · 2026-11-14
 
 ### 安全
