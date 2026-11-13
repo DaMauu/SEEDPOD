@@ -2397,13 +2397,15 @@
       ]);
     }
     function presetRow(r) {
-      return h("div", { class: "preset-row", key: r.t }, [
-        h("div", { class: "lbl" }, r.t),
+      var todo = !!r.todo;
+      return h("div", { class: "preset-row" + (todo ? " todo" : ""), key: r.t }, [
+        h("div", { class: "lbl" }, [r.t, todo ? h("em", { class: "todo-badge" }, "未接") : null]),
         h("div", { class: "cat-row pick-row" }, (r.chips || []).map(function (c) {
           var on = (r.sel || []).indexOf(c) >= 0;
           return h("button", {
-            class: "cat-chip" + (on ? " on" : ""), type: "button",
+            class: "cat-chip" + (on ? " on" : ""), type: "button", disabled: todo,
             onClick: function () {
+              if (todo) return;
               var i = (r.sel || []).indexOf(c);
               r.sel = (r.sel || []).slice();
               if (i >= 0) r.sel.splice(i, 1); else r.sel.push(c);
@@ -2522,14 +2524,15 @@
       }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
     }
     function ctl(r) {
-      if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
+      var dis = !!r.todo;
+      if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", disabled: dis, onClick: function () { if (dis) return; r.on = !r.on; } }, [h("i")]);
       if (r.type === "select") {
         var nodes = curNodes(r);
-        return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
+        return h("select", { class: "select", value: r.v || "", disabled: dis, onChange: function (e) { r.v = e.target.value; } }, nodes);
       }
-      if (r.type === "num") return h("input", { class: "input num", type: "number", value: String(r.v || ""), onInput: function (e) { r.v = e.target.value; } });
+      if (r.type === "num") return h("input", { class: "input num", type: "number", value: String(r.v || ""), disabled: dis, onInput: function (e) { r.v = e.target.value; } });
       if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
-      return h("input", { class: "input", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
+      return h("input", { class: "input", value: r.v || "", placeholder: r.ph || "", disabled: dis, onInput: function (e) { r.v = e.target.value; } });
     }
     function curNodes(r) {
       var nodes = [];
@@ -2542,8 +2545,9 @@
     }
 
     function field(r, key) {
-      return h("div", { class: "set-field", key: key }, [
-        h("div", { class: "lbl" }, [h("span", null, r.t)]),
+      var todo = !!r.todo;
+      return h("div", { class: "set-field" + (todo ? " todo" : ""), key: key }, [
+        h("div", { class: "lbl" }, [h("span", null, r.t), todo ? h("em", { class: "todo-badge" }, "未接") : null]),
         h("div", { class: "ctl" }, [ctl(r)])
       ]);
     }
@@ -2629,28 +2633,30 @@
       }).catch(function () { st.saving = false; toast("保存请求没发出去"); });
     }
     function ctl(r) {
+      var dis = !!r.todo;
       if (r.chips) return h("div", { class: "cat-row pick-row" }, r.chips.map(function (c) {
         var on = (r.sel || []).indexOf(c) >= 0;
         return h("button", {
-          class: "cat-chip" + (on ? " on" : ""), type: "button",
+          class: "cat-chip" + (on ? " on" : ""), type: "button", disabled: dis,
           onClick: function () {
+            if (dis) return;
             var i = (r.sel || []).indexOf(c);
             r.sel = (r.sel || []).slice();
             if (i >= 0) r.sel.splice(i, 1); else r.sel.push(c);
           }
         }, c);
       }));
-      if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
+      if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", disabled: dis, onClick: function () { if (dis) return; r.on = !r.on; } }, [h("i")]);
       if (r.type === "pick") return h("div", { class: "cat-row pick-row" }, (r.opts || []).map(function (o) {
         return h("button", {
-          class: "cat-chip" + (r.v === o ? " on" : ""), type: "button",
-          onClick: function () { r.v = o; }
+          class: "cat-chip" + (r.v === o ? " on" : ""), type: "button", disabled: dis,
+          onClick: function () { if (dis) return; r.v = o; }
         }, o);
       }));
       if (r.type === "chips") return h("div", { class: "chip-row" }, (r.items || []).map(function (it) {
         return h("button", {
-          class: "chip" + (it.on ? " on" : ""), type: "button",
-          onClick: function () { it.on = !it.on; }
+          class: "chip" + (it.on ? " on" : ""), type: "button", disabled: dis,
+          onClick: function () { if (dis) return; it.on = !it.on; }
         }, it.t);
       }));
       if (r.type === "select") {
@@ -2659,7 +2665,7 @@
         (r.opts || []).forEach(function (o) {
           nodes.push(h("option", { value: o }, r.labels && r.labels[o] !== undefined ? r.labels[o] : o));
         });
-        return h("select", { class: "select", value: r.v || "", onChange: function (e) { r.v = e.target.value; } }, nodes);
+        return h("select", { class: "select", value: r.v || "", disabled: dis, onChange: function (e) { r.v = e.target.value; } }, nodes);
       }
       if (r.type === "custom") return h("div", { innerHTML: r.html || "" });
       if (r.type === "fixed") return h("span", { class: "tpl-fixed" }, r.v || "");
@@ -2675,7 +2681,7 @@
         onClick: function () { if (r.t === "发布标题") toast("标题按源站原样发布，不改字"); }
       }, r.v || r.t);
       var isNum = r.type === "num";
-      return h("input", { class: "input" + (isNum ? " num" : ""), type: isNum ? "number" : "text", value: r.v || "", placeholder: r.ph || "", onInput: function (e) { r.v = e.target.value; } });
+      return h("input", { class: "input" + (isNum ? " num" : ""), type: isNum ? "number" : "text", value: r.v || "", placeholder: r.ph || "", disabled: dis, onInput: function (e) { r.v = e.target.value; } });
     }
 
     Vue.createApp({
@@ -2698,16 +2704,18 @@
               h("div", { class: "flow-ttl" }, g.name),
               h("div", { class: "set-fields" }, cells.map(function (c) {
                 if (c.rows.length > 1) return h("div", { class: "set-field pair", key: c.same }, c.rows.map(function (r) {
-                  if (r.type === "switch") return h("div", { class: "pair-item" }, [
-                    h("span", { class: "pair-lbl" }, r.t),
-                    h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")])
+                  var todo = !!r.todo;
+                  if (r.type === "switch") return h("div", { class: "pair-item" + (todo ? " todo" : "") }, [
+                    h("span", { class: "pair-lbl" }, [r.t, todo ? h("em", { class: "todo-badge" }, "未接") : null]),
+                    h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", disabled: todo, onClick: function () { if (todo) return; r.on = !r.on; } }, [h("i")])
                   ]);
-                  return h("div", { class: "pair-item grow" }, [ctl(r)]);
+                  return h("div", { class: "pair-item grow" + (todo ? " todo" : "") }, [ctl(r)]);
                 }));
                 var r = c.rows[0];
                 if (r.type === "section") return h("div", { class: "set-field sec", key: r.t }, [h("div", { class: "sec-ttl" }, r.t)]);
-                return h("div", { class: "set-field" + (r.wide ? " wide" : "") + (r.type === "pick" || r.inline ? " pick" : ""), key: r.t }, [
-                  h("div", { class: "lbl" }, [h("span", null, r.t)]),
+                var todo = !!r.todo;
+                return h("div", { class: "set-field" + (r.wide ? " wide" : "") + (r.type === "pick" || r.inline ? " pick" : "") + (todo ? " todo" : ""), key: r.t }, [
+                  h("div", { class: "lbl" }, [h("span", null, r.t), todo ? h("em", { class: "todo-badge" }, "未接") : null]),
                   h("div", { class: "ctl" }, [ctl(r)])
                 ]);
               }))
