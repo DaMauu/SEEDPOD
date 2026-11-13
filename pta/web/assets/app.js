@@ -2698,7 +2698,7 @@
                 }));
                 var r = c.rows[0];
                 if (r.type === "section") return h("div", { class: "set-field sec", key: r.t }, [h("div", { class: "sec-ttl" }, r.t)]);
-                return h("div", { class: "set-field", key: r.t }, [
+                return h("div", { class: "set-field" + (r.wide ? " wide" : ""), key: r.t }, [
                   h("div", { class: "lbl" }, [h("span", null, r.t)]),
                   h("div", { class: "ctl" }, [ctl(r)])
                 ]);

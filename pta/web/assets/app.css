@@ -2401,6 +2401,7 @@ body::after {
 .flow-group .chip{border:1px solid #e2e5ea;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;color:#5b6573;cursor:pointer;line-height:1.2}
 .flow-group .chip.on{background:#eef5ff;border-color:#bfd8ff;color:#1d4ed8}
 .flow-group .set-field.pair{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:2px 0 4px}
+.flow-group .set-field.wide{grid-column:1/-1}
 .flow-group .set-field.pair .pair-item{display:flex;align-items:center;gap:6px;flex:0 0 auto}
 .flow-group .set-field.pair .pair-item.grow{flex:0 1 430px;max-width:430px;min-width:0}
 .flow-group .set-field.pair .pair-lbl{font-size:12px;color:#5b6573}
