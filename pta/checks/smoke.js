@@ -4,19 +4,8 @@
 const path = require('path');
 const fs = require('fs');
 
-function loadPlaywright() {
-  const tries = [
-    process.env.PTA_PW,
-    path.join(__dirname, 'node_modules', 'playwright-core'),
-    path.join(process.env.TEMP || '', 'pta-shot', 'node_modules', 'playwright-core'),
-    'playwright-core'
-  ].filter(Boolean);
-  for (const t of tries) {
-    try { return require(t); } catch (e) {}
-  }
-  console.error('找不到 playwright-core：设置 PTA_PW 指向该模块目录');
-  process.exit(2);
-}
+const { loadPlaywright, launchChromium } = require('./browser');
+
 const { chromium } = loadPlaywright();
 
 const ROOT = path.resolve(__dirname, '..');
@@ -38,12 +27,14 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
 
 async function main() {
   need(fs.existsSync(path.join(WEB, 'index.html')), '页面不存在：' + WEB);
-  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const browser = await launchChromium(chromium);
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
 
   await page.addInitScript(() => { window.__PTA_TEST_HOOKS__ = true; });
+  await page.route('**/sites-data.local.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB }));
+  await page.route('**/api/health', r => r.abort());
   const FIX_QUEUE = [
     { id: '101', title: 'Fixture Alpha 2020 1080p Blu-ray AVC TrueHD 7.1', cn: '夹具甲', year: 2020, res: '1080p', size: '22.10 GB', imdb: '5.4', site: 'demo-a.example', status: 'pending', check: '未查', checkCls: 'gray' },
     { id: '102', title: 'Fixture Beta 1997 1080p Blu-ray AVC DTS-HD MA 5.1', cn: '夹具乙', year: 1997, res: '1080p', size: '44.14 GB', imdb: '8.0', site: 'demo-a.example', status: 'pending', check: '未查', checkCls: 'gray' }
@@ -61,10 +52,9 @@ async function main() {
     await page.waitForTimeout(150);
   }
   async function open(hash) {
-    await page.route('**/sites-data.local.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB }));
-    await page.route('**/api/health', r => r.abort());
-    await page.goto(BASE + (hash || ''));
-    await page.waitForTimeout(650);
+    await page.goto(BASE + (hash || ''), { waitUntil: 'load' });
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForTimeout(600);
   }
 
   await open('');
@@ -89,7 +79,7 @@ async function main() {
 
   await check('登录后进入面板', async () => {
     await page.fill('#login-user', 'admin');
-    await page.fill('#login-pass', 'seedpod-6x2f');
+    await page.fill('#login-pass', 'demo-pass');
     await page.click('#login-submit');
     await page.waitForTimeout(500);
     need((await page.locator('#login-mask').count()) === 0, '登录页没有消失');
@@ -112,10 +102,10 @@ async function main() {
     await open('#sites');
     await page.locator('.site-item').first().click();
     await page.waitForTimeout(250);
-    need(await page.locator('.site-expand').isVisible(), '详情没展开');
-    await page.click('.site-expand button[data-settab="override"]');
+    need(await page.locator('#site-detail').isVisible(), '详情没展开');
+    await page.click('#site-detail button[data-settab="override"]');
     await page.waitForTimeout(200);
-    const btn = page.locator('.site-expand button[data-btn]').first();
+    const btn = page.locator('#site-detail button[data-btn]').first();
     await btn.click();
     await page.waitForTimeout(250);
     need(await page.locator('#catmap-modal').isVisible(), '分类映射弹窗没打开');
@@ -126,7 +116,7 @@ async function main() {
     need(picked > 0, '自动猜没有填任何值');
     await page.click('#cm-ok');
     await page.waitForTimeout(300);
-    const label = await page.locator('.site-expand button[data-btn]').first().textContent();
+    const label = await page.locator('#site-detail button[data-btn]').first().textContent();
     need(/已配/.test(label), '保存后按钮没显示已配：' + label);
   });
 

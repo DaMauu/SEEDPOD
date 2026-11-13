@@ -4,18 +4,18 @@
 
 ## 开工
 
-1. `cd SEEDPOD && bash scripts/sync-check.sh`
+1. `cd SEEDPOD && bash scripts/sync-check.sh`（Linux 开发机；Windows 仅备用）
    - 输出「三方已一致」→ 直接开工
    - 输出「VPS 和 GitHub 不一致」或「VPS 有未提交改动」→ 停下，先问作者以谁为准
    - 本地落后 → 脚本会自己 `pull --ff-only`
 2. 读 `HANDOFF.md` 的「现在是什么状态」，确认线上版本与最近改动。
 
-## 改完（在 Windows 这边）
+## 改完（在开发机）
 
 1. 前端改动同步升 `package.json` 版本与 `pta/web/index.html` 的 `?v=`
 2. `CHANGELOG.md` 记一条（删除 / 新增 / 优化 / 调整 / 重排）
 3. `git add -A && git commit -m "0.7.xx 一句话" && git push origin main`
-   - 推送要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
+   - 只有 Windows 推送才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 
 ## 发版
 

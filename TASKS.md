@@ -213,9 +213,15 @@ pta\checks\run.cmd
 - [ ] **旧 app.js 退休**（不用 root）
   现象：12 万字节仍在仓库，文件头还写着“生产仍跑旧服务”。
   验收：移到 `pta/server/legacy/` 或删除，`git grep app.js` 只剩文档引用；检查全绿。
-- [ ] **检查脚本跨平台**（不用 root）
-  现象：`smoke.js` / `audit.js` 写死 `channel: 'msedge'`；Linux headless 下下载用例不触发。
-  验收：加 `PTA_CHANNEL` 环境变量与 headless 兜底，补 Linux `run.sh`；VPS 上五段可跑（平台跳过的用例要写明）。
+- [x] **检查脚本跨平台**（不用 root）
+  已做：新增 `browser.js`（Linux 默认 Chromium 新 headless，Windows 可 `PTA_CHANNEL=msedge`）、`run.sh`、playwright 进 devDependencies；下载用例在 Linux 已通过。
+  剩余：smoke 23 条里 5 条与当前 demo UI 不同步（`#site-detail` 重复、设置页 runMode 已移除、`.rule-item` 结构变了、上传缩略图选择器、下载器连接测试），先记为下一条。
+- [ ] **smoke 5 条遗留断言重写**（不用 root）
+  清单：站点展开（重复 id）、请求间隔越界（设置页已无 runMode）、流程页拉取卡（`.rule-item` 不存在）、待审核缩略图（选择器/上传路径）、下载器连接测试。
+  验收：`run.sh` 五段全绿，或明确标 skip 并写原因；不要为了让检查变色而删断言。
+- [ ] **轮换面板密码**（root）
+  现象：真实 `PTA_PASS` 曾写进 `pta/web/assets/app.js` 与检查脚本，git 历史里仍能查到。
+  验收：systemd 改新密码（或迁到 `/etc/seedpod.env` 0600），面板用新密码能登录；旧值作废。
 - [ ] **Docker 对齐 v2**（不用 root）
   现象：Dockerfile 的 `CMD` 还是 `server/app.js`，构建没装 fastify。
   验收：`docker compose up` 后 `/api/health` 回 `db: "sqlite"`，数据卷 `/data` 持久化。

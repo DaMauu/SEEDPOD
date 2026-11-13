@@ -4926,7 +4926,7 @@
   /* ---------- 登录 ---------- */
   var AUTH_KEY = "pta.session";
   /* 演示用的本地账号；正式版改成 POST /api/login，由服务端校验 */
-  var AUTH_DEMO = { user: "admin", pass: "seedpod-6x2f" };
+  var AUTH_DEMO = { user: "admin", pass: "demo-pass" }; /* 仅 file:// 演示模式使用，不是线上密码 */
 
   var AUTH = {
     key: AUTH_KEY,

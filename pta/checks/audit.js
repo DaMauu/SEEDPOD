@@ -3,20 +3,8 @@
    用法：node pta/checks/audit.js（PTA_PW 指向 playwright-core）
    退出码 0 = 没有死按钮，1 = 有死按钮或脚本报错，2 = 缺依赖。 */
 const path = require('path');
+const { loadPlaywright, launchChromium } = require('./browser');
 
-function loadPlaywright() {
-  const tries = [
-    process.env.PTA_PW,
-    path.join(__dirname, 'node_modules', 'playwright-core'),
-    path.join(process.env.TEMP || '', 'pta-shot', 'node_modules', 'playwright-core'),
-    'playwright-core'
-  ].filter(Boolean);
-  for (const t of tries) {
-    try { return require(t); } catch (e) {}
-  }
-  console.error('找不到 playwright-core：设置 PTA_PW 指向该模块目录');
-  process.exit(2);
-}
 const { chromium } = loadPlaywright();
 
 const WEB = path.resolve(__dirname, '..', 'web');
@@ -52,7 +40,7 @@ async function mark(page) {
 }
 
 async function main() {
-  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const browser = await launchChromium(chromium);
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.route('**/sites-data.local.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB }));
   await page.route('**/api/health', r => r.abort());
@@ -75,7 +63,7 @@ async function main() {
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
   await open('#dashboard');
   await page.fill('#login-user', 'admin');
-  await page.fill('#login-pass', 'seedpod-6x2f');
+  await page.fill('#login-pass', 'demo-pass');
   await page.click('#login-submit');
   await page.waitForTimeout(500);
 

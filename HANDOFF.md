@@ -1,6 +1,15 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-14 01:30（当前 v0.7.69 / 已写明前端 demo 阶段与定稿后整体搬迁）
+最后更新：2026-11-14 02:30（当前 v0.7.70 / 检查环境已迁到 Linux；smoke 还有 5 条 demo 期遗留断言）
+
+## 2026-11-14 检查环境迁到 Linux（v0.7.70）
+
+- 新增 `pta/checks/browser.js`：Linux 默认用自带 Chromium 新 headless（支持下载），Windows 可用 `PTA_CHANNEL=msedge`；`playwright` 进 devDependencies，首次跑 `npm ci && npx playwright install chromium`。
+- 新增 `pta/checks/run.sh`，作为主检查入口；`run.cmd` 保留但只作 Windows 备用。文档里的 MSYS / Windows-only 写法已改。
+- `scripts/import-cookies.js` 不再用 `%TEMP%` 找 playwright。
+- 安全检查：`AUTH_DEMO` 改为 `demo-pass`，真实面板密码已从仓库与检查脚本移除；旧值仍在 git 历史，需轮换（见 TASKS）。
+- smoke 目前 18/23：5 条与当前 demo UI 不同步，已列进 TASKS，待前端搬迁时重写。
+- 线上仍是 0.7.64，部署未执行。
 
 ## 架构与交付约束（长期有效，改之前先看）
 

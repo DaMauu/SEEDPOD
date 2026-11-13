@@ -84,3 +84,15 @@
 目标架构：后端 Node + Fastify + SQLite（v2，已就位），前端 Vue，交付 Docker。
 为什么：先把界面和流程跑通，再一次性把结构做正，避免边验证边重构两头耽误。
 代价：demo 阶段会有临时代码与重复样式，搬迁时集中清理；前端是否引入构建工具（Vite / SFC）在搬迁前单独写进决策，当前保持无构建。
+
+## D13 检查入口以 Linux 的 run.sh 为准（2026-11-14）
+
+定了：`pta/checks/run.sh` 是主要检查入口，`run.cmd` 只保留给 Windows 上的聊天环境备用。
+为什么：开发与部署都在 Linux，浏览器用自带 Chromium（新 headless，支持下载），不再依赖 Windows 的 Edge。
+代价：Windows 上跑检查要自己保证 Node 与浏览器依赖；Linux 首次要 `npm ci` 和 `npx playwright install chromium`。
+
+## D14 演示账号与线上密码分离（2026-11-14）
+
+定了：`AUTH_DEMO` 只用于 `file://` 演示模式，值与线上 `PTA_PASS` 无关；线上只走 `POST /api/login`。
+为什么：真实密码曾被写进前端与检查脚本，仓库和 git 历史都可能泄露。
+代价：demo 模式要用 `demo-pass` 登录；线上密码需要轮换一次（旧值已进历史）。

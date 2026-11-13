@@ -1,6 +1,6 @@
 {
   "name": "seedpods-panel",
-  "version": "0.7.69",
+  "version": "0.7.70",
   "private": true,
   "description": "PT 原盘转载面板：抓取、查重、准备、发布",
   "engines": {
@@ -8,7 +8,10 @@
   },
   "scripts": {
     "start": "node pta/server/app.js",
-    "check": "node pta/checks/smoke.js && node pta/checks/audit.js"
+    "check": "bash pta/checks/run.sh"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
 }

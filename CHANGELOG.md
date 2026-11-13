@@ -1,5 +1,20 @@
 # 更新日志
 
+## v0.7.70 · 2026-11-14
+
+### 新增
+- `pta/checks/browser.js`：跨平台浏览器启动，Linux 默认 Chromium 新 headless，Windows 可选 msedge。
+- `pta/checks/run.sh`：Linux 主检查入口；`playwright` 加入 devDependencies。
+
+### 调整
+- `smoke.js` / `audit.js` 不再写死 msedge，也不再依赖 `TEMP` 路径；每次检查强制整页重载，消除上一轮弹窗残留。
+- `scripts/import-cookies.js` 改用共享的浏览器加载器。
+- 文档改为 Linux 优先：AGENTS、CHECKLIST、ARCHITECTURE 的 `run.cmd` / MSYS 写法更新；新增 D13。
+- 演示账号与线上密码分离：`AUTH_DEMO` 改为 `demo-pass`，真实密码从仓库移除；新增 D14。
+
+### 说明
+- smoke 18/23，5 条断言与当前 demo UI 不同步，已列进 TASKS；本次未改业务逻辑。
+
 ## v0.7.69 · 2026-11-14
 
 ### 调整

@@ -12,7 +12,8 @@ const PORT = Number(process.env.PTA_CDP_PORT || 9222);
 function mask(h) { return h.replace(/[a-z0-9]/gi, (c, i) => (i < 2 ? c : '*')); }
 
 (async () => {
-  const { chromium } = require(path.join(process.env.TEMP || '', 'pta-shot', 'node_modules', 'playwright-core'));
+  const { loadPlaywright } = require(path.join(ROOT, 'pta', 'checks', 'browser.js'));
+  const { chromium } = loadPlaywright();
   let hosts = process.argv.slice(2);
   if (!hosts.length) {
     hosts = fs.existsSync(DEF) ? fs.readdirSync(DEF).filter(f => f.endsWith('.json')).map(f => f.replace('.json', '')) : [];

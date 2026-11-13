@@ -20,6 +20,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
 - 阶段：`pta/web` 当前是前端 demo/原型，用来快速验证交互与流程，不是终稿；前端定稿后按目标架构整体搬迁一次，不在 demo 上做大规模重构
+- 开发环境：Linux 为准；Windows 只用于聊天与备用，`run.cmd` 不是主入口
 
 ## 铁律（违反即为错误，不要协商）
 
@@ -27,7 +28,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 2. 真实站点清单、站名、凭据、服务器 IP 都不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
 4. 站点凭据只存密文：`data/credentials.json` + AES-256-GCM，接口只回 `hasCookie`。
-5. 提交前必须 `pta\checks\run.cmd` 全绿（adapter / smoke / audit / security / api）。没绿不提交；连续两轮修不绿就回滚并停手。
+5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 备用 `run.cmd`）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 不接新需求，避免同一功能两套实现。
 
@@ -46,7 +47,7 @@ git add -A && git commit -m "0.7.xx 一句话说清改了什么" && git push ori
 git pull --ff-only && bash deploy.sh
 ```
 
-- Windows 推 GitHub 要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
+- 只有 Windows 推送 GitHub 才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 - VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
 - `deploy.sh` 用 rsync 把 pta/ 同步到 /opt/seedpod 并重启服务，排除 `data/`、`web/assets/sites-data.local.js`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
 - `deploy.sh` 不传 `node_modules`：新机器先 `npm i --omit=dev`（或手工装 fastify 与 @fastify/static）再启动
@@ -71,7 +72,7 @@ git pull --ff-only && bash deploy.sh
 
 ## 干活方式
 
-- 本机命令用 Bash（MSYS），检查脚本是 `pta\checks\run.cmd`（5 段：adapter 19 / smoke 22 / audit 全部交互点 / security 2 / api 45）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（5 段：adapter 19 / smoke 23（5 条 demo 期遗留待重写）/ audit 全部交互点 / security 2 / api 45）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
