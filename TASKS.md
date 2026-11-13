@@ -180,3 +180,47 @@ pta\checks\run.cmd
 - `app.js` 约 2400 行，状态、假数据、渲染、交互混在一起。
 - `app.css` 约 2200 行，末尾叠了多层「后写覆盖先写」的补丁。
 - 这两件事要单独做一次搬家式重构，不加功能，检查必须保持全绿。
+
+## 七、待修清单（2026-11-14，v2 搬迁收尾）
+
+一次一个提交；标了 root 的等作者提供权限后做。
+
+### P0
+
+- [ ] **筛选条件接进 v2**（不用 root）
+  现象：流程页的分辨率 / 体积 / 地区 / 简介 / 中字条件，线上 `/api/catalog/screen` 不生效，只认 `rx.deny/allow`。
+  位置：`pta/server/routes-misc.js` 的 screen 接口；逻辑参考旧 `pta/server/app.js` 的 `flowScreenRules()`。
+  验收：api 检查新增用例，构造条件不符的词条，确认进 skipped 并写 reason。
+- [ ] **package.json 补依赖**（不用 root）
+  现象：仓库没声明 `fastify` / `@fastify/static`，`start` 仍指向旧 `app.js`，没有 lock。
+  验收：清空 `node_modules` 后 `npm ci --omit=dev` 能起 `app-fastify.js`；`npm start` 起 v2。
+- [ ] **unit 安全**（root）
+  现象：`/etc/systemd/system/seedpod.service` 是 644，面板密码明文写在里面，且无 `User=`（root 运行）。
+  验收：密码移到 `/etc/seedpod.env`（0600），服务改专用用户，重启后 `/api/health` 正常。
+
+### P1
+
+- [ ] **部署权限与版本对齐**（root）
+  现象：`/opt/seedpod/pta` 归 `197609`、`package.json` 归 root；`deploy.sh` 里 `systemctl` 没 sudo；线上停在 0.7.64。
+  验收：`ocbot` 能跑 `bash deploy.sh`，线上版本与仓库一致。
+- [ ] **旧 app.js 退休**（不用 root）
+  现象：12 万字节仍在仓库，文件头还写着“生产仍跑旧服务”。
+  验收：移到 `pta/server/legacy/` 或删除，`git grep app.js` 只剩文档引用；检查全绿。
+- [ ] **检查脚本跨平台**（不用 root）
+  现象：`smoke.js` / `audit.js` 写死 `channel: 'msedge'`；Linux headless 下下载用例不触发。
+  验收：加 `PTA_CHANNEL` 环境变量与 headless 兜底，补 Linux `run.sh`；VPS 上五段可跑（平台跳过的用例要写明）。
+- [ ] **Docker 对齐 v2**（不用 root）
+  现象：Dockerfile 的 `CMD` 还是 `server/app.js`，构建没装 fastify。
+  验收：`docker compose up` 后 `/api/health` 回 `db: "sqlite"`，数据卷 `/data` 持久化。
+
+### P2
+
+- [ ] **旧 JSON 归档**（不用 root）
+  现象：`data/` 里 JSON 与 SQLite 两份数据，`credentials.json` 是 11 号的旧文件。
+  验收：旧文件移到 `data/legacy/`，确认 v2 不再读写；文档写明 SQLite 是唯一事实源。
+- [ ] **旧文档对齐**（不用 root）
+  现象：`docs/ARCHITECTURE.md` 写“纯静态页面，假数据”；`DECISIONS.md` / `PRIOR-ART.md` 写“零依赖”。
+  验收：全文搜“零依赖 / 假数据 / app.js”，只剩历史决策条目。
+- [ ] **卸载 OpenCode V1**（root）
+  现象：`opencode.service` 还在 4096 跑，占用约 2.6GB。
+  验收：4096 关闭，V2 与 Telegram 机器人正常。

@@ -1,6 +1,16 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-13 23:10（当前 v0.7.66 / 生产后端已确认为 v2，AGENTS 已对齐）
+最后更新：2026-11-14 00:30（当前 v0.7.67 / 架构与交付约束已写进本文件，待修清单见 TASKS.md 第七节）
+
+## 架构与交付约束（长期有效，改之前先看）
+
+- **后端固定**：Node.js 20+ + Fastify 5 + SQLite（`node:sqlite`）。生产入口 `pta/server/app-fastify.js`，路由在 `pta/server/routes-*.js`，数据层 `pta/server/db.js`。
+- **前端固定**：Vue 3，本地 `pta/web/assets/vue.global.prod.js`，无构建、无打包器；入口 `pta/web/index.html`。
+- **旧后端**：`pta/server/app.js` 只读参考，不再接需求；服务端改动只进 v2。
+- **数据**：`data/seedpod.db` 是唯一事实源；`data/*.json` 是搬迁前的旧数据，只归档不写入。
+- **接口**：`/api/*` 路径保持稳定；字段变更先改 `docs/API.md`，再改代码。
+- **交付形态**：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）。当前 Dockerfile 还指向旧 `server/app.js`，未对齐 v2。
+- **换栈要走决策**：换框架、换数据库、引入构建工具（React / Next / Prisma / MySQL 等）先写进 `docs/DECISIONS.md`，不许顺手换。
 
 ## 每次开工先做（写在最前，别忘了）
 

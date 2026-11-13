@@ -59,3 +59,21 @@
 - cookie 由本机浏览器直接导入（`scripts/import-cookies.js` 读 CDP），不让人手抄；
   传输走 ssh 到服务器后由 `scripts/load-cookies.js` 用服务器自己的密钥加密落盘，明文临时文件立即删掉
 - 两条路径都只存密文，接口只回 `hasPass / hasTotp / hasCookie`
+
+## D8 生产后端固定 Node + Fastify + SQLite（2026-11-14）
+
+定了：唯一生产后端是 `pta/server/app-fastify.js`，Fastify 5 + `node:sqlite`，数据在 `data/seedpod.db`；旧 `app.js` 只读。
+为什么：搬迁已在 v0.7.35 完成，systemd 与健康检查都指向 v2；再维护两套必然分叉。
+代价：新机器要装 fastify 依赖；旧单文件后端不再享受新功能。
+
+## D9 前端固定 Vue 3，无构建（2026-11-14）
+
+定了：Vue 3 通过本地 `vue.global.prod.js` 引入，页面仍是 `index.html + app.js + app.css`，不引入打包器。
+为什么：改一行刷新就见效，排障不用看构建产物；单机面板不需要工程化。
+代价：没有单文件组件与模块系统，大文件靠命名约定和分块维持。
+
+## D10 最终交付必须能 Docker 部署（2026-11-14）
+
+定了：功能完成后以 Docker 镜像 + compose 交付，数据卷挂 `/data`，端口 8080。
+为什么：换机器、备份、回滚都简单，不依赖宿主 Node 版本。
+代价：镜像构建要维护 Dockerfile 与依赖锁定；当前 Dockerfile 仍指向旧 `app.js`，需要对齐 v2。
