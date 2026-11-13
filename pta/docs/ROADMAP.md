@@ -70,7 +70,7 @@
 - [x] 登录限速与失败锁定
 - [x] 会话落库
 - [x] cookie Secure（env 或 X-Forwarded-Proto 触发）
-- [ ] 密钥与数据分离
+- [x] 密钥与数据分离（`/etc/seedpod.secret`）
 - [ ] Docker 两阶段构建 + compose 验证
 
 ### M4 · 收尾
