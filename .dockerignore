@@ -4,8 +4,16 @@ data
 node_modules
 npm-debug.log
 pta/checks
+pta/data
+pta/docs
+pta/fixtures
+pta/scripts
+pta/web
 pta/web/assets/sites-data.local.js
 pta/data/site-arch.local.csv
 docs
+scripts
+.opencode
 *.md
+!CHANGELOG.md
 .*.swp

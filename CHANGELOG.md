@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.99 · 2026-11-15
+
+### 新增
+- Docker 两阶段构建：构建阶段 `npm ci` + `npm run build`，运行阶段只带 `dist`、server 和生产依赖；`CMD` 指向 `pta/server/app-fastify.js`。
+- `pta/docs/DOCKER.md`：build/run/compose、数据卷、密钥与 Secure 说明。
+- `.dockerignore` 收敛构建上下文；compose 去掉 v2 不认的 `PTA_TOKEN`，默认只绑 `127.0.0.1`。
+
+### 验证
+- `docker build` 成功；临时容器 health 200（0.7.98）、登录 200、会话 200、静态资源与 changelog 200。
+
 ## v0.7.98 · 2026-11-14
 
 ### 新增

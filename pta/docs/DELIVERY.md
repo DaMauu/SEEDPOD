@@ -42,7 +42,8 @@
 - 已完成：v2 后端、Vite 上线、日志页 SFC、安全头、unit 降权、api-v2/build 检查
 - M1 完成：禁转/限转、分类轮转、每日硬顶、规则分诊
 - M2 完成：qB 添加/回查、调度器（可开关/暂停/失败记录）
-- 进行中：M3 安全/Docker；M4 收尾
+- M3 完成：登录限速、会话落库、cookie Secure、密钥分离、Docker 两阶段
+- 进行中：M4 收尾（剩余 SFC 页面、smoke/audit）
 
 ## 六、V2 · 对标 UA/upbrr
 

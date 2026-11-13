@@ -5,18 +5,20 @@ services:
     container_name: seedpod
     restart: unless-stopped
     ports:
-      # 只对本机或 docker 网桥开放时，把 PTA_BIND 设成 127.0.0.1 或 172.17.0.1
-      - "${PTA_BIND:-0.0.0.0}:${PTA_PORT:-8080}:8080"
+      # 默认只开本机；要对外再设 PTA_BIND=0.0.0.0
+      - "${PTA_BIND:-127.0.0.1}:${PTA_PORT:-8080}:8080"
     volumes:
       - ./data:/data
+      # 可选：独立密钥，替代 /data/.secret
+      # - ./secrets/seedpod.secret:/run/secrets/seedpod:ro
     environment:
       TZ: Asia/Shanghai
       PTA_PORT: 8080
-      # 面板登录密码（HTTP Basic）。两个都填才生效，留空则不验证
+      PTA_DATA: /data
       PTA_USER: "${PTA_USER:-}"
       PTA_PASS: "${PTA_PASS:-}"
-      # 需要外部访问时再设，设了以后所有 /api 都要带 Authorization: Bearer <token>
-      PTA_TOKEN: ""
+      # PTA_COOKIE_SECURE: "1"
+      # PTA_SECRET_FILE: /run/secrets/seedpod
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
