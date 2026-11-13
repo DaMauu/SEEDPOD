@@ -250,6 +250,14 @@ check('分类游标会轮转', () => {
   need(r.catIdx === 0 && r.page === 0, '只有一类时原地归零：' + JSON.stringify(r));
 });
 
+check('每日硬顶', () => {
+  const limits = require(path.join(ROOT, 'server', 'limits'));
+  const max = limits.dailyMax();
+  need(max >= 1 && max <= 100, '每日上限范围不对：' + max);
+  need(limits.dailyBlocked(max, max) === true, '到上限应拦');
+  need(limits.dailyBlocked(max - 1, max) === false, '没到上限不该拦');
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

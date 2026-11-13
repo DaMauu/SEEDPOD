@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
+const limits = require('./limits');
 
 const DISC_RE = /(?:UHD|Blu-?Ray|BluRay|BDMV|Full\s*Disc|原盘|ISO\b)/i;
 const SKIP_RE = /(?:Remux|Encode|WEB-?DL|WEBRip|HDTV|DVDRip|x264|x265|H\.?264|H\.?265|AVC|HEVC)/i;
@@ -70,6 +71,7 @@ module.exports = function (app, ctx) {
     }
     return ok(reply, {
       siteHost: host, runMode: cfg.runMode || 'test', interval: cfg.interval || 60,
+      dailyMax: limits.dailyMax(),
       catGroups: groups.length, catIds: ids, estimatedQueries: (ids || groups.length) * 1,
       searchUrls: searchUrls, warnings: warnings, engine: preset && preset.engine || ''
     });

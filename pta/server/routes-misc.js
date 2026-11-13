@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const match = require('./match');
 const marksMod = require('./marks');
+const limits = require('./limits');
 
 function flowRules(sets, rx) {
   const allRows = [];
@@ -188,7 +189,10 @@ module.exports = function (app, ctx) {
     const nowMs = Date.now();
     const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - winMs; }) : [];
     const waitMs = Math.max(0, (Number(rec.lastAt) || 0) + gapMs - nowMs);
-    return ok({ host: host, count: times.length, dailyMax: maxWin, windowMinutes: Math.round(winMs / 60000),
+    const dayCount = Number(rec.dayCount) || 0;
+    const dayMax = limits.dailyMax();
+    return ok({ host: host, count: dayCount, dailyMax: dayMax, leftToday: Math.max(0, dayMax - dayCount),
+      windowCount: times.length, windowMax: maxWin, windowMinutes: Math.round(winMs / 60000),
       waitMs: waitMs, lastAt: rec.lastAt || 0, lastError: rec.lastError || '', page: rec.page || 0, catIdx: rec.catIdx || 0 });
   });
 };

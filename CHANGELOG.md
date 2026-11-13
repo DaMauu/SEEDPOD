@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.86 · 2026-11-14
+
+### 修复
+- 抓取加服务端硬顶：每站每天默认 20 次，不跟界面配置走；`PTA_DAILY_MAX` 可调，范围 1–100。
+- 列表、详情、失败请求都计入当天次数；到顶返回 `DAILY_LIMIT`（429），详情提前停。
+- `/api/crawl/status` 的 `count/dailyMax` 改为真实当日次数；`/api/crawl/plan` 补 `dailyMax`；`/api/crawl/run` 补 `daily`。
+
+### 检查
+- adapter 新增每日硬顶断言，21/21；api-v2 15/15；security 2/2；build 7/7。
+
 ## v0.7.85 · 2026-11-14
 
 ### 修复

@@ -7,6 +7,7 @@ const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const marksMod = require('./marks');
 const cursor = require('./cursor');
+const limits = require('./limits');
 
 const BUSY = new Set();
 
@@ -35,10 +36,10 @@ function makeCrawl(ctx) {
     const baseGap = Math.max(8, Math.min(Number(C.interval) || 60, 600)) * 1000;
     const winMin = Math.max(1, Math.min(Number(C.windowMinutes) || 60, 1440));
     const maxWin = Math.max(1, Math.min(Number(C.maxPerWindow) || 20, 1000));
-    if (!s.override) return { minGapMs: baseGap, windowMs: winMin * 60000, maxPerWindow: maxWin };
+    if (!s.override) return { minGapMs: baseGap, windowMs: winMin * 60000, maxPerWindow: maxWin, dailyMax: limits.dailyMax() };
     const gap = Math.max(baseGap, OV[String(s.ovInterval || '')] || 0);
     const maxW = Math.max(1, Math.min(maxWin, Number(s.ovDaily) || maxWin));
-    return { minGapMs: gap, windowMs: winMin * 60000, maxPerWindow: maxW };
+    return { minGapMs: gap, windowMs: winMin * 60000, maxPerWindow: maxW, dailyMax: limits.dailyMax() };
   }
 
   function upsertCatalog(items) {
@@ -88,10 +89,14 @@ function makeCrawl(ctx) {
     const state = readState();
     const today = new Date().toISOString().slice(0, 10);
     const rec = state[host] || { lastAt: 0, day: today, count: 0, page: 0 };
-    if (rec.day !== today) { rec.day = today; rec.count = 0; rec.page = 0; }
+    if (rec.day !== today) { rec.day = today; rec.count = 0; rec.page = 0; rec.dayCount = 0; }
+    rec.dayCount = Number(rec.dayCount) || 0;
     const nowMs = Date.now();
     const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - lim.windowMs; }) : [];
     rec.times = times;
+    if (limits.dailyBlocked(rec.dayCount, lim.dailyMax)) {
+      return { err: { code: 'DAILY_LIMIT', message: '今天这个站已经抓了 ' + rec.dayCount + ' 次，服务端硬顶 ' + lim.dailyMax + ' 次/天', extra: { count: rec.dayCount, max: lim.dailyMax } } };
+    }
     if (nowMs - (rec.lastAt || 0) < lim.minGapMs) {
       return { err: { code: 'TOO_SOON', message: '距上次抓取不到 ' + Math.round(lim.minGapMs / 1000) + ' 秒，等一下再抓', extra: { waitMs: lim.minGapMs - (nowMs - (rec.lastAt || 0)) } } };
     }
@@ -110,11 +115,11 @@ function makeCrawl(ctx) {
       status = res.status;
       html = await res.text().catch(function () { return ''; });
     } catch (e) {
-      rec.lastAt = nowMs; rec.lastError = 'CRAWL_FAILED'; state[host] = rec; saveState(state);
+      rec.dayCount += 1; rec.lastAt = nowMs; rec.lastError = 'CRAWL_FAILED'; state[host] = rec; saveState(state);
       return { err: { code: 'CRAWL_FAILED', message: e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 160) } };
     }
     const loggedOut = status === 302 || /takelogin\.php|请先登录/i.test(html);
-    function mark(code) { rec.lastAt = nowMs; rec.lastError = code; state[host] = rec; saveState(state); }
+    function mark(code) { rec.dayCount = (Number(rec.dayCount) || 0) + 1; rec.lastAt = nowMs; rec.lastError = code; state[host] = rec; saveState(state); }
     if (loggedOut) { mark('LOGIN_REQUIRED'); return { err: { code: 'LOGIN_REQUIRED', message: 'cookie 已失效，先做一次会话自检' } }; }
     if (status !== 200) { mark('CRAWL_HTTP_' + status); return { err: { code: 'CRAWL_HTTP_' + status, message: '站点返回 ' + status } }; }
     let rows = [];
@@ -147,12 +152,14 @@ function makeCrawl(ctx) {
       if (want) {
         const cap = Math.max(1, Math.min(10, Number(opts.detailLimit) || 10));
         const budget = Math.max(0, lim.maxPerWindow - rec.times.length - 1);
-        const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget));
-        if (!picks.length) detail.stopped = 'WINDOW_LIMIT';
+        const dailyLeft = Math.max(0, lim.dailyMax - rec.dayCount - 1);
+        const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget, dailyLeft));
+        if (!picks.length) detail.stopped = dailyLeft <= 0 ? 'DAILY_LIMIT' : 'WINDOW_LIMIT';
         for (const it of picks) {
           const elapsed = Date.now() - (rec.lastAt || 0);
           if (rec.lastAt && elapsed < lim.minGapMs) await sleep(lim.minGapMs - elapsed);
           if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
+          if (rec.dayCount + 1 >= lim.dailyMax) { detail.stopped = 'DAILY_LIMIT'; break; }
           detail.tried++;
           try {
             const res2 = await fetch(it.detailsUrl, {
@@ -161,6 +168,7 @@ function makeCrawl(ctx) {
             });
             rec.lastAt = Date.now(); lastReqAt = rec.lastAt;
             rec.times.push(rec.lastAt);
+            rec.dayCount += 1;
             if (res2.status !== 200) { detail.failed++; it.detailNote = 'HTTP ' + res2.status; continue; }
             const dh = await res2.text().catch(function () { return ''; });
             const d = adapters.parseDetail(dh);
@@ -178,6 +186,7 @@ function makeCrawl(ctx) {
             detail.failed++;
             it.detailNote = '详情请求失败';
             rec.lastAt = Date.now(); lastReqAt = rec.lastAt;
+            rec.dayCount += 1;
           }
         }
       }
@@ -186,6 +195,7 @@ function makeCrawl(ctx) {
     rec.lastAt = lastReqAt;
     rec.times = (rec.times || []).filter(function (t) { return t > nowMs - lim.windowMs; });
     rec.times.push(nowMs);
+    rec.dayCount += 1;
     rec.count = rec.times.length;
     const nc = cursor.nextCursor({ catCount: catMap.length, catIdx: catIdx, page: page, rows: rows.length, rotate: opts.rotate !== false });
     rec.page = nc.page;
@@ -196,7 +206,7 @@ function makeCrawl(ctx) {
     saveState(state);
     return { host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
       categoryId: ids[0] || '', categories: catMap.length, added: out.added, updated: out.updated, skipped: out.skipped,
-      nextPage: nc.page + 1, nextCategoryId: catMap.length ? catMap[Math.min(catMap.length - 1, nc.catIdx)].id : '', rotated: nc.rotated, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };
+      nextPage: nc.page + 1, daily: { day: rec.day, count: rec.dayCount, max: lim.dailyMax }, nextCategoryId: catMap.length ? catMap[Math.min(catMap.length - 1, nc.catIdx)].id : '', rotated: nc.rotated, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };
   }
 
   return { crawlOnce: crawlOnce };
