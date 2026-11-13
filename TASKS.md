@@ -239,3 +239,23 @@ pta\checks\run.cmd
 - [ ] **卸载 OpenCode V1**（root）
   现象：`opencode.service` 还在 4096 跑，占用约 2.6GB。
   验收：4096 关闭，V2 与 Telegram 机器人正常。
+
+## 八、M4 队列页 SFC 前置（blocked，2026-11-15）
+
+队列页暂时不搬，现有 API 与界面行为对不上；先补接口，否则 SFC 会丢功能。
+
+| 缺口 | 位置 | 现状 | 需要 |
+| --- | --- | --- | --- |
+| 列表筛选/分页 | `app-fastify.js:160` | 只认单值 `status`，忽略 `offset` / `q` | 支持 `status=a,b`、`offset`、`q` |
+| 批量动作 | `routes-missing.js:10` | 只认 `ids`，忽略 `fromStatus`；只支持 approve/reject/skip | 支持 `fromStatus`，或前端先取 ids；发布另走 `/api/publish` |
+| 单条查重 | 无 | 旧界面调用 `/api/queue/:id/check`，v2 没这个接口 | 新增，返回 `{duplicate, note}` |
+| 发布表单字段 | `routes-write.js:96` | `action` 只改 status/reason，忽略 title/subtitle/intro/targetSite/shots | 合并表单字段或单独保存接口 |
+| 发布语义 | `routes-write.js:107` | `action=publish` 只记账，不走 qB | 队列“发布”统一走 `/api/publish/:id`，把 409 提示出来 |
+
+验收：上述接口补齐并有 api-v2 用例后，再把 queue 页搬 SFC；搬完 smoke-live 增加列表/详情/驳回/发布断言。
+
+## 九、目标站提交与校验（M8，未开始）
+
+- 内置 NexusPHP/UNIT3D/Gazelle 引擎的提交表单映射
+- `data/site-pack.json` 私有站点包（不入库）
+- 发布后目标站回查；mock 表单测试，不碰真实站
