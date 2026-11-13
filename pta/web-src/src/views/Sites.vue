@@ -52,6 +52,6 @@
           <div class="sites-rows" id="sites-list"></div>
           <div class="sites-pager" id="sites-pager"></div>
         </div>
-        <div class="site-expand" id="site-detail" hidden></div>
+        <div class="site-expand" id="site-detail-home" hidden></div>
       </div>
 </template>
