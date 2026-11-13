@@ -5247,7 +5247,7 @@
   }
 
   function boot() {
-    var __steps = [['chrome', initChrome], ['nav', initNav], ['menu', initMenu], ['queue', initQueue], ['sources', initSources], ['nodes', initNodes], ['logs', initLogs], ['settings', initSettings], ['crawlSettings', initCrawlSettings], ['sites', initSites], ['siteModal', initSiteModal], ['router', initRouter]];
+    var __steps = [['chrome', initChrome], ['nav', initNav], ['menu', initMenu], ['queue', initQueue], ['sources', initSources], ['nodes', initNodes], ['settings', initSettings], ['crawlSettings', initCrawlSettings], ['sites', initSites], ['siteModal', initSiteModal], ['router', initRouter]];
     __steps.forEach(function (x) {
       try { x[1](); } catch (e) { console.error('BOOT_FAIL ' + x[0], e && e.stack ? e.stack : e); throw e; }
     });
