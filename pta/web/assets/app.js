@@ -2483,9 +2483,11 @@
             if (!Array.isArray(rows)) return;
             rows.forEach(function (v) { if (v && v.t) byT[v.t] = v; });
           });
-          st.groups.forEach(function (g) {
-            g.rows.forEach(function (r) {
-              var v = byT[r.t]; if (!v) return;
+          var sameShape = saved.length === st.groups.length;
+          st.groups.forEach(function (g, gi) {
+            g.rows.forEach(function (r, ri) {
+              var v = byT[r.t] || (sameShape && Array.isArray(saved[gi]) ? saved[gi][ri] : null);
+              if (!v) return;
               if (v.v !== undefined) r.v = v.v;
               if (v.on !== undefined) r.on = v.on;
               if (v.sel) r.sel = v.sel;
@@ -2591,9 +2593,11 @@
           if (!Array.isArray(rows)) return;
           rows.forEach(function (v) { if (v && v.t) byT[v.t] = v; });
         });
-        st.groups.forEach(function (g) {
-          g.rows.forEach(function (r) {
-            var v = byT[r.t]; if (!v) return;
+        var sameShape = saved.length === st.groups.length;
+        st.groups.forEach(function (g, gi) {
+          g.rows.forEach(function (r, ri) {
+            var v = byT[r.t] || (sameShape && Array.isArray(saved[gi]) ? saved[gi][ri] : null);
+            if (!v) return;
             if (v.v !== undefined) r.v = v.v;
             if (v.on !== undefined) r.on = v.on;
             if (v.sel) r.sel = v.sel;

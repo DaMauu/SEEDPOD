@@ -310,6 +310,7 @@ function sanitizeFlow(body) {
       return grp.map(function (row) {
         if (!row || typeof row !== 'object' || Array.isArray(row)) throw Object.assign(new Error(key + ' 的行必须是对象'), { bad: true });
         const o = {};
+        if (row.t !== undefined && row.t !== null) o.t = String(row.t).slice(0, 60);
         if (row.v !== undefined && row.v !== null) {
           if (typeof row.v === 'object') throw Object.assign(new Error(key + ' 的 v 只能是字符串/数字/布尔'), { bad: true });
           o.v = typeof row.v === 'string' ? row.v.slice(0, 300) : row.v;
