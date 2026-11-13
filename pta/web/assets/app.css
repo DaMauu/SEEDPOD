@@ -2382,6 +2382,13 @@ body::after {
 .flow-group .set-field .ctl,
 .flow-group .set-field .ctl > .input,
 .flow-group .set-field .ctl > .select{width:100%}
+/* 卡内小节标题 */
+.flow-group .set-field.sec{grid-column:1/-1;padding:7px 0 3px;margin-top:3px;border-top:1px solid #e9ebef}
+.flow-group .set-field.sec:first-child{margin-top:0;padding-top:0;border-top:0}
+.flow-group .sec-ttl{font-size:11.5px;font-weight:600;color:#8a94a2;letter-spacing:.4px}
+.flow-group .chip-row{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 1px}
+.flow-group .chip{border:1px solid #e2e5ea;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;color:#5b6573;cursor:pointer;line-height:1.2}
+.flow-group .chip.on{background:#eef5ff;border-color:#bfd8ff;color:#1d4ed8}
 .dedupe-card .drawer-body,
 .drawer-body.compact{padding:8px 16px 10px}
 @media (max-width:700px){.flow-group .set-fields{grid-template-columns:1fr}}

@@ -175,6 +175,10 @@
       "sum": "发到哪 · 满足条件才发",
       "rows": [
         {
+          "t": "发到哪",
+          "type": "section"
+        },
+        {
           "t": "发布到",
           "type": "custom",
           "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
@@ -185,6 +189,10 @@
           "type": "switch",
           "on": false,
           "hint": "还没接：先只支持一个目标站，这个开关先存配置"
+        },
+        {
+          "t": "门槛",
+          "type": "section"
         },
         {
           "t": "分辨率要求",
@@ -219,6 +227,59 @@
           "type": "switch",
           "on": true,
           "hint": "qB 校验通过才算完成"
+        },
+        {
+          "t": "内容要求",
+          "type": "section"
+        },
+        {
+          "t": "最大体积",
+          "type": "select",
+          "v": "不限",
+          "opts": [
+            "不限",
+            "50 GB",
+            "80 GB",
+            "120 GB"
+          ]
+        },
+        {
+          "t": "地区版本",
+          "type": "switch",
+          "on": true,
+          "hint": "识别出 US/HKG/TWN 这类版本，写进副标题的地区段"
+        },
+        {
+          "t": "必须有简介",
+          "type": "switch",
+          "on": true,
+          "hint": "抓不到中文简介就不自动发"
+        },
+        {
+          "t": "必须带中字",
+          "type": "switch",
+          "on": true,
+          "hint": "成品没有中文字幕就不发"
+        },
+        {
+          "t": "BDInfo",
+          "type": "select",
+          "v": "必须存在且校验通过",
+          "opts": [
+            "必须存在且校验通过",
+            "有就行，不校验",
+            "不要求"
+          ]
+        },
+        {
+          "t": "截图至少几张",
+          "type": "text",
+          "v": "3",
+          "hint": "不够就不自动发"
+        },
+        {
+          "t": "重复与失败",
+          "type": "section"
         },
         {
           "t": "主站已有同片",
@@ -271,51 +332,6 @@
           "type": "switch",
           "on": true
         },
-        {
-          "t": "最大体积",
-          "type": "select",
-          "v": "不限",
-          "opts": [
-            "不限",
-            "50 GB",
-            "80 GB",
-            "120 GB"
-          ]
-        },
-        {
-          "t": "地区版本",
-          "type": "switch",
-          "on": true,
-          "hint": "识别出 US/HKG/TWN 这类版本，写进副标题的地区段"
-        },
-        {
-          "t": "必须有简介",
-          "type": "switch",
-          "on": true,
-          "hint": "抓不到中文简介就不自动发"
-        },
-        {
-          "t": "必须带中字",
-          "type": "switch",
-          "on": true,
-          "hint": "成品没有中文字幕就不发"
-        },
-        {
-          "t": "BDInfo",
-          "type": "select",
-          "v": "必须存在且校验通过",
-          "opts": [
-            "必须存在且校验通过",
-            "有就行，不校验",
-            "不要求"
-          ]
-        },
-        {
-          "t": "截图至少几张",
-          "type": "text",
-          "v": "3",
-          "hint": "不够就不自动发"
-        }
       ]
     },
     {
@@ -359,25 +375,63 @@
     },
     {
       "name": "标题与副标题",
-      "sum": "标题在前、副标题在后",
+      "sum": "正标题照搬 · 副标题按模板 · 正则决定转不转",
       "rows": [
-          {
-            "t": "种子标题",
-            "type": "fixed",
-            "v": "原样照搬，不修改"
-          },
-          {
-            "t": "中文副标题模板",
-            "type": "custom",
-            "hint": "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符",
-            "html": "<div class=\"tpl-wrap\"><input class=\"input\" id=\"sub-tpl\" placeholder=\"例：{电影名} | {地区}原盘 | 导演:{导演}\"><div class=\"tpl-eg\" id=\"sub-eg\"></div></div>"
-          },
-          {
-            "t": "副标题语言",
-            "type": "fixed",
-            "v": "中文"
-          }
-        ]
+        {
+          "t": "种子标题",
+          "type": "fixed",
+          "v": "原样照搬，不修改"
+        },
+        {
+          "t": "中文副标题模板",
+          "type": "custom",
+          "hint": "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符",
+          "html": "<div class=\"tpl-wrap\"><input class=\"input\" id=\"sub-tpl\" placeholder=\"例：{电影名} | {地区}原盘 | 导演:{导演}\"><div class=\"tpl-eg\" id=\"sub-eg\"></div></div>"
+        },
+        {
+          "t": "副标题语言",
+          "type": "fixed",
+          "v": "中文"
+        },
+        {
+          "t": "匹配范围",
+          "type": "select",
+          "v": "",
+          "opts": [
+            "标题",
+            "标题 + 副标题",
+            "标题 + 简介首段"
+          ],
+          "hint": "只读这段文本，不改任何字段"
+        },
+        {
+          "t": "写错时",
+          "type": "select",
+          "v": "",
+          "opts": [
+            "回退成纯文本匹配",
+            "整条跳过等人工"
+          ],
+          "hint": "语法错、超时、超长都走这条"
+        },
+        {
+          "t": "排除匹配",
+          "type": "custom",
+          "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
+          "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
+        },
+        {
+          "t": "白名单匹配",
+          "type": "custom",
+          "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
+          "hint": "和排除同时命中时，排除优先"
+        },
+        {
+          "t": "测试匹配",
+          "type": "custom",
+          "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
+        }
+      ]
     },
     {
       "name": "简介",
@@ -586,50 +640,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "标题匹配",
-      "sum": "正则决定转不转",
-      "rows": [
-          {
-            "t": "匹配范围",
-            "type": "select",
-            "v": "",
-            "opts": [
-              "标题",
-              "标题 + 副标题",
-              "标题 + 简介首段"
-            ],
-            "hint": "只读这段文本，不改任何字段"
-          },
-          {
-            "t": "写错时",
-            "type": "select",
-            "v": "",
-            "opts": [
-              "回退成纯文本匹配",
-              "整条跳过等人工"
-            ],
-            "hint": "语法错、超时、超长都走这条"
-          },
-          {
-            "t": "排除匹配",
-            "type": "custom",
-            "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
-            "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
-          },
-          {
-            "t": "白名单匹配",
-            "type": "custom",
-            "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
-            "hint": "和排除同时命中时，排除优先"
-          },
-          {
-            "t": "测试匹配",
-            "type": "custom",
-            "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>"
-          }
-        ]
     },
     {
       "name": "目标站状态",

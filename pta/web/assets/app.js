@@ -2639,6 +2639,12 @@
         }, c);
       }));
       if (r.type === "switch") return h("button", { class: "switch" + (r.on ? " on" : ""), type: "button", onClick: function () { r.on = !r.on; } }, [h("i")]);
+      if (r.type === "chips") return h("div", { class: "chip-row" }, (r.items || []).map(function (it) {
+        return h("button", {
+          class: "chip" + (it.on ? " on" : ""), type: "button",
+          onClick: function () { it.on = !it.on; }
+        }, it.t);
+      }));
       if (r.type === "select") {
         var nodes = [];
         if (!r.v) nodes.push(h("option", { value: "" }, "未选择"));
@@ -2677,6 +2683,7 @@
             return h("div", { class: "flow-group", key: g.name }, [
               h("div", { class: "flow-ttl" }, g.name),
               h("div", { class: "set-fields" }, g.rows.map(function (r) {
+                if (r.type === "section") return h("div", { class: "set-field sec", key: r.t }, [h("div", { class: "sec-ttl" }, r.t)]);
                 return h("div", { class: "set-field", key: r.t }, [
                   h("div", { class: "lbl" }, [h("span", null, r.t)]),
                   h("div", { class: "ctl" }, [ctl(r)])
