@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const match = require('./match');
+const marksMod = require('./marks');
 
 function flowRules(sets, rx) {
   const allRows = [];
@@ -122,8 +123,8 @@ module.exports = function (app, ctx) {
       const title = String(it.title || '');
       const res = String(it.res || '').toLowerCase() || match.resOf(title);
       const bytes = Number(it.sizeBytes) || match.sizeBytesOf(it) || 0;
-      let reason = '';
-      if (hit(rx.deny, title)) reason = '命中排除规则';
+      let reason = marksMod.complianceReason(it, Date.now());
+      if (!reason && hit(rx.deny, title)) reason = '命中排除规则';
       else if (rx.allow && !hit(rx.allow, title)) reason = '白名单未命中';
       else if (rules.res.length && res && rules.res.indexOf(res) < 0) reason = '分辨率不符 ' + res;
       else if (rules.minSizeGB && bytes && bytes < rules.minSizeGB * 1073741824) reason = '体积偏小';

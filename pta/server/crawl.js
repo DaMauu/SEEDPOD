@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
+const marksMod = require('./marks');
 
 const BUSY = new Set();
 
@@ -123,9 +124,14 @@ function makeCrawl(ctx) {
         site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
         sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
         detailsUrl: r.detailsUrl || '', downloadUrl: r.downloadUrl || '', infohash: r.infohash || '',
-        seeders: Number(r.seeders) || 0, marks: {}, addedAt: r.addedAt || ''
+        seeders: Number(r.seeders) || 0, marks: marksMod.marksOf(r.title), addedAt: r.addedAt || ''
       };
     }).filter(function (x) { return x.title && x.siteId; });
+    /* 站上发布时间不满 7 天的限转，按目标站规矩拦在送审前 */
+    items.forEach(function (it) {
+      const d = marksMod.limitedDaysOf(it, nowMs);
+      if (d) { it.marks = it.marks || {}; it.marks.limitedDays = d; }
+    });
     /* 抓详情页：受开关与窗口预算双重约束，最多 10 条，每条都算一次请求 */
     let detail = { want: false, tried: 0, ok: 0, failed: 0, stopped: '' };
     let lastReqAt = nowMs;

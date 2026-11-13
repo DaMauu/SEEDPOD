@@ -143,12 +143,15 @@ async function main() {
       { site: 'demo-a.example', title: 'Fixture B 2020 2160p', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
       { site: 'demo-a.example', title: 'Fixture C 2020 2160p 中字', res: '2160p', size: '5.00 GB', sizeBytes: 5 * 1024 ** 3 },
       { site: 'demo-a.example', title: 'Fixture D 2020 2160p 中字', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
-      { site: 'demo-a.example', title: 'Fixture D 2020 2160p 中字', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 }
+      { site: 'demo-a.example', title: 'Fixture D 2020 2160p 中字', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
+      { site: 'demo-a.example', title: 'Fixture E 2020 2160p 中字 禁转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
+      { site: 'demo-a.example', title: 'Fixture F 2020 2160p 中字 限转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3, addedAt: new Date().toISOString() },
+      { site: 'demo-a.example', title: 'Fixture G 2020 2160p 中字 限转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3, addedAt: new Date(Date.now() - 8 * 86400000).toISOString() }
     ];
     const add = await (await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items })
     })).json();
-    need(add.ok && add.data.added === 5, '写入 5 条失败：' + JSON.stringify(add));
+    need(add.ok && add.data.added === 8, '写入 8 条失败：' + JSON.stringify(add));
 
     const flow = { sets: { pub: [[
       { t: '分辨率要求', v: '2160p 及以上' },
@@ -161,20 +164,22 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ limit: 10 })
     })).json();
     need(j.ok, '筛选失败');
-    need(j.data.checked === 5, 'checked 应为 5：' + j.data.checked);
-    need(j.data.selected === 1, 'selected 应为 1：' + j.data.selected);
-    need(j.data.skipped === 4, 'skipped 应为 4：' + j.data.skipped);
+    need(j.data.checked === 8, 'checked 应为 8：' + j.data.checked);
+    need(j.data.selected === 2, 'selected 应为 2：' + j.data.selected);
+    need(j.data.skipped === 6, 'skipped 应为 6：' + j.data.skipped);
     need(/分辨率/.test(JSON.stringify(j.data.byReason)), '没有分辨率原因：' + JSON.stringify(j.data.byReason));
     need(/中字/.test(JSON.stringify(j.data.byReason)), '没有中字原因');
     need(/体积/.test(JSON.stringify(j.data.byReason)), '没有体积原因');
     need(/已有/.test(JSON.stringify(j.data.byReason)), '没有重复原因');
+    need(/禁转/.test(JSON.stringify(j.data.byReason)), '没有禁转原因');
+    need(/限转/.test(JSON.stringify(j.data.byReason)), '没有限转原因');
   });
 
   await check('队列里有 1 条待审核', async () => {
     const j = await (await fetchA(BASE + '/api/queue')).json();
     need(j.ok, '读取失败');
-    need(Array.isArray(j.data.items) && j.data.items.length === 1, '队列条数不对：' + (j.data.items || []).length);
-    need(j.data.counts.pending === 1, 'pending 计数不对');
+    need(Array.isArray(j.data.items) && j.data.items.length === 2, '队列条数不对：' + (j.data.items || []).length);
+    need(j.data.counts.pending === 2, 'pending 计数不对');
     const one = await (await fetchA(BASE + '/api/queue/' + j.data.items[0].id)).json();
     need(one.ok && one.data.title, '按 id 读不到条目');
   });
