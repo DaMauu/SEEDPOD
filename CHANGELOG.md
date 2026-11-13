@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.100 · 2026-11-15
+
+### 调整
+- 新增 `pta/checks/smoke-live.js`：临时 v2 后端 + dist，15 条在线断言（登录/七路由/站点抽屉/规则卡/调度卡/空状态/无报错）。
+- 旧 `smoke.js` / `audit.js` 改名 `smoke-legacy.js` / `audit-legacy.js`，退出主检查；`run.sh` 改为 build → smoke-live → 其余检查。
+- `run.cmd` 保留为 Windows legacy 备用，指向 legacy 文件。
+
+### 检查
+- `bash pta/checks/run.sh` 全绿：smoke-live 15/15、adapter 21/21、security 3/3、api-v2 16/16、publish 4/4、scheduler 5/5、detect 5/5、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.99 · 2026-11-15
 
 ### 新增

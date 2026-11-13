@@ -76,7 +76,7 @@
 ### M4 · 收尾
 
 - [ ] 剩余六页拆进 SFC
-- [ ] smoke 重写或迁到 dist
+- [x] smoke 重写为 smoke-live（dist + 临时后端，15/15）
 - [ ] 旧 `pta/web` 归档
 - [ ] 面板密码轮换
 - [ ] `ocbot` sudo 收窄

@@ -42,7 +42,7 @@
 
 | # | 问题 | 位置 | 影响 | 修法 |
 | --- | --- | --- | --- | --- |
-| 15 | smoke 仍 18/23、audit 未跑 | `pte/checks/smoke.js`、`audit.js` | 覆盖不到新构建 | 重写或迁到 dist 后重跑 |
+| 15 | ✅ smoke/audit | 0.7.100 已换 smoke-live（15/15），旧文件标 legacy | — |
 | 16 | 规则体检只报告不拦 | `run.sh` 末尾 | 空开关可以继续进 | 分诊完成后加 `--fail` |
 | 17 | 旧 `pta/web` 未归档 | `pta/web` | 容易改错目录 | 收尾移到 `archive/` |
 | 18 | 面板密码未轮换 | git 历史、`/etc/seedpod.env` | 旧值已进历史 | 生成新值、通知作者、作废旧值 |

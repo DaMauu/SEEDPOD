@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SEEDPOD 检查入口（Linux / macOS）。Windows 备用：run.cmd。
+# SEEDPOD 检查入口（Linux / macOS）。Windows 备用：run.cmd（legacy）。
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -15,25 +15,23 @@ run() {
   return 0
 }
 
-run smoke smoke.js
-run audit audit.js
+echo "==== build (Vite) ===="
+if npm run build >/tmp/pta-build.log 2>&1; then
+  echo "构建通过"
+else
+  tail -5 /tmp/pta-build.log
+  echo "构建失败"
+  fail=1
+fi
+
+run smoke smoke-live.js
 run adapter adapter.js
 run security security.js
 run api api-v2.js
 run publish publish.js
 run scheduler scheduler.js
 run detect detect.js
-
-echo
-echo "==== build (Vite) ===="
-if npm run build >/tmp/pta-build.log 2>&1; then
-  echo "构建通过"
-  run web build.js
-else
-  tail -5 /tmp/pta-build.log
-  echo "构建失败"
-  fail=1
-fi
+run web build.js
 
 echo
 echo "==== 规则体检 ===="
