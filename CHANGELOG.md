@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.96 · 2026-11-14
+
+### 调整
+- 站点适配方向改为开箱即用：内置 NexusPHP/UNIT3D/Gazelle 引擎 + 自动识别上传表单；真实站配置放 `data/` 私有包，不推给用户维护，也不入 git。
+- 同步更新 `UPSTREAM.md`、`ROADMAP.md`、`DELIVERY.md`、`AGENTS.md`。
+
 ## v0.7.95 · 2026-11-14
 
 ### 安全

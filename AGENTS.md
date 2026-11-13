@@ -79,6 +79,7 @@ git pull --ff-only && bash deploy.sh
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
 - 前端不引入构建工具；后端运行时依赖只有 Fastify + @fastify/static（已装，写进 package.json），新增依赖先说明理由
 - 涉及上传/元数据/截图/种子/客户端/站点适配：先读 `pta/docs/UPSTREAM.md`，在文末追加研究记录；不复制 UA/upbrr 代码、品牌、key、站点配置
+- 站点适配做成开箱即用：引擎逻辑进代码；真实站配置只放 `data/` 私有包，不入库、不进回复
 
 ## 用户写需求的最低要求（四要素）
 

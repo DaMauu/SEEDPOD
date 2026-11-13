@@ -46,5 +46,5 @@
 
 ## 六、V2 · 对标 UA/upbrr
 
-七条是“第一版落地”的门槛；之后按 `UPSTREAM.md` / `ROADMAP.md` 的 M5–M10 做完整替代：元数据、截图、种子、客户端、按站提交、CLI、Docker。原则：clean-room，不复制上游代码/品牌/key/站点配置。
+七条是“第一版落地”的门槛；之后按 `UPSTREAM.md` / `ROADMAP.md` 的 M5–M10 做完整替代：元数据、截图、种子、客户端、按站提交、CLI、Docker。原则：clean-room，不复制上游代码/品牌/key；站点适配内置引擎 + 私有包（data/，不入库），用户不需要自己写适配。
 
