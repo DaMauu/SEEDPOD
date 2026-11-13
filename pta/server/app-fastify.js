@@ -54,6 +54,15 @@ let logEvent = null;
 async function build() {
   const app = Fastify({ logger: false, bodyLimit: 8 * 1024 * 1024 });
 
+  /* 与旧后端一致的静态安全头；CSP 放行 Cloudflare 分析脚本 */
+  app.addHook('onSend', async (req, reply, payload) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('Referrer-Policy', 'no-referrer');
+    reply.header('Content-Security-Policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+    return payload;
+  });
+
   /* ---- 认证 ---- */
   app.post('/api/login', async (req, reply) => {
     if (!PTA_USER || !PTA_PASS) return bad(reply, 'NO_ACCOUNT', '服务端还没有设置面板账号', 503);

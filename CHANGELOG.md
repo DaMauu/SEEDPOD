@@ -1,5 +1,10 @@
 # 更新日志
 
+## v0.7.72 · 2026-11-14
+
+### 调整
+- v2 `app-fastify.js` 补静态安全响应头：`X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy`、`Content-Security-Policy`，与旧后端一致并放行 Cloudflare 分析。
+
 ## v0.7.71 · 2026-11-14
 
 ### 新增

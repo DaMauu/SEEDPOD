@@ -197,9 +197,8 @@ pta\checks\run.cmd
 - [ ] **api 检查切到 v2**（不用 root，下一批）
   现象：`pta/checks/api.js` 启动的是 `server/app.js`，45 条契约检查测的是旧后端；它还依赖 Basic auth，v2 是 cookie 会话，`config / logs / tasks` 等接口行为也不同。
   做法：另建 `api-v2.js`，覆盖 health、登录/会话/退出、401、词条读写、flow 读写、screen 条件、凭据不回显；`run.sh` 改跑 v2，旧 `api.js` 标 legacy。
-- [ ] **v2 补安全响应头**（不用 root，下一批）
-  现象：`app-fastify.js` 没有旧后端的 `nosniff / X-Frame-Options / Referrer-Policy / CSP`，api 检查里这条在 v2 会红。
-  验收：静态页与 API 响应带四项头，公网页面正常。
+- [x] **v2 补安全响应头**（不用 root）
+  已做：`app-fastify.js` 的 `onSend` 加 `nosniff / X-Frame-Options / Referrer-Policy / CSP`，CSP 与旧后端一致并放行 Cloudflare 分析；临时实例 `curl -I` 已验证。
 - [x] **cookie 导入改走 SQLite**（不用 root）
   已做：`load-cookies.js` 改为加密后 upsert `credentials` 表；临时库实测写入 1 条、解密值一致，不再写 JSON。
 
