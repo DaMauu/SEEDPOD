@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-13 13:30（当前部署 v0.7.62 / 双机同步流程已固化，详见 CHECKLIST.md）
+最后更新：2026-11-13 22:15（当前 v0.7.65 / 协作协议与设计规范已落地，见 AGENTS.md 与 pta/docs）
 
 ## 每次开工先做（写在最前，别忘了）
 
@@ -10,6 +10,16 @@
 4. 收尾再跑一次 sync-check，更新本文件。
 
 完整清单见 [CHECKLIST.md](CHECKLIST.md)；铁律与发版规则见 [AGENTS.md](AGENTS.md)。
+
+## 2026-11-13 协作规范与流程页收敛（v0.7.65）
+
+- 新增 `pta/docs/PIPELINE-RULES.md`：流程页 3 类目 / 9 组 / 70 行（67 个控件）全量清单、三个收敛方案、发布条件 20 条建议表；等作者确认后先出线框再改代码。
+- 新增 `pta/docs/DESIGN.md`：颜色/字号/间距变量、组件白名单、文案规则、1280/768/390 三宽度验收、流程页每组 8 行上限。
+- 新增 `pta/docs/REQUIREMENTS-TEMPLATE.md`：需求卡模板（背景 / 目标 / 不做 / 规则变更 / 涉及位置 / 验收 / 风险）。
+- `AGENTS.md` 增加「协作协议」「复杂度预算」「设计约束」三节；修正后端路径为 `pta/server/...`。
+- `RULES-TREE.md` 重新生成，跟上 v0.7.64 的发布条件（23 行）。
+- 本次未改页面与接口，只落规范和清单。
+- 检查：adapter 19/19、security 2/2、api 45/45 全绿；smoke 与 audit 在 VPS 上跑不了（脚本写死 `channel: msedge`，Linux 没有 Edge），本次未改前端逻辑，等 Windows 侧复跑。
 
 ## 2026-11-13 发布卡并组（v0.7.55）
 

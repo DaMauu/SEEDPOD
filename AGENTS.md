@@ -14,7 +14,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 个人 PT 转载/交叉做种面板：无构建静态 SPA + 零依赖 Node 后端。
 
 - 前端 `pta/web/index.html` + `pta/web/assets/{app.js,app.css,data.js}`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`
-- 后端单文件 `pta/pta/server/app.js`（只依赖 http/fs/path/crypto/vm/fetch）+ `pta/pta/server/adapters/nexusphp.js` + `pta/pta/server/secretbox.js`
+- 后端单文件 `pta/server/app.js`（只依赖 http/fs/path/crypto/vm/fetch）+ `pta/server/adapters/nexusphp.js` + `pta/server/secretbox.js`
 - 线上跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，监听 8080，数据在 `/opt/seedpod/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 
@@ -66,7 +66,7 @@ git pull --ff-only && bash deploy.sh
 
 ## 干活方式
 
-- 本机命令用 Bash（MSYS），检查脚本是 `pta\checks\run.cmd`（5 段：adapter 5 / smoke 22 / audit 全部交互点 / security 2 / api 29）
+- 本机命令用 Bash（MSYS），检查脚本是 `pta\checks\run.cmd`（5 段：adapter 19 / smoke 22 / audit 全部交互点 / security 2 / api 45）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
@@ -81,9 +81,35 @@ git pull --ff-only && bash deploy.sh
 3. 怎么算成功：能验证的现象（某个检查通过、某个接口返回、页面某个状态）
 4. 什么不许动：明确否定项
 
-例：把站点页的登录方式改成只存 cookie，改 `pta/web/assets/app.js` 的登录设置页和 `pta/pta/server/app.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
+例：把站点页的登录方式改成只存 cookie，改 `pta/web/assets/app.js` 的登录设置页和 `pta/server/app.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
 
 改主意时直接说「现在以 X 为准」，不要让我从多条里推断哪条是最新的。
+
+## 协作协议（2026-11-13 起）
+
+每次需求先出四件套，缺一件不动代码：
+
+1. 我理解的需求：三句话，不含方案
+2. 缺口清单：每条带默认值，用户只需回「行 / 不行」
+3. 三个方案 + 代价：改哪里、加多少行、以后怎么改
+4. 风险与这次明确不做什么
+
+确认后一次只做一个需求，一个提交只解决一件事。做完落一张需求卡（模板见 `pta/docs/REQUIREMENTS-TEMPLATE.md`），并更新 HANDOFF.md。
+
+## 复杂度预算（流程页与所有设置页）
+
+- 每个手风琴最多 8 行，超了合并或挪进「高级」
+- 新增一条规则必须回答：不设会怎样、默认值是什么、用户在哪关掉
+- 一条进一条出：加新条件时必须合并或删掉一条旧的，不允许只加不减
+- 能给默认值就不给开关；能三档预设就不给独立选项
+- 新条件先进 `pta/docs/PIPELINE-RULES.md` 清单，再改 `data.js`，最后跑 `node pta/scripts/gen-rules-tree.js`
+
+## 设计约束（UI）
+
+- 先线框后代码：静态 HTML 或截图确认后再改 `app.js`
+- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；CSS 必须 scoped
+- 文案：标签用名词，说明 ≤ 20 字，错误说「怎么办」
+- 验收三宽度 1280 / 768 / 390，无横向滚动，首屏能看到主卡
 
 ## 八、版本与交付说明（2026-11-12 起执行）
 
