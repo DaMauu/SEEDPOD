@@ -89,3 +89,19 @@
 3. **调度频率**：建议 30–60 分钟一轮，单站每日上限由服务端硬顶。
 
 行数不是验收标准；验收看 `DELIVERY.md` 七条。
+
+## 六、对标 UA/upbrr（V2，七条交付之后）
+
+目标不是“再做一个面板”，而是能替代 Upload-Assistant / upbrr 的第三个工具：面板 + 流水线 + CLI + Docker，clean-room 实现。
+
+| 里程碑 | 内容 | 验收 | 依赖 |
+| --- | --- | --- | --- |
+| M5 | 元数据/命名/分类/简介 | 输入标题能出规范名、年份、季集、分类；mock 数据用例 | TMDB key（用户提供） |
+| M6 | MediaInfo/截图/图床/种子 | ffprobe 取信息；ffmpeg 截图 + HDR tonemap；生成/复用 .torrent | ffmpeg（已有）、mediainfo（可选） |
+| M7 | 客户端抽象 | qB 完成；rTorrent/Deluge/watch 至少再接一个 | 本地 mock |
+| M8 | 站点提交适配 | NexusPHP/UNIT3D 提交框架 + 用户自带配置；mock 表单测试 | 不内置真实站 |
+| M9 | CLI + Docker | `pta cli` 能跑抓取/送审/发布/校验；compose 一键起 | 现有后端 |
+| M10 | 发布后校验/通知/重试 | 目标站回查、失败重试、通知 | M8 |
+
+工具现状：`ffmpeg/ffprobe` 已有；`mediainfo`、`mkbrr` 未装（可不装，用 ffprobe + 自写 bencode）。真实站配置一律不入库。
+

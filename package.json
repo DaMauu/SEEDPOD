@@ -13,7 +13,7 @@
     "build": "vite build --config pta/web-src/vite.config.js",
     "preview": "vite preview --config pta/web-src/vite.config.js --port 4173"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.11",
     "playwright": "^1.65.0",

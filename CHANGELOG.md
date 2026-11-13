@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.93 · 2026-11-14
+
+### 新增
+- `pta/docs/UPSTREAM.md`：UA/upbrr 许可边界、能力矩阵、clean-room 规则、M5–M10 对标路线、研究记录模板。
+- `ROADMAP.md` / `DELIVERY.md` 增加 V2 对标 UA/upbrr 的里程碑。
+
+### 调整
+- 每轮自查从四问改为五问，新增“对标 UA/upbrr 的哪一块、查过并记录了吗”。
+- `package.json` 许可改为 GPL-3.0-or-later，与根 LICENSE 一致。
+
 ## v0.7.92 · 2026-11-14
 
 ### 新增

@@ -42,3 +42,8 @@
 - 已完成：v2 后端、Vite 上线、日志页 SFC、安全头、unit 降权、api-v2 / build 检查
 - M1 进行中：规则分诊、禁转拦截、抓取顺序
 - 未开始：M2 真发布/调度、M3 安全/Docker、M4 收尾
+
+## 六、V2 · 对标 UA/upbrr
+
+七条是“第一版落地”的门槛；之后按 `UPSTREAM.md` / `ROADMAP.md` 的 M5–M10 做完整替代：元数据、截图、种子、客户端、按站提交、CLI、Docker。原则：clean-room，不复制上游代码/品牌/key/站点配置。
+

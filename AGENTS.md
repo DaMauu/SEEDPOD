@@ -78,6 +78,7 @@ git pull --ff-only && bash deploy.sh
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
 - 前端不引入构建工具；后端运行时依赖只有 Fastify + @fastify/static（已装，写进 package.json），新增依赖先说明理由
+- 涉及上传/元数据/截图/种子/客户端/站点适配：先读 `pta/docs/UPSTREAM.md`，在文末追加研究记录；不复制 UA/upbrr 代码、品牌、key、站点配置
 
 ## 用户写需求的最低要求（四要素）
 
@@ -133,7 +134,7 @@ git pull --ff-only && bash deploy.sh
 
 行数不是验收标准。
 
-## 每轮自查四问
+## 每轮自查五问
 
 答不上就不动代码：
 
@@ -141,6 +142,7 @@ git pull --ff-only && bash deploy.sh
 2. 什么时候读？请求时、发布前、还是只存配置？
 3. 不设置会怎样？默认值是什么？
 4. 当前体量/结构是否已经越过切换线？
+5. 这块对标 UA/upbrr 的哪一块？查过并记录到 `UPSTREAM.md` 了吗？
 
 ## 设计约束（UI）
 
