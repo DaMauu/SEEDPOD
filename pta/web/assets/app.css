@@ -2382,10 +2382,21 @@ body::after {
 .flow-group .set-field .ctl,
 .flow-group .set-field .ctl > .input,
 .flow-group .set-field .ctl > .select{width:100%}
+/* 流程卡密度收紧：行距、控件高度、开关尺寸 */
+.flow-group{padding:7px 12px 6px;margin:0 0 7px}
+.flow-group .set-fields{gap:0 12px}
+.flow-group .set-field{padding:3px 0}
+.flow-group .set-field .lbl{margin-bottom:2px}
+.flow-group .set-field .lbl span{font-size:12px;line-height:1.3}
+.flow-group .set-field .ctl>.input,
+.flow-group .set-field .ctl>.select{height:28px;font-size:12px;padding:0 8px}
+.flow-group .switch i{width:30px;height:17px}
+.flow-group .switch i::after{width:13px;height:13px;top:2px;left:2px}
+.flow-group .switch.on i::after{left:15px}
 /* 卡内小节标题 */
-.flow-group .set-field.sec{grid-column:1/-1;padding:7px 0 3px;margin-top:3px;border-top:1px solid #e9ebef}
+.flow-group .set-field.sec{grid-column:1/-1;padding:5px 0 2px;margin-top:2px;border-top:1px solid #e9ebef}
 .flow-group .set-field.sec:first-child{margin-top:0;padding-top:0;border-top:0}
-.flow-group .sec-ttl{font-size:11.5px;font-weight:600;color:#8a94a2;letter-spacing:.4px}
+.flow-group .sec-ttl{font-size:11px;font-weight:600;color:#8a94a2;letter-spacing:.4px}
 .flow-group .chip-row{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 1px}
 .flow-group .chip{border:1px solid #e2e5ea;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;color:#5b6573;cursor:pointer;line-height:1.2}
 .flow-group .chip.on{background:#eef5ff;border-color:#bfd8ff;color:#1d4ed8}
