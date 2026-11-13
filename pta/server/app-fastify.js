@@ -1,5 +1,5 @@
-/* SEEDPOD 后端 v2：Node + Fastify + SQLite。
-   接口路径与旧 server/app.js 一致，逐个搬；生产仍跑旧服务，本服务在 8090 联调，全绿后再切 systemd。 */
+/* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
+   旧 server/app.js 只读参考，不再接新需求。 */
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -15,8 +15,14 @@ const WEB_DIR = (function () {
   const dist = path.join(__dirname, '..', 'web', 'dist');
   return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', 'web');
 })();
-const VERSION = require('../../package.json').version;
-const DEV_DATE = '2026-11-13';
+const PKG = require('../../package.json');
+const VERSION = PKG.version;
+const DEV_DATE = '2026-11-14';
+const DEP = PKG.dependencies || {};
+const DEV_DEP = PKG.devDependencies || {};
+const trimVer = (v) => String(v || '').replace(/^[~^]/, '');
+const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vite) + ' + SFC（构建）';
+const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
 const PTA_USER = process.env.PTA_USER || '';
 const PTA_PASS = process.env.PTA_PASS || '';
 
@@ -100,7 +106,7 @@ async function build() {
     ok: true,
     data: {
       version: VERSION, devDate: DEV_DATE, node: process.version,
-      stack: { front: 'Vue 3 + 原生 CSS（无构建）', back: 'Node ' + process.version.split('.')[0].replace('v', '') + ' + Fastify 5 + SQLite' },
+      stack: { front: FRONT_STACK, back: BACK_STACK },
       counts: counts()
     }
   }));
