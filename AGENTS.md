@@ -1,6 +1,8 @@
 # AGENTS.md · SEEDPOD 面板（项目铁律）
 
 这个文件是压缩后仍然有效的事实源。改代码前先读它，改完再更新 HANDOFF.md。
+
+每次会话固定动作见 [CHECKLIST.md](CHECKLIST.md)：开工先 `bash scripts/sync-check.sh`，改完 push，发版 `ssh pta 'cd /opt/seedpod-git && git pull --ff-only && bash deploy.sh'`。
 聊天记录会被压缩，这里的规则不会；两条冲突时以本文件 + HANDOFF.md 为准。
 
 ## 文件放置（长期规定）

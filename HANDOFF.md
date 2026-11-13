@@ -1,6 +1,15 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-13 12:45（当前部署 v0.7.55 / 发布卡并成 8 组，发布条件 19 行）
+最后更新：2026-11-13 13:30（当前部署 v0.7.62 / 双机同步流程已固化，详见 CHECKLIST.md）
+
+## 每次开工先做（写在最前，别忘了）
+
+1. `bash scripts/sync-check.sh`：对本地 / GitHub / VPS 三方提交；一致才自动 ff 拉取，不一致就停下问作者。
+2. 读本文件「现在是什么状态」。
+3. 改完：commit → push（Windows 推要带 `-c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399`）→ `ssh pta 'cd /opt/seedpod-git && git pull --ff-only && bash deploy.sh'`。
+4. 收尾再跑一次 sync-check，更新本文件。
+
+完整清单见 [CHECKLIST.md](CHECKLIST.md)；铁律与发版规则见 [AGENTS.md](AGENTS.md)。
 
 ## 2026-11-13 发布卡并组（v0.7.55）
 
