@@ -1,4 +1,7 @@
-/* 后端契约检查：起一个临时实例，按 docs/API.md 验字段与错误码。
+/* [legacy] 旧零依赖后端的契约检查，已被 api-v2.js 取代，不再进 run.sh。
+   保留仅供对照；旧 app.js 退休后一起删。
+
+   后端契约检查：起一个临时实例，按 docs/API.md 验字段与错误码。
    用法：node pta/checks/api.js（PTA_NODE 指向 node，环境里不需要额外依赖）
    退出码 0 = 全部符合契约，1 = 有不符合，2 = 起不来。 */
 const { spawn } = require('child_process');

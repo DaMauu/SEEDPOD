@@ -19,7 +19,7 @@ run smoke smoke.js
 run audit audit.js
 run adapter adapter.js
 run security security.js
-run api api.js
+run api api-v2.js
 
 echo
 if [ "$fail" -eq 0 ]; then

@@ -194,9 +194,8 @@ pta\checks\run.cmd
 - [x] **unit 安全**（root）
   已做：密码移到 `/etc/seedpod.env`（0600 root:root），unit 用 `EnvironmentFile`，服务改 `seedpod` 用户；重启后 health 正常、登录 200。
 
-- [ ] **api 检查切到 v2**（不用 root，下一批）
-  现象：`pta/checks/api.js` 启动的是 `server/app.js`，45 条契约检查测的是旧后端；它还依赖 Basic auth，v2 是 cookie 会话，`config / logs / tasks` 等接口行为也不同。
-  做法：另建 `api-v2.js`，覆盖 health、登录/会话/退出、401、词条读写、flow 读写、screen 条件、凭据不回显；`run.sh` 改跑 v2，旧 `api.js` 标 legacy。
+- [x] **api 检查切到 v2**（不用 root）
+  已做：新增 `api-v2.js`（15 条，覆盖 health、安全头、登录/会话/退出、401、dev、config、flow、词条、screen 条件、凭据/下载器不回显、404），`run.sh` 已改跑它；旧 `api.js` 标 legacy，不再进检查。
 - [x] **v2 补安全响应头**（不用 root）
   已做：`app-fastify.js` 的 `onSend` 加 `nosniff / X-Frame-Options / Referrer-Policy / CSP`，CSP 与旧后端一致并放行 Cloudflare 分析；临时实例 `curl -I` 已验证。
 - [x] **cookie 导入改走 SQLite**（不用 root）
