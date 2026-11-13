@@ -11,10 +11,11 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 
 ## 项目是什么
 
-个人 PT 转载/交叉做种面板：无构建静态 SPA + 零依赖 Node 后端。
+个人 PT 转载/交叉做种面板：无构建静态 SPA + Node 后端（生产为 Fastify + SQLite）。
 
-- 前端 `pta/web/index.html` + `pta/web/assets/{app.js,app.css,data.js}`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`
-- 后端单文件 `pta/server/app.js`（只依赖 http/fs/path/crypto/vm/fetch）+ `pta/server/adapters/nexusphp.js` + `pta/server/secretbox.js`
+- 前端 `pta/web/index.html` + `pta/web/assets/{app.js,app.css,data.js}`（Vue 3 走本地脚本，无构建），hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`
+- 生产后端 `pta/server/app-fastify.js`（Fastify）+ `pta/server/routes-*.js` + `pta/server/db.js`（SQLite，数据在 `data/seedpod.db`）；适配器 `pta/server/adapters/nexusphp.js`，凭据加密 `pta/server/secretbox.js`
+- 旧零依赖后端 `pta/server/app.js` 只作参考，不在生产运行；服务端改动一律进 v2
 - 线上跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，监听 8080，数据在 `/opt/seedpod/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 
@@ -26,6 +27,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 4. 站点凭据只存密文：`data/credentials.json` + AES-256-GCM，接口只回 `hasCookie`。
 5. 提交前必须 `pta\checks\run.cmd` 全绿（adapter / smoke / audit / security / api）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
+7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 不接新需求，避免同一功能两套实现。
 
 ## 发版与同步（/opt/seedpod 是运行目录，/opt/seedpod-git 是仓库检出）
 
@@ -45,6 +47,7 @@ git pull --ff-only && bash deploy.sh
 - Windows 推 GitHub 要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 - VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
 - `deploy.sh` 用 rsync 把 pta/ 同步到 /opt/seedpod 并重启服务，排除 `data/`、`web/assets/sites-data.local.js`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
+- `deploy.sh` 不传 `node_modules`：新机器先 `npm i --omit=dev`（或手工装 fastify 与 @fastify/static）再启动
 - 改前端静态资源必须同步升 `pta/web/index.html` 里的 `?v=`
 - 两边同时改会 push 失败（non-fast-forward），此时先 pull 再推，不要 force
 
@@ -52,7 +55,7 @@ git pull --ff-only && bash deploy.sh
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
-| 服务起不来，MODULE_NOT_FOUND | 只发了 app.js | 补发 adapters/nexusphp.js、secretbox.js |
+| 服务起不来，MODULE_NOT_FOUND | 只发了入口文件 | 补发 `routes-*.js`、`db.js`、`crawl.js`、`adapters/`、`secretbox.js`；确认目标机 `node_modules` 有 fastify |
 | 页面白屏 / 按钮无反应 | 少了 data.js 或 ?v= 没升 | 补发 data.js、升版本号 |
 | 线上行为像旧版 | Cloudflare 缓存 | 升 `?v=` 并硬刷新 |
 | ssh 超时 | 22 端口时通时断 | 重试 base64 方式，别改端口 |
@@ -70,7 +73,7 @@ git pull --ff-only && bash deploy.sh
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
-- 不装依赖、不引入构建工具（这是设计约束，不是省事）
+- 前端不引入构建工具；后端运行时依赖只有 Fastify + @fastify/static（已装，写进 package.json），新增依赖先说明理由
 
 ## 用户写需求的最低要求（四要素）
 

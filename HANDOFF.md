@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-13 22:15（当前 v0.7.65 / 协作协议与设计规范已落地，见 AGENTS.md 与 pta/docs）
+最后更新：2026-11-13 23:10（当前 v0.7.66 / 生产后端已确认为 v2，AGENTS 已对齐）
 
 ## 每次开工先做（写在最前，别忘了）
 
@@ -10,6 +10,14 @@
 4. 收尾再跑一次 sync-check，更新本文件。
 
 完整清单见 [CHECKLIST.md](CHECKLIST.md)；铁律与发版规则见 [AGENTS.md](AGENTS.md)。
+
+## 2026-11-13 AGENTS 对齐 v2（v0.7.66）
+
+- 生产后端确认是 `pta/server/app-fastify.js`（Fastify + SQLite，数据 `data/seedpod.db`），systemd 于 11-13 00:45 切换；旧 `pta/server/app.js` 不再运行，只作参考。
+- `AGENTS.md` 改掉“零依赖单文件”的旧描述，新增铁律第 7 条“服务端只改 v2”，故障对照补 fastify 与 node_modules，发版说明注明不传 node_modules。
+- 待修：v2 的 `/api/catalog/screen` 只认 rx.deny/allow，0.7.42 的分辨率/体积/地区/简介/中字条件没搬过来（功能缺口）。
+- 待修：`package.json` 没声明 fastify 依赖，`start` 仍指向旧 `app.js`；部署机靠手工 node_modules。
+- 风险：`seedpod.service` 无 `User=`（root 运行），且面板密码直接写在 644 的 unit 文件里。
 
 ## 2026-11-13 协作规范与流程页收敛（v0.7.65）
 

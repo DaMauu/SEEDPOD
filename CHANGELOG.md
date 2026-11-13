@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.66 · 2026-11-13
+
+### 调整
+- `AGENTS.md` 对齐生产实际：后端从“零依赖单文件”改为 v2（Fastify + SQLite，`app-fastify.js` + `routes-*.js` + `db.js`），旧 `app.js` 标记为只读参考。
+- 铁律新增第 7 条：服务端改动只进 v2，避免同一功能两套实现。
+- 依赖约束改为：前端不引入构建工具，后端运行时依赖只有 Fastify + `@fastify/static`。
+- 故障对照补充 v2 的 MODULE_NOT_FOUND 处理与 `node_modules` 检查；发版说明注明不传 node_modules。
+
 ## v0.7.65 · 2026-11-13
 
 ### 新增
