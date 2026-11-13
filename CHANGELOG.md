@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.101 · 2026-11-15
+
+### 调整
+- 设置页拆进 `views/Settings.vue`：版本模式、面板账号、调度、系统四张卡；legacy 的 `initSettings` 不再初始化。
+- 在线冒烟增加“设置页调度开关可用”，smoke-live 16/16。
+
+### 检查
+- `run.sh` 全绿：smoke-live 16/16、adapter 21/21、security 3/3、api-v2 16/16、publish 4/4、scheduler 5/5、detect 5/5、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.100 · 2026-11-15
 
 ### 调整

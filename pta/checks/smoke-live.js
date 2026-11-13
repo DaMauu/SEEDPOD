@@ -116,6 +116,19 @@ async function main() {
     need(/当前版本/.test(txt), '没有版本信息');
   });
 
+  await check('设置页调度开关可用', async () => {
+    const card = page.locator('.set-card').filter({ hasText: '调度' });
+    const sw = card.locator('button.switch');
+    await sw.click();
+    await page.waitForTimeout(500);
+    let j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
+    need(j.ok && j.data.on === true, 'UI 没打开调度');
+    await sw.click();
+    await page.waitForTimeout(500);
+    j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
+    need(j.ok && j.data.on === false, 'UI 没关闭调度');
+  });
+
   await check('调度 API 默认关闭、可开关', async () => {
     const j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
     need(j.ok && j.data.on === false && j.data.everyMinutes === 60, JSON.stringify(j.data));

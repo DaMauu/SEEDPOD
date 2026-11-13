@@ -75,7 +75,7 @@
 
 ### M4 · 收尾
 
-- [ ] 剩余六页拆进 SFC
+- [x] 设置页拆进 SFC（0.7.101）；剩 dashboard/queue/sources/sites/crawl 五页
 - [x] smoke 重写为 smoke-live（dist + 临时后端，15/15）
 - [ ] 旧 `pta/web` 归档
 - [ ] 面板密码轮换
