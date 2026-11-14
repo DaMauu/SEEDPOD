@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
 const form = require('./form');
+const sitePack = require('./site-pack');
 const { makeQb } = require('./qb');
 
 const ENGINES = {
@@ -46,17 +47,19 @@ function readJson(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
 }
 function safeHost(host) { return /^[a-z0-9][a-z0-9.-]*$/i.test(String(host || '')); }
-function catMapOf(p, def) {
+function catMapOf(p, def, built) {
+  const out = {};
+  const b = built && built.catMap;
+  if (b && !Array.isArray(b) && typeof b === 'object') Object.assign(out, b);
   const raw = (p && p.catMap) || (def && def.catMap);
-  if (raw && !Array.isArray(raw) && typeof raw === 'object') return raw;
   if (Array.isArray(raw)) {
-    const out = {};
     raw.forEach(function (x) {
-      if (x && x.id != null && x.purpose && out[x.purpose] === undefined) out[x.purpose] = String(x.id);
+      if (x && x.id != null && x.purpose) out[x.purpose] = String(x.id);
     });
-    return out;
+  } else if (raw && typeof raw === 'object') {
+    Object.assign(out, raw);
   }
-  return {};
+  return out;
 }
 
 function makeTarget(ctx) {
@@ -84,20 +87,21 @@ function makeTarget(ctx) {
     const pack = readPack();
     const p = (pack.sites || {})[host] || {};
     const def = readDef(host) || {};
-    const engine = String(p.engine || def.engine || '').toLowerCase();
-    const base = String(p.base || def.base || '').replace(/\/+$/, '');
+    const built = sitePack.siteOf(host) || {};
+    const engine = String(p.engine || def.engine || built.engine || '').toLowerCase();
+    const base = String(p.base || def.base || built.base || '').replace(/\/+$/, '');
     const e = ENGINES[engine];
     if (!engine || !base || !e) return null;
-    const pm = p.upload || def.uploadMap || {};
+    const pm = p.upload || def.uploadMap || built.upload || {};
     const upload = {
       path: String(pm.path || e.uploadPath),
       formPath: String(pm.formPath || e.formPath || pm.path || e.uploadPath),
       fileField: String(pm.fileField || e.fileField),
-      fields: Object.assign({}, e.fields, pm.fields || {})
+      fields: Object.assign({}, e.fields, (built.upload && built.upload.fields) || {}, pm.fields || {})
     };
-    const verify = Object.assign({ path: e.verifyPath }, p.verify || def.verify || {});
+    const verify = Object.assign({ path: e.verifyPath }, built.verify || {}, p.verify || def.verify || {});
     return { host: host, engine: engine, base: base, upload: upload, verify: verify,
-      catMap: catMapOf(p, def) };
+      catMap: catMapOf(p, def, built) };
   }
 
   function list() {
@@ -108,6 +112,8 @@ function makeTarget(ctx) {
         if (/\.json$/.test(f)) hosts.add(f.replace(/\.json$/, ''));
       });
     } catch (e) {}
+    const bundled = sitePack.load();
+    if (bundled.ok) Object.keys(bundled.pack.sites || {}).forEach(function (h) { hosts.add(h); });
     const out = [];
     hosts.forEach(function (host) {
       const t = resolve(host);

@@ -119,3 +119,5 @@
 
 详细设计见 `pta/docs/SITE-PACK.md`；密钥决策见 `pta/docs/DECISIONS.md` D16。
 
+状态（2026-11-16）：加载器、生成器、检查、第一版密文包、target/crawl 接入、`/api/dev` 状态已完成；设置页状态、分类规则 80%+、例外 UI 待做。
+

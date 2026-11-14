@@ -8,11 +8,21 @@ const adapters = require('./adapters');
 const marksMod = require('./marks');
 const cursor = require('./cursor');
 const limits = require('./limits');
+const sitePack = require('./site-pack');
 
 const BUSY = new Set();
 
 function nowISO() { return new Date().toISOString(); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
+
+function catListFromCats(cats) {
+  if (!cats || typeof cats !== 'object') return [];
+  const out = [];
+  Object.keys(cats).forEach(function (p) {
+    (Array.isArray(cats[p]) ? cats[p] : []).forEach(function (id) { out.push({ id: String(id), label: p, purpose: p }); });
+  });
+  return out;
+}
 
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
@@ -73,12 +83,15 @@ function makeCrawl(ctx) {
   }
 
   async function inner(host, opts) {
-    const def = readDef(host);
-    if (!def) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
+    const def0 = readDef(host);
+    const built = sitePack.siteOf(host) || null;
+    if (!def0 && !built) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
+    const def = Object.assign({}, built || {}, def0 || {});
     if (!def.engine) return { err: { code: 'NO_ENGINE', message: '这个站还没识别出引擎' } };
     const cookie = cookieOf(host);
     if (!cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
-    const catMap = Array.isArray(def.catMap) ? def.catMap : [];
+    const catMap = Array.isArray(def.catList) ? def.catList
+      : (Array.isArray(def.catMap) ? def.catMap : catListFromCats(def.cats));
     const catIdxRaw = Number(opts.catIdx >= 0 ? opts.catIdx : 0);
     const st0 = readState();
     const rec0 = st0[host] || {};

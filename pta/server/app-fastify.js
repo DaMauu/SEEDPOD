@@ -1,6 +1,7 @@
 /* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
    旧 server/app.js 已删除，只保留 v2。 */
 const path = require('path');
+const sitePack = require('./site-pack')
 const fs = require('fs');
 const crypto = require('crypto');
 const Fastify = require('fastify');
@@ -133,7 +134,8 @@ async function build() {
     data: {
       version: VERSION, devDate: DEV_DATE, node: process.version,
       stack: { front: FRONT_STACK, back: BACK_STACK },
-      counts: counts()
+      counts: counts(),
+      pack: sitePack.status()
     }
   }));
 

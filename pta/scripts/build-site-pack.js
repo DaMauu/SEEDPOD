@@ -52,6 +52,7 @@ function normalizeSite(host, def, packSite) {
     });
     site.catMap = cm;
     site.cats = cs;
+    site.catList = arr.map(function (x) { return { id: String(x.id == null ? '' : x.id), label: String(x.label || ''), purpose: x.purpose }; });
     site._catStats = stats;
   } else if (catMap && typeof catMap === 'object') {
     site.catMap = catMap;
@@ -72,7 +73,8 @@ function sensitiveKeys(obj, trail) {
   if (!obj || typeof obj !== 'object') return bad;
   for (const k of Object.keys(obj)) {
     const p = trail ? trail + '.' + k : k;
-    if (/cookie|password|passwd|secret|token|authorization/i.test(k)) bad.push(p);
+    const isHostKey = trail === 'sites'; /* 站点 host 本身可能含 secret 等词，只检查字段名 */
+    if (!isHostKey && /cookie|password|passwd|secret|token|authorization/i.test(k)) bad.push(p);
     if (obj[k] && typeof obj[k] === 'object') bad.push.apply(bad, sensitiveKeys(obj[k], p));
   }
   return bad;
