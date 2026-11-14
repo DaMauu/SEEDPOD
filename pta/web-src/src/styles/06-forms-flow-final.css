@@ -80,9 +80,6 @@
 #set-panel .set-fields .set-field:has(.switch) .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle; }
 
 .view[data-view="logs"] .log-panel { padding: 4px 18px; }
-
-.view[data-view="sources"] .dl-head { height: 34px; }
-.view[data-view="sources"] .dl-row { min-height: 44px; font-size: 12px; }
 #set-panel .set-fields .set-field .lbl { min-width: 0; white-space: nowrap; overflow: hidden; }
 #set-panel .set-fields .set-field .lbl span { display: inline-block; vertical-align: middle; }
 #set-panel .set-fields .set-field .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle;

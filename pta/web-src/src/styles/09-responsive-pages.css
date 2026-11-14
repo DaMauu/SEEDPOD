@@ -32,11 +32,6 @@
 
 .drawer.open .drawer-body[hidden]{display:none}
 
-.mark-row{display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap}
-.cat-site{font-style:normal;font-size:10.5px;color:#9aa0b0;margin-right:2px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mark-btn{font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid #d8dbe6;background:#fff;color:#8b90a0}
-.mark-btn.on{background:#eef0ff;border-color:#b9bdf0;color:#4f46e5}
-
 /* 站点抽屉：紧凑操作区 + 合并后的登录页签 */
 .sd-cookie-bar { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
 .sd-cookie-res { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
@@ -53,6 +48,8 @@
 
 /* ---------- 移动端适配：窄屏把栅格摊平，导航落到底部 ---------- */
 @media (max-width: 900px) {
+  /* 数据清单在窄屏按文档流排，内容高于视口时不要垂直居中压到顶栏 */
+  .view[data-view="sources"] { height: auto; justify-content: flex-start; }
   .topbar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
   .topbar-right { width: 100%; }
   .pills-row { flex-wrap: wrap; gap: 6px; }
@@ -70,14 +67,8 @@
   .dock-label { display: block; font-size: 10px; }
 
   /* 表格类布局摊平 */
-  .dl-head { display: none; }
-  .dl-row { display: grid; grid-template-columns: auto auto auto; gap: 4px 10px;
-    padding: 10px 12px; align-items: start; }
-  .dl-row > span:first-child { grid-column: 1 / -1; }
-  .dl-row .dl-ops { grid-column: 1 / -1; display: flex; gap: 14px; }
 
-  .dl-bar, .log-bar { flex-wrap: wrap; gap: 8px; }
-  .dl-bar .input, .dl-bar .select { max-width: 100%; }
+  .log-bar { flex-wrap: wrap; gap: 8px; }
   .set-card { padding: 14px; }
   .set-fields { grid-template-columns: 1fr; }
   .set-field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
@@ -88,7 +79,6 @@
 
 @media (max-width: 600px) {
   .brand-sub { display: none; }
-  .dl-row { grid-template-columns: auto auto; }
   .dev-foot span { white-space: normal; }
 }
 

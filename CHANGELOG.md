@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.153 · 2026-11-17
+
+### 页面 scoped 迁移
+- Sources：28 条整规则 + 1 处选择器拆分 + 5 条 `.view[data-view="sources"] …` 外层布局规则 + `#dl-body` 迁入 `Sources.vue` 的 `<style scoped>`；全局已无 `dl-*`、`cat-site`、`mark-*`、`t-link`、`ta-r`、`#dl-*` 页面选择器。
+- Crawl 的 `dl-dry*` 规则不动；`sd-*`、`btn`、`chip`、`badge`、`sites-empty`、`spacer` 等共享基础规则继续全局。
+- 删除模板中不存在的 `.dl-body` 死规则。
+- 修复 390：数据清单内容高于视口时不再垂直居中压到顶栏；筛选条、行、分页可正常滚动查看。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者；1280 / 768 / 390 视觉通过。
+
 ## v0.7.152 · 2026-11-17
 
 ### 页面 scoped 迁移

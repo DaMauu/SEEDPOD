@@ -25,7 +25,6 @@
 .st.bad i { background: var(--red); }
 .st.idle i { background: #d1d5db; }
 .soft { color: var(--muted); font-size: 12.5px; }
-.ta-r { text-align: right; }
 .link-btn {
   border: 0; background: transparent; padding: 5px 8px; border-radius: 7px; cursor: pointer;
   font: inherit; font-size: 12px; color: var(--accent);
