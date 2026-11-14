@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.112 · 2026-11-15
+
+### 新增
+- `pta/server/meta.js`：标题解析（片名/年份/季集/分辨率/来源/编码/音轨/HDR/制作组/分类）与 `buildNames` 规范名/副标题/简介。
+- `GET /api/meta/parse?title=...`；`/api/publish/preview` 返回 `parsed`/`releaseTitle`，副标题与简介用解析结果补全。
+- `pta/checks/meta.js`：11 条夹具（电影/剧集/动漫/音乐/修复版/年份歧义），11/11。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.111 · 2026-11-15
 
 ### 新增

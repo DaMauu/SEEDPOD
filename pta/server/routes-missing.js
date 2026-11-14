@@ -75,9 +75,12 @@ module.exports = function (app, ctx) {
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
     const title = String(it.title || '').replace(/\s+/g, ' ').trim();
+    const built = require('./meta').buildNames(it);
     return ok(reply, { id: id, target: it.targetSite || '', title: title,
-      subtitle: [it.cn, it.res, it.size].filter(Boolean).join(' · '),
-      description: [title, it.res ? it.res + ' 原盘' : '', it.site ? '来源 ' + it.site : ''].filter(Boolean).join('，') + '。',
+      subtitle: built.subtitle,
+      description: built.description,
+      parsed: built.parsed,
+      releaseTitle: built.releaseTitle,
       shots: (it.shots || []).length });
   });
 

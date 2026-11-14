@@ -32,6 +32,7 @@ run publish publish.js
 run scheduler scheduler.js
 run detect detect.js
 run target target.js
+run meta meta.js
 run web build.js
 
 echo

@@ -92,3 +92,10 @@
 - 许可/可用性：不复制上游代码、表单配置或站名；字段映射由用户私有包提供。
 - 我们的决定：引擎只给默认路径和字段骨架，`data/site-pack.json` 的 `upload` 覆盖；先干跑出字段，真提交受 `realPublish` 约束；用本地 mock 上传页做夹具，不碰真实站。
 - 我们怎么实现：`pta/server/target.js` 纯映射 + `routes-target.js` API；`pta/checks/target.js` 覆盖 NexusPHP 真提交与 UNIT3D/Gazelle 干跑（6/6）。
+
+## 2026-11-15 · M5 标题解析与命名
+
+- 来源：公开的 scene release 命名惯例与三家引擎的标题字段；未读 UA/upbrr 代码。
+- 观察到的行为：标题里同时带片名、年份、季集、分辨率、来源、编码、音轨、HDR、制作组；年份也可能出现在片名里（Blade Runner 2049）。
+- 许可/可用性：命名规则是事实性惯例，不复制代码；外部元数据（TMDB/豆瓣）需要用户 key。
+- 我们的决定：先做确定性本地解析 + 生成规范名/副标题/简介；`/api/meta/parse` 暴露；TMDB/豆瓣等外部元数据以后单独接，不在这里猜。

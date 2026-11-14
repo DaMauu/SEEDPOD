@@ -2,12 +2,15 @@
 const fs = require('fs');
 const path = require('path');
 const screen = require('./screen');
+const meta = require('./meta');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
   const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
   const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
+
+  app.get('/api/meta/parse', async (req) => ok(meta.parseRelease(req.query.title || '')));
 
   app.get('/api/sites/:host/search', async (req, reply) => {
     const host = req.params.host;
