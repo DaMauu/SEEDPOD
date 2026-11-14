@@ -156,10 +156,50 @@ async function main() {
     await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
     await page.waitForTimeout(300);
     need(await page.locator('#site-detail textarea').count() === 1, '上传配置文本域缺失');
+    await page.locator('#site-detail .cm-actions button').filter({ hasText: '加一条' }).click();
+    await page.waitForTimeout(200);
+    const cm = page.locator('#site-detail .cm-row').last();
+    await cm.locator('input').nth(0).fill('movie');
+    await cm.locator('input').nth(1).fill('401');
+    await page.locator('#site-detail .cm-actions button').filter({ hasText: '保存映射' }).click();
+    await page.waitForTimeout(600);
+    const mj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
+    need(mj.ok && mj.data.catMap && mj.data.catMap.movie === '401', '分类映射没保存');
     await page.locator('#site-detail .sd-cookie-bar button').filter({ hasText: '保存定义' }).click();
     await page.waitForTimeout(500);
     const j = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
     need(j.ok && /added\.example/.test(j.data.base || ''), '站点定义没保存');
+
+    await page.evaluate(async () => {
+      const def = { engine: 'nexusphp', base: 'https://added.example', cats: { movie: ['401'], tv: ['402'] },
+        catMap: [{ id: '401', label: 'Movies', purpose: 'movie' }, { id: '402', label: 'TV', purpose: 'tv' }] };
+      await fetch('/api/site-def/added.example', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def) });
+    });
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { location.hash = '#sites'; });
+    await page.waitForTimeout(700);
+    await page.locator('.sites-bar input').first().fill('added.example');
+    await page.waitForTimeout(500);
+    await page.locator('.site-item').first().click();
+    await page.waitForTimeout(600);
+    await page.locator('#site-detail .tabbtn').filter({ hasText: '设置' }).click();
+    await page.waitForTimeout(300);
+    await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
+    await page.waitForTimeout(400);
+    const rows = page.locator('#site-detail .cm-row:not(.cm-head)');
+    need(await rows.count() === 2, '数组映射行数不对：' + await rows.count());
+    await rows.first().locator('select').selectOption('tv');
+    await page.locator('#site-detail .cm-actions button').filter({ hasText: '保存映射' }).click();
+    await page.waitForTimeout(600);
+    const aj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
+    need(aj.ok && Array.isArray(aj.data.catMap) && aj.data.catMap[0].purpose === 'tv', '数组映射没保存');
+    need(aj.data.cats && Array.isArray(aj.data.cats.tv) && aj.data.cats.tv.includes('401'), 'cats 没按用途重建');
+    await rows.nth(1).locator('.cm-del').click();
+    await page.locator('#site-detail .cm-actions button').filter({ hasText: '保存映射' }).click();
+    await page.waitForTimeout(600);
+    const dj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
+    need(dj.ok && dj.data.catMap.length === 1, '数组映射删除没生效');
   });
 
   await check('流程卡与未接规则', async () => {

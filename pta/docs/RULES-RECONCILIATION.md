@@ -28,7 +28,7 @@
 | 种子完整性校验 | `qb.parseTorrent()` / `target.decodeTorrent()` 始终校验 bencode 和 infohash，没有可关的路径。 |
 | 发布失败重试 | 调度器已按 `config.retryMax` / `retryBackoffMin` 重试；流程页这条没有读者。 |
 | 失败时推送通知 | 通知由 `notify.js` + 设置页的事件级别控制；流程页这条重复。 |
-| 目标站分类映射 | 映射实际存在站点定义的 `catMap`；入口下一步放到站点抽屉，不在流程页。 |
+| 目标站分类映射 | 映射实际存在站点定义的 `catMap`；入口已放到站点抽屉的上传配置（v0.7.133），不在流程页。 |
 | 主站已有同片 | `screen.js` 始终按标题/infohash 跳过重复；没有“仍收”分支。 |
 | 中文副标题模板 | 输入框只在前端预览，从未序列化到 `/api/flow`，也没有服务端读者。 |
 | TMDB 接口 | TMDB key/endpoint 走环境变量 `TMDB_API_KEY` / `PTA_TMDB_API`；密钥不进流程 JSON。 |

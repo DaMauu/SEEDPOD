@@ -1445,10 +1445,22 @@ body::after {
 .set-field .ctl .fixed-val.ref { background: transparent; border-color: transparent; padding: 0 2px; color: #5f6674; }
 
 /* ---------- 分类映射弹窗 ---------- */
+.cm-block { grid-column: 1 / -1; }
 .cm-list { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow: auto; padding: 2px 2px 10px; }
-.cm-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: center; gap: 18px; }
-.cm-row .cm-src { font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px auto; align-items: center; gap: 12px; }
+.cm-row .cm-src { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12.5px; color: var(--ink); }
+.cm-row .cm-src .input { height: 32px; font-size: 12.5px; min-width: 0; }
+.cm-row .cm-src .input.num { flex: 0 0 88px; width: 88px; }
 .cm-row .select { width: 190px; height: 32px; font-size: 12.5px; }
+.cm-row.cm-head { font-size: 11px; color: var(--muted-2); padding: 0 2px 2px; }
+.cm-row .cm-del { flex: 0 0 auto; }
+.cm-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .cm-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .cm-row.cm-head { display: none; }
+  .cm-row .select, .cm-row .cm-src .input.num { width: 100%; flex: 1 1 auto; }
+  .cm-row .cm-del { justify-self: start; }
+}
 
 /* ---------- 已上传截图 ---------- */
 .shot.has { padding: 0; overflow: hidden; border-style: solid; border-color: var(--line-2); }
@@ -1613,6 +1625,7 @@ body::after {
   .set-field .ctl { width: 100%; }
   .modal { width: min(94vw, 560px); }
   .site-expand .sd-form { padding: 12px; }
+  .site-expand .sd-form .set-fields { grid-template-columns: 1fr; }
   .seg-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 

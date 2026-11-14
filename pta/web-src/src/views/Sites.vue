@@ -203,8 +203,41 @@
 
                                 <template v-else-if="setTab === 'upload'">
                   <div class="set-fields">
+                    <div class="sd-block cm-block">
+                      <h4>分类映射</h4>
+                      <p class="set-desc">{{ catKind === 'array' ? '站点分类 → 库内分类；保存后抓取轮转按这张表。' : '库内分类 → 目标站分类 ID；保存后发种按这张表填分类。' }}</p>
+                      <div v-if="catRows.length" class="cm-list">
+                        <div class="cm-row cm-head">
+                          <span>{{ catKind === 'array' ? '站点分类' : '库内分类' }}</span>
+                          <span>{{ catKind === 'array' ? '库内分类' : '目标站分类 ID' }}</span>
+                          <span></span>
+                        </div>
+                        <div v-for="(r, i) in catRows" :key="i" class="cm-row">
+                          <div v-if="catKind === 'array'" class="cm-src">
+                            <input v-model="r.label" class="input" placeholder="分类名称">
+                            <input v-model="r.id" class="input num" placeholder="ID">
+                          </div>
+                          <div v-else class="cm-src">
+                            <input v-model="r.key" class="input" placeholder="库内分类，如 movie">
+                          </div>
+                          <select v-if="catKind === 'array'" v-model="r.purpose" class="select">
+                            <option v-for="p in catPurposes" :key="p.v" :value="p.v">{{ p.label }}</option>
+                          </select>
+                          <input v-else v-model="r.id" class="input" placeholder="目标站分类 ID">
+                          <button class="btn ghost slim cm-del" type="button" @click.stop="removeCatRow(i)">删除</button>
+                        </div>
+                      </div>
+                      <div v-else class="sites-empty">这个站还没有分类映射；点「加一条」开始。</div>
+                      <div class="cm-actions">
+                        <button class="btn ghost slim" type="button" @click.stop="addCatRow">加一条</button>
+                        <button class="btn primary slim" type="button" :disabled="catSaving" @click.stop="saveCatMap">{{ catSaving ? '保存中…' : '保存映射' }}</button>
+                        <span class="sd-cookie-res">{{ catMsg }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="set-fields">
                     <div class="set-field">
-                      <div class="lbl"><span>站点定义 JSON</span><i>上传页字段映射；存 data/site-defs，不进仓库</i></div>
+                      <div class="lbl"><span>站点定义 JSON</span><i>高级字段；存 data/site-defs，不进仓库</i></div>
                       <div class="ctl"><textarea v-model="defText" class="input sd-note" rows="10" placeholder="{}"></textarea></div>
                     </div>
                   </div>
@@ -380,6 +413,23 @@ const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ov
 const defText = ref('')
 const defSaving = ref(false)
 const defMsg = ref('')
+const catKind = ref('object')
+const catRows = ref([])
+const catSaving = ref(false)
+const catMsg = ref('')
+const catPurposes = [
+  { v: 'movie', label: '电影' },
+  { v: 'tv', label: '剧集' },
+  { v: 'doc', label: '纪录片' },
+  { v: 'anime', label: '动漫' },
+  { v: 'music', label: '音乐' },
+  { v: 'sport', label: '体育' },
+  { v: 'game', label: '游戏' },
+  { v: 'book', label: '电子书' },
+  { v: 'software', label: '软件' },
+  { v: 'adult', label: '成人' },
+  { v: 'other', label: '其他' }
+]
 const addOpen = ref(false)
 const addForm = reactive({ url: '', arch: '?', title: '' })
 const busy = reactive({ selfcheck: false, crawl: false, save: false, bulk: false })
@@ -625,7 +675,7 @@ async function loadDetail(host) {
       fetch('/api/catalog?site=' + encodeURIComponent(host) + '&limit=6', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).catch(() => null)
     ])
     if (sel.value !== host) return
-    if (dj && dj.ok) detail.def = dj.data
+    if (dj && dj.ok) { detail.def = dj.data; syncCatRows(detail.def) }
     if (pj && pj.ok) detail.preset = (pj.data && pj.data.preset) || null
     if (cj && cj.ok) {
       detail.catalog = { total: cj.data.total || 0, byStatus: cj.data.byStatus || {} }
@@ -657,7 +707,7 @@ async function loadDef(host) {
     const r = await fetch('/api/site-def/' + encodeURIComponent(host), { credentials: 'same-origin' })
     if (r.ok) {
       const j = await r.json()
-      if (j && j.ok) { defText.value = JSON.stringify(j.data, null, 2); return }
+      if (j && j.ok) { defText.value = JSON.stringify(j.data, null, 2); syncCatRows(j.data); return }
     }
   } catch (e) {}
   const s = sites.value.find(x => x.name === host)
@@ -676,10 +726,101 @@ async function saveDef() {
     const j = await (await fetch('/api/site-def/' + encodeURIComponent(sel.value), {
       method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
     })).json()
-    if (j && j.ok) { defMsg.value = '已保存'; toast('站点定义已保存') }
-    else { defMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(defMsg.value) }
+    if (j && j.ok) {
+      detail.def = def
+      syncCatRows(def)
+      defMsg.value = '已保存'
+      toast('站点定义已保存')
+    } else { defMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(defMsg.value) }
   } catch (e) { toast('保存请求发不出去') }
   defSaving.value = false
+}
+
+function catRowsFromDef(def) {
+  if (!def) return { kind: 'object', rows: [] }
+  const cm = def.catMap
+  if (Array.isArray(cm)) {
+    return { kind: 'array', rows: cm.map(function (x) {
+      return { id: String((x && x.id) || ''), label: String((x && x.label) || ''), purpose: String((x && x.purpose) || 'other') }
+    }) }
+  }
+  if (cm && typeof cm === 'object') {
+    return { kind: 'object', rows: Object.keys(cm).map(function (k) {
+      return { key: String(k), id: String(cm[k] == null ? '' : cm[k]) }
+    }) }
+  }
+  return { kind: 'object', rows: [] }
+}
+function syncCatRows(def) {
+  const s = catRowsFromDef(def)
+  catKind.value = s.kind
+  catRows.value = s.rows
+  catMsg.value = ''
+}
+function addCatRow() {
+  if (catKind.value === 'array') catRows.value.push({ id: '', label: '', purpose: 'other' })
+  else catRows.value.push({ key: '', id: '' })
+}
+function removeCatRow(i) {
+  catRows.value.splice(i, 1)
+}
+async function saveCatMap() {
+  if (!sel.value || catSaving.value) return
+  let def
+  try { def = JSON.parse(defText.value) } catch (e) { catMsg.value = '上面的 JSON 格式不对，先修好再保存映射'; return }
+  if (!def || typeof def !== 'object' || Array.isArray(def)) { catMsg.value = '站点定义必须是 JSON 对象'; return }
+  const rows = catRows.value.map(function (r) { return Object.assign({}, r) })
+  if (catKind.value === 'array') {
+    const seen = {}
+    for (const r of rows) {
+      r.id = String(r.id || '').trim()
+      r.label = String(r.label || '').trim()
+      r.purpose = String(r.purpose || 'other')
+      if (!r.id || !r.label) { catMsg.value = '站点分类的名称和 ID 都要填'; return }
+      if (seen[r.id]) { catMsg.value = '分类 ID 重复：' + r.id; return }
+      seen[r.id] = true
+      if (!catPurposes.some(function (p) { return p.v === r.purpose })) r.purpose = 'other'
+    }
+    def.catMap = rows
+    const cats = {}
+    rows.forEach(function (r) { (cats[r.purpose] = cats[r.purpose] || []).push(r.id) })
+    def.cats = cats
+  } else {
+    const seen = {}
+    const obj = {}
+    for (const r of rows) {
+      const key = String(r.key || '').trim()
+      const id = String(r.id || '').trim()
+      if (!key || !id) { catMsg.value = '库内分类和目标站分类 ID 都要填'; return }
+      if (seen[key]) { catMsg.value = '库内分类重复：' + key; return }
+      seen[key] = true
+      obj[key] = id
+    }
+    def.catMap = obj
+  }
+  catSaving.value = true
+  try {
+    const j = await (await fetch('/api/site-def/' + encodeURIComponent(sel.value), {
+      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
+    })).json()
+    if (j && j.ok) {
+      const saved = (j.data && j.data.def) || def
+      detail.def = saved
+      defText.value = JSON.stringify(saved, null, 2)
+      syncCatRows(saved)
+      catMsg.value = '已保存 · ' + rows.length + ' 条'
+      toast('分类映射已保存')
+      if (defs.value && defs.value[sel.value]) {
+        const cats = saved.cats || {}
+        defs.value[sel.value] = Object.assign({}, defs.value[sel.value], {
+          groups: Object.keys(cats).length,
+          ids: Object.keys(cats).reduce(function (a, k) { return a + (cats[k] || []).length }, 0),
+          cats: cats
+        })
+      }
+    } else { catMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(catMsg.value) }
+  } catch (e) { catMsg.value = '保存请求发不出去'; toast(catMsg.value) }
+  catSaving.value = false
 }
 function openAdd() { addForm.url = ''; addForm.arch = '?'; addForm.title = ''; addOpen.value = true }
 async function addSite() {
@@ -904,8 +1045,9 @@ function catRangeTxt(s) {
   return groups ? groups + ' 组分类' : '还没有分类'
 }
 function catMapTxt(s) {
-  const n = Object.keys((detail.def && detail.def.catMap) || {}).length
-  return n ? '已配 ' + n + ' 条' : '未接（私有包里改 catMap）'
+  const cm = detail.def && detail.def.catMap
+  const n = Array.isArray(cm) ? cm.length : (cm && typeof cm === 'object' ? Object.keys(cm).length : 0)
+  return n ? '已配 ' + n + ' 条' : '未配置'
 }
 
 onMounted(() => {

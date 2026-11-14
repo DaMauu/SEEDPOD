@@ -290,6 +290,28 @@ async function main() {
     need(!(list2.data.sites || []).some(x => x.host === 'added.example'), '移除后列表还在');
   });
 
+  await check('站点分类映射数组/对象回读', async () => {
+    const host = 'map.example';
+    const arr = { engine: 'nexusphp', base: 'https://map.example', cats: { movie: ['401'], tv: ['402'] },
+      catMap: [{ id: '401', label: 'Movies', purpose: 'movie' }, { id: '402', label: 'TV', purpose: 'tv' }] };
+    const put = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(arr)
+    });
+    need(put.status === 200, '数组映射保存失败 ' + put.status);
+    const got = await (await fetchA(BASE + '/api/site-def/' + host)).json();
+    need(got.ok && Array.isArray(got.data.catMap) && got.data.catMap.length === 2, '数组映射没读回');
+    need(got.data.catMap[0].purpose === 'movie' && got.data.catMap[1].id === '402', '数组映射内容不对');
+    const list = await (await fetchA(BASE + '/api/site-defs')).json();
+    need(list.ok && list.data[host] && list.data[host].groups === 2 && list.data[host].ids === 2, 'site-defs 分类统计不对：' + JSON.stringify(list.data[host]));
+    const obj = { engine: 'nexusphp', base: 'https://map.example', catMap: { movie: '401', tv: '402' } };
+    const put2 = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(obj)
+    });
+    need(put2.status === 200, '对象映射保存失败 ' + put2.status);
+    const got2 = await (await fetchA(BASE + '/api/site-def/' + host)).json();
+    need(got2.ok && got2.data.catMap && got2.data.catMap.movie === '401' && got2.data.catMap.tv === '402', '对象映射没读回');
+  });
+
   await check('凭据只回 hasCookie，不回明文', async () => {
     const put = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=secret-cookie' })
