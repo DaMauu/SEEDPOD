@@ -94,7 +94,6 @@
 #set-panel .set-fields .set-field:has(.switch) .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle; }
 
 .view[data-view="logs"] .log-panel { padding: 4px 18px; }
-.view[data-view="logs"] .log-row { padding: 6px 0; font-size: 11.5px; }
 
 .view[data-view="sources"] .dl-head { height: 34px; }
 .view[data-view="sources"] .dl-row { min-height: 44px; font-size: 12px; }
@@ -118,7 +117,6 @@
 #set-panel .set-fields .set-field .ctl .select { width: 100%; box-sizing: border-box; }
 /* 日志右侧留白 */
 .view[data-view="logs"] .log-panel { padding-right: 24px; }
-#set-panel .set-field .ctl { justify-content: flex-end; }
 #set-panel .set-field .ctl .btn { height: 28px; padding: 0 12px; font-size: 11.5px; border-radius: 8px; }
 #set-panel .set-field .ctl { display: flex; align-items: center; justify-content: flex-end; width: 220px; }
 /* 下载器：容量文字固定宽度，进度条起点对齐 */
@@ -219,19 +217,14 @@
 .qd-grid .shot { width: 62px; height: 42px; font-size: 10px; }
 .qd-status { margin-top: 10px; }
 .qd-actions { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
-.view[data-view="queue"] .queue-split { align-items: flex-start; }
 .view[data-view="queue"] .queue-list { max-height: calc(100vh - 210px); }
-.view[data-view="queue"] .queue-detail { align-self: flex-start; }
 /* 详情撑满一屏，简介占剩余高度，操作条贴底 */
 .view[data-view="queue"] .queue-split { align-items: stretch; height: calc(100vh - 208px); }
-.view[data-view="queue"] .queue-list { max-height: none; }
-.view[data-view="queue"] .queue-detail { align-self: stretch; display: flex; flex-direction: column; }
 .view[data-view="queue"] .qd-grid { flex: 1; min-height: 0; }
 .view[data-view="queue"] .qd-actions { margin-top: 10px; }
 .view[data-view="queue"] .qd-grid { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
 .view[data-view="queue"] .qd-shots { margin-top: auto; }
 /* 回车键式紧凑：卡片按内容高度，不留大片空白 */
-.view[data-view="queue"] .queue-split { height: auto; align-items: flex-start; }
 .view[data-view="queue"] .queue-detail { align-self: flex-start; display: block; }
 .view[data-view="queue"] .qd-grid { flex: none; grid-template-rows: auto; align-content: start; }
 .view[data-view="queue"] .qd-shots { margin-top: 0; }

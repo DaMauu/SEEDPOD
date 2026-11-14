@@ -12,12 +12,10 @@
 .bento-top .list-item, .bento-bottom .list-item { padding: 10px 0; }
 
 @media (max-width: 1000px) {
-  .bento-top, .bento-bottom { grid-template-columns: 1fr; }
   .stat-card, .status-card { aspect-ratio: auto; }
 }
 /* stack published and logs */
-.bento-bottom { grid-template-columns: 300px minmax(0, 1fr); }
-.bento-bottom { align-items: start; }
+.bento-bottom { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
 .status-card { width: 300px; height: 300px; aspect-ratio: auto; }
 /* polish: spacing, type, whitespace */
 .main { padding: 30px 32px 128px; }
@@ -107,7 +105,6 @@
 
 .bento-top .list-item, .bento-bottom .list-item { padding: 9px 0; }
 /* fixed card sizes */
-.main { max-width: 1280px; }
 .bento-top, .bento-bottom { grid-template-columns: 300px 444px 444px; }
 .bento-top > .card, .bento-bottom > .card { height: 236px; }
 .stat-card, .status-card { width: 300px; height: 236px; }
@@ -131,13 +128,10 @@
 /* more breathing room from the browser edge */
 .main { max-width: 1200px; }
 .bento-top, .bento-bottom { grid-template-columns: 300px 400px 400px; }
-@media (min-width: 1320px) { .dock { right: 36px; } }
 /* top row two columns, bottom three */
 .main { max-width: 1252px; }
-.bento-top { grid-template-columns: 300px minmax(0, 1fr); }
 .bento-bottom { grid-template-columns: 300px 430px 430px; }
 @media (min-width: 1320px) {
-  .dock { right: 36px; padding: 6px; }
   .dock-item { padding: 8px 9px; font-size: 12px; }
 }
 @media (max-width: 1320px) {
@@ -145,11 +139,8 @@
   .bento-bottom { grid-template-columns: 300px minmax(0,1fr) minmax(0,1fr); }
 }
 /* restore full content width, compact rail */
-.main { max-width: 1280px; }
 .bento-top { grid-template-columns: 300px minmax(0, 1fr); }
-.bento-bottom { grid-template-columns: 300px 444px 444px; }
 @media (min-width: 1320px) {
-  .dock { right: 36px; padding: 6px; }
   .dock-item { padding: 8px 7px; font-size: 11.5px; gap: 4px; }
 }
 
@@ -161,8 +152,6 @@
 .dock-item svg { width: 17px; height: 17px; flex: 0 0 17px; }
 @media (min-width: 1320px) {
   .dock { right: 36px; padding: 6px; }
-  .dock-item { position: relative; padding: 9px; gap: 0; }
-  .dock-label { display: none; }
 }
 @media (min-width: 1320px) { .dock { right: 56px; } }
 @media (min-width: 1320px) { .dock { right: 32px; } }
@@ -170,9 +159,6 @@
 @media (min-width: 1320px) { .dock { right: 48px; } }
 @media (min-width: 1320px) { .dock { right: 54px; } }
 /* rail 80px from browser edge */
-.main { max-width: 1230px; }
-.bento-bottom { grid-template-columns: 300px 418px 418px; }
-@media (min-width: 1320px) { .dock { right: 80px; } }
 /* nav lives in the top-right menu */
 .dock { display: none !important; }
 .main { max-width: 1280px; }

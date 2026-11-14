@@ -18,8 +18,6 @@
 .seg-tabs button.active i { color: var(--accent); }
 .btn.slim { height: 36px; padding: 0 13px; border-radius: 10px; font-size: 12.5px; }
 .select.slim { height: 36px; border-radius: 10px; font-size: 12.5px; color: var(--muted); }
-
-.sites-panel { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .chip {
   display: inline-block; padding: 2px 8px; border-radius: 6px; font-style: normal;
   font-size: 10.5px; letter-spacing: .3px; font-weight: 600;
@@ -76,7 +74,6 @@
 .site-item { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background .13s ease; }
 .site-item + .site-item { margin-top: 2px; }
 .site-item:hover { background: #f7f8fa; }
-.site-item.on { background: var(--accent-soft); }
 .site-item.on .si-txt b { color: var(--accent); }
 .si-txt { flex: 1; min-width: 0; }
 .si-txt b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
