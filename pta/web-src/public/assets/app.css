@@ -1766,11 +1766,11 @@ body::after {
   .dock-item {
     flex: 1 1 0; min-width: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 1px; padding: 5px 1px; border-radius: 10px;
+    gap: 1px; padding: 5px 1px; min-height: 40px; border-radius: 10px;
   }
-  .dock-label { display: block; font-size: 10px; line-height: 1.2; text-align: center; white-space: nowrap; }
+  .dock .dock-label { display: block; font-size: 10.5px; line-height: 1.2; text-align: center; white-space: nowrap; }
   .main { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (max-width: 360px) {
-  .dock-label { font-size: 9px; }
+  .dock .dock-label { font-size: 9px; }
 }
