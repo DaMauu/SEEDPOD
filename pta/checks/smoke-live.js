@@ -134,6 +134,34 @@ async function main() {
     need(await page.locator('#site-detail').count() === 0, 'Escape 没关闭抽屉');
   });
 
+  await check('面板添加站点与上传配置', async () => {
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(200);
+    await page.evaluate(() => { location.hash = '#sites'; });
+    await page.waitForTimeout(700);
+    await page.locator('.sites-bar button').filter({ hasText: '添加站点' }).click();
+    await page.waitForTimeout(300);
+    need(await page.locator('#site-add-modal').isVisible(), '添加站点弹窗没打开');
+    const inputs = page.locator('#site-add-modal input');
+    await inputs.nth(0).fill('https://added.example/index.php');
+    await inputs.nth(1).fill('Added Site');
+    await page.locator('#site-add-modal select').selectOption('NP');
+    await page.locator('#site-add-modal .modal-foot button').filter({ hasText: '添加' }).click();
+    await page.waitForTimeout(800);
+    need(await page.locator('.site-item').count() === 4, '添加后站点数量不对：' + await page.locator('.site-item').count());
+    need(/Added Site/.test(await page.locator('#sites-list').innerText()), '添加的站点没出现');
+    need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
+    await page.locator('#site-detail .tabbtn').filter({ hasText: '设置' }).click();
+    await page.waitForTimeout(200);
+    await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
+    await page.waitForTimeout(300);
+    need(await page.locator('#site-detail textarea').count() === 1, '上传配置文本域缺失');
+    await page.locator('#site-detail .sd-cookie-bar button').filter({ hasText: '保存定义' }).click();
+    await page.waitForTimeout(500);
+    const j = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
+    need(j.ok && /added\.example/.test(j.data.base || ''), '站点定义没保存');
+  });
+
   await check('流程卡与未接规则', async () => {
     await page.evaluate(() => { location.hash = '#crawl'; });
     await page.waitForTimeout(700);
