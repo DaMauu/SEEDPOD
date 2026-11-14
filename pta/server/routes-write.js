@@ -173,7 +173,7 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, detail: false };
+  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, detail: false, retryMax: 2, retryBackoffMin: 15 };
   const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] };
   function readCfg() {
     const row = one("SELECT v FROM meta WHERE k = 'config'");
@@ -194,6 +194,16 @@ module.exports = function (app, ctx) {
     if (b.realCrawl !== undefined) next.realCrawl = !!b.realCrawl;
     if (b.realPublish !== undefined) next.realPublish = !!b.realPublish;
     if (b.detail !== undefined) next.detail = !!b.detail;
+    if (b.retryMax !== undefined) {
+      const n = Number(b.retryMax);
+      if (!Number.isInteger(n) || n < 0 || n > 10) return bad(reply, 'OUT_OF_RANGE', 'retryMax 必须是 0–10 的整数');
+      next.retryMax = n;
+    }
+    if (b.retryBackoffMin !== undefined) {
+      const n = Number(b.retryBackoffMin);
+      if (!Number.isInteger(n) || n < 1 || n > 1440) return bad(reply, 'OUT_OF_RANGE', 'retryBackoffMin 必须是 1–1440 的整数');
+      next.retryBackoffMin = n;
+    }
     ['interval', 'windowMinutes', 'maxPerWindow', 'breaker'].forEach(function (k) { if (b[k] !== undefined) next[k] = Number(b[k]); });
     db.prepare("INSERT INTO meta(k, v) VALUES('config', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(next));
     return ok(reply, next);

@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 20:00（当前 v0.7.118 / M10 Telegram 通知已接，notify 7/7）
+最后更新：2026-11-15 21:00（当前 v0.7.119 / M10 通知 + 重试完成）
+
+## 2026-11-15 M10：失败重试（v0.7.119）
+
+- 调度器对 `failed` 队列条目重试，默认最多 2 次、退避 15 分钟；`retryMax/retryBackoffMin` 可配。
+- 失败写 `retries/lastRetryAt/nextRetryAt/retryMsg`；成功转 published；重试失败计入 TG 通知。
+- `clients` 夹具加调度重试用例，5/5。
+- M9/M10 完成，六项与 M8–M10 全部收口。
 
 ## 2026-11-15 M10：Telegram 通知（v0.7.118）
 

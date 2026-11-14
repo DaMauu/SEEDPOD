@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.119 · 2026-11-15
+
+### 新增
+- 调度器重试 `failed` 队列条目：`retryMax`（默认 2）、`retryBackoffMin`（默认 15）可配；失败写 `retries/lastRetryAt/nextRetryAt/retryMsg`，成功后转 published。
+- 重试失败会计入调度通知文本；`clients` 夹具加“调度重试 failed 条目”，5/5。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 5/5、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.118 · 2026-11-15
 
 ### 新增

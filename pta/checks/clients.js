@@ -165,6 +165,25 @@ async function main() {
     need(/watch/.test(g.body.data.pubMsg || ''), 'pubMsg 没提 watch：' + g.body.data.pubMsg);
   });
 
+  await check('调度重试 failed 条目', async function () {
+    const item = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Watch Retry 2020 1080p', site: 'demo-a.example', targetSite: 'target.example',
+        downloadUrl: src.base + '/t.torrent', status: 'failed', size: '20 GB', retries: 0 })
+    });
+    need(item.status === 200 && item.body.ok, '建 failed 队列失败：' + JSON.stringify(item.body && item.body.error));
+    const id = item.body.data.id;
+    const before = torrentFiles().length;
+    const run = await json(BASE + '/api/scheduler/run', { method: 'POST' });
+    need(run.status === 200 && run.body.ok, '调度运行失败：' + JSON.stringify(run.body && run.body.error));
+    const retry = run.body.data.retry;
+    need(retry && retry.checked >= 1 && retry.ok >= 1, '重试没跑：' + JSON.stringify(retry));
+    const g = await json(BASE + '/api/queue/' + encodeURIComponent(id));
+    need(g.body.data.status === 'published', '重试后状态不是 published：' + g.body.data.status);
+    need(g.body.data.qb && g.body.data.qb.client === 'watch', '重试没走 watch');
+    need(torrentFiles().length === before + 1, '重试没写 watch 目录');
+  });
+
   child.kill();
   src.server.close();
   try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}
