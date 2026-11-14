@@ -100,9 +100,15 @@
         </div>
 
         <div v-if="sel.pubMsg" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ sel.pubMsg }}</div>
+        <div v-if="sel.targetUpload" class="qd-status" :class="sel.targetVerify && sel.targetVerify.found ? 'ok' : ''">
+          目标站 {{ sel.targetUpload.host }} · {{ sel.targetUpload.message || '已提交' }}
+          <a v-if="sel.targetUpload.detailsUrl" :href="sel.targetUpload.detailsUrl" target="_blank" rel="noopener noreferrer">详情</a>
+          <span v-if="sel.targetVerify"> · 回查：{{ sel.targetVerify.found ? '已找到' : '未找到' }}</span>
+        </div>
 
         <div class="qd-actions">
           <button class="btn primary slim" type="button" :disabled="busy.act" @click="act('publish')">{{ sel.status === 'failed' ? '重试发布' : '通过并发布' }}</button>
+          <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite" title="把种子提交到目标站；真发布关闭时会提示" @click="submitTarget">{{ busy.target ? '提交中…' : '提交目标站' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
           <div class="spacer"></div>
@@ -137,7 +143,7 @@ const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
-const busy = reactive({ act: false, check: false, approve: false, publish: false })
+const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false })
 const filePick = ref(null)
 let timer = null
 let qTimer = null
@@ -237,6 +243,26 @@ async function act(action) {
     await refresh()
   } catch (e) { toast('请求发不出去') }
   busy.act = false
+}
+async function submitTarget() {
+  if (!sel.value || busy.target) return
+  const host = form.targetSite || sel.value.targetSite
+  if (!host) { toast('先选目标站'); return }
+  busy.target = true
+  try {
+    const r = await fetch('/api/targets/' + encodeURIComponent(host) + '/upload', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: sel.value.id, dryRun: false })
+    })
+    const j = await r.json().catch(() => null)
+    if (j && j.ok) {
+      const v = j.data.verify
+      toast('已提交目标站' + (v ? (v.found ? '，回查已找到' : '，回查暂未找到') : ''))
+      await refresh()
+    } else toast((j && j.error && j.error.message) || ('提交失败 ' + r.status))
+  } catch (e) { toast('提交请求发不出去') }
+  busy.target = false
 }
 async function preview() {
   if (!sel.value) return

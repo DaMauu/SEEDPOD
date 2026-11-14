@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "sites": {
+    "target.example": {
+      "engine": "nexusphp",
+      "base": "https://target.example",
+      "upload": {
+        "path": "/takeupload.php",
+        "fileField": "file",
+        "fields": {
+          "name": "{title}",
+          "small_desc": "{subtitle}",
+          "descr": "{description}",
+          "type": "{catId}",
+          "source_sel": "{source}",
+          "codec_sel": "{codec}",
+          "standard_sel": "{resolution}",
+          "team_sel": "{team}",
+          "anon": "{anonymous}"
+        }
+      },
+      "verify": { "path": "/torrents.php?search={title}" },
+      "catMap": { "movie": "401", "tv": "402" }
+    }
+  }
+}

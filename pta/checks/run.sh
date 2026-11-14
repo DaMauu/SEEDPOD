@@ -31,6 +31,7 @@ run api api-v2.js
 run publish publish.js
 run scheduler scheduler.js
 run detect detect.js
+run target target.js
 run web build.js
 
 echo

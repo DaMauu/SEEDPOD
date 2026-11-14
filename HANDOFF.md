@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 12:00（当前 v0.7.110 / 七个页面 SFC，旧 web 已归档）
+最后更新：2026-11-15 13:00（当前 v0.7.111 / M8 目标站提交与回查已接，target 6/6）
+
+## 2026-11-15 M8：目标站提交与回查（v0.7.111）
+
+- `pta/server/target.js` + `routes-target.js`：三引擎路径/字段骨架，`data/site-pack.json` 的 `upload` 覆盖；干跑默认，真提交要 `realPublish=true`。
+- API：`GET /api/targets`、`POST /api/targets/:host/plan|upload|verify`；队列页加“提交目标站”，成功后写回 `targetUpload/targetVerify`。
+- `pta/checks/target.js`：本地 mock 上传页，6/6；不碰真实站。真实站字段由用户私有包确认。
+- 检查：`run.sh` 全绿。
 
 ## 2026-11-15 M4 收口：七页 SFC + 旧 web 归档（v0.7.110）
 

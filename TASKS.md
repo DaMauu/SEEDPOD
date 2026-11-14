@@ -254,11 +254,13 @@ pta\checks\run.cmd
 
 验收：上述接口补齐并有 api-v2 用例后，再把 queue 页搬 SFC；搬完 smoke-live 增加列表/详情/驳回/发布断言。
 
-## 九、目标站提交与校验（M8，未开始）
+## 九、目标站提交与校验（M8，已完成 0.7.111）
 
-- 内置 NexusPHP/UNIT3D/Gazelle 引擎的提交表单映射
-- `data/site-pack.json` 私有站点包（不入库）
-- 发布后目标站回查；mock 表单测试，不碰真实站
+- 内置 NexusPHP/UNIT3D/Gazelle 的路径/字段骨架，`data/site-pack.json` 的 `upload` 覆盖。
+- API：`GET /api/targets`、`POST /api/targets/:host/plan|upload|verify`；真提交受 `realPublish` 门禁。
+- `pta/checks/target.js` 本地 mock：私有包、NexusPHP 真提交、UNIT3D/Gazelle 干跑、门禁、回查，6/6。
+- 待审核页加“提交目标站”，成功后把 `targetUpload/targetVerify` 写回队列。
+- 真实站不测；用户的私有包自行确认字段。
 
 ## 十、M4 归档（已完成，0.7.110）
 

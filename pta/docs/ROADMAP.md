@@ -99,9 +99,9 @@
 | M5 | 元数据/命名/分类/简介 | 输入标题能出规范名、年份、季集、分类；mock 数据用例 | TMDB key（用户提供） |
 | M6 | MediaInfo/截图/图床/种子 | ffprobe 取信息；ffmpeg 截图 + HDR tonemap；生成/复用 .torrent | ffmpeg（已有）、mediainfo（可选） |
 | M7 | 客户端抽象 | qB 完成；rTorrent/Deluge/watch 至少再接一个 | 本地 mock |
-| M8 | 站点提交适配 | 引擎识别已完成（0.7.98，detect 5/5）；下一步上传表单映射 + 私有站点包；mock 表单测试 | 真实站名不入库 |
+| M8 | 站点提交适配 ✅ | 0.7.111：三引擎路径/字段骨架 + `data/site-pack.json` 覆盖；mock 上传/回查 target 6/6；队列页有“提交目标站” | 真实站名不入库 |
 | M9 | CLI + Docker | `pta cli` 能跑抓取/送审/发布/校验；compose 一键起 | 现有后端 |
-| M10 | 发布后校验/通知/重试 | 目标站回查、失败重试、通知 | M8 |
+| M10 | 通知/重试 | 目标站回查已随 M8 落地；剩失败重试、通知 | M8 |
 
 工具现状：`ffmpeg/ffprobe` 已有；`mediainfo`、`mkbrr` 未装（可不装，用 ffprobe + 自写 bencode）。真实站配置一律不入库。
 

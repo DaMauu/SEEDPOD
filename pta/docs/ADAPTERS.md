@@ -44,9 +44,23 @@
 
 ## 五、私有站点包
 
-- 路径：`data/site-pack.json`（0600，gitignore）。
-- 结构：`{ "version": 1, "sites": { "<host>": { "engine": "...", "catMap": [], "uploadMap": {} } } }`
-- 面板可导入/导出；部署时可随包安装，用户不用手填。
+- 路径：`data/site-pack.json`（0600，gitignore）；示例见 `pta/docs/site-pack.example.json`。
+- 结构：
+
+```json
+{ "version": 1, "sites": { "target.example": {
+  "engine": "nexusphp",
+  "base": "https://target.example",
+  "upload": { "path": "/takeupload.php", "fileField": "file",
+    "fields": { "name": "{title}", "descr": "{description}", "type": "{catId}" } },
+  "verify": { "path": "/torrents.php?search={title}" },
+  "catMap": { "movie": "401" }
+} } }
+```
+
+- 字段占位：`{title}`、`{subtitle}`、`{description}`、`{catId}`、`{source}`、`{codec}`、`{resolution}`、`{team}`、`{anonymous}`、`{year}`、`{imdb}`、`{shots}`。
+- 没有 `upload` 时用引擎默认骨架；真实站字段以私有包为准，不猜。
+- API：`GET /api/targets` 列可用站；`POST /api/targets/:host/plan` 只读映射；`POST /api/targets/:host/upload`（`dryRun` 默认 true，真提交要 `realPublish=true`，可带 `torrentBase64`）；`POST /api/targets/:host/verify` 回查。
 - 包里可以有真实站，但**永远不进仓库、不进回复**。
 
 ## 六、验收
@@ -55,6 +69,7 @@
 - 低置信度：必须走手动选择，不自动保存。
 - mock 上传页：字段映射正确，缺字段有提示。
 - 全程不向真实站发请求；真实站只在用户明确点“识别/抓取”时发一次。
+- 已完成（0.7.111）：NexusPHP mock 真提交/回查、UNIT3D/Gazelle 干跑映射，`target` 6/6。
 
 ## 七、和 UA/upbrr 的差异
 

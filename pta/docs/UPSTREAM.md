@@ -84,3 +84,11 @@
 - 观察到的行为：UA 是 Python CLI + Web UI + Docker，覆盖 MediaInfo/BDInfo、截图、元数据、种子、客户端、站点提交；upbrr 是 Go + Web UI + CLI，定位“guided upload preparation”，支持从 UA 迁移配置。
 - 许可/可用性：UA 为 UAPL（非 OSI，限制衍生/品牌/key）；upbrr 为 GPL-2.0-or-later。
 - 我们的决定：clean-room 重写；先学流水线分层与校验顺序，不复制代码/配置/站名。
+
+## 2026-11-15 · M8 目标站提交与回查
+
+- 来源：NexusPHP `takeupload.php`、UNIT3D `/torrents/create`、Gazelle `/upload.php` 的公开表单结构；UA/upbrr 只读流水线分层与校验顺序，未取代码。
+- 观察到的行为：三家引擎都是 multipart 表单；字段名和必填项因站而异；提交成功后返回详情页或跳转；回查通常用标题或 infohash 搜一次。
+- 许可/可用性：不复制上游代码、表单配置或站名；字段映射由用户私有包提供。
+- 我们的决定：引擎只给默认路径和字段骨架，`data/site-pack.json` 的 `upload` 覆盖；先干跑出字段，真提交受 `realPublish` 约束；用本地 mock 上传页做夹具，不碰真实站。
+- 我们怎么实现：`pta/server/target.js` 纯映射 + `routes-target.js` API；`pta/checks/target.js` 覆盖 NexusPHP 真提交与 UNIT3D/Gazelle 干跑（6/6）。

@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.111 · 2026-11-15
+
+### 新增
+- `pta/server/target.js` + `routes-target.js`：NexusPHP/UNIT3D/Gazelle 的提交路径与字段骨架，`data/site-pack.json` 私有包覆盖；`GET /api/targets`、`plan/upload/verify`。
+- 真提交受 `realPublish` 门禁；成功后把 `targetUpload/targetVerify` 写回队列；待审核页加“提交目标站”。
+- `pta/checks/target.js`：本地 mock 上传页夹具，覆盖私有包、干跑、门禁、NexusPHP 真提交、UNIT3D/Gazelle 干跑、回查，6/6。
+- `pta/docs/site-pack.example.json` 与 ADAPTERS/UPSTREAM 记录。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.110 · 2026-11-15
 
 ### 调整
