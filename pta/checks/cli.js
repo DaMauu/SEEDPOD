@@ -203,13 +203,18 @@ async function main() {
     fs.writeFileSync(path.join(DATA, 'site-defs', 'target.example.json'), JSON.stringify({
       host: 'target.example', base: 'https://target.example', engine: 'nexusphp'
     }));
+    fs.writeFileSync(path.join(DATA, 'site-defs', 'target2.example.json'), JSON.stringify({
+      host: 'target2.example', base: 'https://target2.example', engine: 'nexusphp'
+    }));
     const torrent = tinyTorrent(path.join(DATA, 'tiny.torrent'));
-    const prep = parse(await cliLocal(['prepare', queueId2, '--host', 'target.example', '--json']));
-    const u = parse(await cliLocal(['target-upload', queueId2, '--host', 'target.example', '--torrent', torrent, '--json']));
-    need(u.dryRun === true && u.url, '本地 target-upload 没返回干跑计划');
-    need(u.fields && Object.keys(u.fields).length > 0, '本地 target-upload 没有字段');
-    const planned = (prep.prepared && prep.prepared.target && prep.prepared.target.fields) || {};
-    Object.keys(planned).forEach(function (k) { need(u.fields[k] === planned[k], '上传字段没使用 prepared：' + k); });
+    const prep = parse(await cliLocal(['prepare', queueId2, '--targets', 'target.example,target2.example,bad.example', '--json']));
+    const u = parse(await cliLocal(['target-upload', queueId2, '--targets', 'target.example,target2.example,bad.example', '--torrent', torrent, '--json']));
+    need(u.dryRun === true && Array.isArray(u.targets) && u.targets.length === 3, '多目标干跑数量不对');
+    need(u.targets.filter(function (x) { return x.ok; }).length === 2, '多目标干跑成功数不对');
+    need(u.targets.some(function (x) { return !x.ok && x.host === 'bad.example'; }), '缺定义的站没被单独标记失败');
+    const planned = (prep.prepared && prep.prepared.targets && prep.prepared.targets[0] && prep.prepared.targets[0].target.fields) || {};
+    const first = u.targets[0].data || {};
+    Object.keys(planned).forEach(function (k) { need(first.fields[k] === planned[k], '上传字段没使用 prepared：' + k); });
   });
 
   await check('缺 --host 时退出码 2', async function () {

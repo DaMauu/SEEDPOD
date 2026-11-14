@@ -23,7 +23,7 @@
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
 | G8 | 原生单 release 上传准备与站点提交 | ✅ 完成（0.7.172） | G7、G9、G4、G5 | prepared payload 已接 target-upload |
 | G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ✅ 完成（0.7.171） | G7 | 本地 CLI 12/12，不启 HTTP |
-| G10 | 多目标发布框架 | 🔵 当前 active | G8、G9 | 一条 release 多站 dry run/提交/回查 |
+| G10 | 多目标发布框架 | 🟡 进行中：CLI/API 多目标干跑已落地；面板多选/真实多站待做 | G8、G9 | 一条 release 多站 dry run/提交/回查 |
 | G11 | 上传准备 1:1：元数据/命名/简介/截图/BDInfo/图床 | 🟢 open | G8 | 对齐 UA/upbrr 的准备能力 |
 | G12 | 全自动流水线：抓取→查重→准备→多站发布 | 🟢 open | G10、G11、G13 | 一条命令推进，失败可恢复 |
 | G13 | 站点覆盖与验证：3→10→100 站 | 🟢 open | G5、G10 | 每站真实提交/回查证据 |
@@ -225,6 +225,14 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 逐站 dry run 和完整 payload 预览；单站提交/回查复用 G8 的 target-service。
 - 任一站失败只标该站失败，不影响其他站；重试按站。
 - 面板和 CLI 都能选择多个目标站。
+
+**进展（0.7.174）**：
+
+- `prepare --targets h1,h2` 生成每站独立 payload；`preview` 返回 `targets`。
+- `target-upload --targets h1,h2` 逐站干跑；单站失败只标该站，不阻断其他站。
+- 单站提交/回查仍复用 target-service；阶段/证据按目标站记录 `targetResults`。
+- CLI 夹具：2 个有定义站 + 1 个缺定义站，2 成功/1 失败。
+- 待做：面板多选目标站、真实多站提交、按站重试 UI。
 
 **验收**：
 

@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 01:00（当前 v0.7.173 / G0+G10–G14 与 Goal Runner）
+最后更新：2026-11-18 02:00（当前 v0.7.174 / G10 多目标第一切片）
+
+## 2026-11-18 G10 多目标第一切片（v0.7.174）
+
+- prepare --targets / preview targets / target-upload --targets 已落地。
+- 逐站干跑，单站失败不阻断；targetResults 按站记录。
+- 待做：面板多选、真实多站提交、按站重试 UI。
 
 ## 2026-11-18 Goal 扩展（v0.7.173）
 

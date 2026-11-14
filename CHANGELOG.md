@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.174 · 2026-11-18
+
+### G10 多目标发布（第一切片）
+- `prepare` 支持 `--targets h1,h2`，为每站生成独立 payload，存入 `prepared.targets`。
+- `preview` 返回 `targets` 列表；单站 payload 继续保留。
+- `target-upload` 支持 `--targets h1,h2`，逐站干跑；单站失败只标该站，不阻断其他站。
+- 新增 `/api/queue/:id/targets/upload`；target-service 按目标站记录 `targetResults`，单站幂等。
+- CLI 夹具：2 个有定义站 + 1 个缺定义站，2 成功/1 失败；target 10/10、CLI 12/12。
+- 待做：面板多选目标站、真实多站提交、按站重试 UI。
+
 ## v0.7.173 · 2026-11-17
 
 ### G0 + G10–G14 目标与执行协议

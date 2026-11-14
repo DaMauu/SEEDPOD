@@ -49,8 +49,19 @@ function makeRelease(ctx) {
   function build(item, body) {
     const b = body || {};
     const names = meta.buildNames(item);
-    const host = String(b.host || item.targetSite || '').trim();
-    const tp = targetPlan(item, host);
+    let raw = b.targets;
+    if (typeof raw === 'string') raw = raw.split(',');
+    raw = Array.isArray(raw) ? raw : [];
+    const hosts = [];
+    raw.concat([b.host], item.targets || [], [item.targetSite]).forEach(function (h) {
+      h = String(h || '').trim().toLowerCase();
+      if (h && hosts.indexOf(h) < 0) hosts.push(h);
+    });
+    const targets = hosts.map(function (host) {
+      const tp = targetPlan(item, host);
+      return { host: host, target: tp.target, error: tp.error };
+    });
+    const first = targets[0] || { host: '', target: null, error: '' };
     const tr = torrentOf(b);
     return {
       at: now(),
@@ -59,9 +70,10 @@ function makeRelease(ctx) {
       subtitle: names.subtitle,
       description: names.description,
       parsed: names.parsed,
-      targetHost: host,
-      target: tp.target,
-      targetError: tp.error,
+      targetHost: first.host,
+      target: first.target,
+      targetError: first.error,
+      targets: targets,
       torrent: tr.torrent,
       torrentError: tr.error,
       shots: Array.isArray(item.shots) ? item.shots.length : 0
@@ -74,7 +86,9 @@ function makeRelease(ctx) {
     const prepared = build(it, body);
     it.prepared = prepared;
     it.preparedAt = prepared.at;
-    stage.set(it, 'prepared', { evidence: { host: prepared.targetHost || '', shots: prepared.shots || 0, preparedAt: prepared.at } });
+    it.targets = (prepared.targets || []).map(function (t) { return t.host }).filter(Boolean);
+    if (it.targets.length) it.targetSite = it.targets[0];
+    stage.set(it, 'prepared', { evidence: { host: prepared.targetHost || '', targets: it.targets, shots: prepared.shots || 0, preparedAt: prepared.at } });
     save(cur);
     return { ok: true, data: { id: id, stage: 'prepared', prepared: prepared } };
   }
@@ -94,7 +108,7 @@ function makeRelease(ctx) {
     const payload = {
       title: p.title || '', subtitle: p.subtitle || '', description: p.description || '',
       targetHost: p.targetHost || '', target: p.target || null, targetError: p.targetError || '',
-      shots: p.shots || 0, torrent: p.torrent || null
+      targets: p.targets || [], shots: p.shots || 0, torrent: p.torrent || null
     };
     return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared, payload: payload } };
   }

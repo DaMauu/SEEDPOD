@@ -21,13 +21,13 @@ function usage() {
   pta queue [--status pending] [--limit 50] [--json]
   pta crawl --site <host> [--limit 100] [--real] [--json]
   pta screen [--limit 50] [--host <host>] [--json]
-  pta prepare <queueId> [--host <target>] [--torrent file] [--json]
+  pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--json]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
   pta publish <queueId> [--real] [--json]
   pta targets [--json]
-  pta target-upload <queueId> --host <target> [--real] [--torrent file] [--json]
+  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--real] [--torrent file] [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
 环境：
@@ -183,7 +183,8 @@ async function main() {
     if (!USE_HTTP) {
       const b64 = readTorrent(opts.torrent);
       if (b64) body.torrentBase64 = b64;
-      const d = core().prepare(id, { host: opts.host ? String(opts.host) : '', torrentBase64: body.torrentBase64 });
+      const targets = opts.targets ? String(opts.targets).split(',').map(x => x.trim()).filter(Boolean) : [];
+      const d = core().prepare(id, { host: opts.host ? String(opts.host) : '', targets: targets, torrentBase64: body.torrentBase64 });
       print(d, opts, function (x) {
         const p = x.prepared || {};
         return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') + ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0);
@@ -191,6 +192,7 @@ async function main() {
       return;
     }
     if (opts.host) body.host = String(opts.host);
+    if (opts.targets) body.targets = String(opts.targets).split(',').map(x => x.trim()).filter(Boolean);
     const b64 = readTorrent(opts.torrent);
     if (b64) body.torrentBase64 = b64;
     const d = await api('/api/queue/' + encodeURIComponent(id) + '/prepare', { method: 'POST', body: body });
@@ -295,19 +297,32 @@ async function main() {
   if (cmd === 'target-upload') {
     const id = args[0];
     if (!id) die('target-upload 需要 queueId', 2);
-    if (!opts.host) die('target-upload 需要 --host <target>', 2);
-    const body = { queueId: id, dryRun: !opts.real };
+    const targets = opts.targets ? String(opts.targets).split(',').map(x => x.trim()).filter(Boolean) : [];
+    if (!targets.length && !opts.host) die('target-upload 需要 --host <target> 或 --targets h1,h2', 2);
+    const b64 = readTorrent(opts.torrent);
+    const body = { queueId: id, dryRun: !opts.real, torrentBase64: b64 || undefined, verify: opts.verify };
     if (!USE_HTTP) {
-      const b64 = readTorrent(opts.torrent);
-      const x = await core().targetUpload({ queueId: id, host: String(opts.host), torrentBase64: b64, dryRun: !opts.real, verify: opts.verify });
+      if (targets.length) {
+        const x = await core().targetUploadMany(Object.assign({}, body, { targets: targets }));
+        print(x, opts, function (v) {
+          return '多目标' + (v.dryRun ? '干跑' : '提交') + ' · ' + v.targets.map(function (t) { return t.host + ' ' + (t.ok ? 'OK' : (t.code || 'FAILED')); }).join(' · ');
+        });
+        return;
+      }
+      const x = await core().targetUpload(Object.assign({}, body, { host: String(opts.host) }));
       print(x, opts, function (v) {
         if (v.dryRun) return '干跑 · ' + v.url + ' · 字段 ' + Object.keys(v.fields || {}).join(',');
         return '已提交 ' + (v.status || '') + (v.detailsUrl ? ' · ' + v.detailsUrl : '') + (v.verify ? ' · 回查 ' + (v.verify.found ? '已找到' : '未找到') : '');
       });
       return;
     }
-    const b64 = readTorrent(opts.torrent);
-    if (b64) body.torrentBase64 = b64;
+    if (targets.length) {
+      const d = await api('/api/queue/' + encodeURIComponent(id) + '/targets/upload', { method: 'POST', body: Object.assign({}, body, { targets: targets }) });
+      print(d, opts, function (v) {
+        return '多目标' + (v.dryRun ? '干跑' : '提交') + ' · ' + v.targets.map(function (t) { return t.host + ' ' + (t.ok ? 'OK' : (t.code || 'FAILED')); }).join(' · ');
+      });
+      return;
+    }
     const d = await api('/api/targets/' + encodeURIComponent(String(opts.host)) + '/upload', { method: 'POST', body: body });
     print(d, opts, function (x) {
       if (x.dryRun) return '干跑 · ' + x.url + ' · 字段 ' + Object.keys(x.fields || {}).join(',');

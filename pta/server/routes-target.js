@@ -92,6 +92,12 @@ module.exports = function (app, ctx) {
     return ok(reply, r.data);
   });
 
+  app.post('/api/queue/:id/targets/upload', async (req, reply) => {
+    const r = await targetService.uploadMany(Object.assign({}, req.body || {}, { queueId: req.params.id }));
+    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    return ok(reply, r.data);
+  });
+
   app.post('/api/targets/:host/verify', async (req, reply) => {
     const b = req.body || {};
     const item = loadQueue(b.queueId);

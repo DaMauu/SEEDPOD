@@ -175,6 +175,7 @@ function createCore(opts) {
     publish: async (id, body) => unwrap(await ctx.publisher.publishItem(id, body || {})),
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
+    targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
     verify: verify,
     close: () => { try { db.close() } catch (e) { console.warn('[seedpod] close:', e && e.message ? e.message : e) } }
   };

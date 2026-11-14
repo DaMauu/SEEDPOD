@@ -15,9 +15,43 @@ function makeTargetService(ctx, target) {
       .run(JSON.stringify(it), now(), it.id);
   }
   function checkHost(item, host) {
-    if (item.targetSite && String(item.targetSite) !== String(host)) {
-      return { code: 'TARGET_MISMATCH', message: '条目目标站是 ' + item.targetSite + '，跟请求的 ' + host + ' 不一致' };
+    const want = String(host || '').toLowerCase();
+    const allowed = [];
+    if (item.targetSite) allowed.push(String(item.targetSite).toLowerCase());
+    (Array.isArray(item.targets) ? item.targets : []).forEach(function (h) { allowed.push(String(h || '').toLowerCase()); });
+    if (item.prepared && Array.isArray(item.prepared.targets)) item.prepared.targets.forEach(function (t) { if (t && t.host) allowed.push(String(t.host).toLowerCase()); });
+    if (allowed.length && allowed.indexOf(want) < 0) {
+      return { code: 'TARGET_MISMATCH', message: '条目目标站是 ' + allowed.join(', ') + '，跟请求的 ' + host + ' 不一致' };
     }
+    return null;
+  }
+  function targetResults(item) {
+    if (!item.targetResults || typeof item.targetResults !== 'object' || Array.isArray(item.targetResults)) item.targetResults = {};
+    return item.targetResults;
+  }
+  function targetHosts(item) {
+    const list = [];
+    (Array.isArray(item.targets) ? item.targets : []).forEach(function (h) { h = String(h || '').toLowerCase(); if (h && list.indexOf(h) < 0) list.push(h); });
+    if (!list.length && item.targetSite) list.push(String(item.targetSite).toLowerCase());
+    return list;
+  }
+  function allDone(item) {
+    const hosts = targetHosts(item);
+    if (!hosts.length) return false;
+    return hosts.every(function (h) { const r = targetResults(item)[h]; return r && (r.stage === 'submitted' || r.stage === 'injected'); });
+  }
+  function setTargetResult(item, host, rec) {
+    const r = targetResults(item);
+    r[String(host).toLowerCase()] = Object.assign({ at: now() }, rec || {});
+    return r;
+  }
+  function preparedPlan(item, host) {
+    const p = item && item.prepared;
+    if (!p) return null;
+    const list = Array.isArray(p.targets) ? p.targets : [];
+    const hit = list.filter(function (t) { return t && String(t.host).toLowerCase() === String(host).toLowerCase(); })[0];
+    if (hit) return hit.target || null;
+    if (p.targetHost && String(p.targetHost).toLowerCase() === String(host).toLowerCase()) return p.target || null;
     return null;
   }
   function flowMap() {
@@ -70,8 +104,9 @@ function makeTargetService(ctx, target) {
     const mism = checkHost(item.data, host);
     if (mism) return { ok: false, code: mism.code, message: mism.message, http: 400 };
     const dryRun = b.dryRun !== false;
-    if (!dryRun && stage.isSubmitted(item.data)) {
-      return { ok: false, code: 'ALREADY_SUBMITTED', message: '这个条目已经提交过，不能重复提交', http: 409 };
+    const tr = targetResults(item.data)[String(host).toLowerCase()];
+    if (!dryRun && tr && (tr.stage === 'submitted' || tr.stage === 'injected')) {
+      return { ok: false, code: 'ALREADY_SUBMITTED', message: '这个目标站已经提交过，不能重复提交', http: 409 };
     }
     const flow = flowMap();
     const shotRule = flow['截图至少几张'];
@@ -88,10 +123,14 @@ function makeTargetService(ctx, target) {
       return { ok: false, code: 'TORRENT_UNAVAILABLE', message: t.err, http: 400 };
     }
     const uploadItem = preparedItem(item.data, host);
-    const preparedPlan = item.data.prepared && item.data.prepared.targetHost === host ? item.data.prepared.target : null;
-    const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: preparedPlan || undefined });
+    const plan = preparedPlan(item.data, host);
+    const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });
     if (!r.ok) {
-      if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', r.message || r.code); saveQueue(item.data); }
+      if (!dryRun) {
+        setTargetResult(item.data, host, { stage: 'failed', error: r.message || r.code, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString() });
+        if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', r.message || r.code);
+        saveQueue(item.data);
+      }
       return r;
     }
     if (dryRun) return r;
@@ -109,16 +148,43 @@ function makeTargetService(ctx, target) {
         item.data.targetVerify = Object.assign({}, v.data, { at: now() });
       }
     }
-    stage.set(item.data, 'submitted', { evidence: {
-      host: host, infohash: r.data.infohash || '',
+    const result = {
+      stage: 'submitted', infohash: r.data.infohash || '',
       detailsUrl: r.data.detailsUrl || '', status: r.data.status || 0,
-      verified: !!(verified && verified.found)
-    } });
+      verified: !!(verified && verified.found), error: ''
+    };
+    setTargetResult(item.data, host, result);
+    const evidence = {
+      host: host, infohash: result.infohash, detailsUrl: result.detailsUrl,
+      verified: result.verified, targets: item.data.targetResults
+    };
+    if (allDone(item.data)) {
+      stage.set(item.data, 'submitted', { evidence: evidence });
+    } else {
+      stage.ensure(item.data);
+      item.data.stageEvidence = Object.assign({}, item.data.stageEvidence || {}, evidence);
+    }
     saveQueue(item.data);
-    return { ok: true, data: Object.assign({}, r.data, { verify: verified }) };
+    return { ok: true, data: Object.assign({}, r.data, { verify: verified, targetResults: item.data.targetResults }) };
   }
 
-  return { upload: upload, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
+  async function uploadMany(body) {
+    const b = body || {};
+    const item = loadQueue(b.queueId);
+    if (!item) return { ok: false, code: 'NOT_FOUND', message: '队列条目不存在', http: 404 };
+    let hosts = Array.isArray(b.targets) ? b.targets : (typeof b.targets === 'string' ? b.targets.split(',') : []);
+    hosts = hosts.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(Boolean);
+    if (!hosts.length) hosts = targetHosts(item.data);
+    if (!hosts.length) return { ok: false, code: 'NO_TARGET', message: '没有配置目标站', http: 400 };
+    const out = [];
+    for (const host of hosts) {
+      const r = await upload(host, b);
+      out.push({ host: host, ok: !!r.ok, code: r.code || '', message: r.message || '', data: r.data || null });
+    }
+    return { ok: true, data: { queueId: item.id, dryRun: b.dryRun !== false, targets: out, allOk: out.every(function (x) { return x.ok }) } };
+  }
+
+  return { upload: upload, uploadMany: uploadMany, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
 module.exports = { makeTargetService };

@@ -104,6 +104,16 @@ pta run --stage <stage>            # 批量推进可执行阶段
 - 每个命令幂等；G7 的阶段状态落 SQLite。
 - 面板和 CLI 不复制业务逻辑，只做输入/输出适配。
 
+### 多目标（0.7.174）
+
+```bash
+pta prepare <queueId> --targets h1,h2
+pta preview <queueId>
+pta target-upload <queueId> --targets h1,h2 --torrent ./test.torrent
+```
+
+逐站干跑；单站失败只标该站，不阻断其他站。真正的多站提交和面板多选还在 G10 进行中。
+
 ### prepared 上传（0.7.172）
 
 - `prepare` 的标题/副标题/简介/目标字段会作为上传计划传给 `target-upload`
