@@ -150,3 +150,10 @@
 - 观察：匿名图床返回值不统一（JSON / 纯文本 / HTML），不能假定单一字段；Pixhost/Imgbox 的实际上传响应尚未验证。
 - 决定：`imagehost.js` 默认演练；真上传只开放已验证的 custom/local（`PTA_IMAGE_HOST_URL` / `PTA_IMAGE_HOST_FIELD` / `PTA_IMAGE_HOST_TOKEN`），逐张重试、失败隔离；简介只替换 data URL 并追加 `[img]` 链接。
 - 待做：验证 Pixhost/Imgbox 实际响应字段；客户端注入 dry run。
+
+## 2026-11-18 · G11 客户端注入 dry-run
+
+- 来源：qBittorrent WebUI API、watch 目录约定；只做本地/模拟验证，不连真实下载器。
+- 观察：qB 加种是 multipart `/api/v2/torrents/add`；watch 是原子写 `.torrent`；dry-run 只需给出 wouldAdd/wouldWrite、保存路径、hash、幂等和重试状态。
+- 决定：`publisher.injectPlan` 统一 qB/watch/rtorrent/deluge 计划；真注入复用 `publishItem`；已 injected 直接 skipped；failed+stageFailedFrom=injected 标记 retry。
+- 待做：真实 rTorrent/Deluge 环境仍由 G5 验证。

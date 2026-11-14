@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.183 · 2026-11-18
+
+### G11 客户端注入演练
+- `publisher.injectPlan` 统一 qB / watch / rTorrent / Deluge 的注入计划：`wouldAdd` / `wouldWrite`、保存路径、分类、hash、幂等、重试状态。
+- 新增 `POST /api/queue/:id/inject`；默认演练，真注入复用 `publishItem` 的取种/加种/回查链路。
+- CLI 新增 `pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real]`。
+- 面板新增“注入演练”和上传准备卡片（标题/副标题/媒体/图床/简介预览）。
+- 夹具：clients 6/6（watch 计划、已注入幂等、qB 计划、失败重试）、CLI 15/15、smoke 22/22。
+- G11 收口；下一步 G3 拆 Sites.vue。
+
 ## v0.7.182 · 2026-11-18
 
 ### G11 图床转存与链接替换

@@ -217,6 +217,14 @@ async function main() {
     need(real.code === 1 && /真上传没打开/.test(real.stderr), '真上传门禁不对：code=' + real.code + ' err=' + real.stderr.slice(0, 80));
   });
 
+  await check('本地 inject 默认演练、真注入门禁', async function () {
+    const j = parse(await cliLocal(['inject', queueId2, '--json']));
+    need(j.dryRun === true && j.client === 'qb' && j.wouldAdd === true, 'inject 演练不对：' + JSON.stringify(j));
+    need(Array.isArray(j.warnings) && j.warnings.some(function (x) { return /下载地址/.test(x); }), '没提示缺下载地址：' + JSON.stringify(j.warnings));
+    const real = await cliLocal(['inject', queueId2, '--real', '--json']);
+    need(real.code === 1 && /真发布还没打开/.test(real.stderr), '真注入门禁不对：code=' + real.code + ' err=' + real.stderr.slice(0, 80));
+  });
+
   await check('本地 target-upload 干跑', async function () {
     fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
     fs.writeFileSync(path.join(DATA, 'site-defs', 'target.example.json'), JSON.stringify({

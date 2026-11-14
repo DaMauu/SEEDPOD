@@ -98,6 +98,14 @@
             <div class="qd-field"><span>查重</span><b :class="(sel.checkCls || '') + '-t'">{{ sel.check || '' }}</b></div>
           </section>
 
+          <section v-if="sel.prepared" class="sd-card qd-prepared">
+            <h3>上传准备</h3>
+            <div class="t-sub">标题：{{ sel.prepared.title || '—' }}</div>
+            <div class="t-sub">副标题：{{ sel.prepared.subtitle || '—' }}</div>
+            <div class="t-sub">媒体：{{ sel.prepared.media ? sel.prepared.media.summary : '未填' }} · 图床 {{ (sel.prepared.imageLinks || []).length }} 张 · 截图 {{ sel.prepared.shots || 0 }}</div>
+            <details class="qd-prepared-desc"><summary>简介预览</summary><pre>{{ sel.prepared.description || '（空）' }}</pre></details>
+          </section>
+
           <section class="sd-card qd-desc-card">
             <h3>简介</h3>
             <textarea v-model="form.intro" class="input sd-note" rows="3"></textarea>
@@ -163,10 +171,17 @@
           <a v-if="sel.targetUpload.detailsUrl" :href="sel.targetUpload.detailsUrl" target="_blank" rel="noopener noreferrer">详情</a>
           <span v-if="sel.targetVerify"> · 回查：{{ sel.targetVerify.found ? '已找到' : '未找到' }}</span>
         </div>
+        <div v-if="sel.injectPlan" class="qd-status" :class="sel.injectPlan.ok === false ? 'bad' : ''">
+          注入演练：{{ sel.injectPlan.client }} · {{ sel.injectPlan.message }}
+          <span v-if="sel.injectPlan.hash"> · {{ String(sel.injectPlan.hash).slice(0, 12) }}…</span>
+          <span v-if="sel.injectPlan.retry"> · 重试</span>
+          <span v-if="sel.injectPlan.idempotent"> · 已注入，跳过</span>
+        </div>
 
         <div class="qd-actions">
           <button class="btn primary slim" type="button" :disabled="busy.act" @click="act('publish')">{{ sel.status === 'failed' ? '重试发布' : '通过并发布' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite" title="把种子提交到目标站；真发布关闭时会提示" @click="submitTarget">{{ busy.target ? '提交中…' : '提交目标站' }}</button>
+          <button class="btn ghost slim" type="button" :disabled="busy.inject" @click="runInjectPlan">{{ busy.inject ? '演练中…' : '注入演练' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="fetchMeta">查资料</button>
@@ -204,7 +219,7 @@ const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
-const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false })
+const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
 let mediaCfgLoaded = false
 const filePick = ref(null)
@@ -417,6 +432,19 @@ async function probeMedia() {
     else toast((j && j.error && j.error.message) || '探测失败')
   } catch (e) { toast('探测请求发不出去') }
   media.probing = false
+}
+async function runInjectPlan() {
+  if (!sel.value || busy.inject) return
+  busy.inject = true
+  try {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/inject', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ dryRun: true })
+    })).json()
+    if (j && j.ok) { toast('注入演练：' + (j.data.message || 'OK')); await refresh() }
+    else toast((j && j.error && j.error.message) || '注入演练失败')
+  } catch (e) { reportError('Queue.runInjectPlan', e); toast('注入演练请求发不出去') }
+  busy.inject = false
 }
 async function imageAction(dryRun) {
   if (!sel.value || busy.images) return
@@ -751,4 +779,7 @@ onUnmounted(() => {
 .qd-media-info { flex-direction: column; align-items: stretch; gap: 6px; }
 .qd-media-info > span { flex: none; }
 .qd-media-info .sd-note { width: 100%; height: auto; min-height: 78px; }
+.qd-prepared { grid-column: 1 / -1; }
+.qd-prepared-desc { margin-top: 8px; font-size: 12px; }
+.qd-prepared-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; background: var(--panel-2); padding: 10px; border-radius: 8px; font-size: 11.5px; }
 </style>

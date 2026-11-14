@@ -318,6 +318,8 @@ async function main() {
     await page.waitForTimeout(800);
     const prepared = await page.locator('.qd-media').innerText();
     need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
+    const pack = await page.locator('.qd-prepared').innerText();
+    need(/上传准备/.test(pack) && /2160p/.test(pack) && /简介预览/.test(pack), '上传准备预览缺失：' + pack.slice(0, 160));
     await page.getByRole('button', { name: '图床演练' }).click();
     await page.waitForTimeout(1200);
     const shotTxt = await page.locator('.qd-shots').innerText();
@@ -374,6 +376,17 @@ async function main() {
     await page.locator('#node-modal-vue .modal-foot button').filter({ hasText: '取消' }).click();
     await page.waitForTimeout(200);
     need(await page.locator('#node-modal-vue').count() === 0, '取消没关闭弹窗');
+  });
+
+  await check('注入演练面板', async () => {
+    await page.evaluate(() => { location.hash = '#queue'; });
+    await page.waitForTimeout(800);
+    await page.locator('.q-item').first().evaluate(function (el) { el.click(); });
+    await page.waitForTimeout(400);
+    await page.locator('button').filter({ hasText: '注入演练' }).first().evaluate(function (el) { el.click(); });
+    await page.waitForTimeout(900);
+    const txt = await page.locator('#queue-detail').innerText();
+    need(/注入演练：qb/.test(txt) && /qB/.test(txt), '注入演练没显示：' + txt.slice(0, 200));
   });
 
   await check('无 JS 报错', async () => {

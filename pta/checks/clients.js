@@ -135,11 +135,18 @@ async function main() {
     const item = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ title: 'Watch Publish 2020 1080p', site: 'demo-a.example', targetSite: 'target.example',
-        downloadUrl: src.base + '/t.torrent', status: 'approved', size: '20 GB' })
+        downloadUrl: src.base + '/t.torrent', status: 'approved', size: '20 GB', infohash: HASH })
     });
     need(item.status === 200 && item.body.ok, '建队列失败');
     const id = item.body.data.id;
     const before = torrentFiles().length;
+    const inj = await json(BASE + '/api/queue/' + encodeURIComponent(id) + '/inject', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ dryRun: true })
+    });
+    need(inj.status === 200 && inj.body.ok, '注入演练失败：' + JSON.stringify(inj.body && inj.body.error));
+    need(inj.body.data.client === 'watch' && inj.body.data.wouldWrite === true, 'watch 演练没写计划：' + JSON.stringify(inj.body.data));
+    need(inj.body.data.watchPath === WATCH && inj.body.data.hash === HASH, 'watch 路径/hash 不对');
+    need(inj.body.data.idempotent === false && inj.body.data.retry === false, '初次演练不该是幂等/重试');
     const dry = await json(BASE + '/api/publish/' + encodeURIComponent(id), {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ dryRun: true })
     });
@@ -163,6 +170,10 @@ async function main() {
     need(g.body.data.status === 'published', '状态不是 published：' + g.body.data.status);
     need(g.body.data.qb && g.body.data.qb.client === 'watch', '队列没记 watch');
     need(/watch/.test(g.body.data.pubMsg || ''), 'pubMsg 没提 watch：' + g.body.data.pubMsg);
+    const again = await json(BASE + '/api/queue/' + encodeURIComponent(id) + '/inject', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ dryRun: true })
+    });
+    need(again.body.ok && again.body.data.idempotent === true && again.body.data.alreadyInjected === true && again.body.data.skipped === true, '注入幂等不对：' + JSON.stringify(again.body.data));
   });
 
   await check('调度重试 failed 条目', async function () {
@@ -182,6 +193,28 @@ async function main() {
     need(g.body.data.status === 'published', '重试后状态不是 published：' + g.body.data.status);
     need(g.body.data.qb && g.body.data.qb.client === 'watch', '重试没走 watch');
     need(torrentFiles().length === before + 1, '重试没写 watch 目录');
+  });
+
+  await check('注入演练：qB 计划与失败重试', async function () {
+    const qbDl = await json(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'qb', name: 'qb-dry', url: 'http://127.0.0.1:1' })
+    });
+    need(qbDl.status === 200 && qbDl.body.ok, 'qB 下载器创建失败：' + JSON.stringify(qbDl.body && qbDl.body.error));
+    const item = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Inject Retry 2020 1080p', site: 'demo-a.example', targetSite: 'target.example',
+        downloadUrl: src.base + '/t.torrent', status: 'approved', size: '20 GB', infohash: HASH,
+        stage: 'failed', stageFailedFrom: 'injected', stageNextRetryAt: new Date(Date.now() + 60000).toISOString() })
+    });
+    need(item.status === 200 && item.body.ok, '建重试队列失败');
+    const r = await json(BASE + '/api/queue/' + encodeURIComponent(item.body.data.id) + '/inject', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ dryRun: true, downloaderId: qbDl.body.data.id })
+    });
+    need(r.status === 200 && r.body.ok, 'qB 演练失败：' + JSON.stringify(r.body && r.body.error));
+    need(r.body.data.client === 'qb' && r.body.data.wouldAdd === true, 'qB 演练计划不对：' + JSON.stringify(r.body.data));
+    need(r.body.data.retry === true && r.body.data.nextRetryAt, '失败重试标记不对：' + JSON.stringify(r.body.data));
   });
 
   child.kill();

@@ -27,6 +27,7 @@ function usage() {
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
   pta publish <queueId> [--real] [--json]
+  pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
   pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--real] [--torrent file] [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
@@ -308,6 +309,28 @@ async function main() {
       if (x.dryRun) return '干跑 · 会加入 ' + (x.qb && x.qb.downloader ? (x.qb.downloader.name || x.qb.downloader.id) : '下载器');
       return '已发布 · qB ' + (x.qb && x.qb.verified ? '已校验' : '未校验') + ' · ' + (x.msg || '');
     });
+    return;
+  }
+  if (cmd === 'inject') {
+    const id = args[0];
+    if (!id) die('inject 需要 queueId', 2);
+    const body = { dryRun: !opts.real };
+    if (opts.downloader) body.downloaderId = String(opts.downloader);
+    if (opts.savepath) body.savePath = String(opts.savepath);
+    if (opts.category) body.category = String(opts.category);
+    const human = function (x) {
+      const client = x.client || (x.inject && x.inject.client) || (x.qb && x.qb.client) || 'qb';
+      const message = x.message || (x.inject && x.inject.message) || x.msg || '';
+      const hash = x.hash || (x.qb && x.qb.hash) || '';
+      return (x.dryRun === false ? '已注入' : '注入演练') + ' · ' + client + ' · ' + message + (hash ? ' · ' + String(hash).slice(0, 12) : '');
+    };
+    if (!USE_HTTP) {
+      const x = await core().inject(Object.assign({ queueId: id }, body));
+      print(x, opts, human);
+      return;
+    }
+    const d = await api('/api/queue/' + encodeURIComponent(id) + '/inject', { method: 'POST', body: body });
+    print(d, opts, human);
     return;
   }
   if (cmd === 'targets') {

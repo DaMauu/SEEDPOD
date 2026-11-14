@@ -32,6 +32,51 @@ function makePublisher(ctx) {
     if (want) return rows.filter(function (d) { return d.id === want; })[0] || null;
     return rows[0] || null;
   }
+  function injectPlanFor(it, dl, body) {
+    const b = body || {};
+    stage.ensure(it);
+    const kind = String((dl && dl.kind) || 'qb');
+    const out = { ok: true, dryRun: true, client: kind,
+      downloader: { id: dl.id, name: dl.name || '' },
+      item: { id: it.id, title: it.title || '', stage: it.stage || 'draft', status: it.status || '' },
+      hash: String(it.infohash || '').toLowerCase(),
+      savePath: String(b.savePath || it.savePath || ''),
+      category: String(b.category || it.category || ''),
+      idempotent: false, alreadyInjected: false, wouldAdd: false, wouldWrite: false,
+      retry: false, warnings: [], message: '' };
+    if (stage.isInjected(it)) {
+      out.idempotent = true;
+      out.alreadyInjected = true;
+      out.skipped = true;
+      out.message = '已注入过，跳过重复操作';
+      return out;
+    }
+    if (!it.title) out.warnings.push('条目没有标题');
+    if (!it.downloadUrl) out.warnings.push('没有种子下载地址；真注入前要补种子');
+    if (kind === 'watch') {
+      const d = watch.normDir(dl.watchPath);
+      if (d.err) { out.ok = false; out.code = 'BAD_WATCH_PATH'; out.message = d.err; return out; }
+      out.wouldWrite = true;
+      out.watchPath = d.dir;
+      out.savePath = d.dir;
+      out.filename = watch.safeName(String(it.title || 'upload').slice(0, 60) + '.torrent');
+      out.message = '演练：会写入 watch 目录 ' + d.dir;
+    } else if (kind === 'rtorrent' || kind === 'deluge') {
+      out.wouldAdd = true;
+      out.url = String(dl.url || '');
+      out.message = '演练：会通过 ' + kind + ' 加种';
+    } else {
+      out.wouldAdd = true;
+      out.url = String(dl.url || '');
+      out.message = '演练：会通过 qB 加种' + (out.savePath ? ' · 保存到 ' + out.savePath : '');
+    }
+    if (it.stage === 'failed' && it.stageFailedFrom === 'injected') {
+      out.retry = true;
+      out.nextRetryAt = it.stageNextRetryAt || '';
+      out.message += '；上次注入失败，这次是重试';
+    }
+    return out;
+  }
   async function fetchTorrent(url, cookie) {
     if (!/^https?:\/\//i.test(String(url || ''))) return { err: '下载地址必须是 http/https' };
     if (!cookie) return { err: '来源站没有 cookie，取不到种子' };
@@ -63,8 +108,10 @@ function makePublisher(ctx) {
     if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB', http: 400 };
 
     if (dryRun) {
-      it.pubMsg = '演练：目标站 ' + it.targetSite + '，下载器 ' + (dl.name || dl.id) + '，' + (it.shots || []).length + ' 张图，没有发出真实请求';
-      return { ok: true, data: { id: it.id, dryRun: true, published: false, qb: { wouldAdd: true, downloader: { id: dl.id, name: dl.name || '' } }, msg: it.pubMsg } };
+      const plan = injectPlanFor(it, dl, b);
+      if (!plan.ok) return { ok: false, code: plan.code, message: plan.message, http: 400 };
+      it.pubMsg = plan.message;
+      return { ok: true, data: { id: it.id, dryRun: true, published: false, inject: plan, qb: { wouldAdd: plan.wouldAdd, downloader: { id: dl.id, name: dl.name || '' } }, msg: plan.message } };
     }
     if (!ctx.allowReal('realPublish')) {
       return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true（或设 PTA_ALLOW_REAL=1）再试', http: 409 };
@@ -192,7 +239,15 @@ function makePublisher(ctx) {
     return { ok: true, data: { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' }, msg: it.pubMsg } };
   }
 
-  return { publishItem };
+  function injectPlan(id, body) {
+    const cur = load(id);
+    if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
+    const dl = downloaderOf(body, cur.data);
+    if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB/watch', http: 400 };
+    return { ok: true, data: injectPlanFor(cur.data, dl, body) };
+  }
+
+  return { publishItem, injectPlan };
 }
 
 module.exports = { makePublisher };

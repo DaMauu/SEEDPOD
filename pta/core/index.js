@@ -142,6 +142,14 @@ function createCore(opts) {
     }));
   }
 
+  async function inject(input) {
+    const b = input || {};
+    const id = String(b.queueId || '').trim();
+    if (!id) throw new Error('inject 需要 queueId');
+    if (b.dryRun !== false) return unwrap(ctx.publisher.injectPlan(id, b));
+    return unwrap(await ctx.publisher.publishItem(id, Object.assign({}, b, { dryRun: false })));
+  }
+
   async function images(input) {
     const b = input || {};
     const id = String(b.queueId || '').trim();
@@ -203,6 +211,7 @@ function createCore(opts) {
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
+    inject: inject,
     images: images,
     verify: verify,
     close: () => { try { db.close() } catch (e) { console.warn('[seedpod] close:', e && e.message ? e.message : e) } }

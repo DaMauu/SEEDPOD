@@ -86,6 +86,29 @@ module.exports = function (app, ctx) {
     return ok(reply, Object.assign({}, r, { prepared: prep.data.prepared }));
   });
 
+  /* 客户端注入：默认演练；真注入复用 publishItem 的取种/加种/回查链路 */
+  app.post('/api/queue/:id/inject', async (req, reply) => {
+    const b = req.body || {};
+    if (b.dryRun !== false) {
+      const r = publisher.injectPlan(req.params.id, b);
+      if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+      const cur = load(req.params.id);
+      if (cur) {
+        cur.data.injectPlan = r.data;
+        cur.data.pubMsg = r.data.message;
+        save(cur.data);
+      }
+      return ok(reply, r.data);
+    }
+    const r = await publisher.publishItem(req.params.id, Object.assign({}, b, { dryRun: false }));
+    if (!r.ok && ctx.notify) {
+      ctx.notify.send('inject.failed', 'SEEDPOD 注入失败：' + (r.message || r.code) + ' · ' + req.params.id,
+        { id: req.params.id, code: r.code }).catch(function (e) { console.warn('[seedpod] notify failed:', e && e.message ? e.message : e) });
+    }
+    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    return ok(reply, r.data);
+  });
+
   /* 发布：核心在 publish.js，路由只做参数与错误映射 */
   app.post('/api/publish/:id', async (req, reply) => {
     const r = await publisher.publishItem(req.params.id, req.body || {});

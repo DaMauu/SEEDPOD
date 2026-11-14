@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 10:00（当前 v0.7.182 / G11 图床转存）
+最后更新：2026-11-18 11:00（当前 v0.7.183 / G11 完成）
+
+## 2026-11-18 G11 客户端注入演练（v0.7.183）
+
+- `injectPlan` 覆盖 qB/watch/rtorrent/deluge，返回 wouldAdd/wouldWrite、savePath、hash、幂等、重试。
+- `/api/queue/:id/inject` + CLI `inject` + 面板“注入演练/上传准备”卡片。
+- 真注入复用 publishItem；已 injected 直接 skipped；failed+stageFailedFrom=injected 标 retry。
+- clients 6/6、CLI 15/15、smoke 22/22；G11 验收项全部有夹具。
+- 下一步 G3 拆 Sites.vue；G13/G12 继续等真实站点权限。
 
 ## 2026-11-18 G11 图床转存（v0.7.182）
 
