@@ -761,4 +761,19 @@ onUnmounted(() => {
 .ti-host { grid-column: 1; grid-row: 2; }
 .target-item .chip { grid-column: 2; grid-row: 1 / 3; align-self: center; }
 }
-</style>
+
+:global(.view[data-view="crawl"]) { height: auto; min-height: calc(100vh - 150px); display: flex; flex-direction: column; }
+.drawers { gap: 12px; flex: 1; min-height: 0; height: auto; }
+.drawers .drawer, .drawers :deep(.drawer) {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+  background: #fff;
+  overflow: hidden;
+}
+.drawers .drawer-head, .drawers :deep(.drawer-head) { padding: 13px 22px; gap: 16px; }
+.drawers .drawer-t, .drawers :deep(.drawer-t) { display: block; }
+.drawers .drawer-title, .drawers :deep(.drawer-title) { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.drawers .drawer-desc, .drawers :deep(.drawer-desc) { margin-top: 3px; font-size: 11.5px; color: var(--muted-2); white-space: normal; }
+.drawers .drawer-meta, .drawers :deep(.drawer-meta) { font-size: 11.5px; color: var(--muted); }
+.drawers .drawer-body, .drawers :deep(.drawer-body) { padding: 2px 22px 10px; }</style>

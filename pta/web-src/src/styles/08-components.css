@@ -35,9 +35,6 @@
 }
 
 /* ---------- 已上传截图 ---------- */
-.shot.has { padding: 0; overflow: hidden; border-style: solid; border-color: var(--line-2); }
-.shot.has img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.shot.has span { display: none; }
 .link-btn[disabled] { color: var(--muted-2); cursor: default; }
 
 /* ---------- 登录页 ---------- */

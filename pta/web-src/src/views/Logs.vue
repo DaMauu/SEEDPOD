@@ -176,4 +176,5 @@ onUnmounted(() => {
 .log-row .log-msg { grid-column: 1 / -1; line-height: 1.5; overflow-wrap: anywhere; }
 .log-row .log-src { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
-</style>
+
+:global(.view[data-view="logs"]) { height: calc(100vh - 150px); display: flex; flex-direction: column; justify-content: center; }</style>

@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.161 · 2026-11-17
+
+### 外框规则最终收口
+- 全局剩的 `.view[data-view="queue" / "sources" / "logs" / "crawl"]` 全部迁入对应 SFC，用单选择器 `:global(.view[data-view=...])`；全局已无 `data-view` 选择器。
+- Crawl 抽屉头/标题/描述/正文覆盖迁入 `Crawl.vue`：Crawl 自己的抽屉用 `.drawers .drawer-*`，Nodes 子组件用 `.drawers :deep(.drawer-*)`。
+- `.view[data-view="sources"]` 的 900px 取消居中规则也迁入 `Sources.vue` scoped。
+- 05/08 里 Queue 专属的 `.shots` / `.shot*` 迁入 `Queue.vue`；`05-queue-sources-logs.css` 改名为 `05-shared-picker-drawer.css`，只留共用多选行、规则行和抽屉头。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者；1280 / 768 / 390 视觉通过。
+
 ## v0.7.160 · 2026-11-17
 
 ### 页面 scoped 彻底收口

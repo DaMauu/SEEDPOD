@@ -46,5 +46,4 @@ body::after {
   0%, 100% { opacity: .26; transform: scale(1); }
   50%      { opacity: .92; transform: scale(1.05); }
 }
-.view[data-view="queue"], .view[data-view="sources"], .view[data-view="logs"] { justify-content: center; }
 

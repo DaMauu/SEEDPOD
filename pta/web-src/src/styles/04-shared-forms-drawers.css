@@ -47,9 +47,6 @@
 .drawer-head { border-radius: 14px; }
 .drawer.open .drawer-head { border-radius: 14px 14px 0 0; }
 /* 流程页：撑满视口，展开不产生整页滚动条 */
-.view[data-view="crawl"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
-.view[data-view="crawl"][hidden] { display: none !important; }
-.view[data-view="crawl"] .drawers { flex: 1; min-height: 0; height: auto; }
 .drawer-body-flush { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
 .drawer:not(.open) .drawer-body-flush { display: none; }
 /* 全局隐藏滚动条（仍可滚动） */

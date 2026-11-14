@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D30 外框规则进页面 SFC 的 `:global`（2026-11-17）
+
+定了：`.view[data-view=...]` 的尺寸/居中规则全部放对应 SFC，单选择器 `:global(.view[data-view=...])`；Crawl 抽屉头覆盖放 `Crawl.vue`，自己的抽屉用 `.drawers .drawer-*`，Nodes 子组件用 `.drawers :deep(.drawer-*)`。
+为什么：这些规则只服务单页；全局留着会继续制造跨页覆盖，也让 05/07/09 的文件名和内容对不上。
+代价：`:global` 不走 scoped 属性，必须保证选择器唯一；迁完要 grep 全局 `data-view` 为零并做三宽度验收。
+
 ## D29 共享模块只留共用规则，页面规则清空即改名（2026-11-17）
 
 定了：04 里的 Crawl 目标站和 Nodes 规则全部迁到各自 SFC；文件只剩共用表单/抽屉/外框规则后，改名为 `04-shared-forms-drawers.css`。下载器行和弹窗在 ≤600px 用两行/单列布局。

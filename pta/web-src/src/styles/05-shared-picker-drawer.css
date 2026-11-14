@@ -1,0 +1,12 @@
+/* 共用：多选行、规则行、抽屉头 */
+.set-field .ctl .pick-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; max-width: 560px; }
+.set-field .ctl .pick-row .cat-chip { padding: 4px 9px; font-size: 11.5px; }
+/* 流程页：去掉手风琴，全部常驻展开 */
+.drawer-head { cursor: default; }
+.drawer-head:hover { background: none; }
+.drawer.open .drawer-head { background: #fcfcfd; }
+/* 规则行内手风琴 */
+.fixed-row{display:flex;align-items:center;gap:10px;min-height:34px}
+.fixed-row .btn{flex:0 0 auto}
+
+

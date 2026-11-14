@@ -20,20 +20,6 @@
 .drawer-desc { margin: 0; font-size: 10.5px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drawer-body { padding-bottom: 8px; }
 /* ===== 流程页最终版式：统一间距与密度 ===== */
-.view[data-view="crawl"] .drawers { gap: 12px; }
-.view[data-view="crawl"] .drawer {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
-  background: #fff;
-  overflow: hidden;
-}
-.view[data-view="crawl"] .drawer-head { padding: 14px 22px; gap: 16px; }
-.view[data-view="crawl"] .drawer-t { display: block; }
-.view[data-view="crawl"] .drawer-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; }
-.view[data-view="crawl"] .drawer-desc { margin-top: 3px; font-size: 11.5px; color: var(--muted-2); white-space: normal; }
-.view[data-view="crawl"] .drawer-meta { font-size: 11.5px; color: var(--muted); }
-.view[data-view="crawl"] .drawer-body { padding: 2px 22px 10px; }
 
 /* 多选按钮行：标签固定宽，选项一行铺开 */
 
@@ -41,8 +27,6 @@
 /* 展开后的设置项更紧凑，栏目标题保持舒展 */
 
 /* 栏目本身微调 */
-.view[data-view="crawl"] .drawer-head { padding: 13px 22px; }
-.view[data-view="crawl"] .drawer-title { font-size: 14px; }
 /* 下载器栏目与其它栏目统一 */
 /* 下载器：去掉列表外框，行分隔保留 */
 /* 下载器：底部操作行与其它栏目保存按钮同规格 */

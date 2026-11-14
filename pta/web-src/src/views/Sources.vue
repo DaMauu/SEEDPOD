@@ -476,4 +476,8 @@ onUnmounted(() => {
 .dl-bar .btn { width: 100%; }
 #dl-export { grid-column: 1 / -1; }
 }
-</style>
+
+:global(.view[data-view="sources"]) { height: calc(100vh - 150px); display: flex; flex-direction: column; justify-content: center; }
+@media (max-width: 900px) {
+  :global(.view[data-view="sources"]) { height: auto; justify-content: flex-start; }
+}</style>

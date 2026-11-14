@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 12:00（当前 v0.7.160 / Nodes 与目标站弹窗 scoped 收口）
+最后更新：2026-11-17 13:00（当前 v0.7.161 / 全局页面选择器清零）
+
+## 2026-11-17 外框规则收口（v0.7.161）
+
+- 全局 `.view[data-view=...]` 清零，全部进页面 SFC 的 `:global`。
+- Crawl 抽屉头覆盖进 `Crawl.vue`，Nodes 子组件用 `:deep`。
+- Queue 截图样式进 `Queue.vue`；05 改名 `05-shared-picker-drawer.css`。
+- smoke 21/21，全量全绿，质量审计 83 未回退。
 
 ## 2026-11-17 Nodes / 目标站弹窗收口（v0.7.160）
 

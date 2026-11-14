@@ -49,7 +49,6 @@
 /* ---------- 移动端适配：窄屏把栅格摊平，导航落到底部 ---------- */
 @media (max-width: 900px) {
   /* 数据清单在窄屏按文档流排，内容高于视口时不要垂直居中压到顶栏 */
-  .view[data-view="sources"] { height: auto; justify-content: flex-start; }
   .topbar { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
   .topbar-right { width: 100%; }
   .pills-row { flex-wrap: wrap; gap: 6px; }

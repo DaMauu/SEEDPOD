@@ -600,4 +600,14 @@ onUnmounted(() => {
 .queue-list, .queue-detail { width: 100%; max-width: none; flex: 0 0 auto; }
 .queue-list { max-height: none; }
 }
+
+:global(.view[data-view="queue"]) { height: calc(100vh - 150px); display: flex; flex-direction: column; justify-content: center; }
+/* Queue 媒体截图：页面专属 */
+.shots { display: flex; gap: 8px; }
+.shot { width: 96px; height: 60px; border-radius: 8px; background: var(--panel-2); display: grid; place-items: center; font-size: 11px; color: var(--muted-2); border: 1px dashed var(--line-2); }
+.shot.add { cursor: pointer; }
+.shot.add:hover { color: var(--accent); border-color: var(--accent); }
+.shot.has { padding: 0; overflow: hidden; border-style: solid; border-color: var(--line-2); }
+.shot.has img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot.has span { display: none; }
 </style>
