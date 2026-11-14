@@ -53,7 +53,7 @@ module.exports = function (app, ctx) {
     const r = await publisher.publishItem(req.params.id, req.body || {});
     if (!r.ok && ctx.notify) {
       ctx.notify.send('publish.failed', 'SEEDPOD 发布失败：' + (r.message || r.code) + ' · ' + req.params.id,
-        { id: req.params.id, code: r.code }).catch(function () {});
+        { id: req.params.id, code: r.code }).catch(function (e) { console.warn('[seedpod] notify failed:', e && e.message ? e.message : e) });
     }
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r.data);

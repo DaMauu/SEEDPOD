@@ -75,6 +75,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { fmtBytes } from '../utils/format'
 import { reportError } from '../utils/errors'
 import { loggedIn, viewVisible } from '../utils/ui'
 
@@ -90,14 +91,6 @@ let busy = false
 const pubCount = computed(() => Number(ov.value && ov.value.queue && ov.value.queue.counts && ov.value.queue.counts.published) || 0)
 const catalogTotal = computed(() => Number(ov.value && ov.value.catalog && ov.value.catalog.total) || 0)
 
-function fmtBytes(n) {
-  let v = Number(n) || 0
-  if (!v) return ''
-  const u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-  let i = 0
-  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++ }
-  return (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + ' ' + u[i]
-}
 const health = computed(() => {
   const o = ov.value
   const s = (o && o.sites) || {}

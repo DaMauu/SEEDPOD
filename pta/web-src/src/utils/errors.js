@@ -4,5 +4,5 @@ export function reportError(scope, e) {
     if (typeof console !== 'undefined' && console.warn) {
       console.warn('[seedpod] ' + scope + ':', e && e.message ? e.message : e)
     }
-  } catch (_) {}
+  } catch (_) { /* console is unavailable; nothing else to report */ }
 }

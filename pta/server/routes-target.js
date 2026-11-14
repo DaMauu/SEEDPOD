@@ -97,7 +97,7 @@ module.exports = function (app, ctx) {
     if (!r.ok) {
       if (ctx.notify) {
         ctx.notify.send('target.failed', 'SEEDPOD 目标站提交失败：' + req.params.host + ' · ' + (r.message || r.code),
-          { host: req.params.host, id: b.queueId }).catch(function () {});
+          { host: req.params.host, id: b.queueId }).catch(function (e) { console.warn('[seedpod] notify failed:', e && e.message ? e.message : e) });
       }
       return bad(reply, r.code, r.message, r.http || 400);
     }

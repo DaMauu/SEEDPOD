@@ -121,7 +121,7 @@ function collect(files) {
     const code = /\.vue$/.test(f) ? s.replace(/<style[\s\S]*?<\/style>/gi, '').split('\n').length : n;
     if (n > maxLines) { maxLines = n; maxFile = rel(f); }
     if (code > maxCodeLines) { maxCodeLines = code; maxCodeFile = rel(f); }
-    todos += (s.match(/\b(TODO|FIXME|XXX)\b/g) || []).length;
+    if (rel(f) !== 'pta/scripts/audit-quality.js') todos += (s.match(/\b(TODO|FIXME|XXX)\b/g) || []).length;
     const runtimeFile = /\/server\//.test(f) || /\/web-src\/src\//.test(f);
     if (runtimeFile) {
       consoleLogs += (s.match(/console\.log\s*\(/g) || []).length;

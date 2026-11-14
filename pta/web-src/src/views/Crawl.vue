@@ -176,7 +176,7 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
-import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
+import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 import RuleControl from '../components/RuleControl.vue'
 import Nodes from './Nodes.vue'
 
@@ -252,10 +252,6 @@ const targetOptions = computed(() => {
   }).map(s => ({ host: s.host, title: s.title || s.host }))
 })
 
-function initials(t) {
-  const m = String(t || '').match(/^[A-Za-z0-9]+/)
-  return m ? m[0].slice(0, 2).toUpperCase() : String(t || '?').slice(0, 1)
-}
 function specialOf(r) { return SPECIAL[r.t] || '' }
 function toggleFetchChip(r, c) {
   if (r.todo) return
@@ -412,6 +408,7 @@ async function screenRun() {
   if (window.__ptaLoadOverview) window.__ptaLoadOverview()
 }
 
+// 页面独立：需要 siteStatus/siteCfg 驱动目标站列表，不能和 Queue 的简化版共用。
 async function loadSites() {
   const [sj, cj] = await Promise.all([getJson('/api/sites'), getJson('/api/site-config')])
   if (sj && sj.ok) {
@@ -541,7 +538,7 @@ const RuleOrSpecial = (props) => {
   const kind = specialOf(r)
   if (kind === 'target') {
     return h('div', { class: 'target-pick' }, [
-      h('em', { class: 'tp-ava', id: 'tp-ava' }, targetSite.value ? initials(targetSite.value.title || targetSite.value.host) : '?'),
+      h('em', { class: 'tp-ava', id: 'tp-ava' }, targetSite.value ? initialsOf(targetSite.value.title || targetSite.value.host) : '?'),
       h('div', { class: 'tp-info' }, [
         h('b', { id: 'tp-name' }, targetSite.value ? (targetSite.value.title || targetSite.value.host) : '未选择'),
         h('span', { id: 'tp-host' }, targetSite.value ? targetSite.value.host : '')

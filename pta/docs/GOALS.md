@@ -7,12 +7,12 @@
 | Goal | 内容 | 状态 | 依赖 | 验收命令 / 证据 |
 | --- | --- | --- | --- | --- |
 | G1 | 响应式自动验收进 `run.sh` | ✅ 完成（0.7.163） | 无 | `responsive-layout.js` 32 项通过 |
-| G2 | 可靠性债：公共函数、空 catch、TODO/console | 🟡 进行中：UI 函数已收口，空 catch 剩 9 | 无 | `run.sh` 全绿 + 质量审计不回退 |
+| G2 | 可靠性债：公共函数、空 catch、TODO/console | ✅ 完成（0.7.169） | 无 | 空 catch 0、审计 87 |
 | G3 | 拆 `Sites.vue` | 🟢 open | G2 完成后 | smoke 21/21、responsive 32 项 |
 | G4 | 40 条未接规则分诊 | 🟢 open · 等拍板 | 用户逐条决定 | `audit-rules.js` 0 缺读者 |
 | G5 | 真实目标站发布 + 真实 rTorrent/Deluge | 🟡 部分完成 · 等真实 daemon | 用户提供真实 daemon | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | 🟢 open | G2/G3 后 | 例外确认可用、备份恢复演练 |
-| G7 | 发布工作流状态机：阶段落库、幂等、恢复 | 🟢 open | G2 | 重启可续跑、不重复提交 |
+| G7 | 发布工作流状态机：阶段落库、幂等、恢复 | 🔵 下一个 active | G2 | 重启可续跑、不重复提交 |
 | G8 | 原生单 release 上传准备与站点提交 | 🟡 进行中：测试站真实提交已通过 | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
 | G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | 🟡 进行中 | G7 | 不启浏览器跑通全链路 |
 
@@ -42,12 +42,15 @@
 
 **不做**：不改页面布局、不改接口、不碰真实站。
 
-**进展（0.7.168）**：
+**完成（0.7.169）**：
 
-- 新增 `pta/web-src/src/utils/ui.js`：`toast / confirmBox / loggedIn / viewVisible` 收口，页面内重复定义从 11 个函数名降到 7 个。
-- 新增 `pta/web-src/src/utils/errors.js`：显式 `catch (e) {}` 已清零，改为 `reportError` / `console.warn`；审计仍列 9 个空 catch（`.catch(() => null)` 等），下一批处理。
-- `console.log` 清零；质量审计总体从 83 升到 **85**。
-- 全量 `run.sh`、smoke 21/21、responsive 32 项通过。
+- 新增 `utils/ui.js`：`toast / confirmBox / loggedIn / viewVisible / initialsOf` 收口；`initials` 两处不同语义合并为 `initialsOf(text)`。
+- 新增 `utils/errors.js`：显式空 catch 清零，Promise 的 `.catch(() => null)` / 通知失败也补了 `reportError` / warn。
+- `fmtBytes` 收口到 `utils/format.js`；`loadSites` 保留两份：Crawl 需要 siteStatus/siteCfg，Queue 只要站点列表，已在代码注释写明；`tone` / `openAdd` 语义不同，不硬合并。
+- `console.log` / TODO 自计数清零；质量审计 **87（优质）**，代码 91、复用率 85、质量 100。
+- 全量 `run.sh`、smoke 21/21、responsive 32 项、CLI 9/9 通过。
+
+**保留的重复函数**：`load` / `ensure` 是页面生命周期，`loadSites` 是不同数据需求；`tone` / `openAdd` 在不同页面含义不同，强行共用会引入条件分支。
 
 **验收**：
 
@@ -197,7 +200,7 @@
 
 ## 推进规则
 
-1. 一次只开一个 active goal；当前是 **G2**，下一个 **G7**，再 **G9**，再 **G8**。
+1. 一次只开一个 active goal；G2 已完成，当前 **G7**，之后 **G9**，再 **G8**。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。

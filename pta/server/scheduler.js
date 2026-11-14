@@ -111,14 +111,14 @@ function makeScheduler(ctx, deps) {
           } else if (ctx.notify.status().events === 'always') {
             await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });
           }
-        } catch (e2) {}
+        } catch (e2) { console.warn('[seedpod] scheduler notify failed:', e2 && e2.message ? e2.message : e2) }
       }
       save(Object.assign({}, s, { lastRunAt: Date.now(), lastResult: steps, lastError: '' }));
       return { ok: true, steps: steps };
     } catch (e) {
       const msg = String(e && e.message || e).slice(0, 300);
       if (ctx.notify) {
-        try { await ctx.notify.send('scheduler.error', 'SEEDPOD 调度失败：' + msg); } catch (e2) {}
+        try { await ctx.notify.send('scheduler.error', 'SEEDPOD 调度失败：' + msg); } catch (e2) { console.warn('[seedpod] scheduler error notify failed:', e2 && e2.message ? e2.message : e2) }
       }
       save(Object.assign({}, s, { lastRunAt: Date.now(), lastError: msg }));
       return { ok: false, error: msg, steps: steps };

@@ -183,6 +183,7 @@ function tone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
 function sub(it) {
   return (it.cn ? it.cn + ' · ' : '') + (it.res || '') + ' · ' + (it.size || '') + (it.targetSite ? ' · 目标 ' + it.targetSite : '')
 }
+// 页面独立：队列只需要站点列表给下拉，不加载状态/配置。
 async function loadSites() {
   try {
     const j = await (await fetch('/api/sites', { credentials: 'same-origin' })).json()

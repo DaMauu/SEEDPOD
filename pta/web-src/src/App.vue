@@ -77,6 +77,7 @@ import Sources from './views/Sources.vue'
 import Logs from './views/Logs.vue'
 import Changelog from './views/Changelog.vue'
 import Settings from './views/Settings.vue'
+import { reportError } from './utils/errors'
 
 const VIEWS = [
   { key: 'dashboard', label: '总览', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z' },
@@ -175,15 +176,15 @@ function probeAuth() {
 }
 function loadStats() {
   fetch('/api/health', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) { serviceOnline.value = !!(j && j.ok); }).catch(function () { serviceOnline.value = false })
+    .then(function (j) { serviceOnline.value = !!(j && j.ok); }).catch(function (e) { reportError('App.health', e); serviceOnline.value = false })
   if (!authed.value) return
   fetch('/api/queue?limit=1', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) {
       const c = j && j.ok && j.data && j.data.counts ? j.data.counts : {}
       pendingCount.value = Number(c.pending) || 0
-    }).catch(function () {})
+    }).catch(function (e) { reportError('App.queue', e) })
   fetch('/api/downloaders', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) { downloaderCount.value = Array.isArray(j && j.data) ? j.data.length : 0; }).catch(function () {})
+    .then(function (j) { downloaderCount.value = Array.isArray(j && j.data) ? j.data.length : 0; }).catch(function (e) { reportError('App.downloaders', e) })
 }
 function loadDev() {
   if (!authed.value) return
@@ -196,11 +197,11 @@ function loadDev() {
         ' · 页面 ' + (c.pages || 0) + ' · 接口 ' + (c.endpoints || 0) +
         ' · 站点 ' + (c.sites || 0) + ' · 待审 ' + (c.queue || 0) + ' · 下载器 ' + (c.downloaders || 0) +
         ' · 已运行 ' + (d.uptime || 0) + ' 秒'
-    }).catch(function () {})
+    }).catch(function (e) { reportError('App.dev', e) })
 }
 window.__ptaLoadOverview = function () {
   fetch('/api/stats/overview', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) { if (j && j.ok) window.__ptaOverview = j.data; }).catch(function () {})
+    .then(function (j) { if (j && j.ok) window.__ptaOverview = j.data; }).catch(function (e) { reportError('App.overview', e) })
 }
 let timer = null
 onMounted(function () {

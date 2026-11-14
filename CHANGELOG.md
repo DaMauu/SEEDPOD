@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.169 · 2026-11-17
+
+### G2 完成：可靠性债收口
+- 公共 UI 函数继续收口；`initials` 合并为 `utils/ui.js` 的 `initialsOf(text)`。
+- 剩余 Promise `.catch(() => null)`、通知失败 catch 全部补上 `reportError` / `console.warn`；显式空 catch 清零。
+- `fmtBytes` 收口到 `utils/format.js`；`loadSites` 按页面数据需求保留两份并写明原因；`tone` / `openAdd` 语义不同不合并。
+- 修复质量审计把自身 `TODO|FIXME|XXX` 正则计入 TODO 的自计数问题。
+- 质量审计：**87（优质）**，代码 91、复用率 85、质量 100；空 catch 0、TODO 0、console.log 0。
+- 全量 `run.sh`、smoke 21/21、responsive 32 项、CLI 9/9 通过。
+
 ## v0.7.168 · 2026-11-17
 
 ### G2 第一批：公共 UI 函数与错误可见性

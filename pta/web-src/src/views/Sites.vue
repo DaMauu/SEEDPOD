@@ -84,7 +84,7 @@
 
           <div v-if="sel === s.name" class="site-expand" id="site-detail">
             <div class="sd-top">
-              <em class="ava lg" :class="archCls(s)">{{ initials(s) }}</em>
+              <em class="ava lg" :class="archCls(s)">{{ initialsOf(s.title || s.name) }}</em>
               <div class="sd-id">
                 <div class="sd-title-row">
                   <h2>{{ s.title }}</h2>
@@ -403,7 +403,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
-import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
+import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 
 const PER_PAGE = 11
 const ARCH = {
@@ -481,10 +481,6 @@ function fmtWhen(raw) {
   const now = new Date()
   const sameDay = t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth() && t.getDate() === now.getDate()
   return (sameDay ? '今日 ' : p2(t.getMonth() + 1) + '-' + p2(t.getDate()) + ' ') + p2(t.getHours()) + ':' + p2(t.getMinutes())
-}
-function initials(s) {
-  const m = String(s.title || s.name).match(/^[A-Za-z0-9]+/)
-  return m ? m[0].slice(0, 2).toUpperCase() : String(s.title || s.name).slice(0, 1)
 }
 function archOf(s) { return ARCH[s.arch] || ARCH['?'] }
 function archCls(s) { return archOf(s)[0] }

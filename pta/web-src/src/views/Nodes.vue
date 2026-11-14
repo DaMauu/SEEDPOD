@@ -99,6 +99,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { fmtBytes } from '../utils/format'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, viewVisible } from '../utils/ui'
 
@@ -112,14 +113,6 @@ const cats = ref([])
 const catsMsg = ref('')
 let timer = null
 
-function fmtBytes(n) {
-  let v = Number(n) || 0
-  if (!v) return ''
-  const u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-  let i = 0
-  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++ }
-  return (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + ' ' + u[i]
-}
 function hostOf(url) {
   return String(url || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '')
 }

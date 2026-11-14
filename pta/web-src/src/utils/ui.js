@@ -13,6 +13,11 @@ export function loggedIn() {
   return !document.querySelector('#login-mask')
 }
 
+export function initialsOf(text) {
+  const m = String(text || '').match(/^[A-Za-z0-9]+/)
+  return m ? m[0].slice(0, 2).toUpperCase() : String(text || '?').slice(0, 1)
+}
+
 export function viewVisible(name) {
   const v = document.querySelector('[data-view="' + name + '"]')
   return !!(v && !v.hidden)
