@@ -522,13 +522,6 @@ tbody tr:hover td { background: #fafbff; }
 @media (min-width: 1320px) { .dock { right: 56px; } }
 @media (min-width: 1320px) { .dock { right: 32px; } }
 /* topbar menu */
-.menu-wrap { position: relative; }
-.menu-btn { padding: 8px 9px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); }
-.menu-btn svg { width: 17px; height: 17px; display: block; }
-.menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 152px; background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 6px; display: none; z-index: 70; }
-.menu.open { display: block; }
-.menu a { display: block; padding: 8px 10px; border-radius: 8px; font-size: 12.5px; color: var(--ink); }
-.menu a:hover { background: var(--panel-2); }
 @media (min-width: 1320px) { .dock { right: 48px; } }
 @media (min-width: 1320px) { .dock { right: 54px; } }
 /* rail 80px from browser edge */
@@ -539,10 +532,7 @@ tbody tr:hover td { background: #fafbff; }
 .dock { display: none !important; }
 .main { max-width: 1280px; }
 .bento-bottom { grid-template-columns: 300px 444px 444px; }
-.menu a.menu-link { display: flex; align-items: center; gap: 6px; }
-.menu a.active { color: var(--accent); font-weight: 600; }
 .menu-sep { height: 1px; background: var(--line); margin: 6px 4px; }
-.menu .dock-count { position: static; background: var(--panel-2); color: var(--muted); font-size: 10px; padding: 0 5px; margin-left: auto; }
 /* restore side rail, nav also in menu */
 .dock { display: flex !important; }
 .main { max-width: 1230px; }
@@ -554,10 +544,7 @@ tbody tr:hover td { background: #fafbff; }
   .dock-count { position: absolute; top: auto; bottom: 1px; right: 1px; font-size: 7.5px; padding: 0 2px; }
 }
 .menu-title { font-size: 10px; letter-spacing: 1.4px; color: var(--muted-2); padding: 4px 10px; }
-.menu a.menu-link { display: flex; align-items: center; gap: 6px; }
-.menu a.active { color: var(--accent); font-weight: 600; }
 .menu-sep { height: 1px; background: var(--line); margin: 6px 4px; }
-.menu .dock-count { position: static; background: var(--panel-2); color: var(--muted); font-size: 10px; padding: 0 5px; margin-left: auto; }
 /* dock hugs the card right edge (constant ~16px gap), never nearer than 80px to the window edge */
 @media (min-width: 1320px) {
   .dock { right: max(20px, calc(50vw - 646px)); }
@@ -1215,23 +1202,9 @@ html, body { overflow-x: hidden; }
 .set-field.stack .ctl .pick-row { justify-content: flex-start; max-width: none; }
 .set-field.stack .lbl i { margin-top: 3px; }
 .rule-list { display: flex; flex-direction: column; }
-.rule-row { display: grid; grid-template-columns: 140px 1fr 44px; align-items: center; gap: 14px; padding: 11px 4px; border-bottom: 1px solid var(--line); }
-.rule-row:last-child { border-bottom: 0; }
-.rule-name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
-.rule-sum { font-size: 11.5px; color: var(--muted); text-align: right; }
 .rule-set { justify-self: end; font-size: 11.5px; color: var(--muted); }
 .rule-set:hover { color: var(--accent); }
-#rule-body { max-height: 52vh; overflow-y: auto; }
-#rule-body .set-field .input, #rule-body .set-field .select { width: 240px; height: 32px; font-size: 12px; }
 #rule-modal .modal { width: 540px; }
-#rule-body .set-field { flex-direction: column; align-items: stretch; gap: 7px; padding: 11px 0; }
-#rule-body .set-field .lbl span { font-size: 12.5px; }
-#rule-body .set-field .lbl i { margin-top: 2px; }
-#rule-body .set-field .ctl .input, #rule-body .set-field .ctl .select { width: 100%; height: 32px; font-size: 12px; }
-#rule-body .set-field .ctl .pick-row { justify-content: flex-start; }
-#rule-body .tpl-wrap { align-items: stretch; }
-#rule-body .tpl-wrap .input { width: 100%; }
-#rule-body .tpl-eg { text-align: left; }
 /* 流程页：去掉手风琴，全部常驻展开 */
 .view[data-view="crawl"] { height: auto; min-height: calc(100vh - 150px); }
 .drawers .drawer { flex: 0 0 auto; }
@@ -1240,25 +1213,7 @@ html, body { overflow-x: hidden; }
 .drawer-head { cursor: default; }
 .drawer-head:hover { background: none; }
 .drawer.open .drawer-head { background: #fcfcfd; }
-#rule-body .tpl-wrap .input, #rule-body .tpl-try .input { width: 100%; }
-#rule-body .tpl-wrap { align-items: stretch; }
-#rule-body .tpl-eg { text-align: left; }
 /* 规则行内手风琴 */
-.rule-item { border-bottom: 1px solid var(--line); }
-.rule-item:last-child { border-bottom: 0; }
-.rule-item .rule-row { display: grid; grid-template-columns: 140px 1fr 18px; align-items: center; gap: 14px; width: 100%; text-align: left; border: 0; background: none; padding: 12px 4px; cursor: pointer; font: inherit; }
-.rule-item .rule-row:hover { background: #fafbfd; }
-.rule-chev { width: 15px; height: 15px; color: var(--muted-2); transition: transform .16s ease; }
-.rule-item.open .rule-chev { transform: rotate(180deg); }
-.rule-body { display: none; padding: 2px 4px 14px; }
-.rule-item.open .rule-body { display: block; }
-.rule-body .set-fields { border-top: 1px solid var(--line); padding-top: 6px; }
-.rule-body .set-field { flex-direction: column; align-items: stretch; gap: 7px; padding: 10px 0; }
-.rule-body .set-field .ctl .input, .rule-body .set-field .ctl .select { width: 100%; height: 32px; font-size: 12px; }
-.rule-body .set-field .ctl .pick-row { justify-content: flex-start; }
-.rule-body .tpl-wrap { align-items: stretch; }
-.rule-body .tpl-wrap .input { width: 100%; }
-.rule-body .tpl-eg { text-align: left; }
 .rule-actions { display: flex; justify-content: flex-end; padding-top: 10px; }
 .tpl-fixed { font-size: 12.5px; color: var(--muted); line-height:1.4; }
 .fixed-row{display:flex;align-items:center;gap:10px;min-height:34px}
@@ -1299,29 +1254,6 @@ html, body { overflow-x: hidden; }
 .log-row.error .log-msg { color: var(--red); }
 
 /* 手风琴内表单：双列紧凑排布，控件靠右定宽 */
-.rule-body .set-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 34px; }
-.rule-body .set-field { flex-direction: row; align-items: center; gap: 16px; padding: 9px 0; border-bottom: 0; }
-.rule-body .set-field .lbl { min-width: 0; flex: 1; }
-.rule-body .set-field .lbl span { font-size: 12.5px; }
-.rule-body .set-field .lbl i { display: block; margin-top: 2px; line-height: 1.5; }
-.rule-body .set-field .ctl { flex: 0 0 auto; width: 216px; display: flex; justify-content: flex-end; }
-.rule-body .set-field .ctl .input,
-.rule-body .set-field .ctl .select { width: 100%; height: 30px; font-size: 12px; }
-.rule-body .set-field .ctl .switch { margin: 0; }
-.rule-body .set-field:has(.pick-row),
-.rule-body .set-field:has(.tpl-wrap),
-.rule-body .set-field:has(.target-pick),
-.rule-body .set-field:has(textarea) { grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 0; }
-.rule-body .set-field:has(.pick-row) .ctl,
-.rule-body .set-field:has(.tpl-wrap) .ctl,
-.rule-body .set-field:has(.target-pick) .ctl,
-.rule-body .set-field:has(textarea) .ctl { width: 100%; justify-content: flex-start; }
-.rule-body .set-field:has(.pick-row) .ctl .pick-row { justify-content: flex-start; }
-.rule-body .set-field .ctl .btn { min-width: 0; }
-.rule-body .set-field:has(.pick-row) { grid-column: auto; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 0; }
-.rule-body .set-field:has(.pick-row) .ctl { width: 100%; }
-.rule-body .set-field:has(.pick-row) .pick-row { gap: 6px; }
-.rule-body .set-field:has(.pick-row) .cat-chip { font-size: 11px; padding: 4px 10px; }
 
 /* 站点设置：与流程一致的双列紧凑排布 */
 .sd-form .set-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 34px; }
@@ -1338,82 +1270,13 @@ html, body { overflow-x: hidden; }
 .sd-form .set-field .ctl textarea { width: 100%; min-height: 68px; }
 
 /* 手风琴内表单：更紧凑、左右对齐 */
-.rule-body { padding: 0 4px 10px; }
-.rule-body .set-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; max-width: 920px; }
-.rule-body .set-field { align-items: flex-start; gap: 14px; padding: 7px 0; min-height: 0; }
-.rule-body .set-field .lbl { padding-top: 3px; }
-.rule-body .set-field .lbl span { font-size: 12px; line-height: 1.5; }
-.rule-body .set-field .lbl i { font-size: 11px; color: var(--muted-2); margin-top: 1px; line-height: 1.35; }
-.rule-body .set-field .ctl { width: 186px; align-items: flex-start; }
-.rule-body .set-field .ctl .input,
-.rule-body .set-field .ctl .select { height: 28px; font-size: 11.5px; padding: 0 10px; }
-.rule-body .set-field .ctl .switch { margin-top: 1px; }
-.rule-body .set-field .ctl .btn { height: 28px; font-size: 11.5px; }
-.rule-body .set-field:has(.pick-row),
-.rule-body .set-field:has(.tpl-wrap),
-.rule-body .set-field:has(.target-pick),
-.rule-body .set-field:has(textarea) { padding: 9px 0; gap: 6px; }
-.rule-body .set-field .pick-row { gap: 5px; }
-.rule-body .set-field .cat-chip { font-size: 11px; padding: 3px 9px; }
-.rule-body .rule-actions { padding-top: 6px; }
-.rule-body .set-field .ctl { justify-content: flex-end; align-items: flex-start; }
-.rule-body .set-fields { max-width: 880px; column-gap: 36px; }
-.rule-body .set-field .ctl { width: 176px; }
-.rule-body .set-field { padding: 6px 0; }
-.rule-body .set-field .lbl i { max-width: 240px; }
 
 /* 手风琴内表单：单列一行一项 */
-.rule-body .set-fields { display: block; max-width: 760px; }
-.rule-body .set-field { display: flex; flex-direction: row; align-items: center;
-  justify-content: space-between; gap: 20px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-.rule-body .set-field:last-child { border-bottom: 0; }
-.rule-body .set-field .lbl { flex: 1; min-width: 0; padding-top: 0; }
-.rule-body .set-field .lbl span { font-size: 12.5px; }
-.rule-body .set-field .lbl i { max-width: none; margin-top: 1px; }
-.rule-body .set-field .ctl { flex: 0 0 auto; width: 208px; justify-content: flex-end; align-items: center; }
-.rule-body .set-field:has(.pick-row),
-.rule-body .set-field:has(.tpl-wrap),
-.rule-body .set-field:has(.target-pick),
-.rule-body .set-field:has(textarea) { flex-direction: column; align-items: stretch; gap: 8px; }
-.rule-body .set-field:has(.pick-row) .ctl,
-.rule-body .set-field:has(.tpl-wrap) .ctl,
-.rule-body .set-field:has(.target-pick) .ctl,
-.rule-body .set-field:has(textarea) .ctl { width: 100%; justify-content: flex-start; }
-.rule-body .set-fields { max-width: 640px; }
-.rule-body .set-field .ctl { width: 200px; }
-.rule-body .set-field { padding: 8px 0; }
-.rule-body .set-fields { max-width: none; }
-.rule-body .set-field .ctl { width: 220px; }
 .sec-actions { display: flex; justify-content: flex-end; padding: 10px 4px 2px; border-top: 1px solid var(--line); margin-top: 6px; }
 
 /* 搜索预设：标签与选项同一行，按钮区、输入区分开成块 */
-.rule-body .set-field:has(.pick-row) { flex-direction: row; align-items: flex-start; gap: 14px; padding: 9px 0; }
-.rule-body .set-field:has(.pick-row) .lbl { flex: 0 0 84px; padding-top: 5px; }
-.rule-body .set-field:has(.pick-row) .lbl i { display: none; }
-.rule-body .set-field:has(.pick-row) .ctl { width: auto; flex: 1 1 auto; justify-content: flex-start; }
-.rule-body .set-field:has(.pick-row) .pick-row { flex-wrap: wrap; justify-content: flex-start; row-gap: 6px; }
-.rule-body .set-field:has(.pick-row) .pick-row { flex-wrap: nowrap; overflow-x: auto; row-gap: 0; padding-bottom: 2px; }
-.rule-body .set-field:has(.pick-row) .cat-chip { font-size: 10.5px; padding: 3px 8px; flex: 0 0 auto; }
-.rule-body .set-field:has(.pick-row) { padding: 8px 0; }
-.rule-body .set-fields:has(.pick-row) { max-width: none; }
-.rule-body .set-field:has(.pick-row) .ctl { min-width: 0; }
-.rule-body .set-field:has(.pick-row) .pick-row { flex: 1 1 auto; }
 .set-field .ctl .pick-row { max-width: none; }
-.rule-body .set-field .ctl .pick-row { max-width: none; }
-.rule-body .set-fields:has(.pick-row) { max-width: 960px; }
-.rule-body .set-field:has(.pick-row) .cat-chip { padding: 3px 7px; }
 /* 更紧凑：搜索预设与整体表单密度 */
-.rule-body .set-field:has(.pick-row) { padding: 3px 0; gap: 10px; }
-.rule-body .set-field:has(.pick-row) .lbl { flex: 0 0 64px; padding-top: 3px; }
-.rule-body .set-field:has(.pick-row) .lbl span { font-size: 11.5px; }
-.rule-body .set-field:has(.pick-row) .cat-chip { font-size: 10px; padding: 2px 6px; }
-.rule-body .set-field:has(.pick-row) .pick-row { gap: 4px; }
-.rule-body .set-field .ctl .input,
-.rule-body .set-field .ctl .select { height: 26px; font-size: 11px; }
-.rule-body .set-field { padding: 5px 0; }
-.rule-body .set-field .lbl span { font-size: 11.5px; }
-.rule-body .set-field .lbl i { font-size: 10.5px; }
-.rule-body .set-fields:has(.pick-row) { max-width: 900px; }
 .sec-actions { padding: 6px 4px 0; }
 /* 整体再压一档 */
 .drawers { gap: 10px; }
@@ -1421,17 +1284,12 @@ html, body { overflow-x: hidden; }
 .drawer-title { font-size: 14px; }
 .drawer-desc { margin-top: 2px; font-size: 11px; }
 .drawer-body { padding: 0 22px 10px; }
-.rule-item .rule-row { padding: 9px 4px; }
-.rule-name { font-size: 12px; }
-.rule-sum { font-size: 11px; }
 .sec-actions { padding: 4px 4px 0; margin-top: 2px; }
-.rule-body .set-field { padding: 4px 0; }
 /* 分区头压成一行，行高再收 */
 .drawers { gap: 8px; }
 .drawer-head { padding: 10px 22px; }
 .drawer-t { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .drawer-desc { margin: 0; font-size: 10.5px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rule-item .rule-row { padding: 7px 4px; }
 .sec-actions { padding: 2px 4px 0; margin-top: 0; }
 .drawer-body { padding-bottom: 8px; }
 /* ===== 流程页最终版式：统一间距与密度 ===== */
@@ -1450,67 +1308,17 @@ html, body { overflow-x: hidden; }
 .view[data-view="crawl"] .drawer-meta { font-size: 11.5px; color: var(--muted); }
 .view[data-view="crawl"] .drawer-body { padding: 2px 22px 10px; }
 
-.view[data-view="crawl"] .rule-item { border-bottom: 1px solid var(--line); }
-.view[data-view="crawl"] .rule-item:last-child { border-bottom: 0; }
-.view[data-view="crawl"] .rule-item .rule-row { padding: 11px 4px; grid-template-columns: 148px 1fr 16px; gap: 16px; }
-.view[data-view="crawl"] .rule-name { font-size: 12.5px; font-weight: 500; }
-.view[data-view="crawl"] .rule-sum { font-size: 11.5px; color: var(--muted); }
-.view[data-view="crawl"] .rule-chev { width: 14px; height: 14px; }
-.view[data-view="crawl"] .rule-item.open .rule-row { background: #fcfcfd; }
-
-.view[data-view="crawl"] .rule-body { padding: 2px 4px 8px; }
-.view[data-view="crawl"] .rule-body .set-fields { display: block; max-width: 980px; }
-.view[data-view="crawl"] .rule-body .set-field {
-  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
-  gap: 20px; min-height: 46px; padding: 8px 0; border-bottom: 1px solid #f4f5f7;
-}
-.view[data-view="crawl"] .rule-body .set-field:last-child { border-bottom: 0; }
-.view[data-view="crawl"] .rule-body .set-field .lbl { flex: 1; min-width: 0; padding-top: 0; }
-.view[data-view="crawl"] .rule-body .set-field .lbl span { font-size: 12.5px; color: var(--ink); }
-.view[data-view="crawl"] .rule-body .set-field .lbl i { display: block; margin-top: 2px; font-size: 11px; color: var(--muted-2); line-height: 1.5; max-width: none; }
-.view[data-view="crawl"] .rule-body .set-field .ctl { flex: 0 0 auto; width: 230px; justify-content: flex-end; align-items: center; }
-.view[data-view="crawl"] .rule-body .set-field .ctl .input,
-.view[data-view="crawl"] .rule-body .set-field .ctl .select { width: 100%; height: 30px; font-size: 12px; }
-.view[data-view="crawl"] .rule-body .set-field .ctl .btn { height: 30px; font-size: 12px; }
-
 /* 多选按钮行：标签固定宽，选项一行铺开 */
-.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) { flex-direction: row; align-items: flex-start; min-height: 0; padding: 10px 0; }
-.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) .lbl { flex: 0 0 72px; padding-top: 4px; }
-.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) .lbl i { display: none; }
-.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) .ctl { width: auto; flex: 1 1 auto; min-width: 0; justify-content: flex-start; }
-.view[data-view="crawl"] .rule-body .set-field .pick-row {
-  display: flex; flex-wrap: nowrap; gap: 6px; max-width: none; overflow-x: auto;
-  justify-content: flex-start; padding-bottom: 2px;
-}
-.view[data-view="crawl"] .rule-body .set-field .cat-chip { flex: 0 0 auto; font-size: 11px; padding: 3px 9px; border-radius: 8px; }
 
 /* 模板/文本块占整行 */
-.view[data-view="crawl"] .rule-body .set-field:has(.tpl-wrap),
-.view[data-view="crawl"] .rule-body .set-field:has(.target-pick),
-.view[data-view="crawl"] .rule-body .set-field:has(textarea) { flex-direction: column; align-items: stretch; gap: 8px; }
-.view[data-view="crawl"] .rule-body .set-field:has(.tpl-wrap) .ctl,
-.view[data-view="crawl"] .rule-body .set-field:has(.target-pick) .ctl,
-.view[data-view="crawl"] .rule-body .set-field:has(textarea) .ctl { width: 100%; justify-content: flex-start; }
 
 .view[data-view="crawl"] .sec-actions { display: flex; justify-content: flex-end; padding: 10px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
 .view[data-view="crawl"] .sec-actions .btn { height: 30px; font-size: 12px; }
-.view[data-view="crawl"] .rule-body .set-fields { max-width: none; }
-.view[data-view="crawl"] .rule-body .set-fields:has(.pick-row) { max-width: 980px; }
 /* 展开后的设置项更紧凑，栏目标题保持舒展 */
-.view[data-view="crawl"] .rule-body .set-field { min-height: 38px; padding: 5px 0; gap: 16px; }
-.view[data-view="crawl"] .rule-body .set-field .lbl span { font-size: 12px; }
-.view[data-view="crawl"] .rule-body .set-field .lbl i { font-size: 10.5px; margin-top: 1px; }
-.view[data-view="crawl"] .rule-body .set-field .ctl { width: 220px; }
-.view[data-view="crawl"] .rule-body .set-field .ctl .input,
-.view[data-view="crawl"] .rule-body .set-field .ctl .select { height: 28px; font-size: 11.5px; }
-.view[data-view="crawl"] .rule-body .set-field:has(.pick-row) { padding: 6px 0; }
-.view[data-view="crawl"] .rule-body .set-field .cat-chip { font-size: 10.5px; padding: 2px 8px; }
-.view[data-view="crawl"] .rule-body { padding-bottom: 4px; }
 
 /* 栏目本身微调 */
 .view[data-view="crawl"] .drawer-head { padding: 13px 22px; }
 .view[data-view="crawl"] .drawer-title { font-size: 14px; }
-.view[data-view="crawl"] .rule-item .rule-row { padding: 10px 4px; }
 .view[data-view="crawl"] .sec-actions { padding: 8px 4px 0; }
 /* 下载器栏目与其它栏目统一 */
 .view[data-view="crawl"] .drawer[data-name="下载器"] .drawer-body-flush { padding: 0 22px 10px; }
@@ -1532,17 +1340,6 @@ html, body { overflow-x: hidden; }
   grid-template-columns: 200px 118px 1fr 60px 44px; padding: 5.5px 27px; margin: 0 -23px; }
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-set { justify-self: end; }
 .nodes-foot .btn { height: 30px; font-size: 12px; }/* 开关型行压紧：说明改成同一行的浅色小字 */
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) {
-  min-height: 30px; padding: 3px 0; }
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl {
-  flex-direction: row; align-items: center; gap: 10px; min-width: 0; margin-right: 16px; }
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl i {
-  margin: 0; font-size: 10.5px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) .ctl { width: auto; }
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl i {
-  display: inline-block; margin-left: 8px; vertical-align: middle; }
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl span { display: inline-block; vertical-align: middle; }
-.view[data-view="crawl"] .rule-body .set-field:has(.switch) .lbl { line-height: 18px; }
 /* 保存栏不再画分隔线，避免与最后一行分隔线叠在一起 */
 .view[data-view="crawl"] .sec-actions { border-top: 0; margin-top: 0; padding: 12px 4px 2px; }
 /* 左上角：固定品牌，不随页面变化 */
@@ -2201,7 +1998,6 @@ body::after {
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
 }
-.menu-link.menu-logout { width: 100%; text-align: left; background: none; border: 0; color: #b3352f; }
 .dash-log-empty { padding: 18px 4px; font-size: 12px; color: var(--muted-2); }
 
 /* ---- 干跑任务面板（数据清单页） ---- */
@@ -2327,7 +2123,6 @@ body::after {
   .modal { width: min(94vw, 560px); }
   .site-expand .sd-form { padding: 12px; }
   .seg-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .btn, .link-btn, .menu-link { min-height: 32px; }
 }
 
 @media (max-width: 600px) {
