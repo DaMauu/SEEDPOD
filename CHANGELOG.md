@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.136 · 2026-11-16
+
+### 修复
+- 按 NexusPHP 开源实现校正默认上传映射：表单页 `/upload.php`，提交页 `/takeupload.php`；字段 `small_descr`、`type`、`uplver=yes`。
+- 站点定义 `catMap` 数组按 `purpose` 自动转成目标站分类对象，发布时 `type` 能填 401/402 等，不再把 `movie` 当分类 ID。
+- 站点检查新增 NexusPHP 默认字段/分类数组用例；target 10/10。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、api-v2 23/23、form 5/5、target 10/10。
+
 ## v0.7.135 · 2026-11-16
 
 ### 修复

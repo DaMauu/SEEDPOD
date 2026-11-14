@@ -10,16 +10,18 @@ const { makeQb } = require('./qb');
 const ENGINES = {
   nexusphp: {
     uploadPath: '/takeupload.php',
+    formPath: '/upload.php',
     fileField: 'file',
     verifyPath: '/torrents.php?search={title}',
     fields: {
-      name: '{title}', small_desc: '{subtitle}', descr: '{description}', type: '{catId}',
+      name: '{title}', small_descr: '{subtitle}', descr: '{description}', type: '{catId}',
       source_sel: '{source}', codec_sel: '{codec}', standard_sel: '{resolution}',
-      audiocodec_sel: '{audio}', team_sel: '{team}', anon: '{anonymous}'
+      audiocodec_sel: '{audio}', team_sel: '{team}', uplver: '{anonymousYes}'
     }
   },
   unit3d: {
     uploadPath: '/torrents/create',
+    formPath: '/torrents/create',
     fileField: 'torrent',
     verifyPath: '/torrents?search={title}',
     fields: {
@@ -29,6 +31,7 @@ const ENGINES = {
   },
   gazelle: {
     uploadPath: '/upload.php',
+    formPath: '/upload.php',
     fileField: 'file_input',
     verifyPath: '/torrents.php?searchstr={title}',
     fields: {
@@ -43,6 +46,18 @@ function readJson(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
 }
 function safeHost(host) { return /^[a-z0-9][a-z0-9.-]*$/i.test(String(host || '')); }
+function catMapOf(p, def) {
+  const raw = (p && p.catMap) || (def && def.catMap);
+  if (raw && !Array.isArray(raw) && typeof raw === 'object') return raw;
+  if (Array.isArray(raw)) {
+    const out = {};
+    raw.forEach(function (x) {
+      if (x && x.id != null && x.purpose && out[x.purpose] === undefined) out[x.purpose] = String(x.id);
+    });
+    return out;
+  }
+  return {};
+}
 
 function makeTarget(ctx) {
   const { DATA_DIR, one } = ctx;
@@ -82,7 +97,7 @@ function makeTarget(ctx) {
     };
     const verify = Object.assign({ path: e.verifyPath }, p.verify || def.verify || {});
     return { host: host, engine: engine, base: base, upload: upload, verify: verify,
-      catMap: p.catMap || def.catMap || {} };
+      catMap: catMapOf(p, def) };
   }
 
   function list() {
@@ -113,7 +128,7 @@ function makeTarget(ctx) {
       title: String(item.title || '').replace(/\s+/g, ' ').trim(),
       subtitle: String(item.cn || [res, size].filter(Boolean).join(' · ')),
       description: String(item.intro || [item.title, res ? res + ' 原盘' : '', item.site ? '来源 ' + item.site : ''].filter(Boolean).join('，') + '。'),
-      catId: String(item.catId || item.cat || ''),
+      catId: String(item.catId || ''),
       category: String(item.cat || item.catId || ''),
       source: String(item.source || ''),
       codec: String(item.codec || ''),
@@ -121,6 +136,7 @@ function makeTarget(ctx) {
       audio: String(item.audio || ''),
       team: String(item.team || item.group || ''),
       anonymous: item.anonymous ? '1' : '0',
+      anonymousYes: item.anonymous ? 'yes' : '',
       typeId: String(item.typeId || ''),
       resolutionId: String(item.resolutionId || ''),
       year: String(item.year || ''),
@@ -140,7 +156,11 @@ function makeTarget(ctx) {
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包，提交不了', http: 400 };
     const v = vars(item);
-    if (!v.catId) v.catId = String(t.catMap[item.cat] || t.catMap[String(item.cat || '')] || '');
+    if (!v.catId) {
+      const mapped = t.catMap[item.cat] != null ? t.catMap[item.cat] : t.catMap[String(item.cat || '')];
+      if (mapped != null) v.catId = String(mapped);
+      else if (/^\d+$/.test(String(item.cat || ''))) v.catId = String(item.cat);
+    }
     const fields = {};
     Object.keys(t.upload.fields || {}).forEach(function (k) {
       const val = expand(t.upload.fields[k], v);

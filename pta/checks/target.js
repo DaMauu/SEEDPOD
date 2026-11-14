@@ -149,7 +149,9 @@ async function main() {
         catMap: { movie: '401' }
       },
       'unit3d.example': { engine: 'unit3d', base: 'http://127.0.0.1:' + mockPort },
-      'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort }
+      'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort },
+      'nexus-default.example': { engine: 'nexusphp', base: 'http://127.0.0.1:' + mockPort,
+        catMap: [{ id: '401', label: 'Movies', purpose: 'movie' }, { id: '402', label: 'TV', purpose: 'tv' }] }
     }
   };
   fs.writeFileSync(path.join(DATA, 'site-pack.json'), JSON.stringify(pack, null, 2), { mode: 0o600 });
@@ -257,6 +259,33 @@ async function main() {
     need(gp.body.data.fileField === 'file_input', 'Gazelle 文件字段不对：' + gp.body.data.fileField);
     need(gp.body.data.url.indexOf('/upload.php') >= 0, 'Gazelle 上传路径不对');
     need(gp.body.data.fields.title === 'Gazelle Target Test 2024 1080p', 'Gazelle 标题映射不对');
+  });
+
+  await check('NexusPHP 默认字段与分类数组', async function () {
+    async function mk(title, anonymous) {
+      const r = await json(BASE + '/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: title, targetSite: 'nexus-default.example', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', anonymous: anonymous })
+      });
+      need(r.status === 200 && r.body.ok, '建队列失败');
+      return r.body.data.id;
+    }
+    const id1 = await mk('Nexus Default Test 2024 1080p', true);
+    const p1 = await json(BASE + '/api/targets/nexus-default.example/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id1 })
+    });
+    need(p1.status === 200 && p1.body.ok, '默认计划失败：' + JSON.stringify(p1.body && p1.body.error));
+    const f1 = p1.body.data.fields;
+    need(f1.name === 'Nexus Default Test 2024 1080p', '标题默认映射不对');
+    need(f1.small_descr === '1080p · 20 GB', '副标题默认映射不对：' + f1.small_descr);
+    need(f1.type === '401', '分类数组没转成目标分类：' + f1.type);
+    need(f1.uplver === 'yes', '匿名默认值不对：' + f1.uplver);
+    const id2 = await mk('Nexus Default Test 2024 1080p', false);
+    const p2 = await json(BASE + '/api/targets/nexus-default.example/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id2 })
+    });
+    need(p2.status === 200 && p2.body.ok, '非匿名计划失败');
+    need(p2.body.data.fields.uplver === undefined, '非匿名不该带 uplver');
   });
 
   await check('真发布门禁', async function () {

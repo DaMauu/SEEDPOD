@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 11:00（当前 v0.7.135 / 上传识别拆分提交路径与表单页路径）
+最后更新：2026-11-16 12:00（当前 v0.7.136 / 按 NexusPHP 开源实现校正上传默认映射）
+
+## 2026-11-16 NexusPHP 默认映射校正（v0.7.136）
+
+- 表单页 `/upload.php`、提交页 `/takeupload.php`；字段 `small_descr`、`type`、`uplver=yes`。
+- 分类数组按 purpose 自动转成发布分类对象；target 10/10。
+- 来源与 clean-room 记录追加到 `pta/docs/UPSTREAM.md`。
 
 ## 2026-11-16 识别页路径拆分（v0.7.135）
 

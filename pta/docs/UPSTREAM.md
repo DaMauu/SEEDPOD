@@ -120,3 +120,12 @@
 - 观察：无 key 可用 Wikipedia 搜索+摘要；有 key 用 TMDB 搜索+详情+credits，能拿导演/演员/海报。
 - 许可/可用性：公共 API；TMDB key 用户自己提供，不进仓库。
 - 决定：`meta-ext.js` 两个 provider，失败回退本地标题解析；mock 夹具测试，不拿真实数据写死。
+
+## 2026-11-16 · 上传页路径与字段（clean-room）
+
+- 来源：NexusPHP 开源实现（`upload.php` / `takeupload.php`）、UNIT3D 路由、Gazelle 上传页；只记录路径和字段结构，不复制代码、模板、语言包。
+- 观察：
+  - NexusPHP：GET 表单页是 `upload.php`，POST 提交是 `takeupload.php`；文件字段 `file`；必填 `descr`、`type`、`name`；副标题 `small_descr`；匿名是 `uplver=yes`（不匿名就不带这个字段）。
+  - UNIT3D：表单和提交都在 `/torrents/create`，文件字段通常 `torrent`。
+  - Gazelle：`/upload.php`，文件字段通常 `file_input`。
+- 我们的决定：`formPath` 和 `path` 分开；NexusPHP 默认 `formPath=/upload.php`、`path=/takeupload.php`；`uplver` 用 `{anonymousYes}`，不匿名时值为空、字段不提交；站点定义的分类数组按 `purpose` 自动转成发布分类对象。识别仍只在用户点击时发一次只读 GET。
