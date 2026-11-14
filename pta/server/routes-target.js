@@ -21,6 +21,20 @@ module.exports = function (app, ctx) {
     }
     return null;
   }
+  function flowMap() {
+    const row = one("SELECT v FROM meta WHERE k = 'flow'");
+    const flow = JSON.parse(row ? row.v : 'null') || {};
+    const sets = flow.sets || {};
+    const out = {};
+    ['dedupe', 'pub'].forEach(function (k) {
+      (Array.isArray(sets[k]) ? sets[k] : []).forEach(function (g) {
+        (Array.isArray(g) ? g : []).forEach(function (r) {
+          if (r && r.t && out[r.t] === undefined) out[r.t] = r;
+        });
+      });
+    });
+    return out;
+  }
   function decodeTorrent(b) {
     const raw = String((b && b.torrentBase64) || '');
     if (!raw) return null;
@@ -58,9 +72,16 @@ module.exports = function (app, ctx) {
     if (!item) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
     const mism = checkHost(item.data, req.params.host);
     if (mism) return bad(reply, mism.code, mism.message, 400);
+    const dryRun = b.dryRun !== false;
+    const flow = flowMap();
+    const shotRule = flow['截图至少几张'];
+    const minShots = shotRule ? Math.max(0, Number(shotRule.v) || 0) : 3;
+    const shotCount = Array.isArray(item.data.shots) ? item.data.shots.length : 0;
+    if (!dryRun && minShots > 0 && shotCount < minShots) {
+      return bad(reply, 'SHOTS_REQUIRED', '截图不足：至少 ' + minShots + ' 张，当前 ' + shotCount + ' 张', 400);
+    }
     const t = await torrentFor(b, item.data);
     if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
-    const dryRun = b.dryRun !== false;
     const r = await target.submit(req.params.host, item.data, t.buf, { dryRun: dryRun });
     if (!r.ok) {
       if (ctx.notify) {
@@ -76,7 +97,9 @@ module.exports = function (app, ctx) {
       infohash: r.data.infohash || '', status: r.data.status || 0, message: r.data.message || ''
     };
     let verified = null;
-    if (b.verify !== false) {
+    const verifyRule = flow['发布后校验'];
+    const shouldVerify = b.verify !== undefined ? !!b.verify : (verifyRule ? verifyRule.on !== false : true);
+    if (shouldVerify) {
       const v = await target.verify(req.params.host, item.data, t.buf, { url: r.data.detailsUrl || undefined });
       if (v.ok) {
         verified = v.data;

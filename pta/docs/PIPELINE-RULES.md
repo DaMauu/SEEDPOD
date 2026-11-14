@@ -3,7 +3,7 @@
 单一事实源是 `pta/web-src/src/data/rules.js`；改完跑 `node pta/scripts/gen-rules-tree.js` 更新 `RULES-TREE.md`。
 本文件是给人看的决策稿：先盘点，再给方案，确认后才动代码。
 
-统计：3 个类目、9 个手风琴、70 行，其中 67 个可操作控件、3 个分组标题。
+统计（2026-11-16 对账后）：3 个类目、9 个手风琴、53 行，其中 50 个可操作控件；已接 10、未接 40。删了 8 行，转正 2 行，详见 `pta/docs/RULES-RECONCILIATION.md`。下面清单保留对账前的设计记录，当前事实源以 `rules.js` 和 `RULES-TREE.md` 为准。
 
 ## 一、全量清单
 

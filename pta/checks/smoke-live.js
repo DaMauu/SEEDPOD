@@ -167,7 +167,13 @@ async function main() {
     await page.waitForTimeout(700);
     need(await page.locator('.flow-group').count() === 8, '规则组数量不对');
     need(await page.locator('.limits-panel input').count() === 4, '请求限制输入数量不对');
-    need(await page.locator('.todo-badge').count() === 50, '未接标记数量不对');
+    const todoCount = await page.evaluate(() => {
+      const R = window.PTA_RULES || {};
+      let n = 0;
+      ['fetch', 'dedupe', 'pub'].forEach(k => (R[k] || []).forEach(g => (g.rows || []).forEach(r => { if (r.todo) n++; })));
+      return n;
+    });
+    need(await page.locator('.todo-badge').count() === todoCount, '未接标记数量不对');
     need(!(await page.locator('#rx-deny').isDisabled()), '排除正则被误禁用');
   });
 

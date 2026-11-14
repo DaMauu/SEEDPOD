@@ -186,7 +186,8 @@ async function main() {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ title: 'Target Upload Test 2024 1080p Blu-ray', cn: '目标站测试', intro: '测试简介',
-        site: 'source.example', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', anonymous: false })
+        site: 'source.example', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', anonymous: false,
+        shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
     });
     need(add.status === 200 && add.body.ok, '建队列失败');
     qid = add.body.data.id;
@@ -251,6 +252,23 @@ async function main() {
     need(cfg.status === 200 && cfg.body.ok, '打开 realPublish 失败');
   });
 
+  await check('截图不足拦真发布', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'No Shots Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB' })
+    });
+    need(add.status === 200 && add.body.ok, '建无图队列失败');
+    const id = add.body.data.id;
+    const r = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: id, torrentBase64: torrent.toString('base64'), dryRun: false })
+    });
+    need(r.status === 400 && r.body && r.body.error && r.body.error.code === 'SHOTS_REQUIRED', '截图门槛没拦住：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
+    need(hits.length === 0, '截图不足不该发请求，实际发了 ' + hits.length);
+    const del = await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
+    need(del.status === 200 && del.body.ok, '清理无图队列失败');
+  });
+
   await check('真提交与目标站回查', async function () {
     const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -268,6 +286,36 @@ async function main() {
     const g = await json(BASE + '/api/queue/' + encodeURIComponent(qid));
     need(g.body.data.targetUpload && g.body.data.targetUpload.host === '127.0.0.1', '队列没记 targetUpload');
     need(g.body.data.targetVerify && g.body.data.targetVerify.found === true, '队列没记 targetVerify');
+  });
+
+  await check('关闭发布后校验时跳过回查', async function () {
+    const put = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: false }]] } })
+    });
+    need(put.status === 200 && put.body.ok, '关发布后校验失败');
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Verify Off Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+        shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
+    });
+    need(add.status === 200 && add.body.ok, '建回查关闭队列失败');
+    const id = add.body.data.id;
+    const before = hits.length;
+    const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: id, torrentBase64: torrent.toString('base64'), dryRun: false })
+    });
+    need(up.status === 200 && up.body.ok, '关闭回查后提交失败：' + JSON.stringify(up.body && up.body.error));
+    need(up.body.data.sent === true && up.body.data.verify === null, '关闭回查后还在回查');
+    need(hits.length === before + 1, '关闭回查后上传次数不对');
+    const on = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: true }]] } })
+    });
+    need(on.status === 200 && on.body.ok, '恢复发布后校验失败');
+    const del = await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
+    need(del.status === 200 && del.body.ok, '清理回查关闭队列失败');
   });
 
   await check('回查接口', async function () {

@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.132 · 2026-11-16
+
+### 对账
+- 50 条未接规则逐条对账：转正 2 条（发布后校验、截图至少几张），删除 8 条重复/无读者行，剩余 40 条继续禁用。
+- 服务端：真发布前按“截图至少几张”拦（默认 3，干跑不拦）；“发布后校验”关掉时只提交不回查，手动回查仍可用。
+- `rules.js` 58 → 50 条非分组规则；`RULES-TREE.md` 重新生成；新增 `RULES-RECONCILIATION.md`。
+- target 检查 6 → 8（新增截图门槛、回查开关）。
+
+### 检查
+- `run.sh` 全绿：smoke-live 21/21、adapter 21/21、security 3/3、api-v2 21/21、publish 4/4、scheduler 5/5、detect 5/5、target 8/8、meta 11/11、meta-ext 5/5、media 7/7、media-api 6/6、clients 5/5、clients-ext 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.131 · 2026-11-16
 
 ### 清理

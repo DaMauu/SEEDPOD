@@ -173,13 +173,6 @@
           "todo": true
         },
         {
-          "t": "目标站分类映射",
-          "type": "button",
-          "v": "配置映射",
-          "hint": "把目标站分类对到库内分类，发种时据此选分类",
-          "todo": true
-        },
-        {
           "t": "门槛",
           "type": "section"
         },
@@ -210,13 +203,6 @@
           "type": "switch",
           "on": true,
           "hint": "种子还没下完就发，容易被删",
-          "todo": true
-        },
-        {
-          "t": "种子完整性校验",
-          "type": "switch",
-          "on": true,
-          "hint": "qB 校验通过才算完成",
           "todo": true
         },
         {
@@ -269,24 +255,12 @@
           "t": "截图至少几张",
           "type": "text",
           "v": "3",
-          "hint": "不够就不自动发",
-          "inline": true,
-          "todo": true
+          "hint": "真发布前检查截图数量；干跑不拦",
+          "inline": true
         },
         {
           "t": "重复与失败",
           "type": "section"
-        },
-        {
-          "t": "主站已有同片",
-          "type": "pick",
-          "v": "直接跳过（标记目标站已有）",
-          "opts": [
-            "直接跳过（标记目标站已有）",
-            "转待审核（标重复）"
-          ],
-          "hint": "转载时检测到站点有同片，直接跳过，并在库里标记目标站已有",
-          "todo": true
         },
         {
           "t": "不满足时",
@@ -307,23 +281,10 @@
           "todo": true
         },
         {
-          "t": "发布失败重试",
-          "type": "text",
-          "v": "2 次，间隔 5 分钟",
-          "inline": true,
-          "todo": true
-        },
-        {
           "t": "连续失败几次暂停该站",
           "type": "text",
           "v": "5",
           "inline": true,
-          "todo": true
-        },
-        {
-          "t": "失败时推送通知",
-          "type": "switch",
-          "on": true,
           "todo": true
         }
       ],
@@ -333,13 +294,6 @@
       "name": "标题与副标题",
       "sum": "正标题照搬 · 副标题按模板 · 正则决定转不转",
       "rows": [
-        {
-          "t": "中文副标题模板",
-          "type": "custom",
-          "hint": "用 {电影名} {地区} {导演} {主演1..3} {音轨} {字幕} 这些占位符",
-          "html": "<div class=\"tpl-wrap\"><input class=\"input\" id=\"sub-tpl\" placeholder=\"例：{电影名} | {地区}原盘 | 导演:{导演}\"><div class=\"tpl-eg\" id=\"sub-eg\"></div></div>",
-          "todo": true
-        },
         {
           "t": "中文副标题来源",
           "type": "select",
@@ -483,20 +437,6 @@
           "todo": true
         },
         {
-          "t": "TMDB 接口",
-          "type": "text",
-          "v": "",
-          "ph": "填 API Key 才能自动查导演和主演",
-          "todo": true
-        },
-        {
-          "t": "豆影 API Key",
-          "type": "text",
-          "v": "",
-          "ph": "免费每天 10 次，用完走网页版",
-          "todo": true
-        },
-        {
           "t": "豆瓣抓取间隔（秒）",
           "type": "text",
           "v": "3",
@@ -524,8 +464,7 @@
           "t": "发布后校验",
           "type": "switch",
           "on": true,
-          "hint": "还没接：发布后不会自动去目标站核对",
-          "todo": true
+          "hint": "发布后自动去目标站核对；关掉就只提交不回查"
         }
       ]
     },
