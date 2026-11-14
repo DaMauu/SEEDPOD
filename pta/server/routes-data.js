@@ -1,7 +1,6 @@
 /* 站点、凭据、日志与站点定义接口（Fastify v2）。 */
 const path = require('path');
 const fs = require('fs');
-const vm = require('vm');
 const secretbox = require('./secretbox');
 
 module.exports = function (app, ctx) {
@@ -54,42 +53,17 @@ module.exports = function (app, ctx) {
     return reply;
   });
 
-  /* ---- 站点清单（真实清单在数据目录，不进 web 根） ---- */
-  function loadSiteList() {
-    const files = [path.join(DATA_DIR, 'sites-data.local.js')];
-    const sandbox = { window: {} };
-    try {
-      let code = null;
-      for (let i = 0; i < files.length && code === null; i++) {
-        try { code = fs.readFileSync(files[i], 'utf8'); } catch (e) {}
-      }
-      if (code === null) return [];
-      vm.runInNewContext(code, sandbox, { timeout: 1000 });
-      const urls = (sandbox.window.SITE_URLS || []).slice();
-      const arch = sandbox.window.PT_ARCH || {};
-      const names = sandbox.window.PT_NAMES || {};
-      const seen = {};
-      return urls.map(function (u) {
-        const host = String(u).replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
-        return { host: host, url: u, arch: arch[host] || '?', title: names[host] || '' };
-      }).filter(function (x) { return x.host && !seen[x.host] && (seen[x.host] = 1); });
-    } catch (e) {
-      return [];
-    }
-  }
+  /* ---- 站点清单：v2 以 SQLite sites 表为唯一事实源 ---- */
   function readStatus() {
     try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-status.json'), 'utf8')) || {}; } catch (e) { return {}; }
   }
 
   app.get('/api/sites', async () => {
-    const list = loadSiteList();
     const seen = {};
-    list.forEach(function (x) { seen[x.host] = x; });
     all('SELECT host, data FROM sites').forEach(function (r) {
-      if (seen[r.host]) return;
       const c = jparse(r.data) || {};
       seen[r.host] = { host: r.host, url: c.url || ('https://' + r.host), arch: c.arch || '?',
-        title: c.title || r.host, added: true };
+        title: c.title || r.host, added: c.base !== true && c.added === true };
     });
     const merged = Object.keys(seen).map(function (h) { return seen[h]; });
     const counts = { total: merged.length, np: 0, unit3d: 0, gz: 0, other: 0, unknown: 0 };
@@ -130,7 +104,9 @@ module.exports = function (app, ctx) {
 
   app.delete('/api/sites/:host', async (req, reply) => {
     const host = req.params.host;
-    if (loadSiteList().some(function (x) { return x.host === host; })) {
+    const row = one('SELECT data FROM sites WHERE host = ?', host);
+    const cfg = row ? (jparse(row.data) || {}) : {};
+    if (cfg.base === true) {
       return bad(reply, 'BASE_SITE', '基础清单里的站点不能删；可以恢复默认配置', 400);
     }
     db.prepare('DELETE FROM sites WHERE host = ?').run(host);

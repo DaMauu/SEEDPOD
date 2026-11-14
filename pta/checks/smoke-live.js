@@ -32,15 +32,18 @@ async function waitUp() {
 async function main() {
   const dist = path.join(ROOT, 'web', 'dist');
   if (!fs.existsSync(path.join(dist, 'index.html'))) { console.error('没有 dist，先 npm run build'); process.exit(2); }
-  fs.writeFileSync(path.join(DATA, 'sites-data.local.js'), [
-    'window.SITE_URLS = [' + JSON.stringify([
-      'https://demo-a.example/index.php',
-      'https://demo-b.example/',
-      'https://demo-c.example/'
-    ]).slice(1, -1) + '];',
-    'window.PT_ARCH = ' + JSON.stringify({ 'demo-a.example': 'NP', 'demo-b.example': 'UNIT3D', 'demo-c.example': 'GZ' }) + ';',
-    'window.PT_NAMES = ' + JSON.stringify({ 'demo-a.example': 'Demo A', 'demo-b.example': 'Demo B', 'demo-c.example': 'Demo C' }) + ';'
-  ].join('\n'));
+  const { DatabaseSync } = require('node:sqlite');
+  const seedDb = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+  seedDb.exec('CREATE TABLE IF NOT EXISTS sites (host TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT)');
+  const seedSite = seedDb.prepare('INSERT OR REPLACE INTO sites(host, data, updated_at) VALUES(?, ?, ?)');
+  [
+    ['demo-a.example', 'https://demo-a.example/index.php', 'NP', 'Demo A'],
+    ['demo-b.example', 'https://demo-b.example/', 'UNIT3D', 'Demo B'],
+    ['demo-c.example', 'https://demo-c.example/', 'GZ', 'Demo C']
+  ].forEach(function (x) {
+    seedSite.run(x[0], JSON.stringify({ url: x[1], arch: x[2], title: x[3], base: true }), new Date().toISOString());
+  });
+  seedDb.close();
 
   const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
@@ -115,6 +118,12 @@ async function main() {
     const items = page.locator('.site-item');
     need(await items.count() === 3, '站点列表数量不对：' + await items.count());
     need(/Demo A/.test(await page.locator('#sites-list').innerText()), '站点标题没渲染');
+
+    const del = await page.evaluate(async () => {
+      const r = await fetch('/api/sites/demo-a.example', { method: 'DELETE' });
+      return { status: r.status, body: await r.json() };
+    });
+    need(del.status === 400 && del.body.error && del.body.error.code === 'BASE_SITE', '基础站点应该禁止删除：' + del.status);
     await page.selectOption('#site-arch', 'UNIT3D');
     await page.waitForTimeout(250);
     need(await items.count() === 1, '架构筛选不对：' + await items.count());

@@ -68,7 +68,7 @@ git pull --ff-only && bash deploy.sh
 
 ## 数据与不入库的东西
 
-数据目录 `data/`（0600）：`seedpod.db`（SQLite，唯一事实源）、`site-defs/`（私有站点定义）、`.secret`（凭据密钥）、`events.log`。
+数据目录 `data/`（0600）：`seedpod.db`（SQLite，唯一事实源：站点/凭据/队列/配置）、`site-defs/`（私有站点定义）、`library.json` / `site-search.local.json` / `site-status.json`（v2 文件数据）、`.secret`（凭据密钥）、`events.log`；`_v1-backup-*` 只作迁移备份，v2 不读。
 
 只在本地/测试机、已被 gitignore：`data/site-defs/`、`data/samples/`、`cookies.tmp.json`、`pta/data/*.local.*`、`pta/data/site-arch.local.csv`；`docs` 里只有 example。
 

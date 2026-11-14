@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 20:00（当前 v0.7.144 / v1 运行残留与过期文档清理）
+最后更新：2026-11-16 21:00（当前 v0.7.145 / v1 站点清单迁入 SQLite）
+
+## 2026-11-16 站点清单迁 SQLite（v0.7.145）
+
+- 305 个基础站从 v1 `sites-data.local.js` 迁入 `sites` 表；`/api/sites` 只读 SQLite，`base:true` 禁止删除。
+- 旧 `sites-data.local.js` 和 8 个 v1 JSON 移到 `data/_v1-backup-20261116`（0600）；v2 不再读。
+- 迁移中误删 1 个基础站配置和 1 条凭据，已从迁移前数据库副本恢复；站点 305、凭据 8。
+- 新增 `migrate-sites-js.js` 和 base-delete 冒烟断言；全量检查全绿。
 
 ## 2026-11-16 v1 残留清理（v0.7.144）
 

@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D18 站点基础清单进 SQLite（2026-11-16）
+
+定了：v1 `data/sites-data.local.js` 的 305 个基础站迁入 SQLite `sites` 表；`/api/sites` 只读 SQLite，`base:true` 的站点禁止删除。旧 JS 与 8 个 v1 JSON 只留在 `data/_v1-backup-20261116`（0600），v2 不读；`library.json` / `site-search.local.json` / `site-status.json` 仍是 v2 文件数据。
+为什么：站点清单是运行数据，v1 JS 读取是最后一处运行时 v1 依赖；SQLite 已经是配置、队列、凭据的唯一事实源。
+代价：旧安装升级要跑一次 `pta/scripts/migrate-sites-js.js`；基础站删除保护要靠数据里的 `base:true`。迁移脚本和冒烟断言已覆盖。
+
 ## D16 站点包随程序发，密钥放部署环境（2026-11-16）
 
 定了：站点包是数据文件，跟程序一起发布；用户安装/升级面板或 Docker 镜像即可，不单独下载、不导入。仓库里只放 AES-256-GCM 密文 `pta/pack/site-pack.enc`，密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，安装时配置一次；缺密钥时回退私有 `data/` 站点定义并提示，不崩溃。私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。

@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.145 · 2026-11-16
+
+### 迁移
+- 站点基础清单从 v1 `sites-data.local.js` 迁入 SQLite `sites` 表：305 站，3 个已有配置保留。
+- `/api/sites` 只读 SQLite；`base:true` 站点禁止删除；smoke 增加回归断言。
+- 旧 `sites-data.local.js` 及 8 个 v1 JSON 移入 `data/_v1-backup-20261116`（0600），v2 不再读；`library.json` / `site-search.local.json` / `site-status.json` 仍是 v2 数据。
+- 新增 `pta/scripts/migrate-sites-js.js`。
+- 迁移操作中误删 1 个基础站配置与 1 条凭据，已从迁移前数据库副本恢复（站点 305、凭据 8）。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、规则体检 0 缺读者。
+
 ## v0.7.144 · 2026-11-16
 
 ### 清理
