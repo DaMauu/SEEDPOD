@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D27 页面空壳迁移时补齐缺失的页面内加载（2026-11-17）
+
+定了：Changelog 迁样式时发现只有空模板、旧 `legacy/app.js` 的 `/api/changelog` 加载器已随 legacy 删除；把解析和渲染补回 `Changelog.vue`，由页面自己 fetch，不再依赖全局脚本。
+为什么：只迁 CSS 会留下一个永远空白的页面，无法验收；页面数据加载属于页面职责。
+代价：页面 SFC 增加约 60 行脚本；以后新增页面必须同时检查“样式、数据、状态”三件事。
+
 ## D26 Settings 的 ID 规则保留前缀迁 scoped（2026-11-17）
 
 定了：`#set-panel ...` 规则整体迁 `Settings.vue` scoped 时保留 `#set-panel` 前缀，不降成 `.set-field`；共用 `set-field` / `set-fields` / `fixed-val` 基础规则留全局。

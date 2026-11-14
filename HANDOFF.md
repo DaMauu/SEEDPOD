@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 09:00（当前 v0.7.157 / 小屏溢出修复）
+最后更新：2026-11-17 10:00（当前 v0.7.158 / Changelog 样式迁入 scoped，八页完成）
+
+## 2026-11-17 Changelog scoped（v0.7.158）
+
+- Changelog 规则迁入 `<style scoped>`；补回页面内 `/api/changelog` 加载与 Markdown 渲染。
+- 401 后登录/切页自动重试；1280/768/390 无横向溢出。
+- 八页页面级 scoped 迁移完成：Dashboard / Sites / Crawl / Queue / Sources / Logs / Settings / Changelog。
 
 ## 2026-11-17 小屏溢出修复（v0.7.157）
 

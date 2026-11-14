@@ -79,17 +79,6 @@
   .dev-foot span { white-space: normal; }
 }
 
-/* 更新日志页：等宽小字，按标题分组，手机上也放得下 */
-.changelog-wrap{max-width:900px;margin:0 auto;padding:8px 4px 40px}
-.changelog-body{background:var(--card,#fff);border:1px solid var(--line,#eef0f4);border-radius:14px;padding:18px 22px;line-height:1.75;font-size:13px;color:var(--text,#2b2f38)}
-.changelog-body h3{font-size:15px;margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--line,#eef0f4)}
-.changelog-body h3:first-child{margin-top:0;padding-top:0;border-top:0}
-.changelog-body h4{font-size:13px;margin:12px 0 4px;color:var(--muted,#6b7280)}
-.changelog-body ul{margin:4px 0 8px;padding-left:18px}
-.changelog-body li{margin:2px 0}
-.changelog-body p{margin:6px 0}
-@media (max-width:900px){.changelog-body{padding:14px}}
-
 
 /* 窄屏抽屉头：标题独占一行，操作区换行，避免标题被挤成竖排 */
 @media (max-width: 900px) {
