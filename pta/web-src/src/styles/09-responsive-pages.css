@@ -13,8 +13,6 @@
 /* ---- 下载器连接测试 ---- */
 
 /* ---- 站点列表：搜索预设标记 ---- */
-.si-preset{flex:0 0 58px;font-size:10px;color:#aeb4c2;text-align:center;letter-spacing:.02em}
-.si-preset.on{color:var(--accent);font-weight:600}
 
 /* ---- 流程页干跑自检 ---- */
 .crawl-dry .drawer-body{padding-top:0}
@@ -26,21 +24,13 @@
 .dl-dry-warn li{line-height:1.6}
 
 /* ---- 站点详情：连接自检结果 ---- */
-.sd-selfcheck{display:block;margin-top:4px;font-size:11px;color:#8b90a0}
 
 /* ---- 站点列表：状态点固定贴在复选框右边、站名左边 ---- */
-.site-item .st{flex:0 0 8px;width:8px;justify-content:center}
-.site-item .st i{width:7px;height:7px}
 
 /* 站点列表改成 8 列：复选框 | 状态点 | 站名 | 架构 | 登录 | 预设 | 抓取 | 上次抓取 */
-.st-head, .site-item{grid-template-columns:26px 10px minmax(0,1fr) 96px 84px 58px 56px 92px;gap:12px}
-.site-item .st{justify-self:start}
 
 /* 顶栏：状态条与页面 token 分两组显示 */
 .topbar-right .pills-row + .pills-row{margin-left:6px}
-
-.sd-preset-url{display:block;font-size:11px;color:var(--accent);word-break:break-all;margin:5px 0;text-decoration:none}
-.sd-preset-url:hover{text-decoration:underline}
 
 .drawer.open .drawer-body[hidden]{display:none}
 
@@ -50,21 +40,12 @@
 .mark-btn.on{background:#eef0ff;border-color:#b9bdf0;color:#4f46e5}
 
 /* 站点抽屉：紧凑操作区 + 合并后的登录页签 */
-.sd-actions { flex-wrap: wrap; }
-.sd-arch-sel { width: 106px; height: 28px; font-size: 11.5px; padding: 0 6px; }
-.sd-actions > button.switch.sm i { width: 30px; height: 17px; }
-.sd-actions > button.switch.sm i::after { width: 13px; height: 13px; }
-.sd-actions > button.switch.sm.on i::after { left: 15px; }
-.sd-form .set-field .ctl { flex: 1 1 auto; min-width: 0; }
-.sd-form .set-field .ctl .input, .sd-form .set-field .ctl .select { width: 240px; }
-#site-detail textarea.sd-note { min-height: 84px; }
 .sd-cookie-bar { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
 .sd-cookie-res { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 
 /* 待审核：草稿标签预览 */
 .qd-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 26px; align-items: center; }
 .qd-warn { flex-basis: 100%; font-size: 11.5px; color: #b45309; line-height: 1.6; }
-.sites-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 0; font-size: 12px; color: var(--muted); }
 
 
 /* 抓取卡片底部小字：当前节奏与大概请求数 */
@@ -94,16 +75,14 @@
   .dock-label { display: block; font-size: 10px; }
 
   /* 表格类布局摊平 */
-  .dl-head, .st-head { display: none; }
+  .dl-head { display: none; }
   .dl-row { display: grid; grid-template-columns: auto auto auto; gap: 4px 10px;
     padding: 10px 12px; align-items: start; }
   .dl-row > span:first-child { grid-column: 1 / -1; }
   .dl-row .dl-ops { grid-column: 1 / -1; display: flex; gap: 14px; }
-  .site-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; }
-  .site-item > span { font-size: 11.5px; }
 
-  .sites-bar, .dl-bar, .queue-bar, .log-bar { flex-wrap: wrap; gap: 8px; }
-  .sites-bar .input, .sites-bar .select, .dl-bar .input, .dl-bar .select { max-width: 100%; }
+  .dl-bar, .queue-bar, .log-bar { flex-wrap: wrap; gap: 8px; }
+  .dl-bar .input, .dl-bar .select { max-width: 100%; }
   .queue-split { flex-direction: column; gap: 10px; }
   .queue-list, .queue-detail { width: 100%; max-width: none; }
   .set-card { padding: 14px; }
@@ -111,8 +90,6 @@
   .set-field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
   .set-field .ctl { width: 100%; }
   .modal { width: min(94vw, 560px); }
-  .site-expand .sd-form { padding: 12px; }
-  .site-expand .sd-form .set-fields { grid-template-columns: 1fr; }
   .seg-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 

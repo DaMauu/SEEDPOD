@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D21 不在 scoped 里用 `:global(...)` 加后代（2026-11-17）
+
+定了：SFC `<style scoped>` 里需要页面外层 `.view[data-view="..."]` 布局时，只写单选择器 `:global(.view[...])`；不要写 `:global(.view[...]) .child`，Vue 编译会把后代丢掉，`[hidden]` 也可能被吞。页面内部元素直接在 scoped 里写，不依赖外层 global 前缀。
+为什么：Sites 迁移时 `:global(.view[data-view="sites"])[hidden]` 被编译成 `.view[data-view=sites]{display:none!important}`，整个站点页被隐藏。
+代价：外层布局规则只能是最小集，页面内部样式靠自身选择器保证作用域。
+
 ## D20 页面样式逐页迁 SFC scoped（2026-11-16）
 
 定了：共用样式只留 `src/styles/` 的 base / shell / components / responsive / dock；页面专属规则迁进对应 SFC 的 `<style scoped>`；页面最外层 `.view[data-view="..."]` 布局用 `:global`；一次迁一页，迁完删除对应全局页面模块。每页验收：构建、smoke 21/21、全量检查、1280/768/390（Dashboard 加 1440）视觉、升版本、部署、更新文档。

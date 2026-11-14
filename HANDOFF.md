@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 00:00（当前 v0.7.148 / Dashboard 样式迁入 scoped）
+最后更新：2026-11-17 01:00（当前 v0.7.149 / Sites 样式迁入 scoped）
+
+## 2026-11-17 Sites scoped（v0.7.149）
+
+- Sites 277 条规则迁入 `<style scoped>`；shared `sd-*`/`set-field` 留全局。
+- 页面模块改名/拆分；修复 `:global` 后代编译丢失导致的站点页 display:none。
+- smoke 21/21，全量检查全绿。
 
 ## 2026-11-17 Dashboard scoped（v0.7.148）
 

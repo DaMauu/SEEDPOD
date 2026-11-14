@@ -74,8 +74,6 @@
 .drawers { display: flex; flex-direction: column; gap: 12px; background: none; box-shadow: none; border-radius: 0; overflow: visible; }
 .drawer { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .drawer + .drawer { border-top: 0; }
-.drawer-body-flush .sites-bar { padding: 16px 20px 0; margin-bottom: 12px; }
-.drawer-body-flush .sites-list, .drawer-body-flush .site-detail { box-shadow: none; border: 1px solid var(--line); }
 .nodes-inner { padding: 16px 20px 20px; }
 .nodes-inner .nodes-sum { margin-bottom: 14px; }
 .nodes-inner .nodes-grid { gap: 12px; }
@@ -90,10 +88,6 @@
 .drawer-body .set-fields .set-field:first-child { padding-top: 8px; }
 
 /* 源站抽屉内部：去掉双层卡片感 */
-.drawer-body-flush .sites-bar { padding: 14px 20px 12px; margin-bottom: 0; }
-.drawer-body-flush .sites-list { width: 300px; flex: 0 0 300px; border: 0; box-shadow: none; background: var(--panel-2); border-radius: 12px; }
-.drawer-body-flush .site-detail { border: 0; box-shadow: none; border-radius: 12px; padding: 20px 22px; }
-.drawer-body-flush .site-item.on { background: #fff; box-shadow: 0 1px 2px rgba(16,24,40,.06); }
 
 /* 节点抽屉内部 */
 .nodes-inner { padding: 14px 20px 18px; }
@@ -112,8 +106,6 @@
 .drawers .drawer.open { flex: 1 1 auto; }
 .drawers .drawer-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .drawer-body-flush { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-.drawer-body-flush .sites-bar { flex: 0 0 auto; }
-.drawer-body-flush .sites-list { min-height: 0; }
 .nodes-inner { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .drawer:not(.open) .drawer-body-flush { display: none; }
 #crawl-panel { display: contents; }
@@ -122,44 +114,11 @@
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 html, body { overflow-x: hidden; }
 .drawer-body-flush { overflow: hidden; }
-.sites-pager { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
-.sites-pager span { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.sd-scroll { overflow: hidden; }
 .drawer:not(.open) .drawer-head { padding: 12px 22px; }
 .drawer:not(.open) .drawer-desc { display: none; }
 .drawer:not(.open) .drawer-head { padding: 10px 22px; }
 .drawer:not(.open) .drawer-title { font-size: 13.5px; }
-.site-item { padding: 7px 10px; }
-.si-txt b { font-size: 12.5px; }
-.drawer-body-flush .sd-scroll { overflow-y: auto; overscroll-behavior: contain; }
-.drawer-body-flush .sd-scroll::-webkit-scrollbar { width: 0 !important; }
-.sd-form .set-fields + .set-fields { margin-top: 4px; }
-.drawer-body-flush .sd-form .set-field { padding: 10px 0; }
-.drawer-body-flush .sd-form .cat-row { padding: 2px 0 8px; }
-.drawer-body-flush .sd-form .sd-note { min-height: 56px; }
-.drawer-body-flush .sd-form .set-field { padding: 7px 0; }
-.drawer-body-flush .sd-form .set-field .lbl span { font-size: 12.5px; }
-.drawer-body-flush .sd-form .set-field .lbl i { font-size: 10.5px; margin-top: 2px; }
-.drawer-body-flush .sd-form .set-field .input,
-.drawer-body-flush .sd-form .set-field .select { height: 30px; width: 200px; font-size: 12px; }
-.drawer-body-flush .sd-form .sd-note { min-height: 46px; }
-.drawer-body-flush .sd-form .cat-chip { padding: 4px 9px; font-size: 11.5px; }
-.drawer-body-flush .sd-form-actions { padding-top: 10px; margin-top: 8px; }
-.drawer-body-flush .sd-form .cat-row { gap: 5px; }
-.drawer-body-flush .sd-form .ctl textarea { width: 300px; height: 58px; }
 /* 站点独立页 */
-.view[data-view="sites"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
-.view[data-view="sites"][hidden] { display: none !important; }
-.sites-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
-.sites-wrap .sites-bar { padding: 0; margin-bottom: 0; }
-.sites-wrap .sites-list { border: 0; box-shadow: var(--shadow); background: #fff; border-radius: 14px; width: 320px; flex: 0 0 320px; }
-.sites-wrap .site-detail { border: 0; border-radius: 14px; box-shadow: var(--shadow); padding: 22px 24px; }
-.sites-wrap .site-item { padding: 8px 10px; }
-.sites-wrap .site-item + .site-item { margin-top: 1px; }
-.sites-wrap .ava { width: 26px; height: 26px; flex: 0 0 26px; font-size: 10px; }
-.sites-wrap .si-txt b { font-size: 13px; }
-.sites-wrap .si-txt span { font-size: 11px; }
-.sites-wrap .sd-scroll { overflow-y: auto; }
 .drawer:not(.open) .drawer-desc { display: block; }
 .drawer:not(.open) .drawer-title { font-size: 14.5px; }
 .drawer:not(.open) .drawer-head { padding: 14px 22px; }

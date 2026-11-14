@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.149 · 2026-11-16
+
+### 页面 scoped 迁移
+- Sites：277 条整规则 + 3 处选择器拆分迁入 `Sites.vue` 的 `<style scoped>`，约 23.9KB；`pill2`、`ava.lg`、`modal-scroll` 补迁。
+- 共享 `sd-note` / `sd-url` / `sd-card` / `sd-cookie-bar` / `sd-cookie-res` / `set-field` 留在全局；Queue/Nodes 不受影响。
+- `03-sites.css` 只剩 shared 组件，改名 `03-shared-components.css`；`07-sites-detail.css` 只剩全局背景/布局，改名 `07-global-effects.css`。
+- 修复 Vue scoped 的 `:global(.view…) 后代` 被编译丢后代、`[hidden]` 被吞导致站点页 `display:none` 的问题：后代规则改为页面内 scoped，仅最外层 `.view` 保留单选择器 global。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、规则体检 0 缺读者。
+
 ## v0.7.148 · 2026-11-16
 
 ### 页面 scoped 迁移
