@@ -32,6 +32,7 @@
 
   <nav class="dock" id="dock-root">
     <a v-for="v in navViews" :key="v.key" class="dock-item" :class="{ active: current === v.key }" :href="'#' + v.key" :data-view="v.key" :title="v.label">
+      <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="v.icon" /></svg>
       <span class="dock-label">{{ v.label }}</span>
     </a>
   </nav>
@@ -77,14 +78,14 @@ import Changelog from './views/Changelog.vue'
 import Settings from './views/Settings.vue'
 
 const VIEWS = [
-  { key: 'dashboard', label: '总览' },
-  { key: 'sites', label: '站点' },
-  { key: 'crawl', label: '流程' },
-  { key: 'queue', label: '待审核' },
-  { key: 'sources', label: '数据清单' },
-  { key: 'logs', label: '日志' },
-  { key: 'changelog', label: '更新日志' },
-  { key: 'settings', label: '设置' }
+  { key: 'dashboard', label: '总览', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z' },
+  { key: 'sites', label: '站点', icon: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z' },
+  { key: 'crawl', label: '流程', icon: 'M4 6h16M7 12h10M10 18h4' },
+  { key: 'queue', label: '待审核', icon: 'M4 5h16v14H4zM4 13h4l2 3h4l2-3h4' },
+  { key: 'sources', label: '数据清单', icon: 'M4 6c0 1.7 3.6 3 8 3s8-1.3 8-3M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3v12c0 1.7-3.6 3-8 3s-8-1.3-8-3V6z' },
+  { key: 'logs', label: '日志', icon: 'M4 5h16v14H4zM7 9l3 3-3 3M12 15h5' },
+  { key: 'changelog', label: '更新日志', icon: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7' },
+  { key: 'settings', label: '设置', icon: 'M4 6h16M4 12h16M4 18h16M8 4v4M16 10v4M11 16v4' }
 ]
 const mode = (function () { try { return localStorage.getItem('pta.mode') === 'dev' ? 'dev' : 'basic'; } catch (e) { return 'basic'; } })()
 const navViews = VIEWS.filter(function (v) { return v.key !== 'changelog' || mode === 'dev' })
