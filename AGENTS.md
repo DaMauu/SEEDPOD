@@ -11,16 +11,16 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 
 ## 项目是什么
 
-个人 PT 转载/交叉做种面板：无构建静态 SPA + Node 后端（生产为 Fastify + SQLite）。
+个人 PT 转载/交叉做种面板：Vite + Vue 3 SFC 前端 + Node 后端（生产为 Fastify + SQLite）。
 
-- 前端 `pta/web/index.html` + `pta/web/assets/{app.js,app.css,data.js}`（Vue 3 走本地脚本，无构建），hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`
+- 前端源码 `pta/web-src`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 归档在 `pta/archive/web-demo`，不再使用
 - 生产后端 `pta/server/app-fastify.js`（Fastify）+ `pta/server/routes-*.js` + `pta/server/db.js`（SQLite，数据在 `data/seedpod.db`）；适配器 `pta/server/adapters/nexusphp.js`，凭据加密 `pta/server/secretbox.js`
 - 旧零依赖后端 `pta/server/app.js` 只作参考，不在生产运行；服务端改动一律进 v2
 - 线上跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，监听 8080，数据在 `/opt/seedpod/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
-- 阶段：`pta/web` 当前是前端 demo/原型，用来快速验证交互与流程，不是终稿；前端定稿后按目标架构整体搬迁一次，不在 demo 上做大规模重构
-- 前端已切到 Vite 构建：源码在 `pta/web-src`，线上服务 `pta/web/dist`；`pta/web` 只作旧版回退，不再改
+- 阶段：七个页面已全部 SFC；legacy `app.js` 只保留登录/路由/顶栏/共享工具，页面逻辑不再回写 legacy
+- Vite 构建：源码 `pta/web-src`，`npm run build` 输出 `pta/web/dist`；改前端不碰 `pta/archive/web-demo`
 - 开发环境：Linux 为准；Windows 只用于聊天与备用，`run.cmd` 不是主入口
 
 ## 铁律（违反即为错误，不要协商）
@@ -50,9 +50,9 @@ git pull --ff-only && bash deploy.sh
 
 - 只有 Windows 推送 GitHub 才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 - VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
-- `deploy.sh` 用 rsync 把 pta/ 同步到 /opt/seedpod 并重启服务，排除 `data/`、`web/assets/sites-data.local.js`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
+- `deploy.sh` 用 rsync 把 pta/ 同步到 /opt/seedpod 并重启服务，排除 `data/`、`archive/`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
 - `deploy.sh` 不传 `node_modules`：新机器先 `npm i --omit=dev`（或手工装 fastify 与 @fastify/static）再启动
-- 改前端静态资源必须同步升 `pta/web/index.html` 里的 `?v=`
+- 改前端后跑 `npm run build`，部署脚本会重新生成 `pta/web/dist`；不再维护 `?v=`
 - 两边同时改会 push 失败（non-fast-forward），此时先 pull 再推，不要 force
 
 ## 常见故障对照
@@ -69,7 +69,7 @@ git pull --ff-only && bash deploy.sh
 
 数据目录 `data/`（0600）：`config.json`、`site-config.json`、`queue.json`、`downloaders.json`、`credentials.json`、`events.log`、`.secret`。
 
-只在本地/测试机、已被 gitignore：`pta/web/assets/sites-data.local.js`、`pta/data/{sites-bookmark.local.json,site-search.local.json,site-arch.local.csv,site-defs/,samples/,cookies.tmp.json}`、`docs` 里只有 example。
+只在本地/测试机、已被 gitignore：`data/{sites-data.local.js,sites-bookmark.local.json,site-search.local.json,site-arch.local.csv,site-defs/,samples/,cookies.tmp.json}`、`docs` 里只有 example。
 
 ## 干活方式
 
@@ -90,7 +90,7 @@ git pull --ff-only && bash deploy.sh
 3. 怎么算成功：能验证的现象（某个检查通过、某个接口返回、页面某个状态）
 4. 什么不许动：明确否定项
 
-例：把站点页的登录方式改成只存 cookie，改 `pta/web/assets/app.js` 的登录设置页和 `pta/server/app.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
+例：把站点页的登录方式改成只存 cookie，改 `pta/web-src/src/views/Sites.vue` 的登录页签和 `pta/server/routes-data.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
 
 改主意时直接说「现在以 X 为准」，不要让我从多条里推断哪条是最新的。
 
@@ -117,7 +117,7 @@ git pull --ff-only && bash deploy.sh
 
 这些只提示“该拆了”，不证明功能做对：
 
-- 单个前端文件超过 2000 行（旧 `pta/web/assets/app.js` 已 5272 行，所以已切 Vite）
+- 单个前端文件超过 2000 行（页面已全 SFC；legacy `app.js` 仍含共享壳，别再把页面逻辑写回去）
 - 同一个文件被改过 3 次以上仍没有模块边界
 - 页面上的规则/开关与服务端契约对不上（用 `node pta/scripts/audit-rules.js` 查）
 
@@ -154,7 +154,7 @@ git pull --ff-only && bash deploy.sh
 
 ## 八、版本与交付说明（2026-11-12 起执行）
 
-1. 每次改动都要升版本号：`package.json` 的 version 递增一位（0.4.1 → 0.4.2 …），同时把 `pta/web/index.html` 里 assets 的 `?v=` 缓存号改掉，二者都要改。
+1. 每次改动都要升版本号：`package.json` 的 version 递增一位（0.4.1 → 0.4.2 …）；前端产物由 `npm run build` 生成，不再维护 `?v=`。
 2. 每个页面底部固定一行开发说明（`#dev-foot`），内容全部来自 `/api/dev`，不写死：版本号、开发日期、前端与后端技术栈、页面数、接口数、站点/预设/词条/待审/下载器数量、已运行时长。
 3. 开发版必须带更新日志：删除 / 新增 / 优化 / 调整 / 重排，逐条记，落在 `CHANGELOG.md`，面板里能打开。
 4. 面板提供「基础版 / 开发版」切换：基础版只保留日常要用的功能，开发版显示全部功能与更新日志；切换结果记在浏览器里。

@@ -1,6 +1,8 @@
 # 前端逻辑搬迁计划（legacy → SFC）
 
 目标：把 `pta/web-src/src/legacy/app.js` 里的页面逻辑逐步搬进对应 SFC，直到 legacy 只剩路由、登录、共享工具。
+
+状态：已完成（0.7.109 七页 SFC；0.7.110 旧 `pta/web` 归档到 `pta/archive/web-demo`）。
 线上始终服务 `pta/web/dist`，每页拆完都能单独上线。
 
 ## 顺序
@@ -51,7 +53,7 @@
 ## 自主边界
 
 - 只改 `pta/web-src`、`CHANGELOG.md`、`HANDOFF.md`、`TASKS.md`、`package.json`、本文件。
-- 不碰 `pta/web`、`pta/server`、`data/`、真实站点。
+- 归档完成后不碰 `pta/archive/web-demo`；新代码只进 `pta/web-src`、`pta/server`、检查脚本与文档。
 - 旧函数先停止调用，不急着删；全部拆完再统一清理。
 - 不改视觉风格和文案，只做等价搬迁。
 - 不引 Pinia、UI 库、CSS 框架。

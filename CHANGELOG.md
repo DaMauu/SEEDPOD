@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.110 · 2026-11-15
+
+### 调整
+- 旧前端 demo 归档到 `pta/archive/web-demo`；`pta/web` 只保留 Vite 构建产物 `dist` 和说明，不再改旧 `index.html/assets`。
+- `gen-rules-tree.js` 改读 `pta/web-src/src/legacy/data.js`；`routes-data.js` 只从 `data/sites-data.local.js` 读私有站点清单；`deploy.sh` 排除 `archive/`；dev compose 挂载改到 `pta/server` 与 `pta/web/dist`。
+- AGENTS/HANDOFF/DESIGN/PIPELINE-RULES/ARCHITECTURE-TARGET 等文档对齐 Vite + SFC，删除 `?v=` 与旧 demo 目录说明。
+
+### 检查
+- `npm run build` 通过；`run.sh` 全绿；smoke-live 20/20。
+
 ## v0.7.109 · 2026-11-15
 
 ### 调整

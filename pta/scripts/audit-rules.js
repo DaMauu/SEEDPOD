@@ -7,7 +7,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
-const RULES = path.join(ROOT, 'web', 'assets', 'data.js');
+const RULES = path.join(ROOT, 'web-src', 'src', 'legacy', 'data.js');
 const SERVER = path.join(ROOT, 'server');
 const V2_FILES = fs.readdirSync(SERVER)
   .filter(f => f.endsWith('.js') && f !== 'app.js')

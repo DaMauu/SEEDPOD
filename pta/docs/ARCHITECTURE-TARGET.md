@@ -24,7 +24,7 @@ pta/
   docs/             计划、规范、决策
 ```
 
-`pta/web` 是旧 demo，只作回退，不再改。
+`pta/web` 只放 Vite 构建产物 `dist`；源码在 `pta/web-src`，旧 demo 已归档到 `pta/archive/web-demo`。
 
 ## 搬迁顺序
 

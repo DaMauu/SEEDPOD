@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 11:00（当前 v0.7.109 / 七个页面全部 SFC，旧 web 待归档）
+最后更新：2026-11-15 12:00（当前 v0.7.110 / 七个页面 SFC，旧 web 已归档）
+
+## 2026-11-15 M4 收口：七页 SFC + 旧 web 归档（v0.7.110）
+
+- 七个页面全部拆进 `pta/web-src/src/views`，legacy `app.js` 不再初始化页面（只剩 chrome/nav/menu/siteModal/router/auth/devFoot）。
+- 旧 demo 的 HTML/assets 移到 `pta/archive/web-demo`；`pta/web` 只保留构建产物 `dist` 和说明，不再改。
+- `deploy.sh` 排除 `archive/`；`gen-rules-tree.js` 改读 `pta/web-src/src/legacy/data.js`；`routes-data.js` 只从 `data/sites-data.local.js` 读私有站点清单。
+- 检查：smoke-live 20/20，`run.sh` 全绿；线上 0.7.110。
 
 ## 2026-11-14 检查环境迁到 Linux（v0.7.70）
 
@@ -38,13 +45,13 @@
 ## 架构与交付约束（长期有效，改之前先看）
 
 - **后端固定**：Node.js 20+ + Fastify 5 + SQLite（`node:sqlite`）。生产入口 `pta/server/app-fastify.js`，路由在 `pta/server/routes-*.js`，数据层 `pta/server/db.js`。
-- **前端固定**：Vue 3，本地 `pta/web/assets/vue.global.prod.js`，无构建、无打包器；入口 `pta/web/index.html`。
+- **前端固定**：Vue 3 + Vite + SFC，源码 `pta/web-src`，构建输出 `pta/web/dist`；旧 demo 在 `pta/archive/web-demo`，不再使用。
 - **旧后端**：`pta/server/app.js` 只读参考，不再接需求；服务端改动只进 v2。
 - **数据**：`data/seedpod.db` 是唯一事实源；`data/*.json` 是搬迁前的旧数据，只归档不写入。
 - **接口**：`/api/*` 路径保持稳定；字段变更先改 `docs/API.md`，再改代码。
-- **交付形态**：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）。当前 Dockerfile 还指向旧 `server/app.js`，未对齐 v2。
+- **交付形态**：功能完成后必须能用 Docker 部署（两阶段 `Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；生产入口 `app-fastify.js`。
 - **换栈要走决策**：换框架、换数据库、引入构建工具（React / Next / Prisma / MySQL 等）先写进 `docs/DECISIONS.md`，不许顺手换。
-- **阶段说明**：`pta/web` 这一版是前端 demo，用来快速验证交互和流程，不是终稿。前端定稿后按目标架构整体搬迁一次（后端 v2、Vue、Docker）；搬迁前不在 demo 上做大规模重构，也不把临时结构当长期结构。
+- **阶段说明**：七个页面已全部 SFC；legacy `app.js` 只保留登录/路由/顶栏/共享工具；旧 demo 已归档到 `pta/archive/web-demo`。
 
 ## 每次开工先做（写在最前，别忘了）
 

@@ -1,7 +1,6 @@
 node_modules/
 
 # 真实站点数据与本地采集结果（不提交）
-pta/web/assets/sites-data.local.js
 pta/data/site-arch.local.csv
 pta/data/sites-bookmark.local.json
 pta/data/site-search.local.json

@@ -3,6 +3,7 @@
 services:
   seedpod:
     volumes:
-      - ./server:/app/server
-      - ./pta/web:/app/pta/web
+      - ./pta/server:/app/pta/server
+      - ./pta/web-src:/app/pta/web-src
+      - ./pta/web/dist:/app/pta/web/dist
       - ./data:/data

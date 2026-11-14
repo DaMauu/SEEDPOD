@@ -5,7 +5,7 @@ const vm = require('vm');
 const secretbox = require('./secretbox');
 
 module.exports = function (app, ctx) {
-  const { db, DATA_DIR, WEB_DIR, one, all, ok, bad, jparse } = ctx;
+  const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const KEYRING = secretbox.loadKey(DATA_DIR);
   const SSE = new Set();
   const now = () => new Date().toISOString();
@@ -56,7 +56,7 @@ module.exports = function (app, ctx) {
 
   /* ---- 站点清单（真实清单在数据目录，不进 web 根） ---- */
   function loadSiteList() {
-    const files = [path.join(DATA_DIR, 'sites-data.local.js'), path.join(WEB_DIR, 'assets', 'sites-data.local.js')];
+    const files = [path.join(DATA_DIR, 'sites-data.local.js')];
     const sandbox = { window: {} };
     try {
       let code = null;

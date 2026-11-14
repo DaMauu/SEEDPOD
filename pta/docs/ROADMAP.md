@@ -15,12 +15,12 @@
 | P0 | 会话在内存、cookie 无 Secure | 重启掉线，HTTP 可截 |
 | P0 | 密钥与数据同目录 | 拿到数据目录等于拿到密钥 |
 | P1 | 没有调度器 | 抓取/送审/发布全靠人点 |
-| P1 | 旧 web 未归档 | `pta/web` 只作回退；Vite 源码在 `pta/web-src`，线上服务 `pta/web/dist` |
-| P1 | Docker 还是旧后端 | CMD `server/app.js`，不装依赖 |
+| P1 | ✅ 旧 web 已归档 | `pta/web` 只放 dist；旧 demo 在 `pta/archive/web-demo` |
+| P1 | ✅ Docker 已两阶段 | CMD `app-fastify.js`，构建阶段 `npm run build` |
 | P1 | 多目标站/图床/截图来源未接 | 页面像能用，实际没接 |
-| P2 | smoke 18/23、audit 未跑 | 覆盖不到新构建 |
+| P2 | ✅ smoke-live 20/20 | 旧 smoke/audit 已标 legacy |
 | P2 | 规则体检只报告不拦 | 空开关能继续进 |
-| P2 | 旧 `pta/web` 未归档 | 容易改错目录 |
+| P2 | ✅ 旧 `pta/web` 已归档 | 0.7.110 移到 `pta/archive/web-demo` |
 | P2 | 面板密码未轮换 | 旧值已进 git 历史 |
 | P2 | `ocbot` sudo 全开 | 等于 root |
 | P2 | 文档还写“零依赖/假数据” | 误导接手者 |
@@ -75,9 +75,9 @@
 
 ### M4 · 收尾
 
-- [x] 七个页面全部拆进 SFC（0.7.101–0.7.109）；剩旧 `pta/web` 归档
+- [x] 七个页面全部拆进 SFC（0.7.101–0.7.109）
 - [x] smoke 重写为 smoke-live（dist + 临时后端，15/15）
-- [ ] 旧 `pta/web` 归档
+- [x] 旧 `pta/web` 归档（0.7.110，`pta/archive/web-demo`）
 - [ ] 面板密码轮换
 - [ ] `ocbot` sudo 收窄
 - [ ] 文档对齐（零依赖/假数据/旧后端注释）

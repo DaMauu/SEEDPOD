@@ -49,7 +49,7 @@ async function main() {
   const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
-      PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web'),
+      PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),
       PTA_USER: USER, PTA_PASS: PASS
     }),
     stdio: ['ignore', 'pipe', 'pipe']

@@ -9,7 +9,7 @@ pta/docs
 pta/fixtures
 pta/scripts
 pta/web
-pta/web/assets/sites-data.local.js
+pta/archive
 pta/data/site-arch.local.csv
 docs
 scripts

@@ -29,7 +29,7 @@
 ## 三、规矩
 
 1. 改之前先读文件；新功能优先新建文件，不改旧文件的结构。
-2. 不动 `pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv`（真实站点数据，不入库）。
+2. 不动 `data/sites-data.local.js`、`pta/data/site-arch.local.csv`（真实站点数据，不入库）。
 3. 一次提交只做一件事，提交信息写清改了什么、为什么。
 4. 审美、业务取舍、要不要改需求这类判定不了的事，标 blocked 等人，不许自己猜。
 5. 检查本身也会过时：需求变了先更新断言，再改代码，顺序不能反。
@@ -259,3 +259,8 @@ pta\checks\run.cmd
 - 内置 NexusPHP/UNIT3D/Gazelle 引擎的提交表单映射
 - `data/site-pack.json` 私有站点包（不入库）
 - 发布后目标站回查；mock 表单测试，不碰真实站
+
+## 十、M4 归档（已完成，0.7.110）
+
+- 旧 demo 的 HTML/assets 移到 `pta/archive/web-demo`；`pta/web` 只留构建产物 `dist` 和说明。
+- `gen-rules-tree.js` 改读 `pta/web-src/src/legacy/data.js`；`deploy.sh` 排除 `archive/`。
