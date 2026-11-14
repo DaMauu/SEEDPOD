@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.106 · 2026-11-15
+
+### 调整
+- 数据清单页拆进 `views/Sources.vue`：搜索、站点/类型/状态/标记筛选、分页、送审、归档/恢复、本地查重、目标站查重、批量归档、导出 JSON；legacy `initSources` 不再初始化。
+- `/api/site-defs` 增回 `cats` 分类映射，旧词条可按站点定义显示中文类型。
+- `/api/catalog/bulk` 支持 `host` 与 `includeDup`，让“归档已跳过/已有”真正包含标了已有的新词条。
+- 在线冒烟增加“数据清单渲染、筛选与标记”，smoke-live 19/19。
+
+### 检查
+- `run.sh` 全绿：smoke-live 19/19、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.105 · 2026-11-15
 
 ### 调整

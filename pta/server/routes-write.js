@@ -73,8 +73,24 @@ module.exports = function (app, ctx) {
     const status = String(b.status || '');
     if (!['new', 'selected', 'archived', 'published', 'skipped'].includes(status)) return bad(reply, 'BAD_REQUEST', 'status 不合法');
     const ids = Array.isArray(b.ids) ? b.ids.map(String) : [];
+    const from = String(b.fromStatus || '');
+    const host = String(b.host || '').trim().toLowerCase();
+    const includeDup = !!b.includeDup;
+    if (!ids.length && !from && !includeDup) return bad(reply, 'BAD_REQUEST', '要么给 ids，要么给 fromStatus，要么 includeDup');
     let want = ids;
-    if (!ids.length && b.fromStatus) want = all('SELECT id FROM catalog WHERE status = ? LIMIT 1000', String(b.fromStatus)).map(function (r) { return r.id; });
+    if (!ids.length && from) {
+      want = all('SELECT id, data, site FROM catalog WHERE status = ? LIMIT 5000', from)
+        .filter(function (r) { const it = jparse(r.data) || {}; return !host || String(it.site || r.site || '').toLowerCase() === host; })
+        .map(function (r) { return r.id; });
+    }
+    if (includeDup) {
+      const dup = all("SELECT id, data, site FROM catalog WHERE status = 'new' LIMIT 5000")
+        .filter(function (r) {
+          const it = jparse(r.data) || {};
+          return it.marks && it.marks.existing && (!host || String(it.site || r.site || '').toLowerCase() === host);
+        }).map(function (r) { return r.id; });
+      want = Array.from(new Set(want.concat(dup)));
+    }
     let changed = 0;
     want.slice(0, 1000).forEach(function (id) { if (updCatalog(id, { status: status })) changed++; });
     return ok(reply, { changed: changed, status: status });

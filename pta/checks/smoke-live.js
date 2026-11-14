@@ -176,6 +176,35 @@ async function main() {
     need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
   });
 
+  await check('数据清单渲染、筛选与标记', async () => {
+    await page.evaluate(async () => {
+      await fetch('/api/catalog', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ items: [{ title: 'Smoke Catalog 2024 2160p UHD Blu-ray', site: 'demo-a.example', res: '2160p', size: '60 GB', cat: '401', detailsUrl: 'details.php?id=1' }] })
+      });
+    });
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { location.hash = '#sources'; });
+    await page.waitForTimeout(800);
+    const rows = page.locator('.dl-row');
+    need(await rows.count() === 1, '数据清单行数不对：' + await rows.count());
+    const txt = await rows.first().innerText();
+    need(/Smoke Catalog/.test(txt) && /2160p/.test(txt) && /待筛选/.test(txt), '清单字段不对：' + txt.slice(0, 80));
+    await page.fill('#dl-q', '不存在的片名');
+    await page.waitForTimeout(200);
+    need(/没有匹配/.test(await page.locator('#dl-body').innerText()), '搜索没过滤');
+    await page.fill('#dl-q', 'Smoke');
+    await page.waitForTimeout(200);
+    const mb = page.locator('.dl-row .mark-btn').first();
+    const before = await mb.getAttribute('class');
+    await mb.click();
+    await page.waitForTimeout(500);
+    const j = await page.evaluate(async () => (await fetch('/api/catalog?q=Smoke')).json());
+    need(j.ok && j.data.items[0].marks && j.data.items[0].marks.noRedistribute, '标记没写进后端：' + JSON.stringify(j.data.items[0].marks || {}));
+    need((await page.locator('.dl-row .mark-btn').first().getAttribute('class')).indexOf('on') >= 0, '标记按钮没变亮（之前 ' + before + '）');
+  });
+
   await check('无 JS 报错', async () => {
     need(errors.length === 0, errors.slice(0, 3).join(' | '));
   });

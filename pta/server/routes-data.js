@@ -157,7 +157,8 @@ module.exports = function (app, ctx) {
         const d = readDef(host);
         if (!d) return;
         out[host] = { engine: d.engine || '', base: d.base || '', groups: d.cats ? Object.keys(d.cats).length : 0,
-          ids: d.cats ? Object.keys(d.cats).reduce(function (a, k) { return a + (d.cats[k] || []).length; }, 0) : 0 };
+          ids: d.cats ? Object.keys(d.cats).reduce(function (a, k) { return a + (d.cats[k] || []).length; }, 0) : 0,
+          cats: d.cats || {} };
       });
     } catch (e) {}
     return ok(out);
