@@ -1513,4 +1513,10 @@ function onKey(e) {
 .modal-scroll { max-height: 46vh; overflow-y: auto; margin-top: 8px; padding-right: 6px; }
 .modal-scroll::-webkit-scrollbar { width: 8px; }
 .modal-scroll::-webkit-scrollbar-thumb { background: #e3e6ec; border-radius: 99px; border: 2px solid #fff; }
+
+@media (max-width: 600px) {
+.sites-wrap { height: auto; }
+.sites-panel { flex: 0 0 auto; }
+.sites-rows { flex: 0 0 auto; max-height: none; overflow: visible; }
+}
 </style>

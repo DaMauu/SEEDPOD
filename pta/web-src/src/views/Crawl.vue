@@ -676,7 +676,7 @@ onUnmounted(stopDry)
 .flow-group :deep(.set-field.wide .rx-test em){white-space:nowrap}
 .flow-group.cond{background:transparent;border:0;padding:0;margin:0 0 4px}
 .flow-group.cond :deep(.set-fields){grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
-.flow-group.cond :deep(.set-field){grid-column:auto;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid #f3f5f8}
+.flow-group.cond :deep(.set-field){grid-column:auto;display:grid;grid-template-columns:fit-content(220px) minmax(0,1fr);align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid #f3f5f8}
 .flow-group.cond :deep(.set-field .lbl){margin:0}
 .flow-group.cond :deep(.set-field.sec){grid-column:1/-1;padding:9px 0 3px;margin-top:2px;border-top:1px solid #e9ebef;border-bottom:0}
 .flow-group.cond :deep(.set-field.sec .sec-ttl){font-size:11px;color:#98a1ad}
@@ -685,7 +685,7 @@ onUnmounted(stopDry)
 .flow-group.cond :deep(.set-field.pick){grid-column:auto}
 .flow-group.cond :deep(.set-field.pick .cat-chip){height:24px;padding:0 9px;line-height:24px}
 .flow-group.cond :deep(.set-field .ctl>.input){height:26px;max-width:180px}
-.flow-group :deep(.set-field.pick){grid-column:1/-1;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:10px;padding:3px 0}
+.flow-group :deep(.set-field.pick){grid-column:1/-1;display:grid;grid-template-columns:fit-content(220px) minmax(0,1fr);align-items:center;gap:10px;padding:3px 0}
 .flow-group :deep(.set-field.pick .lbl){margin:0}
 .flow-group :deep(.set-field.pick .ctl){width:100%}
 .flow-group :deep(.set-field.pick .cat-row){display:flex;flex-wrap:wrap;gap:6px;padding:0}
@@ -697,7 +697,7 @@ onUnmounted(stopDry)
 @media (max-width:700px) {
 .flow-group :deep(.set-fields){grid-template-columns:1fr}
 .flow-group.cond :deep(.set-fields){grid-template-columns:1fr}
-.flow-group.cond :deep(.set-field){grid-template-columns:96px minmax(0,1fr);gap:8px}
+.flow-group.cond :deep(.set-field){grid-template-columns:1fr;gap:2px}
 .flow-group.cond :deep(.set-field .ctl>.input){max-width:none;width:100%}
 .flow-group :deep(.set-field.pair), .flow-group.cond :deep(.set-field.pair){flex-direction:column;align-items:stretch;gap:4px}
 .flow-group :deep(.set-field.pair .pair-item){width:100%;flex:1 1 auto}
@@ -709,4 +709,13 @@ onUnmounted(stopDry)
 .pair-item.todo{opacity:.55;pointer-events:none}
 .set-field.todo{opacity:.55}
 .set-field.todo .ctl{pointer-events:none}
+
+.flow-group :deep(.set-field .lbl), .preset-row :deep(.lbl) { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; }
+.flow-group :deep(.set-field .lbl span), .preset-row :deep(.lbl span) { min-width: 0; }
+.flow-group :deep(.set-field .lbl i) { flex: 1 1 100%; margin-top: 2px; }
+.flow-group :deep(.set-field .lbl .todo-badge), .preset-row :deep(.lbl .todo-badge) { flex: 0 0 auto; margin-left: 0; }
+.flow-group :deep(.pair-lbl) { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.flow-group :deep(.pair-lbl .todo-badge) { flex: 0 0 auto; margin-left: 0; }
+
+@media (max-width:900px){.flow-group.cond :deep(.set-field),.flow-group :deep(.set-field.pick){grid-template-columns:1fr;gap:2px}}
 </style>

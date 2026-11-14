@@ -594,4 +594,10 @@ onUnmounted(() => {
 .qd-grid { grid-template-columns: 1fr; min-width: 0; }
 .qd-grid .sd-card { min-width: 0; }
 }
+
+@media (max-width: 900px) {
+.queue-split { height: auto; flex: 0 0 auto; align-items: stretch; }
+.queue-list, .queue-detail { width: 100%; max-width: none; flex: 0 0 auto; }
+.queue-list { max-height: none; }
+}
 </style>

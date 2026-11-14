@@ -466,4 +466,14 @@ onUnmounted(() => {
 .dl-row { min-height: 44px; font-size: 12px; }
 .dl-wrap { height: auto; flex: 0 0 auto; width: 100%; }
 .dl-panel { flex: 0 0 auto; height: auto; max-height: 620px; }
+
+@media (max-width: 600px) {
+.dl-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+.dl-bar .spacer { display: none; }
+#dl-q { width: 100% !important; grid-column: 1 / -1; }
+.dl-bar .select { width: 100%; min-width: 0; }
+#dl-target { grid-column: 1 / -1; }
+.dl-bar .btn { width: 100%; }
+#dl-export { grid-column: 1 / -1; }
+}
 </style>
