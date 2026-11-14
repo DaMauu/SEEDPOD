@@ -230,6 +230,29 @@ async function main() {
     need((await page.locator('.dl-row .mark-btn').first().getAttribute('class')).indexOf('on') >= 0, '标记按钮没变亮（之前 ' + before + '）');
   });
 
+  await check('下载器抽屉', async () => {
+    await page.evaluate(async () => {
+      await fetch('/api/downloaders', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Smoke qB', url: 'http://127.0.0.1:1', user: 'demo', pass: 'demo' })
+      });
+    });
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { location.hash = '#crawl'; });
+    await page.waitForTimeout(800);
+    const card = page.locator('#nodes-grid .node-row');
+    need(await card.count() === 1, '下载器卡片数量不对：' + await card.count());
+    need(/Smoke qB/.test(await card.first().innerText()), '下载器名称没渲染');
+    await card.first().locator('.nr-set').click();
+    await page.waitForTimeout(350);
+    need(await page.locator('#node-modal-vue').isVisible(), '下载器设置弹窗没打开');
+    need(await page.locator('#node-modal-vue input[type=password]').count() === 1, '密码输入框缺失');
+    await page.locator('#node-modal-vue .modal-foot button').filter({ hasText: '取消' }).click();
+    await page.waitForTimeout(200);
+    need(await page.locator('#node-modal-vue').count() === 0, '取消没关闭弹窗');
+  });
+
   await check('无 JS 报错', async () => {
     need(errors.length === 0, errors.slice(0, 3).join(' | '));
   });

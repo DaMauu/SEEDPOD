@@ -149,23 +149,7 @@
       </section>
     </div>
 
-    <section class="drawer open" data-i="nodes" data-name="下载器">
-      <div class="drawer-head">
-        <div class="drawer-t">
-          <div class="drawer-title">下载器</div>
-        </div>
-        <div class="drawer-head-right">
-          <span class="drawer-meta" id="nodes-drawer-meta"></span>
-          <button type="button" class="btn primary slim" id="node-add">新增下载器</button>
-        </div>
-      </div>
-      <div class="drawer-body drawer-body-flush">
-        <div class="nodes-inner">
-          <div class="nodes-sum" id="nodes-sum"></div>
-          <div class="nodes-grid" id="nodes-grid"></div>
-        </div>
-      </div>
-    </section>
+    <Nodes />
   </div>
 
   <Teleport to="body">
@@ -192,6 +176,7 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, reactive, ref } from 'vue'
 import RuleControl from '../components/RuleControl.vue'
+import Nodes from './Nodes.vue'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}

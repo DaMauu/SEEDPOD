@@ -5299,7 +5299,7 @@
   }
 
   function boot() {
-    var __steps = [['chrome', initChrome], ['nav', initNav], ['menu', initMenu], ['nodes', initNodes], ['siteModal', initSiteModal], ['router', initRouter]];
+    var __steps = [['chrome', initChrome], ['nav', initNav], ['menu', initMenu], ['siteModal', initSiteModal], ['router', initRouter]];
     __steps.forEach(function (x) {
       try { x[1](); } catch (e) { console.error('BOOT_FAIL ' + x[0], e && e.stack ? e.stack : e); throw e; }
     });
