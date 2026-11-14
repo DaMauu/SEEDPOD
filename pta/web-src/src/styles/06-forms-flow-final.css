@@ -83,12 +83,6 @@
 
 .view[data-view="sources"] .dl-head { height: 34px; }
 .view[data-view="sources"] .dl-row { min-height: 44px; font-size: 12px; }
-
-.view[data-view="queue"] .q-item { padding: 6px 9px; }
-.view[data-view="queue"] .qd-head { margin-bottom: 2px; }
-.view[data-view="queue"] .qd-field { padding: 4px 0; font-size: 12px; }
-.view[data-view="queue"] .qd-field .input, .view[data-view="queue"] .qd-field .select { height: 30px; }
-.view[data-view="queue"] .qd-actions { padding-top: 8px; margin-top: 8px; }
 #set-panel .set-fields .set-field .lbl { min-width: 0; white-space: nowrap; overflow: hidden; }
 #set-panel .set-fields .set-field .lbl span { display: inline-block; vertical-align: middle; }
 #set-panel .set-fields .set-field .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle;
@@ -157,40 +151,6 @@
 #set-panel .set-card-head .set-save { height: 28px; padding: 0 14px; font-size: 11.5px; border-radius: 8px; flex: 0 0 auto; }
 #set-panel .set-card > .set-h2, #set-panel .set-card > .set-desc { display: none; }
 /* 待审核：审核台布局 */
-.view[data-view="queue"] .queue-list { width: 264px; flex: 0 0 264px; }
-.view[data-view="queue"] .q-item { padding: 7px 10px; gap: 8px; }
-.view[data-view="queue"] .q-title b { font-size: 12px; }
-.view[data-view="queue"] .q-title i { font-size: 10px; margin-top: 1px; }
-.queue-detail { display: flex; flex-direction: column; min-height: 0; }
-.qd-head { align-items: flex-start; gap: 12px; }
-.qd-title-row { display: flex; align-items: center; gap: 8px; }
-.qd-title-row h2 { font-size: 16px; }
-.qd-meta { display: flex; align-items: center; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
-.qd-meta span { font-size: 11px; color: var(--muted-2); }
-.qd-meta b { margin-left: 5px; font-size: 11.5px; font-weight: 500; color: var(--ink); }
-.qd-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 10px; margin-top: 12px; align-content: start; }
-.qd-grid .sd-card { padding: 12px 14px 10px; border-radius: 10px; }
-.qd-grid .sd-card h3 { margin-bottom: 6px; font-size: 10px; letter-spacing: .6px; }
-.qd-field { padding: 3px 0; font-size: 12px; }
-.qd-field .input, .qd-field .select { width: 250px; height: 28px; font-size: 11.5px; }
-.qd-grid .sd-note { width: 100%; height: 92px; font-size: 11.5px; line-height: 1.5; }
-.qd-grid .shots { gap: 6px; }
-.qd-grid .shot { width: 62px; height: 42px; font-size: 10px; }
-.qd-status { margin-top: 10px; }
-.qd-actions { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
-.view[data-view="queue"] .queue-list { max-height: calc(100vh - 210px); }
 /* 详情撑满一屏，简介占剩余高度，操作条贴底 */
-.view[data-view="queue"] .queue-split { align-items: stretch; height: calc(100vh - 208px); }
-.view[data-view="queue"] .qd-grid { flex: 1; min-height: 0; }
-.view[data-view="queue"] .qd-actions { margin-top: 10px; }
-.view[data-view="queue"] .qd-grid { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
-.view[data-view="queue"] .qd-shots { margin-top: auto; }
 /* 回车键式紧凑：卡片按内容高度，不留大片空白 */
-.view[data-view="queue"] .queue-detail { align-self: flex-start; display: block; }
-.view[data-view="queue"] .qd-grid { flex: none; grid-template-rows: auto; align-content: start; }
-.view[data-view="queue"] .qd-shots { margin-top: 0; }
 /* 审核页：输入框占满整行，长标题完整显示 */
-.view[data-view="queue"] .qd-field { display: flex; align-items: center; gap: 12px; }
-.view[data-view="queue"] .qd-field > span { flex: 0 0 48px; }
-.view[data-view="queue"] .qd-field .input,
-.view[data-view="queue"] .qd-field .select { flex: 1 1 auto; width: auto; min-width: 0; }

@@ -42,8 +42,6 @@
 .sd-cookie-res { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 
 /* 待审核：草稿标签预览 */
-.qd-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 26px; align-items: center; }
-.qd-warn { flex-basis: 100%; font-size: 11.5px; color: #b45309; line-height: 1.6; }
 
 
 /* 抓取卡片底部小字：当前节奏与大概请求数 */
@@ -78,10 +76,8 @@
   .dl-row > span:first-child { grid-column: 1 / -1; }
   .dl-row .dl-ops { grid-column: 1 / -1; display: flex; gap: 14px; }
 
-  .dl-bar, .queue-bar, .log-bar { flex-wrap: wrap; gap: 8px; }
+  .dl-bar, .log-bar { flex-wrap: wrap; gap: 8px; }
   .dl-bar .input, .dl-bar .select { max-width: 100%; }
-  .queue-split { flex-direction: column; gap: 10px; }
-  .queue-list, .queue-detail { width: 100%; max-width: none; }
   .set-card { padding: 14px; }
   .set-fields { grid-template-columns: 1fr; }
   .set-field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }

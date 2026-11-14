@@ -1,30 +1,10 @@
 /* ============ 待审核工作台 ============ */
 .view[data-view="queue"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
 .view[data-view="queue"][hidden] { display: none !important; }
-.queue-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.queue-bar .spacer { flex: 1; }
-.queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
-.queue-list { width: 320px; flex: 0 0 320px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
-.queue-items { flex: 1; overflow-y: auto; padding: 6px; }
-.q-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none; padding: 9px 10px; border-radius: 10px; cursor: pointer; font: inherit; }
-.q-item:hover { background: #f7f8fa; }
-.q-item.on { background: var(--accent-soft); }
-.q-title { flex: 1; min-width: 0; }
-.q-title b { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.q-title i { display: block; margin-top: 2px; font-style: normal; font-size: 10.5px; color: var(--muted-2); }
-.queue-detail { flex: 1; min-width: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px 16px; display: flex; flex-direction: column; overflow: hidden; }
-.qd-head { display: flex; align-items: center; gap: 12px; }
-.qd-id { min-width: 0; }
-.qd-id h2 { margin: 0; font-size: 15.5px; font-weight: 600; }
-.qd-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 12.5px; color: var(--muted); }
-.qd-field .input, .qd-field .select { width: 220px; height: 30px; font-size: 12px; }
 .shots { display: flex; gap: 8px; }
 .shot { width: 96px; height: 60px; border-radius: 8px; background: var(--panel-2); display: grid; place-items: center; font-size: 11px; color: var(--muted-2); border: 1px dashed var(--line-2); }
 .shot.add { cursor: pointer; }
 .shot.add:hover { color: var(--accent); border-color: var(--accent); }
-.qd-actions { display: flex; align-items: center; gap: 8px; padding-top: 12px; margin-top: 10px; border-top: 1px solid var(--line); }
-.qd-actions .spacer { flex: 1; }
-.qd-field .input, .qd-field .select { height: 32px; }
 .set-field .ctl .pick-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; max-width: 560px; }
 .set-field .ctl .pick-row .cat-chip { padding: 4px 9px; font-size: 11.5px; }
 /* 流程页：去掉手风琴，全部常驻展开 */

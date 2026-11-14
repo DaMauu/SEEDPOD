@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.152 · 2026-11-17
+
+### 页面 scoped 迁移
+- Queue：41 条整规则 + 34 条 `.view[data-view="queue"] …` 外层布局规则迁入 `Queue.vue` 的 `<style scoped>`；全局已无 queue 选择器。
+- `sd-card` / `sd-note` / `sd-url` / `seg-tabs` / `badge` / `chip` 基础规则继续全局；`.view[data-view=queue]` 纯外层高度保留 global。
+- 1280 / 768 / 390 队列列表、详情、发布信息、简介/截图卡正常，无横向滚动。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者。
+
 ## v0.7.151 · 2026-11-17
 
 ### 页面 scoped 迁移

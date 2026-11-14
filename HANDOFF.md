@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 03:00（当前 v0.7.151 / Crawl 样式迁入 scoped）
+最后更新：2026-11-17 04:00（当前 v0.7.152 / Queue 样式迁入 scoped）
+
+## 2026-11-17 Queue scoped（v0.7.152）
+
+- Queue 41 + 34 条规则迁入 `<style scoped>`；全局无 queue 选择器。
+- 共享 `sd-card/sd-note/sd-url/seg-tabs` 基础规则保留；三宽度列表/详情正常。
+- 质量审计 83 未回退，全量检查全绿。
 
 ## 2026-11-17 Crawl scoped（v0.7.151）
 
