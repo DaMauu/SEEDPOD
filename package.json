@@ -1,6 +1,6 @@
 {
   "name": "seedpods-panel",
-  "version": "0.7.116",
+  "version": "0.7.117",
   "private": true,
   "description": "PT 原盘转载面板：抓取、查重、准备、发布",
   "engines": {
@@ -11,7 +11,8 @@
     "check": "bash pta/checks/run.sh",
     "dev": "vite --config pta/web-src/vite.config.js",
     "build": "vite build --config pta/web-src/vite.config.js",
-    "preview": "vite preview --config pta/web-src/vite.config.js --port 4173"
+    "preview": "vite preview --config pta/web-src/vite.config.js --port 4173",
+    "cli": "node pta/cli.js"
   },
   "license": "GPL-3.0-or-later",
   "devDependencies": {
@@ -23,5 +24,8 @@
     "@fastify/static": "^10.1.11",
     "fastify": "^5.12.8",
     "vue": "^3.5.45"
+  },
+  "bin": {
+    "pta": "pta/cli.js"
   }
 }

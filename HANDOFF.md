@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 18:00（当前 v0.7.116 / M6 队列页媒体入口已接，六项全部收口）
+最后更新：2026-11-15 19:00（当前 v0.7.117 / M9 CLI 已接，cli 7/7）
+
+## 2026-11-15 M9：pta CLI（v0.7.117）
+
+- `pta/cli.js`：登录后调 v2 API，支持 status/queue/crawl/screen/publish/targets/target-upload/verify；默认干跑，`--real` 才真发。
+- `package.json` 加 `bin.pta` 与 `npm run cli`；凭据只从 `PTA_USER/PTA_PASS` 或 `PTA_COOKIE` 读，不打印。
+- `pta/checks/cli.js`：临时后端 + 子进程，7/7。
+- 下一步：M10 通知（通用 webhook/Telegram 可选）与失败重试。
 
 ## 2026-11-15 M6 UI：队列页媒体入口（v0.7.116）
 

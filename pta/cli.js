@@ -1,0 +1,185 @@
+#!/usr/bin/env node
+/* SEEDPOD CLI：走 v2 HTTP API，不直接碰数据库。
+   默认干跑；--real 才真抓/真发。凭据只从环境读，不打印。 */
+const BASE = (process.env.PTA_BASE || 'http://127.0.0.1:8080').replace(/\/+$/, '');
+const ENV = process.env;
+let cookie = ENV.PTA_COOKIE || '';
+let logged = false;
+
+function usage() {
+  console.log(`SEEDPOD CLI
+
+用法：
+  pta status [--json]
+  pta queue [--status pending] [--limit 50] [--json]
+  pta crawl --site <host> [--limit 100] [--real] [--json]
+  pta screen [--limit 50] [--host <host>] [--json]
+  pta publish <queueId> [--real] [--json]
+  pta targets [--json]
+  pta target-upload <queueId> --host <target> [--real] [--torrent file] [--json]
+  pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
+
+环境：
+  PTA_BASE   默认 http://127.0.0.1:8080
+  PTA_USER / PTA_PASS   面板账号（或 PTA_COOKIE 直接给会话）
+  --real 才真抓/真发；默认干跑。`);
+}
+function die(msg, code) {
+  console.error(msg);
+  process.exit(code || 1);
+}
+async function login() {
+  if (cookie || logged) return;
+  if (!ENV.PTA_USER || !ENV.PTA_PASS) die('需要 PTA_USER / PTA_PASS（或 PTA_COOKIE）', 2);
+  const r = await fetch(BASE + '/api/login', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ user: ENV.PTA_USER, pass: ENV.PTA_PASS })
+  });
+  const sc = r.headers.get('set-cookie') || '';
+  cookie = sc.split(';')[0];
+  if (!r.ok || !cookie) die('登录失败：' + r.status, 2);
+  logged = true;
+}
+async function api(path, opts) {
+  if (path !== '/api/health') await login();
+  const o = Object.assign({}, opts || {});
+  o.headers = Object.assign({}, o.headers || {});
+  if (cookie) o.headers.cookie = cookie;
+  if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
+  if (o.body) o.headers['content-type'] = o.headers['content-type'] || 'application/json';
+  let r;
+  try { r = await fetch(BASE + path, o); }
+  catch (e) { die('请求发不出去：' + String(e && e.message || e).slice(0, 160), 1); }
+  const j = await r.json().catch(function () { return null; });
+  if (!r.ok || !j || !j.ok) {
+    const er = j && j.error;
+    die((er && er.code ? er.code + '：' : '') + ((er && er.message) || ('HTTP ' + r.status)), 1);
+  }
+  return j.data;
+}
+function readTorrent(p) {
+  const fs = require('fs');
+  if (!p) return null;
+  let st;
+  try { st = fs.statSync(p); } catch (e) { die('种子文件不存在：' + p, 2); }
+  if (!st.isFile()) die('不是文件：' + p, 2);
+  if (st.size > 10 * 1024 * 1024) die('种子超过 10MB', 2);
+  return fs.readFileSync(p).toString('base64');
+}
+function print(data, opts, human) {
+  if (opts.json) { console.log(JSON.stringify(data, null, 2)); return; }
+  console.log(human(data));
+}
+
+const argv = process.argv.slice(2);
+if (!argv.length || argv[0] === 'help' || argv[0] === '--help' || argv[0] === '-h') { usage(); process.exit(0); }
+const cmd = argv.shift();
+const args = [];
+const opts = { json: false, real: false };
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  if (a === '--json') opts.json = true;
+  else if (a === '--real') opts.real = true;
+  else if (a === '--dry-run') opts.real = false;
+  else if (a.startsWith('--')) {
+    const k = a.slice(2);
+    const v = argv[i + 1];
+    if (v === undefined || v.startsWith('--')) { opts[k] = true; }
+    else { opts[k] = v; i++; }
+  } else args.push(a);
+}
+
+async function main() {
+  if (cmd === 'status') {
+    const h = await api('/api/health');
+    const s = await api('/api/scheduler');
+    const q = await api('/api/queue?limit=1');
+    const d = { version: h.version, db: h.db, queue: q.counts || {}, scheduler: { on: !!s.on, everyMinutes: s.everyMinutes } };
+    print(d, opts, function (x) {
+      return 'v' + x.version + ' · ' + x.db + ' · 队列 ' + JSON.stringify(x.queue) + ' · 调度 ' + (x.scheduler.on ? '开' : '关') + '/' + x.scheduler.everyMinutes + ' 分钟';
+    });
+    return;
+  }
+  if (cmd === 'queue') {
+    const qs = new URLSearchParams();
+    if (opts.status) qs.set('status', String(opts.status));
+    qs.set('limit', String(Math.max(1, Math.min(500, Number(opts.limit) || 50))));
+    const d = await api('/api/queue?' + qs.toString());
+    print(d, opts, function (x) {
+      if (!x.items.length) return '没有匹配的条目';
+      return x.items.map(function (it) { return it.id + '  ' + it.status + '  ' + (it.cn || it.title); }).join('\n');
+    });
+    return;
+  }
+  if (cmd === 'crawl') {
+    if (!opts.site) die('crawl 需要 --site <host>', 2);
+    const d = await api('/api/crawl/run', { method: 'POST', body: {
+      host: String(opts.site), limit: Math.max(1, Math.min(1000, Number(opts.limit) || 100)), dryRun: !opts.real
+    } });
+    print(d, opts, function (x) {
+      if (x.dryRun) return '干跑 · 站点 ' + (x.siteHost || opts.site) + ' · ' + ((x.steps || []).length) + ' 步 · 没有发请求';
+      return '抓取完成 · 第 ' + (x.page || 0) + ' 页 · 抓回 ' + (x.rows || 0) + ' · 新增 ' + (x.added || 0) + ' · 更新 ' + (x.updated || 0);
+    });
+    return;
+  }
+  if (cmd === 'screen') {
+    const d = await api('/api/catalog/screen', { method: 'POST', body: {
+      limit: Math.max(1, Math.min(500, Number(opts.limit) || 50)), host: opts.host ? String(opts.host) : ''
+    } });
+    print(d, opts, function (x) {
+      const rs = Object.keys(x.byReason || {}).map(function (k) { return k + ' ' + x.byReason[k]; }).join(' · ');
+      return '检查 ' + (x.checked || 0) + ' · 入选 ' + (x.selected || 0) + ' · 跳过 ' + (x.skipped || 0) + (rs ? '（' + rs + '）' : '');
+    });
+    return;
+  }
+  if (cmd === 'publish') {
+    const id = args[0];
+    if (!id) die('publish 需要 queueId', 2);
+    const body = { dryRun: !opts.real };
+    const d = await api('/api/publish/' + encodeURIComponent(id), { method: 'POST', body: body });
+    print(d, opts, function (x) {
+      if (x.dryRun) return '干跑 · 会加入 ' + (x.qb && x.qb.downloader ? (x.qb.downloader.name || x.qb.downloader.id) : '下载器');
+      return '已发布 · qB ' + (x.qb && x.qb.verified ? '已校验' : '未校验') + ' · ' + (x.msg || '');
+    });
+    return;
+  }
+  if (cmd === 'targets') {
+    const d = await api('/api/targets');
+    print(d, opts, function (x) {
+      if (!x.length) return '没有目标站定义（data/site-pack.json 或 site-defs 为空）';
+      return x.map(function (t) { return t.host + '  ' + t.engine + '  ' + (t.ready ? '就绪' : (t.hasCookie ? '缺配置' : '缺 cookie')); }).join('\n');
+    });
+    return;
+  }
+  if (cmd === 'target-upload') {
+    const id = args[0];
+    if (!id) die('target-upload 需要 queueId', 2);
+    if (!opts.host) die('target-upload 需要 --host <target>', 2);
+    const body = { queueId: id, dryRun: !opts.real };
+    const b64 = readTorrent(opts.torrent);
+    if (b64) body.torrentBase64 = b64;
+    const d = await api('/api/targets/' + encodeURIComponent(String(opts.host)) + '/upload', { method: 'POST', body: body });
+    print(d, opts, function (x) {
+      if (x.dryRun) return '干跑 · ' + x.url + ' · 字段 ' + Object.keys(x.fields || {}).join(',');
+      return '已提交 ' + (x.status || '') + (x.detailsUrl ? ' · ' + x.detailsUrl : '') + (x.verify ? ' · 回查 ' + (x.verify.found ? '已找到' : '未找到') : '');
+    });
+    return;
+  }
+  if (cmd === 'verify') {
+    const id = args[0];
+    if (!id) die('verify 需要 queueId', 2);
+    if (!opts.host) die('verify 需要 --host <target>', 2);
+    const body = { queueId: id };
+    if (opts.url) body.url = String(opts.url);
+    const b64 = readTorrent(opts.torrent);
+    if (b64) body.torrentBase64 = b64;
+    const d = await api('/api/targets/' + encodeURIComponent(String(opts.host)) + '/verify', { method: 'POST', body: body });
+    print(d, opts, function (x) {
+      return (x.found ? '已找到' : '未找到') + ' · ' + (x.url || '') + (x.message ? ' · ' + x.message : '');
+    });
+    return;
+  }
+  die('未知命令：' + cmd + '\n' + '跑 pta --help 看用法', 2);
+}
+
+main().catch(function (e) { die(String(e && e.message || e), 1); });

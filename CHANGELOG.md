@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.117 · 2026-11-15
+
+### 新增
+- `pta/cli.js` + `package.json` 的 `bin.pta`：`status / queue / crawl / screen / publish / targets / target-upload / verify`，默认干跑，`--real` 才真抓/真发；凭据只从环境读，不打印。
+- `pta/checks/cli.js`：临时后端 + 真实 CLI 子进程，7/7（状态、抓取干跑、送审、队列、发布干跑、目标站列表、缺参退出码）。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 4/4、cli 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.116 · 2026-11-15
 
 ### 新增

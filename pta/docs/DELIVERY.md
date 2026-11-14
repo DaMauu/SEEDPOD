@@ -48,6 +48,7 @@
 - M5 进行中：标题解析/命名已接（0.7.112，meta 11/11）；TMDB/豆瓣等外部元数据待 key
 - M6 完成：媒体探测/截图/种子（0.7.116，模块 + API + 队列页入口；media 7/7、media-api 6/6）
 - M7 进行中：qB + watch 目录（0.7.115，clients 4/4）；rTorrent/Deluge 待接
+- M9 完成：`pta` CLI 已接（0.7.117，cli 7/7）；Docker 两阶段已有
 
 ## 六、V2 · 对标 UA/upbrr
 
