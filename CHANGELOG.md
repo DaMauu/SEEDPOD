@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.146 · 2026-11-16
+
+### 重构
+- `src/styles/v2.css` 按原级联顺序拆成 12 个模块：`00-base.css` … `11-dock.css`，`index.css` 统一入口，`main.js` 导入。
+- 拆分前后 CSS 字节完全一致（102,284 bytes）；构建仍输出单个哈希 CSS。
+- 历史文档移入 `pta/docs/history/`：`MIGRATION-PLAN.md`、`PIPELINE-RULES.md`、`RULES-TRIAGE.md`、`PROBLEMS.md`，附 `README.md`；当前文档只留活跃项。
+- AGENTS / DESIGN / DECISIONS / ROADMAP 的路径与引用同步。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10。
+
 ## v0.7.145 · 2026-11-16
 
 ### 迁移

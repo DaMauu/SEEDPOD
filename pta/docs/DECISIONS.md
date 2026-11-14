@@ -119,6 +119,6 @@
 
 ## D17 v2 共用样式进构建链（2026-11-16）
 
-定了：共用样式放 `pta/web-src/src/styles/v2.css`，由 `src/main.js` 导入，Vite 打包并哈希；字体放 `src/assets/fonts/`，logo 放 `src/assets/whale.png`，`public/` 只留 favicon/icon。删除手工 `<link rel="stylesheet" href="/assets/app.css">` 和 CSS 指纹插件。
+定了：共用样式放 `pta/web-src/src/styles/` 模块，`index.css` 为入口，由 `src/main.js` 导入，Vite 打包并哈希；2026-11-16 已拆成 12 个按级联顺序的模块；字体放 `src/assets/fonts/`，logo 放 `src/assets/whale.png`，`public/` 只留 favicon/icon。删除手工 `<link rel="stylesheet" href="/assets/app.css">` 和 CSS 指纹插件。
 为什么：`public/assets/app.css` 是 v1/demo 资产路径，Cloudflare 还会缓存 4 小时；进构建链后文件名带哈希，发布即换 URL。
 代价：CSS 改动会改构建哈希；页面级 `<style scoped>` 拆分仍需逐页做，当前先完成“v2 共用版”。D1/D11 里“无构建、直接 app.css”是历史记录，以本条为准。

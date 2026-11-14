@@ -1,0 +1,13 @@
+/* v2 样式入口：按原级联顺序 import，Vite 打包成一个哈希 CSS。 */
+@import './00-base.css';
+@import './01-shell.css';
+@import './02-dashboard.css';
+@import './03-sites.css';
+@import './04-settings-flow.css';
+@import './05-queue-sources-logs.css';
+@import './06-forms-flow-final.css';
+@import './07-sites-detail.css';
+@import './08-components.css';
+@import './09-responsive-pages.css';
+@import './10-crawl-final.css';
+@import './11-dock.css';

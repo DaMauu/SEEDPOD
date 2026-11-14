@@ -1,6 +1,6 @@
 # 路线图：问题 / 需求 / 未来 / 待做
 
-基于 0.7.81 的代码走查与线上实测。问题明细见 `PROBLEMS.md`，验收标准见 `DELIVERY.md`。
+基于 0.7.81 的代码走查与线上实测。问题明细见 `pta/docs/history/PROBLEMS.md`，验收标准见 `DELIVERY.md`。
 
 ## 一、问题（现在存在的）
 
@@ -54,7 +54,7 @@
 - [x] 抓取写入禁转/限转 marks，送审先拦
 - [x] `catIdx` 到底后轮转，page 归零
 - [x] 每日上限服务端硬顶，界面只能调低
-- [x] 67 条规则逐条分诊：保留 8 / 标未接 50 / 删除 9（见 RULES-TRIAGE.md）
+- [x] 67 条规则逐条分诊：保留 8 / 标未接 50 / 删除 9（见 `pta/docs/history/RULES-TRIAGE.md`）
 - [x] 按分诊表改 `src/data/rules.js` + 界面禁用/删除
 - [x] 分诊后 `audit-rules.js --fail` 进闸门
 

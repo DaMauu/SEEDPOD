@@ -123,7 +123,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 - 新增一条规则必须回答：不设会怎样、默认值是什么、用户在哪关掉
 - 一条进一条出：加新条件时必须合并或删掉一条旧的，不允许只加不减
 - 能给默认值就不给开关；能三档预设就不给独立选项
-- 新条件先进 `pta/docs/PIPELINE-RULES.md` 清单，再改 `pta/web-src/src/data/rules.js`，最后跑 `node pta/scripts/gen-rules-tree.js`
+- 新条件先对照 `pta/docs/RULES-RECONCILIATION.md` / `RULES-TREE.md`，再改 `pta/web-src/src/data/rules.js`，最后跑 `node pta/scripts/gen-rules-tree.js`
 
 ## 结构气味（提示，不是验收）
 
@@ -160,7 +160,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 ## 设计约束（UI）
 
 - 先线框后代码：静态 HTML 或截图确认后再改对应 SFC
-- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式只放 `pta/web-src/src/styles/v2.css`，页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
+- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式放 `pta/web-src/src/styles/index.css`（按级联顺序 import `src/styles/*.css` 模块），页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
 - 文案：标签用名词，说明 ≤ 20 字，错误说「怎么办」
 - 验收三宽度 1280 / 768 / 390，无横向滚动，首屏能看到主卡
 

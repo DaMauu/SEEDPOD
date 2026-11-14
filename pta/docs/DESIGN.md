@@ -1,10 +1,10 @@
 # 界面规范（DESIGN）
 
-面向个人使用的工具面板：信息密度可以高，但必须能扫读。所有改动先对照本文件，再动 `pta/web-src/src/styles/v2.css` / `src/views/*.vue`。
+面向个人使用的工具面板：信息密度可以高，但必须能扫读。所有改动先对照本文件，再动 `pta/web-src/src/styles/index.css` / `src/views/*.vue`。
 
 ## 一、设计变量（只准用这些）
 
-来自 `pta/web-src/src/styles/v2.css` 的 `:root`，不要新增同义色值。
+来自 `pta/web-src/src/styles/00-base.css` 的 `:root`，不要新增同义色值。
 
 | 变量 | 值 | 用途 |
 | --- | --- | --- |
@@ -88,7 +88,7 @@
 ## 七、流程页补充规则
 
 - 每组组头一行说明，≤ 20 字，回答「这段在管什么」。
-- 新增条件先过 `pta/docs/PIPELINE-RULES.md` 的复杂度预算，再进 `pta/web-src/src/data/rules.js`。
+- 新增条件先过 `pta/docs/RULES-RECONCILIATION.md` / `RULES-TREE.md` 的复杂度预算，再进 `pta/web-src/src/data/rules.js`。
 - 高级项默认收起，组头显示「高级 · N 项」。
 - 档位（简洁/标准/严格）只改默认值，不锁死单项；切档后显示「改了哪几项」。
 - 任何新条件必须能回答：不设会怎样、默认值是什么、在哪关掉。

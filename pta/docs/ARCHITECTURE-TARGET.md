@@ -1,7 +1,7 @@
 # 目标架构（终稿）
 
 这份文件回答四个问题：跑在哪、用什么栈、代码放哪、按什么顺序搬。
-和 `pta/docs/DECISIONS.md` 的 D8–D17、`pta/docs/MIGRATION-PLAN.md` 一起看。
+和 `pta/docs/DECISIONS.md` 的 D8–D17、`pta/docs/history/MIGRATION-PLAN.md` 一起看。
 
 ## 运行时
 

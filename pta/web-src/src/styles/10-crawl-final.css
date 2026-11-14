@@ -1,0 +1,93 @@
+/* 抓取卡：预设一行一条、限制四列浅底面板、底栏放说明与抓详情页；只影响本卡 */
+.crawl-card .drawer-head{padding:12px 20px;gap:10px}
+.crawl-card .drawer-title{font-size:15px}
+.crawl-card .drawer-body{padding:4px 20px 18px}
+.crawl-card .preset-block{display:flex;flex-direction:column;gap:2px}
+.crawl-card .preset-row{display:grid;grid-template-columns:68px minmax(0,1fr);align-items:center;gap:14px;padding:7px 0}
+.crawl-card .preset-row .lbl{font-size:12.5px;color:var(--muted,#6b7280);min-width:0}
+.crawl-card .preset-row .cat-row{display:flex;flex-wrap:wrap;gap:6px;padding:0}
+.crawl-card .preset-row .cat-chip{height:28px;padding:0 12px;border-radius:6px;font-size:12px;line-height:28px}
+.crawl-card .limits-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px;margin-top:16px;padding:14px 16px;background:var(--panel-2,#f9fafb);border:1px solid var(--line,#eef0f4);border-radius:10px}
+.crawl-card .limit-item{display:flex;flex-direction:column;gap:6px;min-width:0}
+.crawl-card .limit-item .lbl{font-size:12px;color:var(--muted,#6b7280)}
+.crawl-card .limit-item .input{width:100%;height:32px;padding:0 10px;font-size:13px}
+.crawl-card .crawl-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line,#eef0f4)}
+.crawl-card .crawl-note{font-size:12px;color:var(--muted-2,#9ca3af);line-height:1.5}
+.crawl-card .detail-sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted,#6b7280);cursor:pointer}
+.crawl-card .detail-sw .switch{flex:0 0 auto}
+@media (max-width:1100px){.crawl-card .limits-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.crawl-card .preset-row{grid-template-columns:1fr;gap:6px}.crawl-card .limits-panel{grid-template-columns:1fr}.crawl-card .crawl-foot{flex-direction:column;align-items:flex-start;gap:10px}}
+
+/* 发布卡：每组整行，字段标签在上、控件在下，避免标签被挤成竖排 */
+.flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
+.flow-group .flow-ttl{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 1px}
+.flow-group .set-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 18px}
+.flow-group .set-field{display:block;padding:5px 0;border-bottom:0;min-width:0}
+.flow-group .set-field .lbl{margin-bottom:3px}
+.flow-group .set-field .lbl span{font-size:12.5px;line-height:1.35}
+.flow-group .set-field .ctl,
+.flow-group .set-field .ctl > .input,
+.flow-group .set-field .ctl > .select{width:100%}
+/* 流程卡密度收紧：行距、控件高度、开关尺寸 */
+.flow-group{padding:7px 12px 6px;margin:0 0 7px}
+.flow-group .set-fields{gap:0 12px}
+.flow-group .set-field{padding:3px 0}
+.flow-group .set-field .lbl{margin-bottom:2px}
+.flow-group .set-field .lbl span{font-size:12px;line-height:1.3}
+.flow-group .set-field .ctl>.input,
+.flow-group .set-field .ctl>.select{height:28px;font-size:12px;padding:0 8px}
+.flow-group .switch i{width:30px;height:17px}
+.flow-group .switch i::after{width:13px;height:13px;top:2px;left:2px}
+.flow-group .switch.on i::after{left:15px}
+/* 卡内小节标题 */
+.flow-group .set-field.sec{grid-column:1/-1;padding:5px 0 2px;margin-top:2px;border-top:1px solid #e9ebef}
+.flow-group .set-field.sec:first-child{margin-top:0;padding-top:0;border-top:0}
+.flow-group .sec-ttl{font-size:11px;font-weight:600;color:#8a94a2;letter-spacing:.4px}
+.flow-group .chip-row{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 1px}
+.flow-group .chip{border:1px solid #e2e5ea;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;color:#5b6573;cursor:pointer;line-height:1.2}
+.flow-group .chip.on{background:#eef5ff;border-color:#bfd8ff;color:#1d4ed8}
+.flow-group .set-field.pair{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:2px 0 4px}
+.flow-group .set-field.wide{grid-column:1/-1}
+.flow-group .set-field.wide .rx-test{width:100%}
+.flow-group .set-field.wide .rx-test .input{width:auto;flex:1 1 auto;min-width:200px;height:28px;font-size:12px}
+.flow-group .set-field.wide .rx-test em{white-space:nowrap}
+/* 发布条件：去掉外框，行改成两列标签+控件 */
+.flow-group.cond{background:transparent;border:0;padding:0;margin:0 0 4px}
+.flow-group.cond .set-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+.flow-group.cond .set-field{grid-column:auto;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid #f3f5f8}
+.flow-group.cond .set-field .lbl{margin:0}
+.flow-group.cond .set-field.sec{grid-column:1/-1;padding:9px 0 3px;margin-top:2px;border-top:1px solid #e9ebef;border-bottom:0}
+.flow-group.cond .set-field.sec .sec-ttl{font-size:11px;color:#98a1ad}
+.flow-group.cond .set-field.pair{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+.flow-group.cond .set-field.wide{grid-column:1/-1}
+.flow-group.cond .set-field.pick{grid-column:auto}
+.flow-group.cond .set-field.pick .cat-chip{height:24px;padding:0 9px;line-height:24px}
+.flow-group.cond .set-field .ctl>.input{height:26px;max-width:180px}
+.flow-group .set-field.pick{grid-column:1/-1;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:10px;padding:3px 0}
+.flow-group .set-field.pick .lbl{margin:0}
+.flow-group .set-field.pick .ctl{width:100%}
+.flow-group .set-field.pick .cat-row{display:flex;flex-wrap:wrap;gap:6px;padding:0}
+.flow-group .set-field.pick .cat-chip{height:26px;padding:0 10px;border-radius:6px;font-size:12px;line-height:26px}
+.flow-group .set-field.pick .ctl>.input{height:26px;max-width:180px;font-size:12px}
+.flow-group .set-field.pair .pair-item{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.flow-group .set-field.pair .pair-lbl{font-size:12px;color:#5b6573}
+.dedupe-card .drawer-body,
+.drawer-body.compact{padding:8px 16px 10px}
+@media (max-width:700px){.flow-group .set-fields{grid-template-columns:1fr}}
+/* 本地演练外壳：没内容时不要撑出一块空白 */
+.crawl-dry .drawer-body:empty{display:none}
+
+/* 规则分诊：服务端未接的规则禁用并标「未接」 */
+.set-field.todo{opacity:.55}
+.set-field.todo .ctl{pointer-events:none}
+.todo-badge{font-style:normal;font-size:10px;line-height:16px;color:#b45309;background:#fef3c7;border:1px solid #fde68a;border-radius:999px;padding:0 6px;margin-left:6px;white-space:nowrap}
+.preset-row.todo{opacity:.55;pointer-events:none}
+.pair-item.todo{opacity:.55;pointer-events:none}
+
+/* 窄屏设置项：长说明换行，避免定宽 220px 把文字挤出卡片 */
+@media (max-width: 1000px) {
+  #set-panel .set-fields .set-field .ctl { width: 100%; }
+  #set-panel .set-fields .set-field .ctl .fixed-val { white-space: normal; height: auto; min-height: 34px; line-height: 1.5; overflow-wrap: anywhere; }
+  #set-panel .set-fields .set-field .ctl .fixed-val.ref { padding: 0; }
+}
+
