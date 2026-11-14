@@ -37,6 +37,7 @@ run media media.js
 run media-api media-api.js
 run clients clients.js
 run cli cli.js
+run notify notify.js
 run web build.js
 
 echo

@@ -224,6 +224,7 @@ async function build() {
       return cfg[key] === true;
     } };
   ctx.crawl = makeCrawl(ctx);
+  ctx.notify = require('./notify').makeNotify(ctx);
   require('./routes-write')(app, ctx);
   require('./routes-data')(app, ctx);
   logEvent = ctx.logEvent || null;
@@ -235,6 +236,7 @@ async function build() {
   require('./routes-publish')(app, ctx);
   require('./routes-target')(app, ctx);
   require('./routes-media')(app, ctx);
+  require('./routes-notify')(app, ctx);
   require('./routes-missing')(app, ctx);
 
   const publisher = require('./publish').makePublisher(ctx);

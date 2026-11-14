@@ -52,3 +52,18 @@ curl -s http://127.0.0.1:8080/api/health
 ```
 
 容器健康检查每 30 秒跑一次；启动失败先看 `docker logs seedpod`。
+
+## Telegram 通知
+
+两种方式，环境变量优先：
+
+1. **面板**：设置 → 通知，填 Bot Token 和 Chat ID，保存后点「发送测试」。token 用 AES-GCM 存 `/data/seedpod.db`，接口只回是否配置，不回显 token。
+2. **compose `.env`**：
+
+```bash
+TELEGRAM_BOT_TOKEN=123456:replace-me
+TELEGRAM_ALLOWED_USER_ID=123456789
+docker compose up -d
+```
+
+环境变量会覆盖面板配置；`.env` 已 gitignore，不要提交。通用 webhook 可用 `PTA_NOTIFY_WEBHOOK=https://...`，POST `{event,text,at}`。

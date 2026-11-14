@@ -71,9 +71,20 @@ git pull --ff-only && bash deploy.sh
 
 只在本地/测试机、已被 gitignore：`data/{sites-data.local.js,sites-bookmark.local.json,site-search.local.json,site-arch.local.csv,site-defs/,samples/,cookies.tmp.json}`、`docs` 里只有 example。
 
+Telegram bot token / webhook 只放环境变量或面板加密配置；不入库明文、不进仓库、不打印。
+
+## 环境与产品边界（长期有效，2026-11-15）
+
+- 先定正确的产品形态，再让本机环境去适配它；不许为了本机权限/路径/服务差异，把产品代码写成只能在这台机器跑。
+- 本机问题在本机解决：权限、目录、systemd、端口、私有凭据文件，优先改本机配置/环境变量/文件权限，不改产品逻辑。
+- 只有真实产品约束（Docker 非 root、数据卷权限、无 systemd）才抽象成配置项、启动检查或文档，不写死主机路径。
+- 产品代码不出现 `/opt/seedpod`、`/etc/seedpod.env`、`/etc/opencode-*` 等本机路径；这些只允许出现在部署脚本和内部 HANDOFF/运维文档。
+- 凭据/密钥只通过环境变量或面板加密配置进入产品；不因本机文件权限降级安全设计。
+- 遇到“本机跑不通”先判断：这是产品约束还是本机差异？本机差异改本机，产品约束改配置/文档。
+
 ## 干活方式
 
-- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 20 → adapter 21 → security 3 → api-v2 20 → publish 4 → scheduler 5 → detect 5 → target 6 → meta 11 → media 7 → media-api 6 → clients 4 → cli 7 → web 7 → 规则体检）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 20 → adapter 21 → security 3 → api-v2 20 → publish 4 → scheduler 5 → detect 5 → target 6 → meta 11 → media 7 → media-api 6 → clients 4 → cli 7 → notify 7 → web 7 → 规则体检）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断

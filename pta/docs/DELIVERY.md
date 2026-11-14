@@ -49,6 +49,7 @@
 - M6 完成：媒体探测/截图/种子（0.7.116，模块 + API + 队列页入口；media 7/7、media-api 6/6）
 - M7 进行中：qB + watch 目录（0.7.115，clients 4/4）；rTorrent/Deluge 待接
 - M9 完成：`pta` CLI 已接（0.7.117，cli 7/7）；Docker 两阶段已有
+- M10 进行中：Telegram 通知已接（0.7.118，notify 7/7，环境变量或面板加密配置）；剩失败重试
 
 ## 六、V2 · 对标 UA/upbrr
 

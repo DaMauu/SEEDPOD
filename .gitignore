@@ -16,3 +16,8 @@ data/
 
 # Vite 构建产物（部署时生成）
 pta/web/dist/
+
+# 本地密钥/通知配置
+.env
+.env.*
+!.env.example

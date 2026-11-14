@@ -101,7 +101,7 @@
 | M7 | 客户端抽象 ✅ | qB 完成；0.7.115 已接 watch 目录（写种子/探测/发布，clients 4/4）；rTorrent/Deluge 以后再加 | 本地 mock |
 | M8 | 站点提交适配 ✅ | 0.7.111：三引擎路径/字段骨架 + `data/site-pack.json` 覆盖；mock 上传/回查 target 6/6；队列页有“提交目标站” | 真实站名不入库 |
 | M9 | CLI + Docker ✅ | 0.7.117：`pta` CLI 支持 status/queue/crawl/screen/publish/targets/target-upload/verify，默认干跑；cli 7/7；Docker 两阶段已有 | 现有后端 |
-| M10 | 通知/重试 | 目标站回查已随 M8 落地；剩失败重试、通知 | M8 |
+| M10 | 通知/重试 | 0.7.118：Telegram 通知已接（notify 7/7，环境变量或面板加密配置）；剩失败重试 | M8 |
 
 工具现状：`ffmpeg/ffprobe` 已有；`mediainfo`、`mkbrr` 未装（可不装，用 ffprobe + 自写 bencode）。真实站配置一律不入库。
 

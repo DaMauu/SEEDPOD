@@ -21,10 +21,11 @@ curl -s -m 5 http://127.0.0.1:8080/api/health || true
 echo
 
 # 部署完成推一条 Telegram；没配凭据就静默跳过
-if [ -f "$SRC/scripts/notify-tg.sh" ] && [ -f /etc/opencode-telegram-bot.env ]; then
+TG_ENV_FILE=${TELEGRAM_ENV_FILE:-/etc/opencode-telegram-bot.env}
+if [ -f "$SRC/scripts/notify-tg.sh" ] && [ -f "$TG_ENV_FILE" ]; then
   VER=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' /opt/seedpod/package.json | head -1)
   REV=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo "?")
-  OUT=$(bash "$SRC/scripts/notify-tg.sh" "SEEDPOD 已部署 v$VER ($REV)" 2>&1 || true)
+  OUT=$(ENV_FILE="$TG_ENV_FILE" bash "$SRC/scripts/notify-tg.sh" "SEEDPOD 已部署 v$VER ($REV)" 2>&1 || true)
   case "$OUT" in
     *'"ok":true'*) echo "TG 通知已发 v$VER ($REV)" ;;
     *) echo "TG 通知失败：$(printf '%s' "$OUT" | head -c 120)" ;;

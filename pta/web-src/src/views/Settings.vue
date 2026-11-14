@@ -84,6 +84,49 @@
       <section class="set-card">
         <div class="set-card-head">
           <div class="set-card-t">
+            <h2 class="set-h2">通知</h2>
+            <p class="set-desc">环境变量优先；也可以在这里填 Bot Token（加密保存，只写不读）。</p>
+          </div>
+          <button class="btn primary slim set-save" type="button" :disabled="notify.saving" @click="saveNotify">{{ notify.saving ? '保存中…' : '保存' }}</button>
+          <button class="btn ghost slim" type="button" :disabled="notify.testing || (!notify.telegram && !notify.webhook)" @click="testNotify">{{ notify.testing ? '发送中…' : '发送测试' }}</button>
+        </div>
+        <div class="set-fields">
+          <div class="set-field">
+            <div class="lbl"><span>Telegram</span><i>环境变量或面板配置</i></div>
+            <div class="ctl"><span class="fixed-val ref">{{ notify.telegram ? ('已配置 · ' + (notify.source === 'env' ? '环境变量' : '面板')) : '未配置' }}</span></div>
+          </div>
+          <div class="set-field">
+            <div class="lbl"><span>Bot Token</span><i>环境变量优先；面板保存后 AES-GCM 加密，不回显</i></div>
+            <div class="ctl"><input v-model="notify.token" class="input" type="password" :disabled="notify.source === 'env'" :placeholder="notify.source === 'env' ? '由环境变量提供' : (notify.telegram ? '已保存；留空不改' : '粘贴 Bot Token')" autocomplete="new-password"></div>
+          </div>
+          <div class="set-field">
+            <div class="lbl"><span>Chat ID</span><i>你的 Telegram 用户 ID；群组可填负数</i></div>
+            <div class="ctl"><input v-model="notify.chat" class="input" :disabled="notify.source === 'env'" placeholder="如 123456789"></div>
+          </div>
+          <div class="set-field">
+            <div class="lbl"><span>发送时机</span></div>
+            <div class="ctl">
+              <select v-model="notify.events" class="select">
+                <option value="off">关闭</option>
+                <option value="error">仅失败</option>
+                <option value="always">每轮都发</option>
+              </select>
+            </div>
+          </div>
+          <div v-if="notify.source === 'config'" class="set-field">
+            <div class="lbl"><span>清除面板凭据</span><i>不影响环境变量</i></div>
+            <div class="ctl"><button class="btn ghost slim danger" type="button" @click="clearNotify">清除</button></div>
+          </div>
+          <div v-if="notify.testMsg" class="set-field">
+            <div class="lbl"><span>上次测试</span></div>
+            <div class="ctl"><span class="fixed-val ref">{{ notify.testMsg }}</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="set-card">
+        <div class="set-card-head">
+          <div class="set-card-t">
             <h2 class="set-h2">系统</h2>
             <p class="set-desc">版本、存储和这台浏览器里的数据。</p>
           </div>
@@ -118,6 +161,7 @@ const mode = ref((localStorage.getItem('pta.mode') === 'dev') ? 'dev' : 'basic')
 const version = ref('读取中…')
 const user = ref('读取中…')
 const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '', lastResult: null })
+const notify = reactive({ telegram: false, webhook: false, source: '', chat: '', token: '', events: 'error', saving: false, testing: false, testMsg: '' })
 let timer = null
 let loaded = false
 
@@ -155,16 +199,68 @@ function applySched(data) {
 async function load() {
   if (loaded || !loggedIn()) return
   try {
-    const [h, s, sc] = await Promise.all([
+    const [h, s, sc, nt] = await Promise.all([
       fetch('/api/health', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/session', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
-      fetch('/api/scheduler', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
+      fetch('/api/scheduler', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
+      fetch('/api/notify', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
     ])
     if (h && h.ok) version.value = 'v' + h.data.version
     if (s && s.ok) user.value = s.data.user || '—'
     if (sc && sc.ok) applySched(sc.data)
+    if (nt && nt.ok) applyNotify(nt.data)
     loaded = true
   } catch (e) {}
+}
+function applyNotify(d) {
+  if (!d) return
+  notify.telegram = !!d.telegram
+  notify.webhook = !!d.webhook
+  notify.source = d.source || ''
+  notify.chat = d.chat || ''
+  notify.events = d.events || 'error'
+}
+async function saveNotify() {
+  if (notify.saving) return
+  notify.saving = true
+  const body = { events: notify.events, telegramChat: notify.chat }
+  if (String(notify.token || '').trim()) body.telegramToken = String(notify.token).trim()
+  try {
+    const j = await (await fetch('/api/notify', {
+      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    })).json()
+    if (j && j.ok) {
+      notify.token = ''
+      applyNotify(j.data)
+      toast('通知设置已保存')
+    } else toast((j && j.error && j.error.message) || '通知设置保存失败')
+  } catch (err) { toast('通知设置保存失败') }
+  notify.saving = false
+}
+function clearNotify() {
+  confirmBox('清除面板凭据', '只清面板保存的 Telegram token/chat，环境变量不受影响。继续？', async () => {
+    try {
+      const j = await (await fetch('/api/notify', {
+        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ clearTelegram: true })
+      })).json()
+      if (j && j.ok) { notify.token = ''; notify.chat = ''; applyNotify(j.data); toast('已清除面板凭据') }
+      else toast((j && j.error && j.error.message) || '清除失败')
+    } catch (err) { toast('清除失败') }
+  })
+}
+async function testNotify() {
+  if (notify.testing) return
+  notify.testing = true
+  notify.testMsg = ''
+  try {
+    const r = await fetch('/api/notify/test', { method: 'POST', credentials: 'same-origin' })
+    const j = await r.json().catch(() => null)
+    if (j && j.ok) { notify.testMsg = '已发送 · ' + (j.data.channel || ''); toast('测试通知已发') }
+    else { notify.testMsg = (j && j.error && j.error.message) || ('发送失败 ' + r.status); toast(notify.testMsg) }
+  } catch (err) { notify.testMsg = '请求发不出去'; toast(notify.testMsg) }
+  notify.testing = false
 }
 function ensure() {
   if (visible() && loggedIn()) load()

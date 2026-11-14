@@ -17,6 +17,10 @@ services:
       PTA_DATA: /data
       PTA_USER: "${PTA_USER:-}"
       PTA_PASS: "${PTA_PASS:-}"
+      # Telegram 通知：留空则用面板里保存的加密配置
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_ALLOWED_USER_ID: "${TELEGRAM_ALLOWED_USER_ID:-}"
+      # PTA_NOTIFY_WEBHOOK: "${PTA_NOTIFY_WEBHOOK:-}"
       # PTA_COOKIE_SECURE: "1"
       # PTA_SECRET_FILE: /run/secrets/seedpod
     healthcheck:

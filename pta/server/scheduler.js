@@ -71,10 +71,25 @@ function makeScheduler(ctx, deps) {
         steps.publish = { skipped: 'realPublish off' };
       }
 
+      const crawlFail = (steps.crawl && steps.crawl.failed) || 0;
+      const pubFail = (steps.publish && steps.publish.failed) || 0;
+      const selected = (steps.screen && steps.screen.selected) || 0;
+      if (ctx.notify) {
+        try {
+          if (crawlFail || pubFail) {
+            await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail, { steps: steps });
+          } else if (ctx.notify.status().events === 'always') {
+            await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });
+          }
+        } catch (e2) {}
+      }
       save(Object.assign({}, s, { lastRunAt: Date.now(), lastResult: steps, lastError: '' }));
       return { ok: true, steps: steps };
     } catch (e) {
       const msg = String(e && e.message || e).slice(0, 300);
+      if (ctx.notify) {
+        try { await ctx.notify.send('scheduler.error', 'SEEDPOD 调度失败：' + msg); } catch (e2) {}
+      }
       save(Object.assign({}, s, { lastRunAt: Date.now(), lastError: msg }));
       return { ok: false, error: msg, steps: steps };
     } finally {

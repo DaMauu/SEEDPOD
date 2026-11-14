@@ -1,5 +1,21 @@
 # 更新日志
 
+## v0.7.118 · 2026-11-15
+
+### 新增
+- Telegram 通知：环境变量优先，面板可保存 token（AES-GCM）/Chat ID；调度失败、发布失败、目标站提交失败推送；设置页可发送测试。
+- `GET/PUT /api/notify`、`POST /api/notify/test`；token 只写不读，接口只回是否配置/来源/chat。
+- Docker compose 支持 `TELEGRAM_BOT_TOKEN` / `TELEGRAM_ALLOWED_USER_ID`；`.env` 已 gitignore。
+- `pta/checks/notify.js`：本地 mock Bot API，7/7（发送/跳过/面板加密兜底/未配置）。
+
+### 调整
+- `AGENTS.md` 增加“环境与产品边界”：本机权限/路径问题改本机，不把主机路径写进产品代码。
+- `scripts/load-cookies.js` 不再自动读 `/etc/seedpod.secret`；找不到密钥退出 2，不自动新建。
+- `scripts/notify-tg.sh` 不再默认 `/etc` 环境文件；`deploy.sh` 用 `TELEGRAM_ENV_FILE` 显式指定。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.117 · 2026-11-15
 
 ### 新增

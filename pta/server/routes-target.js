@@ -62,7 +62,13 @@ module.exports = function (app, ctx) {
     if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
     const dryRun = b.dryRun !== false;
     const r = await target.submit(req.params.host, item.data, t.buf, { dryRun: dryRun });
-    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    if (!r.ok) {
+      if (ctx.notify) {
+        ctx.notify.send('target.failed', 'SEEDPOD 目标站提交失败：' + req.params.host + ' · ' + (r.message || r.code),
+          { host: req.params.host, id: b.queueId }).catch(function () {});
+      }
+      return bad(reply, r.code, r.message, r.http || 400);
+    }
     if (dryRun) return ok(reply, r.data);
 
     item.data.targetUpload = {

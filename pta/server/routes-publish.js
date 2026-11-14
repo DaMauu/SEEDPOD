@@ -51,6 +51,10 @@ module.exports = function (app, ctx) {
   /* 发布：核心在 publish.js，路由只做参数与错误映射 */
   app.post('/api/publish/:id', async (req, reply) => {
     const r = await publisher.publishItem(req.params.id, req.body || {});
+    if (!r.ok && ctx.notify) {
+      ctx.notify.send('publish.failed', 'SEEDPOD 发布失败：' + (r.message || r.code) + ' · ' + req.params.id,
+        { id: req.params.id, code: r.code }).catch(function () {});
+    }
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r.data);
   });
