@@ -1,5 +1,20 @@
 # 更新日志
 
+## v0.7.179 · 2026-11-18
+
+### Telegram 开发进度
+- 新增 `scripts/notify-progress.sh`：读取 `PROGRESS.md`，发当前 goal、百分比、总进度。
+- `deploy.sh` 部署后自动发一条最新进度；不再只有“已部署”。
+- `GOAL-RUNNER.md` 增加规则：每轮更新 PROGRESS.md；单独发进度用 notify-progress.sh。
+- 已实测发送成功（message_id 2446）。
+
+## v0.7.178 · 2026-11-18
+
+### 开发进度跟踪
+- 新增 `pta/docs/PROGRESS.md`：G0–G14 当前百分比、总进度、阻塞和更新规则。
+- `GOAL-RUNNER.md` 固定每轮开头输出“正在开发：Gx · 百分比 · 总进度”。
+- 当前：G10 85%，总进度约 49%。
+
 ## v0.7.177 · 2026-11-18
 
 ### G10 按站结果与重试

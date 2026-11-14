@@ -46,3 +46,12 @@ if [ -f "$SRC/scripts/notify-tg.sh" ] && [ -n "$TG_ENV_FILE" ] && [ -f "$TG_ENV_
     *) echo "TG 通知失败：$(printf '%s' "$OUT" | head -c 120)" ;;
   esac
 fi
+if [ -f "$SRC/scripts/notify-progress.sh" ] && [ -n "$TG_ENV_FILE" ] && [ -f "$TG_ENV_FILE" ]; then
+  PVER=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' "$DEPLOY_DIR/package.json" | head -1)
+  PREV=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo "?")
+  POUT=$(TELEGRAM_ENV_FILE="$TG_ENV_FILE" bash "$SRC/scripts/notify-progress.sh" "已部署 v$PVER ($PREV)" 2>&1 || true)
+  case "$POUT" in
+    *'"ok":true'*) echo "TG 进度已发 v$PVER ($PREV)" ;;
+    *) echo "TG 进度失败：$(printf '%s' "$POUT" | head -c 120)" ;;
+  esac
+fi

@@ -39,6 +39,8 @@
 5. 失败了先修；同一个检查连续两轮修不绿，停下报告，不要硬提交。
 6. 通过后：升 package.json 版本 → 更新 CHANGELOG.md / HANDOFF.md / GOALS.md / 相关 docs → git add/commit/push → deploy.sh → /api/health 探活。
 7. 一个提交只解决一个 goal；不要混入下一个 goal。
+8. 每轮修改 `PROGRESS.md` 的百分比；部署脚本会自动把最新进度发到 Telegram。
+9. 单独发进度时：`TELEGRAM_ENV_FILE=<环境文件> bash scripts/notify-progress.sh "<一句话>"`；没有环境文件就跳过，不打印 token。
 
 推进顺序：
 - 已完成的 goal 不要重做：G0、G1、G2、G7、G8、G9。
@@ -59,11 +61,14 @@
 除以上情况，不要停，不要问“要继续吗”，直接做下一个可执行 goal。
 
 输出格式（每轮结束）：
+0. 开头固定一行：🛠 正在开发：<当前 G> · <百分比>% · 总进度约 <百分比>%
 1. 当前 goal 和状态（完成/进行中/blocked）。
 2. 改了什么（文件/接口/数据）。
 3. 证据（检查结果、版本、health）。
 4. 下一轮要做什么。
 5. 只有 blocked 时才写“需要你做什么”。
+
+进度以 `pta/docs/PROGRESS.md` 为准；每轮结束前更新当前 G 的百分比和总进度。
 
 现在从 G10 开始。先给 3 句话计划，然后直接改代码。
 ```
