@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.140 · 2026-11-16
+
+### 修复
+- 手机底部导航：旧图标轨 CSS 把 `.dock-label` 设为绝对定位、`opacity:0`、`visibility:hidden`，而 `App.vue` 只有文字标签，导致导航只剩空胶囊。
+- 标签改为始终可见；手机端底栏去掉 `max-width`，全宽显示，并加 `viewport-fit=cover` + `env(safe-area-inset-bottom)`，适配 iPhone XS 的底部安全区。
+- 1280 恢复底部文字胶囊，1440 恢复右侧文字导航；375 / 390 / 1280 / 1440 无横向滚动。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21。
+
 ## v0.7.139 · 2026-11-16
 
 ### 站点包接入

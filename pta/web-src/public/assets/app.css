@@ -1744,3 +1744,33 @@ body::after {
   #set-panel .set-fields .set-field .ctl .fixed-val { white-space: normal; height: auto; min-height: 34px; line-height: 1.5; overflow-wrap: anywhere; }
   #set-panel .set-fields .set-field .ctl .fixed-val.ref { padding: 0; }
 }
+
+/* 导航条修正：模板只有文字，不能沿用旧图标轨的 tooltip 隐藏；手机全宽并留 iPhone 安全区 */
+.dock-item .dock-label {
+  position: static; right: auto; top: auto; transform: none;
+  display: block; padding: 0; border-radius: 0; background: none;
+  color: inherit; font-size: inherit; line-height: inherit; letter-spacing: 0;
+  white-space: nowrap; box-shadow: none;
+  opacity: 1; visibility: visible; pointer-events: auto;
+}
+.dock-item .dock-label::after { display: none; }
+@media (max-width: 900px) {
+  .dock {
+    left: 0; right: 0; bottom: 0; top: auto; transform: none;
+    width: 100%; max-width: none; height: auto;
+    min-height: calc(52px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box; overflow: visible;
+    justify-content: space-around; gap: 0;
+  }
+  .dock-item {
+    flex: 1 1 0; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; padding: 5px 1px; border-radius: 10px;
+  }
+  .dock-label { display: block; font-size: 10px; line-height: 1.2; text-align: center; white-space: nowrap; }
+  .main { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 360px) {
+  .dock-label { font-size: 9px; }
+}
