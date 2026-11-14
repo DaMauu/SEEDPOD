@@ -44,18 +44,9 @@
 .view[data-view="crawl"] .drawer-head { padding: 13px 22px; }
 .view[data-view="crawl"] .drawer-title { font-size: 14px; }
 /* 下载器栏目与其它栏目统一 */
-.view[data-view="crawl"] .drawer[data-name="下载器"] .drawer-body-flush { padding: 0 22px 10px; }
-.nodes-inner { border-top: 1px solid var(--line); }
 /* 下载器：去掉列表外框，行分隔保留 */
-.nodes-inner .nodes-grid { background: transparent; border: 0; border-radius: 0; }
-.node-row { padding: 9px 2px; }
 /* 下载器：底部操作行与其它栏目保存按钮同规格 */
-.view[data-view="crawl"] .drawer[data-name="下载器"] .drawer-body-flush { padding-bottom: 8px; }
-/* 行与栏目标题左边缘对齐，右侧统一收在 1276 */
-.view[data-view="crawl"] .drawer[data-name="下载器"] .nodes-inner { padding-left: 0; padding-right: 0; }
-.view[data-view="crawl"] .drawer[data-name="下载器"] .node-row {
-  grid-template-columns: 200px 118px 1fr 60px 44px; padding: 5.5px 27px; margin: 0 -23px; }
-.view[data-view="crawl"] .drawer[data-name="下载器"] .nr-set { justify-self: end; }/* 开关型行压紧：说明改成同一行的浅色小字 */
+/* 行与栏目标题左边缘对齐，右侧统一收在 1276 *//* 开关型行压紧：说明改成同一行的浅色小字 */
 /* 保存栏不再画分隔线，避免与最后一行分隔线叠在一起 */
 /* 左上角：固定品牌，不随页面变化 */
 .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); }
@@ -72,8 +63,6 @@
 /* 设置页控件收进卡片内边距，不再顶到右边缘 */
 /* 日志右侧留白 */
 /* 下载器：容量文字固定宽度，进度条起点对齐 */
-.view[data-view="crawl"] .drawer[data-name="下载器"] .nr-cap { flex: 0 0 148px; }
-.view[data-view="crawl"] .drawer[data-name="下载器"] .nr-pct { flex: 0 0 34px; }
 /* 日志：SSH 终端黑绿 */
 @keyframes term-blink { 50% { opacity: 0; } }
 /* 日志页：内容回到顶部 */

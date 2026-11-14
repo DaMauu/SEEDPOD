@@ -1,0 +1,69 @@
+/* 共用表单：Settings / Sites / Crawl 的字段行 */
+.set-desc { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.set-fields { margin-top: 14px; }
+.set-field { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px 0; border-bottom: 1px solid #f4f5f8; }
+.set-field:last-child { border-bottom: 0; }
+.set-field .lbl span { display: block; font-size: 13px; color: var(--ink); }
+.set-field .lbl i { display: block; margin-top: 4px; font-size: 11px; color: var(--muted-2); font-style: normal; }
+.set-field .ctl { flex: 0 0 auto; }
+.set-field .ctl .input, .set-field .ctl .select { width: 240px; height: 34px; font-size: 12.5px; }
+@media (max-width: 1000px) {
+  .set-field { flex-direction: column; align-items: stretch; gap: 8px; }
+  .set-field .ctl .input, .set-field .ctl .select { width: 100%; }
+}
+.set-fields .set-field { padding: 13px 0; border-bottom: 1px solid #f6f7f9; }
+/* 设置页：加大主次差 */
+.set-fields .set-field:last-child { border-bottom: 0; }
+.set-field .lbl span { font-size: 13px; color: var(--ink); font-weight: 500; }
+.set-field .lbl i { font-size: 11px; color: var(--muted); margin-top: 5px; }
+/* 共用抽屉 */
+.drawer + .drawer { border-top: 1px solid var(--line); }
+.drawer-head { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; border: 0; background: none; padding: 17px 24px; cursor: pointer; font: inherit; }
+.drawer-head:hover { background: #fafbfd; }
+.drawer-title { font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.drawer-desc { margin-top: 4px; font-size: 11.5px; color: var(--muted); }
+.drawer-meta { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.drawer-body { display: none; padding: 0 24px 14px; }
+.drawer.open .drawer-body { display: block; }
+.drawer-body .set-fields .set-field:first-child { padding-top: 6px; }
+/* 流程页：抽屉作为独立卡片 */
+.drawer { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.drawer + .drawer { border-top: 0; }
+
+/* ============ 流程页整体调整 ============ */
+.drawer-head { padding: 15px 22px; gap: 18px; }
+.drawer.open .drawer-head { border-bottom: 1px solid var(--line); background: #fcfcfd; }
+.drawer-title { font-size: 14.5px; }
+.drawer-desc { font-size: 11.5px; margin-top: 3px; color: var(--muted-2); }
+.drawer-meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.drawer-body { padding: 0 22px 16px; }
+.drawer-body .set-fields .set-field:first-child { padding-top: 8px; }
+
+/* 源站抽屉内部：去掉双层卡片感 */
+
+/* 节点抽屉内部 */
+.drawer { position: relative; }
+.drawer.open { box-shadow: 0 6px 18px -6px rgba(16,24,40,.12), 0 1px 2px rgba(16,24,40,.04); }
+.drawer-head { border-radius: 14px; }
+.drawer.open .drawer-head { border-radius: 14px 14px 0 0; }
+/* 流程页：撑满视口，展开不产生整页滚动条 */
+.view[data-view="crawl"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
+.view[data-view="crawl"][hidden] { display: none !important; }
+.view[data-view="crawl"] .drawers { flex: 1; min-height: 0; height: auto; }
+.drawer-body-flush { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.drawer:not(.open) .drawer-body-flush { display: none; }
+/* 全局隐藏滚动条（仍可滚动） */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+html, body { overflow-x: hidden; }
+.drawer-body-flush { overflow: hidden; }
+.drawer:not(.open) .drawer-head { padding: 12px 22px; }
+.drawer:not(.open) .drawer-desc { display: none; }
+.drawer:not(.open) .drawer-head { padding: 10px 22px; }
+.drawer:not(.open) .drawer-title { font-size: 13.5px; }
+/* 站点独立页 */
+.drawer:not(.open) .drawer-desc { display: block; }
+.drawer:not(.open) .drawer-title { font-size: 14.5px; }
+.drawer:not(.open) .drawer-head { padding: 14px 22px; }
+#confirm-modal { z-index: 420; }
+

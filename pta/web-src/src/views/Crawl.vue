@@ -577,12 +577,27 @@ const RuleOrSpecial = (props) => {
 }
 RuleOrSpecial.props = { r: { type: Object, required: true } }
 
-onMounted(() => {
-  loadSites()
+function visible() {
+  const v = document.querySelector('[data-view="crawl"]')
+  return !!(v && !v.hidden)
+}
+function loggedIn() {
+  return !document.querySelector('#login-mask')
+}
+function ensure() {
+  if (!visible() || !loggedIn()) return
+  if (!sites.value.length) loadSites()
   loadFlow()
+}
+onMounted(() => {
+  window.addEventListener('hashchange', ensure)
+  ensure()
   loadLastDry()
 })
-onUnmounted(stopDry)
+onUnmounted(() => {
+  window.removeEventListener('hashchange', ensure)
+  stopDry()
+})
 </script>
 
 <style scoped>
@@ -718,4 +733,32 @@ onUnmounted(stopDry)
 .flow-group :deep(.pair-lbl .todo-badge) { flex: 0 0 auto; margin-left: 0; }
 
 @media (max-width:900px){.flow-group.cond :deep(.set-field),.flow-group :deep(.set-field.pick){grid-template-columns:1fr;gap:2px}}
+
+/* Crawl 目标站弹窗：页面专属规则，迁入 scoped */
+.target-item { display: grid; grid-template-columns: 1fr 150px 76px; gap: 12px; align-items: center; width: 100%; text-align: left; border: 0; background: none; padding: 11px 12px; border-radius: 10px; cursor: pointer; font: inherit; }
+.target-item:hover { background: #f7f8fa; }
+.target-item.on { background: var(--accent-soft); }
+.target-item .chip { justify-self: start; }
+#crawl-panel { display: flex; flex-direction: column; gap: 14px; }
+#crawl-panel { display: contents; }
+
+/* Crawl 目标站弹窗：页面专属规则，迁入 scoped */
+.tp-info { text-align: right; }
+.tp-info b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
+.ti-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ti-host { font-size: 11.5px; color: var(--muted-2); font-family: var(--mono, monospace); }
+.tp-ava { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+.tp-ava.u3d { background: #f3e8ff; color: #7e22ce; }
+.tp-ava.gz { background: #ecfeff; color: #0e7490; }
+.tp-ava.oth { background: #f1f5f9; color: #64748b; }
+.tp-info { text-align: left; margin-right: 6px; }
+.tp-info b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+.tp-info span { display: block; font-size: 11px; color: var(--muted-2); margin-top: 2px; }
+
+@media (max-width: 600px) {
+.target-item { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
+.ti-name { grid-column: 1; }
+.ti-host { grid-column: 1; grid-row: 2; }
+.target-item .chip { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+}
 </style>

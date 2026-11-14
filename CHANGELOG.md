@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.160 · 2026-11-17
+
+### 页面 scoped 彻底收口
+- 把 04 里剩余的 Crawl 目标站弹窗规则迁入 `Crawl.vue` scoped，Nodes 的 `.nodes-*` / `.node-row` / `.nr-*` / `.nd-cats*` / `.modal-two` 迁入 `Nodes.vue` scoped；04 改名为 `04-shared-forms-drawers.css`，只留共享表单/抽屉/外框规则。
+- 06 里带 `.view[data-view="crawl"] .drawer[data-name="下载器"]` 前缀的 Nodes 规则也迁入 `Nodes.vue`，下载器容量列和行布局保持原样。
+- Nodes 390：下载器行改成名称/状态第一行、容量/设置第二行；下载器弹窗 `.modal-two` 单列，避免表单挤在一起。
+- Crawl 目标站弹窗 390：目标站名称/域名两行、状态标签靠右，不再把站名挤成「Demo / A」。
+- Crawl 登录后自动补载站点与流程配置；登录前 401 不再导致来源站/目标站列表为空。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者；1280 / 768 / 390 视觉通过。
+
 ## v0.7.159 · 2026-11-17
 
 ### 小屏收口

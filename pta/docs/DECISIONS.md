@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D29 共享模块只留共用规则，页面规则清空即改名（2026-11-17）
+
+定了：04 里的 Crawl 目标站和 Nodes 规则全部迁到各自 SFC；文件只剩共用表单/抽屉/外框规则后，改名为 `04-shared-forms-drawers.css`。下载器行和弹窗在 ≤600px 用两行/单列布局。
+为什么：文件名继续叫 settings-flow 会误导，后续又容易把页面规则塞回去；Nodes 五列网格在 390 会挤到 0 宽。
+代价：Crawl/Nodes 的 scoped 样式变长；共享模块的边界要靠检查脚本和 grep 守住。
+
 ## D28 移动端列表整页滚、筛选两列网格（2026-11-17）
 
 定了：≤600px 的站点列表取消内部滚动，随页面展开；数据清单筛选栏改两列网格，搜索和目标站占整行，按钮两列、导出独占一行。队列空态列表和详情统一全宽。Crawl 条件字段≤900px 标签在上、控件在下，「未接」徽标固定贴标签右侧。
@@ -120,7 +126,7 @@
 ## D26 Settings 的 ID 规则保留前缀迁 scoped（2026-11-17）
 
 定了：`#set-panel ...` 规则整体迁 `Settings.vue` scoped 时保留 `#set-panel` 前缀，不降成 `.set-field`；共用 `set-field` / `set-fields` / `fixed-val` 基础规则留全局。
-为什么：SFC 的 scoped CSS 先于全局样式加载，降特异性后会被 `04-settings-flow.css` / `08-components.css` 的共用规则覆盖。
+为什么：SFC 的 scoped CSS 先于全局样式加载，降特异性后会被 `04-shared-forms-drawers.css` / `08-components.css` 的共用规则覆盖。
 代价：scoped 选择器更长；`#set-panel` 必须保持唯一。
 
 ## D25 窄屏优先保证主要内容可读（2026-11-17）

@@ -314,3 +314,80 @@ onUnmounted(() => {
   if (timer) clearInterval(timer)
 })
 </script>
+
+<style scoped>
+/* Nodes：页面专属规则，迁入 scoped */
+.nodes-sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.nodes-sum span { display: block; font-size: 11px; color: var(--muted); }
+.nodes-sum b { display: block; margin-top: 5px; font-size: 18px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.nodes-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1240px) {
+.nodes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1240px) {
+.nodes-sum { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 760px) {
+.nodes-grid { grid-template-columns: 1fr; }
+}
+.nodes-inner { padding: 16px 20px 20px; }
+.nodes-inner .nodes-sum { margin-bottom: 14px; }
+.nodes-inner .nodes-grid { gap: 12px; }
+.nodes-inner { padding: 14px 20px 18px; }
+.nodes-inner .nodes-sum { display: flex; gap: 10px; background: none; border-radius: 0; margin-bottom: 12px; }
+.nodes-inner { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.modal-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nodes-inner .nodes-grid { gap: 10px; }
+.nodes-inner .nodes-sum { margin-bottom: 10px; }
+.nodes-inner .nodes-sum span { font-size: 10px; }
+.nodes-inner .nodes-sum b { font-size: 15px; margin-top: 3px; }
+.nodes-inner .nodes-sum { display: none; }
+.nodes-inner .nodes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.nd-cats { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.nodes-inner .nodes-grid { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.node-row { display: grid; grid-template-columns: 190px 110px 1fr 64px 44px; align-items: center; gap: 12px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.node-row:last-child { border-bottom: 0; }
+.node-row:hover { background: #fafbfd; }
+.node-row.warn .nr-bar i { background: var(--amber); }
+.node-row.off .nr-bar i { background: #d7dae1; }
+.node-row .badge { justify-self: start; font-size: 10px; padding: 1px 6px; }
+.node-row.off .nr-name b, .node-row.off .nr-cap { color: var(--muted); }
+
+/* Nodes：页面专属规则，迁入 scoped */
+.nd-cats-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.nd-cats-list .cat-chip i { font-style: normal; font-size: 10px; color: var(--muted-2); margin-left: 5px; }
+.nd-cats-list .cat-chip.on i { color: var(--accent); }
+.nr-name b { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.nr-tag { margin-left: 6px; font-size: 9.5px; color: var(--muted-2); border: 1px solid var(--line-2); border-radius: 5px; padding: 1px 4px; }
+.nr-host { font-size: 11px; color: var(--muted); }
+.nr-disk { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.nr-cap { font-size: 11.5px; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nr-bar { flex: 1; height: 4px; border-radius: 99px; background: #f1f3f7; overflow: hidden; min-width: 60px; }
+.nr-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.nr-pct { font-size: 10.5px; color: var(--muted); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+.nr-set { justify-self: end; font-size: 11px; color: var(--muted); }
+.nr-set:hover { color: var(--accent); }
+
+/* Nodes：下载器抽屉与卡片规则，迁入 scoped */
+.drawer .drawer-body-flush { padding: 0 22px 10px; }
+.nodes-inner { border-top: 1px solid var(--line); }
+.nodes-inner .nodes-grid { background: transparent; border: 0; border-radius: 0; }
+.node-row { padding: 9px 2px; }
+.drawer .drawer-body-flush { padding-bottom: 8px; }
+.nodes-inner { padding-left: 0; padding-right: 0; }
+.node-row {
+  grid-template-columns: 200px 118px 1fr 60px 44px; padding: 5.5px 27px; margin: 0 -23px; }
+.nr-set { justify-self: end; }
+.nr-cap { flex: 0 0 148px; }
+.nr-pct { flex: 0 0 34px; }
+
+@media (max-width: 600px) {
+.node-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name badge" "disk set"; gap: 4px 8px; padding: 8px 10px; }
+.nr-name { grid-area: name; }
+.node-row .badge { grid-area: badge; justify-self: end; }
+.nr-disk { grid-area: disk; }
+.nr-set { grid-area: set; justify-self: end; }
+.nr-host { display: none; }
+.modal-two { grid-template-columns: 1fr; }
+}
+</style>
