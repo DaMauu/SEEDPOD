@@ -98,7 +98,7 @@
 | --- | --- | --- | --- |
 | M5 | 元数据/命名/分类/简介 ✅ | 0.7.112：`parseRelease`/`buildNames` + `/api/meta/parse` + preview 接入；meta 11/11；TMDB/豆瓣仍待 key | TMDB key（用户提供） |
 | M6 | MediaInfo/截图/图床/种子 ✅ | 0.7.113 模块 + 0.7.114 API + 0.7.116 队列页入口（media 7/7、media-api 6/6） | ffmpeg（已有）、mediainfo（可选） |
-| M7 | 客户端抽象 ✅ | qB 完成；0.7.115 已接 watch 目录（写种子/探测/发布，clients 4/4）；rTorrent/Deluge 以后再加 | 本地 mock |
+| M7 | 客户端抽象 ✅ | qB + watch + rTorrent + Deluge（0.7.121，clients 5/5、clients-ext 4/4，本地 mock） | 本地 mock |
 | M8 | 站点提交适配 ✅ | 0.7.111：三引擎路径/字段骨架 + `data/site-pack.json` 覆盖；mock 上传/回查 target 6/6；队列页有“提交目标站” | 真实站名不入库 |
 | M9 | CLI + Docker ✅ | 0.7.117：`pta` CLI 支持 status/queue/crawl/screen/publish/targets/target-upload/verify，默认干跑；cli 7/7；Docker 两阶段已有 | 现有后端 |
 | M10 | 通知/重试 ✅ | 0.7.118 Telegram 通知 + 0.7.119 failed 重试（notify 7/7、clients 5/5） | M8 |

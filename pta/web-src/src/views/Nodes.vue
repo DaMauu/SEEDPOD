@@ -51,15 +51,17 @@
         <label class="field"><span>类型</span>
           <select v-model="form.kind" class="select">
             <option value="qb">qBittorrent</option>
+            <option value="rtorrent">rTorrent</option>
+            <option value="deluge">Deluge</option>
             <option value="watch">watch 目录</option>
           </select></label>
         <template v-if="form.kind === 'qb'">
-          <label class="field"><span>地址</span>
+          <label class="field"><span>Web 地址</span>
             <input v-model="form.url" class="input" placeholder="http://主机:端口，qB 的 Web 地址就是它的 API 地址"></label>
           <div class="modal-two">
-            <label class="field"><span>qB 用户名</span>
+            <label class="field"><span>用户名（qB / rTorrent）</span>
               <input v-model="form.user" class="input" placeholder="admin"></label>
-            <label class="field"><span>qB 密码</span>
+            <label class="field"><span>密码（qB / Deluge / rTorrent）</span>
               <input v-model="form.pass" class="input" type="password" :placeholder="editing ? '留空表示不改已存的密码' : '不设置就留空'" autocomplete="new-password"></label>
           </div>
           <div class="set-field">
@@ -259,7 +261,7 @@ async function testConn() {
     req = fetch('/api/downloaders/probe', {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url, user: form.user, pass: form.pass })
+      body: JSON.stringify({ kind: form.kind, url, user: form.user, pass: form.pass })
     })
   }
   const out = await req.then(r => r.json()).catch(() => null)

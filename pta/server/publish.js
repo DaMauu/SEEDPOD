@@ -3,6 +3,8 @@
 const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
+const rtorrent = require('./clients/rtorrent');
+const deluge = require('./clients/deluge');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
@@ -102,6 +104,44 @@ function makePublisher(ctx) {
         qb: { added: true, client: 'watch', path: w.path, message: w.message || 'Ok.', hash: meta.hash || '', verified: true, state: 'watch' },
         msg: it.pubMsg } };
     }
+    const clientKind = dl.kind || 'qb';
+    if (clientKind === 'rtorrent' || clientKind === 'deluge') {
+      const mod = clientKind === 'rtorrent' ? rtorrent : deluge;
+      const cadd = await mod.addTorrent(dl, got.buf, {
+        filename: String(it.title || 'upload').slice(0, 60) + '.torrent',
+        savePath: b.savePath || it.savePath
+      });
+      if (!cadd.ok) {
+        it.status = 'failed';
+        it.pubMsg = clientKind + ' 添加失败：' + (cadd.message || 'unknown');
+        save(it);
+        return { ok: false, code: clientKind.toUpperCase() + '_ADD_FAILED', message: it.pubMsg, http: 502 };
+      }
+      const cchk = await mod.findTorrent(dl, meta.hash);
+      it.status = 'published';
+      it.publishedAt = now();
+      it.approvedAt = it.approvedAt || now();
+      it.qb = { id: dl.id, name: dl.name || '', at: it.publishedAt, message: cadd.message || 'Ok.',
+        hash: meta.hash || '', torrentName: meta.name || '', state: cchk.state || '',
+        progress: Number(cchk.progress) || 0, verified: !!cchk.found, client: clientKind };
+      it.pubMsg = '已通过 ' + clientKind + ' 添加' + (cchk.found ? '并校验到种子' : '，回查暂未找到');
+      save(it);
+      db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
+        .run(it.id, JSON.stringify(it), it.publishedAt);
+      if (it.catalogId) {
+        const c = one('SELECT data FROM catalog WHERE id = ?', String(it.catalogId));
+        if (c) {
+          const cd = jparse(c.data) || {};
+          cd.status = 'published';
+          cd.updatedAt = now();
+          db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
+        }
+      }
+      return { ok: true, data: { id: it.id, dryRun: false, published: true,
+        qb: { added: true, client: clientKind, message: cadd.message || 'Ok.', hash: meta.hash || '', verified: !!cchk.found, state: cchk.state || '' },
+        msg: it.pubMsg } };
+    }
+
     const add = await qb.addTorrent(dl, got.buf, {
       savePath: b.savePath || it.savePath,
       category: b.category || it.category,

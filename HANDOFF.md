@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 22:00（当前 v0.7.120 / 环境与产品边界硬约束清理完成）
+最后更新：2026-11-15 23:00（当前 v0.7.121 / rTorrent + Deluge 已接，clients-ext 4/4）
+
+## 2026-11-15 M7：rTorrent + Deluge（v0.7.121）
+
+- `clients/rtorrent.js` XML-RPC、`clients/deluge.js` Web JSON-RPC；探测/加种/回查。
+- 下载器 `kind` 扩到 qb/watch/rtorrent/deluge；发布按 kind 分派；设置 UI 可选。
+- `clients-ext` 用本地 mock 服务，4/4；真实 daemon 未测。
+- 下一步：元数据两种来源（无 key Wikipedia/Wikidata、有 key TMDB），以及面板内站点/上传映射配置。
 
 ## 2026-11-15 环境与产品边界（v0.7.120）
 

@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.121 · 2026-11-15
+
+### 新增
+- 下载器直连 rTorrent（XML-RPC）与 Deluge（Web JSON-RPC）：探测、加种、按 infohash 回查；`kind` 支持 qb/watch/rtorrent/deluge。
+- 发布链路按 `kind` 分派；rTorrent/Deluge 添加后回查并写 `qb.client/state/progress/verified`。
+- 下载器设置 UI 支持四种类型；`clients-ext` 夹具用本地 mock XML-RPC/JSON-RPC，4/4。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 5/5、clients-ext 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.120 · 2026-11-15
 
 ### 调整
