@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.116 · 2026-11-15
+
+### 新增
+- 待审核页加“媒体”卡：填 `PTA_MEDIA_ROOT` 下的文件路径，可探测、生成 3 张截图（直接写入队列）、生成种子；生成的种子 base64 会随“提交目标站”一起发送，省一次源站下载。
+- smoke 增加媒体卡渲染断言，smoke-live 20/20。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 4/4、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.115 · 2026-11-15
 
 ### 新增

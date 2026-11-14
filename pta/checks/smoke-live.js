@@ -199,6 +199,9 @@ async function main() {
     await page.waitForTimeout(400);
     const txt = await page.locator('#queue-detail').innerText();
     need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
+    need(await page.locator('.qd-media').count() === 1, '媒体卡缺失');
+    const mtxt = await page.locator('.qd-media').innerText();
+    need(/探测/.test(mtxt) && /生成截图/.test(mtxt) && /生成种子/.test(mtxt), '媒体按钮缺失：' + mtxt.slice(0, 80));
   });
 
   await check('数据清单渲染、筛选与标记', async () => {

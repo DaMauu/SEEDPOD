@@ -97,6 +97,26 @@
               <button class="shot add" type="button" @click="pickFiles">上传</button>
             </div>
           </section>
+
+          <section class="sd-card qd-media">
+            <h3>媒体</h3>
+            <div class="qd-field">
+              <span>文件</span>
+              <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
+            </div>
+            <div class="qd-field">
+              <span>Tracker</span>
+              <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
+            </div>
+            <div class="qd-actions">
+              <button class="btn ghost slim" type="button" :disabled="media.probing" @click="probeMedia">{{ media.probing ? '探测中…' : '探测' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.shooting" @click="shootMedia">{{ media.shooting ? '截图中…' : '生成截图' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.making" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成种子' }}</button>
+            </div>
+            <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
+            <div v-if="media.torrent" class="t-sub">种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
+            <div v-else class="soft">先填 {{ media.root || 'PTA_MEDIA_ROOT' }} 下的文件路径；生成种子后可随“提交目标站”一起用。</div>
+          </section>
         </div>
 
         <div v-if="sel.pubMsg" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ sel.pubMsg }}</div>
@@ -144,6 +164,8 @@ const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false })
+const media = reactive({ path: '', announce: '', probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
+let mediaCfgLoaded = false
 const filePick = ref(null)
 let timer = null
 let qTimer = null
@@ -198,6 +220,11 @@ async function select(id) {
     const j = await (await fetch('/api/queue/' + encodeURIComponent(id), { credentials: 'same-origin' })).json()
     if (!j || !j.ok) return
     sel.value = j.data
+    media.path = ''
+    media.announce = ''
+    media.probe = null
+    media.torrent = null
+    loadMediaConfig()
     form.title = j.data.title || ''
     form.cn = j.data.cn || ''
     form.intro = j.data.intro || ''
@@ -250,10 +277,12 @@ async function submitTarget() {
   if (!host) { toast('先选目标站'); return }
   busy.target = true
   try {
+    const body = { queueId: sel.value.id, dryRun: false }
+    if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
     const r = await fetch('/api/targets/' + encodeURIComponent(host) + '/upload', {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ queueId: sel.value.id, dryRun: false })
+      body: JSON.stringify(body)
     })
     const j = await r.json().catch(() => null)
     if (j && j.ok) {
@@ -263,6 +292,71 @@ async function submitTarget() {
     } else toast((j && j.error && j.error.message) || ('提交失败 ' + r.status))
   } catch (e) { toast('提交请求发不出去') }
   busy.target = false
+}
+function fmtSize(n) {
+  let v = Number(n) || 0
+  if (!v) return '—'
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++ }
+  return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + ' ' + u[i]
+}
+async function loadMediaConfig() {
+  if (mediaCfgLoaded || !loggedIn()) return
+  try {
+    const j = await (await fetch('/api/media/config', { credentials: 'same-origin' })).json()
+    if (j && j.ok) { media.root = j.data.root || ''; mediaCfgLoaded = true }
+  } catch (e) {}
+}
+async function probeMedia() {
+  if (!sel.value || media.probing) return
+  if (!media.path.trim()) { toast('先填媒体文件路径'); return }
+  media.probing = true
+  try {
+    const j = await (await fetch('/api/media/probe', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: media.path.trim() })
+    })).json()
+    if (j && j.ok) { media.probe = j.data; toast('探测完成：' + (j.data.summary || j.data.format || 'OK')) }
+    else toast((j && j.error && j.error.message) || '探测失败')
+  } catch (e) { toast('探测请求发不出去') }
+  media.probing = false
+}
+async function shootMedia() {
+  if (!sel.value || media.shooting) return
+  if (!media.path.trim()) { toast('先填媒体文件路径'); return }
+  media.shooting = true
+  try {
+    const j = await (await fetch('/api/media/shots', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: media.path.trim(), count: 3, width: 1280 })
+    })).json()
+    if (!j || !j.ok) { toast((j && j.error && j.error.message) || '截图失败'); media.shooting = false; return }
+    const shots = (j.data.items || []).map(x => ({ name: x.name, url: x.dataUrl }))
+    if (!shots.length) { toast('没有生成截图'); media.shooting = false; return }
+    const add = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/shots', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ shots })
+    })).json()
+    toast(add && add.ok ? ('已加入 ' + shots.length + ' 张截图') : ((add && add.error && add.error.message) || '截图没存进队列'))
+    await refresh()
+  } catch (e) { toast('截图请求发不出去') }
+  media.shooting = false
+}
+async function makeMediaTorrent() {
+  if (!sel.value || media.making) return
+  if (!media.path.trim()) { toast('先填媒体文件路径'); return }
+  if (!media.announce.trim()) { toast('先填 tracker announce'); return }
+  media.making = true
+  try {
+    const j = await (await fetch('/api/media/torrent', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: media.path.trim(), announce: media.announce.trim(), name: sel.value.title })
+    })).json()
+    if (j && j.ok) { media.torrent = j.data; toast('种子已生成：' + j.data.infohash) }
+    else toast((j && j.error && j.error.message) || '生成种子失败')
+  } catch (e) { toast('种子请求发不出去') }
+  media.making = false
 }
 async function preview() {
   if (!sel.value) return
@@ -371,7 +465,7 @@ async function removeShot(i) {
     await refresh()
   } catch (e) { toast('删除失败') }
 }
-function ensure() { if (visible() && loggedIn()) { loadSites(); load() } }
+function ensure() { if (visible() && loggedIn()) { loadSites(); loadMediaConfig(); load() } }
 onMounted(() => {
   window.addEventListener('hashchange', ensure)
   timer = setInterval(() => { if (!loaded) ensure() }, 1500)

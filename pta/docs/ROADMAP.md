@@ -97,7 +97,7 @@
 | 里程碑 | 内容 | 验收 | 依赖 |
 | --- | --- | --- | --- |
 | M5 | 元数据/命名/分类/简介 ✅ | 0.7.112：`parseRelease`/`buildNames` + `/api/meta/parse` + preview 接入；meta 11/11；TMDB/豆瓣仍待 key | TMDB key（用户提供） |
-| M6 | MediaInfo/截图/图床/种子 | 0.7.113 模块 + 0.7.114 API（media 7/7、media-api 6/6）；队列页入口待接 | ffmpeg（已有）、mediainfo（可选） |
+| M6 | MediaInfo/截图/图床/种子 ✅ | 0.7.113 模块 + 0.7.114 API + 0.7.116 队列页入口（media 7/7、media-api 6/6） | ffmpeg（已有）、mediainfo（可选） |
 | M7 | 客户端抽象 ✅ | qB 完成；0.7.115 已接 watch 目录（写种子/探测/发布，clients 4/4）；rTorrent/Deluge 以后再加 | 本地 mock |
 | M8 | 站点提交适配 ✅ | 0.7.111：三引擎路径/字段骨架 + `data/site-pack.json` 覆盖；mock 上传/回查 target 6/6；队列页有“提交目标站” | 真实站名不入库 |
 | M9 | CLI + Docker | `pta cli` 能跑抓取/送审/发布/校验；compose 一键起 | 现有后端 |
