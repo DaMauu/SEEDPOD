@@ -1,5 +1,5 @@
 /* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
-   旧 server/app.js 已归档到 pta/archive/server-v1.js，只读参考，不再接新需求。 */
+   旧 server/app.js 已删除，只保留 v2。 */
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');

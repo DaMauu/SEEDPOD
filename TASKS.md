@@ -16,11 +16,11 @@
 1. `smoke.js` 功能断言（23 条）：未登录弹登录页、错误密码有提示、登录后进面板、七个路由能开、分类映射能存、越界参数被拦、上传 3 张出 3 缩略图、批量查重跑完、归档与两个下载、下载器连接测试与干跑按钮在没后端时有提示、确认弹窗能开能关、无 JS 报错。
 2. `audit.js` 交互审计：把每个页面所有可点的东西逐个点一遍（约 140 个交互点），没有反应就报 DEAD；同时查重复 id、指向不存在页面的链接。
 3. `api.js` 后端契约（41 条）：起临时实例，验 health、双模式区间、越界 400、配置落盘、静态回退、站点清单结构、站点配置读写与秘密不落盘、搜索预设读写、待审核状态机与鉴权、下载器秘密不回显与本地假 qB 探测、干跑任务生命周期、并发 409、非干跑 501、登录与 401。
-4. `run.cmd` 一键跑上面三套，全绿退出 0，有失败退出 1。
+4. `run.sh` 一键跑上面三套，全绿退出 0，有失败退出 1。
 
 ## 二、自动修的闭环（每轮照做，不许跳）
 
-1. 先跑 `run.cmd`，把失败项原文记下来（哪条、报什么）。
+1. 先跑 `run.sh`，把失败项原文记下来（哪条、报什么）。
 2. 只改导致失败的最小范围；一次只修一条失败。
 3. 改完立刻重跑；全绿才 `git commit`，红了不许提交。
 4. 同一条失败修两轮还不好：`git checkout -- <改过的文件>` 回滚，把这条标 blocked，写清原因。
@@ -38,7 +38,7 @@
 ## 四、跑检查
 
 ```
-pta\checks\run.cmd
+pta/checks/run.sh
 ```
 
 没有 node 环境时：
@@ -46,7 +46,7 @@ pta\checks\run.cmd
 ```
 set PTA_NODE=<node.exe 路径>
 set PTA_PW=<playwright-core 目录>
-pta\checks\run.cmd
+pta/checks/run.sh
 ```
 
 ## 五、任务
@@ -264,5 +264,5 @@ pta\checks\run.cmd
 
 ## 十、M4 归档（已完成，0.7.110）
 
-- 旧 demo 的 HTML/assets 移到 `pta/archive/web-demo`；`pta/web` 只留构建产物 `dist` 和说明。
+- 旧 demo 的 HTML/assets 已删除；`pta/web` 只留构建产物 `dist` 和说明。
 - `gen-rules-tree.js` 改读 `pta/web-src/src/legacy/data.js`；`deploy.sh` 排除 `archive/`。
