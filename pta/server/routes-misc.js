@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const screen = require('./screen');
 const meta = require('./meta');
+const metaExt = require('./meta-ext');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -11,6 +12,13 @@ module.exports = function (app, ctx) {
   const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
 
   app.get('/api/meta/parse', async (req) => ok(meta.parseRelease(req.query.title || '')));
+  app.get('/api/meta/providers', async () => ok(metaExt.providers()));
+  app.post('/api/meta/fetch', async (req, reply) => {
+    const b = req.body || {};
+    const r = await metaExt.fetchMeta({ title: b.title, year: b.year, type: b.type, provider: b.provider, key: b.key });
+    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    return ok(reply, r);
+  });
 
   app.get('/api/sites/:host/search', async (req, reply) => {
     const host = req.params.host;

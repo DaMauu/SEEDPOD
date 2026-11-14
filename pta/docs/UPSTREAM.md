@@ -113,3 +113,10 @@
 - 观察到的行为：watch 客户端只需把 `.torrent` 原子写入监视目录；状态由外部客户端接管，面板拿不到 qB 那样的进度。
 - 许可/可用性：目录约定是事实性接口，自己实现。
 - 我们的决定：下载器加 `kind=qb|watch`；watch 写 0600 文件并标记 `verified=true/state=watch`，不假装能回查外部客户端状态。
+
+## 2026-11-16 · 外部元数据（Wikipedia / TMDB）
+
+- 来源：Wikipedia API、TMDB API 公开文档；UA/upbrr 只作流程参考，未取代码/配置/key。
+- 观察：无 key 可用 Wikipedia 搜索+摘要；有 key 用 TMDB 搜索+详情+credits，能拿导演/演员/海报。
+- 许可/可用性：公共 API；TMDB key 用户自己提供，不进仓库。
+- 决定：`meta-ext.js` 两个 provider，失败回退本地标题解析；mock 夹具测试，不拿真实数据写死。

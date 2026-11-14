@@ -96,7 +96,7 @@
 
 | 里程碑 | 内容 | 验收 | 依赖 |
 | --- | --- | --- | --- |
-| M5 | 元数据/命名/分类/简介 ✅ | 0.7.112：`parseRelease`/`buildNames` + `/api/meta/parse` + preview 接入；meta 11/11；TMDB/豆瓣仍待 key | TMDB key（用户提供） |
+| M5 | 元数据/命名/分类/简介 ✅ | 0.7.112 本地解析 + 0.7.124 外部元数据（无 key Wikipedia、有 key TMDB）；meta 11/11、meta-ext 5/5 | TMDB key（用户提供） |
 | M6 | MediaInfo/截图/图床/种子 ✅ | 0.7.113 模块 + 0.7.114 API + 0.7.116 队列页入口（media 7/7、media-api 6/6） | ffmpeg（已有）、mediainfo（可选） |
 | M7 | 客户端抽象 ✅ | qB + watch + rTorrent + Deluge（0.7.121，clients 5/5、clients-ext 4/4，本地 mock） | 本地 mock |
 | M8 | 站点提交适配 ✅ | 0.7.111 三引擎骨架 + 0.7.122 面板添加站点/上传定义；mock target 6/6 | 真实站配置存 data/，不进仓库 |

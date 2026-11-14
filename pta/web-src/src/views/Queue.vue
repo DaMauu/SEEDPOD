@@ -131,6 +131,7 @@
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite" title="把种子提交到目标站；真发布关闭时会提示" @click="submitTarget">{{ busy.target ? '提交中…' : '提交目标站' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
+          <button class="btn ghost slim" type="button" :disabled="busy.act" @click="fetchMeta">查资料</button>
           <div class="spacer"></div>
           <input v-model="reason" class="input slim" placeholder="驳回理由（可留空）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>
@@ -270,6 +271,20 @@ async function act(action) {
     await refresh()
   } catch (e) { toast('请求发不出去') }
   busy.act = false
+}
+async function fetchMeta() {
+  if (!sel.value) return
+  try {
+    const j = await (await fetch('/api/meta/fetch', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: sel.value.title, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
+    })).json()
+    if (j && j.ok && j.data) {
+      if (j.data.title) form.cn = j.data.title
+      if (j.data.overview) form.intro = j.data.overview
+      toast('已填入资料 · ' + j.provider)
+    } else toast((j && j.error && j.error.message) || '没查到资料')
+  } catch (e) { toast('资料请求发不出去') }
 }
 async function submitTarget() {
   if (!sel.value || busy.target) return

@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.124 · 2026-11-16
+
+### 新增
+- 外部元数据两种来源：无 key 用 Wikipedia 公共接口；有 key 用 TMDB（`TMDB_API_KEY`，不进仓库）。
+- `GET /api/meta/providers`、`POST /api/meta/fetch`；待审核页加“查资料”，查到后填副标题/简介。
+- `pta/checks/meta-ext.js`：本地 mock Wikipedia/TMDB，5/5。
+
+### 检查
+- `run.sh` 全绿：smoke-live 21/21、adapter 21/21、security 3/3、api-v2 21/21、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、meta-ext 5/5、media 7/7、media-api 6/6、clients 5/5、clients-ext 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.123 · 2026-11-16
 
 ### 自检修复
