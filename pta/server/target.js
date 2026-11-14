@@ -76,6 +76,7 @@ function makeTarget(ctx) {
     const pm = p.upload || def.uploadMap || {};
     const upload = {
       path: String(pm.path || e.uploadPath),
+      formPath: String(pm.formPath || e.formPath || pm.path || e.uploadPath),
       fileField: String(pm.fileField || e.fileField),
       fields: Object.assign({}, e.fields, pm.fields || {})
     };
@@ -275,7 +276,8 @@ function makeTarget(ctx) {
       return { ok: false, code: 'BAD_BASE', message: '上传页域名和站点域名不一致，为免 cookie 外泄先停下', http: 400 };
     }
     if (!/^https?:/i.test(t.base)) return { ok: false, code: 'BAD_BASE', message: '站点 base 必须是 http/https', http: 400 };
-    const url = t.base + t.upload.path;
+    const formPath = t.upload.formPath || t.upload.path;
+    const url = t.base + formPath;
     let res;
     try {
       res = await fetch(url, {
@@ -299,7 +301,7 @@ function makeTarget(ctx) {
     const forms = form.parse(html);
     if (!forms.length) return { ok: false, code: 'NO_FORM', message: '没识别到上传表单，可以继续手工编辑字段表', http: 422 };
     const f = forms[0];
-    return { ok: true, data: { url: url, path: t.upload.path, fileField: f.fileField || '', fields: f.fields, forms: forms } };
+    return { ok: true, data: { url: url, path: t.upload.path, formPath: formPath, fileField: f.fileField || '', fields: f.fields, forms: forms } };
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,

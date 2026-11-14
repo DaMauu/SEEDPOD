@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.135 · 2026-11-16
+
+### 修复
+- 上传表单识别拆成“提交路径”和“识别页路径”：NexusPHP 的 `/takeupload.php` 是 POST 提交地址，GET 表单页通常是另一个地址。
+- 站点定义 `uploadMap` 新增 `formPath`；识别用 `formPath`（留空回退 `path`），提交仍用 `path`。
+- 目标站夹具覆盖两者不同的情况：识别 `/upload-form`，提交 `/takeupload.php`。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、api-v2 23/23、form 5/5、target 9/9。
+
 ## v0.7.134 · 2026-11-16
 
 ### 功能

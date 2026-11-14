@@ -240,7 +240,8 @@
                       <h4>上传表单</h4>
                       <p class="set-desc">目标站上传页的字段映射；保存后发种按这张表填。识别只在你点按钮时发一次 GET。</p>
                       <div class="up-pair">
-                        <label><span>上传路径</span><input v-model="upForm.path" class="input" placeholder="/takeupload.php"></label>
+                        <label><span>提交路径</span><input v-model="upForm.path" class="input" placeholder="/takeupload.php"></label>
+                        <label><span>识别页路径</span><input v-model="upForm.formPath" class="input" placeholder="/upload.php（留空用提交路径）"></label>
                         <label><span>文件字段</span><input v-model="upForm.fileField" class="input" placeholder="file"></label>
                       </div>
                       <div v-if="upForm.fields.length" class="cm-list">
@@ -442,7 +443,7 @@ const catKind = ref('object')
 const catRows = ref([])
 const catSaving = ref(false)
 const catMsg = ref('')
-const upForm = reactive({ path: '', fileField: '', fields: [] })
+const upForm = reactive({ path: '', formPath: '', fileField: '', fields: [] })
 const upSaving = ref(false)
 const upMsg = ref('')
 const detectBusy = ref(false)
@@ -742,7 +743,7 @@ async function loadDef(host) {
   } catch (e) {}
   const s = sites.value.find(x => x.name === host)
   const tpl = { engine: (s && s.def && s.def.engine) || 'nexusphp', base: (s && s.url) || ('https://' + host),
-    uploadMap: { path: '/takeupload.php', fileField: 'file', fields: { name: '{title}', descr: '{description}', type: '{catId}', anon: '{anonymous}' } },
+    uploadMap: { path: '/takeupload.php', formPath: '/upload.php', fileField: 'file', fields: { name: '{title}', descr: '{description}', type: '{catId}', anon: '{anonymous}' } },
     verify: { path: '/torrents.php?search={title}' }, catMap: {} }
   defText.value = JSON.stringify(tpl, null, 2)
   defMsg.value = '还没有站点定义，这是模板；按站修改后保存'
@@ -856,6 +857,7 @@ async function saveCatMap() {
 function syncUpForm(def) {
   const um = (def && def.uploadMap) || {}
   upForm.path = String(um.path || '')
+  upForm.formPath = String(um.formPath || '')
   upForm.fileField = String(um.fileField || '')
   upForm.fields = Object.keys(um.fields || {}).map(function (k) {
     return { name: k, template: String(um.fields[k] == null ? '' : um.fields[k]) }
@@ -883,6 +885,7 @@ async function saveUpForm() {
   }
   def.uploadMap = Object.assign({}, def.uploadMap || {}, {
     path: String(upForm.path || '').trim(),
+    formPath: String(upForm.formPath || '').trim(),
     fileField: String(upForm.fileField || '').trim(),
     fields: fields
   })
@@ -919,6 +922,7 @@ function detectRemote() {
       }
       const d = j.data || {}
       if (d.path) upForm.path = d.path
+      if (d.formPath) upForm.formPath = d.formPath
       if (d.fileField) upForm.fileField = d.fileField
       upForm.fields = (d.fields || []).map(function (f) { return { name: f.name, template: f.template || '' } })
       detectMsg.value = '识别到 ' + upForm.fields.length + ' 个字段 · ' + (d.url || d.path || '')

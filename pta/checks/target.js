@@ -110,7 +110,7 @@ function startMock(hash) {
       });
       return;
     }
-    if (req.method === 'GET' && u.pathname === '/takeupload.php') {
+    if (req.method === 'GET' && u.pathname === '/upload-form') {
       const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'upload-form.html'), 'utf8');
       res.writeHead(200, { 'content-type': 'text/html' });
       res.end(html);
@@ -141,6 +141,7 @@ async function main() {
         base: 'http://127.0.0.1:' + mockPort,
         upload: {
           path: '/takeupload.php',
+          formPath: '/upload-form',
           fileField: 'file',
           fields: { name: '{title}', small_desc: '{subtitle}', descr: '{description}', anon: '{anonymous}' }
         },
@@ -192,6 +193,7 @@ async function main() {
     const r = await json(BASE + '/api/targets/127.0.0.1/detect-form', { method: 'POST' });
     need(r.status === 200 && r.body.ok, '识别失败：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
     need(r.body.data.path === '/takeupload.php', '上传路径不对：' + r.body.data.path);
+    need(r.body.data.formPath === '/upload-form', '识别页路径不对：' + r.body.data.formPath);
     need(r.body.data.fileField === 'torrent', '文件字段不对：' + r.body.data.fileField);
     need(r.body.data.fields.length === 6, '字段数量不对：' + r.body.data.fields.length);
     const again = await json(BASE + '/api/targets/127.0.0.1/detect-form', { method: 'POST' });

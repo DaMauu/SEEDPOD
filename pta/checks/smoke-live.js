@@ -208,12 +208,13 @@ async function main() {
     await uf.locator('input').nth(0).fill('name');
     await uf.locator('input').nth(1).fill('{title}');
     await page.locator('#site-detail .up-pair input').nth(0).fill('/takeupload.php');
-    await page.locator('#site-detail .up-pair input').nth(1).fill('torrent');
+    await page.locator('#site-detail .up-pair input').nth(1).fill('/upload.php');
+    await page.locator('#site-detail .up-pair input').nth(2).fill('torrent');
     await upBlock.locator('.cm-actions button').filter({ hasText: '保存上传映射' }).click();
     await page.waitForTimeout(600);
     const uj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
     need(uj.ok && uj.data.uploadMap && uj.data.uploadMap.fields && uj.data.uploadMap.fields.name === '{title}', '上传映射没保存');
-    need(uj.data.uploadMap.path === '/takeupload.php' && uj.data.uploadMap.fileField === 'torrent', '上传路径/文件字段没保存');
+    need(uj.data.uploadMap.path === '/takeupload.php' && uj.data.uploadMap.formPath === '/upload.php' && uj.data.uploadMap.fileField === 'torrent', '上传路径/识别页/文件字段没保存');
   });
 
   await check('流程卡与未接规则', async () => {
