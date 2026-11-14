@@ -158,6 +158,24 @@ async function main() {
     need(/没有|空/.test(txt), '队列没有空状态：' + txt.slice(0, 60));
   });
 
+  await check('待审核列表与详情', async () => {
+    await page.evaluate(async () => {
+      await fetch('/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'Smoke Queue 2020 2160p', status: 'pending', site: 'demo-a.example', targetSite: 'target.example', downloadUrl: 'http://127.0.0.1:1/t.torrent', res: '2160p', size: '20 GB' })
+      });
+    });
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { location.hash = '#queue'; });
+    await page.waitForTimeout(800);
+    need(await page.locator('.q-item').count() === 1, '队列条目数量不对');
+    await page.locator('.q-item').first().click();
+    await page.waitForTimeout(400);
+    const txt = await page.locator('#queue-detail').innerText();
+    need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
+  });
+
   await check('无 JS 报错', async () => {
     need(errors.length === 0, errors.slice(0, 3).join(' | '));
   });

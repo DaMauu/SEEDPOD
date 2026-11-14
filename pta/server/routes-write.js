@@ -110,6 +110,8 @@ module.exports = function (app, ctx) {
     if (b.anonymous !== undefined) it.anonymous = !!b.anonymous;
 
     if (b.action === 'publish') {
+      db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
+        .run(it.title, JSON.stringify(it), now(), it.id);
       const r = await ctx.publisher.publishItem(req.params.id, { dryRun: false });
       if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
       return ok(reply, r.data);

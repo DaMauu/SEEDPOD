@@ -75,7 +75,7 @@
 
 ### M4 · 收尾
 
-- [x] 设置页（0.7.101）、总览页（0.7.102）已拆；queue 接口已补齐（0.7.104），下一步搬 queue；剩 sources/sites/crawl
+- [x] 设置（0.7.101）、总览（0.7.102）、待审核（0.7.105）已拆；剩 sources/sites/crawl
 - [x] smoke 重写为 smoke-live（dist + 临时后端，15/15）
 - [ ] 旧 `pta/web` 归档
 - [ ] 面板密码轮换
