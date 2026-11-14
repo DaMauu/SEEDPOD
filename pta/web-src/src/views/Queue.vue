@@ -145,6 +145,8 @@
 
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { reportError } from '../utils/errors'
+import { toast, loggedIn, viewVisible } from '../utils/ui'
 
 const tabs = [
   { v: 'all', label: '全部' },
@@ -181,19 +183,11 @@ function tone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
 function sub(it) {
   return (it.cn ? it.cn + ' · ' : '') + (it.res || '') + ' · ' + (it.size || '') + (it.targetSite ? ' · 目标 ' + it.targetSite : '')
 }
-function toast(msg) {
-  if (window.PTA && window.PTA.toast) window.PTA.toast(msg)
-}
-function loggedIn() { return !document.querySelector('#login-mask') }
-function visible() {
-  const v = document.querySelector('[data-view="queue"]')
-  return !!(v && !v.hidden)
-}
 async function loadSites() {
   try {
     const j = await (await fetch('/api/sites', { credentials: 'same-origin' })).json()
     if (j && j.ok && j.data) sites.value = j.data.sites || []
-  } catch (e) {}
+  } catch (e) { reportError('Queue', e) }
 }
 async function load(p) {
   if (!loggedIn()) return
@@ -214,7 +208,7 @@ async function load(p) {
       if (items.value.length) select(items.value[0].id)
       else sel.value = null
     }
-  } catch (e) {}
+  } catch (e) { reportError('Queue', e) }
 }
 async function select(id) {
   try {
@@ -235,7 +229,7 @@ async function select(id) {
     tags.chips = []
     tags.warnings = []
     reason.value = ''
-  } catch (e) {}
+  } catch (e) { reportError('Queue', e) }
 }
 function setTab(v) { tab.value = v; page.value = 1; load(1) }
 function debounced() {
@@ -321,7 +315,7 @@ async function loadMediaConfig() {
   try {
     const j = await (await fetch('/api/media/config', { credentials: 'same-origin' })).json()
     if (j && j.ok) { media.root = j.data.root || ''; mediaCfgLoaded = true }
-  } catch (e) {}
+  } catch (e) { reportError('Queue', e) }
 }
 async function probeMedia() {
   if (!sel.value || media.probing) return
@@ -429,7 +423,7 @@ async function bulkCheck() {
     try {
       const j = await (await fetch('/api/queue/' + encodeURIComponent(it.id) + '/check', { method: 'POST', credentials: 'same-origin' })).json()
       if (j && j.ok && j.data.duplicate) dup++
-    } catch (e) {}
+    } catch (e) { reportError('Queue', e) }
   }
   busy.check = false
   toast('查重完成：' + list.length + ' 条，重复 ' + dup + ' 条')
@@ -480,7 +474,7 @@ async function removeShot(i) {
     await refresh()
   } catch (e) { toast('删除失败') }
 }
-function ensure() { if (visible() && loggedIn()) { loadSites(); loadMediaConfig(); load() } }
+function ensure() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadMediaConfig(); load() } }
 onMounted(() => {
   window.addEventListener('hashchange', ensure)
   timer = setInterval(() => { if (!loaded) ensure() }, 1500)

@@ -256,7 +256,7 @@ async function build() {
 
 if (require.main === module) {
   build().then((app) => app.listen({ port: PORT, host: '0.0.0.0' }))
-    .then(() => console.log('SEEDPOD v2 (fastify+sqlite) on :' + PORT))
+    .then(() => console.info('SEEDPOD v2 (fastify+sqlite) on :' + PORT))
     .catch((e) => { console.error(e); process.exit(1); });
 }
 

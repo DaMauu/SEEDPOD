@@ -38,7 +38,7 @@ async function wikipedia(title, year) {
     try {
       const r = await wikiSearch(title, year, lang);
       if (r && r.overview) return r;
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   }
   return null;
 }

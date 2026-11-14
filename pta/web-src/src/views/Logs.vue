@@ -30,6 +30,8 @@
 
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { reportError } from '../utils/errors'
+import { loggedIn, viewVisible } from '../utils/ui'
 
 const filters = [
   { v: 'all', label: '全部' },
@@ -58,13 +60,6 @@ function push(r) {
   if (rows.value.length > 200) rows.value.splice(0, rows.value.length - 200)
   scrollDown()
 }
-function loggedIn() {
-  return !document.querySelector('#login-mask')
-}
-function visible() {
-  const v = document.querySelector('[data-view="logs"]')
-  return !!(v && !v.hidden)
-}
 async function load() {
   if (loaded || !loggedIn()) return
   try {
@@ -78,7 +73,7 @@ async function load() {
       scrollDown()
       connect()
     }
-  } catch (e) {}
+  } catch (e) { reportError('Logs', e) }
 }
 function connect() {
   if (es || !window.EventSource) return
@@ -93,12 +88,12 @@ function connect() {
         tag: d.src || '服务',
         msg: d.msg || ''
       })
-    } catch (e) {}
+    } catch (e) { reportError('Logs', e) }
   }
   es.onerror = () => { if (es) { es.close(); es = null } }
 }
 function ensure() {
-  if (!visible() || !loggedIn()) return
+  if (!viewVisible('logs') || !loggedIn()) return
   if (!loaded) load()
   else connect()
 }

@@ -11,7 +11,7 @@ function parseKey(raw) {
   try {
     const b = Buffer.from(s, 'base64');
     if (b.length === 32) return b;
-  } catch (e) {}
+  } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   if (s.length === 32) return Buffer.from(s, 'utf8');
   return null;
 }
@@ -24,13 +24,13 @@ function loadKey(dataDir) {
     try {
       const k = parseKey(fs.readFileSync(secretFile, 'utf8'));
       if (k) return { key: k, source: 'secret-file' };
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   }
   const file = path.join(dataDir, '.secret');
   try {
     const k = parseKey(fs.readFileSync(file, 'utf8'));
     if (k) return { key: k, source: 'file' };
-  } catch (e) {}
+  } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   const generated = crypto.randomBytes(32);
   try {
     fs.writeFileSync(file, generated.toString('hex') + '\n', { mode: 0o600 });

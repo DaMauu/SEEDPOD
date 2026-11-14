@@ -103,7 +103,7 @@ function parse(html) {
     const fields = parseFields(m[2]);
     if (!fields.length) continue;
     let action = attr(m[1], 'action');
-    try { if (/^https?:\/\//i.test(action)) action = new URL(action).pathname; } catch (e) {}
+    try { if (/^https?:\/\//i.test(action)) action = new URL(action).pathname; } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     forms.push({
       action: action || '',
       method: (attr(m[1], 'method') || 'post').toLowerCase(),

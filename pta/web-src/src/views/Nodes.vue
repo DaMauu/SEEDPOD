@@ -99,6 +99,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { reportError } from '../utils/errors'
+import { toast, confirmBox, viewVisible } from '../utils/ui'
 
 const nodes = ref([])
 const modalOpen = ref(false)
@@ -110,13 +112,6 @@ const cats = ref([])
 const catsMsg = ref('')
 let timer = null
 
-function toast(msg) {
-  if (window.PTA && window.PTA.toast) window.PTA.toast(msg)
-}
-function confirmBox(title, text, fn) {
-  if (window.PTA && window.PTA.confirm) window.PTA.confirm(title, text, fn)
-  else if (window.confirm(title + '\n\n' + text)) fn()
-}
 function fmtBytes(n) {
   let v = Number(n) || 0
   if (!v) return ''
@@ -148,10 +143,6 @@ const meta = computed(() => nodes.value.length
   ? (onlineCount.value + ' / ' + nodes.value.length + ' 在线' + (freeAll.value ? ' · 余量 ' + fmtBytes(freeAll.value) : ''))
   : '还没有下载器')
 
-function visible() {
-  const v = document.querySelector('[data-view="crawl"]')
-  return !!(v && !v.hidden)
-}
 async function load() {
   try {
     const j = await (await fetch('/api/downloaders', { credentials: 'same-origin' })).json()
@@ -160,7 +151,7 @@ async function load() {
       window.__ptaDownloaderCount = j.data.length
       if (window.__ptaPaintTopbar) window.__ptaPaintTopbar()
     }
-  } catch (e) {}
+  } catch (e) { reportError('Nodes', e) }
 }
 function ensure() { load() }
 function openAdd() {
@@ -306,7 +297,7 @@ function removeNode() {
 
 onMounted(() => {
   window.addEventListener('hashchange', ensure)
-  timer = setInterval(() => { if (visible()) load() }, 30000)
+  timer = setInterval(() => { if (viewVisible('crawl')) load() }, 30000)
   load()
 })
 onUnmounted(() => {

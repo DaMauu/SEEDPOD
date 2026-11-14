@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.168 · 2026-11-17
+
+### G2 第一批：公共 UI 函数与错误可见性
+- 新增 `pta/web-src/src/utils/ui.js`：`toast / confirmBox / loggedIn / viewVisible` 统一收口，页面内重复定义减少。
+- 新增 `pta/web-src/src/utils/errors.js`：显式 `catch (e) {}` 改为 `reportError` / `console.warn`；启动 `console.log` 改为 `console.info`。
+- 质量审计总体从 83 升到 **85**；重复函数名从 11 降到 7。
+- 全量 `run.sh`、smoke 21/21、responsive 32 项通过。
+
 ## v0.7.167 · 2026-11-17
 
 ### 测试站真实验证

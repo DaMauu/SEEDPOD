@@ -19,6 +19,7 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
+import { loggedIn, viewVisible } from '../utils/ui'
 
 const blocks = ref([])
 const error = ref('')
@@ -44,13 +45,6 @@ function parseChangelog(text) {
   return out
 }
 
-function visible() {
-  const v = document.querySelector('[data-view="changelog"]')
-  return !!(v && !v.hidden)
-}
-function loggedIn() {
-  return !document.querySelector('#login-mask')
-}
 async function load() {
   if (busy || loaded || !loggedIn()) return
   busy = true
@@ -70,7 +64,7 @@ async function load() {
   }
 }
 function ensure() {
-  if (visible() && loggedIn()) load()
+  if (viewVisible('changelog') && loggedIn()) load()
 }
 onMounted(() => {
   window.addEventListener('hashchange', ensure)

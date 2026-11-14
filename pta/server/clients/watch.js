@@ -31,7 +31,7 @@ function test(opts) {
       const st = fs.statfsSync(d.dir);
       free = Number(st.bavail) * Number(st.bsize);
       total = Number(st.blocks) * Number(st.bsize);
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     return { pass: true, version: 'watch', savePath: d.dir, freeSpace: free, totalSpace: total,
       steps: [{ step: 'write', path: d.dir, ok: true, ms: Date.now() - t0 }] };
   } catch (e) {

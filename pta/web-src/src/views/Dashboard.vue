@@ -75,6 +75,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { reportError } from '../utils/errors'
+import { loggedIn, viewVisible } from '../utils/ui'
 
 const ov = ref(null)
 const logs = ref([])
@@ -123,13 +125,6 @@ function dateOf(p) {
   const raw = String(p.publishedAt || p.at || '')
   return raw.slice(5, 16).replace('T', ' ')
 }
-function loggedIn() {
-  return !document.querySelector('#login-mask')
-}
-function visible() {
-  const v = document.querySelector('[data-view="dashboard"]')
-  return !!(v && !v.hidden)
-}
 async function load() {
   if (busy || !loggedIn()) return
   busy = true
@@ -145,16 +140,16 @@ async function load() {
     if (q && q.ok && q.data) pending.value = (q.data.items || []).slice(0, 3)
     if (p && p.ok && p.data) published.value = (p.data.items || []).slice(0, 3)
     loaded = true
-  } catch (e) {}
+  } catch (e) { reportError('Dashboard', e) }
   busy = false
 }
 function ensure() {
-  if (visible() && loggedIn()) load()
+  if (viewVisible('dashboard') && loggedIn()) load()
 }
 onMounted(() => {
   window.addEventListener('hashchange', ensure)
   bootTimer = setInterval(() => { if (!loaded) ensure() }, 1500)
-  refreshTimer = setInterval(() => { if (visible()) load() }, 30000)
+  refreshTimer = setInterval(() => { if (viewVisible('dashboard')) load() }, 30000)
   ensure()
 })
 onUnmounted(() => {

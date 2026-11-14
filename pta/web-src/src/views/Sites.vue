@@ -402,6 +402,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { reportError } from '../utils/errors'
+import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 
 const PER_PAGE = 11
 const ARCH = {
@@ -471,18 +473,6 @@ let loadBusy = false
 let bootTimer = null
 let qTimer = null
 
-function toast(msg) {
-  if (window.PTA && window.PTA.toast) window.PTA.toast(msg)
-}
-function confirmBox(title, text, fn) {
-  if (window.PTA && window.PTA.confirm) window.PTA.confirm(title, text, fn)
-  else if (window.confirm(title + '\n\n' + text)) fn()
-}
-function loggedIn() { return !document.querySelector('#login-mask') }
-function visible() {
-  const v = document.querySelector('[data-view="sites"]')
-  return !!(v && !v.hidden)
-}
 function fmtWhen(raw) {
   if (!raw) return '—'
   const t = typeof raw === 'number' ? new Date(raw) : new Date(String(raw))
@@ -688,11 +678,11 @@ async function loadAll() {
     }
     if (csj && csj.ok && csj.data && csj.data.state) crawlState.value = csj.data.state
     loaded = true
-  } catch (e) {}
+  } catch (e) { reportError('Sites', e) }
   loadBusy = false
 }
 function ensure() {
-  if (visible() && loggedIn()) loadAll()
+  if (viewVisible('sites') && loggedIn()) loadAll()
 }
 async function loadDetail(host) {
   detail.def = null
@@ -712,7 +702,7 @@ async function loadDetail(host) {
       detail.catalog = { total: cj.data.total || 0, byStatus: cj.data.byStatus || {} }
       detail.items = cj.data.items || []
     }
-  } catch (e) {}
+  } catch (e) { reportError('Sites', e) }
 }
 function fillForm(s) {
   form.url = s.url
@@ -740,7 +730,7 @@ async function loadDef(host) {
       const j = await r.json()
       if (j && j.ok) { defText.value = JSON.stringify(j.data, null, 2); syncCatRows(j.data); syncUpForm(j.data); return }
     }
-  } catch (e) {}
+  } catch (e) { reportError('Sites', e) }
   const s = sites.value.find(x => x.name === host)
   const tpl = { engine: (s && s.def && s.def.engine) || 'nexusphp', base: (s && s.url) || ('https://' + host),
     uploadMap: { path: '/takeupload.php', formPath: '/upload.php', fileField: 'file', fields: { name: '{title}', descr: '{description}', type: '{catId}', anon: '{anonymous}' } },
@@ -1097,7 +1087,7 @@ async function applyBulk() {
         headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch)
       })).json()
       if (j && j.ok) n++
-    } catch (e) {}
+    } catch (e) { reportError('Sites', e) }
   }
   busy.bulk = false
   bulkOpen.value = false

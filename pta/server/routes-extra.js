@@ -126,7 +126,7 @@ module.exports = function (app, ctx) {
   app.get('/api/events', async (req, reply) => {
     reply.raw.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
     reply.raw.write('retry: 3000\n\n');
-    const ping = setInterval(function () { try { reply.raw.write(': ping\n\n'); } catch (e) {} }, 15000);
+    const ping = setInterval(function () { try { reply.raw.write(': ping\n\n'); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) } }, 15000);
     req.raw.on('close', function () { clearInterval(ping); });
     return reply;
   });

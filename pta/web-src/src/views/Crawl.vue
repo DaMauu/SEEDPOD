@@ -175,6 +175,8 @@
 
 <script setup>
 import { computed, h, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { reportError } from '../utils/errors'
+import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 import RuleControl from '../components/RuleControl.vue'
 import Nodes from './Nodes.vue'
 
@@ -250,13 +252,6 @@ const targetOptions = computed(() => {
   }).map(s => ({ host: s.host, title: s.title || s.host }))
 })
 
-function toast(msg) {
-  if (window.PTA && window.PTA.toast) window.PTA.toast(msg)
-}
-function confirmBox(title, text, fn) {
-  if (window.PTA && window.PTA.confirm) window.PTA.confirm(title, text, fn)
-  else if (window.confirm(title + '\n\n' + text)) fn()
-}
 function initials(t) {
   const m = String(t || '').match(/^[A-Za-z0-9]+/)
   return m ? m[0].slice(0, 2).toUpperCase() : String(t || '?').slice(0, 1)
@@ -279,14 +274,14 @@ function clampLimit(k, e) {
   e.target.value = String(v)
 }
 function saveSource() {
-  try { localStorage.setItem('pta.crawlSite', sourceHost.value) } catch (e) {}
+  try { localStorage.setItem('pta.crawlSite', sourceHost.value) } catch (e) { reportError('Crawl', e) }
 }
 function saveLimit() {
-  try { localStorage.setItem('pta.crawlLimit', limit.value) } catch (e) {}
+  try { localStorage.setItem('pta.crawlLimit', limit.value) } catch (e) { reportError('Crawl', e) }
 }
 function pickTarget(host) {
   targetHost.value = host
-  try { localStorage.setItem('pta.target', host) } catch (e) {}
+  try { localStorage.setItem('pta.target', host) } catch (e) { reportError('Crawl', e) }
   targetOpen.value = false
   toast('发布目标改为：' + ((targetSite.value && targetSite.value.title) || host))
 }
@@ -428,7 +423,7 @@ async function loadSites() {
     sourceHost.value = localStorage.getItem('pta.crawlSite') || ''
     limit.value = localStorage.getItem('pta.crawlLimit') || '100'
     targetHost.value = localStorage.getItem('pta.target') || ''
-  } catch (e) {}
+  } catch (e) { reportError('Crawl', e) }
   if (!siteOptions.value.some(s => s.host === sourceHost.value)) sourceHost.value = ''
   if (!siteOptions.value.some(s => s.host === targetHost.value)) targetHost.value = ''
 }
@@ -577,15 +572,8 @@ const RuleOrSpecial = (props) => {
 }
 RuleOrSpecial.props = { r: { type: Object, required: true } }
 
-function visible() {
-  const v = document.querySelector('[data-view="crawl"]')
-  return !!(v && !v.hidden)
-}
-function loggedIn() {
-  return !document.querySelector('#login-mask')
-}
 function ensure() {
-  if (!visible() || !loggedIn()) return
+  if (!viewVisible('crawl') || !loggedIn()) return
   if (!sites.value.length) loadSites()
   loadFlow()
 }

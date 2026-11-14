@@ -99,6 +99,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { reportError } from '../utils/errors'
+import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 
 const PAGE_SIZE = 100
 const LOAD_MAX = 2000
@@ -123,18 +125,6 @@ let loaded = false
 let bootTimer = null
 let loadBusy = false
 
-function toast(msg) {
-  if (window.PTA && window.PTA.toast) window.PTA.toast(msg)
-}
-function confirmBox(title, text, fn) {
-  if (window.PTA && window.PTA.confirm) window.PTA.confirm(title, text, fn)
-  else if (window.confirm(title + '\n\n' + text)) fn()
-}
-function loggedIn() { return !document.querySelector('#login-mask') }
-function visible() {
-  const v = document.querySelector('[data-view="sources"]')
-  return !!(v && !v.hidden)
-}
 function matchRes(title) {
   const m = /\b(2160p|1080p|1080i|720p|576p|480p)\b/i.exec(String(title || ''))
   return m ? m[1] : ''
@@ -199,14 +189,14 @@ async function loadDefs() {
     if (Array.isArray(j.data)) j.data.forEach(d => { if (d && d.host) out[d.host] = d })
     else if (j.data && typeof j.data === 'object') Object.keys(j.data).forEach(h => { out[h] = j.data[h] })
     defs.value = out
-  } catch (e) {}
+  } catch (e) { reportError('Sources', e) }
 }
 async function loadTargets() {
   try {
     const j = await (await fetch('/api/credentials', { credentials: 'same-origin' })).json()
     if (!j || !j.ok || !Array.isArray(j.data)) return
     targetHosts.value = j.data.filter(c => c.hasCookie).map(c => c.host).sort()
-  } catch (e) {}
+  } catch (e) { reportError('Sources', e) }
 }
 async function load() {
   if (loadBusy || !loggedIn()) return
@@ -219,10 +209,10 @@ async function load() {
     rowsAll.value = (j.data.items || []).map(mapRow)
     total.value = Number(j.data.total) || 0
     loaded = true
-  } catch (e) {} finally { loadBusy = false }
+  } catch (e) { reportError('Sources', e) } finally { loadBusy = false }
 }
 function ensure() {
-  if (visible() && loggedIn()) load()
+  if (viewVisible('sources') && loggedIn()) load()
 }
 function reload() {
   page.value = 0

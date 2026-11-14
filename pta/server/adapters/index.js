@@ -17,7 +17,7 @@ function byName(name) {
 /* 识别引擎：返回适配器对象或 null */
 function detectAdapter(html) {
   for (const a of ADAPTERS) {
-    try { if (a.detect(html)) return a; } catch (e) {}
+    try { if (a.detect(html)) return a; } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   }
   return null;
 }

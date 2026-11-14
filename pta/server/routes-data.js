@@ -16,7 +16,7 @@ module.exports = function (app, ctx) {
     try {
       const r = db.prepare('INSERT INTO logs(ts, level, src, msg) VALUES(?, ?, ?, ?)').run(ts, level || 'info', src || '', String(msg || '').slice(0, 2000));
       id = Number(r.lastInsertRowid) || 0;
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     pushOne({ id: id, t: ts.slice(11, 19), lvl: level || 'info', tag: src || '', msg: msg });
   }
   function pushOne(row) {
@@ -46,9 +46,9 @@ module.exports = function (app, ctx) {
       rows.forEach(function (r) {
         reply.raw.write('data: ' + JSON.stringify({ id: r.id, t: String(r.ts).slice(11, 19), lvl: r.level, tag: r.src, msg: r.msg }) + '\n\n');
       });
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     SSE.add(reply.raw);
-    const ping = setInterval(function () { try { reply.raw.write(': ping\n\n'); } catch (e) {} }, 15000);
+    const ping = setInterval(function () { try { reply.raw.write(': ping\n\n'); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) } }, 15000);
     req.raw.on('close', function () { clearInterval(ping); SSE.delete(reply.raw); });
     return reply;
   });
@@ -196,7 +196,7 @@ module.exports = function (app, ctx) {
           ids: d.cats ? Object.keys(d.cats).reduce(function (a, k) { return a + (d.cats[k] || []).length; }, 0) : 0,
           cats: d.cats || {} };
       });
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     return ok(out);
   });
 };

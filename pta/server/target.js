@@ -111,7 +111,7 @@ function makeTarget(ctx) {
       fs.readdirSync(defDir).forEach(function (f) {
         if (/\.json$/.test(f)) hosts.add(f.replace(/\.json$/, ''));
       });
-    } catch (e) {}
+    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     const bundled = sitePack.load();
     if (bundled.ok) Object.keys(bundled.pack.sites || {}).forEach(function (h) { hosts.add(h); });
     const out = [];

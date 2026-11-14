@@ -7,7 +7,7 @@ const media = require('./media');
 module.exports = function (app, ctx) {
   const { DATA_DIR, ok, bad } = ctx;
   const ROOT = path.resolve(process.env.PTA_MEDIA_ROOT || path.join(DATA_DIR, 'media'));
-  try { fs.mkdirSync(ROOT, { recursive: true, mode: 0o700 }); } catch (e) {}
+  try { fs.mkdirSync(ROOT, { recursive: true, mode: 0o700 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
 
   function safeFile(rel) {
     const raw = String(rel || '').trim();

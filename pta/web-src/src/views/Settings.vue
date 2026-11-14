@@ -156,6 +156,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { reportError } from '../utils/errors'
+import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 
 const mode = ref((localStorage.getItem('pta.mode') === 'dev') ? 'dev' : 'basic')
 const version = ref('读取中…')
@@ -171,20 +173,6 @@ const lastText = computed(() => {
   return sched.lastError ? t + ' · ' + sched.lastError : t
 })
 
-function toast(msg) {
-  if (window.PTA && window.PTA.toast) window.PTA.toast(msg)
-}
-function confirmBox(title, text, fn) {
-  if (window.PTA && window.PTA.confirm) window.PTA.confirm(title, text, fn)
-  else if (window.confirm(title + '\n\n' + text)) fn()
-}
-function loggedIn() {
-  return !document.querySelector('#login-mask')
-}
-function visible() {
-  const v = document.querySelector('[data-view="settings"]')
-  return !!(v && !v.hidden)
-}
 function applySched(data) {
   if (!data) return
   Object.assign(sched, {
@@ -210,7 +198,7 @@ async function load() {
     if (sc && sc.ok) applySched(sc.data)
     if (nt && nt.ok) applyNotify(nt.data)
     loaded = true
-  } catch (e) {}
+  } catch (e) { reportError('Settings', e) }
 }
 function applyNotify(d) {
   if (!d) return
@@ -263,10 +251,10 @@ async function testNotify() {
   notify.testing = false
 }
 function ensure() {
-  if (visible() && loggedIn()) load()
+  if (viewVisible('settings') && loggedIn()) load()
 }
 function saveMode() {
-  try { localStorage.setItem('pta.mode', mode.value === 'dev' ? 'dev' : 'basic') } catch (e) {}
+  try { localStorage.setItem('pta.mode', mode.value === 'dev' ? 'dev' : 'basic') } catch (e) { reportError('Settings', e) }
   toast('已切到' + (mode.value === 'dev' ? '开发版' : '基础版') + '，正在刷新')
   setTimeout(() => location.reload(), 500)
 }
@@ -279,7 +267,7 @@ function logout() {
 }
 function clearCache() {
   confirmBox('清空本地缓存', '会清掉浏览器里存的站点设置、流程设置和分类映射，服务器数据不动。确定？', () => {
-    try { localStorage.clear() } catch (e) {}
+    try { localStorage.clear() } catch (e) { reportError('Settings', e) }
     toast('本地缓存已清空，正在刷新')
     setTimeout(() => location.reload(), 700)
   })

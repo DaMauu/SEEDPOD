@@ -12,7 +12,7 @@ module.exports = function (app, ctx) {
 
   function readStatus() { try { return JSON.parse(fs.readFileSync(STATUS_FILE, 'utf8')) || {}; } catch (e) { return {}; } }
   function writeStatus(host, rec) {
-    try { const all2 = readStatus(); all2[host] = rec; fs.writeFileSync(STATUS_FILE, JSON.stringify(all2, null, 1), { mode: 0o600 }); } catch (e) {}
+    try { const all2 = readStatus(); all2[host] = rec; fs.writeFileSync(STATUS_FILE, JSON.stringify(all2, null, 1), { mode: 0o600 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   }
   function readDef(host) { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } }
   function cred(host) {
