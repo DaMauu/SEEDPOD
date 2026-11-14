@@ -22,9 +22,9 @@
           <div v-for="nd in nodes" :key="nd.id" class="node-row" :class="tone(nd)">
             <div class="nr-name">
               <b>{{ nd.name || hostOf(nd.url) }}</b>
-              <span class="nr-tag">{{ nd.user || '无账号' }}</span>
+              <span class="nr-tag">{{ nd.kind === 'watch' ? 'watch' : (nd.user || 'qB') }}</span>
             </div>
-            <div class="nr-host mono">{{ hostOf(nd.url) }}</div>
+            <div class="nr-host mono">{{ nd.kind === 'watch' ? nd.watchPath : hostOf(nd.url) }}</div>
             <div class="nr-disk">
               <span class="nr-cap">{{ diskTxt(nd) }}</span>
               <div v-if="totalOf(nd)" class="nr-bar"><i :style="{ width: pct(nd).toFixed(0) + '%' }"></i></div>
@@ -48,25 +48,35 @@
         </div>
         <label class="field"><span>名称</span>
           <input v-model="form.name" class="input" placeholder="留空就用地址"></label>
-        <label class="field"><span>地址</span>
-          <input v-model="form.url" class="input" placeholder="http://主机:端口，qB 的 Web 地址就是它的 API 地址"></label>
-        <div class="modal-two">
-          <label class="field"><span>qB 用户名</span>
-            <input v-model="form.user" class="input" placeholder="admin"></label>
-          <label class="field"><span>qB 密码</span>
-            <input v-model="form.pass" class="input" type="password" :placeholder="editing ? '留空表示不改已存的密码' : '不设置就留空'" autocomplete="new-password"></label>
-        </div>
-        <div class="set-field">
-          <div class="lbl"><span>免密登录</span></div>
-          <div class="ctl">
-            <button class="switch" :class="{ on: form.disableAuth }" type="button" @click="form.disableAuth = !form.disableAuth"><i></i></button>
+        <label class="field"><span>类型</span>
+          <select v-model="form.kind" class="select">
+            <option value="qb">qBittorrent</option>
+            <option value="watch">watch 目录</option>
+          </select></label>
+        <template v-if="form.kind === 'qb'">
+          <label class="field"><span>地址</span>
+            <input v-model="form.url" class="input" placeholder="http://主机:端口，qB 的 Web 地址就是它的 API 地址"></label>
+          <div class="modal-two">
+            <label class="field"><span>qB 用户名</span>
+              <input v-model="form.user" class="input" placeholder="admin"></label>
+            <label class="field"><span>qB 密码</span>
+              <input v-model="form.pass" class="input" type="password" :placeholder="editing ? '留空表示不改已存的密码' : '不设置就留空'" autocomplete="new-password"></label>
           </div>
-        </div>
+          <div class="set-field">
+            <div class="lbl"><span>免密登录</span></div>
+            <div class="ctl">
+              <button class="switch" :class="{ on: form.disableAuth }" type="button" @click="form.disableAuth = !form.disableAuth"><i></i></button>
+            </div>
+          </div>
+        </template>
+        <label v-else class="field"><span>watch 目录</span>
+          <input v-model="form.watchPath" class="input" placeholder="/data/watch">
+          <span class="soft">绝对路径；外部客户端监视这个目录，种子写入后由它接管。</span></label>
         <div class="sd-cookie-bar">
           <button class="btn ghost slim" type="button" :disabled="busy.test" @click="testConn">{{ busy.test ? '连接中…' : '测试连接' }}</button>
           <span class="sd-cookie-res">{{ testResult || '还没测试' }}</span>
         </div>
-        <div v-if="editing" class="nd-cats">
+        <div v-if="editing && form.kind === 'qb'" class="nd-cats">
           <div class="lbl"><span>下载器分类</span><i>只读：发种暂不按分类</i></div>
           <div class="nd-cats-list" id="nd-cat-list">
             <span v-for="c in cats" :key="c.name" class="cat-chip">{{ c.name }}<i>{{ c.count }}</i></span>
@@ -91,7 +101,7 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 const nodes = ref([])
 const modalOpen = ref(false)
 const editing = ref('')
-const form = reactive({ name: '', url: '', user: '', pass: '', disableAuth: false })
+const form = reactive({ kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
 const busy = reactive({ save: false, test: false, cats: false })
 const testResult = ref('')
 const cats = ref([])
@@ -153,7 +163,7 @@ async function load() {
 function ensure() { load() }
 function openAdd() {
   editing.value = ''
-  Object.assign(form, { name: '', url: '', user: '', pass: '', disableAuth: false })
+  Object.assign(form, { kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
   testResult.value = ''
   cats.value = []
   catsMsg.value = ''
@@ -162,17 +172,19 @@ function openAdd() {
 function openEdit(nd) {
   editing.value = nd.id
   Object.assign(form, {
+    kind: nd.kind || 'qb',
     name: nd.name || '',
     url: nd.url || '',
     user: nd.user || '',
     pass: '',
-    disableAuth: !!nd.disableAuth
+    disableAuth: !!nd.disableAuth,
+    watchPath: nd.watchPath || ''
   })
   testResult.value = ''
   cats.value = []
   catsMsg.value = ''
   modalOpen.value = true
-  loadCats(nd)
+  if (form.kind === 'qb') loadCats(nd)
 }
 function normUrl(raw) {
   let s = String(raw || '').trim()
@@ -182,17 +194,24 @@ function normUrl(raw) {
 }
 async function save() {
   if (busy.save) return
-  const url = normUrl(form.url)
-  if (!url) { toast('先填地址（下载器 Web 地址）'); return }
-  if (!/^https?:\/\/[^\s/]+/i.test(url)) { toast('地址要像 http://主机:端口'); return }
-  busy.save = true
-  const body = {
-    name: String(form.name || '').trim() || hostOf(url),
-    url,
-    user: String(form.user || '').trim(),
-    disableAuth: !!form.disableAuth
+  const kind = form.kind === 'watch' ? 'watch' : 'qb'
+  const body = { kind }
+  if (kind === 'watch') {
+    const wp = String(form.watchPath || '').trim()
+    if (!wp || wp[0] !== '/') { toast('watch 目录要填绝对路径'); return }
+    body.watchPath = wp
+    body.name = String(form.name || '').trim() || wp.split('/').filter(Boolean).pop() || 'watch'
+  } else {
+    const url = normUrl(form.url)
+    if (!url) { toast('先填地址（下载器 Web 地址）'); return }
+    if (!/^https?:\/\/[^\s/]+/i.test(url)) { toast('地址要像 http://主机:端口'); return }
+    body.name = String(form.name || '').trim() || hostOf(url)
+    body.url = url
+    body.user = String(form.user || '').trim()
+    body.disableAuth = !!form.disableAuth
+    if (form.pass) body.pass = form.pass
   }
-  if (form.pass) body.pass = form.pass
+  busy.save = true
   const res = await fetch(editing.value ? '/api/downloaders/' + encodeURIComponent(editing.value) : '/api/downloaders', {
     method: editing.value ? 'PUT' : 'POST', credentials: 'same-origin',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
@@ -202,7 +221,7 @@ async function save() {
   const id = res.data.id
   modalOpen.value = false
   await load()
-  toast('已保存到服务端：' + (res.data.name || hostOf(res.data.url)))
+  toast('已保存到服务端：' + (res.data.name || res.data.watchPath || hostOf(res.data.url)))
   if (id) {
     await fetch('/api/downloaders/' + encodeURIComponent(id) + '/test', { method: 'POST', credentials: 'same-origin' }).catch(() => null)
     await load()
@@ -211,6 +230,23 @@ async function save() {
 }
 async function testConn() {
   if (busy.test) return
+  if (form.kind === 'watch') {
+    const wp = String(form.watchPath || '').trim()
+    if (!wp || wp[0] !== '/') { toast('watch 目录要填绝对路径'); return }
+    busy.test = true
+    testResult.value = '正在检查…'
+    const out = await fetch('/api/downloaders/probe', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: 'watch', watchPath: wp })
+    }).then(r => r.json()).catch(() => null)
+    busy.test = false
+    if (!out || !out.ok) { testResult.value = (out && out.error && out.error.message) || '检查失败'; return }
+    const d = out.data || {}
+    testResult.value = d.pass ? ('可写 · ' + (d.freeSpace ? '剩余 ' + fmtBytes(d.freeSpace) : '目录可用')) : ('不可写：' + (d.error || ''))
+    toast(d.pass ? 'watch 目录可写' : 'watch 目录不可写')
+    return
+  }
   const url = normUrl(form.url)
   if (!url) { toast('先填地址'); return }
   if (!/^https?:\/\/[^\s/]+/i.test(url)) { toast('地址要像 http://主机:端口'); return }
@@ -240,6 +276,7 @@ async function testConn() {
   if (editing.value) { await load(); if (window.__ptaLoadOverview) window.__ptaLoadOverview() }
 }
 async function loadCats(nd) {
+  if (form.kind === 'watch') { cats.value = []; catsMsg.value = 'watch 目录没有分类'; return }
   const node = nd || nodes.value.find(x => x.id === editing.value)
   if (!node || !node.id) { catsMsg.value = '先保存下载器，再读它的分类'; return }
   if (busy.cats) return

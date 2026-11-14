@@ -47,6 +47,7 @@
 - M8 完成：目标站提交/回查（0.7.111，target 6/6，私有包 `data/site-pack.json`）
 - M5 进行中：标题解析/命名已接（0.7.112，meta 11/11）；TMDB/豆瓣等外部元数据待 key
 - M6 进行中：媒体探测/截图/种子模块与 API 已落地（0.7.114，media 7/7、media-api 6/6）；队列页入口待接
+- M7 进行中：qB + watch 目录（0.7.115，clients 4/4）；rTorrent/Deluge 待接
 
 ## 六、V2 · 对标 UA/upbrr
 

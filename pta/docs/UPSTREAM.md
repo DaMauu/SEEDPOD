@@ -106,3 +106,10 @@
 - 观察到的行为：ffprobe JSON 给流信息；截图按百分比取帧；HDR 需要 tonemap；种子是 bencoded 字典，infohash 是 info 字典的 SHA1。
 - 许可/可用性：ffmpeg/ffprobe 是系统工具；bencode 是公开格式，自己实现。
 - 我们的决定：纯本地模块，先做单文件种子；截图先落文件，API 层再按需转 data URL；不联网。
+
+## 2026-11-15 · M7 客户端抽象（watch）
+
+- 来源：qB API 公开文档、rTorrent/Deluge/Transmission 的 watch 目录约定；未复制上游代码。
+- 观察到的行为：watch 客户端只需把 `.torrent` 原子写入监视目录；状态由外部客户端接管，面板拿不到 qB 那样的进度。
+- 许可/可用性：目录约定是事实性接口，自己实现。
+- 我们的决定：下载器加 `kind=qb|watch`；watch 写 0600 文件并标记 `verified=true/state=watch`，不假装能回查外部客户端状态。

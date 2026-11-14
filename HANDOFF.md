@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 16:00（当前 v0.7.114 / M6 媒体 API 已接，media-api 6/6）
+最后更新：2026-11-15 17:00（当前 v0.7.115 / M7 watch 客户端已接，clients 4/4）
+
+## 2026-11-15 M7：watch 目录客户端（v0.7.115）
+
+- `pta/server/clients/watch.js`：绝对路径校验、目录可写/余量探测、`.torrent` 0600 原子写入。
+- 下载器加 `kind=qb|watch`；`routes-qb` 增删改/探测/测试分支；`GET /api/downloaders` 回 `kind/watchPath`。
+- `publish.js` 支持 watch：写目录后 `client=watch`、`state=watch`、`verified=true`；qB 路径不变。
+- `Nodes.vue` 支持类型切换；`clients` 4/4。
 
 ## 2026-11-15 M6 API：媒体探测/截图/种子（v0.7.114）
 

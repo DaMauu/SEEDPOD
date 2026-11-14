@@ -188,7 +188,7 @@ async function build() {
   function publicDls() {
     return all('SELECT data FROM downloaders').map(function (r) {
       const d = jparse(r.data) || {};
-      return { id: d.id, name: d.name, url: d.url, user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
+      return { id: d.id, name: d.name, kind: d.kind || 'qb', url: d.url || '', watchPath: d.watchPath || '', user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
     });
   }
 

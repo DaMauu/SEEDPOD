@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.115 · 2026-11-15
+
+### 新增
+- 下载器加 `kind`（qb/watch）；watch 目录客户端写入 `.torrent`（0600，原子 rename），探测可写与余量。
+- 发布链路支持 watch：写目录后标记 `client:'watch'`/`state:'watch'`/`verified:true`；qB 路径行为不变。
+- 下载器设置 UI 支持类型切换；`GET /api/downloaders` 回 `kind/watchPath`。
+- `pta/checks/clients.js`：watch 模块 + 下载器 API + 发布到 watch，4/4。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 4/4、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.114 · 2026-11-15
 
 ### 新增

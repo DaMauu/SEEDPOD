@@ -2,6 +2,7 @@
    路由与调度器共用，避免两份实现。 */
 const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
+const watch = require('./clients/watch');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
@@ -69,6 +70,38 @@ function makePublisher(ctx) {
 
     const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
     if (got.err) return { ok: false, code: 'TORRENT_FETCH_FAILED', message: got.err, http: 502 };
+    const meta = qb.parseTorrent(got.buf);
+    if ((dl.kind || 'qb') === 'watch') {
+      const w = watch.addTorrent({ dir: dl.watchPath, buf: got.buf, filename: String(it.title || 'upload').slice(0, 60) + '.torrent' });
+      if (!w.ok) {
+        it.status = 'failed';
+        it.pubMsg = 'watch 写入失败：' + w.message;
+        save(it);
+        return { ok: false, code: w.error || 'WATCH_WRITE_FAILED', message: w.message || 'watch 写入失败', http: 502 };
+      }
+      it.status = 'published';
+      it.publishedAt = now();
+      it.approvedAt = it.approvedAt || now();
+      it.qb = { id: dl.id, name: dl.name || '', at: it.publishedAt, message: w.message || 'Ok.',
+        hash: meta.hash || '', torrentName: meta.name || '', state: 'watch', progress: 0,
+        verified: true, client: 'watch', path: w.path };
+      it.pubMsg = '已写入 watch 目录：' + w.path;
+      save(it);
+      db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
+        .run(it.id, JSON.stringify(it), it.publishedAt);
+      if (it.catalogId) {
+        const c = one('SELECT data FROM catalog WHERE id = ?', String(it.catalogId));
+        if (c) {
+          const cd = jparse(c.data) || {};
+          cd.status = 'published';
+          cd.updatedAt = now();
+          db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
+        }
+      }
+      return { ok: true, data: { id: it.id, dryRun: false, published: true,
+        qb: { added: true, client: 'watch', path: w.path, message: w.message || 'Ok.', hash: meta.hash || '', verified: true, state: 'watch' },
+        msg: it.pubMsg } };
+    }
     const add = await qb.addTorrent(dl, got.buf, {
       savePath: b.savePath || it.savePath,
       category: b.category || it.category,
@@ -81,14 +114,13 @@ function makePublisher(ctx) {
       return { ok: false, code: add.error || 'QB_ADD_FAILED', message: add.message || 'qB 添加失败', http: 502 };
     }
 
-    const meta = qb.parseTorrent(got.buf);
     const chk = await qb.findTorrent(dl, meta.hash, meta.name);
     it.status = 'published';
     it.publishedAt = now();
     it.approvedAt = it.approvedAt || now();
     it.qb = { id: dl.id, name: dl.name || '', at: it.publishedAt, message: add.message || 'Ok.',
       hash: meta.hash || '', torrentName: meta.name || '', state: chk.state || '',
-      progress: Number(chk.progress) || 0, verified: !!chk.found };
+      progress: Number(chk.progress) || 0, verified: !!chk.found, client: 'qb' };
     it.pubMsg = chk.found
       ? '已加入 qB 并校验到种子（' + (chk.state || '未知') + '）'
       : '已加入 qB，但列表里还没找到（可能延迟）';
