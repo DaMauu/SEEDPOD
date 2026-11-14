@@ -549,6 +549,9 @@ onUnmounted(() => {
 }
 @media (max-width: 900px) {
 .queue-list, .queue-detail { width: 100%; max-width: none; }
+.qd-head { flex-direction: column; gap: 6px; }
+.qd-id { width: 100%; }
+.qd-meta { margin-top: 4px; gap: 6px 14px; }
 }
 
 .q-item { padding: 6px 9px; }
@@ -586,4 +589,8 @@ onUnmounted(() => {
 .queue-split { align-items: stretch; }
 .queue-detail { align-self: stretch; display: flex; flex-direction: column; }
 .qd-actions { margin-top: auto; }
+
+@media (max-width: 600px) {
+.qd-grid { grid-template-columns: 1fr; }
+}
 </style>

@@ -116,7 +116,8 @@
 #set-panel .set-field .switch { margin-left: auto; }
 /* 设置页：保存改为每栏右上角 */
 #set-panel .set-card-head { display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 16px; padding: 16px 22px 14px; border-bottom: 1px solid var(--line); }
+  flex-wrap: wrap; gap: 16px; padding: 16px 22px 14px; border-bottom: 1px solid var(--line); }
+#set-panel .set-card-head > .btn { flex: 0 0 auto; white-space: nowrap; }
 #set-panel .set-card-t { min-width: 0; }
 #set-panel .set-card-head .set-h2 { margin: 0 0 4px; }
 #set-panel .set-card-head .set-desc { margin: 0; border: 0; padding: 0; }

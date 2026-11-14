@@ -1485,6 +1485,10 @@ function onKey(e) {
 @media (max-width: 900px) {
 .site-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; }
 }
+@media (max-width: 600px) {
+.site-item .si-mode, .site-item .si-last { display: none; }
+.site-item .si-txt { flex: 1 1 120px; }
+}
 @media (max-width: 900px) {
 .site-item > span { font-size: 11.5px; }
 }

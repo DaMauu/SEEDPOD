@@ -219,8 +219,7 @@ async function load() {
     rowsAll.value = (j.data.items || []).map(mapRow)
     total.value = Number(j.data.total) || 0
     loaded = true
-  } catch (e) {}
-  loadBusy = false
+  } catch (e) {} finally { loadBusy = false }
 }
 function ensure() {
   if (visible() && loggedIn()) load()

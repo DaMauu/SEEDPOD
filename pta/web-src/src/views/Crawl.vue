@@ -696,6 +696,11 @@ onUnmounted(stopDry)
 .dedupe-card :deep(.drawer-body){padding:8px 16px 10px}
 @media (max-width:700px) {
 .flow-group :deep(.set-fields){grid-template-columns:1fr}
+.flow-group.cond :deep(.set-fields){grid-template-columns:1fr}
+.flow-group.cond :deep(.set-field){grid-template-columns:96px minmax(0,1fr);gap:8px}
+.flow-group.cond :deep(.set-field .ctl>.input){max-width:none;width:100%}
+.flow-group :deep(.set-field.pair), .flow-group.cond :deep(.set-field.pair){flex-direction:column;align-items:stretch;gap:4px}
+.flow-group :deep(.set-field.pair .pair-item){width:100%;flex:1 1 auto}
 }
 .crawl-dry :deep(.drawer-body:empty){display:none}
 .crawl-dry :deep(.drawer-body[hidden]){display:none!important}
