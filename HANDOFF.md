@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 02:10（当前 v0.7.125 / 自检修复 run.sh 可执行位）
+最后更新：2026-11-16 03:00（当前 v0.7.126 / legacy 死代码清理完成）
+
+## 2026-11-16 legacy 清理（v0.7.126）
+
+- `src/legacy/app.js` 5321 → 1314 行；只剩 chrome/nav/menu/router/runtime/auth/devfoot。
+- 删除 8 个旧页面函数和死流程 helper；App.vue 四个旧弹窗删除。
+- v1 后端归档到 `pta/archive/server-v1.js`；退休测试删除；`run.cmd` 只提示用 WSL/Git Bash。
+- 全量检查全绿。
 
 ## 2026-11-16 外部元数据（v0.7.124）
 

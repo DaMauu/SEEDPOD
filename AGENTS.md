@@ -15,7 +15,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 
 - 前端源码 `pta/web-src`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 归档在 `pta/archive/web-demo`，不再使用
 - 生产后端 `pta/server/app-fastify.js`（Fastify）+ `pta/server/routes-*.js` + `pta/server/db.js`（SQLite，数据在 `data/seedpod.db`）；适配器 `pta/server/adapters/nexusphp.js`，凭据加密 `pta/server/secretbox.js`
-- 旧零依赖后端 `pta/server/app.js` 只作参考，不在生产运行；服务端改动一律进 v2
+- 旧零依赖后端已归档到 `pta/archive/server-v1.js`，只作参考，不在生产运行；服务端改动一律进 v2
 - 线上部署目录由 `DEPLOY_DIR` 指定（本地参数放未入库的 `.deploy.env`），systemd 服务 `seedpod`，监听 8080，数据在 `$DEPLOY_DIR/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`

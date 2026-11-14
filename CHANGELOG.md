@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.126 · 2026-11-16
+
+### 清理
+- legacy `app.js` 从 5321 行降到 1314 行：删掉 8 个已不在启动列表的页面函数和死流程 helper；启动只剩 chrome/nav/menu/router。
+- 删掉 App.vue 里四个已死的旧弹窗（site/bulk/target/node/rule）；确认弹窗保留。
+- 旧 v1 后端移到 `pta/archive/server-v1.js`；删除 `smoke-legacy.js` / `audit-legacy.js`；`run.cmd` 退休为提示入口。
+- 全量检查保持全绿。
+
 ## v0.7.125 · 2026-11-16
 
 ### 自检修复
