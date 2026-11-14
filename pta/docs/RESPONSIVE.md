@@ -94,17 +94,17 @@ const bad = await page.evaluate(() => ({
 
 ## 六、里程碑
 
-### R1 · 规范和验收固化（本轮，0.7.162）
+### R1 · 规范和验收固化（0.7.162）
 
 - [x] 新增本文，接入 `ROADMAP.md`、`CHECKLIST.md`、`AGENTS.md`、`DESIGN.md`
 - [x] 固定 360 / 390 / 768 / 1280 验收宽度
-- [ ] 把“无横向滚动/按钮不溢出”接进自动检查
 
-### R2 · 自动检查
+### R2 · 自动检查（0.7.163）
 
-- 新增 `pta/checks/responsive.js` 或扩展 `smoke-live.js`：登录后逐页量 `scrollWidth`、按钮溢出、卡片对齐。
-- 接进 `pta/checks/run.sh`；失败即阻断提交。
-- 用临时数据覆盖：空数据、长标题、305 站。
+- [x] 新增 `pta/checks/responsive-layout.js`：登录后逐页量 `scrollWidth`、按钮溢出、卡片对齐、徽标换行。
+- [x] 接进 `pta/checks/run.sh`；失败即阻断提交。
+- [x] 用临时数据覆盖：空数据、长标题、305 站、目标站弹窗、下载器抽屉。
+- 运行：`node pta/checks/responsive-layout.js`（由 `run.sh` 自动调用）。
 
 ### R3 · 断点收敛
 

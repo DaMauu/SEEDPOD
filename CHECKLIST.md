@@ -26,7 +26,7 @@ UI 改动额外问：360/390/768/1280 是否都看过？有没有横向滚动、
 
 1. 前端只改 `pta/web-src`，升 `package.json` 版本；Vite 产物带 hash，不再手改 `?v=`
 2. 质量审计：先跑 `node pta/scripts/audit-quality.js --feature <name>`（单文件用 `--file`），有「差」先修；再跑 `bash pta/checks/run.sh`（含全库基线闸门）
-3. 涉及 UI/样式：按 360 / 390 / 768 / 1280 验收（新增页面加 1440），检查横向滚动、按钮文字、卡片对齐；规则见 `pta/docs/RESPONSIVE.md`
+3. 涉及 UI/样式：按 360 / 390 / 768 / 1280 验收（新增页面加 1440），检查横向滚动、按钮文字、卡片对齐；规则见 `pta/docs/RESPONSIVE.md`。`run.sh` 已自动跑 `responsive-layout.js`
 4. `CHANGELOG.md` 记一条（删除 / 新增 / 优化 / 调整 / 重排）
 5. `git add -A && git commit -m "0.7.xx 一句话" && git push origin main`
    - 只有 Windows 推送才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`

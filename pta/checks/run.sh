@@ -25,6 +25,7 @@ else
 fi
 
 run smoke smoke-live.js
+run responsive responsive-layout.js
 run adapter adapter.js
 run security security.js
 run api api-v2.js
