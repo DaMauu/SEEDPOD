@@ -30,7 +30,7 @@
 1. 腳本能直接在 Tampermonkey 裡裝上、在目標站點跑通，不是「理論可用」。
 2. 說明在哪些站點類型上驗證過（NexusPHP / UNIT3D / Gazelle / f3nix），最好給出站點名。
 3. 刪除除錯用的 `console.log`、本地路徑和測試帳號。
-4. 不要提交本地真實站點資料：`pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv` 已在 `.gitignore` 裡，別用 `-f` 強推。
+4. 不要提交本地真實站點資料：`data/site-defs/`、`pta/data/site-arch.local.csv` 已在 `.gitignore` 裡，別用 `-f` 強推。
 5. **絕對不要提交**任何 Cookie、passkey、Tracker 金鑰、API key 或帶個人資訊的截圖。
 
 ### 提交訊息

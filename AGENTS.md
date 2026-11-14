@@ -28,10 +28,10 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 1. 不碰真实 PT 站点：不自己找 cookie、不复用 cookie 去登录、不对真实站点做探测/压测/反复请求。抓取一律先干跑或本地夹具。
 2. 真实站点清单、站名、网址只允许以 AES-256-GCM 加密站点包形式入仓库（`pta/pack/site-pack.enc`），密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，不得与密文同库；聊天回复仍不写站名/网址。凭据、cookie、密码、服务器 IP 仍绝不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
-4. 站点凭据只存密文：`data/credentials.json` + AES-256-GCM，接口只回 `hasCookie`。
+4. 站点凭据只存密文：SQLite `data/seedpod.db` 的 credentials 表 + AES-256-GCM，接口只回 `hasCookie`。
 5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
-7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 不接新需求，避免同一功能两套实现。
+7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 已删除，避免同一功能两套实现。
 8. 站点包随程序发布，用户不单独下载；私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。详见 `pta/docs/SITE-PACK.md`。
 
 ## 发版与同步（`DEPLOY_DIR` 是运行目录，`VPS_DIR` 是仓库检出）
@@ -51,7 +51,7 @@ git pull --ff-only && bash deploy.sh
 
 - 只有 Windows 推送 GitHub 才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 - VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
-- `deploy.sh` 用 rsync 把 pta/ 同步到 `$DEPLOY_DIR` 并重启服务，排除 `data/`、`archive/`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
+- `deploy.sh` 用 rsync 把 pta/ 同步到 `$DEPLOY_DIR` 并重启服务，排除 `data/`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
 - `deploy.sh` 不传 `node_modules`：新机器先 `npm i --omit=dev`（或手工装 fastify 与 @fastify/static）再启动
 - 改前端后跑 `npm run build`，部署脚本会重新生成 `pta/web/dist`；不再维护 `?v=`
 - 两边同时改会 push 失败（non-fast-forward），此时先 pull 再推，不要 force
@@ -61,16 +61,16 @@ git pull --ff-only && bash deploy.sh
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
 | 服务起不来，MODULE_NOT_FOUND | 只发了入口文件 | 补发 `routes-*.js`、`db.js`、`crawl.js`、`adapters/`、`secretbox.js`；确认目标机 `node_modules` 有 fastify |
-| 页面白屏 / 按钮无反应 | 少了 data.js 或 ?v= 没升 | 补发 data.js、升版本号 |
-| 线上行为像旧版 | Cloudflare 缓存 | 升 `?v=` 并硬刷新 |
+| 页面白屏 / 按钮无反应 | 构建产物不完整或旧缓存 | 跑 `npm run build`，确认 `pta/web/dist` 完整；Vite 产物带 hash，硬刷新 |
+| 线上行为像旧版 | Cloudflare/浏览器缓存 | 换新构建 hash 的文件；清站点数据/硬刷新 |
 | ssh 超时 | 22 端口时通时断 | 重试 base64 方式，别改端口 |
-| 登录进不去 | 前端旧缓存 | 升 `?v=`；服务端 `POST /api/login` 本地应回 200 |
+| 登录进不去 | 前端旧缓存 | 清站点数据/硬刷新；服务端 `POST /api/login` 本地应回 200 |
 
 ## 数据与不入库的东西
 
-数据目录 `data/`（0600）：`config.json`、`site-config.json`、`queue.json`、`downloaders.json`、`credentials.json`、`events.log`、`.secret`。
+数据目录 `data/`（0600）：`seedpod.db`（SQLite，唯一事实源）、`site-defs/`（私有站点定义）、`.secret`（凭据密钥）、`events.log`。
 
-只在本地/测试机、已被 gitignore：`data/{sites-data.local.js,sites-bookmark.local.json,site-search.local.json,site-arch.local.csv,site-defs/,samples/,cookies.tmp.json}`、`docs` 里只有 example。
+只在本地/测试机、已被 gitignore：`data/site-defs/`、`data/samples/`、`cookies.tmp.json`、`pta/data/*.local.*`、`pta/data/site-arch.local.csv`；`docs` 里只有 example。
 
 Telegram bot token / webhook 只放环境变量或面板加密配置；不入库明文、不进仓库、不打印。
 
@@ -123,7 +123,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 - 新增一条规则必须回答：不设会怎样、默认值是什么、用户在哪关掉
 - 一条进一条出：加新条件时必须合并或删掉一条旧的，不允许只加不减
 - 能给默认值就不给开关；能三档预设就不给独立选项
-- 新条件先进 `pta/docs/PIPELINE-RULES.md` 清单，再改 `data.js`，最后跑 `node pta/scripts/gen-rules-tree.js`
+- 新条件先进 `pta/docs/PIPELINE-RULES.md` 清单，再改 `pta/web-src/src/data/rules.js`，最后跑 `node pta/scripts/gen-rules-tree.js`
 
 ## 结构气味（提示，不是验收）
 
@@ -137,7 +137,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 以 `pta/docs/DELIVERY.md` 为准，七条全过才算项目落地：
 
-1. 七个页面全是 SFC，`src/legacy` 已删除，共享壳在 App.vue，旧 web 归档
+1. 七个页面全是 SFC，`src/legacy` 已删除，共享壳在 App.vue，旧 web 已删除
 2. 页面上每个开关服务端都有读者；没有就删/禁用/标未接
 3. 主流程能跑通：cookie → 抓取 → 查重 → 送审 → 队列 → 真发布 → 校验
 4. 定时抓取/送审/发布能跑能停
@@ -159,7 +159,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 ## 设计约束（UI）
 
-- 先线框后代码：静态 HTML 或截图确认后再改 `app.js`
+- 先线框后代码：静态 HTML 或截图确认后再改对应 SFC
 - 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式只放 `pta/web-src/src/styles/v2.css`，页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
 - 文案：标签用名词，说明 ≤ 20 字，错误说「怎么办」
 - 验收三宽度 1280 / 768 / 390，无横向滚动，首屏能看到主卡

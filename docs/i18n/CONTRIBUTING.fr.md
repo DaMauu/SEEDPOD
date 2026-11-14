@@ -30,7 +30,7 @@ Des modules complémentaires en fichier unique : userscripts Tampermonkey et feu
 1. Le script s'installe dans Tampermonkey et fonctionne réellement sur le site cible — pas « devrait fonctionner ».
 2. Indiquez les types de trackers vérifiés (NexusPHP / UNIT3D / Gazelle / f3nix) ; les noms de sites aident.
 3. Supprimez les `console.log` de débogage, les chemins locaux et les comptes de test.
-4. Ne commitez pas de données locales de trackers : `pta/web/assets/sites-data.local.js` et `pta/data/site-arch.local.csv` sont gitignorés — jamais de `git add -f`.
+4. Ne commitez pas de données locales de trackers : `data/site-defs/` et `pta/data/site-arch.local.csv` sont gitignorés — jamais de `git add -f`.
 5. **Ne jamais commiter** de cookies, passkeys, clés de tracker, clés d'API ni captures d'écran contenant des données personnelles.
 
 ### Messages de commit

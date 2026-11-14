@@ -30,7 +30,7 @@ SEEDPOD を改善してくれてありがとうございます。まずこのペ
 1. スクリプトが Tampermonkey に入り、対象サイトで実際に動くこと。「理論上動く」ではだめ。
 2. どのトラッカータイプで検証したか（NexusPHP / UNIT3D / Gazelle / f3nix）を書く。サイト名があると助かる。
 3. デバッグ用の `console.log`、ローカルパス、テストアカウントを消す。
-4. ローカルの実データをコミットしない: `pta/web/assets/sites-data.local.js` と `pta/data/site-arch.local.csv` は gitignore 済み。`git add -f` で強制追加しない。
+4. ローカルの実データをコミットしない: `data/site-defs/` と `pta/data/site-arch.local.csv` は gitignore 済み。`git add -f` で強制追加しない。
 5. **絶対にコミットしない**: Cookie、passkey、Tracker キー、API キー、個人情報を含むスクリーンショット。
 
 ### コミットメッセージ

@@ -1,4 +1,4 @@
-# 前端逻辑搬迁计划（legacy → SFC）
+# 前端逻辑搬迁计划（legacy → SFC，已完成，历史记录）
 
 目标：把页面逻辑逐步搬进 SFC，直到 `src/legacy` 清空。状态：已完成（0.7.127，登录/路由/顶栏/Toast/Confirm/页脚在 `App.vue`，`src/legacy` 已删）。
 
@@ -41,7 +41,7 @@
 
 ## 停止条件
 
-任一条命中就停下，写进 `TASKS.md` 并说明，不许猜：
+任一条命中就停下，写进 `HANDOFF.md` 并说明，不许猜：
 
 - 需要改接口、字段或数据模型。
 - 交互含义不明确，两种做法都合理。
@@ -52,7 +52,7 @@
 
 ## 自主边界
 
-- 只改 `pta/web-src`、`CHANGELOG.md`、`HANDOFF.md`、`TASKS.md`、`package.json`、本文件。
+- 只改 `pta/web-src`、`CHANGELOG.md`、`HANDOFF.md`、`HANDOFF.md`、`package.json`、本文件。
 - 旧 demo 已删除；新代码只进 `pta/web-src`、`pta/server`、检查脚本与文档。
 - 旧函数先停止调用，不急着删；全部拆完再统一清理。
 - 不改视觉风格和文案，只做等价搬迁。

@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.144 · 2026-11-16
+
+### 清理
+- 删除 v1 规划/任务残留：`PLAN.md`、`TASKS.md`、`.opencode/commands/migrate.md`。
+- 删除 `screen.js` 旧流程数据兼容层；生产 flow 已是新格式。
+- 删除最后 5 条 `.map-row` 死 CSS；选择器审计剩 5 条均为 live/混合保留。
+- `AGENTS.md` 数据目录/故障表/设计约束对齐 v2；`DECISIONS.md` 增加历史说明；ROADMAP/DELIVERY/PROBLEMS/PIPELINE-RULES/RULES-TRIAGE/DESIGN/CONTRIBUTING 路径更新。
+- `deploy.sh` 去掉 v1 `sites-data` 排除项。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、规则体检 0 缺读者。
+
 ## v0.7.143 · 2026-11-16
 
 ### v2 样式迁移

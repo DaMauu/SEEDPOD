@@ -10,21 +10,18 @@ function flowRules(sets, rx) {
   });
   const byTitle = {};
   allRows.forEach(function (r) { if (r && r.t && byTitle[r.t] === undefined) byTitle[r.t] = r; });
-  const legacy = (Array.isArray(sets.dedupe) && Array.isArray(sets.dedupe[0])) ? sets.dedupe[0] : [];
-  const pick = function (t, i) {
-    if (byTitle[t]) return byTitle[t];
-    if (legacy[i] && !legacy[i].t) return legacy[i];
-    return {};
+  const pick = function (t) {
+    return byTitle[t] || {};
   };
   const out = { res: [], minSizeGB: 0, maxSizeGB: 0, requireChinese: false };
-  const rv = String(pick('分辨率要求', 0).v || '');
+  const rv = String(pick('分辨率要求').v || '');
   if (/2160|4k/i.test(rv)) out.res = ['2160p'];
   else if (/1080/.test(rv)) out.res = ['1080p', '2160p'];
-  const lo = /([\d.]+)\s*GB/.exec(String(pick('体积范围', 1).v || ''));
+  const lo = /([\d.]+)\s*GB/.exec(String(pick('体积范围').v || ''));
   if (lo) out.minSizeGB = Number(lo[1]) || 0;
-  const hi = /([\d.]+)\s*GB/.exec(String(pick('最大体积', 2).v || ''));
+  const hi = /([\d.]+)\s*GB/.exec(String(pick('最大体积').v || ''));
   if (hi) out.maxSizeGB = Number(hi[1]) || 0;
-  out.requireChinese = !!pick('必须带中字', 5).on;
+  out.requireChinese = !!pick('必须带中字').on;
   return out;
 }
 

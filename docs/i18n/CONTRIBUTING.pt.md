@@ -30,7 +30,7 @@ Complementos em arquivo único: userscripts do Tampermonkey e folhas de estilo e
 1. O script instala no Tampermonkey e funciona de fato no site alvo — não "deveria funcionar".
 2. Diga quais tipos de tracker você verificou (NexusPHP / UNIT3D / Gazelle / f3nix); nomes de sites ajudam.
 3. Remova `console.log` de depuração, caminhos locais e contas de teste.
-4. Não faça commit de dados locais de trackers: `pta/web/assets/sites-data.local.js` e `pta/data/site-arch.local.csv` estão no `.gitignore` — nunca use `git add -f`.
+4. Não faça commit de dados locais de trackers: `data/site-defs/` e `pta/data/site-arch.local.csv` estão no `.gitignore` — nunca use `git add -f`.
 5. **Nunca faça commit** de cookies, passkeys, chaves de tracker, chaves de API ou capturas com dados pessoais.
 
 ### Mensagens de commit

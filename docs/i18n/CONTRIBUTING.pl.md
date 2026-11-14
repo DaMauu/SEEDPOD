@@ -30,7 +30,7 @@ Dodatki w jednym pliku: skrypty użytkownika Tampermonkey i zewnętrzne arkusze 
 1. Skrypt instaluje się w Tampermonkey i naprawdę działa na docelowej stronie — nie „powinien działać”.
 2. Napisz, na jakich typach trackerów weryfikowałeś (NexusPHP / UNIT3D / Gazelle / f3nix); nazwy stron pomagają.
 3. Usuń debugowe `console.log`i, lokalne ścieżki i konta testowe.
-4. Nie commituj lokalnych danych trackerów: `pta/web/assets/sites-data.local.js` i `pta/data/site-arch.local.csv` są w `.gitignore` — nigdy nie wymuszaj ich przez `git add -f`.
+4. Nie commituj lokalnych danych trackerów: `data/site-defs/` i `pta/data/site-arch.local.csv` są w `.gitignore` — nigdy nie wymuszaj ich przez `git add -f`.
 5. **Nigdy nie commituj** plików cookie, passkeyów, kluczy trackerów, kluczy API ani zrzutów ekranu z danymi osobowymi.
 
 ### Komunikaty commitów

@@ -20,7 +20,7 @@
 | `scripts/bluray/docs/` | 快速上手、使用手册、架构、开发指南 |
 | `scripts/PTScripts/` | 站点小工具合集，跟随上游 `DaMauu/Scripts` |
 | `styles/r/` | 站点主题样式 |
-| `pta/` | 本地站点架构整理页 |
+| `pta/` | SEEDPOD 面板（Vue 3 + Fastify + SQLite） |
 
 ### 版本规则
 
@@ -33,7 +33,7 @@
 1. 脚本能直接在 Tampermonkey 里装上、在目标站点跑通，不是「理论可用」。
 2. 说明在哪些站点类型上验证过（NexusPHP / UNIT3D / Gazelle / f3nix），最好给出站点名。
 3. 删除调试用的 `console.log`、本地路径和测试账号。
-4. 不要提交本地真实站点数据：`pta/web/assets/sites-data.local.js`、`pta/data/site-arch.local.csv` 已在 `.gitignore` 里，别用 `-f` 强推。
+4. 不要提交本地真实站点数据：`data/site-defs/`、`pta/data/site-arch.local.csv` 已在 `.gitignore` 里，别用 `-f` 强推。
 5. **绝对不要提交**任何 Cookie、passkey、Tracker 密钥、API key 或带个人信息的截图。
 
 ### 提交信息
@@ -86,7 +86,7 @@ Single-file add-ons: Tampermonkey userscripts and external stylesheets. **No bui
 1. The script installs in Tampermonkey and actually works on the target site — not "should work".
 2. Say which tracker types you verified (NexusPHP / UNIT3D / Gazelle / f3nix); site names help.
 3. Remove debug `console.log`s, local paths, and test accounts.
-4. Do not commit local tracker data: `pta/web/assets/sites-data.local.js` and `pta/data/site-arch.local.csv` are gitignored — never `git add -f` them.
+4. Do not commit local tracker data: `data/site-defs/` and `pta/data/site-arch.local.csv` are gitignored — never `git add -f` them.
 5. **Never commit** cookies, passkeys, tracker keys, API keys, or screenshots containing personal data.
 
 ### Commit messages

@@ -30,7 +30,7 @@ Add-on in un unico file: userscript per Tampermonkey e fogli di stile esterni. *
 1. Lo script si installa in Tampermonkey e funziona davvero sul sito di destinazione — non «dovrebbe funzionare».
 2. Indica su quali tipi di tracker l'hai verificato (NexusPHP / UNIT3D / Gazelle / f3nix); i nomi dei siti aiutano.
 3. Rimuovi i `console.log` di debug, i percorsi locali e gli account di test.
-4. Non committare dati locali dei tracker: `pta/web/assets/sites-data.local.js` e `pta/data/site-arch.local.csv` sono in `.gitignore` — non forzarli con `git add -f`.
+4. Non committare dati locali dei tracker: `data/site-defs/` e `pta/data/site-arch.local.csv` sono in `.gitignore` — non forzarli con `git add -f`.
 5. **Non committare mai** cookie, passkey, chiavi dei tracker, chiavi API o screenshot con dati personali.
 
 ### Messaggi di commit

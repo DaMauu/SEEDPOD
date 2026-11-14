@@ -30,7 +30,7 @@ Add-ons van één bestand: Tampermonkey-userscripts en externe stylesheets. **Ge
 1. Het script installeert in Tampermonkey en werkt echt op de doelsite — niet „zou moeten werken“.
 2. Vermeld op welke trackertypes je het hebt geverifieerd (NexusPHP / UNIT3D / Gazelle / f3nix); sitenamen helpen.
 3. Verwijder debug-`console.log`s, lokale paden en testaccounts.
-4. Commit geen lokale trackerdata: `pta/web/assets/sites-data.local.js` en `pta/data/site-arch.local.csv` staan in `.gitignore` — forceer ze nooit met `git add -f`.
+4. Commit geen lokale trackerdata: `data/site-defs/` en `pta/data/site-arch.local.csv` staan in `.gitignore` — forceer ze nooit met `git add -f`.
 5. **Commit nooit** cookies, passkeys, trackersleutels, API-sleutels of screenshots met persoonsgegevens.
 
 ### Commitberichten

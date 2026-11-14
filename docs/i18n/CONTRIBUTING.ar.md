@@ -30,7 +30,7 @@
 1. يُثبَّت السكربت في Tampermonkey ويعمل فعلًا على الموقع المستهدف — لا «يُفترض أن يعمل».
 2. اذكر أنواع المتتبعات التي تحققت عليها (NexusPHP / UNIT3D / Gazelle / f3nix)؛ أسماء المواقع مفيدة.
 3. أزل `console.log` الخاصة بالتنقيح والمسارات المحلية وحسابات الاختبار.
-4. لا تُودِع بيانات المتتبعات المحلية: `pta/web/assets/sites-data.local.js` و`pta/data/site-arch.local.csv` موجودة في `.gitignore` — لا تفرض إضافتها بـ`git add -f`.
+4. لا تُودِع بيانات المتتبعات المحلية: `data/site-defs/` و`pta/data/site-arch.local.csv` موجودة في `.gitignore` — لا تفرض إضافتها بـ`git add -f`.
 5. **لا تُودِع أبدًا** أي cookie أو passkey أو مفاتيح متتبعات أو مفاتيح API أو لقطات شاشة تحوي بيانات شخصية.
 
 ### رسائل commit

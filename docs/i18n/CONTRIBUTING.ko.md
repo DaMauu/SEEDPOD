@@ -30,7 +30,7 @@ SEEDPOD 개선에 참여해 주셔서 감사합니다. 먼저 이 페이지를 �
 1. 스크립트가 Tampermonkey에 설치되고 대상 사이트에서 실제로 동작해야 합니다. "이론상 된다"는 안 됩니다.
 2. 어떤 트래커 유형에서 검증했는지(NexusPHP / UNIT3D / Gazelle / f3nix) 적으세요. 사이트 이름이 있으면 더 좋습니다.
 3. 디버그용 `console.log`, 로컬 경로, 테스트 계정을 제거하세요.
-4. 로컬 실제 데이터를 커밋하지 마세요: `pta/web/assets/sites-data.local.js` 와 `pta/data/site-arch.local.csv` 는 .gitignore에 있습니다. `git add -f` 로 강제 추가하지 마세요.
+4. 로컬 실제 데이터를 커밋하지 마세요: `data/site-defs/` 와 `pta/data/site-arch.local.csv` 는 .gitignore에 있습니다. `git add -f` 로 강제 추가하지 마세요.
 5. **절대 커밋하지 마세요**: Cookie, passkey, Tracker 키, API key, 개인정보가 담긴 스크린샷.
 
 ### 커밋 메시지

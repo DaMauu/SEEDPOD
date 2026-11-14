@@ -30,7 +30,7 @@ Tek dosyalık eklentiler: Tampermonkey userscript'leri ve harici stil sayfaları
 1. Betik Tampermonkey'e kuruluyor ve hedef sitede gerçekten çalışıyor — “çalışması gerekir” değil.
 2. Hangi tracker türlerinde doğruladığınızı belirtin (NexusPHP / UNIT3D / Gazelle / f3nix); site adları yardımcı olur.
 3. Hata ayıklama amaçlı `console.log`'ları, yerel yolları ve test hesaplarını kaldırın.
-4. Yerel tracker verilerini commit'lemeyin: `pta/web/assets/sites-data.local.js` ve `pta/data/site-arch.local.csv` `.gitignore` içinde — bunları asla `git add -f` ile zorlamayın.
+4. Yerel tracker verilerini commit'lemeyin: `data/site-defs/` ve `pta/data/site-arch.local.csv` `.gitignore` içinde — bunları asla `git add -f` ile zorlamayın.
 5. **Asla commit'lemeyin**: çerezler, passkey'ler, tracker anahtarları, API anahtarları veya kişisel veri içeren ekran görüntüleri.
 
 ### Commit mesajları

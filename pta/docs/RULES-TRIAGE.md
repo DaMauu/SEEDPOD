@@ -114,7 +114,7 @@
 
 ## 执行方式
 
-1. 在 `data.js` 给“标未接”的行加 `todo: true`；渲染层禁用并显示「未接」，不参与保存。
+1. 在 `pta/web-src/src/data/rules.js` 给“标未接”的行加 `todo: true`；渲染层禁用并显示「未接」，不参与保存。
 2. 删除 9 条固定/装饰行，`gen-rules-tree.js` 重新生成。
 3. `audit-rules.js --fail` 只允许“保留”与显式 `todo` 的行存在 0 命中。
 4. M2 每接一条，就把对应行从 `todo` 改成可用，并补 API 用例。

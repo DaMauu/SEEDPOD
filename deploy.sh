@@ -26,7 +26,6 @@ if [ -d "$SRC/pta/web-src" ]; then
 fi
 rsync -rc --delete \
   --exclude "data/" \
-  --exclude "web/assets/sites-data.local.js" \
   --exclude "*.log" \
   "$SRC/pta/" "$DEPLOY_DIR/pta/"
 rsync -c "$SRC/package.json" "$SRC/CHANGELOG.md" "$DEPLOY_DIR/"

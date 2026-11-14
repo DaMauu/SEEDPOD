@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 19:00（当前 v0.7.143 / 共用样式迁入 v2 构建链）
+最后更新：2026-11-16 20:00（当前 v0.7.144 / v1 运行残留与过期文档清理）
+
+## 2026-11-16 v1 残留清理（v0.7.144）
+
+- 删除 `PLAN.md`、`TASKS.md`、`.opencode/commands/migrate.md`。
+- 删除 `screen.js` 旧 flow 兼容层和最后 5 条 `.map-row` 死 CSS。
+- AGENTS/DECISIONS/ROADMAP/DELIVERY/PROBLEMS/PIPELINE-RULES/RULES-TRIAGE/DESIGN/CONTRIBUTING 路径与状态对齐 v2。
+- `deploy.sh` 去掉 v1 sites-data 排除项；全量检查全绿。
 
 ## 2026-11-16 v2 样式迁移（v0.7.143）
 

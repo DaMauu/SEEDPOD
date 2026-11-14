@@ -30,7 +30,7 @@ Add-on satu berkas: userscript Tampermonkey dan stylesheet eksternal. **Tanpa bu
 1. Skrip terpasang di Tampermonkey dan benar-benar berjalan di situs target — bukan “seharusnya berjalan”.
 2. Sebutkan jenis tracker yang sudah kamu verifikasi (NexusPHP / UNIT3D / Gazelle / f3nix); nama situs sangat membantu.
 3. Hapus `console.log` debug, path lokal, dan akun uji.
-4. Jangan commit data tracker lokal: `pta/web/assets/sites-data.local.js` dan `pta/data/site-arch.local.csv` sudah ada di `.gitignore` — jangan paksa dengan `git add -f`.
+4. Jangan commit data tracker lokal: `data/site-defs/` dan `pta/data/site-arch.local.csv` sudah ada di `.gitignore` — jangan paksa dengan `git add -f`.
 5. **Jangan pernah commit** cookie, passkey, kunci tracker, API key, atau tangkapan layar yang berisi data pribadi.
 
 ### Pesan commit

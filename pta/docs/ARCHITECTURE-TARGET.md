@@ -1,7 +1,7 @@
 # 目标架构（终稿）
 
 这份文件回答四个问题：跑在哪、用什么栈、代码放哪、按什么顺序搬。
-和 `pta/docs/DECISIONS.md` 的 D8–D15、`pta/docs/MIGRATION-PLAN.md` 一起看。
+和 `pta/docs/DECISIONS.md` 的 D8–D17、`pta/docs/MIGRATION-PLAN.md` 一起看。
 
 ## 运行时
 
@@ -20,7 +20,7 @@ pta/
     src/components/ 共享组件
     src/data/       规则数据（rules.js）
   web/dist/         构建产物（gitignore，部署时生成）
-  checks/           adapter / security / api-v2 / build / smoke-legacy
+  checks/           adapter / security / api-v2 / build / smoke-live / site-pack / form
   docs/             计划、规范、决策
 ```
 
@@ -29,7 +29,7 @@ pta/
 ## 搬迁顺序
 
 1. 前端页面逻辑：已完成逐页搬进 SFC；共享壳在 `App.vue`，`src/legacy` 已删除
-2. 规则兑现：把 `data.js` 里服务端没读的开关逐条处理——实现 / 删除 / 移到「高级」并标未接
+2. 规则兑现：把 `pta/web-src/src/data/rules.js` 里服务端没读的开关逐条处理——实现 / 删除 / 移到「高级」并标未接
 3. 抓取正确性：分类轮转、每日上限、禁转/限转参与筛选
 4. 发布链路：qB `add torrent` 真发布，dryRun 只作演练
 5. 调度：定时抓取/送审/发布，带开关与暂停

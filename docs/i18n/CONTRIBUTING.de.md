@@ -30,7 +30,7 @@ Einzeldatei-Add-ons: Tampermonkey-Userscripts und externe Stylesheets. **Kein Bu
 1. Das Skript lässt sich in Tampermonkey installieren und funktioniert tatsächlich auf der Zielseite — nicht „sollte funktionieren“.
 2. Gib an, welche Tracker-Typen du verifiziert hast (NexusPHP / UNIT3D / Gazelle / f3nix); Seitennamen helfen.
 3. Entferne Debug-`console.log`s, lokale Pfade und Testkonten.
-4. Committe keine lokalen Tracker-Daten: `pta/web/assets/sites-data.local.js` und `pta/data/site-arch.local.csv` sind gitignored — niemals mit `git add -f` hinzufügen.
+4. Committe keine lokalen Tracker-Daten: `data/site-defs/` und `pta/data/site-arch.local.csv` sind gitignored — niemals mit `git add -f` hinzufügen.
 5. **Niemals committen**: Cookies, Passkeys, Tracker-Keys, API-Keys oder Screenshots mit personenbezogenen Daten.
 
 ### Commit-Nachrichten

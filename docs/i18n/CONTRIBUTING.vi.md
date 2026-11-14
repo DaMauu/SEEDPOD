@@ -30,7 +30,7 @@ Tiện ích một tệp: userscript cho Tampermonkey và stylesheet bên ngoài.
 1. Script cài được trong Tampermonkey và thực sự chạy trên trang đích — không phải “chắc là chạy được”.
 2. Nêu rõ bạn đã kiểm chứng trên loại tracker nào (NexusPHP / UNIT3D / Gazelle / f3nix); tên trang rất hữu ích.
 3. Xóa các `console.log` gỡ lỗi, đường dẫn cục bộ và tài khoản thử nghiệm.
-4. Không commit dữ liệu tracker cục bộ: `pta/web/assets/sites-data.local.js` và `pta/data/site-arch.local.csv` đã nằm trong `.gitignore` — đừng dùng `git add -f` để ép thêm.
+4. Không commit dữ liệu tracker cục bộ: `data/site-defs/` và `pta/data/site-arch.local.csv` đã nằm trong `.gitignore` — đừng dùng `git add -f` để ép thêm.
 5. **Tuyệt đối không commit** cookie, passkey, khóa tracker, khóa API hoặc ảnh chụp màn hình có dữ liệu cá nhân.
 
 ### Thông điệp commit

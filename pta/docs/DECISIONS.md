@@ -2,7 +2,9 @@
 
 每条只写三件事：定了什么、为什么、代价是什么。改主意就在下面追加新条目，不删旧的。
 
-## D1 前端保持无构建静态页面
+> 2026-11-16 起：早期条目里的 `app.js`、零依赖、无构建等是当时状态；当前以 `AGENTS.md` 和最新条目（D16/D17）为准。
+
+## D1 前端保持无构建静态页面（已由 D17 取代）
 
 定了：`pta/web` 直接用 index.html + app.js + app.css，不引入打包器。
 为什么：本机单机使用，改一行刷新就见效，出问题用浏览器就能查。
@@ -62,7 +64,7 @@
 
 ## D8 生产后端固定 Node + Fastify + SQLite（2026-11-14）
 
-定了：唯一生产后端是 `pta/server/app-fastify.js`，Fastify 5 + `node:sqlite`，数据在 `data/seedpod.db`；旧 `app.js` 只读。
+定了：唯一生产后端是 `pta/server/app-fastify.js`，Fastify 5 + `node:sqlite`，数据在 `data/seedpod.db`；旧 `app.js` 已删除。
 为什么：搬迁已在 v0.7.35 完成，systemd 与健康检查都指向 v2；再维护两套必然分叉。
 代价：新机器要装 fastify 依赖；旧单文件后端不再享受新功能。
 
@@ -76,9 +78,9 @@
 
 定了：功能完成后以 Docker 镜像 + compose 交付，数据卷挂 `/data`，端口 8080。
 为什么：换机器、备份、回滚都简单，不依赖宿主 Node 版本。
-代价：镜像构建要维护 Dockerfile 与依赖锁定；当前 Dockerfile 仍指向旧 `app.js`，需要对齐 v2。
+代价：镜像构建要维护 Dockerfile 与依赖锁定；Dockerfile 已对齐 v2（两阶段构建）。
 
-## D11 当前前端是 demo，定稿后整体搬迁（2026-11-14）
+## D11 当前前端是 demo，定稿后整体搬迁（2026-11-14，已完成，由 D17 取代）
 
 定了：`pta/web` 现在这一版是前端 demo，用来验证交互与流程；前端定稿后按目标架构整体搬迁一次，不在 demo 上继续堆结构。
 目标架构：后端 Node + Fastify + SQLite（v2，已就位），前端 Vue，交付 Docker。

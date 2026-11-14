@@ -30,7 +30,7 @@
 1. สคริปต์ติดตั้งใน Tampermonkey ได้และทำงานจริงบนไซต์เป้าหมาย ไม่ใช่ “น่าจะใช้ได้”
 2. ระบุว่าตรวจสอบบน tracker ประเภทใด (NexusPHP / UNIT3D / Gazelle / f3nix) ถ้ามีชื่อไซต์ด้วยจะยิ่งดี
 3. ลบ `console.log` ที่ใช้ดีบัก เส้นทางไฟล์ในเครื่อง และบัญชีทดสอบออก
-4. อย่า commit ข้อมูล tracker ในเครื่อง: `pta/web/assets/sites-data.local.js` และ `pta/data/site-arch.local.csv` อยู่ใน `.gitignore` แล้ว อย่าใช้ `git add -f` ฝืนเพิ่ม
+4. อย่า commit ข้อมูล tracker ในเครื่อง: `data/site-defs/` และ `pta/data/site-arch.local.csv` อยู่ใน `.gitignore` แล้ว อย่าใช้ `git add -f` ฝืนเพิ่ม
 5. **ห้าม commit** cookie, passkey, คีย์ tracker, API key หรือภาพหน้าจอที่มีข้อมูลส่วนบุคคลเด็ดขาด
 
 ### ข้อความ commit
