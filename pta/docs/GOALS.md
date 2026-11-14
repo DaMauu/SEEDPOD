@@ -12,9 +12,9 @@
 | G4 | 40 条未接规则分诊 | 🟢 open · 等拍板 | 用户逐条决定 | `audit-rules.js` 0 缺读者 |
 | G5 | 真实目标站发布 + 真实 rTorrent/Deluge | 🟡 部分完成 · 等真实 daemon | 用户提供真实 daemon | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | 🟢 open | G2/G3 后 | 例外确认可用、备份恢复演练 |
-| G7 | 发布工作流状态机：阶段落库、幂等、恢复 | 🔵 下一个 active | G2 | 重启可续跑、不重复提交 |
+| G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
 | G8 | 原生单 release 上传准备与站点提交 | 🟡 进行中：测试站真实提交已通过 | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
-| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | 🟡 进行中 | G7 | 不启浏览器跑通全链路 |
+| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | 🔵 下一个 active | G7 | 不启浏览器跑通全链路 |
 
 ## G1 · 响应式自动验收（已完成）
 
@@ -138,14 +138,15 @@
 - 调度器改成推进可执行阶段，不再一口气抓→审→发。
 - UI 显示当前阶段、下一步、失败原因和重试按钮。
 
-**明确不做**：不引入 Redis / 消息队列 / 独立 worker / Postgres；不做 UA/upbrr 交接。
+**完成（0.7.170）**：
 
-**验收**：
+- queue 阶段扩展为 `draft / prepared / previewed / submitted / injected / failed`。
+- 每阶段落 SQLite：`stageAttempts`、`stageLastError`、`stageNextRetryAt`、`stageEvidence`、`stageHistory`、`stageFailedFrom`。
+- `advance` 一次只推进本地一步；`target-upload` 成功写 `submitted`，`publish` 成功写 `injected`，重复提交/注入被 409 或 skipped 拦住。
+- 待审核详情显示阶段、尝试次数、错误、下次重试时间；失败有「重试」按钮。
+- `stage.js` 5/5、target 10/10、publish 5/5、responsive 32 项、全量通过。
 
-- 进程重启后未完成条目能从当前阶段继续，不重复提交。
-- 失败阶段可重试，`nextRetryAt` 生效。
-- 发布/注入有幂等保护。
-- smoke 21/21、responsive 32 项、质量审计不回退。
+**明确不做**：不引入 Redis / 消息队列 / 独立 worker / Postgres；不做 UA/upbrr 交接；`advance` 不隐式真发，提交/注入仍用明确命令。
 
 ## G9 · CLI-first 核心层
 
@@ -200,7 +201,7 @@
 
 ## 推进规则
 
-1. 一次只开一个 active goal；G2 已完成，当前 **G7**，之后 **G9**，再 **G8**。
+1. 一次只开一个 active goal；G2、G7 已完成，当前 **G9**，之后 **G8**。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。

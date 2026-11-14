@@ -104,6 +104,13 @@ pta run --stage <stage>            # 批量推进可执行阶段
 - 每个命令幂等；G7 的阶段状态落 SQLite。
 - 面板和 CLI 不复制业务逻辑，只做输入/输出适配。
 
+### 阶段与幂等（0.7.170）
+
+- queue 的 `stage`：`draft / prepared / previewed / submitted / injected / failed`
+- `stageAttempts` / `stageLastError` / `stageNextRetryAt` / `stageEvidence` / `stageHistory`
+- `advance` 只推进本地一步；`target-upload` / `publish` 会写 submitted / injected
+- 重复提交/注入会被 409 或 skipped 拦住
+
 ### 已实现（0.7.166）
 
 - `POST /api/queue/:id/prepare`、`GET /api/queue/:id/preview`、`POST /api/queue/:id/advance`、`POST /api/release/run`

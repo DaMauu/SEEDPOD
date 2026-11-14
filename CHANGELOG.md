@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.170 · 2026-11-17
+
+### G7 发布状态机
+- queue 阶段扩展：`draft / prepared / previewed / submitted / injected / failed`。
+- 新增 `pta/server/stage.js`：attempts、lastError、nextRetryAt、evidence、history、failedFrom 统一落库。
+- `target-upload` 成功写 submitted，失败写 failed；重复提交 409 `ALREADY_SUBMITTED`。
+- `publish` 成功写 injected，失败写 failed；重复注入返回 skipped，不重复 qB add。
+- 待审核详情显示阶段/尝试/错误/重试时间，失败提供重试按钮。
+- 新增 stage 检查 5/5；target 10/10、publish 5/5 均加幂等断言。
+- 全量 `run.sh`、smoke 21/21、responsive 32 项、CLI 9/9 通过；审计 87。
+
 ## v0.7.169 · 2026-11-17
 
 ### G2 完成：可靠性债收口

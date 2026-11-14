@@ -49,6 +49,14 @@
           </div>
         </div>
 
+        <div v-if="sel.stage" class="qd-stage">
+          <span class="badge" :class="stageTone(sel.stage)">{{ stageLabel(sel.stage) }}</span>
+          <span class="t-sub">尝试 {{ sel.stageAttempts || 0 }}</span>
+          <span v-if="sel.stageNextRetryAt" class="t-sub">下次重试 {{ stageTime(sel.stageNextRetryAt) }}</span>
+          <span v-if="sel.stageLastError" class="qd-stage-err">{{ sel.stageLastError }}</span>
+          <button v-if="sel.stage === 'failed'" class="btn ghost slim" type="button" @click.stop="retryStage">重试</button>
+        </div>
+
         <div class="qd-grid">
           <section class="sd-card qd-pubinfo">
             <h3>发布信息</h3>
@@ -180,6 +188,23 @@ const LABELS = {
 }
 function label(s) { return (LABELS[s] || ['未知', 'gray'])[0] }
 function tone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
+const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预览', submitted: '已提交', injected: '已注入', failed: '失败' }
+const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red' }
+function stageLabel(s) { return STAGE_LABEL[s] || s || '草稿' }
+function stageTone(s) { return STAGE_TONE[s] || '' }
+function stageTime(iso) { return String(iso || '').slice(5, 16).replace('T', ' ') }
+async function retryStage() {
+  if (!sel.value) return
+  try {
+    const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/advance', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: '{}'
+    })
+    const j = await r.json()
+    if (!j || !j.ok) { toast((j && j.error && j.error.message) || '重试失败'); return }
+    toast(j.data.next ? '下一步：' + j.data.next : '阶段：' + stageLabel(j.data.stage))
+    await refresh()
+  } catch (e) { reportError('Queue.retryStage', e); toast('重试请求发不出去') }
+}
 function sub(it) {
   return (it.cn ? it.cn + ' · ' : '') + (it.res || '') + ' · ' + (it.size || '') + (it.targetSite ? ' · 目标 ' + it.targetSite : '')
 }
@@ -605,4 +630,7 @@ onUnmounted(() => {
 .shot.has { padding: 0; overflow: hidden; border-style: solid; border-color: var(--line-2); }
 .shot.has img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .shot.has span { display: none; }
+.qd-stage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+.qd-stage .t-sub { font-size: 11px; }
+.qd-stage-err { flex: 1 1 100%; font-size: 11.5px; color: var(--red); line-height: 1.5; overflow-wrap: anywhere; }
 </style>

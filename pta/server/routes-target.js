@@ -1,6 +1,7 @@
 /* 目标站提交与回查（Fastify v2）。
    干跑默认；真提交必须 realPublish=true；cookie 只从加密凭据读。 */
 const { makeTarget } = require('./target');
+const stage = require('./stage');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
@@ -84,17 +85,26 @@ module.exports = function (app, ctx) {
     const mism = checkHost(item.data, req.params.host);
     if (mism) return bad(reply, mism.code, mism.message, 400);
     const dryRun = b.dryRun !== false;
+    if (!dryRun && stage.isSubmitted(item.data)) {
+      return bad(reply, 'ALREADY_SUBMITTED', '这个条目已经提交过，不能重复提交', 409);
+    }
     const flow = flowMap();
     const shotRule = flow['截图至少几张'];
     const minShots = shotRule ? Math.max(0, Number(shotRule.v) || 0) : 3;
     const shotCount = Array.isArray(item.data.shots) ? item.data.shots.length : 0;
     if (!dryRun && minShots > 0 && shotCount < minShots) {
+      stage.fail(item.data, item.data.stage || 'previewed', '截图不足：至少 ' + minShots + ' 张');
+      saveQueue(item.data);
       return bad(reply, 'SHOTS_REQUIRED', '截图不足：至少 ' + minShots + ' 张，当前 ' + shotCount + ' 张', 400);
     }
     const t = await torrentFor(b, item.data);
-    if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
+    if (t.err) {
+      if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', t.err); saveQueue(item.data); }
+      return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
+    }
     const r = await target.submit(req.params.host, item.data, t.buf, { dryRun: dryRun });
     if (!r.ok) {
+      if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', r.message || r.code); saveQueue(item.data); }
       if (ctx.notify) {
         ctx.notify.send('target.failed', 'SEEDPOD 目标站提交失败：' + req.params.host + ' · ' + (r.message || r.code),
           { host: req.params.host, id: b.queueId }).catch(function (e) { console.warn('[seedpod] notify failed:', e && e.message ? e.message : e) });
@@ -117,6 +127,11 @@ module.exports = function (app, ctx) {
         item.data.targetVerify = Object.assign({}, v.data, { at: now() });
       }
     }
+    stage.set(item.data, 'submitted', { evidence: {
+      host: req.params.host, infohash: r.data.infohash || '',
+      detailsUrl: r.data.detailsUrl || '', status: r.data.status || 0,
+      verified: !!(verified && verified.found)
+    } });
     saveQueue(item.data);
     return ok(reply, Object.assign({}, r.data, { verify: verified }));
   });

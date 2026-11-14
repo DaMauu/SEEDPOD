@@ -5,6 +5,7 @@ const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
 const rtorrent = require('./clients/rtorrent');
 const deluge = require('./clients/deluge');
+const stage = require('./stage');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
@@ -54,6 +55,8 @@ function makePublisher(ctx) {
     if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
     const dryRun = b.dryRun !== false;
     const it = cur.data;
+    stage.ensure(it);
+    if (stage.isInjected(it)) return { ok: true, data: { id: it.id, skipped: true, published: true, msg: '已注入过，跳过重复操作' } };
     if (!it.title) return { ok: false, code: 'BAD_ITEM', message: '条目没有标题，发不了', http: 400 };
     if (!it.targetSite) return { ok: false, code: 'NO_TARGET', message: '还没选目标站', http: 400 };
     const dl = downloaderOf(b, it);
@@ -71,13 +74,18 @@ function makePublisher(ctx) {
     }
 
     const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
-    if (got.err) return { ok: false, code: 'TORRENT_FETCH_FAILED', message: got.err, http: 502 };
+    if (got.err) {
+      stage.fail(it, it.stage || 'previewed', got.err);
+      save(it);
+      return { ok: false, code: 'TORRENT_FETCH_FAILED', message: got.err, http: 502 };
+    }
     const meta = qb.parseTorrent(got.buf);
     if ((dl.kind || 'qb') === 'watch') {
       const w = watch.addTorrent({ dir: dl.watchPath, buf: got.buf, filename: String(it.title || 'upload').slice(0, 60) + '.torrent' });
       if (!w.ok) {
         it.status = 'failed';
         it.pubMsg = 'watch 写入失败：' + w.message;
+        stage.fail(it, it.stage || 'previewed', it.pubMsg);
         save(it);
         return { ok: false, code: w.error || 'WATCH_WRITE_FAILED', message: w.message || 'watch 写入失败', http: 502 };
       }
@@ -88,6 +96,7 @@ function makePublisher(ctx) {
         hash: meta.hash || '', torrentName: meta.name || '', state: 'watch', progress: 0,
         verified: true, client: 'watch', path: w.path };
       it.pubMsg = '已写入 watch 目录：' + w.path;
+      stage.set(it, 'injected', { evidence: { client: 'watch', hash: meta.hash || '', path: w.path, verified: true } });
       save(it);
       db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
         .run(it.id, JSON.stringify(it), it.publishedAt);
@@ -114,6 +123,7 @@ function makePublisher(ctx) {
       if (!cadd.ok) {
         it.status = 'failed';
         it.pubMsg = clientKind + ' 添加失败：' + (cadd.message || 'unknown');
+        stage.fail(it, it.stage || 'previewed', it.pubMsg);
         save(it);
         return { ok: false, code: clientKind.toUpperCase() + '_ADD_FAILED', message: it.pubMsg, http: 502 };
       }
@@ -125,6 +135,7 @@ function makePublisher(ctx) {
         hash: meta.hash || '', torrentName: meta.name || '', state: cchk.state || '',
         progress: Number(cchk.progress) || 0, verified: !!cchk.found, client: clientKind };
       it.pubMsg = '已通过 ' + clientKind + ' 添加' + (cchk.found ? '并校验到种子' : '，回查暂未找到');
+      stage.set(it, 'injected', { evidence: { client: clientKind, hash: meta.hash || '', verified: !!cchk.found, state: cchk.state || '' } });
       save(it);
       db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
         .run(it.id, JSON.stringify(it), it.publishedAt);
@@ -150,6 +161,7 @@ function makePublisher(ctx) {
     if (!add.ok) {
       it.status = 'failed';
       it.pubMsg = 'qB 添加失败：' + (add.message || add.error);
+      stage.fail(it, it.stage || 'previewed', it.pubMsg);
       save(it);
       return { ok: false, code: add.error || 'QB_ADD_FAILED', message: add.message || 'qB 添加失败', http: 502 };
     }
@@ -164,6 +176,7 @@ function makePublisher(ctx) {
     it.pubMsg = chk.found
       ? '已加入 qB 并校验到种子（' + (chk.state || '未知') + '）'
       : '已加入 qB，但列表里还没找到（可能延迟）';
+    stage.set(it, 'injected', { evidence: { client: 'qb', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' } });
     save(it);
     db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
       .run(it.id, JSON.stringify(it), it.publishedAt);

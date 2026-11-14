@@ -42,6 +42,7 @@ run media-api media-api.js
 run clients clients.js
 run clients-ext clients-ext.js
 run cli cli.js
+run stage stage.js
 run notify notify.js
 run web build.js
 

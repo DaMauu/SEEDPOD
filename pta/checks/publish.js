@@ -163,6 +163,17 @@ async function main() {
     need(j.data.status === 'published', '状态不是 published：' + j.data.status);
     need(j.data.qb && j.data.qb.id, '没有记录 qB 下载器');
     need(/已加入 qB/.test(j.data.pubMsg || ''), 'pubMsg 不对：' + j.data.pubMsg);
+    need(j.data.stage === 'injected', '状态机不是 injected：' + j.data.stage);
+    need(j.data.stageEvidence && j.data.stageEvidence.client === 'qb', '没有注入证据');
+  });
+
+  await check('重复发布不重复注入', async () => {
+    const r = await fetchA(BASE + '/api/publish/' + item.data.id, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ dryRun: false })
+    });
+    const j = await r.json();
+    need(r.status === 200 && j.ok && j.data.skipped === true, '重复发布没被跳过：' + r.status);
+    need(addHits === 1, '重复发布又加了一次 qB：' + addHits);
   });
 
   await check('发布后校验到 qB 种子', async () => {

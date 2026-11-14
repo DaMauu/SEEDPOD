@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 21:00（当前 v0.7.169 / G2 完成，质量审计 87）
+最后更新：2026-11-17 22:00（当前 v0.7.170 / G7 发布状态机完成）
+
+## 2026-11-17 G7 发布状态机（v0.7.170）
+
+- stage 扩展 submitted/injected/failed；attempts/lastError/nextRetryAt/evidence/history 落 SQLite。
+- target-upload/publish 成功推进阶段，失败标 failed；重复提交/注入被拦住。
+- 待审核详情显示阶段和重试按钮。
+- G7 完成；下一步 active 切到 G9 CLI-first core。
 
 ## 2026-11-17 G2 完成（v0.7.169）
 

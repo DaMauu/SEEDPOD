@@ -335,6 +335,14 @@ async function main() {
     const g = await json(BASE + '/api/queue/' + encodeURIComponent(qid));
     need(g.body.data.targetUpload && g.body.data.targetUpload.host === '127.0.0.1', '队列没记 targetUpload');
     need(g.body.data.targetVerify && g.body.data.targetVerify.found === true, '队列没记 targetVerify');
+    need(g.body.data.stage === 'submitted', '状态机不是 submitted：' + g.body.data.stage);
+    need(g.body.data.stageEvidence && g.body.data.stageEvidence.infohash, '没有提交证据 infohash');
+    const again = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: false, verify: false })
+    });
+    need(again.status === 409 && again.body.error && again.body.error.code === 'ALREADY_SUBMITTED', '重复提交没被拦住');
+    need(hits.length === 1, '重复提交又发了请求：' + hits.length);
   });
 
   await check('关闭发布后校验时跳过回查', async function () {

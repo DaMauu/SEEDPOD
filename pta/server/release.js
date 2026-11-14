@@ -3,6 +3,7 @@
 const meta = require('./meta');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
+const stage = require('./stage');
 
 function makeRelease(ctx) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
@@ -72,9 +73,8 @@ function makeRelease(ctx) {
     const it = cur.data;
     const prepared = build(it, body);
     it.prepared = prepared;
-    it.stage = 'prepared';
-    it.stageError = '';
     it.preparedAt = prepared.at;
+    stage.set(it, 'prepared', { evidence: { host: prepared.targetHost || '', shots: prepared.shots || 0, preparedAt: prepared.at } });
     save(cur);
     return { ok: true, data: { id: id, stage: 'prepared', prepared: prepared } };
   }
@@ -87,9 +87,8 @@ function makeRelease(ctx) {
       if (!p.ok) return p;
       it.prepared = p.data.prepared;
     }
-    it.stage = 'previewed';
     it.previewedAt = now();
-    it.stageError = '';
+    stage.set(it, 'previewed', { evidence: { previewedAt: it.previewedAt } });
     save(cur);
     return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared } };
   }
@@ -97,19 +96,35 @@ function makeRelease(ctx) {
     const cur = load(id);
     if (!cur) return fail('NOT_FOUND', '条目不存在', 404);
     const it = cur.data;
-    const stage = it.stage || 'draft';
-    if (stage === 'draft' || stage === 'failed') return prepare(id, body);
-    if (stage === 'prepared') return preview(id);
-    if (stage === 'previewed') {
-      return { ok: true, data: { id: id, stage: stage, next: 'target-upload / publish', note: '本地准备完成；提交和注入用 target-upload / publish，默认干跑' } };
+    stage.ensure(it);
+    const curStage = it.stage;
+    if (curStage === 'failed') {
+      const next = Date.parse(it.stageNextRetryAt || '') || 0;
+      if (next > Date.now()) {
+        return { ok: true, data: { id: id, stage: 'failed', next: 'wait', nextRetryAt: it.stageNextRetryAt, note: '还没到重试时间' } };
+      }
+      if (it.stageFailedFrom === 'submitted') {
+        return { ok: true, data: { id: id, stage: 'failed', next: 'target-upload', note: '提交失败；用 target-upload 重试，成功后自动标 submitted' } };
+      }
+      if (it.stageFailedFrom === 'injected') {
+        return { ok: true, data: { id: id, stage: 'failed', next: 'publish', note: '注入失败；用 publish 重试，成功后自动标 injected' } };
+      }
+      stage.set(it, 'draft', { evidence: { retryAt: now() } });
+      save(cur);
+      return prepare(id, body);
     }
-    if (stage === 'submitted') {
-      return { ok: true, data: { id: id, stage: stage, next: 'publish', note: '已提交目标站；下一步注入下载器' } };
+    if (curStage === 'draft') return prepare(id, body);
+    if (curStage === 'prepared') return preview(id);
+    if (curStage === 'previewed') {
+      return { ok: true, data: { id: id, stage: curStage, next: 'target-upload / publish', note: '本地准备完成；提交和注入用 target-upload / publish，默认干跑' } };
     }
-    if (stage === 'injected') {
-      return { ok: true, data: { id: id, stage: stage, next: '', note: '已完成' } };
+    if (curStage === 'submitted') {
+      return { ok: true, data: { id: id, stage: curStage, next: 'publish', note: '已提交目标站；下一步注入下载器' } };
     }
-    return fail('BAD_STAGE', '未知阶段：' + stage);
+    if (curStage === 'injected') {
+      return { ok: true, data: { id: id, stage: curStage, next: '', note: '已完成' } };
+    }
+    return fail('BAD_STAGE', '未知阶段：' + curStage);
   }
   function run(body) {
     const b = body || {};
