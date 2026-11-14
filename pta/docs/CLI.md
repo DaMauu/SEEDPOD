@@ -1,6 +1,6 @@
 # CLI 与 CLI-first（CLI）
 
-状态：2026-11-17，v0.7.166。CLI 仍是 HTTP 客户端（后端必须先启动），但已支持 `prepare / preview / advance / run`；后续 G9 再把业务抽到 core，面板只做视图。
+状态：2026-11-17，v0.7.171。CLI 默认直接读本地 SQLite（不要求先起后端）；设置 `PTA_BASE` 或加 `--http` 才走 HTTP。核心命令已复用 `pta/core/` 与 server 模块。
 
 ## 一、CLI 在哪
 
@@ -16,25 +16,24 @@ npm run cli -- status
 node pta/cli.js status
 ```
 
-当前 CLI 通过 `PTA_BASE` 访问运行中的后端，默认：
-
-```text
-http://127.0.0.1:8080
-```
-
-登录用环境变量，不写进命令、不写进仓库：
+默认直接读本地数据，不需要起后端：
 
 ```bash
+PTA_DATA=/opt/seedpod/data node pta/cli.js status
+```
+
+也可以设置 `PTA_DATA` 环境变量，或让 CLI 使用默认 `data/`。
+
+要走 HTTP（旧方式/远程调用）时：
+
+```bash
+export PTA_BASE='http://127.0.0.1:8080'
 export PTA_USER='面板用户名'
 export PTA_PASS='面板密码'
 node pta/cli.js status
 ```
 
-也可以直接给会话 cookie：
-
-```bash
-export PTA_COOKIE='pta_sid=...'
-```
+或者加 `--http`，同样需要 `PTA_BASE` 和登录环境变量。
 
 ## 二、现在能做什么
 
@@ -60,13 +59,14 @@ node pta/cli.js status --json
 node pta/cli.js queue --status pending --limit 20
 ```
 
-## 三、现在的限制
+## 三、现状
 
-- CLI 只是 HTTP 客户端：必须先起 `node pta/server/app-fastify.js` 或 systemd 服务。
-- `prepare` / `preview` / `advance` / `run` 已实现，但只做本地准备和预览；`advance` 到 previewed 后会提示用 `target-upload` / `publish` 做提交和注入。
-- 还没有独立的 `inject` 命令。
-- 抓取/发布仍受服务端 `realCrawl` / `realPublish` 开关约束。
-- 业务逻辑还在 Fastify 路由里，CLI 不能脱离 HTTP 跑。
+- 默认本地模式：CLI 直接打开 SQLite 和 `data/`，不要求 HTTP。
+- HTTP 模式仍保留：`PTA_BASE` 或 `--http`；适合远程/面板联调。
+- `prepare` / `preview` / `advance` / `run` 已实现；`advance` 到 previewed 后提示用 `target-upload` / `publish` 提交/注入。
+- `target-upload` 的提交逻辑由 `pta/server/target-service.js` 提供，HTTP 路由和 CLI core 共用。
+- `realCrawl` / `realPublish` 仍默认关；本地 CLI 也受同一门禁。
+- 还没有独立 `inject` 命令；也没有完全把 crawl/dupe 路由收成 core thin adapter。
 
 ## 四、G9：CLI-first 核心层
 

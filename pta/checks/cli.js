@@ -45,6 +45,36 @@ function cli(args) {
     });
   });
 }
+function cliLocal(args) {
+  const env = Object.assign({}, process.env, { PTA_DATA: DATA });
+  delete env.PTA_BASE; delete env.PTA_USER; delete env.PTA_PASS;
+  return new Promise(function (resolve) {
+    execFile(process.execPath, [path.join(ROOT, 'cli.js')].concat(args), { env, timeout: 20000 }, function (err, stdout, stderr) {
+      resolve({ code: err ? (typeof err.code === 'number' ? err.code : 1) : 0,
+        stdout: String(stdout || ''), stderr: String(stderr || '') });
+    });
+  });
+}
+function tinyTorrent(file) {
+  const announce = 'http://127.0.0.1:1/announce';
+  const name = 'cli-local-test';
+  const info = Buffer.concat([
+    Buffer.from('d6:lengthi1048576e4:name' + Buffer.byteLength(name) + ':'),
+    Buffer.from(name),
+    Buffer.from('6:pieces20:'),
+    Buffer.from('a'.repeat(20)),
+    Buffer.from('e')
+  ]);
+  const buf = Buffer.concat([
+    Buffer.from('d8:announce' + Buffer.byteLength(announce) + ':'),
+    Buffer.from(announce),
+    Buffer.from('4:info'),
+    info,
+    Buffer.from('e')
+  ]);
+  fs.writeFileSync(file, buf);
+  return file;
+}
 function parse(r) {
   try { return JSON.parse(r.stdout); }
   catch (e) { throw new Error('CLI 输出不是 JSON：' + r.stdout.slice(0, 100) + ' / ' + r.stderr.slice(0, 100)); }
@@ -150,6 +180,33 @@ async function main() {
   await check('targets --json 是数组', async function () {
     const j = parse(await cli(['targets', '--json']));
     need(Array.isArray(j), 'targets 不是数组');
+  });
+
+  await check('本地 status / queue 不启 HTTP', async function () {
+    const status = JSON.parse((await cliLocal(['status', '--json'])).stdout);
+    need(status.version === PKG.version && status.db === 'sqlite', '本地 status 不对');
+    const q = JSON.parse((await cliLocal(['queue', '--json'])).stdout);
+    need(Array.isArray(q.items) && q.items.some(function (x) { return x.id === queueId; }), '本地 queue 没找到条目');
+  });
+
+  await check('本地 prepare / preview / publish 干跑', async function () {
+    const p = parse(await cliLocal(['prepare', queueId2, '--host', 'target.example', '--json']));
+    need(p.stage === 'prepared' && p.prepared, '本地 prepare 失败');
+    const v = parse(await cliLocal(['preview', queueId2, '--json']));
+    need(v.stage === 'previewed', '本地 preview 失败');
+    const pub = parse(await cliLocal(['publish', queueId, '--json']));
+    need(pub.dryRun === true, '本地 publish 不是干跑');
+  });
+
+  await check('本地 target-upload 干跑', async function () {
+    fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
+    fs.writeFileSync(path.join(DATA, 'site-defs', 'target.example.json'), JSON.stringify({
+      host: 'target.example', base: 'https://target.example', engine: 'nexusphp'
+    }));
+    const torrent = tinyTorrent(path.join(DATA, 'tiny.torrent'));
+    const u = parse(await cliLocal(['target-upload', queueId2, '--host', 'target.example', '--torrent', torrent, '--json']));
+    need(u.dryRun === true && u.url, '本地 target-upload 没返回干跑计划');
+    need(u.fields && Object.keys(u.fields).length > 0, '本地 target-upload 没有字段');
   });
 
   await check('缺 --host 时退出码 2', async function () {

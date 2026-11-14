@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.171 · 2026-11-17
+
+### G9 CLI-first 核心层
+- 新增 `pta/core/index.js`：CLI 本地模式直接读 SQLite，不要求先起 HTTP。
+- 新增 `pta/server/target-service.js`：目标站提交/幂等/阶段逻辑由 Fastify 路由和 CLI core 共用。
+- CLI 本地覆盖 status/queue/crawl/screen/prepare/preview/advance/run/publish/targets/target-upload/verify；`PTA_BASE` / `--http` 保留远程模式。
+- 本地 CLI 夹具 12/12；新增本地 target-upload 干跑断言。
+- 面板 smoke 21/21、responsive 32 项、全量检查、质量审计 87 通过。
+
 ## v0.7.170 · 2026-11-17
 
 ### G7 发布状态机

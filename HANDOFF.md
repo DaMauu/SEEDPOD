@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 22:00（当前 v0.7.170 / G7 发布状态机完成）
+最后更新：2026-11-17 23:00（当前 v0.7.171 / G9 CLI 本地模式）
+
+## 2026-11-17 G9 CLI-first（v0.7.171）
+
+- CLI 默认本地模式：直接读 SQLite/data，不要求 HTTP；`PTA_BASE`/`--http` 仍可远程。
+- 新增 `pta/core/index.js` 与 `target-service.js`；target-upload 路由和 CLI 共用。
+- 本地 CLI 12/12；面板 smoke/responsive 不回退。
+- G9 完成；下一步 active 切到 G8 原生上传。
 
 ## 2026-11-17 G7 发布状态机（v0.7.170）
 

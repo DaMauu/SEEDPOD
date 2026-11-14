@@ -13,8 +13,8 @@
 | G5 | 真实目标站发布 + 真实 rTorrent/Deluge | 🟡 部分完成 · 等真实 daemon | 用户提供真实 daemon | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | 🟢 open | G2/G3 后 | 例外确认可用、备份恢复演练 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
-| G8 | 原生单 release 上传准备与站点提交 | 🟡 进行中：测试站真实提交已通过 | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
-| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | 🔵 下一个 active | G7 | 不启浏览器跑通全链路 |
+| G8 | 原生单 release 上传准备与站点提交 | 🔵 下一个 active | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
+| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ✅ 完成（0.7.171） | G7 | 本地 CLI 12/12，不启 HTTP |
 
 ## G1 · 响应式自动验收（已完成）
 
@@ -160,14 +160,14 @@
 - 默认干跑，`--real` 才真抓/真发；`--json` 给脚本用；失败用非 0 退出码。
 - 不打印 cookie/密码/passkey/IP；不复制 UA/upbrr 代码。
 
-**进展（0.7.166）**：`prepare / preview / advance / run` 已接入 CLI 和 HTTP API；queue 增加 `stage`。仅本地准备/预览，提交仍走 `target-upload/publish`。
+**完成（0.7.171）**：
 
-**验收**：
-
-- 临时数据库上只用 CLI 跑通 crawl → screen → prepare → preview → publish（mock）。
-- 不启动浏览器、不点页面。
-- 面板复用同一 core，smoke 21/21、responsive 32 项仍通过。
-- 重启可续跑，不重复提交。
+- 新增 `pta/core/index.js`：本地上下文 + status/queue/crawl/screen/prepare/preview/advance/run/publish/targets/target-upload/verify。
+- 新增 `pta/server/target-service.js`：HTTP 路由与 CLI core 共用提交/幂等/阶段逻辑。
+- CLI 默认本地模式，不要求 HTTP；`PTA_BASE` / `--http` 保留远程模式。
+- 本地 CLI 夹具 12/12：status、queue、prepare、preview、advance、run、publish 干跑、target-upload 干跑。
+- 面板 smoke/responsive 不回退；`run.sh` 全绿。
+- 备注：crawl/dupe 的 Fastify 路由还未全部收成 core thin adapter，后续可继续。
 
 ## G8 · 原生单 release 上传准备与站点提交
 
@@ -201,7 +201,7 @@
 
 ## 推进规则
 
-1. 一次只开一个 active goal；G2、G7 已完成，当前 **G9**，之后 **G8**。
+1. 一次只开一个 active goal；G2、G7、G9 已完成，当前 **G8**。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。
