@@ -159,3 +159,5 @@
 
 状态（0.7.167）：`prepare / preview / advance / run` 已落地；在授权测试站完成真实抓取、查重、准备、提交和回查（测试种子需用户自行删除）；真实 rTorrent/Deluge 和 core 抽取仍待做。命令契约见 `pta/docs/CLI.md`。
 
+执行协议：`pta/docs/GOAL-RUNNER.md`；当前 goal 队列见 `pta/docs/GOALS.md`（G10 多目标发布）。
+

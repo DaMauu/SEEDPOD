@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.173 · 2026-11-17
+
+### G0 + G10–G14 目标与执行协议
+- GOALS 补 G0 地基；新增 G10 多目标发布、G11 上传准备 1:1、G12 全自动流水线、G13 站点覆盖、G14 可选 Python sidecar。
+- 当前 active 切到 G10；G3/G6 作为后续/并行，G4/G5 等拍板/环境。
+- 新增 `pta/docs/GOAL-RUNNER.md`：一次性总提示词，按 GOALS 连续执行，不再每轮要指令。
+- 明确技术边界：Vue + Node 固定，不引入 Redis/队列/worker/Postgres；不复制 UA/upbrr 代码/声明；真实站需授权。
+
+### 检查
+- smoke 21/21、responsive 32 项、CLI 12/12、全量检查、质量审计 87。
+
 ## v0.7.172 · 2026-11-17
 
 ### G8 原生单 release 上传
