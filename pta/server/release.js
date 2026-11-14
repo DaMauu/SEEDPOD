@@ -2,6 +2,7 @@
    为 CLI prepare/preview/advance/run 提供同一套逻辑，后续 G7/G8 再扩展提交/注入。 */
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
+const imagehost = require('./imagehost');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
@@ -73,6 +74,16 @@ function makeRelease(ctx) {
         /\[(?:quote|code|hide)(?:=[^\]]*)?\][\s\S]*?(?:Disc Title|Complete name)\s*:/i.test(description);
       if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 20000);
     }
+    const imageLinks = (Array.isArray(item.imageLinks) ? item.imageLinks : []).filter(function (x) { return x && x.url; });
+    if (imageLinks.length) {
+      const shots = Array.isArray(item.shots) ? item.shots : [];
+      imageLinks.forEach(function (l, i) {
+        const shot = shots.filter(function (s) { return s && s.name === l.name; })[0] || shots[i];
+        const orig = shot && shot.url;
+        if (orig && description.indexOf(orig) >= 0) description = description.split(orig).join(l.url);
+      });
+      description = imagehost.replaceDescription(description, imageLinks);
+    }
     return {
       at: now(),
       title: names.title,
@@ -93,6 +104,8 @@ function makeRelease(ctx) {
       } : null,
       mediaError: media && media.error ? media.error : '',
       mediaBbcode: mediaBlock,
+      imageHost: item.imageHost || '',
+      imageLinks: imageLinks.map(function (x) { return { name: x.name || '', url: x.url }; }),
       targetHost: first.host,
       target: first.target,
       targetError: first.error,
@@ -135,7 +148,8 @@ function makeRelease(ctx) {
       title: p.title || '', subtitle: p.subtitle || '', description: p.description || '',
       targetHost: p.targetHost || '', target: p.target || null, targetError: p.targetError || '',
       targets: p.targets || [], shots: p.shots || 0, torrent: p.torrent || null,
-      media: p.media || null, mediaBbcode: p.mediaBbcode || '', mediaError: p.mediaError || ''
+      media: p.media || null, mediaBbcode: p.mediaBbcode || '', mediaError: p.mediaError || '',
+      imageHost: p.imageHost || '', imageLinks: p.imageLinks || []
     };
     return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared, payload: payload } };
   }

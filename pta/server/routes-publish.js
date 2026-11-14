@@ -1,9 +1,11 @@
 /* 截图上传与发布（Fastify v2）。发布默认只演练：真发帖要等站点表单适配验证后再开。 */
 const { makePublisher } = require('./publish');
+const imagehost = require('./imagehost');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
   const publisher = makePublisher(ctx);
+  const release = require('./release').makeRelease(ctx);
   const now = () => new Date().toISOString();
   const MAX_SHOTS = 6;
   const MAX_LEN = 3 * 1024 * 1024;
@@ -46,6 +48,42 @@ module.exports = function (app, ctx) {
     cur.data.shots = shots;
     save(cur.data);
     return ok(reply, { id: cur.id, count: shots.length });
+  });
+
+  /* 图床：默认演练；真上传要 realImages 开关，且只接受已验证的 custom/local 接口 */
+  app.post('/api/queue/:id/images', async (req, reply) => {
+    const cur = load(req.params.id);
+    if (!cur) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
+    const b = req.body || {};
+    const shots = Array.isArray(cur.data.shots) ? cur.data.shots : [];
+    if (!shots.length) return bad(reply, 'NO_SHOTS', '还没有截图', 400);
+    const provider = String(b.imageHost || cur.data.imageHost || '站内');
+    const dryRun = b.dryRun !== false;
+    const allowReal = !dryRun && ctx.allowReal('realImages');
+    if (!dryRun && !allowReal) {
+      return bad(reply, 'REAL_IMAGES_DISABLED', '图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
+    }
+    let r;
+    try {
+      r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: allowReal, retries: b.retries, delayMs: b.delayMs });
+    } catch (e) {
+      return bad(reply, 'IMAGE_HOST_FAILED', String(e && e.message || e).slice(0, 240), 502);
+    }
+    cur.data.imagePlan = { at: now(), provider: r.provider, dryRun: r.dryRun, total: r.total, uploaded: r.uploaded, failed: r.failed, code: r.code, message: r.message };
+    if (dryRun || r.code === 'IMAGE_HOST_MANUAL') {
+      save(cur.data);
+      return ok(reply, r);
+    }
+    if (!r.items.some(function (x) { return x.ok; })) {
+      save(cur.data);
+      return bad(reply, r.code, r.message, r.http || 502);
+    }
+    cur.data.imageHost = provider;
+    cur.data.imageLinks = r.items.filter(function (x) { return x.ok && x.url; }).map(function (x) { return { name: x.name, url: x.url }; });
+    save(cur.data);
+    const prep = release.prepare(req.params.id, {});
+    if (!prep.ok) return ok(reply, Object.assign({}, r, { preparedError: prep.message }));
+    return ok(reply, Object.assign({}, r, { prepared: prep.data.prepared }));
   });
 
   /* 发布：核心在 publish.js，路由只做参数与错误映射 */

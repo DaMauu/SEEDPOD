@@ -2,6 +2,7 @@
    用法：node pta/checks/api-v2.js  退出码 0 全过 / 1 有失败 / 2 起不来 */
 const { spawn } = require('child_process');
 const fs = require('fs');
+const http = require('http');
 const os = require('os');
 const path = require('path');
 
@@ -46,11 +47,31 @@ async function waitUp() {
 }
 
 async function main() {
+  let imageHits = 0;
+  const imageServer = http.createServer(function (req, res) {
+    const chunks = [];
+    req.on('data', function (c) { chunks.push(c); });
+    req.on('end', function () {
+      imageHits++;
+      const body = Buffer.concat(chunks).toString('latin1');
+      if (!/name="file"/.test(body)) {
+        res.writeHead(400, { 'content-type': 'text/plain' });
+        res.end('no file');
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ data: { url: 'http://127.0.0.1:' + imageServer.address().port + '/img/1.jpg' } }));
+    });
+  });
+  await new Promise(function (resolve) { imageServer.listen(0, '127.0.0.1', resolve); });
+  const imagePort = imageServer.address().port;
   const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),
-      PTA_USER: USER, PTA_PASS: PASS
+      PTA_USER: USER, PTA_PASS: PASS,
+      PTA_IMAGE_HOST_URL: 'http://127.0.0.1:' + imagePort + '/upload',
+      PTA_IMAGE_HOST_FIELD: 'file'
     }),
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -272,6 +293,48 @@ async function main() {
     need(no.status === 422, '无法识别时应 422，实际 ' + no.status);
   });
 
+  await check('图床演练与真上传门禁', async () => {
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Image Host Test 2024 2160p', status: 'pending', site: 'demo-a.example', imageHost: '本地图床' })
+    })).json();
+    const addShot = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/shots', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ shots: [{ name: 'shot1.png', url: png }] })
+    })).json();
+    need(addShot.ok && addShot.data.count === 1, '截图没存进队列');
+    const dry = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/images', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageHost: '本地图床', dryRun: true })
+    })).json();
+    need(dry.ok && dry.data.dryRun === true && dry.data.total === 1 && dry.data.code === 'IMAGE_DRY_RUN', '图床演练结果不对：' + JSON.stringify(dry));
+    const got = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(got.ok && got.data.imagePlan && got.data.imagePlan.dryRun === true, '图床演练没落库');
+    const real = await fetchA(BASE + '/api/queue/' + add.data.id + '/images', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageHost: '本地图床', dryRun: false })
+    });
+    need(real.status === 409, '真上传关闭时状态码是 ' + real.status);
+    const rj = await real.json();
+    need(rj.error && rj.error.code === 'REAL_IMAGES_DISABLED', '真上传错误码不对：' + JSON.stringify(rj));
+    const cfg = await (await fetchA(BASE + '/api/config/user', {
+      method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realImages: true })
+    })).json();
+    need(cfg.ok && cfg.data.realImages === true, 'realImages 没打开：' + JSON.stringify(cfg));
+    const up = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/images', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageHost: '本地图床', dryRun: false, retries: 0 })
+    })).json();
+    need(up.ok && up.data.uploaded === 1 && up.data.failed === 0, '真上传结果不对：' + JSON.stringify(up));
+    need(imageHits === 1, '图床请求数不对：' + imageHits);
+    const got2 = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(got2.ok && got2.data.imageLinks && got2.data.imageLinks.length === 1, 'imageLinks 没落库');
+    need(/\/img\/1\.jpg/.test(got2.data.imageLinks[0].url), 'imageLinks 地址不对：' + JSON.stringify(got2.data.imageLinks));
+    need(got2.data.prepared && /\[img\]http:\/\/127\.0\.0\.1:/.test(got2.data.prepared.description), '简介没替换图床链接：' + ((got2.data.prepared && got2.data.prepared.description) || '').slice(-200));
+    need(got2.data.prepared.description.indexOf('data:image') < 0, '简介里还留着 data URL');
+  });
+
   await check('队列批量按 fromStatus', async () => {
     await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -390,6 +453,7 @@ async function main() {
   });
 
   child.kill();
+  imageServer.close();
   const pass = results.filter(r => r[0]).length;
   results.forEach(r => console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')));
   console.log('\n' + pass + '/' + results.length + ' 通过');

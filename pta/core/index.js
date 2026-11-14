@@ -8,6 +8,7 @@ const { makeTarget } = require('../server/target');
 const { makePublisher } = require('../server/publish');
 const { makeRelease } = require('../server/release');
 const { makeTargetService } = require('../server/target-service');
+const imagehost = require('../server/imagehost');
 const screen = require('../server/screen');
 const adapters = require('../server/adapters');
 const secretbox = require('../server/secretbox');
@@ -141,6 +142,32 @@ function createCore(opts) {
     }));
   }
 
+  async function images(input) {
+    const b = input || {};
+    const id = String(b.queueId || '').trim();
+    if (!id) throw new Error('images 需要 queueId');
+    const row = one('SELECT data FROM queue WHERE id = ?', id);
+    if (!row) throw new Error('队列条目不存在');
+    const it = jparse(row.data) || {};
+    const shots = Array.isArray(it.shots) ? it.shots : [];
+    if (!shots.length) throw new Error('还没有截图');
+    const provider = String(b.imageHost || it.imageHost || '站内');
+    const dryRun = b.dryRun !== false;
+    if (!dryRun && !ctx.allowReal('realImages')) throw new Error('图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试');
+    const r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: !dryRun && ctx.allowReal('realImages'), retries: b.retries, delayMs: b.delayMs });
+    it.imagePlan = { at: now(), provider: r.provider, dryRun: r.dryRun, total: r.total, uploaded: r.uploaded, failed: r.failed, code: r.code, message: r.message };
+    if (!dryRun && r.items.some(function (x) { return x.ok; })) {
+      it.imageHost = provider;
+      it.imageLinks = r.items.filter(function (x) { return x.ok && x.url; }).map(function (x) { return { name: x.name, url: x.url }; });
+    }
+    db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), id);
+    if (!dryRun && r.items.some(function (x) { return x.ok; })) {
+      const prep = ctx.release.prepare(id, {});
+      if (prep.ok) r.prepared = prep.data.prepared;
+    }
+    return r;
+  }
+
   async function verify(input) {
     const b = input || {};
     const item = ctx.targetService.loadQueue(b.queueId);
@@ -176,6 +203,7 @@ function createCore(opts) {
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
+    images: images,
     verify: verify,
     close: () => { try { db.close() } catch (e) { console.warn('[seedpod] close:', e && e.message ? e.message : e) } }
   };

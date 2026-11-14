@@ -22,6 +22,7 @@ function usage() {
   pta crawl --site <host> [--limit 100] [--real] [--json]
   pta screen [--limit 50] [--host <host>] [--json]
   pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--mediainfo file] [--bdinfo file] [--json]
+  pta images <queueId> [--host 站内|Pixhost|Imgbox|本地图床] [--real] [--retries 2] [--json]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
@@ -214,6 +215,24 @@ async function main() {
       return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') +
         ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0) + (p.media && p.media.summary ? ' · ' + p.media.summary : '');
     });
+    return;
+  }
+  if (cmd === 'images') {
+    const id = args[0];
+    if (!id) die('images 需要 queueId', 2);
+    const retries = opts.retries === undefined ? 2 : Math.max(0, Math.min(4, Number(opts.retries) || 0));
+    const body = { imageHost: opts.host ? String(opts.host) : '', retries: retries, dryRun: !opts.real };
+    const human = function (x) {
+      return '图床 ' + (x.provider || '—') + ' · ' + (x.dryRun ? '演练' : (x.uploaded + ' 成功 / ' + x.failed + ' 失败')) + ' · 共 ' + (x.total || 0) + ' 张' + (x.message ? ' · ' + x.message : '');
+    };
+    if (!USE_HTTP) {
+      const r = await core().images(Object.assign({ queueId: id }, body));
+      print(r, opts, human);
+      if (!r.ok && !r.uploaded) process.exitCode = 1;
+      return;
+    }
+    const d = await api('/api/queue/' + encodeURIComponent(id) + '/images', { method: 'POST', body: body });
+    print(d, opts, human);
     return;
   }
   if (cmd === 'preview') {

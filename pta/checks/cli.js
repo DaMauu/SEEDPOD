@@ -47,7 +47,7 @@ function cli(args) {
 }
 function cliLocal(args) {
   const env = Object.assign({}, process.env, { PTA_DATA: DATA });
-  delete env.PTA_BASE; delete env.PTA_USER; delete env.PTA_PASS;
+  delete env.PTA_BASE; delete env.PTA_USER; delete env.PTA_PASS; delete env.PTA_ALLOW_REAL;
   return new Promise(function (resolve) {
     execFile(process.execPath, [path.join(ROOT, 'cli.js')].concat(args), { env, timeout: 20000 }, function (err, stdout, stderr) {
       resolve({ code: err ? (typeof err.code === 'number' ? err.code : 1) : 0,
@@ -205,6 +205,16 @@ async function main() {
     need(p.prepared && p.prepared.media && p.prepared.media.kind === 'bdinfo', '没解析出 BDInfo：' + JSON.stringify(p.prepared && p.prepared.media));
     need(/2160p/.test(p.prepared.media.summary), '摘要没有 2160p：' + p.prepared.media.summary);
     need(/【BDInfo】/.test(p.prepared.description), '简介没拼 BDInfo');
+  });
+
+  await check('本地 images 默认演练、真上传门禁', async function () {
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+    const add = await json('/api/queue/' + queueId2 + '/shots', { method: 'POST', body: { shots: [{ name: 'shot1.png', url: png }] } });
+    need(add.status === 200 && add.body.ok, '截图没加进去');
+    const dry = parse(await cliLocal(['images', queueId2, '--host', '本地图床', '--json']));
+    need(dry.dryRun === true && dry.code === 'IMAGE_DRY_RUN' && dry.total === 1, 'images 演练不对：' + JSON.stringify(dry));
+    const real = await cliLocal(['images', queueId2, '--host', '本地图床', '--real', '--json']);
+    need(real.code === 1 && /真上传没打开/.test(real.stderr), '真上传门禁不对：code=' + real.code + ' err=' + real.stderr.slice(0, 80));
   });
 
   await check('本地 target-upload 干跑', async function () {

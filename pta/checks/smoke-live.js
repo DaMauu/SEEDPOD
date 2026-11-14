@@ -282,12 +282,20 @@ async function main() {
   });
 
   await check('待审核列表与详情', async () => {
-    await page.evaluate(async () => {
-      await fetch('/api/queue', {
+    const qid = await page.evaluate(async () => {
+      const r = await fetch('/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Smoke Queue 2020 2160p', status: 'pending', site: 'demo-a.example', targetSite: 'target.example', downloadUrl: 'http://127.0.0.1:1/t.torrent', res: '2160p', size: '20 GB' })
+        body: JSON.stringify({ title: 'Smoke Queue 2020 2160p', status: 'pending', site: 'demo-a.example', targetSite: 'target.example', downloadUrl: 'http://127.0.0.1:1/t.torrent', res: '2160p', size: '20 GB', imageHost: '本地图床' })
       });
+      const j = await r.json();
+      return j.data && j.data.id;
     });
+    await page.evaluate(async (id) => {
+      await fetch('/api/queue/' + encodeURIComponent(id) + '/shots', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ shots: [{ name: 'shot1.png', url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=' }] })
+      });
+    }, qid);
     await page.evaluate(() => { location.hash = '#dashboard'; });
     await page.waitForTimeout(250);
     await page.evaluate(() => { location.hash = '#queue'; });
@@ -310,6 +318,10 @@ async function main() {
     await page.waitForTimeout(800);
     const prepared = await page.locator('.qd-media').innerText();
     need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
+    await page.getByRole('button', { name: '图床演练' }).click();
+    await page.waitForTimeout(1200);
+    const shotTxt = await page.locator('.qd-shots').innerText();
+    need(/图床：本地图床/.test(shotTxt) && /演练/.test(shotTxt), '图床演练没显示摘要：' + shotTxt.slice(0, 120));
   });
 
   await check('数据清单渲染、筛选与标记', async () => {

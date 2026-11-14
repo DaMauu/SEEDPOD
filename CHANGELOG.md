@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.182 · 2026-11-18
+
+### G11 图床转存与链接替换
+- 新增 `pta/server/imagehost.js`：默认演练；真上传逐张重试、失败隔离；Pixhost/Imgbox 未验证只演练，不冒充成功。
+- `release.prepare` 把 `imageLinks` 追加为 `[img]` 并清掉 data URL；`prepared.imageLinks` 可直接预览。
+- 新增 `POST /api/queue/:id/images`；真上传受 `realImages` 开关或 `PTA_ALLOW_REAL` 限制。
+- CLI 新增 `pta images <queueId> [--host 站内|Pixhost|Imgbox|本地图床] [--real] [--retries 2]`。
+- 面板截图区新增“图床演练 / 上传截图”和摘要显示。
+- 新增 `pta/checks/imagehost.js` 7/7；api-v2 25/25、CLI 14/14、smoke 21/21。
+- 待做：客户端注入干跑；验证 Pixhost/Imgbox 的实际响应字段。
+
 ## v0.7.181 · 2026-11-18
 
 ### G11 上传准备：MediaInfo/BDInfo

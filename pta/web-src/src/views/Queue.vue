@@ -122,6 +122,11 @@
               </template>
               <button class="shot add" type="button" @click="pickFiles">上传</button>
             </div>
+            <div class="qd-actions">
+              <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(true)">图床演练</button>
+              <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(false)">上传截图</button>
+            </div>
+            <div v-if="sel.imagePlan" class="t-sub">图床：{{ hostLabel(sel.imagePlan.provider) }} · {{ sel.imagePlan.total }} 张 · {{ sel.imagePlan.dryRun ? '演练' : (sel.imagePlan.uploaded + ' 张已传' + (sel.imagePlan.failed ? '，' + sel.imagePlan.failed + ' 张失败' : '')) }}</div>
           </section>
 
           <section class="sd-card qd-media">
@@ -199,7 +204,7 @@ const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
-const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false })
+const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
 let mediaCfgLoaded = false
 const filePick = ref(null)
@@ -215,6 +220,7 @@ function label(s) { return (LABELS[s] || ['未知', 'gray'])[0] }
 function tone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
 const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预览', submitted: '已提交', injected: '已注入', failed: '失败' }
 const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red' }
+function hostLabel(s) { return ({ none: '站内', local: '本地图床', pixhost: 'Pixhost', imgbox: 'Imgbox', custom: '自定义' })[s] || s || '—' }
 function stageLabel(s) { return STAGE_LABEL[s] || s || '草稿' }
 function stageTone(s) { return STAGE_TONE[s] || '' }
 function targetTone(s) { return STAGE_TONE[s] || '' }
@@ -411,6 +417,22 @@ async function probeMedia() {
     else toast((j && j.error && j.error.message) || '探测失败')
   } catch (e) { toast('探测请求发不出去') }
   media.probing = false
+}
+async function imageAction(dryRun) {
+  if (!sel.value || busy.images) return
+  if (!(sel.value.shots || []).length) { toast('先加截图'); return }
+  busy.images = true
+  try {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/images', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ imageHost: form.imageHost, dryRun, retries: 2 })
+    })).json()
+    if (j && j.ok) {
+      toast(dryRun ? ('图床演练：' + j.data.total + ' 张，没有上传') : ('图床上传：成功 ' + j.data.uploaded + '，失败 ' + j.data.failed))
+      await refresh()
+    } else toast((j && j.error && j.error.message) || '图床操作失败')
+  } catch (e) { reportError('Queue.imageAction', e); toast('图床请求发不出去') }
+  busy.images = false
 }
 async function parseMediaInfo() {
   if (!sel.value || media.parsing) return

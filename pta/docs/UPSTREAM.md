@@ -143,3 +143,10 @@
 - 观察：MediaInfo 是分段 `Key : Value`，BDInfo 是逐行 `Label: value`；音频/字幕可能有多条，不能只抓第一条。
 - 决定：`mediainfo.js` 先识别格式再解析；摘要只取分辨率/编码/HDR/音轨/字幕/体积；原文默认包 `[quote]` 进简介；无法识别返回空 kind，不猜。
 - 待做：截图转存图床并替换简介链接；客户端注入 dry run。
+
+## 2026-11-18 · G11 图床转存与链接替换
+
+- 来源：Pixhost/Imgbox 公开上传页与通用 multipart 图床接口；只做能力对照，未复制代码/配置。
+- 观察：匿名图床返回值不统一（JSON / 纯文本 / HTML），不能假定单一字段；Pixhost/Imgbox 的实际上传响应尚未验证。
+- 决定：`imagehost.js` 默认演练；真上传只开放已验证的 custom/local（`PTA_IMAGE_HOST_URL` / `PTA_IMAGE_HOST_FIELD` / `PTA_IMAGE_HOST_TOKEN`），逐张重试、失败隔离；简介只替换 data URL 并追加 `[img]` 链接。
+- 待做：验证 Pixhost/Imgbox 实际响应字段；客户端注入 dry run。

@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 09:00（当前 v0.7.181 / G11 MediaInfo/BDInfo 上传准备）
+最后更新：2026-11-18 10:00（当前 v0.7.182 / G11 图床转存）
+
+## 2026-11-18 G11 图床转存（v0.7.182）
+
+- 新增 `imagehost.js`：演练/真上传、逐张重试、失败隔离；Pixhost/Imgbox 未验证只演练。
+- `release.prepare` 把 `imageLinks` 追加为 `[img]` 并清掉 data URL；目标站继续读 `description`。
+- `POST /api/queue/:id/images` + CLI `images` + 面板“图床演练/上传截图”；真上传要 `realImages` 或 `PTA_ALLOW_REAL`。
+- imagehost 7/7、api-v2 25/25、CLI 14/14、smoke 21/21。
+- 下一步：客户端注入干跑；之后验证 Pixhost/Imgbox 实际接口。
 
 ## 2026-11-18 G11 MediaInfo/BDInfo 上传准备（v0.7.181）
 
