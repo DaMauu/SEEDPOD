@@ -213,7 +213,7 @@ function makeTarget(ctx) {
   }
 
   async function submit(host, item, buf, opts) {
-    const p = plan(host, item);
+    const p = opts && opts.plan ? { ok: true, data: opts.plan } : plan(host, item);
     if (!p.ok) return p;
     const meta = torrentMeta(buf);
     if (!meta.hash) return { ok: false, code: 'BAD_TORRENT', message: '种子解析不出 infohash', http: 400 };

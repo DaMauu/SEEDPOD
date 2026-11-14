@@ -104,6 +104,12 @@ pta run --stage <stage>            # 批量推进可执行阶段
 - 每个命令幂等；G7 的阶段状态落 SQLite。
 - 面板和 CLI 不复制业务逻辑，只做输入/输出适配。
 
+### prepared 上传（0.7.172）
+
+- `prepare` 的标题/副标题/简介/目标字段会作为上传计划传给 `target-upload`
+- `preview` 输出完整 `payload`（含目标 URL/字段、截图数、种子摘要）
+- `target-upload` 默认干跑；`--real` 才提交
+
 ### 阶段与幂等（0.7.170）
 
 - queue 的 `stage`：`draft / prepared / previewed / submitted / injected / failed`

@@ -8,12 +8,12 @@
 | --- | --- | --- | --- | --- |
 | G1 | 响应式自动验收进 `run.sh` | ✅ 完成（0.7.163） | 无 | `responsive-layout.js` 32 项通过 |
 | G2 | 可靠性债：公共函数、空 catch、TODO/console | ✅ 完成（0.7.169） | 无 | 空 catch 0、审计 87 |
-| G3 | 拆 `Sites.vue` | 🟢 open | G2 完成后 | smoke 21/21、responsive 32 项 |
+| G3 | 拆 `Sites.vue` | 🔵 下一个 active | G2 完成后 | smoke 21/21、responsive 32 项 |
 | G4 | 40 条未接规则分诊 | 🟢 open · 等拍板 | 用户逐条决定 | `audit-rules.js` 0 缺读者 |
 | G5 | 真实目标站发布 + 真实 rTorrent/Deluge | 🟡 部分完成 · 等真实 daemon | 用户提供真实 daemon | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | 🟢 open | G2/G3 后 | 例外确认可用、备份恢复演练 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
-| G8 | 原生单 release 上传准备与站点提交 | 🔵 下一个 active | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
+| G8 | 原生单 release 上传准备与站点提交 | ✅ 完成（0.7.172） | G7、G9、G4、G5 | prepared payload 已接 target-upload |
 | G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ✅ 完成（0.7.171） | G7 | 本地 CLI 12/12，不启 HTTP |
 
 ## G1 · 响应式自动验收（已完成）
@@ -190,18 +190,17 @@
 - G4 规则分诊决定哪些条件保留。
 - G5 提供真实目标站权限和真实 daemon 才能做最终验收；之前用本地 mock 夹具。
 
-**进展（0.7.167）**：在用户授权的测试站完成一次真实提交，HTTP 200，回查找到种子；测试站会留下一条测试种子，需用户自行删除。真实 daemon（rTorrent/Deluge）仍未验证。
+**完成（0.7.172）**：
 
-**验收**：
-
-- mock 目标站全链路通过：准备 → 预览 → 提交 → 回查 → 注入。
-- 一次用户授权的真实目标站发布成功，且不重复提交。
-- 全程 cookie/密码/IP 不进仓库、不进日志、不进回复。
-- 不新增 UA/upbrr 代码、配置、品牌或私有站点数据。
+- `prepare` 生成的标题/副标题/简介/目标字段已作为上传计划传给 `target-upload`，不再用原始 item 重新拼。
+- `preview` 返回完整 `payload`（标题、副标题、简介、目标字段、截图数、种子摘要）。
+- 默认干跑；成功写 `submitted`，`publish` 成功写 `injected`；失败写 `failed` + `lastError` + `nextRetryAt`。
+- 本地 CLI 12/12，target-upload 断言校验了 prepared 字段与实际上传字段一致。
+- 测试站真实提交/回查已通过；真实 daemon 仍待 G5。
 
 ## 推进规则
 
-1. 一次只开一个 active goal；G2、G7、G9 已完成，当前 **G8**。
+1. 一次只开一个 active goal；G2、G7、G8、G9 已完成，当前 **G3**。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。

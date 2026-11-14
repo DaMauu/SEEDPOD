@@ -53,6 +53,16 @@ function makeTargetService(ctx, target) {
     return target.fetchSourceTorrent(item);
   }
 
+  function preparedItem(item, host) {
+    const p = item && item.prepared;
+    if (!p) return item;
+    const out = Object.assign({}, item);
+    if (p.title) out.title = p.title;
+    if (p.subtitle) out.cn = p.subtitle;
+    if (p.description) out.intro = p.description;
+    return out;
+  }
+
   async function upload(host, body) {
     const b = body || {};
     const item = loadQueue(b.queueId);
@@ -77,7 +87,9 @@ function makeTargetService(ctx, target) {
       if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', t.err); saveQueue(item.data); }
       return { ok: false, code: 'TORRENT_UNAVAILABLE', message: t.err, http: 400 };
     }
-    const r = await target.submit(host, item.data, t.buf, { dryRun: dryRun });
+    const uploadItem = preparedItem(item.data, host);
+    const preparedPlan = item.data.prepared && item.data.prepared.targetHost === host ? item.data.prepared.target : null;
+    const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: preparedPlan || undefined });
     if (!r.ok) {
       if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', r.message || r.code); saveQueue(item.data); }
       return r;
@@ -91,7 +103,7 @@ function makeTargetService(ctx, target) {
     const verifyRule = flow['发布后校验'];
     const shouldVerify = b.verify !== undefined ? !!b.verify : (verifyRule ? verifyRule.on !== false : true);
     if (shouldVerify) {
-      const v = await target.verify(host, item.data, t.buf, { url: r.data.detailsUrl || undefined });
+      const v = await target.verify(host, uploadItem, t.buf, { url: r.data.detailsUrl || undefined });
       if (v.ok) {
         verified = v.data;
         item.data.targetVerify = Object.assign({}, v.data, { at: now() });

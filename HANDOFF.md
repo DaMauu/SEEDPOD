@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 23:00（当前 v0.7.171 / G9 CLI 本地模式）
+最后更新：2026-11-18 00:00（当前 v0.7.172 / G8 原生上传完成）
+
+## 2026-11-18 G8 原生上传（v0.7.172）
+
+- prepared payload 已接 target-upload；preview 返回完整 payload。
+- 提交/注入成功写 submitted/injected，失败写 failed + lastError + nextRetryAt。
+- CLI 12/12；全量、smoke、responsive、审计 87 通过。
+- G8 完成；下一步 active 切到 G3 拆 Sites.vue。
 
 ## 2026-11-17 G9 CLI-first（v0.7.171）
 

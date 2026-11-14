@@ -208,7 +208,7 @@ async function main() {
       const x = core().preview(id);
       const p = x.prepared || {};
       print(x, opts, function () {
-        return '阶段 ' + x.stage + '\n标题: ' + (p.title || '') + '\n副标题: ' + (p.subtitle || '') + '\n目标: ' + (p.targetHost || '未选') + (p.target ? '\nURL: ' + p.target.url + '\n字段: ' + Object.keys(p.target.fields || {}).join(', ') : '') + (p.targetError ? '\n目标站未就绪: ' + p.targetError : '') + '\n截图: ' + (p.shots || 0);
+        return '阶段 ' + x.stage + '\n标题: ' + (p.title || '') + '\n副标题: ' + (p.subtitle || '') + '\n简介: ' + (p.description || '') + '\n目标: ' + (p.targetHost || '未选') + (p.target ? '\nURL: ' + p.target.url + '\n字段: ' + Object.keys(p.target.fields || {}).join(', ') : '') + (p.targetError ? '\n目标站未就绪: ' + p.targetError : '') + '\n截图: ' + (p.shots || 0);
       });
       return;
     }

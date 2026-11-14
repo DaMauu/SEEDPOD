@@ -204,9 +204,12 @@ async function main() {
       host: 'target.example', base: 'https://target.example', engine: 'nexusphp'
     }));
     const torrent = tinyTorrent(path.join(DATA, 'tiny.torrent'));
+    const prep = parse(await cliLocal(['prepare', queueId2, '--host', 'target.example', '--json']));
     const u = parse(await cliLocal(['target-upload', queueId2, '--host', 'target.example', '--torrent', torrent, '--json']));
     need(u.dryRun === true && u.url, '本地 target-upload 没返回干跑计划');
     need(u.fields && Object.keys(u.fields).length > 0, '本地 target-upload 没有字段');
+    const planned = (prep.prepared && prep.prepared.target && prep.prepared.target.fields) || {};
+    Object.keys(planned).forEach(function (k) { need(u.fields[k] === planned[k], '上传字段没使用 prepared：' + k); });
   });
 
   await check('缺 --host 时退出码 2', async function () {

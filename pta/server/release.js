@@ -90,7 +90,13 @@ function makeRelease(ctx) {
     it.previewedAt = now();
     stage.set(it, 'previewed', { evidence: { previewedAt: it.previewedAt } });
     save(cur);
-    return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared } };
+    const p = it.prepared || {};
+    const payload = {
+      title: p.title || '', subtitle: p.subtitle || '', description: p.description || '',
+      targetHost: p.targetHost || '', target: p.target || null, targetError: p.targetError || '',
+      shots: p.shots || 0, torrent: p.torrent || null
+    };
+    return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared, payload: payload } };
   }
   function advance(id, body) {
     const cur = load(id);

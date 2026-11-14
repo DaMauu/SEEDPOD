@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.172 · 2026-11-17
+
+### G8 原生单 release 上传
+- `prepare` 的标题/副标题/简介/目标字段作为上传计划传给 `target-upload`，避免上传时重新拼原始字段。
+- `target.submit` 支持 prepared plan override；`target-service` 在 prepared 目标站一致时直接使用该计划。
+- `preview` 返回完整 `payload`：标题、副标题、简介、目标 URL/字段、截图数、种子摘要。
+- 默认干跑；提交成功写 submitted，注入成功写 injected；失败写 failed + lastError + nextRetryAt。
+- CLI 本地 target-upload 断言 prepared 字段与实际上传字段一致；CLI 12/12。
+- 全量 `run.sh`、smoke 21/21、responsive 32 项、审计 87 通过。
+
 ## v0.7.171 · 2026-11-17
 
 ### G9 CLI-first 核心层
