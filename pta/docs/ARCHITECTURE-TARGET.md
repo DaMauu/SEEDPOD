@@ -1,7 +1,7 @@
 # 目标架构（终稿）
 
 这份文件回答四个问题：跑在哪、用什么栈、代码放哪、按什么顺序搬。
-和 `docs/DECISIONS.md` 的 D8–D15、`pta/docs/MIGRATION-PLAN.md` 一起看。
+和 `pta/docs/DECISIONS.md` 的 D8–D15、`pta/docs/MIGRATION-PLAN.md` 一起看。
 
 ## 运行时
 
@@ -24,7 +24,7 @@ pta/
   docs/             计划、规范、决策
 ```
 
-`pta/web` 只放 Vite 构建产物 `dist`；源码在 `pta/web-src`，旧 demo 已归档到 `pta/archive/web-demo`。
+`pta/web` 只放 Vite 构建产物 `dist`；源码在 `pta/web-src`，旧 demo 已删除。
 
 ## 搬迁顺序
 

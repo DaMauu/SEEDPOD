@@ -11,7 +11,6 @@ pta/docs
 pta/fixtures
 pta/scripts
 pta/web
-pta/archive
 pta/data/site-arch.local.csv
 docs
 scripts

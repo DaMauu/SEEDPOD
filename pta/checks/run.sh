@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SEEDPOD 检查入口（Linux / macOS）。Windows 备用：run.cmd（legacy）。
+# SEEDPOD 检查入口（Linux / macOS）。Windows 用 WSL / Git Bash 跑同一脚本。
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 

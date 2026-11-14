@@ -34,7 +34,7 @@
 
 ## D6 检查先于功能
 
-定了：`pta/checks/run.cmd` 全绿才允许提交。
+定了：`pta/checks/run.sh` 全绿才允许提交。
 为什么：改需求最容易悄悄弄坏旧功能，没有断言就只能靠人肉点。
 代价：加功能前先想清楚怎么断言，前期会慢一点。
 
@@ -87,7 +87,7 @@
 
 ## D13 检查入口以 Linux 的 run.sh 为准（2026-11-14）
 
-定了：`pta/checks/run.sh` 是主要检查入口，`run.cmd` 只保留给 Windows 上的聊天环境备用。
+定了：`pta/checks/run.sh` 是主要检查入口，`run.sh` 只保留给 Windows 上的聊天环境备用。
 为什么：开发与部署都在 Linux，浏览器用自带 Chromium（新 headless，支持下载），不再依赖 Windows 的 Edge。
 代价：Windows 上跑检查要自己保证 Node 与浏览器依赖；Linux 首次要 `npm ci` 和 `npx playwright install chromium`。
 

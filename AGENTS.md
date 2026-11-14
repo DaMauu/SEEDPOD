@@ -13,23 +13,23 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 
 个人 PT 转载/交叉做种面板：Vite + Vue 3 SFC 前端 + Node 后端（生产为 Fastify + SQLite）。
 
-- 前端源码 `pta/web-src`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 归档在 `pta/archive/web-demo`，不再使用
+- 前端源码 `pta/web-src`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 已删除，不再保留
 - 生产后端 `pta/server/app-fastify.js`（Fastify）+ `pta/server/routes-*.js` + `pta/server/db.js`（SQLite，数据在 `data/seedpod.db`）；适配器 `pta/server/adapters/nexusphp.js`，凭据加密 `pta/server/secretbox.js`
-- 旧零依赖后端已归档到 `pta/archive/server-v1.js`，只作参考，不在生产运行；服务端改动一律进 v2
+- 旧零依赖后端已删除，只保留 v2；服务端改动一律进 v2
 - 线上部署目录由 `DEPLOY_DIR` 指定（本地参数放未入库的 `.deploy.env`），systemd 服务 `seedpod`，监听 8080，数据在 `$DEPLOY_DIR/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
-- 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
+- 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `pta/docs/DECISIONS.md`
 - 阶段：七个页面已全部 SFC；登录/路由/顶栏/Toast/Confirm/页脚已搬进 `App.vue`，`src/legacy` 已删除
-- Vite 构建：源码 `pta/web-src`，`npm run build` 输出 `pta/web/dist`；改前端不碰 `pta/archive/web-demo`
-- 开发环境：Linux 为准；Windows 只用于聊天与备用，`run.cmd` 不是主入口
+- Vite 构建：源码 `pta/web-src`，`npm run build` 输出 `pta/web/dist`；改前端只动 `pta/web-src`
+- 开发环境：Linux 为准；Windows 用 WSL / Git Bash 跑 `run.sh`
 
 ## 铁律（违反即为错误，不要协商）
 
 1. 不碰真实 PT 站点：不自己找 cookie、不复用 cookie 去登录、不对真实站点做探测/压测/反复请求。抓取一律先干跑或本地夹具。
-2. 真实站点清单、站名、凭据、服务器 IP 都不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`docs/*.example.json`）。
+2. 真实站点清单、站名、凭据、服务器 IP 都不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
 4. 站点凭据只存密文：`data/credentials.json` + AES-256-GCM，接口只回 `hasCookie`。
-5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 备用 `run.cmd`）。没绿不提交；连续两轮修不绿就回滚并停手。
+5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 不接新需求，避免同一功能两套实现。
 

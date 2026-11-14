@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.128 · 2026-11-16
+
+### 清理
+- 删除 `pta/archive`（旧 web demo + v1 后端）；删除 `pta/checks/api.js`、`pta/checks/run.cmd`。
+- `routes-missing.js` 改名 `routes-extra.js`；删除零引用的一次性 scripts（clean/collect/discover/merge/migrate/reshape/verify）。
+- v1 文档：`DECISIONS.md`、`PRIOR-ART.md`、两个 example 迁到 `pta/docs/`；v1 的 API/ARCHITECTURE/DEPLOY/PIPELINE 删除。
+- `README` 用的 `docs/i18n`、banner 保留；`scripts/bluray` 是独立项目，保留。
+
+### 检查
+- `run.sh` 全绿：smoke-live 21/21、adapter 21/21、security 3/3、api-v2 21/21、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、meta-ext 5/5、media 7/7、media-api 6/6、clients 5/5、clients-ext 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.127 · 2026-11-16
 
 ### 重构

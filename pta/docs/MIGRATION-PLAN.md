@@ -2,7 +2,7 @@
 
 目标：把页面逻辑逐步搬进 SFC，直到 `src/legacy` 清空。状态：已完成（0.7.127，登录/路由/顶栏/Toast/Confirm/页脚在 `App.vue`，`src/legacy` 已删）。
 
-状态：已完成（0.7.109 七页 SFC；0.7.110 旧 `pta/web` 归档到 `pta/archive/web-demo`）。
+状态：已完成（0.7.109 七页 SFC；0.7.110 旧 `pta/web` 归档，0.7.128 归档已删除）。
 线上始终服务 `pta/web/dist`，每页拆完都能单独上线。
 
 ## 顺序
@@ -23,7 +23,7 @@
 
 1. 该页的 legacy `initXxx()` 从 `boot()` 移除，且不再被调用。
 2. 数据、状态、事件在 SFC 内；允许复用 legacy 的纯工具函数，但不新增 DOM 拼接逻辑。
-3. 接口路径与字段不变；需要改先停，写 `docs/API.md` 提案。
+3. 接口路径与字段不变；需要改先停，写 `pta/docs/` 里的提案。
 4. `npm run build` 通过。
 5. `node pta/checks/build.js` 7/7。
 6. 线上手动验收清单逐项通过（见下），0 个 console error / pageerror。
@@ -53,7 +53,7 @@
 ## 自主边界
 
 - 只改 `pta/web-src`、`CHANGELOG.md`、`HANDOFF.md`、`TASKS.md`、`package.json`、本文件。
-- 归档完成后不碰 `pta/archive/web-demo`；新代码只进 `pta/web-src`、`pta/server`、检查脚本与文档。
+- 旧 demo 已删除；新代码只进 `pta/web-src`、`pta/server`、检查脚本与文档。
 - 旧函数先停止调用，不急着删；全部拆完再统一清理。
 - 不改视觉风格和文案，只做等价搬迁。
 - 不引 Pinia、UI 库、CSS 框架。

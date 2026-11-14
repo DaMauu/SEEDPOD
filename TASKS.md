@@ -247,7 +247,7 @@ pta\checks\run.cmd
 | 缺口 | 位置 | 现状 | 需要 |
 | --- | --- | --- | --- |
 | 列表筛选/分页 | `app-fastify.js:160` | 只认单值 `status`，忽略 `offset` / `q` | 支持 `status=a,b`、`offset`、`q` |
-| 批量动作 | `routes-missing.js:10` | 只认 `ids`，忽略 `fromStatus`；只支持 approve/reject/skip | 支持 `fromStatus`，或前端先取 ids；发布另走 `/api/publish` |
+| 批量动作 | `routes-extra.js:10` | 只认 `ids`，忽略 `fromStatus`；只支持 approve/reject/skip | 支持 `fromStatus`，或前端先取 ids；发布另走 `/api/publish` |
 | 单条查重 | 无 | 旧界面调用 `/api/queue/:id/check`，v2 没这个接口 | 新增，返回 `{duplicate, note}` |
 | 发布表单字段 | `routes-write.js:96` | `action` 只改 status/reason，忽略 title/subtitle/intro/targetSite/shots | 合并表单字段或单独保存接口 |
 | 发布语义 | `routes-write.js:107` | `action=publish` 只记账，不走 qB | 队列“发布”统一走 `/api/publish/:id`，把 409 提示出来 |

@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 04:00（当前 v0.7.127 / legacy 目录删除，共享壳搬进 App.vue）
+最后更新：2026-11-16 05:00（当前 v0.7.128 / 旧归档、旧文档、一次性脚本清理完成）
+
+## 2026-11-16 旧资产清理（v0.7.128）
+
+- 删除 `pta/archive`（web demo + v1 后端）、`pta/checks/api.js`、`run.cmd`。
+- `routes-missing.js` → `routes-extra.js`。
+- DECISIONS/PRIOR-ART/example 迁到 `pta/docs`；v1 API/ARCHITECTURE/DEPLOY/PIPELINE 删除。
+- 删除零引用 scripts；保留 README i18n/banner 和独立 scripts/bluray。
 
 ## 2026-11-16 Vue App Shell（v0.7.127）
 

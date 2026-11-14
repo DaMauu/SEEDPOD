@@ -44,7 +44,7 @@
 | --- | --- | --- | --- | --- |
 | 15 | ✅ smoke/audit | 0.7.100 已换 smoke-live（现 21/21），旧文件已删 | — | — |
 | 16 | 规则体检只报告不拦 | `run.sh` 末尾 | 空开关可以继续进 | 分诊完成后加 `--fail` |
-| 17 | ✅ 旧 `pta/web` 已归档 | 0.7.110 移到 `pta/archive/web-demo` | — | — |
+| 17 | ✅ 旧 `pta/web` 已归档 | 0.7.110 归档，0.7.128 删除 | — | — |
 | 18 | 面板密码未轮换 | git 历史、`PTA_USER/PTA_PASS` 环境 | 旧值已进历史 | 生成新值、通知作者、作废旧值 |
 | 19 | `ocbot` sudo 全开 | `/etc/sudoers.d` | 等于 root | 收窄到 systemctl/必要命令 |
 | 20 | 文档仍写“零依赖/假数据” | `ARCHITECTURE.md`、`PRIOR-ART.md`、`app-fastify.js` 头 | 误导下一个接手者 | 一次文档对齐 |

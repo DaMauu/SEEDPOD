@@ -7,7 +7,7 @@
 
 pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根。
 
-- 进 pta/ 的：`pta/server`、`pta/web-src`、`pta/web`（只放 dist）、`pta/archive/web-demo`、`pta/checks`、`pta/fixtures`、`pta/data`（采样产物）、`pta/docs`（面板规则树等）、`pta/scripts`（面板专用脚本），以及以后新增的 pta 代码/文档/脚本。
+- 进 pta/ 的：`pta/server`、`pta/web-src`、`pta/web`（只放 dist）、`pta/docs`、`pta/checks`、`pta/fixtures`、`pta/data`（采样产物）、`pta/docs`（面板规则树等）、`pta/scripts`（面板专用脚本），以及以后新增的 pta 代码/文档/脚本。
 - 留仓库根的：README、LICENSE、AGENTS.md、.github、项目级 scripts/docs/styles、package.json、Docker 与 compose、HANDOFF.md、TASKS.md、PLAN.md。
 - 两条方向都守：pta 文件不许出 pta；非 pta 文件也不许塞进 pta。
 
