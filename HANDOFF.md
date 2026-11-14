@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 15:00（当前 v0.7.113 / M6 媒体探测/截图/种子模块已落地，media 7/7）
+最后更新：2026-11-15 16:00（当前 v0.7.114 / M6 媒体 API 已接，media-api 6/6）
+
+## 2026-11-15 M6 API：媒体探测/截图/种子（v0.7.114）
+
+- `routes-media.js`：`GET /api/media/config`、`POST /api/media/probe|shots|torrent`；路径限制在 `PTA_MEDIA_ROOT`，拒绝越界。
+- 截图返回 data URL，可直接喂 `/api/queue/:id/shots`；种子落 `data/torrents` 并回 base64，可喂目标站上传。
+- `media-api` 6/6；下一步队列页入口 + M7 多客户端。
 
 ## 2026-11-15 M6：媒体探测/截图/种子模块（v0.7.113）
 

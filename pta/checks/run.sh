@@ -34,6 +34,7 @@ run detect detect.js
 run target target.js
 run meta meta.js
 run media media.js
+run media-api media-api.js
 run web build.js
 
 echo

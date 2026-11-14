@@ -234,6 +234,7 @@ async function build() {
   require('./routes-misc')(app, ctx);
   require('./routes-publish')(app, ctx);
   require('./routes-target')(app, ctx);
+  require('./routes-media')(app, ctx);
   require('./routes-missing')(app, ctx);
 
   const publisher = require('./publish').makePublisher(ctx);

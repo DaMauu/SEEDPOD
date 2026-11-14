@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.114 · 2026-11-15
+
+### 新增
+- `pta/server/routes-media.js`：`GET /api/media/config`、`POST /api/media/probe|shots|torrent`；路径限制在 `PTA_MEDIA_ROOT`（默认 `data/media`），拒绝越界；截图返回 data URL，种子落 `data/torrents`。
+- `pta/checks/media-api.js`：合成视频 + 临时后端，6/6（路径越界、探测、截图、种子、坏 announce）。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.113 · 2026-11-15
 
 ### 新增
