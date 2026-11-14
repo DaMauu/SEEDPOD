@@ -118,6 +118,10 @@ function startMock(hash) {
     }
     if (req.method === 'GET' && (u.pathname === '/torrents.php' || u.pathname === '/details.php')) {
       res.writeHead(200, { 'content-type': 'text/html' });
+      if (/echo[ +]only/i.test(decodeURIComponent(u.search || ''))) {
+        res.end('<html><body><input name="search" value="Echo Only 2024 1080p"><div>没有找到结果</div></body></html>');
+        return;
+      }
       res.end('<html><body><a href="details.php?id=42">Target Upload Test 2024 1080p Blu-ray</a><div>' + hash + '</div></body></html>');
       return;
     }
@@ -343,6 +347,21 @@ async function main() {
     });
     need(again.status === 409 && again.body.error && again.body.error.code === 'ALREADY_SUBMITTED', '重复提交没被拦住');
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
+  });
+
+  await check('回查不把搜索框回显当命中', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Echo Only 2024 1080p', targetSite: '127.0.0.1', status: 'pending', cat: 'movie' })
+    });
+    need(add.status === 200 && add.body.ok, '创建回查条目失败');
+    const v = await json(BASE + '/api/targets/127.0.0.1/verify', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: add.body.data.id, torrentBase64: torrent.toString('base64') })
+    });
+    need(v.status === 200 && v.body.ok, '回查失败：' + v.status);
+    need(v.body.data.found === false, '搜索框回显被误判为命中');
+    need(v.body.data.rows === 0, '搜索结果行数不是 0');
   });
 
   await check('关闭发布后校验时跳过回查', async function () {

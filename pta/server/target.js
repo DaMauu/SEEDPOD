@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
 const form = require('./form');
+const adapters = require('./adapters');
 const sitePack = require('./site-pack');
 const { makeQb } = require('./qb');
 
@@ -253,9 +254,12 @@ function makeTarget(ctx) {
           : ('目标站返回 ' + res.status + (text ? '：' + text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : '')),
         http: 502, data: { status: res.status } };
     }
+    const successText = /上传成功|发布成功|种子已|success|torrent.{0,20}(uploaded|created)/i.test(text);
+    const uncertain = !where && !successText;
     return { ok: true, data: {
       dryRun: false, sent: true, status: res.status, url: p.data.url, detailsUrl: where,
-      infohash: meta.hash, torrent: meta, fields: Object.keys(p.data.fields), message: '已提交到目标站'
+      infohash: meta.hash, torrent: meta, fields: Object.keys(p.data.fields), uncertain: uncertain,
+      message: uncertain ? '提交返回 200，但没拿到详情页/成功提示，需人工确认' : '已提交到目标站'
     } };
   }
 
@@ -278,14 +282,28 @@ function makeTarget(ctx) {
     const text = await res.text().catch(function () { return ''; });
     const norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
     const title = norm(item.title);
-    const found = res.status === 200 && (
-      (title && norm(text).indexOf(title) >= 0) ||
-      (meta.hash && text.toLowerCase().indexOf(meta.hash) >= 0) ||
-      /details\.php\?id=\d+/.test(text)
-    );
+    const hash = String(meta.hash || '').toLowerCase();
+    const isDetails = /details\.php\?id=\d+|\/torrents?\/\d+/i.test(url);
+    let found = false;
+    let matchedTitle = '';
+    let rows = 0;
+    if (res.status === 200 && isDetails) {
+      found = !!(title && norm(text).indexOf(title) >= 0) || !!(hash && text.toLowerCase().indexOf(hash) >= 0);
+    } else if (res.status === 200) {
+      const list = adapters.parseList(text, p.data.engine);
+      rows = list.length;
+      const hit = list.filter(function (r) {
+        const t = norm(r.title);
+        const d = norm(r.detailsUrl + ' ' + r.downloadUrl);
+        return (title && t.indexOf(title) >= 0) || (hash && d.indexOf(hash) >= 0);
+      })[0];
+      found = !!hit;
+      matchedTitle = hit ? String(hit.title || '').slice(0, 200) : '';
+    }
     return { ok: true, data: {
-      found: found, url: url, status: res.status, title: found ? item.title : '',
-      infohash: meta.hash, message: found ? '目标站已能看到这个种子' : '目标站页面里没找到这个种子'
+      found: found, url: url, status: res.status, title: found ? (matchedTitle || item.title) : '',
+      infohash: meta.hash, rows: rows, mode: isDetails ? 'details' : 'search',
+      message: found ? '目标站列表里找到这个种子' : '目标站列表里没找到这个种子'
     } };
   }
 

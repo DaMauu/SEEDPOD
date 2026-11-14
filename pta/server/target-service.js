@@ -148,6 +148,14 @@ function makeTargetService(ctx, target) {
         item.data.targetVerify = Object.assign({}, v.data, { at: now() });
       }
     }
+    if (shouldVerify && (!verified || !verified.found)) {
+      const msg = '提交返回 200，但回查未找到（可能待审核/索引延迟）';
+      const failed = { stage: 'failed', error: msg, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString(), verify: verified || null };
+      setTargetResult(item.data, host, failed);
+      if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', msg);
+      saveQueue(item.data);
+      return { ok: false, code: 'VERIFY_FAILED', message: msg, http: 502, data: { host: host, verify: verified || null } };
+    }
     const result = {
       stage: 'submitted', infohash: r.data.infohash || '',
       detailsUrl: r.data.detailsUrl || '', status: r.data.status || 0,

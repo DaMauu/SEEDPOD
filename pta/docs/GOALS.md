@@ -232,6 +232,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - `target-upload --targets h1,h2` 逐站干跑；单站失败只标该站，不阻断其他站。
 - 单站提交/回查仍复用 target-service；阶段/证据按目标站记录 `targetResults`。
 - CLI 夹具：2 个有定义站 + 1 个缺定义站，2 成功/1 失败。
+- 回查已改为解析结果行；测试站实际 0 行，不再假阳性（0.7.175）。
 - 待做：面板多选目标站、真实多站提交、按站重试 UI。
 
 **验收**：
