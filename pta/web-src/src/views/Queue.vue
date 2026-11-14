@@ -68,6 +68,15 @@
                 <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
               </select>
             </div>
+            <div class="qd-field qd-targets-row">
+              <span>多目标</span>
+              <div class="pick-row qd-target-chips">
+                <label v-for="s in sites" :key="s.name" class="cat-chip" :class="{ on: form.targets.includes(s.name) }" :title="s.name">
+                  <input type="checkbox" :value="s.name" v-model="form.targets" class="qd-target-check">
+                  {{ s.title || s.name }}
+                </label>
+              </div>
+            </div>
             <div class="qd-field"><span>标题</span><input v-model="form.title" class="input"></div>
             <div class="qd-field"><span>副标题</span><input v-model="form.cn" class="input"></div>
             <div class="qd-field">
@@ -172,7 +181,7 @@ const items = ref([])
 const sel = ref(null)
 const sites = ref([])
 const reason = ref('')
-const form = reactive({ title: '', cn: '', intro: '', targetSite: '', imageHost: '站内', anonymous: false })
+const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false })
 const media = reactive({ path: '', announce: '', probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
@@ -250,6 +259,7 @@ async function select(id) {
     form.cn = j.data.cn || ''
     form.intro = j.data.intro || ''
     form.targetSite = j.data.targetSite || ''
+    form.targets = Array.isArray(j.data.targets) ? j.data.targets.slice() : (j.data.targetSite ? [j.data.targetSite] : [])
     form.imageHost = j.data.imageHost || '站内'
     form.anonymous = !!j.data.anonymous
     tags.chips = []
@@ -308,21 +318,32 @@ async function fetchMeta() {
 }
 async function submitTarget() {
   if (!sel.value || busy.target) return
-  const host = form.targetSite || sel.value.targetSite
-  if (!host) { toast('先选目标站'); return }
+  const primary = form.targetSite || sel.value.targetSite
+  const targets = (form.targets && form.targets.length ? form.targets.slice() : (primary ? [primary] : []))
+  if (!targets.length) { toast('先选目标站'); return }
   busy.target = true
   try {
     const body = { queueId: sel.value.id, dryRun: false }
     if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
-    const r = await fetch('/api/targets/' + encodeURIComponent(host) + '/upload', {
+    const multi = targets.length > 1
+    const url = multi ? '/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload'
+      : '/api/targets/' + encodeURIComponent(targets[0]) + '/upload'
+    if (multi) body.targets = targets
+    const r = await fetch(url, {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body)
     })
     const j = await r.json().catch(() => null)
     if (j && j.ok) {
-      const v = j.data.verify
-      toast('已提交目标站' + (v ? (v.found ? '，回查已找到' : '，回查暂未找到') : ''))
+      if (multi) {
+        const ok = (j.data.targets || []).filter(function (x) { return x.ok }).length
+        const bad = (j.data.targets || []).length - ok
+        toast('多目标提交：成功 ' + ok + '，失败 ' + bad)
+      } else {
+        const v = j.data.verify
+        toast('已提交目标站' + (v ? (v.found ? '，回查已找到' : '，回查暂未找到') : ''))
+      }
       await refresh()
     } else toast((j && j.error && j.error.message) || ('提交失败 ' + r.status))
   } catch (e) { toast('提交请求发不出去') }
@@ -633,4 +654,7 @@ onUnmounted(() => {
 .qd-stage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
 .qd-stage .t-sub { font-size: 11px; }
 .qd-stage-err { flex: 1 1 100%; font-size: 11.5px; color: var(--red); line-height: 1.5; overflow-wrap: anywhere; }
+.qd-targets-row { align-items: flex-start; }
+.qd-target-chips { justify-content: flex-start; gap: 6px; }
+.qd-target-check { display: none; }
 </style>

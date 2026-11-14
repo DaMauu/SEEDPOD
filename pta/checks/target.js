@@ -236,6 +236,13 @@ async function main() {
     need(dry.status === 200 && dry.body.ok && dry.body.data.dryRun === true && dry.body.data.sent === false, '干跑不对');
     need(dry.body.data.torrent && dry.body.data.torrent.hash === hash, '种子哈希不对');
     need(hits.length === 0, '干跑不该发请求，实际发了 ' + hits.length + ' 次');
+    const multi = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64'), dryRun: true })
+    });
+    need(multi.status === 200 && multi.body.ok, '多目标接口失败：' + multi.status);
+    need(Array.isArray(multi.body.data.targets) && multi.body.data.targets.length === 1 && multi.body.data.targets[0].ok, '多目标干跑结果不对');
+    need(hits.length === 0, '多目标干跑发了请求：' + hits.length);
   });
 
   await check('UNIT3D / Gazelle 默认映射', async function () {

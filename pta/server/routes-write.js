@@ -122,6 +122,11 @@ module.exports = function (app, ctx) {
     if (b.cn !== undefined) it.cn = String(b.cn).slice(0, 300);
     if (b.intro !== undefined) it.intro = String(b.intro).slice(0, 20000);
     if (b.targetSite !== undefined) it.targetSite = String(b.targetSite).slice(0, 200);
+    if (b.targets !== undefined) {
+      const arr = Array.isArray(b.targets) ? b.targets : String(b.targets).split(',');
+      it.targets = arr.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(function (h, i, a) { return h && /^[a-z0-9][a-z0-9.-]*$/i.test(h) && a.indexOf(h) === i }).slice(0, 20);
+      if (it.targets.length) it.targetSite = it.targets[0];
+    }
     if (b.imageHost !== undefined) it.imageHost = String(b.imageHost).slice(0, 40);
     if (b.anonymous !== undefined) it.anonymous = !!b.anonymous;
 
