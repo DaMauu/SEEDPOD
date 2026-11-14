@@ -157,5 +157,5 @@
 - 不要求先起 HTTP；CLI 直接读 SQLite 和 data/。
 - 验收：临时库只用 CLI 跑通 mock 全链路；面板 smoke/responsive 不回退。
 
-状态（0.7.166）：`prepare / preview / advance / run` 已落地，queue 增加 `stage`；仍为 HTTP 客户端，core 抽取和 `inject` 待做。命令契约见 `pta/docs/CLI.md`。
+状态（0.7.167）：`prepare / preview / advance / run` 已落地；在授权测试站完成真实抓取、查重、准备、提交和回查（测试种子需用户自行删除）；真实 rTorrent/Deluge 和 core 抽取仍待做。命令契约见 `pta/docs/CLI.md`。
 
