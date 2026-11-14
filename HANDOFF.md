@@ -1,8 +1,22 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 01:00（当前 v0.7.149 / Sites 样式迁入 scoped）
+最后更新：2026-11-17 02:00（当前 v0.7.150 / 质量审计固定进检查）
 
-## 2026-11-17 Sites scoped（v0.7.149）
+## 质量审计（固定，v0.7.150）
+
+命令：
+
+```bash
+node pta/scripts/audit-quality.js --project pta       # 全库
+node pta/scripts/audit-quality.js --file <path>       # 单文件
+node pta/scripts/audit-quality.js --feature <name>    # 单功能
+node pta/scripts/audit-quality.js --project bluray    # 单项目
+node pta/scripts/audit-quality.js --project pta --fail
+```
+
+当前基线（`pta/quality-baseline.json`）：代码 78 / 功能 86 / 编写 100 / 逻辑 76 / 简洁 80 / 复用 70 / 质量 99，总体 83（平衡）。全库基线回退 ≥2 分即失败；单文件/功能出现「差」即失败。规则写在 `AGENTS.md`、`CHECKLIST.md`、`DECISIONS.md` D22、`DELIVERY.md` 和 `pta/docs/QUALITY.md`。
+
+## 2026-11-17 Sites scoped（v0.7.149）## 2026-11-17 Sites scoped（v0.7.149）
 
 - Sites 277 条规则迁入 `<style scoped>`；shared `sd-*`/`set-field` 留全局。
 - 页面模块改名/拆分；修复 `:global` 后代编译丢失导致的站点页 display:none。

@@ -7,4 +7,6 @@
 - `RULES-TRIAGE.md`：v1 时期的规则分诊表，已完成。
 - `PROBLEMS.md`：v1 时期的问题清单，只作记录。
 
+当前事实源还包括 `pta/docs/QUALITY.md`（质量审计）和 `pta/quality-baseline.json`（全库基线）。
+
 当前事实源：`AGENTS.md`、`HANDOFF.md`、`CHANGELOG.md`、`pta/docs/DELIVERY.md`、`pta/docs/RULES-TREE.md`、`pta/docs/RULES-RECONCILIATION.md`、`pta/docs/SITE-PACK.md`、`pta/docs/DECISIONS.md`。

@@ -23,8 +23,9 @@
 ## 改完（在开发机）
 
 1. 前端只改 `pta/web-src`，升 `package.json` 版本；Vite 产物带 hash，不再手改 `?v=`
-2. `CHANGELOG.md` 记一条（删除 / 新增 / 优化 / 调整 / 重排）
-3. `git add -A && git commit -m "0.7.xx 一句话" && git push origin main`
+2. 质量审计：先跑 `node pta/scripts/audit-quality.js --feature <name>`（单文件用 `--file`），有「差」先修；再跑 `bash pta/checks/run.sh`（含全库基线闸门）
+3. `CHANGELOG.md` 记一条（删除 / 新增 / 优化 / 调整 / 重排）
+4. `git add -A && git commit -m "0.7.xx 一句话" && git push origin main`
    - 只有 Windows 推送才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 
 ## 发版

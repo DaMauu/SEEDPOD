@@ -1,0 +1,36 @@
+{
+  "version": "0.7.150",
+  "scope": "project:pta",
+  "updatedAt": "2026-11-14T12:39:39.382Z",
+  "overall": 83,
+  "dimensions": {
+    "code": {
+      "score": 78,
+      "rating": "平衡"
+    },
+    "function": {
+      "score": 86,
+      "rating": "优质"
+    },
+    "development": {
+      "score": 100,
+      "rating": "优质"
+    },
+    "logic": {
+      "score": 76,
+      "rating": "平衡"
+    },
+    "simplicity": {
+      "score": 80,
+      "rating": "平衡"
+    },
+    "reuse": {
+      "score": 70,
+      "rating": "平衡"
+    },
+    "quality": {
+      "score": 99,
+      "rating": "优质"
+    }
+  }
+}

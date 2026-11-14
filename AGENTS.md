@@ -33,6 +33,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 已删除，避免同一功能两套实现。
 8. 站点包随程序发布，用户不单独下载；私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。详见 `pta/docs/SITE-PACK.md`。
+9. 质量审计固定进 `pta/checks/run.sh`：全库看 `pta/quality-baseline.json` 防回退；单文件/单功能先跑对应 scope；有「差」先修，不能带「差」提交。详见 `pta/docs/QUALITY.md`。
 
 ## 发版与同步（`DEPLOY_DIR` 是运行目录，`VPS_DIR` 是仓库检出）
 
@@ -85,8 +86,9 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 ## 干活方式
 
-- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 21 → publish 4 → scheduler 5 → detect 5 → target 6 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 规则体检）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 23 → form 5 → site-pack 5 → publish 4 → scheduler 5 → detect 5 → target 10 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 质量审计 → 规则体检）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
+- 改完先跑 `node pta/scripts/audit-quality.js --feature <name>`（单文件用 `--file`）；看「差」项和发现清单，再跑全量 `run.sh`
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
 - 前端不引入构建工具；后端运行时依赖只有 Fastify + @fastify/static（已装，写进 package.json），新增依赖先说明理由
@@ -143,7 +145,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 4. 定时抓取/送审/发布能跑能停
 5. 登录限速/锁定、会话落库、cookie Secure、密钥分离
 6. Docker 一键起，数据卷持久化，备份恢复有文档
-7. 检查全绿 + 端到端脚本跑通
+7. 检查全绿 + 质量审计基线不回退 + 端到端脚本跑通
 
 行数不是验收标准。
 

@@ -45,6 +45,12 @@ run notify notify.js
 run web build.js
 
 echo
+echo "==== 质量审计 ===="
+node pta/scripts/audit-quality.js --project pta --fail
+s=$?
+[ "$s" -eq 0 ] || fail=1
+
+echo
 echo "==== 规则体检 ===="
 node pta/scripts/audit-rules.js --fail
 s=$?

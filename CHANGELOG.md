@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.150 · 2026-11-17
+
+### 质量审计
+- 新增 `pta/scripts/audit-quality.js`：代码 / 功能 / 编写 / 逻辑 / 简洁度 / 复用率 / 质量七维评分，评级为优质 / 平衡 / 勉强 / 差。
+- 支持全库、单文件、单功能、单项目；`--json`、`--fail`、`--strict`、`--update-baseline`。
+- 接入 `pta/checks/run.sh`，全库用 `pta/quality-baseline.json` 防回退；新增 `pta/docs/QUALITY.md`。
+- 当前基线：代码 78 / 功能 86 / 编写 100 / 逻辑 76 / 简洁 80 / 复用 70 / 质量 99，总体 83（平衡）。
+- AGENTS / CHECKLIST / DECISIONS / DELIVERY / HANDOFF 已写入永久规则。
+
+### 检查
+- `run.sh` 全绿（含质量审计）；smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、规则体检 0 缺读者。
+
 ## v0.7.149 · 2026-11-16
 
 ### 页面 scoped 迁移

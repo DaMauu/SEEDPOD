@@ -12,11 +12,11 @@
 4. **调度**：定时抓取/送审/发布，能在界面暂停和恢复，失败有记录。
 5. **安全**：登录限速与失败锁定、会话落库、cookie 带 Secure、加密密钥与数据分离、凭据只回 `hasCookie`。
 6. **部署**：`docker compose up` 一条命令起，数据卷 `/data` 持久化，health 正常，备份/恢复有文档。
-7. **质量**：adapter / security / api-v2 / build / 规则体检全绿；一条端到端脚本能在 mock 站上跑完主流程。
+7. **质量**：adapter / security / api-v2 / build / 规则体检全绿；`audit-quality.js` 全库基线不回退、无「差」；一条端到端脚本能在 mock 站上跑完主流程。
 
 ## 二、怎么验收
 
-- 机器：`bash pta/checks/run.sh` 全绿；`node pta/scripts/audit-rules.js` 的「未接」为 0 或全部显式禁用。
+- 机器：`bash pta/checks/run.sh` 全绿；`node pta/scripts/audit-quality.js --project pta --fail` 通过；`node pta/scripts/audit-rules.js` 的「未接」为 0 或全部显式禁用。
 - 端到端：`scripts/e2e.sh` 起 mock 站，跑通抓取→送审→发布→校验，不碰真实站。
 - 人工：Docker 起一份，按七个页面各点一遍主按钮，无报错、无空转。
 - 数据：重启容器后数据还在；备份恢复一次成功。
