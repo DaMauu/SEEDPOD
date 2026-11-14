@@ -264,6 +264,32 @@ async function main() {
     need(g.ok && g.data.matched === 2, '批量后状态不对：' + g.data.matched);
   });
 
+  await check('面板添加站点与上传定义', async () => {
+    const add = await fetchA(BASE + '/api/sites', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'https://added.example/index.php', arch: 'NP', title: 'Added Site' })
+    });
+    need(add.status === 200, '添加站点失败 ' + add.status);
+    const aj = await add.json();
+    need(aj.ok && aj.data.host === 'added.example', '返回 host 不对：' + JSON.stringify(aj));
+    const list = await (await fetchA(BASE + '/api/sites')).json();
+    const hit = (list.data.sites || []).filter(x => x.host === 'added.example')[0];
+    need(hit && hit.added === true, '列表没出现面板添加的站点');
+    const def = { engine: 'nexusphp', base: 'https://added.example',
+      uploadMap: { path: '/takeupload.php', fileField: 'file', fields: { name: '{title}' } },
+      verify: { path: '/torrents.php?search={title}' } };
+    const put = await fetchA(BASE + '/api/site-def/added.example', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
+    });
+    need(put.status === 200, '保存站点定义失败 ' + put.status);
+    const got = await (await fetchA(BASE + '/api/site-def/added.example')).json();
+    need(got.ok && got.data.engine === 'nexusphp', '站点定义没读到');
+    const del = await fetchA(BASE + '/api/sites/added.example', { method: 'DELETE' });
+    need(del.status === 200, '移除站点失败 ' + del.status);
+    const list2 = await (await fetchA(BASE + '/api/sites')).json();
+    need(!(list2.data.sites || []).some(x => x.host === 'added.example'), '移除后列表还在');
+  });
+
   await check('凭据只回 hasCookie，不回明文', async () => {
     const put = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=secret-cookie' })

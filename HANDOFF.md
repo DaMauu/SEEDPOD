@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 23:00（当前 v0.7.121 / rTorrent + Deluge 已接，clients-ext 4/4）
+最后更新：2026-11-16 00:00（当前 v0.7.122 / 面板添加站点与上传定义已接）
+
+## 2026-11-16 面板站点与上传定义（v0.7.122）
+
+- 站点页可添加/移除面板站点；`GET /api/sites` 合并 base 清单与 `sites` 表。
+- “上传配置”页签直接编辑站点定义 JSON，保存到 `data/site-defs/<host>.json`（0600）；不再要求手改文件。
+- api-v2 加站点配置契约，21/21。
+- 下一步：元数据两种来源（无 key Wikipedia/Wikidata、有 key TMDB）。
 
 ## 2026-11-15 M7：rTorrent + Deluge（v0.7.121）
 

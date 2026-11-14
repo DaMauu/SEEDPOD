@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.122 · 2026-11-15
+
+### 新增
+- 面板内添加/移除站点：`POST/DELETE /api/sites`；`GET /api/sites` 合并 base 清单和面板添加的站点。
+- 上传定义编辑：`PUT /api/site-def/:host`，存 `data/site-defs/<host>.json`（0600）；站点页加“添加站点”弹窗和“上传配置”页签。
+- api-v2 增加站点配置契约，21/21。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 21/21、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 5/5、clients-ext 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.121 · 2026-11-15
 
 ### 新增

@@ -84,7 +84,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 ## 干活方式
 
-- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 20 → adapter 21 → security 3 → api-v2 20 → publish 4 → scheduler 5 → detect 5 → target 6 → meta 11 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 规则体检）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 20 → adapter 21 → security 3 → api-v2 21 → publish 4 → scheduler 5 → detect 5 → target 6 → meta 11 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 规则体检）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断

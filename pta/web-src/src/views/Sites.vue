@@ -43,7 +43,7 @@
       <button class="btn ghost slim" id="site-selfcheck" :disabled="busy.selfcheck || !cookieCount" @click="selfcheckAll" title="对有 cookie 的站点逐个跑一次会话自检；每个站只发一次 GET">
         {{ busy.selfcheck ? '自检中…' : '自检有 cookie 的站' }}
       </button>
-      <button class="btn primary slim" disabled title="服务端站点清单来自私有包，面板暂不支持新增；未接">添加站点</button>
+      <button class="btn primary slim" type="button" @click="openAdd">添加站点</button>
     </div>
 
     <div class="sites-stats" id="sites-stats">
@@ -201,6 +201,19 @@
                   </div>
                 </template>
 
+                                <template v-else-if="setTab === 'upload'">
+                  <div class="set-fields">
+                    <div class="set-field">
+                      <div class="lbl"><span>站点定义 JSON</span><i>上传页字段映射；存 data/site-defs，不进仓库</i></div>
+                      <div class="ctl"><textarea v-model="defText" class="input sd-note" rows="10" placeholder="{}"></textarea></div>
+                    </div>
+                  </div>
+                  <div class="sd-cookie-bar">
+                    <button class="btn primary slim" type="button" :disabled="defSaving" @click.stop="saveDef">{{ defSaving ? '保存中…' : '保存定义' }}</button>
+                    <span class="sd-cookie-res">{{ defMsg }}</span>
+                  </div>
+                </template>
+
                 <template v-else>
                   <div class="set-fields">
                     <div class="set-field">
@@ -259,7 +272,8 @@
               <button class="btn primary slim" type="button" :disabled="busy.save" @click.stop="saveSite(s)">{{ busy.save ? '保存中…' : '保存设置' }}</button>
               <button class="btn ghost slim" type="button" :disabled="busy.save" @click.stop="resetSite(s)">恢复默认</button>
               <div class="spacer"></div>
-              <button class="btn ghost slim danger" type="button" disabled title="站点清单来自私有包，面板暂不支持移除；未接">移除站点</button>
+              <button v-if="s.added" class="btn ghost slim danger" type="button" @click.stop="removeSite(s)">移除站点</button>
+              <button v-else class="btn ghost slim danger" type="button" disabled title="基础清单站点不能移除；可恢复默认配置">移除站点</button>
             </div>
           </div>
         </template>
@@ -298,6 +312,32 @@
         </div>
       </div>
     </Teleport>
+    <Teleport to="body">
+      <div v-if="addOpen" class="modal-mask" id="site-add-modal">
+        <div class="modal">
+          <div class="modal-head">
+            <h2>添加站点</h2>
+            <button class="btn ghost slim" type="button" @click="addOpen = false">关闭</button>
+          </div>
+          <label class="field"><span>站点地址</span>
+            <input v-model="addForm.url" class="input" placeholder="https://example.org/index.php" autocomplete="off"></label>
+          <label class="field"><span>架构</span>
+            <select v-model="addForm.arch" class="select">
+              <option value="?">未确认</option>
+              <option value="NP">NexusPHP</option>
+              <option value="UNIT3D">UNIT3D</option>
+              <option value="GZ">Gazelle</option>
+              <option value="OTHER">其它</option>
+            </select></label>
+          <label class="field"><span>名称（可选）</span>
+            <input v-model="addForm.title" class="input" placeholder="留空就用域名"></label>
+          <div class="modal-foot">
+            <button class="btn ghost slim" type="button" @click="addOpen = false">取消</button>
+            <button class="btn primary slim" type="button" @click="addSite">添加</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -314,7 +354,7 @@ const archOptions = [
   { v: 'NP', label: 'NexusPHP' }, { v: 'UNIT3D', label: 'UNIT3D' }, { v: 'GZ', label: 'Gazelle' },
   { v: 'OTHER', label: '其它' }, { v: '?', label: '未确认' }
 ]
-const setTabs = [{ v: 'login', label: '登录' }, { v: 'search', label: '搜索预设' }, { v: 'override', label: '站点覆盖' }]
+const setTabs = [{ v: 'login', label: '登录' }, { v: 'search', label: '搜索预设' }, { v: 'upload', label: '上传配置' }, { v: 'override', label: '站点覆盖' }]
 
 const baseSites = ref([])
 const configs = ref({})
@@ -337,6 +377,11 @@ const tab = ref('overview')
 const setTab = ref('login')
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
 const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDaily: '', ovDetail: false, priority: 'normal' })
+const defText = ref('')
+const defSaving = ref(false)
+const defMsg = ref('')
+const addOpen = ref(false)
+const addForm = reactive({ url: '', arch: '?', title: '' })
 const busy = reactive({ selfcheck: false, crawl: false, save: false, bulk: false })
 const bulkOpen = ref(false)
 const bulkForm = reactive({ ovr: 'keep', iv: 'keep', daily: '', det: 'keep', prio: 'keep' })
@@ -604,6 +649,61 @@ function openSite(host) {
   const s = sites.value.find(x => x.name === host)
   if (s) fillForm(s)
   loadDetail(host)
+  loadDef(host)
+}
+async function loadDef(host) {
+  defMsg.value = ''
+  try {
+    const r = await fetch('/api/site-def/' + encodeURIComponent(host), { credentials: 'same-origin' })
+    if (r.ok) {
+      const j = await r.json()
+      if (j && j.ok) { defText.value = JSON.stringify(j.data, null, 2); return }
+    }
+  } catch (e) {}
+  const s = sites.value.find(x => x.name === host)
+  const tpl = { engine: (s && s.def && s.def.engine) || 'nexusphp', base: (s && s.url) || ('https://' + host),
+    uploadMap: { path: '/takeupload.php', fileField: 'file', fields: { name: '{title}', descr: '{description}', type: '{catId}', anon: '{anonymous}' } },
+    verify: { path: '/torrents.php?search={title}' }, catMap: {} }
+  defText.value = JSON.stringify(tpl, null, 2)
+  defMsg.value = '还没有站点定义，这是模板；按站修改后保存'
+}
+async function saveDef() {
+  if (!sel.value || defSaving.value) return
+  let def
+  try { def = JSON.parse(defText.value) } catch (e) { toast('JSON 格式不对'); return }
+  defSaving.value = true
+  try {
+    const j = await (await fetch('/api/site-def/' + encodeURIComponent(sel.value), {
+      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
+    })).json()
+    if (j && j.ok) { defMsg.value = '已保存'; toast('站点定义已保存') }
+    else { defMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(defMsg.value) }
+  } catch (e) { toast('保存请求发不出去') }
+  defSaving.value = false
+}
+function openAdd() { addForm.url = ''; addForm.arch = '?'; addForm.title = ''; addOpen.value = true }
+async function addSite() {
+  if (!addForm.url.trim()) { toast('先填站点地址'); return }
+  try {
+    const j = await (await fetch('/api/sites', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: addForm.url.trim(), arch: addForm.arch, title: addForm.title.trim() })
+    })).json()
+    if (!j || !j.ok) { toast((j && j.error && j.error.message) || '添加失败'); return }
+    addOpen.value = false
+    await loadAll()
+    openSite(j.data.host)
+    toast('已添加：' + j.data.host)
+  } catch (e) { toast('添加请求发不出去') }
+}
+function removeSite(s) {
+  confirmBox('移除站点', '会删除面板里添加的站点和凭据；基础清单站点不能删。继续？', async () => {
+    try {
+      const j = await (await fetch('/api/sites/' + encodeURIComponent(s.name), { method: 'DELETE', credentials: 'same-origin' })).json()
+      if (j && j.ok) { sel.value = null; await loadAll(); toast('已移除：' + s.name) }
+      else toast((j && j.error && j.error.message) || '移除失败')
+    } catch (e) { toast('移除请求发不出去') }
+  })
 }
 function closeSheet() { sel.value = null }
 
