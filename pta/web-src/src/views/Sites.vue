@@ -1486,8 +1486,10 @@ function onKey(e) {
 .site-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; }
 }
 @media (max-width: 600px) {
+.site-item { height: auto; min-height: 46px; }
 .site-item .si-mode, .site-item .si-last { display: none; }
 .site-item .si-txt { flex: 1 1 120px; }
+.site-item .si-txt b { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.3; }
 }
 @media (max-width: 900px) {
 .site-item > span { font-size: 11.5px; }

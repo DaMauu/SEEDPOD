@@ -591,6 +591,7 @@ onUnmounted(() => {
 .qd-actions { margin-top: auto; }
 
 @media (max-width: 600px) {
-.qd-grid { grid-template-columns: 1fr; }
+.qd-grid { grid-template-columns: 1fr; min-width: 0; }
+.qd-grid .sd-card { min-width: 0; }
 }
 </style>

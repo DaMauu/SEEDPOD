@@ -413,7 +413,7 @@ onUnmounted(() => {
 <style scoped>
 .ta-r { text-align: right; }
 .dl-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
-#dl-body { flex: 1; overflow-y: auto; }
+#dl-body { flex: 1; overflow-y: auto; overflow-x: hidden; }
 .dl-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .dl-bar .spacer { flex: 1; }
 .dl-panel { flex: 1; min-height: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
@@ -454,7 +454,12 @@ onUnmounted(() => {
 .dl-bar .input, .dl-bar .select { max-width: 100%; }
 }
 @media (max-width: 600px) {
-.dl-row { grid-template-columns: auto auto; }
+.dl-row { grid-template-columns: minmax(0, 1fr) auto; }
+.dl-row > span { min-width: 0; }
+.dl-title { overflow: hidden; }
+}
+@media (max-width: 900px) {
+.dl-ops { min-width: 0; max-width: 100%; flex-wrap: wrap; justify-content: flex-start; white-space: normal; }
 }
 
 .dl-head { height: 34px; }

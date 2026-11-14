@@ -8,7 +8,7 @@
 
 CSS 清理规则：只删被后续同选择器/同媒体上下文完全覆盖的规则，只合并相邻同选择器，只删规则内同属性重复声明；不跨规则移动声明。
 
-页面样式迁移：共用 base / shell / components / responsive / dock 留 `src/styles/`；页面专属规则进对应 SFC `<style scoped>`；页面最外层 `.view[data-view=...]` 的布局与响应式覆盖留在 `src/styles/`（构建产物里 SFC CSS 先于全局样式，同特异性的 `:global` 会被覆盖）；一次一页，迁完删全局页面模块。子组件内部用 `.page-root :deep(.child)`，共享组件基础规则留全局。 页面专属主题（如日志页黑绿终端）和窄屏行布局也放页面 SFC，不留在共用模块。 窄屏（≤700px）优先保证名称、标签和控件可读：次要列可隐藏，成对字段纵向排，卡片头部按钮不压缩、允许换行。 Settings 的 `#set-panel` 规则迁 scoped 时保留 ID 前缀，避免特异性下降后被共用 `.set-field` 覆盖。
+页面样式迁移：共用 base / shell / components / responsive / dock 留 `src/styles/`；页面专属规则进对应 SFC `<style scoped>`；页面最外层 `.view[data-view=...]` 的布局与响应式覆盖留在 `src/styles/`（构建产物里 SFC CSS 先于全局样式，同特异性的 `:global` 会被覆盖）；一次一页，迁完删全局页面模块。子组件内部用 `.page-root :deep(.child)`，共享组件基础规则留全局。 页面专属主题（如日志页黑绿终端）和窄屏行布局也放页面 SFC，不留在共用模块。 窄屏（≤700px）优先保证名称、标签和控件可读：次要列可隐藏，成对字段纵向排，卡片头部按钮不压缩、允许换行。 Settings 的 `#set-panel` 规则迁 scoped 时保留 ID 前缀，避免特异性下降后被共用 `.set-field` 覆盖。 长标题行用 `minmax(0, 1fr)` 约束轨道，行内项加 `min-width: 0`；操作按钮区允许换行，不能靠隐藏溢出来伪装不滚动。
 
 | 变量 | 值 | 用途 |
 | --- | --- | --- |
