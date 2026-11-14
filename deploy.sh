@@ -35,23 +35,14 @@ systemctl is-active "$SERVICE_NAME"
 curl -s -m 5 "$HEALTH_URL" || true
 echo
 
-# 部署完成推一条 Telegram；ENV_FILE 由本地环境显式给，没给就跳过
+# 部署完成只推一条 Telegram：工作中 + 进度，并置顶；ENV_FILE 由本地环境显式给，没给就跳过
 TG_ENV_FILE=${TELEGRAM_ENV_FILE:-}
-if [ -f "$SRC/scripts/notify-tg.sh" ] && [ -n "$TG_ENV_FILE" ] && [ -f "$TG_ENV_FILE" ]; then
-  VER=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' "$DEPLOY_DIR/package.json" | head -1)
-  REV=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo "?")
-  OUT=$(ENV_FILE="$TG_ENV_FILE" bash "$SRC/scripts/notify-tg.sh" "SEEDPOD 已部署 v$VER ($REV)" 2>&1 || true)
-  case "$OUT" in
-    *'"ok":true'*) echo "TG 通知已发 v$VER ($REV)" ;;
-    *) echo "TG 通知失败：$(printf '%s' "$OUT" | head -c 120)" ;;
-  esac
-fi
 if [ -f "$SRC/scripts/notify-progress.sh" ] && [ -n "$TG_ENV_FILE" ] && [ -f "$TG_ENV_FILE" ]; then
   PVER=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' "$DEPLOY_DIR/package.json" | head -1)
-  PREV=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo "?")
-  POUT=$(TELEGRAM_ENV_FILE="$TG_ENV_FILE" bash "$SRC/scripts/notify-progress.sh" "已部署 v$PVER ($PREV)" 2>&1 || true)
+  POUT=$(TELEGRAM_ENV_FILE="$TG_ENV_FILE" bash "$SRC/scripts/notify-progress.sh" "已部署 v$PVER" 2>&1 || true)
   case "$POUT" in
-    *'"ok":true'*) echo "TG 进度已发 v$PVER ($PREV)" ;;
+    *'"ok":true'*'pin=ok'*) echo "TG 进度已发并置顶 v$PVER" ;;
+    *'"ok":true'*) echo "TG 进度已发 v$PVER（置顶未确认）" ;;
     *) echo "TG 进度失败：$(printf '%s' "$POUT" | head -c 120)" ;;
   esac
 fi

@@ -39,8 +39,8 @@
 5. 失败了先修；同一个检查连续两轮修不绿，停下报告，不要硬提交。
 6. 通过后：升 package.json 版本 → 更新 CHANGELOG.md / HANDOFF.md / GOALS.md / 相关 docs → git add/commit/push → deploy.sh → /api/health 探活。
 7. 一个提交只解决一个 goal；不要混入下一个 goal。
-8. 每轮修改 `PROGRESS.md` 的百分比；部署脚本会自动把最新进度发到 Telegram。
-9. 单独发进度时：`TELEGRAM_ENV_FILE=<环境文件> bash scripts/notify-progress.sh "<一句话>"`；没有环境文件就跳过，不打印 token。
+8. 每轮修改 `PROGRESS.md` 的百分比；部署脚本只发一条“工作中 + 进度”的 Telegram，并自动置顶，新进度替换旧置顶。
+9. 单独发进度时：`TELEGRAM_ENV_FILE=<环境文件> bash scripts/notify-progress.sh "<一句话>"`；消息里不写代码、提交哈希或 token。
 
 推进顺序：
 - 已完成的 goal 不要重做：G0、G1、G2、G7、G8、G9。
