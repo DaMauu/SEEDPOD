@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.138 · 2026-11-16
+
+### 站点包基础设施
+- 新增 `pta/server/site-pack.js`：AES-256-GCM 解密、校验、缓存；缺 `PTA_SITE_PACK_KEY` 回退 `NO_KEY`，不阻塞启动。
+- 新增 `pta/scripts/build-site-pack.js`：离线生成、分类自动匹配、`--dry` 覆盖率、例外私有报告；密文写 `pta/pack/site-pack.enc`。
+- 新增 `pta/checks/site-pack.js`：roundtrip、缺密钥、错误密钥、篡改、密文无明文 host、生成器 dry-run；5/5，已进 `run.sh`。
+- 现有 308 站 dry-run：1409 个分类自动匹配 913（64.8%）；真实密文包待部署密钥后生成。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、api-v2 23/23、form 5/5、site-pack 5/5、target 10/10。
+
 ## v0.7.137 · 2026-11-16
 
 ### 计划
