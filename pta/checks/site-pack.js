@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const secretbox = require('../server/secretbox');
 const sitePack = require('../server/site-pack');
+const admin = require('../server/site-pack-admin');
 
 const ROOT = path.resolve(__dirname, '..');
 const KEY = crypto.randomBytes(32).toString('hex');
@@ -79,6 +80,41 @@ check('错误密钥和篡改都解不开', function () {
   fs.writeFileSync(badFile, raw.slice(0, 20) + (raw[20] === 'A' ? 'B' : 'A') + raw.slice(21));
   const bad = sitePack.load({ file: badFile, key: KEY });
   need(!bad.ok && bad.reason === 'BAD_PACK', '篡改应失败');
+});
+
+check('站点包覆盖率与例外列表', function () {
+  const o = admin.overview({ DATA_DIR: TMP }, { file: ENC, key: KEY });
+  need(o.available === true, '站点包不可用：' + o.reason);
+  need(o.status.sites === 2, '站点数不对：' + o.status.sites);
+  need(o.coverage.total === 3 && o.coverage.mapped === 2 && o.coverage.other === 1, '覆盖率不对：' + JSON.stringify(o.coverage));
+  need(o.totalExceptions === 1 && o.exceptions[0].label === 'Unknown Thing', '例外列表不对：' + JSON.stringify(o.exceptions));
+  need(o.exceptions[0].host === 'b.example' && o.exceptions[0].id === '9', '例外站/ID 不对');
+});
+
+check('确认例外写私有 data/site-defs', function () {
+  const r = admin.confirm({ DATA_DIR: TMP }, { host: 'b.example', id: '9', purpose: 'movie' }, { file: ENC, key: KEY });
+  need(r.ok && r.data.saved === true, '确认失败：' + JSON.stringify(r));
+  const file = path.join(DEF, 'b.example.json');
+  need(fs.existsSync(file), '私有定义没写');
+  const d = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const hit = (d.catList || []).filter(function (x) { return x.id === '9'; })[0];
+  need(hit && hit.purpose === 'movie', 'catList 没更新：' + JSON.stringify(d.catList));
+  need(d.cats && d.cats.movie && d.cats.movie.indexOf('9') >= 0, 'cats 没更新：' + JSON.stringify(d.cats));
+  need(d.catMap && d.catMap.movie === '9', 'catMap 没更新：' + JSON.stringify(d.catMap));
+  need((fs.statSync(file).mode & 0o777) === 0o600, '私有定义不是 0600');
+});
+
+check('确认后覆盖率和例外数回读', function () {
+  const o = admin.overview({ DATA_DIR: TMP }, { file: ENC, key: KEY });
+  need(o.coverage.mapped === 3 && o.coverage.other === 0, '确认后覆盖率不对：' + JSON.stringify(o.coverage));
+  need(o.totalExceptions === 0, '确认后还有例外：' + o.totalExceptions);
+});
+
+check('非法站点/用途被拒', function () {
+  const badHost = admin.confirm({ DATA_DIR: TMP }, { host: '../x', id: '9', purpose: 'movie' }, { file: ENC, key: KEY });
+  need(!badHost.ok && badHost.code === 'BAD_HOST', '坏 host 没被拒');
+  const badPurpose = admin.confirm({ DATA_DIR: TMP }, { host: 'b.example', id: '9', purpose: 'nope' }, { file: ENC, key: KEY });
+  need(!badPurpose.ok && badPurpose.code === 'BAD_PURPOSE', '坏用途没被拒');
 });
 
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) {}

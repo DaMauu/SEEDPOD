@@ -262,6 +262,13 @@ async function main() {
     need(j.ok && j.data.on === false, 'UI 没关闭调度');
   });
 
+  await check('设置页站点包状态', async () => {
+    await page.evaluate(() => { location.hash = '#settings'; });
+    await page.waitForTimeout(700);
+    const txt = await page.locator('#set-panel').innerText();
+    need(/站点包/.test(txt) && /未解密/.test(txt), '站点包卡缺失：' + txt.slice(0, 200));
+  });
+
   await check('调度 API 默认关闭、可开关', async () => {
     const j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
     need(j.ok && j.data.on === false && j.data.everyMinutes === 60, JSON.stringify(j.data));

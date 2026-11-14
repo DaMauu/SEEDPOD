@@ -53,6 +53,33 @@ curl -s http://127.0.0.1:8080/api/health
 
 容器健康检查每 30 秒跑一次；启动失败先看 `docker logs seedpod`。
 
+## 备份与恢复
+
+备份文件含 SQLite、`.secret` 和私有站点定义，属于敏感文件，默认权限 0600；不要放公开目录。
+
+```bash
+# 备份（可先 docker compose stop，热备也安全）
+bash pta/scripts/backup.sh ./data ./seedpod-backup-$(date +%Y%m%d-%H%M%S).tar.gz
+
+# 恢复：先停容器；目标已有 seedpod.db 时默认拒绝，确认覆盖加 FORCE=1
+docker compose stop
+FORCE=1 bash pta/scripts/restore.sh ./seedpod-backup-YYYYmmdd-HHMMSS.tar.gz ./data
+docker compose up -d
+curl -s http://127.0.0.1:8080/api/health
+```
+
+- 备份包含 `seedpod.db`、`.secret`、`site-defs/`、`site-pack.json`、`library.json` 等；不包含日志和旧备份。
+- SQLite 用 `VACUUM INTO` 做一致性快照，避免 WAL 未合并导致丢数据；没有 `node:sqlite` 时回退 `db + WAL + SHM` 一起备份。
+- 恢复会先清掉旧 `seedpod.db-wal` / `seedpod.db-shm`，避免新旧状态拼在一起。
+- 如果用了外部 `PTA_SECRET_FILE`，那份密钥要单独备份。
+
+### 备份恢复演练（2026-11-18 · v0.7.185）
+
+- `docker build` 成功；`docker compose up -d` 后 `/api/health` 返回 `ok:true`。
+- 容器内创建一条队列记录，重启容器后记录仍在。
+- `backup.sh` 生成 0600 备份，tar 内只有 `./seedpod.db` 和 `./.secret`（没有日志/WAL）。
+- `restore.sh` 恢复到新数据目录，`docker compose up` 后 health 正常，队列记录仍在。
+
 ## Telegram 通知
 
 两种方式，环境变量优先：

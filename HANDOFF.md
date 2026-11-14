@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 12:00（当前 v0.7.184 / G3 完成）
+最后更新：2026-11-18 13:00（当前 v0.7.185 / G6 完成）
+
+## 2026-11-18 G6 站点包例外 + Docker/备份（v0.7.185）
+
+- 站点包例外：设置页显示覆盖率/待确认；确认写私有 `data/site-defs`，不回写密文包；API 支持筛选。
+- 备份/恢复：`pta/scripts/backup.sh`（VACUUM INTO 快照，处理 WAL）与 `restore.sh`（清旧 WAL、默认拒绝覆盖）；夹具 4/4。
+- Docker 复验：build、compose up、重启持久化、备份后恢复到新卷再起，health 正常且队列条目保留。
+- site-pack 9/9、api-v2 26/26、smoke 23/23、backup 4/4、全量 run.sh 通过。
+- 剩余 G4/G5/G10/G12/G13 等真实权限/环境/拍板；G14 可选。
 
 ## 2026-11-18 G3 拆 Sites.vue（v0.7.184）
 

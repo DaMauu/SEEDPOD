@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.185 · 2026-11-18
+
+### G6 站点包例外 + Docker/备份
+- 新增 `site-pack-admin` + `/api/site-pack` + `/api/site-pack/exception`；设置页站点包卡显示覆盖率/待确认，确认后只写私有 `data/site-defs`（0600），不改密文包。
+- 例外确认后回读覆盖率和异常数；支持按分类/站点/ID 筛选，非法站点/用途拒绝。
+- 新增 `pta/scripts/backup.sh` / `restore.sh`：SQLite `VACUUM INTO` 一致性快照，处理 WAL/SHM，恢复时清旧 WAL；夹具 4/4。
+- Docker 构建、`docker compose up`、重启持久化、备份恢复演练通过（0.7.185，health 正常，恢复后队列条目仍在）；记录写 `pta/docs/DOCKER.md`。
+- site-pack 9/9、api-v2 26/26、smoke 23/23、backup 4/4、全量 `run.sh` 通过。
+- 剩余 goal 均等真实站点/下载器权限或用户拍板；没有可自动推进的 goal。
+
 ## v0.7.184 · 2026-11-18
 
 ### G3 拆 Sites.vue

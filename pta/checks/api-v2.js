@@ -70,6 +70,7 @@ async function main() {
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),
       PTA_USER: USER, PTA_PASS: PASS,
+      PTA_SITE_PACK_KEY: '',
       PTA_IMAGE_HOST_URL: 'http://127.0.0.1:' + imagePort + '/upload',
       PTA_IMAGE_HOST_FIELD: 'file'
     }),
@@ -414,6 +415,20 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ html: '<div>没有表单</div>' })
     });
     need(no.status === 422, '没有表单时应返回 422，实际 ' + no.status);
+  });
+
+  await check('站点包状态与例外门禁', async () => {
+    const j = await (await fetchA(BASE + '/api/site-pack')).json();
+    need(j.ok && j.data.available === false, '无密钥时应不可用：' + JSON.stringify(j.data && { available: j.data.available, reason: j.data.reason }));
+    need(j.data.reason === 'NO_KEY', '缺密钥原因不对：' + j.data.reason);
+    need(Array.isArray(j.data.purposes) && j.data.purposes.length > 0, '用途列表缺失');
+    const bad = await fetchA(BASE + '/api/site-pack/exception', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ host: '../x', id: '1', purpose: 'movie' })
+    });
+    need(bad.status === 400, '坏 host 状态码是 ' + bad.status);
+    const bj = await bad.json();
+    need(bj.error && bj.error.code === 'BAD_HOST', '坏 host 错误码不对：' + JSON.stringify(bj));
   });
 
   await check('凭据只回 hasCookie，不回明文', async () => {

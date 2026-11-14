@@ -31,6 +31,7 @@ run security security.js
 run api api-v2.js
 run form form.js
 run site-pack site-pack.js
+run backup backup.js
 run publish publish.js
 run scheduler scheduler.js
 run detect detect.js
