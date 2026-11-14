@@ -163,8 +163,9 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 - 先线框后代码：静态 HTML 或截图确认后再改对应 SFC
 - 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式放 `pta/web-src/src/styles/index.css`（按级联顺序 import `src/styles/*.css` 模块），页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
+- 桌面和手机共用一套 Vue 代码；允许组件级换布局，不做独立移动站/两套前端；规范见 `pta/docs/RESPONSIVE.md`
 - 文案：标签用名词，说明 ≤ 20 字，错误说「怎么办」
-- 验收三宽度 1280 / 768 / 390，无横向滚动，首屏能看到主卡
+- 验收四宽度 360 / 390 / 768 / 1280（新增页面加 1440），无横向滚动，首屏能看到主卡
 
 ## 八、版本与交付说明（2026-11-12 起执行）
 
