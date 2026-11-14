@@ -103,7 +103,7 @@ module.exports = function (app, ctx) {
     if (!title) return bad(reply, 'BAD_REQUEST', 'title 必填');
     const mxq = one("SELECT MAX(CAST(SUBSTR(id, 3) AS INTEGER)) AS m FROM queue WHERE id LIKE 'q_%'") || { m: 0 };
     const n = Number(mxq.m) || 0;
-    const item = Object.assign({}, b, { id: 'q_' + String(n + 1).padStart(4, '0'), status: b.status || 'pending', createdAt: now() });
+    const item = Object.assign({}, b, { id: 'q_' + String(n + 1).padStart(4, '0'), status: b.status || 'pending', stage: b.stage || 'draft', createdAt: now() });
     db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
       .run(item.id, item.status, title, JSON.stringify(item), item.createdAt, now());
     return ok(reply, item);

@@ -1,6 +1,6 @@
 # CLI 与 CLI-first（CLI）
 
-状态：2026-11-17，v0.7.164。当前 CLI 是 HTTP 薄客户端；G9 会把它改成直接调用核心服务，面板只做视图。
+状态：2026-11-17，v0.7.166。CLI 仍是 HTTP 客户端（后端必须先启动），但已支持 `prepare / preview / advance / run`；后续 G9 再把业务抽到 core，面板只做视图。
 
 ## 一、CLI 在哪
 
@@ -48,6 +48,10 @@ export PTA_COOKIE='pta_sid=...'
 | `targets` | 列目标站定义与就绪状态 | 只读 |
 | `target-upload <queueId> --host <target>` | 提交到目标站 | 干跑，`--real` 才真发 |
 | `verify <queueId> --host <target>` | 发布后回查 | 只读 |
+| `prepare <queueId>` | 生成单 release 的标题/副标题/简介/目标字段，落库到 queue | 本地，不发外部请求 |
+| `preview <queueId>` | 返回完整准备结果，阶段推进到 previewed | 本地，不发外部请求 |
+| `advance <queueId>` | draft → prepared → previewed 自动推进；后续提示用 target-upload/publish | 本地 |
+| `run --stage prepared\|previewed` | 批量准备/预览可处理队列 | 本地 |
 
 输出：
 
@@ -59,7 +63,8 @@ node pta/cli.js queue --status pending --limit 20
 ## 三、现在的限制
 
 - CLI 只是 HTTP 客户端：必须先起 `node pta/server/app-fastify.js` 或 systemd 服务。
-- 还没有 `prepare`（单 release 上传准备）、`preview`、`advance`（推进阶段）、`inject` 这些命令。
+- `prepare` / `preview` / `advance` / `run` 已实现，但只做本地准备和预览；`advance` 到 previewed 后会提示用 `target-upload` / `publish` 做提交和注入。
+- 还没有独立的 `inject` 命令。
 - 抓取/发布仍受服务端 `realCrawl` / `realPublish` 开关约束。
 - 业务逻辑还在 Fastify 路由里，CLI 不能脱离 HTTP 跑。
 
@@ -98,6 +103,12 @@ pta run --stage <stage>            # 批量推进可执行阶段
 - 不打印 cookie、密码、passkey、IP。
 - 每个命令幂等；G7 的阶段状态落 SQLite。
 - 面板和 CLI 不复制业务逻辑，只做输入/输出适配。
+
+### 已实现（0.7.166）
+
+- `POST /api/queue/:id/prepare`、`GET /api/queue/:id/preview`、`POST /api/queue/:id/advance`、`POST /api/release/run`
+- queue 条目新增 `stage`：`draft / prepared / previewed / submitted / injected / failed`
+- 默认不提交、不注入；提交继续走现有 `target-upload` / `publish`
 
 ### 验收
 

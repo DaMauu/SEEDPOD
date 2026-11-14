@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.166 · 2026-11-17
+
+### 单 release 准备与阶段推进
+- 新增 `pta/server/release.js` 和 `routes-release.js`：`prepare` / `preview` / `advance` / `run`，只做本地准备，不发外部请求。
+- queue 条目增加 `stage`：`draft / prepared / previewed / submitted / injected / failed`；准备结果存 `prepared`（标题、副标题、简介、目标字段、截图数、种子摘要）。
+- CLI 新增 `prepare <id>`、`preview <id>`、`advance <id>`、`run --stage prepared|previewed`；默认本地，提交仍走 `target-upload` / `publish`。
+- 测试站补了私有 NexusPHP 上传骨架（只在部署 `data/site-defs/`，不入库），已用其做本地准备/预览，未发提交请求。
+- CLI 夹具 9/9；新增 prepare/preview/advance/run 断言。
+
+### 检查
+- smoke 21/21、responsive 32 项、全量检查、质量审计 83。
+
 ## v0.7.165 · 2026-11-17
 
 ### CLI-first 与 G9

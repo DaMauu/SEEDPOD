@@ -14,7 +14,7 @@
 | G6 | 站点包例外 UI + Docker/备份复验 | ⏳ 排队 | G2/G3 后 | 例外确认可用、备份恢复演练 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ⏳ 排队（G2 后） | G2 | 重启可续跑、不重复提交 |
 | G8 | 原生单 release 上传准备与站点提交 | ⏳ 排队（G9 后；真实提交依赖 G5） | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
-| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ⏳ 排队（G7 后） | G7 | 不启浏览器跑通全链路 |
+| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | 🟡 进行中：prepare/preview/advance/run 已落地，core 抽取待做 | G7 | 不启浏览器跑通全链路 |
 
 ## G1 · 响应式自动验收（已完成）
 
@@ -148,6 +148,8 @@
 - 命令契约见 `pta/docs/CLI.md`：`crawl`、`screen`、`queue`、`prepare`、`preview`、`publish`、`target-upload`、`verify`、`advance`、`run`。
 - 默认干跑，`--real` 才真抓/真发；`--json` 给脚本用；失败用非 0 退出码。
 - 不打印 cookie/密码/passkey/IP；不复制 UA/upbrr 代码。
+
+**进展（0.7.166）**：`prepare / preview / advance / run` 已接入 CLI 和 HTTP API；queue 增加 `stage`。仅本地准备/预览，提交仍走 `target-upload/publish`。
 
 **验收**：
 

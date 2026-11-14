@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 17:00（当前 v0.7.165 / G9 CLI-first）
+最后更新：2026-11-17 18:00（当前 v0.7.166 / prepare/preview/advance/run）
+
+## 2026-11-17 单 release 准备（v0.7.166）
+
+- 新增 release API 与 CLI：prepare / preview / advance / run；queue 增加 stage。
+- 只做本地准备/预览，提交仍走 target-upload / publish；测试站已用私有 NexusPHP 骨架验证准备链，未提交。
+- CLI 夹具 9/9；下一步 G7 阶段机、G9 core 抽取、G8 原生提交。
 
 ## 2026-11-17 CLI-first（v0.7.165）
 

@@ -91,6 +91,12 @@ async function main() {
   });
   need(item.status === 200 && item.body.ok, '队列创建失败');
   queueId = item.body.data.id;
+  const item2 = await json('/api/queue', {
+    method: 'POST', body: { title: 'CLI Prepare 2021 2160p', site: 'source.example',
+      targetSite: 'target.example', status: 'pending', size: '60 GB' }
+  });
+  need(item2.status === 200 && item2.body.ok, '第二个队列创建失败');
+  const queueId2 = item2.body.data.id;
 
   await check('status --json', async function () {
     const j = parse(await cli(['status', '--json']));
@@ -119,6 +125,26 @@ async function main() {
     const j = parse(await cli(['publish', queueId, '--json']));
     need(j.dryRun === true, '默认不是干跑');
     need(j.qb && j.qb.wouldAdd === true, '没有 wouldAdd');
+  });
+
+  await check('prepare / preview / advance 阶段链', async function () {
+    const p = parse(await cli(['prepare', queueId, '--json']));
+    need(p.stage === 'prepared', 'prepare 阶段不对：' + p.stage);
+    need(p.prepared && p.prepared.title, 'prepare 没有标题');
+    const a = parse(await cli(['advance', queueId, '--json']));
+    need(a.stage === 'previewed', 'advance 阶段不对：' + a.stage);
+    const v = parse(await cli(['preview', queueId, '--json']));
+    need(v.stage === 'previewed', 'preview 阶段不对：' + v.stage);
+    need(v.prepared && v.prepared.subtitle, 'preview 没有副标题');
+  });
+
+  await check('run --stage prepared 批量准备', async function () {
+    const j = parse(await cli(['run', '--stage', 'prepared', '--limit', '10', '--json']));
+    need(j.checked >= 2, 'run 没检查到队列：' + j.checked);
+    need(j.prepared >= 1, 'run 没有准备任何条目');
+    const q = parse(await cli(['queue', '--json']));
+    const it = q.items.find(function (x) { return x.id === queueId2; });
+    need(it && it.stage === 'prepared', '第二个条目阶段不是 prepared：' + JSON.stringify(it && it.stage));
   });
 
   await check('targets --json 是数组', async function () {

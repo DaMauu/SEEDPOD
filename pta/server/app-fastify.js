@@ -236,6 +236,7 @@ async function build() {
   require('./routes-tasks')(app, ctx);
   require('./routes-misc')(app, ctx);
   require('./routes-publish')(app, ctx);
+  require('./routes-release')(app, ctx);
   require('./routes-target')(app, ctx);
   require('./routes-media')(app, ctx);
   require('./routes-notify')(app, ctx);

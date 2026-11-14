@@ -14,6 +14,10 @@ function usage() {
   pta queue [--status pending] [--limit 50] [--json]
   pta crawl --site <host> [--limit 100] [--real] [--json]
   pta screen [--limit 50] [--host <host>] [--json]
+  pta prepare <queueId> [--host <target>] [--torrent file] [--json]
+  pta preview <queueId> [--json]
+  pta advance <queueId> [--json]
+  pta run --stage prepared|previewed [--limit 20] [--json]
   pta publish <queueId> [--real] [--json]
   pta targets [--json]
   pta target-upload <queueId> --host <target> [--real] [--torrent file] [--json]
@@ -129,6 +133,57 @@ async function main() {
     print(d, opts, function (x) {
       const rs = Object.keys(x.byReason || {}).map(function (k) { return k + ' ' + x.byReason[k]; }).join(' · ');
       return '检查 ' + (x.checked || 0) + ' · 入选 ' + (x.selected || 0) + ' · 跳过 ' + (x.skipped || 0) + (rs ? '（' + rs + '）' : '');
+    });
+    return;
+  }
+  if (cmd === 'prepare') {
+    const id = args[0];
+    if (!id) die('prepare 需要 queueId', 2);
+    const body = {};
+    if (opts.host) body.host = String(opts.host);
+    const b64 = readTorrent(opts.torrent);
+    if (b64) body.torrentBase64 = b64;
+    const d = await api('/api/queue/' + encodeURIComponent(id) + '/prepare', { method: 'POST', body: body });
+    print(d, opts, function (x) {
+      const p = x.prepared || {};
+      return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') +
+        ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0);
+    });
+    return;
+  }
+  if (cmd === 'preview') {
+    const id = args[0];
+    if (!id) die('preview 需要 queueId', 2);
+    const d = await api('/api/queue/' + encodeURIComponent(id) + '/preview');
+    print(d, opts, function (x) {
+      const p = x.prepared || {};
+      return '阶段 ' + x.stage + '\n标题: ' + (p.title || '') + '\n副标题: ' + (p.subtitle || '') + '\n目标: ' + (p.targetHost || '未选') +
+        (p.target ? '\nURL: ' + p.target.url + '\n字段: ' + Object.keys(p.target.fields || {}).join(', ') : '') +
+        (p.targetError ? '\n目标站未就绪: ' + p.targetError : '') +
+        '\n截图: ' + (p.shots || 0);
+    });
+    return;
+  }
+  if (cmd === 'advance') {
+    const id = args[0];
+    if (!id) die('advance 需要 queueId', 2);
+    const body = {};
+    if (opts.host) body.host = String(opts.host);
+    const b64 = readTorrent(opts.torrent);
+    if (b64) body.torrentBase64 = b64;
+    const d = await api('/api/queue/' + encodeURIComponent(id) + '/advance', { method: 'POST', body: body });
+    print(d, opts, function (x) {
+      return (x.stage || '') + (x.next ? ' · 下一步 ' + x.next : '') + (x.note ? ' · ' + x.note : '');
+    });
+    return;
+  }
+  if (cmd === 'run') {
+    if (!opts.stage) die('run 需要 --stage prepared|previewed', 2);
+    const d = await api('/api/release/run', { method: 'POST', body: {
+      stage: String(opts.stage), limit: Math.max(1, Math.min(100, Number(opts.limit) || 20))
+    } });
+    print(d, opts, function (x) {
+      return '阶段 ' + x.stage + ' · 检查 ' + x.checked + ' · 准备 ' + x.prepared + ' · 预览 ' + x.previewed + ' · 跳过 ' + x.skipped + ' · 失败 ' + x.failed;
     });
     return;
   }
