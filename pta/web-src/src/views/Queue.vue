@@ -57,6 +57,15 @@
           <button v-if="sel.stage === 'failed'" class="btn ghost slim" type="button" @click.stop="retryStage">重试</button>
         </div>
 
+        <div v-if="sel.targetResults && Object.keys(sel.targetResults).length" class="qd-target-results">
+          <div v-for="(tr, host) in sel.targetResults" :key="host" class="qd-target-result">
+            <span class="badge" :class="targetTone(tr.stage)">{{ host }}</span>
+            <span class="t-sub">{{ stageLabel(tr.stage) }}</span>
+            <span v-if="tr.error" class="qd-stage-err">{{ tr.error }}</span>
+            <button v-if="tr.stage === 'failed'" class="btn ghost slim" type="button" @click.stop="retryTarget(host)">重试</button>
+          </div>
+        </div>
+
         <div class="qd-grid">
           <section class="sd-card qd-pubinfo">
             <h3>发布信息</h3>
@@ -201,6 +210,22 @@ const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预
 const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red' }
 function stageLabel(s) { return STAGE_LABEL[s] || s || '草稿' }
 function stageTone(s) { return STAGE_TONE[s] || '' }
+function targetTone(s) { return STAGE_TONE[s] || '' }
+async function retryTarget(host) {
+  if (!sel.value || busy.target) return
+  busy.target = true
+  try {
+    const body = { queueId: sel.value.id, targets: [host], dryRun: false }
+    if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
+    const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
+    })
+    const j = await r.json().catch(() => null)
+    toast(j && j.ok ? '目标站重试完成' : ((j && j.error && j.error.message) || '重试失败'))
+    await refresh()
+  } catch (e) { reportError('Queue.retryTarget', e); toast('重试请求发不出去') }
+  busy.target = false
+}
 function stageTime(iso) { return String(iso || '').slice(5, 16).replace('T', ' ') }
 async function retryStage() {
   if (!sel.value) return
@@ -657,4 +682,7 @@ onUnmounted(() => {
 .qd-targets-row { align-items: flex-start; }
 .qd-target-chips { justify-content: flex-start; gap: 6px; }
 .qd-target-check { display: none; }
+.qd-target-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.qd-target-result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.qd-target-result .qd-stage-err { flex: 1 1 100%; }
 </style>
