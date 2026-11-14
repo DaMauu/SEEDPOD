@@ -1,10 +1,21 @@
 /* 补齐前端仍在调用的缺口接口：队列批量、抓取执行、更新日志、事件流别名。 */
 const fs = require('fs');
 const path = require('path');
+const form = require('./form');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
+
+  /* 上传表单识别：只解析用户贴进来的本地 HTML，不联网。 */
+  app.post('/api/form/parse', async (req, reply) => {
+    const html = String((req.body && req.body.html) || '');
+    if (!html.trim()) return bad(reply, 'BAD_REQUEST', 'html 必填');
+    if (html.length > 2 * 1024 * 1024) return bad(reply, 'TOO_LARGE', 'HTML 超过 2MB');
+    const forms = form.parse(html);
+    if (!forms.length) return bad(reply, 'NO_FORM', '没识别到上传表单字段，可以继续用 JSON 编辑', 422);
+    return ok(reply, { forms: forms, path: forms[0].action || '', fileField: forms[0].fileField || '' });
+  });
 
   /* 队列批量动作：approve / reject / skip / delete */
   app.post('/api/queue/bulk', async (req, reply) => {

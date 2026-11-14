@@ -200,6 +200,20 @@ async function main() {
     await page.waitForTimeout(600);
     const dj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
     need(dj.ok && dj.data.catMap.length === 1, '数组映射删除没生效');
+
+    const upBlock = page.locator('#site-detail .cm-block').filter({ hasText: '上传表单' });
+    await upBlock.locator('.cm-actions button').filter({ hasText: '加字段' }).click();
+    await page.waitForTimeout(200);
+    const uf = upBlock.locator('.cm-row:not(.cm-head)').last();
+    await uf.locator('input').nth(0).fill('name');
+    await uf.locator('input').nth(1).fill('{title}');
+    await page.locator('#site-detail .up-pair input').nth(0).fill('/takeupload.php');
+    await page.locator('#site-detail .up-pair input').nth(1).fill('torrent');
+    await upBlock.locator('.cm-actions button').filter({ hasText: '保存上传映射' }).click();
+    await page.waitForTimeout(600);
+    const uj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
+    need(uj.ok && uj.data.uploadMap && uj.data.uploadMap.fields && uj.data.uploadMap.fields.name === '{title}', '上传映射没保存');
+    need(uj.data.uploadMap.path === '/takeupload.php' && uj.data.uploadMap.fileField === 'torrent', '上传路径/文件字段没保存');
   });
 
   await check('流程卡与未接规则', async () => {

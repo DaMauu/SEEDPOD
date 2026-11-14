@@ -110,6 +110,12 @@ function startMock(hash) {
       });
       return;
     }
+    if (req.method === 'GET' && u.pathname === '/takeupload.php') {
+      const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'upload-form.html'), 'utf8');
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end(html);
+      return;
+    }
     if (req.method === 'GET' && (u.pathname === '/torrents.php' || u.pathname === '/details.php')) {
       res.writeHead(200, { 'content-type': 'text/html' });
       res.end('<html><body><a href="details.php?id=42">Target Upload Test 2024 1080p Blu-ray</a><div>' + hash + '</div></body></html>');
@@ -180,6 +186,18 @@ async function main() {
     const j2 = await json(BASE + '/api/targets');
     const t2 = (j2.body.data || []).filter(function (x) { return x.host === '127.0.0.1'; })[0];
     need(t2 && t2.hasCookie === true && t2.ready === true, '导入 cookie 后没就绪');
+  });
+
+  await check('手动识别上传表单与冷却', async function () {
+    const r = await json(BASE + '/api/targets/127.0.0.1/detect-form', { method: 'POST' });
+    need(r.status === 200 && r.body.ok, '识别失败：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
+    need(r.body.data.path === '/takeupload.php', '上传路径不对：' + r.body.data.path);
+    need(r.body.data.fileField === 'torrent', '文件字段不对：' + r.body.data.fileField);
+    need(r.body.data.fields.length === 6, '字段数量不对：' + r.body.data.fields.length);
+    const again = await json(BASE + '/api/targets/127.0.0.1/detect-form', { method: 'POST' });
+    need(again.status === 429 && again.body.error.code === 'TOO_SOON', '冷却没生效：' + again.status);
+    const no = await json(BASE + '/api/targets/unit3d.example/detect-form', { method: 'POST' });
+    need(no.status === 400 && no.body.error.code === 'NO_COOKIE', '没 cookie 不该请求：' + no.status + ' ' + JSON.stringify(no.body && no.body.error));
   });
 
   await check('队列条目与干跑表单映射', async function () {

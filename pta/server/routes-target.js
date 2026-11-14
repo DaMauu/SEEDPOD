@@ -56,6 +56,17 @@ module.exports = function (app, ctx) {
 
   app.get('/api/targets', async () => ok(target.list()));
 
+  const DETECT_AT = new Map();
+  app.post('/api/targets/:host/detect-form', async (req, reply) => {
+    const host = req.params.host;
+    const last = DETECT_AT.get(host) || 0;
+    if (Date.now() - last < 60000) return bad(reply, 'TOO_SOON', '刚识别过，等 1 分钟再试', 429);
+    const r = await target.detectUploadForm(host);
+    if (r.code !== 'NO_COOKIE' && r.code !== 'NO_TARGET_DEF') DETECT_AT.set(host, Date.now());
+    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    return ok(reply, r.data);
+  });
+
   app.post('/api/targets/:host/plan', async (req, reply) => {
     const item = loadQueue(req.body && req.body.queueId);
     if (!item) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);

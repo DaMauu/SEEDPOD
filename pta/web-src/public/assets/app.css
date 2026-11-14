@@ -1455,6 +1455,10 @@ body::after {
 .cm-row.cm-head { font-size: 11px; color: var(--muted-2); padding: 0 2px 2px; }
 .cm-row .cm-del { flex: 0 0 auto; }
 .cm-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.up-pair { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.up-pair label { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; font-size: 11px; color: var(--muted-2); }
+.up-pair .input { width: 100%; height: 32px; font-size: 12.5px; }
+@media (max-width: 700px) { .up-pair { flex-direction: column; } }
 @media (max-width: 700px) {
   .cm-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .cm-row.cm-head { display: none; }

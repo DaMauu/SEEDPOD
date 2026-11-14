@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh">
+<head><meta charset="utf-8"><title>上传页夹具</title></head>
+<body>
+  <form action="/takeupload.php" method="post" enctype="multipart/form-data">
+    <label for="title">标题</label>
+    <input id="title" name="name" type="text" value="">
+
+    <label for="sub">副标题</label>
+    <input id="sub" name="small_desc" type="text">
+
+    <label for="type">分类</label>
+    <select id="type" name="type">
+      <option value="401">电影</option>
+      <option value="402">剧集</option>
+    </select>
+
+    <label for="intro">简介</label>
+    <textarea id="intro" name="descr" placeholder="简介"></textarea>
+
+    <label for="anon">匿名</label>
+    <input id="anon" name="anon" type="checkbox" value="1">
+
+    <label for="torrent">种子</label>
+    <input id="torrent" name="torrent" type="file">
+
+    <input type="submit" value="上传">
+  </form>
+</body>
+</html>

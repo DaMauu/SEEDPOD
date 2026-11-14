@@ -28,6 +28,7 @@ run smoke smoke-live.js
 run adapter adapter.js
 run security security.js
 run api api-v2.js
+run form form.js
 run publish publish.js
 run scheduler scheduler.js
 run detect detect.js

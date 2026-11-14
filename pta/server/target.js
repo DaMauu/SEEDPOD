@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
+const form = require('./form');
 const { makeQb } = require('./qb');
 
 const ENGINES = {
@@ -261,7 +262,47 @@ function makeTarget(ctx) {
     } };
   }
 
-  return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify,
+  /* 手动识别目标站上传页：只发一次 GET，不提交、不重试；必须已有 cookie。 */
+  async function detectUploadForm(host) {
+    const t = resolve(host);
+    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有上传页配置', http: 400 };
+    const c = cookieOf(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 400 };
+    let baseHost = '';
+    try { baseHost = new URL(t.base).hostname.toLowerCase(); } catch (e) { return { ok: false, code: 'BAD_BASE', message: '站点 base 不是合法地址', http: 400 }; }
+    const wantHost = String(host || '').toLowerCase();
+    if (baseHost !== wantHost && !baseHost.endsWith('.' + wantHost)) {
+      return { ok: false, code: 'BAD_BASE', message: '上传页域名和站点域名不一致，为免 cookie 外泄先停下', http: 400 };
+    }
+    if (!/^https?:/i.test(t.base)) return { ok: false, code: 'BAD_BASE', message: '站点 base 必须是 http/https', http: 400 };
+    const url = t.base + t.upload.path;
+    let res;
+    try {
+      res = await fetch(url, {
+        headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(20000)
+      });
+    } catch (e) {
+      return { ok: false, code: 'DETECT_FAILED', message: e && e.name === 'TimeoutError' ? '上传页请求超时' : '上传页请求失败', http: 502 };
+    }
+    if (res.status >= 300 && res.status < 400) {
+      return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页跳转了，cookie 可能已失效', http: 401 };
+    }
+    if (res.status !== 200) return { ok: false, code: 'HTTP_' + res.status, message: '上传页返回 ' + res.status, http: 502 };
+    const html = await res.text().catch(function () { return ''; });
+    if (!html) return { ok: false, code: 'EMPTY_PAGE', message: '上传页是空的', http: 502 };
+    if (html.length > 2 * 1024 * 1024) return { ok: false, code: 'TOO_LARGE', message: '上传页超过 2MB，先截取表单部分', http: 413 };
+    if (/takelogin\.php|login\.php|请先登录|sign in/i.test(html)) {
+      return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页看起来是登录页，cookie 可能已失效', http: 401 };
+    }
+    const forms = form.parse(html);
+    if (!forms.length) return { ok: false, code: 'NO_FORM', message: '没识别到上传表单，可以继续手工编辑字段表', http: 422 };
+    const f = forms[0];
+    return { ok: true, data: { url: url, path: t.upload.path, fileField: f.fileField || '', fields: f.fields, forms: forms } };
+  }
+
+  return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,
     fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
 }
 

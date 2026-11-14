@@ -312,6 +312,21 @@ async function main() {
     need(got2.ok && got2.data.catMap && got2.data.catMap.movie === '401' && got2.data.catMap.tv === '402', '对象映射没读回');
   });
 
+  await check('上传表单 HTML 识别接口', async () => {
+    const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'upload-form.html'), 'utf8');
+    const r = await fetchA(BASE + '/api/form/parse', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ html: html })
+    });
+    need(r.status === 200, '识别接口失败 ' + r.status);
+    const j = await r.json();
+    need(j.ok && j.data.path === '/takeupload.php' && j.data.fileField === 'torrent', '识别结果不对：' + JSON.stringify(j.data && { path: j.data.path, fileField: j.data.fileField }));
+    need(j.data.forms && j.data.forms[0].fields.length === 6, '字段数量不对');
+    const no = await fetchA(BASE + '/api/form/parse', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ html: '<div>没有表单</div>' })
+    });
+    need(no.status === 422, '没有表单时应返回 422，实际 ' + no.status);
+  });
+
   await check('凭据只回 hasCookie，不回明文', async () => {
     const put = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=secret-cookie' })

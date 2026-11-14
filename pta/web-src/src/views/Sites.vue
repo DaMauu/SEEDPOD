@@ -236,6 +236,31 @@
                     </div>
                   </div>
                   <div class="set-fields">
+                    <div class="sd-block cm-block">
+                      <h4>上传表单</h4>
+                      <p class="set-desc">目标站上传页的字段映射；保存后发种按这张表填。识别只在你点按钮时发一次 GET。</p>
+                      <div class="up-pair">
+                        <label><span>上传路径</span><input v-model="upForm.path" class="input" placeholder="/takeupload.php"></label>
+                        <label><span>文件字段</span><input v-model="upForm.fileField" class="input" placeholder="file"></label>
+                      </div>
+                      <div v-if="upForm.fields.length" class="cm-list">
+                        <div class="cm-row cm-head"><span>目标字段</span><span>值模板</span><span></span></div>
+                        <div v-for="(f, i) in upForm.fields" :key="i" class="cm-row">
+                          <input v-model="f.name" class="input" placeholder="字段名">
+                          <input v-model="f.template" class="input" placeholder="{title}">
+                          <button class="btn ghost slim cm-del" type="button" @click.stop="removeUpField(i)">删除</button>
+                        </div>
+                      </div>
+                      <div v-else class="sites-empty">还没有上传字段；点「从目标站识别」或「加字段」。</div>
+                      <div class="cm-actions">
+                        <button class="btn ghost slim" type="button" @click.stop="addUpField">加字段</button>
+                        <button class="btn primary slim" type="button" :disabled="upSaving" @click.stop="saveUpForm">{{ upSaving ? '保存中…' : '保存上传映射' }}</button>
+                        <button class="btn ghost slim" type="button" :disabled="detectBusy" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '从目标站识别' }}</button>
+                        <span class="sd-cookie-res">{{ upMsg || detectMsg }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="set-fields">
                     <div class="set-field">
                       <div class="lbl"><span>站点定义 JSON</span><i>高级字段；存 data/site-defs，不进仓库</i></div>
                       <div class="ctl"><textarea v-model="defText" class="input sd-note" rows="10" placeholder="{}"></textarea></div>
@@ -417,6 +442,11 @@ const catKind = ref('object')
 const catRows = ref([])
 const catSaving = ref(false)
 const catMsg = ref('')
+const upForm = reactive({ path: '', fileField: '', fields: [] })
+const upSaving = ref(false)
+const upMsg = ref('')
+const detectBusy = ref(false)
+const detectMsg = ref('')
 const catPurposes = [
   { v: 'movie', label: '电影' },
   { v: 'tv', label: '剧集' },
@@ -675,7 +705,7 @@ async function loadDetail(host) {
       fetch('/api/catalog?site=' + encodeURIComponent(host) + '&limit=6', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).catch(() => null)
     ])
     if (sel.value !== host) return
-    if (dj && dj.ok) { detail.def = dj.data; syncCatRows(detail.def) }
+    if (dj && dj.ok) { detail.def = dj.data; syncCatRows(detail.def); syncUpForm(detail.def) }
     if (pj && pj.ok) detail.preset = (pj.data && pj.data.preset) || null
     if (cj && cj.ok) {
       detail.catalog = { total: cj.data.total || 0, byStatus: cj.data.byStatus || {} }
@@ -707,7 +737,7 @@ async function loadDef(host) {
     const r = await fetch('/api/site-def/' + encodeURIComponent(host), { credentials: 'same-origin' })
     if (r.ok) {
       const j = await r.json()
-      if (j && j.ok) { defText.value = JSON.stringify(j.data, null, 2); syncCatRows(j.data); return }
+      if (j && j.ok) { defText.value = JSON.stringify(j.data, null, 2); syncCatRows(j.data); syncUpForm(j.data); return }
     }
   } catch (e) {}
   const s = sites.value.find(x => x.name === host)
@@ -729,6 +759,7 @@ async function saveDef() {
     if (j && j.ok) {
       detail.def = def
       syncCatRows(def)
+      syncUpForm(def)
       defMsg.value = '已保存'
       toast('站点定义已保存')
     } else { defMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(defMsg.value) }
@@ -822,6 +853,81 @@ async function saveCatMap() {
   } catch (e) { catMsg.value = '保存请求发不出去'; toast(catMsg.value) }
   catSaving.value = false
 }
+function syncUpForm(def) {
+  const um = (def && def.uploadMap) || {}
+  upForm.path = String(um.path || '')
+  upForm.fileField = String(um.fileField || '')
+  upForm.fields = Object.keys(um.fields || {}).map(function (k) {
+    return { name: k, template: String(um.fields[k] == null ? '' : um.fields[k]) }
+  })
+  upMsg.value = ''
+  detectMsg.value = ''
+}
+function addUpField() {
+  upForm.fields.push({ name: '', template: '' })
+}
+function removeUpField(i) {
+  upForm.fields.splice(i, 1)
+}
+async function saveUpForm() {
+  if (!sel.value || upSaving.value) return
+  let def
+  try { def = JSON.parse(defText.value) } catch (e) { upMsg.value = '上面的 JSON 格式不对，先修好再保存上传映射'; return }
+  if (!def || typeof def !== 'object' || Array.isArray(def)) { upMsg.value = '站点定义必须是 JSON 对象'; return }
+  const fields = {}
+  for (const f of upForm.fields) {
+    const name = String(f.name || '').trim()
+    if (!name) { upMsg.value = '每个字段都要填字段名'; return }
+    if (fields[name] !== undefined) { upMsg.value = '字段名重复：' + name; return }
+    fields[name] = String(f.template || '')
+  }
+  def.uploadMap = Object.assign({}, def.uploadMap || {}, {
+    path: String(upForm.path || '').trim(),
+    fileField: String(upForm.fileField || '').trim(),
+    fields: fields
+  })
+  upSaving.value = true
+  try {
+    const j = await (await fetch('/api/site-def/' + encodeURIComponent(sel.value), {
+      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
+    })).json()
+    if (j && j.ok) {
+      const saved = (j.data && j.data.def) || def
+      detail.def = saved
+      defText.value = JSON.stringify(saved, null, 2)
+      syncUpForm(saved)
+      upMsg.value = '已保存 · ' + Object.keys(fields).length + ' 个字段'
+      toast('上传映射已保存')
+    } else { upMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(upMsg.value) }
+  } catch (e) { upMsg.value = '保存请求发不出去'; toast(upMsg.value) }
+  upSaving.value = false
+}
+function detectRemote() {
+  if (!sel.value || detectBusy.value) return
+  const host = sel.value
+  confirmBox('识别上传表单', '会向 ' + host + ' 的上传页发一次 GET，只读页面，不提交任何东西。继续？', async function () {
+    detectBusy.value = true
+    detectMsg.value = ''
+    try {
+      const j = await (await fetch('/api/targets/' + encodeURIComponent(host) + '/detect-form', {
+        method: 'POST', credentials: 'same-origin'
+      })).json()
+      if (!j || !j.ok) {
+        detectMsg.value = ((j && j.error && j.error.message) || '识别失败') + '；可以继续手工编辑字段表'
+        detectBusy.value = false
+        return
+      }
+      const d = j.data || {}
+      if (d.path) upForm.path = d.path
+      if (d.fileField) upForm.fileField = d.fileField
+      upForm.fields = (d.fields || []).map(function (f) { return { name: f.name, template: f.template || '' } })
+      detectMsg.value = '识别到 ' + upForm.fields.length + ' 个字段 · ' + (d.url || d.path || '')
+      toast('已识别上传表单')
+    } catch (e) { detectMsg.value = '识别请求发不出去' }
+    detectBusy.value = false
+  })
+}
+
 function openAdd() { addForm.url = ''; addForm.arch = '?'; addForm.title = ''; addOpen.value = true }
 async function addSite() {
   if (!addForm.url.trim()) { toast('先填站点地址'); return }
