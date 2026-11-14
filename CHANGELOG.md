@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.154 · 2026-11-17
+
+### 页面 scoped 迁移
+- Logs：30 条规则迁入 `Logs.vue` 的 `<style scoped>`；05 基础日志样式、06 黑绿终端主题、07 高度规则、09 窄屏工具条全部移走；全局已无 `log-*` 选择器。
+- 删除 `Dashboard.vue` scoped 里不生效的 `.view[data-view="logs"] .log-panel` 跨页选择器。
+- 390：日志行改为两行布局，时间/级别/来源一行，消息独占下一行；消息不再被挤成 68px。
+- `seg-tabs` / `btn` / `sites-empty` / `spacer` 等共享规则继续全局。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者；1280 / 768 / 390 视觉通过，INFO/WARN/ERROR 筛选计数正确。
+
 ## v0.7.153 · 2026-11-17
 
 ### 页面 scoped 迁移

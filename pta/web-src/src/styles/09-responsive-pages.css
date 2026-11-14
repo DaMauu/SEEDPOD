@@ -67,8 +67,6 @@
   .dock-label { display: block; font-size: 10px; }
 
   /* 表格类布局摊平 */
-
-  .log-bar { flex-wrap: wrap; gap: 8px; }
   .set-card { padding: 14px; }
   .set-fields { grid-template-columns: 1fr; }
   .set-field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }

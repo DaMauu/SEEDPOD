@@ -47,6 +47,4 @@ body::after {
   50%      { opacity: .92; transform: scale(1.05); }
 }
 .view[data-view="queue"], .view[data-view="sources"], .view[data-view="logs"] { justify-content: center; }
-.view[data-view="logs"] .log-wrap { height: auto; flex: 0 0 auto; width: 100%; }
-.view[data-view="logs"] .log-panel { flex: 0 0 auto; height: 560px; }
 

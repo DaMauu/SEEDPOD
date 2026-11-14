@@ -303,7 +303,6 @@ onUnmounted(() => {
 .card:has(#dash-logs) { display: flex; flex-direction: column; }
 .card:has(#dash-logs) .list { display: flex; flex-direction: column; flex: 1; }
 #dash-logs { flex: 1; margin: 2px -20px -20px; padding: 10px 20px 12px; }
-.view[data-view="logs"] .log-panel,
 #dash-logs,
 #dash-logs .list-item {
   font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono",

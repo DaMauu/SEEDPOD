@@ -78,8 +78,6 @@
 #set-panel .set-fields .set-field .ctl .select { height: 28px; font-size: 11.5px; }
 #set-panel .set-fields .set-field:has(.switch) .lbl span { display: inline-block; vertical-align: middle; }
 #set-panel .set-fields .set-field:has(.switch) .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle; }
-
-.view[data-view="logs"] .log-panel { padding: 4px 18px; }
 #set-panel .set-fields .set-field .lbl { min-width: 0; white-space: nowrap; overflow: hidden; }
 #set-panel .set-fields .set-field .lbl span { display: inline-block; vertical-align: middle; }
 #set-panel .set-fields .set-field .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle;
@@ -93,39 +91,16 @@
 #set-panel .set-fields .set-field .ctl .input,
 #set-panel .set-fields .set-field .ctl .select { width: 100%; box-sizing: border-box; }
 /* 日志右侧留白 */
-.view[data-view="logs"] .log-panel { padding-right: 24px; }
 #set-panel .set-field .ctl .btn { height: 28px; padding: 0 12px; font-size: 11.5px; border-radius: 8px; }
 #set-panel .set-field .ctl { display: flex; align-items: center; justify-content: flex-end; width: 220px; }
 /* 下载器：容量文字固定宽度，进度条起点对齐 */
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-cap { flex: 0 0 148px; }
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-pct { flex: 0 0 34px; }
 /* 日志：SSH 终端黑绿 */
-.view[data-view="logs"] .log-panel {
-  background: #0b100e; border: 1px solid #16241b; border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(8, 24, 14, .18); padding: 16px 16px 14px;
-  color: #8ef0a8; font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
-}
-.view[data-view="logs"] .log-row {
-  display: grid; grid-template-columns: 76px 56px 96px minmax(0, 1fr); gap: 12px;
-  align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(126, 231, 135, .07);
-  font-size: 11.5px; color: #a8e6bb;
-}
-.view[data-view="logs"] .log-row:last-child { border-bottom: 0; }
-.view[data-view="logs"] .log-ts { color: #47765a; }
-.view[data-view="logs"] .log-tag { color: #63b783; letter-spacing: .06em; }
-.view[data-view="logs"] .log-src { color: #4f9d70; }
-.view[data-view="logs"] .log-msg { color: #c8f7d6; }
-.view[data-view="logs"] .log-row.warn .log-tag,
-.view[data-view="logs"] .log-row.warn .log-msg { color: #e3b341; }
-.view[data-view="logs"] .log-row.error .log-tag,
-.view[data-view="logs"] .log-row.error .log-msg { color: #ff7b72; }
-.view[data-view="logs"] .log-panel { display: flex; flex-direction: column; justify-content: flex-end; }
 @keyframes term-blink { 50% { opacity: 0; } }
 /* 日志页：内容回到顶部 */
-.view[data-view="logs"] .log-panel { justify-content: flex-start; }
 /* 总览实时日志：黑色区域铺满卡片宽度 */
 /* 终端字体：英文数字走等宽，中文走雅黑，避免 fallback 到宋体发虚 */
-.view[data-view="logs"] .log-row { font-size: 12px; }
 /* 设置页：标题栏与行分隔，信息成表 */
 #set-panel .set-card { padding: 0 0 4px; }
 #set-panel .set-card > .set-h2 { margin: 16px 22px 2px; }

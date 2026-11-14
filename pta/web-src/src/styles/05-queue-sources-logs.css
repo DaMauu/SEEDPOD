@@ -23,17 +23,4 @@
 /* ============ 日志 ============ */
 .view[data-view="logs"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
 .view[data-view="logs"][hidden] { display: none !important; }
-.log-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
-.log-bar { display: flex; align-items: center; gap: 10px; }
-.log-bar .spacer { flex: 1; }
-.log-panel { flex: 1; min-height: 0; overflow-y: auto; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 8px 20px; }
-.log-row { display: grid; grid-template-columns: 76px 56px 110px minmax(0,1fr); gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
-.log-row:last-child { border-bottom: 0; }
-.log-ts { color: var(--muted-2); font-family: var(--mono, ui-monospace, monospace); font-size: 11px; }
-.log-tag { font-size: 10px; letter-spacing: .4px; color: var(--muted); }
-.log-row.warn .log-tag { color: var(--amber); }
-.log-row.error .log-tag { color: var(--red); }
-.log-src { color: var(--muted); font-size: 11.5px; }
-.log-msg { color: var(--ink); }
-.log-row.error .log-msg { color: var(--red); }
 

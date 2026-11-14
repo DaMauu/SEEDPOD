@@ -124,3 +124,52 @@ onUnmounted(() => {
   if (es) es.close()
 })
 </script>
+
+<style scoped>
+/* Logs 页面样式：迁入 scoped，shell/shared 保留全局 */
+.log-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.log-bar { display: flex; align-items: center; gap: 10px; }
+.log-bar .spacer { flex: 1; }
+.log-panel { flex: 1; min-height: 0; overflow-y: auto; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 8px 20px; }
+.log-row { display: grid; grid-template-columns: 76px 56px 110px minmax(0,1fr); gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.log-row:last-child { border-bottom: 0; }
+.log-ts { color: var(--muted-2); font-family: var(--mono, ui-monospace, monospace); font-size: 11px; }
+.log-tag { font-size: 10px; letter-spacing: .4px; color: var(--muted); }
+.log-row.warn .log-tag { color: var(--amber); }
+.log-row.error .log-tag { color: var(--red); }
+.log-src { color: var(--muted); font-size: 11.5px; }
+.log-msg { color: var(--ink); }
+.log-row.error .log-msg { color: var(--red); }
+.log-panel { padding: 4px 18px; }
+.log-panel { padding-right: 24px; }
+.log-panel {
+  background: #0b100e; border: 1px solid #16241b; border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(8, 24, 14, .18); padding: 16px 16px 14px;
+  color: #8ef0a8; font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+}
+.log-row {
+  display: grid; grid-template-columns: 76px 56px 96px minmax(0, 1fr); gap: 12px;
+  align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(126, 231, 135, .07);
+  font-size: 11.5px; color: #a8e6bb;
+}
+.log-row:last-child { border-bottom: 0; }
+.log-ts { color: #47765a; }
+.log-tag { color: #63b783; letter-spacing: .06em; }
+.log-src { color: #4f9d70; }
+.log-msg { color: #c8f7d6; }
+.log-row.warn .log-tag, .log-row.warn .log-msg { color: #e3b341; }
+.log-row.error .log-tag, .log-row.error .log-msg { color: #ff7b72; }
+.log-panel { display: flex; flex-direction: column; justify-content: flex-end; }
+.log-panel { justify-content: flex-start; }
+.log-row { font-size: 12px; }
+.log-wrap { height: auto; flex: 0 0 auto; width: 100%; }
+.log-panel { flex: 0 0 auto; height: 560px; }
+@media (max-width: 900px) {
+.log-bar { flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 600px) {
+.log-row { grid-template-columns: 70px 52px minmax(0,1fr); gap: 2px 10px; padding: 8px 0; align-items: baseline; }
+.log-row .log-msg { grid-column: 1 / -1; line-height: 1.5; overflow-wrap: anywhere; }
+.log-row .log-src { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+</style>
