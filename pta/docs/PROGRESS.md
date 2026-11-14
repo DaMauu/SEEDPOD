@@ -1,9 +1,9 @@
 # 开发进度（PROGRESS）
 
-最后更新：2026-11-18 11:00
-当前 goal：**G3 拆 Sites.vue**
+最后更新：2026-11-18 12:00
+当前 goal：**G6 站点包例外 + Docker/备份**
 当前 goal 进度：**0%**
-总进度：**7/15 完成；含进行中折算约 56%**
+总进度：**8/15 完成；含进行中折算约 63%**
 
 ## 计算方式
 
@@ -18,10 +18,10 @@
 | G0 | 项目地基 | 100% | Node/Fastify/SQLite/Vue、站点包、检查、CLI、Docker |
 | G1 | 响应式自动验收 | 100% | 8 页 × 4 宽度，32 项 |
 | G2 | 可靠性债 | 100% | 空 catch 0、TODO 0、审计 87 |
-| G3 | 拆 Sites.vue | 0% | 当前 active；先拆列表/详情/表单 |
+| G3 | 拆 Sites.vue | 100% | Sites.vue 436 行；toolbar/stats/list/detail/modals |
 | G4 | 40 条规则分诊 | 0% | 等用户逐条拍板 |
 | G5 | 真实环境验证 | 50% | 测试站抓取/提交通过；真实 rTorrent/Deluge 待做 |
-| G6 | 站点包例外 UI + Docker/备份 | 0% | 待做 |
+| G6 | 站点包例外 UI + Docker/备份 | 0% | 当前 active；例外确认、Docker/备份复验 |
 | G7 | 发布状态机 | 100% | submitted/injected 幂等、失败重试 |
 | G8 | 原生单 release 上传 | 100% | prepared 字段接 target-upload |
 | G9 | CLI-first 核心层 | 100% | 本地 CLI 12/12 |
@@ -42,5 +42,5 @@
 每个开发回合结束前更新本文件；聊天消息开头同步一行：
 
 ```text
-🛠 正在开发：G10 多目标发布 · 85% · 总进度约 49%
+🛠 正在开发：G6 站点包例外 + Docker/备份 · 0% · 总进度约 63%
 ```

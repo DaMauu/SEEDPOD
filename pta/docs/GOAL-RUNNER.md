@@ -44,8 +44,8 @@
 
 推进顺序：
 - 已完成的 goal 不要重做：G0、G1、G2、G7、G8、G9。
-- 当前 active：以 `pta/docs/PROGRESS.md` 为准（2026-11-18 是 G3 拆 Sites.vue）。
-- G11 已完成；G10/G13/G5 等真实权限/环境；之后 G6 站点包例外 → G13 → G12。
+- 当前 active：以 `pta/docs/PROGRESS.md` 为准（2026-11-18 是 G6 站点包例外 + Docker/备份）。
+- G3/G11 已完成；G10/G13/G5 等真实权限/环境；之后 G13 → G12。
 - G3 拆 Sites.vue、G6 站点包例外+Docker/备份，在 G10/G11 之后或并行做，但不要抢 active。
 - G4 40 条规则分诊：需要用户逐条拍板；先出建议表，不要替用户决定。
 - G5 真实 rTorrent/Deluge：需要用户环境；没有就标 blocked，不占用 active。
