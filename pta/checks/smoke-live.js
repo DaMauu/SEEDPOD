@@ -32,6 +32,16 @@ async function waitUp() {
 async function main() {
   const dist = path.join(ROOT, 'web', 'dist');
   if (!fs.existsSync(path.join(dist, 'index.html'))) { console.error('没有 dist，先 npm run build'); process.exit(2); }
+  fs.writeFileSync(path.join(DATA, 'sites-data.local.js'), [
+    'window.SITE_URLS = [' + JSON.stringify([
+      'https://demo-a.example/index.php',
+      'https://demo-b.example/',
+      'https://demo-c.example/'
+    ]).slice(1, -1) + '];',
+    'window.PT_ARCH = ' + JSON.stringify({ 'demo-a.example': 'NP', 'demo-b.example': 'UNIT3D', 'demo-c.example': 'GZ' }) + ';',
+    'window.PT_NAMES = ' + JSON.stringify({ 'demo-a.example': 'Demo A', 'demo-b.example': 'Demo B', 'demo-c.example': 'Demo C' }) + ';'
+  ].join('\n'));
+
   const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
@@ -97,16 +107,31 @@ async function main() {
     need(await page.locator('#dash-pending').count() === 1, '待审核块缺失');
   });
 
-  await check('站点抽屉只有一个 #site-detail', async () => {
+  await check('站点列表、筛选与抽屉', async () => {
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(200);
     await page.evaluate(() => { location.hash = '#sites'; });
+    await page.waitForTimeout(800);
+    const items = page.locator('.site-item');
+    need(await items.count() === 3, '站点列表数量不对：' + await items.count());
+    need(/Demo A/.test(await page.locator('#sites-list').innerText()), '站点标题没渲染');
+    await page.selectOption('#site-arch', 'UNIT3D');
+    await page.waitForTimeout(250);
+    need(await items.count() === 1, '架构筛选不对：' + await items.count());
+    await page.selectOption('#site-arch', 'all');
+    await page.waitForTimeout(250);
+    await items.first().click();
     await page.waitForTimeout(500);
-    const items = await page.locator('.site-item').count();
-    need(items > 0, '站点列表为空');
-    await page.locator('.site-item').first().click();
-    await page.waitForTimeout(400);
     need(await page.locator('#site-detail').count() === 1, '详情 id 重复或缺失');
     need(await page.locator('#site-detail').isVisible(), '详情没打开');
+    const dtxt = await page.locator('#site-detail').innerText();
+    need(/登录/.test(dtxt) && /抓取/.test(dtxt), '抽屉概览没渲染：' + dtxt.slice(0, 80));
+    await page.locator('#site-detail .tabbtn').filter({ hasText: '设置' }).click();
+    await page.waitForTimeout(300);
+    need(await page.locator('#site-detail textarea').count() === 1, '设置页 cookie 输入框缺失');
     await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+    need(await page.locator('#site-detail').count() === 0, 'Escape 没关闭抽屉');
   });
 
   await check('流程卡与未接规则', async () => {
