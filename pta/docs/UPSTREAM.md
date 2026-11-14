@@ -129,3 +129,10 @@
   - UNIT3D：表单和提交都在 `/torrents/create`，文件字段通常 `torrent`。
   - Gazelle：`/upload.php`，文件字段通常 `file_input`。
 - 我们的决定：`formPath` 和 `path` 分开；NexusPHP 默认 `formPath=/upload.php`、`path=/takeupload.php`；`uplver` 用 `{anonymousYes}`，不匿名时值为空、字段不提交；站点定义的分类数组按 `purpose` 自动转成发布分类对象。识别仍只在用户点击时发一次只读 GET。
+
+## 2026-11-17 · UA / upbrr 的“条件规则”怎么定义
+
+- 来源：Upload-Assistant `data/example-config.py`（UAPL v1.0）、upbrr 官方文档 Configuration / Workflow / Trackers（GPL-2.0-or-later）；只读文档与示例配置，未复制代码、配置或品牌。
+- UA：配置是一个 Python dict，`DEFAULT` 放全局选项，`TRACKERS` 放每站覆盖；条件主要是固定配置键和 CLI 参数，例如 `screens`、`min_successful_image_uploads`、`cutoff_screens`、`img_host_1..6`、`default_trackers`、`tracker_pass_checks`、`skip_auto_torrent`、`get_bluray_info`、`bluray_score`、`check_for_rules`、`skip_if_rehash`、`inject_delay`、`cross_seeding`。站点特有的校验和上传流程写在 tracker 类/代码里，不是用户可编辑的通用规则表达式。
+- upbrr：运行时配置存 SQLite，YAML/JSON 只是导入导出格式；Settings 分 main / image hosting / metadata / screenshot / description / client / arr / torrent / post upload / logging / trackers。工作流分成 source → metadata → tracker 规则与资格 → 查重证据 → 媒体/简介 → 预览 → 提交 → 客户端注入；每个 tracker 的规则、问题、警告、staff token 由 tracker 集成定义，用户主要回答 tracker questions 或确认警告。
+- 结论：两边都没有和 SEEDPOD 当前 40 条一一对应的“通用条件表”。UA 是“配置键 + per-tracker 代码”，upbrr 是“设置项 + tracker-owned rules + 工作流门禁”。SEEDPOD 的 40 条是面板层的 UI 抽象，分诊时应分三类：上游有直接对应、应交给 tracker/站点包自动处理、SEEDPOD 自己特有的产品规则。

@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 15:00（当前 v0.7.163 / 响应式自动检查）
+最后更新：2026-11-17 16:00（当前 v0.7.164 / G7+G8 原生上传工作流）
+
+## 2026-11-17 G7 / G8 目标（v0.7.164）
+
+- G7：发布状态机，阶段 source/metadata/rules/dupe/media/preview/submitted/injected，落 SQLite，幂等可恢复。
+- G8：SEEDPOD 原生单 release 上传准备与站点提交，不接 UA/upbrr、不调用它们 CLI。
+- 技术栈不变：Node + Fastify + SQLite 单进程；不引入 Redis/消息队列/独立 worker/Postgres。
+- 顺序：G2 可靠性债 → G7 状态机 → G8 原生上传（真实提交依赖 G5）。
+- `UPSTREAM.md` 已记录 UA/upbrr 的条件规则定义方式，供 G4/G8 参考。
 
 ## 2026-11-17 响应式自动检查（v0.7.163）
 

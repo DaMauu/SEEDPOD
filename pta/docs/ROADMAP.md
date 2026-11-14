@@ -135,3 +135,15 @@
 
 状态（2026-11-17）：八页 scoped、页面外框清零、360/390 小屏修复完成；R2 自动检查已接入 `run.sh`（`responsive-layout.js`，8 页 × 4 宽度）。规范见 `pta/docs/RESPONSIVE.md`。
 
+## 九、M13 · 原生上传工作流（G7/G8，2026-11-17 定）
+
+目标：SEEDPOD 自己完成单 release 的上传准备和站点提交，不接 UA/upbrr，也不调用它们的 CLI。
+
+- G7 发布状态机：`source → metadata → rules → dupe → media → preview → submitted → injected`，阶段落 SQLite，幂等、可恢复、可重试。
+- G8 原生上传：ffprobe/可选 BDInfo、截图、命名/简介、站点包规则、查重证据、预览、multipart 提交、回查、客户端注入。
+- 仍然单进程 + SQLite；不引入 Redis / 消息队列 / 独立 worker / Postgres。
+- 真实提交依赖 G5 的站点权限和真实 daemon；之前用本地 mock 夹具。
+- 验收：mock 全链路 + 一次授权真实发布；不重复提交；不复制 UA/upbrr 代码/配置/品牌。
+
+详细 goal 卡见 `pta/docs/GOALS.md`。
+
