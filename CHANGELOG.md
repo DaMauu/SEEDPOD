@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.151 · 2026-11-17
+
+### 页面 scoped 迁移
+- Crawl：103 条整规则 + 1 处选择器拆分迁入 `Crawl.vue` 的 `<style scoped>`，约 8.1KB；`crawl-*`、`flow-*`、`preset-*`、`limits-*`、`dedupe-card`、`target/tpl/rx`、`.drawers` 不再留在全局。
+- 子组件（Nodes 抽屉、RuleControl 控件）用 `:deep()` 保留页面 scoped 下的样式；`set-field`/`drawer`/`cat-chip`/`switch` 基础规则仍全局。
+- `10-crawl-final.css` 只剩 Settings 响应式规则，改名 `10-settings-responsive.css`；`.set-field.todo` 迁入 Crawl。
+- 修复窄屏 `.drawer-head` 不换行导致标题竖排：≤900px 标题独占一行、操作区换行；Crawl 空演练 body 的 `[hidden]` 不再被 `.drawer.open` 覆盖。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者。
+
 ## v0.7.150 · 2026-11-17
 
 ### 质量审计

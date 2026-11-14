@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D23 页面 scoped 里的子组件样式用 `:deep`（2026-11-17）
+
+定了：页面 SFC 的 `<style scoped>` 只锁页面根和页面自带元素；遇到子组件内部（如 Nodes 抽屉、RuleControl 的 input/switch/chip），用 `.page-root :deep(.child)`，不把子组件基础样式复制进页面。共享组件的基础规则继续放全局。
+为什么：scoped 属性只加到本组件元素，子组件内部没有页面的 `data-v`；不写 `:deep` 会静默失效。
+代价：`:deep` 选择器要限定在页面根下，避免泄漏；每次迁移都要在浏览器里点数、看开关/芯片尺寸。
+
 ## D22 质量审计固定进检查（2026-11-17）
 
 定了：`pta/scripts/audit-quality.js` 固定进 `pta/checks/run.sh`，按代码、功能、编写、逻辑、简洁度、复用率、质量七个维度打分，评级为优质 / 平衡 / 勉强 / 差。支持全库、单文件、单功能、单项目。全库用 `pta/quality-baseline.json` 防回退；单文件/功能没有基线时，出现「差」即失败。改动后先在对应 scope 看发现清单，再跑全量。

@@ -10,17 +10,6 @@
   font-style: normal; margin-left: 9px; padding-left: 9px;
   border-left: 1px solid #e2e5ee; font-size: 11px; color: #9aa0b0;
 }
-.rx-test .input { width: 260px; }
-.rx-test em { font-style: normal; font-size: 11.5px; color: #9aa0b0; }
-.rx-test em.rx-ok { color: #1f8a5a; }
-.rx-test em.rx-warn { color: #c0453c; }
-.set-field .ctl:has(.rx-test) { flex: 0 1 auto; min-width: 0; justify-content: flex-end; }
-.rx-test { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
-.rx-test .input { flex: 0 1 240px; width: 240px; min-width: 0; }
-.rx-test .btn { flex: 0 0 auto; white-space: nowrap; }
-.rx-test em { flex: 0 0 auto; white-space: nowrap; }
-.set-field .ctl:has(.rx-test) { flex: 0 0 auto; }
-.rx-test .input { flex: 0 0 240px; width: 240px; }
 .set-field .ctl .fixed-val.ref { background: transparent; border-color: transparent; padding: 0 2px; color: #5f6674; }
 
 /* ---------- 分类映射弹窗 ---------- */

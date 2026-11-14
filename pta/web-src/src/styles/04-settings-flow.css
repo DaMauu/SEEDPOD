@@ -36,10 +36,8 @@
 .set-stack .set-desc { font-size: 11.5px; margin-bottom: 2px; }
 .set-stack .set-fields .set-field { padding: 12px 0; }
 .set-stack .set-h2 { font-size: 16px; letter-spacing: -.01em; }
-.target-pick { display: flex; align-items: center; gap: 12px; }
 .tp-info { text-align: right; }
 .tp-info b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
-.target-list { max-height: 46vh; overflow-y: auto; margin-top: 12px; }
 .target-item { display: grid; grid-template-columns: 1fr 150px 76px; gap: 12px; align-items: center; width: 100%; text-align: left; border: 0; background: none; padding: 11px 12px; border-radius: 10px; cursor: pointer; font: inherit; }
 .target-item:hover { background: #f7f8fa; }
 .target-item.on { background: var(--accent-soft); }
@@ -51,7 +49,6 @@
 .set-card .set-desc { font-size: 11.5px; }
 .set-card .set-fields .set-field { padding: 13px 0; }
 .set-card .set-fields .set-field:first-child { padding-top: 14px; }
-.target-pick { display: flex; align-items: center; gap: 10px; }
 .tp-ava { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
 .tp-ava.u3d { background: #f3e8ff; color: #7e22ce; }
 .tp-ava.gz { background: #ecfeff; color: #0e7490; }
@@ -60,7 +57,6 @@
 .tp-info b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
 .tp-info span { display: block; font-size: 11px; color: var(--muted-2); margin-top: 2px; }
 /* 流程页：抽屉 */
-.drawers { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .drawer + .drawer { border-top: 1px solid var(--line); }
 .drawer-head { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; border: 0; background: none; padding: 17px 24px; cursor: pointer; font: inherit; }
 .drawer-head:hover { background: #fafbfd; }
@@ -71,7 +67,6 @@
 .drawer.open .drawer-body { display: block; }
 .drawer-body .set-fields .set-field:first-child { padding-top: 6px; }
 /* 流程页：抽屉作为独立卡片 */
-.drawers { display: flex; flex-direction: column; gap: 12px; background: none; box-shadow: none; border-radius: 0; overflow: visible; }
 .drawer { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .drawer + .drawer { border-top: 0; }
 .nodes-inner { padding: 16px 20px 20px; }
@@ -92,7 +87,6 @@
 /* 节点抽屉内部 */
 .nodes-inner { padding: 14px 20px 18px; }
 .nodes-inner .nodes-sum { display: flex; gap: 10px; background: none; border-radius: 0; margin-bottom: 12px; }
-.drawers { gap: 14px; }
 .drawer { position: relative; }
 .drawer.open { box-shadow: 0 6px 18px -6px rgba(16,24,40,.12), 0 1px 2px rgba(16,24,40,.04); }
 .drawer-head { border-radius: 14px; }
@@ -102,9 +96,6 @@
 .view[data-view="crawl"] { height: calc(100vh - 150px); display: flex; flex-direction: column; }
 .view[data-view="crawl"][hidden] { display: none !important; }
 .view[data-view="crawl"] .drawers { flex: 1; min-height: 0; height: auto; }
-.drawers .drawer { flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; }
-.drawers .drawer.open { flex: 1 1 auto; }
-.drawers .drawer-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .drawer-body-flush { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
 .nodes-inner { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .drawer:not(.open) .drawer-body-flush { display: none; }
