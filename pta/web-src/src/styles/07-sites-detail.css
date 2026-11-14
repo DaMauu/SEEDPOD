@@ -249,7 +249,6 @@ body::after {
   36%  { opacity: .38; transform: scale(1); }
   100% { opacity: .38; transform: scale(1); }
 }
-.view[data-view="dashboard"] { justify-content: flex-start; }
 /* 心跳光晕改到右下角 */
 body::after {
   background:
@@ -279,7 +278,6 @@ body::after {
 .view[data-view="queue"] .qd-grid { grid-template-rows: minmax(0, 1fr); }
 /* 待审核：右列简介与截图等分高度 */
 /* 总览内容垂直居中 */
-.view[data-view="dashboard"] { justify-content: center; }
 /* 待审核：发布信息独占一行，简介与截图并排等高 */
 .view[data-view="queue"] .qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px; align-items: stretch; height: auto; }

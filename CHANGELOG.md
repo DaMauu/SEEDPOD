@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.148 · 2026-11-16
+
+### 页面 scoped 迁移
+- Dashboard：118 条页面规则迁入 `Dashboard.vue` 的 `<style scoped>`，约 9KB；`bento-*`、`stat-*`、`status-*`、`hstat`、`health-row`、`panel-head`、`list-item`、`#dash-*` 不再留在全局。
+- `02-dashboard.css` 只剩 shell/layout 规则，改名 `02-shell-layout.css`；孤立的 Dashboard 注释清掉。
+- `:global(.view[data-view="dashboard"])` 只用于外层布局，页面内部规则保持 scoped。
+- 375 / 768 / 1280 / 1440 实测，Dashboard 与 Sites 无回归；全量检查全绿。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、规则体检 0 缺读者。
+
 ## v0.7.147 · 2026-11-16
 
 ### 语义去重

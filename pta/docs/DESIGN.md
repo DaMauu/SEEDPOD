@@ -8,6 +8,8 @@
 
 CSS 清理规则：只删被后续同选择器/同媒体上下文完全覆盖的规则，只合并相邻同选择器，只删规则内同属性重复声明；不跨规则移动声明。
 
+页面样式迁移：共用 base / shell / components / responsive / dock 留 `src/styles/`；页面专属规则进对应 SFC `<style scoped>`，最外层 `.view[data-view=...]` 用 `:global`；一次一页，迁完删全局页面模块。
+
 | 变量 | 值 | 用途 |
 | --- | --- | --- |
 | `--bg` | `#f6f7f9` | 页面底色 |

@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 23:00（当前 v0.7.147 / CSS 语义去重完成）
+最后更新：2026-11-17 00:00（当前 v0.7.148 / Dashboard 样式迁入 scoped）
+
+## 2026-11-17 Dashboard scoped（v0.7.148）
+
+- Dashboard 118 条页面规则迁入 `<style scoped>`；`bento/stat/status/hstat/panel-head/list-item/#dash-*` 从全局移走。
+- `02-dashboard.css` → `02-shell-layout.css`；外层 `.view[data-view=dashboard]` 用 `:global`。
+- 三宽度 + Sites 回归通过，全量检查全绿。
 
 ## 2026-11-16 CSS 语义去重（v0.7.147）
 

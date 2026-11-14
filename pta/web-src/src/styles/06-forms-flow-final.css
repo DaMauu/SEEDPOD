@@ -142,38 +142,13 @@
 .view[data-view="logs"] .log-row.warn .log-msg { color: #e3b341; }
 .view[data-view="logs"] .log-row.error .log-tag,
 .view[data-view="logs"] .log-row.error .log-msg { color: #ff7b72; }
-
-#dash-logs { background: #0b100e; border: 1px solid #16241b; border-radius: 10px; padding: 8px 12px; margin-top: 2px; }
-#dash-logs .list-item {
-  display: flex; align-items: center; gap: 10px; padding: 6px 0;
-  border-bottom: 1px solid rgba(126, 231, 135, .07);
-  font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace; font-size: 11px;
-}
-#dash-logs .list-item:last-child { border-bottom: 0; }
-#dash-logs .time { color: #47765a; min-width: 56px; }
-#dash-logs .msg { color: #c8f7d6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#dash-logs .list-item.warn .msg { color: #e3b341; }
-#dash-logs .list-item.error .msg { color: #ff7b72; }
 .view[data-view="logs"] .log-panel { display: flex; flex-direction: column; justify-content: flex-end; }
 @keyframes term-blink { 50% { opacity: 0; } }
 /* 日志页：内容回到顶部 */
 .view[data-view="logs"] .log-panel { justify-content: flex-start; }
 /* 总览实时日志：黑色区域铺满卡片宽度 */
-#dash-logs { margin: 2px -20px -20px; padding: 10px 20px 12px; border-radius: 0 0 12px 12px; }
-.card:has(#dash-logs) { display: flex; flex-direction: column; }
-.card:has(#dash-logs) .list { display: flex; flex-direction: column; flex: 1; }
-#dash-logs { flex: 1; margin: 2px -20px -20px; padding: 10px 20px 12px; }
 /* 终端字体：英文数字走等宽，中文走雅黑，避免 fallback 到宋体发虚 */
-.view[data-view="logs"] .log-panel,
-#dash-logs,
-#dash-logs .list-item {
-  font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono",
-    "Sarasa Mono SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-}
 .view[data-view="logs"] .log-row { font-size: 12px; }
-#dash-logs .list-item { font-size: 11.5px; }
 /* 设置页：标题栏与行分隔，信息成表 */
 #set-panel .set-card { padding: 0 0 4px; }
 #set-panel .set-card > .set-h2 { margin: 16px 22px 2px; }

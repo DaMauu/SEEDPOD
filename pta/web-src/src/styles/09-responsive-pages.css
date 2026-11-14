@@ -49,10 +49,6 @@
 .mark-btn{font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid #d8dbe6;background:#fff;color:#8b90a0}
 .mark-btn.on{background:#eef0ff;border-color:#b9bdf0;color:#4f46e5}
 
-.hero-sub{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
-.hero-sub span{font-size:9.5px;letter-spacing:.8px;color:var(--muted)}
-.hero-sub b{font-size:15px;font-weight:600;letter-spacing:0;color:var(--text)}
-
 /* 站点抽屉：紧凑操作区 + 合并后的登录页签 */
 .sd-actions { flex-wrap: wrap; }
 .sd-arch-sel { width: 106px; height: 28px; font-size: 11.5px; padding: 0 6px; }
@@ -122,8 +118,6 @@
 
 @media (max-width: 600px) {
   .brand-sub { display: none; }
-  .stat-grid { grid-template-columns: 1fr; }
-  .bento-top, .bento-bottom { grid-template-columns: 1fr; }
   .dl-row { grid-template-columns: auto auto; }
   .dev-foot span { white-space: normal; }
 }
