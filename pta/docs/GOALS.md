@@ -13,7 +13,8 @@
 | G5 | 真实目标站发布 + 真实 rTorrent/Deluge | ⛔ 待环境/授权 | 用户提供站点权限和 daemon | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | ⏳ 排队 | G2/G3 后 | 例外确认可用、备份恢复演练 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ⏳ 排队（G2 后） | G2 | 重启可续跑、不重复提交 |
-| G8 | 原生单 release 上传准备与站点提交 | ⏳ 排队（G7 后；真实提交依赖 G5） | G7、G4、G5 | mock 全链路 + 一次授权真实发布 |
+| G8 | 原生单 release 上传准备与站点提交 | ⏳ 排队（G9 后；真实提交依赖 G5） | G7、G9、G4、G5 | mock 全链路 + 一次授权真实发布 |
+| G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ⏳ 排队（G7 后） | G7 | 不启浏览器跑通全链路 |
 
 ## G1 · 响应式自动验收（已完成）
 
@@ -136,6 +137,25 @@
 - 发布/注入有幂等保护。
 - smoke 21/21、responsive 32 项、质量审计不回退。
 
+## G9 · CLI-first 核心层
+
+**目标**：抓取、查重、数据、发布、验证都用 CLI 驱动；面板只是调用同一套核心服务的视图。不再把业务逻辑写死在页面路由里。
+
+**范围**：
+
+- 抽出 `pta/core/`（或同等服务层）：crawl / screen / queue / prepare / publish / target / inject。
+- CLI 直接调用 core，不要求先起 HTTP；Fastify 路由改成薄适配层。
+- 命令契约见 `pta/docs/CLI.md`：`crawl`、`screen`、`queue`、`prepare`、`preview`、`publish`、`target-upload`、`verify`、`advance`、`run`。
+- 默认干跑，`--real` 才真抓/真发；`--json` 给脚本用；失败用非 0 退出码。
+- 不打印 cookie/密码/passkey/IP；不复制 UA/upbrr 代码。
+
+**验收**：
+
+- 临时数据库上只用 CLI 跑通 crawl → screen → prepare → preview → publish（mock）。
+- 不启动浏览器、不点页面。
+- 面板复用同一 core，smoke 21/21、responsive 32 项仍通过。
+- 重启可续跑，不重复提交。
+
 ## G8 · 原生单 release 上传准备与站点提交
 
 **目标**：SEEDPOD 自己做单个 release 的上传准备和站点提交，不接 UA/upbrr，也不调用它们的 CLI；只借鉴工作流思想，clean-room 实现。
@@ -153,6 +173,7 @@
 **依赖**：
 
 - G7 的阶段状态机先落地。
+- G9 的 CLI/core 分层先落地。
 - G4 规则分诊决定哪些条件保留。
 - G5 提供真实目标站权限和真实 daemon 才能做最终验收；之前用本地 mock 夹具。
 
@@ -165,7 +186,7 @@
 
 ## 推进规则
 
-1. 一次只开一个 active goal；当前是 **G2**，下一个 **G7**，再 **G8**。
+1. 一次只开一个 active goal；当前是 **G2**，下一个 **G7**，再 **G9**，再 **G8**。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。

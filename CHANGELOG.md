@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.165 · 2026-11-17
+
+### CLI-first 与 G9
+- 新增 `pta/docs/CLI.md`：说明现有 `pta/cli.js` 的位置、认证、命令和当前限制。
+- 新增 G9：抽 `pta/core/` 服务层，CLI 与面板共用；抓取、查重、发布、验证全部命令行可驱动，面板只做视图。
+- 目标命令：crawl / screen / queue / prepare / preview / publish / target-upload / verify / advance / run。
+- 默认干跑，`--real` 才真发；`--json` 可脚本化；不重复业务逻辑。
+- 明确 G8 原生上传排在 G9 后，不接 UA/upbrr CLI。
+
+### 检查
+- smoke 21/21、responsive 32 项、全量检查、质量审计 83。
+
 ## v0.7.164 · 2026-11-17
 
 ### G7 / G8 目标

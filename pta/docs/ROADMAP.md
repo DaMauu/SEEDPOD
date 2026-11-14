@@ -147,3 +147,15 @@
 
 详细 goal 卡见 `pta/docs/GOALS.md`。
 
+## 十、M14 · CLI-first（G9，2026-11-17 定）
+
+目标：抓取、查重、数据、发布、验证都能用 CLI 驱动，面板只做视图。
+
+- 抽 `pta/core/` 服务层；CLI 和 Fastify 路由共用。
+- 命令覆盖 crawl / screen / queue / prepare / preview / publish / target-upload / verify / advance / run。
+- 默认干跑，`--real` 才真发；`--json` 可脚本化；失败非 0 退出。
+- 不要求先起 HTTP；CLI 直接读 SQLite 和 data/。
+- 验收：临时库只用 CLI 跑通 mock 全链路；面板 smoke/responsive 不回退。
+
+命令契约见 `pta/docs/CLI.md`。
+

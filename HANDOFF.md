@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 16:00（当前 v0.7.164 / G7+G8 原生上传工作流）
+最后更新：2026-11-17 17:00（当前 v0.7.165 / G9 CLI-first）
+
+## 2026-11-17 CLI-first（v0.7.165）
+
+- 现有 `pta/cli.js` 是 HTTP 薄客户端，覆盖 status/queue/crawl/screen/publish/targets/target-upload/verify；默认干跑。
+- 新增 `pta/docs/CLI.md` 和 G9：抽 `pta/core/` 服务层，CLI 直接驱动，面板只做视图。
+- 目标命令补齐 prepare / preview / advance / run；`--json`、非 0 退出码、幂等。
+- 顺序：G2 → G7 状态机 → G9 CLI-first → G8 原生上传。
 
 ## 2026-11-17 G7 / G8 目标（v0.7.164）
 
