@@ -195,6 +195,75 @@ async function main() {
     need(one.ok && one.data.title, '按 id 读不到条目');
   });
 
+  await check('队列筛选、分页与搜索', async () => {
+    const make = async (title, status) => (await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title, status, site: 'demo-a.example', targetSite: 'target.example', downloadUrl: 'http://127.0.0.1:1/t.torrent' })
+    })).json());
+    await make('Queue Alpha', 'approved');
+    await make('Queue Beta', 'published');
+    await make('Queue Gamma', 'pending');
+    const j = await (await fetchA(BASE + '/api/queue?status=approved,published&limit=1&offset=1')).json();
+    need(j.ok, '读取失败');
+    need(j.data.matched >= 2, 'matched 不对：' + j.data.matched);
+    need(j.data.items.length === 1, 'limit/offset 不对：' + j.data.items.length);
+    const q = await (await fetchA(BASE + '/api/queue?q=Beta')).json();
+    need(q.ok && q.data.matched === 1, '搜索不对：' + q.data.matched);
+  });
+
+  await check('队列单条查重', async () => {
+    const make = async (title) => (await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title, status: 'pending', site: 'demo-a.example' })
+    })).json());
+    await make('Dup Queue Title 2020');
+    const b = await make('Dup Queue Title 2020');
+    const j = await (await fetchA(BASE + '/api/queue/' + b.data.id + '/check', { method: 'POST' })).json();
+    need(j.ok && j.data.duplicate === true, '没查出重复：' + JSON.stringify(j));
+  });
+
+  await check('队列编辑字段与发布语义', async () => {
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Edit Queue Title', status: 'pending', site: 'demo-a.example', targetSite: 'target.example', downloadUrl: 'http://127.0.0.1:1/t.torrent' })
+    })).json();
+    const j = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', title: 'Edit Queue Title Updated', cn: '甲' })
+    })).json();
+    need(j.ok && j.data.title === 'Edit Queue Title Updated', '标题没更新：' + JSON.stringify(j));
+    const g = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(g.data.cn === '甲', '副标题没保存');
+    await fetchA(BASE + '/api/downloaders', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'queue-test', url: 'http://127.0.0.1:9999' })
+    });
+    const p = await fetchA(BASE + '/api/queue/' + add.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'publish' })
+    });
+    need(p.status === 409, '真发布关闭时状态码是 ' + p.status);
+    const pj = await p.json();
+    need(pj.error && pj.error.code === 'REAL_PUBLISH_DISABLED', '错误码不对：' + JSON.stringify(pj));
+  });
+
+  await check('队列批量按 fromStatus', async () => {
+    await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Bulk One', status: 'pending', site: 'demo-a.example' })
+    });
+    await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Bulk Two', status: 'pending', site: 'demo-a.example' })
+    });
+    const j = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fromStatus: 'pending', action: 'approve' })
+    })).json();
+    need(j.ok && j.data.changed >= 2, '批量批准没生效：' + JSON.stringify(j));
+    const g = await (await fetchA(BASE + '/api/queue?status=approved&q=Bulk')).json();
+    need(g.ok && g.data.matched === 2, '批量后状态不对：' + g.data.matched);
+  });
+
   await check('凭据只回 hasCookie，不回明文', async () => {
     const put = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=secret-cookie' })

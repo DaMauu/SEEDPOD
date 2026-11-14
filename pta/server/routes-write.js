@@ -98,18 +98,31 @@ module.exports = function (app, ctx) {
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
     const b = req.body || {};
-    const target = { approve: 'approved', reject: 'rejected', skip: 'skipped', publish: 'published', retry: 'pending' }[b.action];
+    if (b.title !== undefined) {
+      const t = String(b.title).trim();
+      if (!t) return bad(reply, 'BAD_REQUEST', '标题不能为空');
+      it.title = t.slice(0, 300);
+    }
+    if (b.cn !== undefined) it.cn = String(b.cn).slice(0, 300);
+    if (b.intro !== undefined) it.intro = String(b.intro).slice(0, 20000);
+    if (b.targetSite !== undefined) it.targetSite = String(b.targetSite).slice(0, 200);
+    if (b.imageHost !== undefined) it.imageHost = String(b.imageHost).slice(0, 40);
+    if (b.anonymous !== undefined) it.anonymous = !!b.anonymous;
+
+    if (b.action === 'publish') {
+      const r = await ctx.publisher.publishItem(req.params.id, { dryRun: false });
+      if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+      return ok(reply, r.data);
+    }
+
+    const target = { approve: 'approved', reject: 'rejected', skip: 'skipped', retry: 'pending' }[b.action];
     if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / publish / retry');
     if (b.action === 'reject' && !String(b.reason || '').trim()) return bad(reply, 'BAD_REQUEST', '驳回要写理由');
     it.status = target;
     it.actionAt = now();
     if (b.reason) it.reason = String(b.reason).slice(0, 500);
-    if (target === 'published') {
-      it.publishedAt = now();
-      db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
-        .run(it.id, JSON.stringify(it), it.publishedAt);
-    }
-    db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?').run(target, JSON.stringify(it), now(), it.id);
+    db.prepare('UPDATE queue SET status = ?, title = ?, data = ?, updated_at = ? WHERE id = ?')
+      .run(target, it.title, JSON.stringify(it), now(), it.id);
     return ok(reply, it);
   });
 

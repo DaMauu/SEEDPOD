@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.104 · 2026-11-15
+
+### 接口
+- `GET /api/queue` 支持 `status=a,b`、`offset`、`q`，返回 `matched/limit/offset`。
+- `POST /api/queue/bulk` 支持 `fromStatus` 和 `publish`（走 publisher，真发布关闭时逐条记失败）。
+- `POST /api/queue/:id/check` 补队列/已发布/词条库比对，返回 `duplicate`。
+- `POST /api/queue/:id/action` 合并标题/副标题/简介/目标站/图床/匿名；`publish` 统一走 `/api/publish` 的 qB 链路。
+
+### 检查
+- api-v2 20/20；smoke-live 17/17；adapter 21/21；security 3/3；publish 4/4；scheduler 5/5；detect 5/5；build 7/7；规则体检 0 缺读者。
+
 ## v0.7.103 · 2026-11-15
 
 ### 说明

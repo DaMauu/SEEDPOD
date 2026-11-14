@@ -158,14 +158,23 @@ async function build() {
 
   /* ---- 队列 ---- */
   app.get('/api/queue', async (req) => {
-    const status = String(req.query.status || '');
+    const statuses = String(req.query.status || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    const q = String(req.query.q || '').trim().toLowerCase();
     const limit = Math.min(Number(req.query.limit) || 100, 500);
-    const rows = status
-      ? all('SELECT data FROM queue WHERE status = ? ORDER BY created_at ASC LIMIT ?', status, limit)
-      : all('SELECT data FROM queue ORDER BY created_at ASC LIMIT ?', limit);
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+    const where = [], args = [];
+    if (statuses.length) {
+      where.push('status IN (' + statuses.map(function () { return '?'; }).join(',') + ')');
+      statuses.forEach(function (x) { args.push(x); });
+    }
+    if (q) { where.push('LOWER(title) LIKE ?'); args.push('%' + q + '%'); }
+    const w = where.length ? ' WHERE ' + where.join(' AND ') : '';
+    const matched = (one('SELECT COUNT(*) AS n FROM queue' + w, ...args) || { n: 0 }).n;
+    const rows = all('SELECT data FROM queue' + w + ' ORDER BY created_at ASC LIMIT ? OFFSET ?', ...args, limit, offset);
     const countsBy = {};
     all('SELECT status, COUNT(*) AS n FROM queue GROUP BY status').forEach(function (r) { countsBy[r.status] = r.n; });
-    return ok({ items: rows.map(function (r) { const it = jparse(r.data); if (it) delete it.shots; return it; }).filter(Boolean), counts: countsBy });
+    return ok({ items: rows.map(function (r) { const it = jparse(r.data); if (it) delete it.shots; return it; }).filter(Boolean),
+      counts: countsBy, matched: matched, limit: limit, offset: offset });
   });
   app.get('/api/queue/:id', async (req, reply) => {
     const row = one('SELECT data FROM queue WHERE id = ?', req.params.id);

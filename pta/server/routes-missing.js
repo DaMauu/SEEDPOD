@@ -9,18 +9,30 @@ module.exports = function (app, ctx) {
   /* 队列批量动作：approve / reject / skip / delete */
   app.post('/api/queue/bulk', async (req, reply) => {
     const b = req.body || {};
-    const ids = Array.isArray(b.ids) ? b.ids.map(String) : [];
+    let ids = Array.isArray(b.ids) ? b.ids.map(String) : [];
     const action = String(b.action || '');
-    if (!ids.length) return bad(reply, 'BAD_REQUEST', 'ids 不能为空');
-    if (['approve', 'reject', 'skip'].indexOf(action) < 0) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip');
+    if (['approve', 'reject', 'skip', 'publish'].indexOf(action) < 0) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / publish');
+    const fromStatus = String(b.fromStatus || (action === 'publish' ? 'approved' : 'pending'));
+    if (!ids.length) ids = all('SELECT id FROM queue WHERE status = ? LIMIT 200', fromStatus).map(function (r) { return r.id; });
+    if (!ids.length) return ok(reply, { changed: 0, skipped: 0, errors: [] });
+    let changed = 0, skipped = 0;
+    const errors = [];
+    if (action === 'publish') {
+      for (const id of ids.slice(0, 200)) {
+        const r = await ctx.publisher.publishItem(id, { dryRun: false });
+        if (r.ok) changed++;
+        else { skipped++; if (errors.length < 3) errors.push({ id: id, code: r.code, message: r.message }); }
+      }
+      return ok(reply, { changed: changed, skipped: skipped, errors: errors });
+    }
     const target = { approve: 'approved', reject: 'rejected', skip: 'skipped' }[action];
-    let changed = 0;
     ids.slice(0, 200).forEach(function (id) {
       const row = one('SELECT data FROM queue WHERE id = ?', id);
       if (!row) return;
       const it = jparse(row.data) || {};
       it.status = target;
       it.actionAt = now();
+      if (b.reason) it.reason = String(b.reason).slice(0, 500);
       db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?').run(target, JSON.stringify(it), now(), id);
       changed++;
     });
@@ -69,16 +81,31 @@ module.exports = function (app, ctx) {
       shots: (it.shots || []).length });
   });
 
-  /* 单条查重：先按本地规则判，不发真实请求（真搜走 /api/dupe/check） */
+  /* 单条查重：队列 / 已发布 / 词条库本地比对，不发真实请求（真搜走 /api/dupe/check） */
   app.post('/api/queue/:id/check', async (req, reply) => {
     const row = one('SELECT data FROM queue WHERE id = ?', req.params.id);
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
+    const norm = (s) => String(s || '').toLowerCase().replace(/[\s\-_.]+/g, '');
+    const title = norm(it.title);
     const hash = String(it.infohash || '').toLowerCase();
-    let hit = null;
-    if (hash) hit = one('SELECT id FROM catalog WHERE infohash = ? LIMIT 1', hash);
-    const verdict = hit ? 'dupe' : 'clean';
-    return ok(reply, { id: it.id, status: verdict, matched: hit ? hit.id : '', note: hit ? '词条库里已有同一个种子' : '本地库里没有重复' });
+    let note = '';
+    const hit = function (o, label) {
+      if (note || !o) return;
+      if (hash && String(o.infohash || '').toLowerCase() === hash) { note = label; return; }
+      if (title && norm(o.title) === title) note = label;
+    };
+    all('SELECT id, title, data FROM queue').forEach(function (r) {
+      if (String(r.id) === String(it.id)) return;
+      hit(jparse(r.data) || { title: r.title }, '队列里的 ' + r.id);
+    });
+    all('SELECT id, data FROM published').forEach(function (r) { hit(jparse(r.data) || {}, '已发布 ' + r.id); });
+    all("SELECT id, data FROM catalog WHERE status IN ('selected','published')").forEach(function (r) { hit(jparse(r.data) || {}, '词条库 ' + r.id); });
+    it.check = note ? '已有同片' : '无重复';
+    it.checkCls = note ? 'amber' : 'green';
+    it.checkAt = now();
+    db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), it.id);
+    return ok(reply, { id: it.id, duplicate: !!note, status: note ? 'dupe' : 'clean', matched: note, note: note || '本地库里没有重复' });
   });
 
   /* 事件流别名：前端日志面板用的是 /api/logs/stream，这里提供 /api/events 兼容 */
