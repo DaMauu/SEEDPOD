@@ -1,10 +1,10 @@
 # 界面规范（DESIGN）
 
-面向个人使用的工具面板：信息密度可以高，但必须能扫读。所有改动先对照本文件，再动 `pta/web-src/public/assets/app.css` / `src/views/*.vue`。
+面向个人使用的工具面板：信息密度可以高，但必须能扫读。所有改动先对照本文件，再动 `pta/web-src/src/styles/v2.css` / `src/views/*.vue`。
 
 ## 一、设计变量（只准用这些）
 
-来自 `pta/web-src/public/assets/app.css` 的 `:root`，不要新增同义色值。
+来自 `pta/web-src/src/styles/v2.css` 的 `:root`，不要新增同义色值。
 
 | 变量 | 值 | 用途 |
 | --- | --- | --- |

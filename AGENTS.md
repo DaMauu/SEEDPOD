@@ -160,7 +160,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 ## 设计约束（UI）
 
 - 先线框后代码：静态 HTML 或截图确认后再改 `app.js`
-- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；CSS 必须 scoped
+- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式只放 `pta/web-src/src/styles/v2.css`，页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
 - 文案：标签用名词，说明 ≤ 20 字，错误说「怎么办」
 - 验收三宽度 1280 / 768 / 390，无横向滚动，首屏能看到主卡
 

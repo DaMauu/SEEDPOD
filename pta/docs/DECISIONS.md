@@ -108,3 +108,9 @@
 定了：站点包是数据文件，跟程序一起发布；用户安装/升级面板或 Docker 镜像即可，不单独下载、不导入。仓库里只放 AES-256-GCM 密文 `pta/pack/site-pack.enc`，密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，安装时配置一次；缺密钥时回退私有 `data/` 站点定义并提示，不崩溃。私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。
 为什么：站点 URL、站名、分类和上传字段是站点差异，必须预存才能自动化；但明文进仓库会泄露站点清单。
 代价：部署多一个环境变量；密钥轮换要重新加密；内置包更新跟程序版本走。站点包不含 cookie/密码/账号/IP，也不授予站点权限。详见 `pta/docs/SITE-PACK.md`。
+
+## D17 v2 共用样式进构建链（2026-11-16）
+
+定了：共用样式放 `pta/web-src/src/styles/v2.css`，由 `src/main.js` 导入，Vite 打包并哈希；字体放 `src/assets/fonts/`，logo 放 `src/assets/whale.png`，`public/` 只留 favicon/icon。删除手工 `<link rel="stylesheet" href="/assets/app.css">` 和 CSS 指纹插件。
+为什么：`public/assets/app.css` 是 v1/demo 资产路径，Cloudflare 还会缓存 4 小时；进构建链后文件名带哈希，发布即换 URL。
+代价：CSS 改动会改构建哈希；页面级 `<style scoped>` 拆分仍需逐页做，当前先完成“v2 共用版”。D1/D11 里“无构建、直接 app.css”是历史记录，以本条为准。

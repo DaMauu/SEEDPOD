@@ -3,7 +3,7 @@
     <main class="main">
       <div class="topbar">
         <a class="brand" href="#dashboard" title="回总览">
-          <img class="top-logo" src="/assets/whale.png" alt="">
+          <img class="top-logo" :src="whale" alt="">
           <span class="brand-name">SEEDPOD</span>
           <span class="brand-sub">原盘转载面板</span>
         </a>
@@ -39,7 +39,7 @@
 
   <div v-if="loginOpen" class="login-mask" id="login-mask">
     <form class="login-card" id="login-form" autocomplete="on" @submit.prevent="submitLogin">
-      <div class="login-brand"><img src="/assets/whale.png" alt=""><b>SEEDPOD</b><span>原盘转载面板</span></div>
+      <div class="login-brand"><img :src="whale" alt=""><b>SEEDPOD</b><span>原盘转载面板</span></div>
       <h2>登录</h2>
       <label class="login-field"><span>用户名</span>
         <input id="login-user" v-model="login.user" class="input" autocomplete="username" placeholder="admin"></label>
@@ -68,6 +68,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import whale from './assets/whale.png'
 import Dashboard from './views/Dashboard.vue'
 import Sites from './views/Sites.vue'
 import Crawl from './views/Crawl.vue'

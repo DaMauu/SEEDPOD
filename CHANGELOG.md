@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.143 · 2026-11-16
+
+### v2 样式迁移
+- `public/assets/app.css` → `src/styles/v2.css`，由 `main.js` 导入，Vite 打包为哈希 CSS。
+- 字体 → `src/assets/fonts/`，logo → `src/assets/whale.png`，都由 Vite 哈希；`public/` 只留 favicon/icon。
+- 删除手工 `<link rel="stylesheet" href="/assets/app.css">` 和 CSS 指纹插件。
+- `DESIGN.md`、`AGENTS.md` 路径同步；新增决策 D17。
+- 构建产物：`static/index-<hash>.css`、哈希字体、哈希 whale；旧 `/assets/app.css` 不再被引用。
+
+### 检查
+- 全量 ALL CHECKS PASSED；smoke 21/21、site-pack 5/5、target 10/10。
+
 ## v0.7.142 · 2026-11-16
 
 ### 修复
