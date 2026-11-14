@@ -103,5 +103,19 @@
 | M9 | CLI + Docker ✅ | 0.7.117：`pta` CLI 支持 status/queue/crawl/screen/publish/targets/target-upload/verify，默认干跑；cli 7/7；Docker 两阶段已有 | 现有后端 |
 | M10 | 通知/重试 ✅ | 0.7.118 Telegram 通知 + 0.7.119 failed 重试（notify 7/7、clients 5/5） | M8 |
 
-工具现状：`ffmpeg/ffprobe` 已有；`mediainfo`、`mkbrr` 未装（可不装，用 ffprobe + 自写 bencode）。真实站配置一律不入库。
+工具现状：`ffmpeg/ffprobe` 已有；`mediainfo`、`mkbrr` 未装（可不装，用 ffprobe + 自写 bencode）。
+
+## 七、M11 · 站点包与自动化（2026-11-16 定）
+
+目标：默认自动化，用户只处理例外。站点怎么搜、分类怎么对、上传字段怎么填，提前存进站点包；运行时直接用。
+
+- 站点包随程序发布：仓库/镜像带 `pta/pack/site-pack.enc`，用户不下载、不导入。
+- 仓库只放 AES-256-GCM 密文；密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，安装时配置一次。
+- 私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包；缺密钥回退私有定义并提示。
+- 包内容：host/base/引擎、搜索路径/参数、分类表、上传表单、回查路径；不含 cookie/密码/账号/IP。
+- 自动化路径：预计算分类和字段；高置信度直接用；低置信度/页面改版才进例外队列，确认一次后存档。
+- 生成器离线跑，不抓真实站；`--dry` 先出覆盖率与例外数，不打印站名/网址。
+- 验收：`site-pack` 检查进 `run.sh`（roundtrip、篡改失败、缺密钥回退、私有覆盖、密文无明文 host）。
+
+详细设计见 `pta/docs/SITE-PACK.md`；密钥决策见 `pta/docs/DECISIONS.md` D16。
 

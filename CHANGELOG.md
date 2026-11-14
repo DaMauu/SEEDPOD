@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.137 · 2026-11-16
+
+### 计划
+- 站点包与自动化方案定稿：站点包随程序发布，仓库只放 AES-256-GCM 密文，密钥只放部署环境变量 `PTA_SITE_PACK_KEY`；用户不单独下载、不导入。
+- 私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包；缺密钥回退并提示，不崩溃。
+- 新增 `pta/docs/SITE-PACK.md`；AGENTS 铁律 2/8 更新；DECISIONS D16；ROADMAP M11。
+- 本次只写计划，不改运行代码。
+
 ## v0.7.136 · 2026-11-16
 
 ### 修复

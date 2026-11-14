@@ -26,12 +26,13 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 ## 铁律（违反即为错误，不要协商）
 
 1. 不碰真实 PT 站点：不自己找 cookie、不复用 cookie 去登录、不对真实站点做探测/压测/反复请求。抓取一律先干跑或本地夹具。
-2. 真实站点清单、站名、凭据、服务器 IP 都不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
+2. 真实站点清单、站名、网址只允许以 AES-256-GCM 加密站点包形式入仓库（`pta/pack/site-pack.enc`），密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，不得与密文同库；聊天回复仍不写站名/网址。凭据、cookie、密码、服务器 IP 仍绝不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
 4. 站点凭据只存密文：`data/credentials.json` + AES-256-GCM，接口只回 `hasCookie`。
 5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 不接新需求，避免同一功能两套实现。
+8. 站点包随程序发布，用户不单独下载；私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。详见 `pta/docs/SITE-PACK.md`。
 
 ## 发版与同步（`DEPLOY_DIR` 是运行目录，`VPS_DIR` 是仓库检出）
 
@@ -90,7 +91,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
 - 前端不引入构建工具；后端运行时依赖只有 Fastify + @fastify/static（已装，写进 package.json），新增依赖先说明理由
 - 涉及上传/元数据/截图/种子/客户端/站点适配：先读 `pta/docs/UPSTREAM.md`，在文末追加研究记录；不复制 UA/upbrr 代码、品牌、key、站点配置
-- 站点适配做成开箱即用：引擎逻辑进代码；真实站配置只放 `data/` 私有包，不入库、不进回复
+- 站点适配做成开箱即用：引擎逻辑进代码；站点差异放站点包（加密包随程序发布，仓库只含密文；私有 `data/` 包优先覆盖）
 
 ## 用户写需求的最低要求（四要素）
 
