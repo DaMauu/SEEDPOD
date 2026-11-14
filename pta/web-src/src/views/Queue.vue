@@ -134,11 +134,18 @@
               <span>Tracker</span>
               <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
             </div>
+            <div class="qd-field qd-media-info">
+              <span>MediaInfo/BDInfo</span>
+              <textarea v-model="media.infoText" class="input sd-note" rows="3" placeholder="粘贴 MediaInfo 或 BDInfo 文本"></textarea>
+            </div>
             <div class="qd-actions">
               <button class="btn ghost slim" type="button" :disabled="media.probing" @click="probeMedia">{{ media.probing ? '探测中…' : '探测' }}</button>
               <button class="btn ghost slim" type="button" :disabled="media.shooting" @click="shootMedia">{{ media.shooting ? '截图中…' : '生成截图' }}</button>
               <button class="btn ghost slim" type="button" :disabled="media.making" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成种子' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析媒体信息' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.preparing" @click="prepareRelease">{{ media.preparing ? '准备中…' : '准备上传' }}</button>
             </div>
+            <div v-if="media.info" class="t-sub">媒体：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
             <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
             <div v-if="media.torrent" class="t-sub">种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
             <div v-else class="soft">先填 {{ media.root || 'PTA_MEDIA_ROOT' }} 下的文件路径；生成种子后可随“提交目标站”一起用。</div>
@@ -193,7 +200,7 @@ const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false })
-const media = reactive({ path: '', announce: '', probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
+const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
 let mediaCfgLoaded = false
 const filePick = ref(null)
 let timer = null
@@ -277,6 +284,8 @@ async function select(id) {
     sel.value = j.data
     media.path = ''
     media.announce = ''
+    media.infoText = j.data.mediaInfo || j.data.bdinfo || ''
+    media.info = (j.data.prepared && j.data.prepared.media) || null
     media.probe = null
     media.torrent = null
     loadMediaConfig()
@@ -402,6 +411,38 @@ async function probeMedia() {
     else toast((j && j.error && j.error.message) || '探测失败')
   } catch (e) { toast('探测请求发不出去') }
   media.probing = false
+}
+async function parseMediaInfo() {
+  if (!sel.value || media.parsing) return
+  if (!media.infoText.trim()) { toast('先粘贴 MediaInfo 或 BDInfo'); return }
+  media.parsing = true
+  try {
+    const j = await (await fetch('/api/meta/mediainfo', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: media.infoText })
+    })).json()
+    if (j && j.ok) {
+      media.info = j.data
+      toast('已识别 ' + (j.data.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo') + '：' + (j.data.summary || 'OK'))
+    } else toast((j && j.error && j.error.message) || '没认出格式')
+  } catch (e) { reportError('Queue.parseMediaInfo', e); toast('解析请求发不出去') }
+  media.parsing = false
+}
+async function prepareRelease() {
+  if (!sel.value || media.preparing) return
+  media.preparing = true
+  try {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mediaInfo: media.infoText })
+    })).json()
+    if (j && j.ok) {
+      media.info = (j.data.prepared && j.data.prepared.media) || media.info
+      toast('上传准备完成' + (media.info && media.info.summary ? '：' + media.info.summary : ''))
+      await refresh()
+    } else toast((j && j.error && j.error.message) || '准备失败')
+  } catch (e) { reportError('Queue.prepareRelease', e); toast('准备请求发不出去') }
+  media.preparing = false
 }
 async function shootMedia() {
   if (!sel.value || media.shooting) return
@@ -685,4 +726,7 @@ onUnmounted(() => {
 .qd-target-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .qd-target-result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .qd-target-result .qd-stage-err { flex: 1 1 100%; }
+.qd-media-info { flex-direction: column; align-items: stretch; gap: 6px; }
+.qd-media-info > span { flex: none; }
+.qd-media-info .sd-note { width: 100%; height: auto; min-height: 78px; }
 </style>

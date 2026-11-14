@@ -1,6 +1,7 @@
 /* 单 release 准备与阶段推进：纯本地，不发外部请求。
    为 CLI prepare/preview/advance/run 提供同一套逻辑，后续 G7/G8 再扩展提交/注入。 */
 const meta = require('./meta');
+const mediainfo = require('./mediainfo');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
@@ -63,13 +64,35 @@ function makeRelease(ctx) {
     });
     const first = targets[0] || { host: '', target: null, error: '' };
     const tr = torrentOf(b);
+    const mediaText = String(b.mediaInfo || b.bdinfo || item.mediaInfo || item.bdinfo || '').trim();
+    const media = mediaText ? mediainfo.parse(mediaText) : null;
+    const mediaBlock = media && media.kind ? mediainfo.toBBCode(media) : '';
+    let description = names.description;
+    if (mediaBlock && b.attachMedia !== false) {
+      const already = description.indexOf(media.raw) >= 0 ||
+        /\[(?:quote|code|hide)(?:=[^\]]*)?\][\s\S]*?(?:Disc Title|Complete name)\s*:/i.test(description);
+      if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 20000);
+    }
     return {
       at: now(),
       title: names.title,
       releaseTitle: names.releaseTitle,
       subtitle: names.subtitle,
-      description: names.description,
+      description: description,
       parsed: names.parsed,
+      media: media && media.kind ? {
+        kind: media.kind,
+        summary: media.summary,
+        flags: media.flags,
+        size: media.sizeText || '',
+        duration: media.durationText || '',
+        video: media.video || null,
+        audio: media.audio || [],
+        subtitle: media.subtitle || [],
+        rawLength: mediaText.length
+      } : null,
+      mediaError: media && media.error ? media.error : '',
+      mediaBbcode: mediaBlock,
       targetHost: first.host,
       target: first.target,
       targetError: first.error,
@@ -80,9 +103,12 @@ function makeRelease(ctx) {
     };
   }
   function prepare(id, body) {
+    body = body || {};
     const cur = load(id);
     if (!cur) return fail('NOT_FOUND', '条目不存在', 404);
     const it = cur.data;
+    if (typeof body.mediaInfo === 'string' && body.mediaInfo.trim()) it.mediaInfo = body.mediaInfo.slice(0, 200000);
+    if (typeof body.bdinfo === 'string' && body.bdinfo.trim()) it.bdinfo = body.bdinfo.slice(0, 200000);
     const prepared = build(it, body);
     it.prepared = prepared;
     it.preparedAt = prepared.at;
@@ -108,7 +134,8 @@ function makeRelease(ctx) {
     const payload = {
       title: p.title || '', subtitle: p.subtitle || '', description: p.description || '',
       targetHost: p.targetHost || '', target: p.target || null, targetError: p.targetError || '',
-      targets: p.targets || [], shots: p.shots || 0, torrent: p.torrent || null
+      targets: p.targets || [], shots: p.shots || 0, torrent: p.torrent || null,
+      media: p.media || null, mediaBbcode: p.mediaBbcode || '', mediaError: p.mediaError || ''
     };
     return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared, payload: payload } };
   }

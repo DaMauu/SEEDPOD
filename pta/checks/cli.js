@@ -198,6 +198,15 @@ async function main() {
     need(pub.dryRun === true, '本地 publish 不是干跑');
   });
 
+  await check('本地 prepare 读 --mediainfo 文件', async function () {
+    const file = path.join(DATA, 'bdinfo.txt');
+    fs.writeFileSync(file, 'Disc Title: CLI.Test.2024.2160p\nDisc Size: 1,000,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps');
+    const p = parse(await cliLocal(['prepare', queueId2, '--mediainfo', file, '--json']));
+    need(p.prepared && p.prepared.media && p.prepared.media.kind === 'bdinfo', '没解析出 BDInfo：' + JSON.stringify(p.prepared && p.prepared.media));
+    need(/2160p/.test(p.prepared.media.summary), '摘要没有 2160p：' + p.prepared.media.summary);
+    need(/【BDInfo】/.test(p.prepared.description), '简介没拼 BDInfo');
+  });
+
   await check('本地 target-upload 干跑', async function () {
     fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
     fs.writeFileSync(path.join(DATA, 'site-defs', 'target.example.json'), JSON.stringify({

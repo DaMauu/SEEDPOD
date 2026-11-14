@@ -300,6 +300,16 @@ async function main() {
     need(await page.locator('.qd-media').count() === 1, '媒体卡缺失');
     const mtxt = await page.locator('.qd-media').innerText();
     need(/探测/.test(mtxt) && /生成截图/.test(mtxt) && /生成种子/.test(mtxt), '媒体按钮缺失：' + mtxt.slice(0, 80));
+    need(await page.locator('.qd-media-info textarea').count() === 1, 'MediaInfo/BDInfo 输入框缺失');
+    await page.fill('.qd-media-info textarea', 'Disc Title: Smoke.Media.2024.2160p\nDisc Size: 1,000,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps');
+    await page.getByRole('button', { name: '解析媒体信息' }).click();
+    await page.waitForTimeout(500);
+    const parsed = await page.locator('.qd-media').innerText();
+    need(/2160p/.test(parsed) && /BDInfo/.test(parsed), '媒体解析没显示摘要：' + parsed.slice(0, 120));
+    await page.getByRole('button', { name: '准备上传' }).click();
+    await page.waitForTimeout(800);
+    const prepared = await page.locator('.qd-media').innerText();
+    need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
   });
 
   await check('数据清单渲染、筛选与标记', async () => {

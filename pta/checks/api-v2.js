@@ -246,6 +246,32 @@ async function main() {
     need(pj.error && pj.error.code === 'REAL_PUBLISH_DISABLED', '错误码不对：' + JSON.stringify(pj));
   });
 
+  await check('MediaInfo/BDInfo 准备与解析', async () => {
+    const bd = 'Disc Title: Media.Info.Test.2024.2160p\nDisc Label: Media Info Test\nDisc Size: 1,000,000,000 bytes\nSize: 900,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 23.976 fps / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps';
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Media Info Test 2024 2160p', status: 'pending', site: 'demo-a.example' })
+    })).json();
+    const prep = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/prepare', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mediaInfo: bd })
+    })).json();
+    need(prep.ok, 'prepare 失败：' + JSON.stringify(prep));
+    const p = prep.data.prepared;
+    need(p.media && p.media.kind === 'bdinfo', 'media kind 不对：' + JSON.stringify(p.media));
+    need(/2160p/.test(p.media.summary) && /HEVC/.test(p.media.summary), 'summary 不对：' + p.media.summary);
+    need(/【BDInfo】/.test(p.description) && /\[quote\]/.test(p.description), '简介没拼 BDInfo');
+    const got = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(got.ok && String(got.data.mediaInfo || '').indexOf('Disc Title') === 0, 'mediaInfo 没存进队列');
+    const parsed = await (await fetchA(BASE + '/api/meta/mediainfo', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: bd })
+    })).json();
+    need(parsed.ok && parsed.data.kind === 'bdinfo', '解析接口不对：' + JSON.stringify(parsed));
+    const no = await fetchA(BASE + '/api/meta/mediainfo', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: 'nope' })
+    });
+    need(no.status === 422, '无法识别时应 422，实际 ' + no.status);
+  });
+
   await check('队列批量按 fromStatus', async () => {
     await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

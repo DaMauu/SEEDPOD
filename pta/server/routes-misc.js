@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const screen = require('./screen');
 const meta = require('./meta');
+const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
 
 module.exports = function (app, ctx) {
@@ -12,6 +13,15 @@ module.exports = function (app, ctx) {
   const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
 
   app.get('/api/meta/parse', async (req) => ok(meta.parseRelease(req.query.title || '')));
+  app.post('/api/meta/mediainfo', async (req, reply) => {
+    const b = req.body || {};
+    const text = String(b.text || b.mediaInfo || b.bdinfo || '');
+    if (!text.trim()) return bad(reply, 'BAD_REQUEST', 'text 必填');
+    if (text.length > 200000) return bad(reply, 'TOO_LARGE', '文本超过 200000 字符', 413);
+    const parsed = mediainfo.parse(text);
+    if (!parsed.kind) return bad(reply, 'NO_MEDIAINFO', '没认出 MediaInfo / BDInfo 格式', 422);
+    return ok(reply, parsed);
+  });
   app.get('/api/meta/providers', async () => ok(metaExt.providers()));
   app.post('/api/meta/fetch', async (req, reply) => {
     const b = req.body || {};

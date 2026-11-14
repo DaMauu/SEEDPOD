@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 08:00（当前 v0.7.180 / Telegram 合并通知并置顶）
+最后更新：2026-11-18 09:00（当前 v0.7.181 / G11 MediaInfo/BDInfo 上传准备）
+
+## 2026-11-18 G11 MediaInfo/BDInfo 上传准备（v0.7.181）
+
+- 新增 `mediainfo.js`：BDInfo/MediaInfo 纯文本解析，输出视频/音轨/字幕/体积/时长摘要。
+- `release.prepare` 可接收媒体文本，生成 `[quote]` 块拼进简介；`prepared.media` 带摘要，目标站仍读 `description`。
+- `/api/meta/mediainfo` + 队列动作保存 + CLI `--mediainfo/--bdinfo` + 面板解析/准备按钮。
+- mediainfo 5/5、api-v2 24/24、CLI 13/13、smoke 21/21、responsive 32 项。
+- 下一步：图床转存/链接替换，再做客户端注入干跑。
 
 ## 2026-11-18 Telegram 合并通知并置顶（v0.7.180）
 

@@ -21,7 +21,7 @@ function usage() {
   pta queue [--status pending] [--limit 50] [--json]
   pta crawl --site <host> [--limit 100] [--real] [--json]
   pta screen [--limit 50] [--host <host>] [--json]
-  pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--json]
+  pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--mediainfo file] [--bdinfo file] [--json]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
@@ -78,6 +78,15 @@ function readTorrent(p) {
   if (!st.isFile()) die('不是文件：' + p, 2);
   if (st.size > 10 * 1024 * 1024) die('种子超过 10MB', 2);
   return fs.readFileSync(p).toString('base64');
+}
+function readTextFile(p, label) {
+  const fs = require('fs');
+  if (!p) return '';
+  let st;
+  try { st = fs.statSync(p); } catch (e) { die((label || '文本') + '文件不存在：' + p, 2); }
+  if (!st.isFile()) die('不是文件：' + p, 2);
+  if (st.size > 200000) die((label || '文本') + '超过 200KB', 2);
+  return fs.readFileSync(p, 'utf8');
 }
 function print(data, opts, human) {
   if (opts.json) { console.log(JSON.stringify(data, null, 2)); return; }
@@ -183,11 +192,13 @@ async function main() {
     if (!USE_HTTP) {
       const b64 = readTorrent(opts.torrent);
       if (b64) body.torrentBase64 = b64;
+      body.mediaInfo = readTextFile(opts.mediainfo, 'MediaInfo');
+      body.bdinfo = readTextFile(opts.bdinfo, 'BDInfo');
       const targets = opts.targets ? String(opts.targets).split(',').map(x => x.trim()).filter(Boolean) : [];
-      const d = core().prepare(id, { host: opts.host ? String(opts.host) : '', targets: targets, torrentBase64: body.torrentBase64 });
+      const d = core().prepare(id, { host: opts.host ? String(opts.host) : '', targets: targets, torrentBase64: body.torrentBase64, mediaInfo: body.mediaInfo, bdinfo: body.bdinfo });
       print(d, opts, function (x) {
         const p = x.prepared || {};
-        return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') + ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0);
+        return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') + ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0) + (p.media && p.media.summary ? ' · ' + p.media.summary : '');
       });
       return;
     }
@@ -195,11 +206,13 @@ async function main() {
     if (opts.targets) body.targets = String(opts.targets).split(',').map(x => x.trim()).filter(Boolean);
     const b64 = readTorrent(opts.torrent);
     if (b64) body.torrentBase64 = b64;
+    body.mediaInfo = readTextFile(opts.mediainfo, 'MediaInfo');
+    body.bdinfo = readTextFile(opts.bdinfo, 'BDInfo');
     const d = await api('/api/queue/' + encodeURIComponent(id) + '/prepare', { method: 'POST', body: body });
     print(d, opts, function (x) {
       const p = x.prepared || {};
       return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') +
-        ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0);
+        ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0) + (p.media && p.media.summary ? ' · ' + p.media.summary : '');
     });
     return;
   }
@@ -210,7 +223,7 @@ async function main() {
       const x = core().preview(id);
       const p = x.prepared || {};
       print(x, opts, function () {
-        return '阶段 ' + x.stage + '\n标题: ' + (p.title || '') + '\n副标题: ' + (p.subtitle || '') + '\n简介: ' + (p.description || '') + '\n目标: ' + (p.targetHost || '未选') + (p.target ? '\nURL: ' + p.target.url + '\n字段: ' + Object.keys(p.target.fields || {}).join(', ') : '') + (p.targetError ? '\n目标站未就绪: ' + p.targetError : '') + '\n截图: ' + (p.shots || 0);
+        return '阶段 ' + x.stage + '\n标题: ' + (p.title || '') + '\n副标题: ' + (p.subtitle || '') + '\n简介: ' + (p.description || '') + '\n目标: ' + (p.targetHost || '未选') + (p.target ? '\nURL: ' + p.target.url + '\n字段: ' + Object.keys(p.target.fields || {}).join(', ') : '') + (p.targetError ? '\n目标站未就绪: ' + p.targetError : '') + '\n截图: ' + (p.shots || 0) + (p.media ? '\n媒体: ' + p.media.summary : '');
       });
       return;
     }
@@ -220,7 +233,7 @@ async function main() {
       return '阶段 ' + x.stage + '\n标题: ' + (p.title || '') + '\n副标题: ' + (p.subtitle || '') + '\n目标: ' + (p.targetHost || '未选') +
         (p.target ? '\nURL: ' + p.target.url + '\n字段: ' + Object.keys(p.target.fields || {}).join(', ') : '') +
         (p.targetError ? '\n目标站未就绪: ' + p.targetError : '') +
-        '\n截图: ' + (p.shots || 0);
+        '\n截图: ' + (p.shots || 0) + (p.media ? '\n媒体: ' + p.media.summary : '');
     });
     return;
   }

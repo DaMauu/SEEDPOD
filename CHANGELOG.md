@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.181 · 2026-11-18
+
+### G11 上传准备：MediaInfo/BDInfo
+- 新增 `pta/server/mediainfo.js`：识别 BDInfo/MediaInfo，输出分辨率、编码、HDR、位深、帧率、音轨、字幕、体积、时长和摘要。
+- `release.prepare` 接受 `mediaInfo`/`bdinfo`，生成 `[quote]` 媒体块拼进简介；`prepared.media` 返回结构化摘要，目标站上传继续复用 `description`。
+- 新增 `POST /api/meta/mediainfo`；队列动作可保存 `mediaInfo`/`bdinfo`。
+- CLI `prepare` 支持 `--mediainfo <file>` / `--bdinfo <file>`。
+- 待审核媒体区新增文本框、解析、准备上传和摘要显示；smoke 覆盖面板解析/准备。
+- 新增 `pta/checks/mediainfo.js` 5/5，接入 `run.sh`；api-v2 24/24、CLI 13/13、smoke 21/21、responsive 32 项。
+- 待做：图床转存/链接替换、客户端注入干跑。
+
 ## v0.7.180 · 2026-11-18
 
 ### Telegram 通知合并与置顶

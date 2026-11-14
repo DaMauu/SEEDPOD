@@ -121,6 +121,8 @@ module.exports = function (app, ctx) {
     }
     if (b.cn !== undefined) it.cn = String(b.cn).slice(0, 300);
     if (b.intro !== undefined) it.intro = String(b.intro).slice(0, 20000);
+    if (b.mediaInfo !== undefined) it.mediaInfo = String(b.mediaInfo).slice(0, 200000);
+    if (b.bdinfo !== undefined) it.bdinfo = String(b.bdinfo).slice(0, 200000);
     if (b.targetSite !== undefined) it.targetSite = String(b.targetSite).slice(0, 200);
     if (b.targets !== undefined) {
       const arr = Array.isArray(b.targets) ? b.targets : String(b.targets).split(',');

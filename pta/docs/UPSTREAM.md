@@ -136,3 +136,10 @@
 - UA：配置是一个 Python dict，`DEFAULT` 放全局选项，`TRACKERS` 放每站覆盖；条件主要是固定配置键和 CLI 参数，例如 `screens`、`min_successful_image_uploads`、`cutoff_screens`、`img_host_1..6`、`default_trackers`、`tracker_pass_checks`、`skip_auto_torrent`、`get_bluray_info`、`bluray_score`、`check_for_rules`、`skip_if_rehash`、`inject_delay`、`cross_seeding`。站点特有的校验和上传流程写在 tracker 类/代码里，不是用户可编辑的通用规则表达式。
 - upbrr：运行时配置存 SQLite，YAML/JSON 只是导入导出格式；Settings 分 main / image hosting / metadata / screenshot / description / client / arr / torrent / post upload / logging / trackers。工作流分成 source → metadata → tracker 规则与资格 → 查重证据 → 媒体/简介 → 预览 → 提交 → 客户端注入；每个 tracker 的规则、问题、警告、staff token 由 tracker 集成定义，用户主要回答 tracker questions 或确认警告。
 - 结论：两边都没有和 SEEDPOD 当前 40 条一一对应的“通用条件表”。UA 是“配置键 + per-tracker 代码”，upbrr 是“设置项 + tracker-owned rules + 工作流门禁”。SEEDPOD 的 40 条是面板层的 UI 抽象，分诊时应分三类：上游有直接对应、应交给 tracker/站点包自动处理、SEEDPOD 自己特有的产品规则。
+
+## 2026-11-18 · G11 MediaInfo / BDInfo 解析
+
+- 来源：MediaInfo 文本格式与 BDInfo 公开字段（Disc Title / Disc Size / Playlist / Video / Audio / Subtitle）；UA/upbrr 只作能力对照，未复制代码/配置。
+- 观察：MediaInfo 是分段 `Key : Value`，BDInfo 是逐行 `Label: value`；音频/字幕可能有多条，不能只抓第一条。
+- 决定：`mediainfo.js` 先识别格式再解析；摘要只取分辨率/编码/HDR/音轨/字幕/体积；原文默认包 `[quote]` 进简介；无法识别返回空 kind，不猜。
+- 待做：截图转存图床并替换简介链接；客户端注入 dry run。

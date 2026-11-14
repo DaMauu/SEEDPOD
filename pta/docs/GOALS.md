@@ -24,7 +24,7 @@
 | G8 | 原生单 release 上传准备与站点提交 | ✅ 完成（0.7.172） | G7、G9、G4、G5 | prepared payload 已接 target-upload |
 | G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ✅ 完成（0.7.171） | G7 | 本地 CLI 12/12，不启 HTTP |
 | G10 | 多目标发布框架 | 🟡 进行中：CLI/API 多目标干跑已落地；面板多选/真实多站待做 | G8、G9 | 一条 release 多站 dry run/提交/回查 |
-| G11 | 上传准备 1:1：元数据/命名/简介/截图/BDInfo/图床 | 🟢 open | G8 | 对齐 UA/upbrr 的准备能力 |
+| G11 | 上传准备 1:1：元数据/命名/简介/截图/BDInfo/图床 | 🟡 进行中：MediaInfo/BDInfo 已接；图床/客户端注入待做 | G8 | 对齐 UA/upbrr 的准备能力 |
 | G12 | 全自动流水线：抓取→查重→准备→多站发布 | 🟢 open | G10、G11、G13 | 一条命令推进，失败可恢复 |
 | G13 | 站点覆盖与验证：3→10→100 站 | 🟢 open | G5、G10 | 每站真实提交/回查证据 |
 | G14 | 可选 Python sidecar：AI/OCR/pandas/Scrapy | ⚪ 可选 | 有具体需求再开 | 离线 JSON 任务，不换主后端 |
@@ -275,7 +275,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 
 ## 推进规则
 
-1. 一次只开一个 active goal；G2、G7、G8、G9 已完成，当前 **G10**；之后 G11、G13、G12。
+1. 一次只开一个 active goal；G2、G7、G8、G9 已完成，当前 **G11 上传准备**；G10 真实多站等权限；之后 G13、G12。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。
