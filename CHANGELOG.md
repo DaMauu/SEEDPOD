@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.113 · 2026-11-15
+
+### 新增
+- `pta/server/media.js`：ffprobe 媒体信息、ffmpeg 截图（HDR tonemap + 失败回退）、clean-room bencode 生成单文件 `.torrent`。
+- `pta/checks/media.js`：ffmpeg 合成 2 秒视频，覆盖探测/截图/bencode/种子解析/坏输入，7/7。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.112 · 2026-11-15
 
 ### 新增

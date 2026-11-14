@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 14:00（当前 v0.7.112 / M5 标题解析已接，meta 11/11）
+最后更新：2026-11-15 15:00（当前 v0.7.113 / M6 媒体探测/截图/种子模块已落地，media 7/7）
+
+## 2026-11-15 M6：媒体探测/截图/种子模块（v0.7.113）
+
+- `pta/server/media.js`：`probe`（ffprobe）、`shots`（ffmpeg，HDR tonemap + 回退）、`makeTorrent`（自写 bencode，单文件）。
+- `pta/checks/media.js`：合成 2 秒视频，7/7；不联网。
+- 下一步：M6 API（受 `PTA_MEDIA_ROOT` 限制）与队列页入口；M7 多客户端。
 
 ## 2026-11-15 M5：标题解析与命名（v0.7.112）
 

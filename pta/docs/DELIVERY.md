@@ -46,6 +46,7 @@
 - M4 完成：smoke-live 20/20；七个页面全部 SFC；旧 `pta/web` 已归档
 - M8 完成：目标站提交/回查（0.7.111，target 6/6，私有包 `data/site-pack.json`）
 - M5 进行中：标题解析/命名已接（0.7.112，meta 11/11）；TMDB/豆瓣等外部元数据待 key
+- M6 进行中：媒体探测/截图/种子模块已落地（0.7.113，media 7/7）；API/UI 待接
 
 ## 六、V2 · 对标 UA/upbrr
 
