@@ -18,7 +18,7 @@
 | P1 | ✅ 旧 web 已归档 | `pta/web` 只放 dist；旧 demo 在 `pta/archive/web-demo` |
 | P1 | ✅ Docker 已两阶段 | CMD `app-fastify.js`，构建阶段 `npm run build` |
 | P1 | 多目标站/图床/截图来源未接 | 页面像能用，实际没接 |
-| P2 | ✅ smoke-live 20/20 | 旧 smoke/audit 已标 legacy |
+| P2 | ✅ smoke-live 21/21 | 旧 smoke/audit 已删 |
 | P2 | 规则体检只报告不拦 | 空开关能继续进 |
 | P2 | ✅ 旧 `pta/web` 已归档 | 0.7.110 移到 `pta/archive/web-demo` |
 | P2 | 面板密码未轮换 | 旧值已进 git 历史 |

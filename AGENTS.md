@@ -19,7 +19,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 - 线上部署目录由 `DEPLOY_DIR` 指定（本地参数放未入库的 `.deploy.env`），systemd 服务 `seedpod`，监听 8080，数据在 `$DEPLOY_DIR/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
-- 阶段：七个页面已全部 SFC；legacy `app.js` 只保留登录/路由/顶栏/共享工具，页面逻辑不再回写 legacy
+- 阶段：七个页面已全部 SFC；登录/路由/顶栏/Toast/Confirm/页脚已搬进 `App.vue`，`src/legacy` 已删除
 - Vite 构建：源码 `pta/web-src`，`npm run build` 输出 `pta/web/dist`；改前端不碰 `pta/archive/web-demo`
 - 开发环境：Linux 为准；Windows 只用于聊天与备用，`run.cmd` 不是主入口
 
@@ -128,7 +128,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 这些只提示“该拆了”，不证明功能做对：
 
-- 单个前端文件超过 2000 行（页面已全 SFC；legacy `app.js` 仍含共享壳，别再把页面逻辑写回去）
+- 单个 SFC 超过 800 行或一个文件被改 3 次以上仍没有模块边界
 - 同一个文件被改过 3 次以上仍没有模块边界
 - 页面上的规则/开关与服务端契约对不上（用 `node pta/scripts/audit-rules.js` 查）
 
@@ -136,7 +136,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 以 `pta/docs/DELIVERY.md` 为准，七条全过才算项目落地：
 
-1. 七个页面全是 SFC，legacy 清空，旧 web 归档
+1. 七个页面全是 SFC，`src/legacy` 已删除，共享壳在 App.vue，旧 web 归档
 2. 页面上每个开关服务端都有读者；没有就删/禁用/标未接
 3. 主流程能跑通：cookie → 抓取 → 查重 → 送审 → 队列 → 真发布 → 校验
 4. 定时抓取/送审/发布能跑能停

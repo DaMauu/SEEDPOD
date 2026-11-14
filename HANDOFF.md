@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-16 03:00（当前 v0.7.126 / legacy 死代码清理完成）
+最后更新：2026-11-16 04:00（当前 v0.7.127 / legacy 目录删除，共享壳搬进 App.vue）
+
+## 2026-11-16 Vue App Shell（v0.7.127）
+
+- 登录、hash 路由、顶栏状态、Toast/Confirm、页脚搬进 `App.vue`；`src/legacy` 删除。
+- 规则数据移到 `src/data/rules.js`。
+- smoke 21/21；七路由和登录行为不变。
 
 ## 2026-11-16 legacy 清理（v0.7.126）
 

@@ -1,6 +1,6 @@
 # 前端逻辑搬迁计划（legacy → SFC）
 
-目标：把 `pta/web-src/src/legacy/app.js` 里的页面逻辑逐步搬进对应 SFC，直到 legacy 只剩路由、登录、共享工具。
+目标：把页面逻辑逐步搬进 SFC，直到 `src/legacy` 清空。状态：已完成（0.7.127，登录/路由/顶栏/Toast/Confirm/页脚在 `App.vue`，`src/legacy` 已删）。
 
 状态：已完成（0.7.109 七页 SFC；0.7.110 旧 `pta/web` 归档到 `pta/archive/web-demo`）。
 线上始终服务 `pta/web/dist`，每页拆完都能单独上线。

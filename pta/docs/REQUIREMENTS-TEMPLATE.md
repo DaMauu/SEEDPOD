@@ -69,7 +69,7 @@
 
 ## 涉及位置
 - 页面：流程 › 抓取 › 拉取
-- 前端：`pta/web-src/src/legacy/data.js`、`pta/web-src/src/views/*.vue`
+- 前端：`pta/web-src/src/data/rules.js`、`pta/web-src/src/views/*.vue`
 - 后端：`pta/server/adapters/details.js`、`crawl.js`
 - 字段：`config.detail`
 

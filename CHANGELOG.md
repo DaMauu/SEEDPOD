@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.127 · 2026-11-16
+
+### 重构
+- 删除 `src/legacy`：登录、hash 路由、顶栏、Toast/Confirm、页脚全部搬进 `App.vue`。
+- 规则数据移到 `src/data/rules.js`；`gen-rules-tree`/`audit-rules` 路径同步。
+- 登录页去掉没有实际作用的“记住登录”开关；会话由服务器 cookie 控制。
+- 路由切换后补一次合成事件，保证页面组件在 DOM 可见后拉数据。
+
+### 检查
+- `run.sh` 全绿：smoke-live 21/21、adapter 21/21、security 3/3、api-v2 21/21、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、meta-ext 5/5、media 7/7、media-api 6/6、clients 5/5、clients-ext 4/4、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.126 · 2026-11-16
 
 ### 清理
