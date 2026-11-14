@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 21:00（当前 v0.7.119 / M10 通知 + 重试完成）
+最后更新：2026-11-15 22:00（当前 v0.7.120 / 环境与产品边界硬约束清理完成）
+
+## 2026-11-15 环境与产品边界（v0.7.120）
+
+- 硬约束：产品代码/脚本不写死主机路径；主机路径只放未入库 `.deploy.env` 或环境变量。
+- `deploy.sh` 要 `DEPLOY_DIR`；`sync-check.sh` 要 `SSH_HOST/VPS_DIR`；`load-cookies` 找不到密钥退出 2；`notify-tg` 不默认 `/etc`；`goal-autoresume` 用 `OPENCODE_TG_ENV_FILE`。
+- 本机 systemd 的 goal timer 显式传 `OPENCODE_TG_ENV_FILE`，代码不迁就本机。
+- 检查：`run.sh` 全绿；线上 0.7.120。
 
 ## 2026-11-15 M10：失败重试（v0.7.119）
 

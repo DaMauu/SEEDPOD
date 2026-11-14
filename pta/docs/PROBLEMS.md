@@ -7,7 +7,7 @@
 
 - v2 `screen` 接上分辨率/体积/中字/排除白名单/同片去重
 - v2 补 `nosniff / X-Frame-Options / Referrer-Policy / CSP`
-- unit 改 `User=seedpod` + `/etc/seedpod.env` 0600
+- unit 改 `User=seedpod` + `PTA_USER/PTA_PASS` 环境（0600 文件）
 - 部署权限、`deploy.sh` sudo 重启
 - 线上切 Vite 构建，日志页拆进 SFC
 - 站点详情重复 id
@@ -45,7 +45,7 @@
 | 15 | ✅ smoke/audit | 0.7.100 已换 smoke-live（现 20/20），旧文件标 legacy | — | — |
 | 16 | 规则体检只报告不拦 | `run.sh` 末尾 | 空开关可以继续进 | 分诊完成后加 `--fail` |
 | 17 | ✅ 旧 `pta/web` 已归档 | 0.7.110 移到 `pta/archive/web-demo` | — | — |
-| 18 | 面板密码未轮换 | git 历史、`/etc/seedpod.env` | 旧值已进历史 | 生成新值、通知作者、作废旧值 |
+| 18 | 面板密码未轮换 | git 历史、`PTA_USER/PTA_PASS` 环境 | 旧值已进历史 | 生成新值、通知作者、作废旧值 |
 | 19 | `ocbot` sudo 全开 | `/etc/sudoers.d` | 等于 root | 收窄到 systemctl/必要命令 |
 | 20 | 文档仍写“零依赖/假数据” | `ARCHITECTURE.md`、`PRIOR-ART.md`、`app-fastify.js` 头 | 误导下一个接手者 | 一次文档对齐 |
 

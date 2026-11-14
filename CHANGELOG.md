@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.120 · 2026-11-15
+
+### 调整
+- 硬约束：产品代码/脚本不写死主机路径。`deploy.sh` 用 `DEPLOY_DIR`（可放未入库 `.deploy.env`）；`sync-check.sh` 用 `SSH_HOST/VPS_DIR`；`load-cookies.js` 不再自动读 `/etc/seedpod.secret`；`notify-tg.sh` 不再默认 `/etc`；`goal-autoresume.py` 用 `OPENCODE_TG_ENV_FILE/OPENCODE_GOAL_OFF_FILE`。
+- `AGENTS.md` 删除“部署脚本例外”，改为“主机路径只放未入库 `.deploy.env` 或环境变量”；`docs/DEPLOY.md` 示例路径改 `<部署目录>` 并改 v2 入口。
+- `.deploy.env` 进 gitignore/dockerignore。
+
+### 检查
+- `run.sh` 全绿：smoke-live 20/20、adapter 21/21、security 3/3、api-v2 20/20、publish 4/4、scheduler 5/5、detect 5/5、target 6/6、meta 11/11、media 7/7、media-api 6/6、clients 5/5、cli 7/7、notify 7/7、build 7/7、规则体检 0 缺读者。
+
 ## v0.7.119 · 2026-11-15
 
 ### 新增

@@ -12,13 +12,15 @@ import sys
 import urllib.error
 import urllib.request
 
-ENV_FILE = "/etc/opencode-telegram-bot.env"
-OFF_FILE = "/home/ocbot/.config/opencode/goal-autoresume.off"
+ENV_FILE = os.environ.get("OPENCODE_TG_ENV_FILE", "")
+OFF_FILE = os.environ.get("OPENCODE_GOAL_OFF_FILE") or os.path.join(os.path.expanduser("~"), ".config/opencode/goal-autoresume.off")
 LIMIT_PREFIX = "Reached the limit of"
 
 
 def load_env():
-    env = {}
+    env = dict(os.environ)
+    if not ENV_FILE:
+        return env
     try:
         with open(ENV_FILE, encoding="utf-8") as f:
             for line in f:

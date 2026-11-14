@@ -30,11 +30,11 @@
 ## 发版
 
 ```
-ssh pta 'cd /opt/seedpod-git && git pull --ff-only && bash deploy.sh'
+ssh <部署主机> 'cd <部署仓库> && git pull --ff-only && DEPLOY_DIR=<部署目录> bash deploy.sh'
 ```
 
-`deploy.sh` 会 rsync 到 `/opt/seedpod`、重启服务、打印 health，并推一条 Telegram。
-不要 rsync 覆盖：`data/`、`pta/web/assets/sites-data.local.js`、`*.local.*`。
+`deploy.sh` 会 rsync 到 `$DEPLOY_DIR`、重启服务、打印 health，并推一条 Telegram。
+不要 rsync 覆盖：`data/`、`*.local.*`。
 
 ## 收尾
 
@@ -44,7 +44,7 @@ ssh pta 'cd /opt/seedpod-git && git pull --ff-only && bash deploy.sh'
 
 ## 在 VPS 这边（Telegram 对话时）
 
-1. `cd /opt/seedpod-git && git pull --ff-only`
+1. `cd <部署仓库> && git pull --ff-only`
 2. 改代码 → `git add -A && git commit && git push origin main`（部署密钥已配好）
 3. `bash deploy.sh`
 

@@ -21,3 +21,6 @@ pta/web/dist/
 .env
 .env.*
 !.env.example
+
+# 本地部署参数（DEPLOY_DIR/VPS_DIR/TELEGRAM_ENV_FILE）
+.deploy.env

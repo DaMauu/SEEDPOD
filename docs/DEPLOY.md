@@ -38,8 +38,8 @@ docker run -d --name seedpod -p 8080:8080 -v "$PWD/data:/data" -e TZ=Asia/Shangh
 
 ```
 node -v                       # 需要 Node 20+
-cd /opt/seedpod
-PTA_DATA=/opt/seedpod/data node pta/server/app.js
+cd <部署目录>
+PTA_DATA=<部署目录>/data node pta/server/app-fastify.js
 ```
 
 长期跑用 systemd：
@@ -49,11 +49,11 @@ PTA_DATA=/opt/seedpod/data node pta/server/app.js
 Description=SEEDPOD panel
 After=network.target
 [Service]
-WorkingDirectory=/opt/seedpod
+WorkingDirectory=<部署目录>
 Environment=PTA_PORT=8080
-Environment=PTA_DATA=/opt/seedpod/data
+Environment=PTA_DATA=<部署目录>/data
 Environment=TZ=Asia/Shanghai
-ExecStart=/usr/bin/node pta/server/app.js
+ExecStart=/usr/bin/node pta/server/app-fastify.js
 Restart=always
 RestartSec=2
 [Install]
@@ -66,7 +66,7 @@ systemctl restart seedpod      # 改完代码
 journalctl -u seedpod -f       # 看日志
 ```
 
-改代码就是把文件放到 /opt/seedpod 对应位置，然后 restart，没有打包步骤。容器里跑 nginx 反代时，记得放行网桥网段：`ufw allow from 172.16.0.0/12 to any port 8080 proto tcp`。
+改代码就是把文件放到 <部署目录> 对应位置，然后 restart，没有打包步骤。容器里跑 nginx 反代时，记得放行网桥网段：`ufw allow from 172.16.0.0/12 to any port 8080 proto tcp`。
 
 ## 开发调试（不重建镜像）
 

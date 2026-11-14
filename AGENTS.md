@@ -2,7 +2,7 @@
 
 这个文件是压缩后仍然有效的事实源。改代码前先读它，改完再更新 HANDOFF.md。
 
-每次会话固定动作见 [CHECKLIST.md](CHECKLIST.md)：开工先 `bash scripts/sync-check.sh`，改完 push，发版 `ssh pta 'cd /opt/seedpod-git && git pull --ff-only && bash deploy.sh'`。
+每次会话固定动作见 [CHECKLIST.md](CHECKLIST.md)：开工先 `bash scripts/sync-check.sh`，改完 push，发版 `ssh <部署主机> 'cd <部署仓库> && git pull --ff-only && DEPLOY_DIR=<部署目录> bash deploy.sh'`。
 聊天记录会被压缩，这里的规则不会；两条冲突时以本文件 + HANDOFF.md 为准。
 
 ## 文件放置（长期规定）
@@ -16,7 +16,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 - 前端源码 `pta/web-src`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 归档在 `pta/archive/web-demo`，不再使用
 - 生产后端 `pta/server/app-fastify.js`（Fastify）+ `pta/server/routes-*.js` + `pta/server/db.js`（SQLite，数据在 `data/seedpod.db`）；适配器 `pta/server/adapters/nexusphp.js`，凭据加密 `pta/server/secretbox.js`
 - 旧零依赖后端 `pta/server/app.js` 只作参考，不在生产运行；服务端改动一律进 v2
-- 线上跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，监听 8080，数据在 `/opt/seedpod/data`
+- 线上部署目录由 `DEPLOY_DIR` 指定（本地参数放未入库的 `.deploy.env`），systemd 服务 `seedpod`，监听 8080，数据在 `$DEPLOY_DIR/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `docs/DECISIONS.md`
 - 阶段：七个页面已全部 SFC；legacy `app.js` 只保留登录/路由/顶栏/共享工具，页面逻辑不再回写 legacy
@@ -33,7 +33,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 不接新需求，避免同一功能两套实现。
 
-## 发版与同步（/opt/seedpod 是运行目录，/opt/seedpod-git 是仓库检出）
+## 发版与同步（`DEPLOY_DIR` 是运行目录，`VPS_DIR` 是仓库检出）
 
 两边同一套流程，全程只用 main，不新建分支：
 
@@ -44,13 +44,13 @@ bash scripts/sync-check.sh
 # 改完：提交并推送
 git add -A && git commit -m "0.7.xx 一句话说清改了什么" && git push origin main
 
-# 发版（在 /opt/seedpod-git 里跑）
+# 发版（在部署仓库里跑，DEPLOY_DIR 指向运行目录）
 git pull --ff-only && bash deploy.sh
 ```
 
 - 只有 Windows 推送 GitHub 才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 - VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
-- `deploy.sh` 用 rsync 把 pta/ 同步到 /opt/seedpod 并重启服务，排除 `data/`、`archive/`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
+- `deploy.sh` 用 rsync 把 pta/ 同步到 `$DEPLOY_DIR` 并重启服务，排除 `data/`、`archive/`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync
 - `deploy.sh` 不传 `node_modules`：新机器先 `npm i --omit=dev`（或手工装 fastify 与 @fastify/static）再启动
 - 改前端后跑 `npm run build`，部署脚本会重新生成 `pta/web/dist`；不再维护 `?v=`
 - 两边同时改会 push 失败（non-fast-forward），此时先 pull 再推，不要 force
@@ -78,7 +78,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 - 先定正确的产品形态，再让本机环境去适配它；不许为了本机权限/路径/服务差异，把产品代码写成只能在这台机器跑。
 - 本机问题在本机解决：权限、目录、systemd、端口、私有凭据文件，优先改本机配置/环境变量/文件权限，不改产品逻辑。
 - 只有真实产品约束（Docker 非 root、数据卷权限、无 systemd）才抽象成配置项、启动检查或文档，不写死主机路径。
-- 产品代码不出现 `/opt/seedpod`、`/etc/seedpod.env`、`/etc/opencode-*` 等本机路径；这些只允许出现在部署脚本和内部 HANDOFF/运维文档。
+- 产品代码、脚本和当前操作说明不写死主机路径；主机路径只放未入库的 `.deploy.env` 或环境变量。历史 HANDOFF/PLAN 里的旧路径只作记录，不作为运行参数。
 - 凭据/密钥只通过环境变量或面板加密配置进入产品；不因本机文件权限降级安全设计。
 - 遇到“本机跑不通”先判断：这是产品约束还是本机差异？本机差异改本机，产品约束改配置/文档。
 
