@@ -1,6 +1,0 @@
-@media (max-width: 1000px) {
-  #set-panel .set-fields .set-field .ctl { width: 100%; }
-  #set-panel .set-fields .set-field .ctl .fixed-val { white-space: normal; height: auto; min-height: 34px; line-height: 1.5; overflow-wrap: anywhere; }
-  #set-panel .set-fields .set-field .ctl .fixed-val.ref { padding: 0; }
-}
-

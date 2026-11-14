@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.156 · 2026-11-17
+
+### 页面 scoped 迁移
+- Settings：55 条页面规则迁入 `Settings.vue` 的 `<style scoped>`，包括 `#set-panel`、`.set-panel`、`.set-stack`、`.set-card*`、`.set-h2`、`.set-save` 及窄屏字段覆盖。
+- 删除空模块 `10-settings-responsive.css` 和入口 import；全局已无 Settings 页面选择器。
+- `set-field` / `set-fields` / `fixed-val` 基础规则继续全局，给 Crawl / Sites 共用；`#set-panel` 前缀保留在 scoped 内，维持原有特异性。
+- 390：设置卡头部标题独占一行，保存/发送测试按钮右对齐且不压缩。
+
+### 检查
+- smoke 21/21、api-v2 23/23、site-pack 5/5、target 10/10、质量审计总体 83（平衡）、规则体检 0 缺读者；1280 / 768 / 390 视觉通过。
+
 ## v0.7.155 · 2026-11-17
 
 ### 窄屏与登录后加载修复

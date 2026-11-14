@@ -64,35 +64,13 @@
 .brand-name { font-size: 15px; font-weight: 650; letter-spacing: .04em; }
 .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: .02em; }
 /* 设置 / 日志 / 数据清单 / 待审核：按流程页密度压紧 */
-#set-panel .set-stack { gap: 12px; }
-#set-panel .set-stack .set-card { padding: 16px 22px 6px; }
-#set-panel .set-h2 { font-size: 14px; margin-bottom: 2px; }
-#set-panel .set-desc { font-size: 11.5px; margin-bottom: 6px; }
-#set-panel .set-fields { margin-top: 6px; }
-#set-panel .set-fields .set-field { min-height: 38px; padding: 4px 0; }
-#set-panel .set-fields .set-field:first-child { padding-top: 4px; }
-#set-panel .set-fields .set-field .lbl span { font-size: 12px; }
-#set-panel .set-fields .set-field .lbl i { font-size: 10.5px; line-height: 14px; }
-#set-panel .set-fields .set-field .ctl { width: 220px; }
-#set-panel .set-fields .set-field .ctl .input,
-#set-panel .set-fields .set-field .ctl .select { height: 28px; font-size: 11.5px; }
-#set-panel .set-fields .set-field:has(.switch) .lbl span { display: inline-block; vertical-align: middle; }
-#set-panel .set-fields .set-field:has(.switch) .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle; }
-#set-panel .set-fields .set-field .lbl { min-width: 0; white-space: nowrap; overflow: hidden; }
-#set-panel .set-fields .set-field .lbl span { display: inline-block; vertical-align: middle; }
-#set-panel .set-fields .set-field .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle;
-  overflow: hidden; text-overflow: ellipsis; max-width: 460px; }
 /* 栏目操作放到标题栏右侧 */
 .drawer-head { position: relative; }
 .drawer-head-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .drawer-head-right .drawer-meta { margin: 0; }
 .drawer-head-right .btn { height: 28px; padding: 0 12px; font-size: 11.5px; border-radius: 8px; }
 /* 设置页控件收进卡片内边距，不再顶到右边缘 */
-#set-panel .set-fields .set-field .ctl .input,
-#set-panel .set-fields .set-field .ctl .select { width: 100%; box-sizing: border-box; }
 /* 日志右侧留白 */
-#set-panel .set-field .ctl .btn { height: 28px; padding: 0 12px; font-size: 11.5px; border-radius: 8px; }
-#set-panel .set-field .ctl { display: flex; align-items: center; justify-content: flex-end; width: 220px; }
 /* 下载器：容量文字固定宽度，进度条起点对齐 */
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-cap { flex: 0 0 148px; }
 .view[data-view="crawl"] .drawer[data-name="下载器"] .nr-pct { flex: 0 0 34px; }
@@ -102,27 +80,9 @@
 /* 总览实时日志：黑色区域铺满卡片宽度 */
 /* 终端字体：英文数字走等宽，中文走雅黑，避免 fallback 到宋体发虚 */
 /* 设置页：标题栏与行分隔，信息成表 */
-#set-panel .set-card { padding: 0 0 4px; }
-#set-panel .set-card > .set-h2 { margin: 16px 22px 2px; }
-#set-panel .set-card > .set-desc { margin: 0 22px 14px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
-#set-panel .set-fields { margin: 0; }
-#set-panel .set-fields .set-field {
-  min-height: 44px; padding: 0 22px; border-bottom: 1px solid #f3f4f7; }
-#set-panel .set-fields .set-field:last-child { border-bottom: 0; }
-#set-panel .set-fields .set-field .lbl i { max-width: 620px; }
 /* 顶栏开发进度 */
 /* 设置页：按钮与输入框同宽，右列成一条直线 */
-#set-panel .set-field .ctl .btn { width: 100%; height: 28px; justify-content: center; }
-#set-panel .set-field .switch { margin-left: auto; }
 /* 设置页：保存改为每栏右上角 */
-#set-panel .set-card-head { display: flex; align-items: flex-start; justify-content: space-between;
-  flex-wrap: wrap; gap: 16px; padding: 16px 22px 14px; border-bottom: 1px solid var(--line); }
-#set-panel .set-card-head > .btn { flex: 0 0 auto; white-space: nowrap; }
-#set-panel .set-card-t { min-width: 0; }
-#set-panel .set-card-head .set-h2 { margin: 0 0 4px; }
-#set-panel .set-card-head .set-desc { margin: 0; border: 0; padding: 0; }
-#set-panel .set-card-head .set-save { height: 28px; padding: 0 14px; font-size: 11.5px; border-radius: 8px; flex: 0 0 auto; }
-#set-panel .set-card > .set-h2, #set-panel .set-card > .set-desc { display: none; }
 /* 待审核：审核台布局 */
 /* 详情撑满一屏，简介占剩余高度，操作条贴底 */
 /* 回车键式紧凑：卡片按内容高度，不留大片空白 */

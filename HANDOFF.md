@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 07:00（当前 v0.7.155 / 窄屏与登录后加载修复）
+最后更新：2026-11-17 08:00（当前 v0.7.156 / Settings 样式迁入 scoped）
+
+## 2026-11-17 Settings scoped（v0.7.156）
+
+- Settings 55 条规则迁入 `<style scoped>`；删除空模块 `10-settings-responsive.css` 和入口 import。
+- `set-field` / `set-fields` / `fixed-val` 基础规则留全局；`#set-panel` 前缀保留，避免特异性下降。
+- 390 卡头标题独占一行、按钮右对齐；三宽度视觉通过，smoke 21/21，全量全绿。
 
 ## 2026-11-17 窄屏与登录后加载修复（v0.7.155）
 

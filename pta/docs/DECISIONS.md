@@ -105,6 +105,12 @@
 为什么：用户不想手改上传 JSON，但面板不能自行探测真实站。
 代价：首次识别需要站点定义里有上传路径、识别页路径和 cookie；`formPath` 留空会回退到提交路径。进程重启会重置冷却时间。测试用 `pta/fixtures/upload-form.html` + 本地 mock，不碰真实站。
 
+## D26 Settings 的 ID 规则保留前缀迁 scoped（2026-11-17）
+
+定了：`#set-panel ...` 规则整体迁 `Settings.vue` scoped 时保留 `#set-panel` 前缀，不降成 `.set-field`；共用 `set-field` / `set-fields` / `fixed-val` 基础规则留全局。
+为什么：SFC 的 scoped CSS 先于全局样式加载，降特异性后会被 `04-settings-flow.css` / `08-components.css` 的共用规则覆盖。
+代价：scoped 选择器更长；`#set-panel` 必须保持唯一。
+
 ## D25 窄屏优先保证主要内容可读（2026-11-17）
 
 定了：≤700px 时列表名称、表单标签和控件优先；站点列表可隐藏「抓取 / 上次抓取」两列，成对字段纵向排，卡片头部按钮 `flex: 0 0 auto` 且允许换行，队列卡片改单列。

@@ -324,3 +324,75 @@ onUnmounted(() => {
   if (timer) clearInterval(timer)
 })
 </script>
+
+<style scoped>
+/* Settings 页面样式：迁入 scoped，shell/shared 保留全局 */
+.set-panel { flex: 1; min-width: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 24px 28px; overflow-y: auto; }
+.set-h2 { margin: 0 0 6px; font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; }
+.set-panel { max-height: calc(100vh - 182px); min-height: 320px; }
+.set-card { background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 22px 26px; }
+.set-card .set-h2 { font-size: 15px; }
+#set-panel { background: none; box-shadow: none; padding: 0; overflow: visible; max-height: none; }
+.set-stack { display: flex; flex-direction: column; gap: 16px; }
+.set-stack .set-card { padding: 20px 26px 8px; }
+.set-stack .set-h2 { font-size: 15px; }
+.set-stack .set-desc { font-size: 11.5px; margin-bottom: 2px; }
+.set-stack .set-fields .set-field { padding: 12px 0; }
+.set-stack .set-h2 { font-size: 16px; letter-spacing: -.01em; }
+.set-card .set-h2 { font-size: 16px; letter-spacing: -.01em; }
+.set-card .set-desc { font-size: 11.5px; }
+.set-card .set-fields .set-field { padding: 13px 0; }
+.set-card .set-fields .set-field:first-child { padding-top: 14px; }
+#set-panel .set-stack { gap: 12px; }
+#set-panel .set-stack .set-card { padding: 16px 22px 6px; }
+#set-panel .set-h2 { font-size: 14px; margin-bottom: 2px; }
+#set-panel .set-desc { font-size: 11.5px; margin-bottom: 6px; }
+#set-panel .set-fields { margin-top: 6px; }
+#set-panel .set-fields .set-field { min-height: 38px; padding: 4px 0; }
+#set-panel .set-fields .set-field:first-child { padding-top: 4px; }
+#set-panel .set-fields .set-field .lbl span { font-size: 12px; }
+#set-panel .set-fields .set-field .lbl i { font-size: 10.5px; line-height: 14px; }
+#set-panel .set-fields .set-field .ctl { width: 220px; }
+#set-panel .set-fields .set-field .ctl .input, #set-panel .set-fields .set-field .ctl .select { height: 28px; font-size: 11.5px; }
+#set-panel .set-fields .set-field:has(.switch) .lbl span { display: inline-block; vertical-align: middle; }
+#set-panel .set-fields .set-field:has(.switch) .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle; }
+#set-panel .set-fields .set-field .lbl { min-width: 0; white-space: nowrap; overflow: hidden; }
+#set-panel .set-fields .set-field .lbl span { display: inline-block; vertical-align: middle; }
+#set-panel .set-fields .set-field .lbl i { display: inline-block; margin: 0 0 0 8px; vertical-align: middle;
+  overflow: hidden; text-overflow: ellipsis; max-width: 460px; }
+#set-panel .set-fields .set-field .ctl .input, #set-panel .set-fields .set-field .ctl .select { width: 100%; box-sizing: border-box; }
+#set-panel .set-field .ctl .btn { height: 28px; padding: 0 12px; font-size: 11.5px; border-radius: 8px; }
+#set-panel .set-field .ctl { display: flex; align-items: center; justify-content: flex-end; width: 220px; }
+#set-panel .set-card { padding: 0 0 4px; }
+#set-panel .set-card > .set-h2 { margin: 16px 22px 2px; }
+#set-panel .set-card > .set-desc { margin: 0 22px 14px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+#set-panel .set-fields { margin: 0; }
+#set-panel .set-fields .set-field {
+  min-height: 44px; padding: 0 22px; border-bottom: 1px solid #f3f4f7; }
+#set-panel .set-fields .set-field:last-child { border-bottom: 0; }
+#set-panel .set-fields .set-field .lbl i { max-width: 620px; }
+#set-panel .set-field .ctl .btn { width: 100%; height: 28px; justify-content: center; }
+#set-panel .set-field .switch { margin-left: auto; }
+#set-panel .set-card-head { display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; padding: 16px 22px 14px; border-bottom: 1px solid var(--line); }
+#set-panel .set-card-head > .btn { flex: 0 0 auto; white-space: nowrap; }
+#set-panel .set-card-t { min-width: 0; }
+#set-panel .set-card-head .set-h2 { margin: 0 0 4px; }
+#set-panel .set-card-head .set-desc { margin: 0; border: 0; padding: 0; }
+#set-panel .set-card-head .set-save { height: 28px; padding: 0 14px; font-size: 11.5px; border-radius: 8px; flex: 0 0 auto; }
+#set-panel .set-card > .set-h2, #set-panel .set-card > .set-desc { display: none; }
+@media (max-width: 900px) {
+.set-card { padding: 14px; }
+#set-panel .set-card-head .set-card-t { flex: 1 1 100%; }
+#set-panel .set-card-head > .btn { margin-left: auto; }
+}
+@media (max-width: 1000px) {
+#set-panel .set-fields .set-field .ctl { width: 100%; }
+}
+@media (max-width: 1000px) {
+#set-panel .set-fields .set-field .ctl .fixed-val { white-space: normal; height: auto; min-height: 34px; line-height: 1.5; overflow-wrap: anywhere; }
+}
+@media (max-width: 1000px) {
+#set-panel .set-fields .set-field .ctl .fixed-val.ref { padding: 0; }
+}
+</style>
