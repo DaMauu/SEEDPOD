@@ -345,7 +345,7 @@ async function main() {
     const prepared = await page.locator('.qd-media').innerText();
     need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
     const pack = await page.locator('.qd-prepared').innerText();
-    need(/上传准备/.test(pack) && /2160p/.test(pack) && /简介预览/.test(pack), '上传准备预览缺失：' + pack.slice(0, 160));
+    need(/上传准备/.test(pack) && /2160p/.test(pack) && /多目标预检/.test(pack) && /简介预览/.test(pack), '上传准备预览缺失：' + pack.slice(0, 160));
     await page.getByRole('button', { name: '图床演练' }).click();
     await page.waitForTimeout(1200);
     const shotTxt = await page.locator('.qd-shots').innerText();

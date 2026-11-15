@@ -103,6 +103,14 @@
             <div class="t-sub">标题：{{ sel.prepared.title || '—' }}</div>
             <div class="t-sub">副标题：{{ sel.prepared.subtitle || '—' }}</div>
             <div class="t-sub">媒体：{{ sel.prepared.media ? sel.prepared.media.summary : '未填' }} · 图床 {{ (sel.prepared.imageLinks || []).length }} 张 · 截图 {{ sel.prepared.shots || 0 }}</div>
+            <div v-if="(sel.prepared.targets || []).length" class="qd-target-plans">
+              <div class="qd-target-plan-head">多目标预检</div>
+              <div v-for="t in sel.prepared.targets" :key="t.host" class="qd-target-plan">
+                <span class="badge" :class="t.target ? 'green' : 'red'">{{ t.host }}</span>
+                <span v-if="t.target" class="t-sub">{{ t.target.engine }} · {{ Object.keys(t.target.fields || {}).length }} 字段</span>
+                <span v-else class="qd-stage-err">{{ t.error || '未就绪' }}</span>
+              </div>
+            </div>
             <details class="qd-prepared-desc"><summary>简介预览</summary><pre>{{ sel.prepared.description || '（空）' }}</pre></details>
           </section>
 
@@ -484,7 +492,7 @@ async function prepareRelease() {
   try {
     const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mediaInfo: media.infoText })
+      body: JSON.stringify({ mediaInfo: media.infoText, targets: form.targets, host: form.targetSite })
     })).json()
     if (j && j.ok) {
       media.info = (j.data.prepared && j.data.prepared.media) || media.info
@@ -782,4 +790,7 @@ onUnmounted(() => {
 .qd-prepared { grid-column: 1 / -1; }
 .qd-prepared-desc { margin-top: 8px; font-size: 12px; }
 .qd-prepared-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; background: var(--panel-2); padding: 10px; border-radius: 8px; font-size: 11.5px; }
+.qd-target-plans { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.qd-target-plan-head { font-size: 11px; font-weight: 600; color: var(--muted); }
+.qd-target-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
 </style>
