@@ -30,10 +30,10 @@ defineProps({
   background: #fff; border-radius: 12px; box-shadow: var(--shadow);
   padding: 8px 14px; margin-bottom: 8px;
 }
-.ss-progress { flex: 1 1 auto; min-width: 160px; max-width: 640px; display: flex; flex-direction: column; gap: 3px; }
-.ss-bar { display: flex; gap: 2px; height: 7px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
+.ss-progress { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.ss-bar { flex: 0 0 200px; width: 200px; max-width: 42%; display: flex; gap: 2px; height: 7px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
 .ss-bar .seg { display: block; height: 100%; }
-.ss-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; color: var(--muted-2); line-height: 1.2; }
+.ss-legend { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; color: var(--muted-2); line-height: 1.2; }
 .ss-legend .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
 .ss-nums { display: flex; align-items: center; gap: 18px; flex: 0 0 auto; margin-left: auto; }
 .ss-nums div { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; }
@@ -42,8 +42,10 @@ defineProps({
 .ss-nums b.warn { color: var(--amber); }
 @media (max-width: 900px) {
   .sites-stats { padding: 8px 11px; gap: 6px 12px; }
-  .ss-progress { flex: 1 1 100%; max-width: none; }
-  .ss-nums { width: 100%; justify-content: space-between; gap: 10px; margin-left: 0; }
+  .ss-progress { flex: 1 1 100%; max-width: none; flex-wrap: wrap; justify-content: center; gap: 6px 10px; }
+  .ss-bar { flex: 0 0 160px; width: 160px; max-width: 58%; }
+  .ss-legend { flex: 0 1 auto; justify-content: center; }
+  .ss-nums { width: 100%; justify-content: space-between; gap: 10px; margin-left: 0; align-items: center; }
   .ss-nums b { font-size: 14px; }
 }
 </style>

@@ -28,37 +28,7 @@
         </div>
       </section>
 
-      <section class="set-card">
-        <div class="set-card-head">
-          <div class="set-card-t">
-            <h2 class="set-h2">调度</h2>
-            <p class="set-desc">按间隔自动跑一轮抓取/送审/发布；默认关，真抓真发仍受各自开关约束。</p>
-          </div>
-          <button class="btn primary slim set-save" type="button" :disabled="sched.running" @click="runSched">
-            {{ sched.running ? '跑着呢…' : '立即跑一次' }}
-          </button>
-        </div>
-        <div class="set-fields">
-          <div class="set-field">
-            <div class="lbl"><span>定时任务</span><i>关掉就是暂停</i></div>
-            <div class="ctl">
-              <button class="switch" :class="{ on: sched.on }" type="button" @click="toggleSched"><i></i></button>
-            </div>
-          </div>
-          <div class="set-field">
-            <div class="lbl"><span>间隔</span></div>
-            <div class="ctl">
-              <select class="select" :value="String(sched.everyMinutes)" @change="setEvery">
-                <option v-for="n in [30, 60, 120, 240]" :key="n" :value="String(n)">{{ n }} 分钟</option>
-              </select>
-            </div>
-          </div>
-          <div class="set-field">
-            <div class="lbl"><span>上次结果</span></div>
-            <div class="ctl"><span class="fixed-val ref">{{ lastText }}</span></div>
-          </div>
-        </div>
-      </section>
+      
 
       <section class="set-card">
         <div class="set-card-head">
@@ -144,17 +114,11 @@ import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 
 const version = ref('读取中…')
 const user = ref('读取中…')
-const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '', lastResult: null })
 const notify = reactive({ telegram: false, webhook: false, source: '', chat: '', token: '', events: 'error', saving: false, testing: false, testMsg: '' })
 const keyState = reactive({ ok: null, source: '', reason: '' })
 let timer = null
 let loaded = false
 
-const lastText = computed(() => {
-  if (!sched.lastRunAt) return '还没跑过'
-  const t = new Date(sched.lastRunAt).toLocaleString()
-  return sched.lastError ? t + ' · ' + sched.lastError : t
-})
 const keyText = computed(() => {
   if (keyState.ok === false) return '不可用：' + (keyState.reason || '检查 PTA_SECRET_FILE / PTA_SECRET')
   if (keyState.source === 'env') return '环境变量 PTA_SECRET'
@@ -165,30 +129,17 @@ const keyText = computed(() => {
   return keyState.source || '未读取'
 })
 
-function applySched(data) {
-  if (!data) return
-  Object.assign(sched, {
-    on: !!data.on,
-    everyMinutes: Number(data.everyMinutes) || 60,
-    running: !!data.running,
-    lastRunAt: Number(data.lastRunAt) || 0,
-    lastError: data.lastError || '',
-    lastResult: data.lastResult || null
-  })
-}
 async function load() {
   if (loaded || !loggedIn()) return
   try {
-    const [h, s, sc, nt, dv] = await Promise.all([
+    const [h, s, nt, dv] = await Promise.all([
       fetch('/api/health', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/session', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
-      fetch('/api/scheduler', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/notify', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/dev', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
     ])
     if (h && h.ok) version.value = 'v' + h.data.version
     if (s && s.ok) user.value = s.data.user || '—'
-    if (sc && sc.ok) applySched(sc.data)
     if (nt && nt.ok) applyNotify(nt.data)
     if (dv && dv.ok && dv.data && dv.data.crypto) Object.assign(keyState, dv.data.crypto)
     loaded = true
@@ -260,35 +211,6 @@ function clearCache() {
     toast('本地缓存已清空，正在刷新')
     setTimeout(() => location.reload(), 700)
   })
-}
-async function saveSched() {
-  try {
-    const j = await (await fetch('/api/scheduler', {
-      method: 'PATCH', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ on: !!sched.on, everyMinutes: Number(sched.everyMinutes) || 60 })
-    })).json()
-    if (j && j.ok) { applySched(j.data); toast('调度设置已保存') }
-    else toast((j && j.error && j.error.message) || '调度设置保存失败')
-  } catch (e) { toast('调度设置保存失败') }
-}
-function toggleSched() {
-  sched.on = !sched.on
-  saveSched()
-}
-function setEvery(e) {
-  sched.everyMinutes = Number(e.target.value) || 60
-  saveSched()
-}
-async function runSched() {
-  if (sched.running) return
-  sched.running = true
-  try {
-    const j = await (await fetch('/api/scheduler/run', { method: 'POST', credentials: 'same-origin' })).json()
-    toast(j && j.ok ? '调度已跑完一轮' : ((j && j.error && j.error.message) || '调度跑失败'))
-    const s = await (await fetch('/api/scheduler', { credentials: 'same-origin' })).json()
-    if (s && s.ok) applySched(s.data)
-  } catch (e) { toast('调度请求发不出去') }
-  sched.running = false
 }
 
 onMounted(() => {

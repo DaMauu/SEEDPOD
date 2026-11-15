@@ -16,6 +16,16 @@
           <a class="btn ghost slim" href="#queue">去待审核</a>
         </div>
       </section>
+      <section class="sched-bar" id="sched-bar">
+        <div class="sb-main"><span class="sb-title">调度</span><span class="sb-note">{{ schedText }}</span></div>
+        <div class="sb-actions">
+          <label class="sb-sw">自动跑 <button class="switch" :class="{ on: sched.on }" type="button" role="switch" :aria-checked="String(sched.on)" @click="toggleSched"><i></i></button></label>
+          <select class="select slim sb-every" :value="String(sched.everyMinutes)" @change="setEvery">
+            <option v-for="n in [30, 60, 120, 240]" :key="n" :value="String(n)">{{ n }} 分钟</option>
+          </select>
+          <button class="btn ghost slim" type="button" :disabled="sched.running" @click="runSched">{{ sched.running ? '跑着呢…' : '立即跑一次' }}</button>
+        </div>
+      </section>
       <section class="drawer open vue-card crawl-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">① 抓取</div></div>
@@ -43,13 +53,6 @@
               <li v-for="(w, i) in plan.warnings" :key="i">{{ w }}</li>
             </ul>
             <em>只读本地配置拼的地址，没有发请求；要抓某一页去站点页点「抓一页」</em>
-          </div>
-          <div v-if="catRows.length" class="preset-block">
-            <div class="lbl"><span>抓取分类</span><em class="drawer-meta">{{ catOnCount }}/{{ catRows.length }}</em></div>
-            <div class="cat-row pick-row">
-              <button v-for="c in catRows" :key="c.id" class="cat-chip" :class="{ on: c.on }" type="button" :disabled="!sourceHost" @click="toggleCat(c)">{{ c.label }}</button>
-            </div>
-            <div class="rule-hint">只抓选中的分类；全不选等于全抓。分类 id 按站保存。</div>
           </div>
           <div class="preset-block">
             <div v-for="r in fetchRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
@@ -322,6 +325,37 @@ const targetOpen = ref(false)
 const targetQ = ref('')
 const plan = reactive({ on: false, host: '', urls: [], warnings: [], dailyMax: 0, interval: 0, engine: '', catGroups: 0, catIds: 0, estimatedQueries: 0, today: '' })
 const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, prepare: false, screen: false })
+const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '' })
+const schedText = computed(() => {
+  if (!sched.lastRunAt) return '还没跑过'
+  const t = new Date(sched.lastRunAt).toLocaleString('zh-CN', { hour12: false })
+  return '上次 ' + t + (sched.lastError ? ' · ' + sched.lastError : '')
+})
+function applySched(d) {
+  if (!d) return
+  Object.assign(sched, { on: !!d.on, everyMinutes: Number(d.everyMinutes) || 60, running: !!d.running, lastRunAt: Number(d.lastRunAt) || 0, lastError: d.lastError || '' })
+}
+async function loadSched() {
+  const j = await getJson('/api/scheduler')
+  if (j && j.ok) applySched(j.data)
+}
+async function saveSched() {
+  const r = await fetch('/api/scheduler', { method: 'PATCH', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on: !!sched.on, everyMinutes: Number(sched.everyMinutes) || 60 }) })
+  const j = await r.json().catch(() => null)
+  if (j && j.ok) applySched(j.data)
+  else toast((j && j.error && j.error.message) || '调度设置保存失败')
+}
+function toggleSched() { sched.on = !sched.on; saveSched() }
+function setEvery(e) { sched.everyMinutes = Number(e.target.value) || 60; saveSched() }
+async function runSched() {
+  if (sched.running) return
+  sched.running = true
+  const r = await fetch('/api/scheduler/run', { method: 'POST', credentials: 'same-origin' })
+  const j = await r.json().catch(() => null)
+  toast(j && j.ok ? '调度已跑完一轮' : ((j && j.error && j.error.message) || '调度跑失败'))
+  await loadSched()
+  sched.running = false
+}
 const gates = reactive({ realCrawl: false, realPublish: false, realImages: false, loaded: false })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
@@ -365,22 +399,22 @@ function clampLimit(k, e) {
 }
 function saveSource() {
   try { localStorage.setItem('pta.crawlSite', sourceHost.value) } catch (e) { reportError('Crawl', e) }
-  loadCats()
+  loadTypes()
 }
-const catRows = ref([])
-const catOnCount = computed(() => catRows.value.filter(c => c.on).length)
-async function loadCats() {
-  if (!sourceHost.value) { catRows.value = []; return }
-  const j = await getJson('/api/crawl/cats/' + encodeURIComponent(sourceHost.value))
-  catRows.value = (j && j.ok && j.data && j.data.cats) || []
+const typeRow = computed(() => ((rules.fetch[0] && rules.fetch[0].rows) || []).find(r => r.t === '类型'))
+async function loadTypes() {
+  const row = typeRow.value
+  if (!row) return
+  if (!sourceHost.value) { row.sel = []; return }
+  const j = await getJson('/api/crawl/types/' + encodeURIComponent(sourceHost.value))
+  row.sel = (j && j.ok && j.data && j.data.types) || []
 }
-async function toggleCat(c) {
-  c.on = !c.on
-  let ids = catRows.value.filter(x => x.on).map(x => x.id)
-  if (!ids.length) { catRows.value.forEach(x => { x.on = true }); ids = catRows.value.map(x => x.id) }
-  await fetch('/api/crawl/cats/' + encodeURIComponent(sourceHost.value), {
+async function saveTypes() {
+  const row = typeRow.value
+  if (!row || !sourceHost.value) return
+  await fetch('/api/crawl/types/' + encodeURIComponent(sourceHost.value), {
     method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ids })
+    body: JSON.stringify({ types: row.sel || [] })
   })
 }
 function pickTarget(host) {
@@ -473,7 +507,8 @@ async function saveFetch() {
   busy.fetch = true
   const [a, b] = await Promise.all([
     patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value }),
-    putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny, allow: rx.allow })
+    putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny, allow: rx.allow }),
+    saveTypes()
   ])
   busy.fetch = false
   const bad = [a, b].find(j => !j || !j.ok)
@@ -529,7 +564,8 @@ async function loadSites() {
     targetHost.value = localStorage.getItem('pta.target') || ''
   } catch (e) { reportError('Crawl', e) }
   if (!siteOptions.value.some(s => s.host === sourceHost.value)) sourceHost.value = ''
-  loadCats()
+  loadTypes()
+  loadSched()
   if (!siteOptions.value.some(s => s.host === targetHost.value)) targetHost.value = ''
 }
 
@@ -705,6 +741,18 @@ onUnmounted(() => {
 .crawl-note{margin:4px 0 10px;padding:2px 16px 0;font-size:12px;color:var(--muted-2);line-height:1.6}
 .crawl-card :deep(.drawer-head){padding:12px 20px;gap:10px}
 .crawl-card :deep(.drawer-title){font-size:15px}
+.sched-bar { display:flex; align-items:center; justify-content:space-between; gap:8px 14px; flex-wrap:nowrap; background:#fff; border-radius:12px; box-shadow:var(--shadow); padding:7px 14px; }
+.sb-main { display:flex; align-items:baseline; gap:10px; min-width:0; }
+.sb-title { font-size:12px; font-weight:600; color:var(--ink); }
+.sb-note { font-size:11px; color:var(--muted-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-actions { display:flex; align-items:center; gap:10px; flex:0 0 auto; }
+.sb-sw { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); }
+.sb-every { height:26px; font-size:11.5px; width:96px; }
+@media (max-width:900px){
+  .sched-bar { flex-wrap:wrap; padding:7px 11px; }
+  .sb-main { flex:1 1 100%; }
+  .sb-actions { width:100%; justify-content:space-between; }
+}
 .crawl-card :deep(.drawer-body){padding:4px 20px 18px}
 .crawl-card :deep(.preset-block){display:flex;flex-direction:column;gap:2px}
 .crawl-card :deep(.preset-row){display:grid;grid-template-columns:68px minmax(0,1fr);align-items:center;gap:14px;padding:7px 0}
@@ -723,7 +771,7 @@ onUnmounted(() => {
 .crawl-card :deep(.limits-panel){grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:640px) {
-.crawl-card :deep(.preset-row){grid-template-columns:1fr;gap:6px}
+.crawl-card :deep(.preset-row){grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:start}
 }
 @media (max-width:640px) {
 .crawl-card :deep(.limits-panel){grid-template-columns:1fr}
@@ -809,7 +857,7 @@ onUnmounted(() => {
 .flow-group :deep(.pair-lbl) { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 .flow-group :deep(.pair-lbl .todo-badge) { flex: 0 0 auto; margin-left: 0; }
 
-@media (max-width:900px){.flow-group.cond :deep(.set-field),.flow-group :deep(.set-field.pick){grid-template-columns:1fr;gap:2px}}
+@media (max-width:900px){.flow-group.cond :deep(.set-field),.flow-group :deep(.set-field.pick){grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:center}}
 
 /* Crawl 目标站弹窗：页面专属规则，迁入 scoped */
 .target-item { display: grid; grid-template-columns: 1fr 150px 76px; gap: 12px; align-items: center; width: 100%; text-align: left; border: 0; background: none; padding: 11px 12px; border-radius: 10px; cursor: pointer; font: inherit; }

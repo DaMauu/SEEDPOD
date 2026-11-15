@@ -8,8 +8,11 @@
 .set-field .ctl { flex: 0 0 auto; }
 .set-field .ctl .input, .set-field .ctl .select { width: 240px; height: 34px; font-size: 12.5px; }
 @media (max-width: 1000px) {
-  .set-field { flex-direction: column; align-items: stretch; gap: 8px; }
-  .set-field .ctl .input, .set-field .ctl .select { width: 100%; }
+  /* 窄屏也不换行：标签在左，控件在右；只让控件内部换行 */
+  .set-field { flex-direction: row; align-items: center; gap: 10px; }
+  .set-field .lbl { flex: 0 1 40%; min-width: 64px; }
+  .set-field .ctl { flex: 1 1 auto; min-width: 0; justify-content: flex-end; flex-wrap: wrap; }
+  .set-field .ctl .input, .set-field .ctl .select { width: 100%; min-width: 0; }
 }
 .set-fields .set-field { padding: 13px 0; border-bottom: 1px solid #f6f7f9; }
 /* 设置页：加大主次差 */

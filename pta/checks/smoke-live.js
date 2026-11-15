@@ -337,19 +337,21 @@ async function main() {
     need(/未选择目标站/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
   });
 
-  await check('设置页有调度卡', async () => {
+  await check('调度在流程页，不在设置页', async () => {
     await page.evaluate(() => { location.hash = '#settings'; });
     await page.waitForTimeout(500);
     const txt = await page.locator('#set-panel').innerText();
-    need(/调度/.test(txt), '没有调度卡');
+    need(!/调度/.test(txt), '设置页不该有调度卡');
     need(/当前版本/.test(txt), '没有版本信息');
     need(/凭据密钥/.test(txt), '没有凭据密钥状态');
     need(!/站点包|站点覆盖/.test(txt), '设置页不该出现站点包/覆盖卡');
+    await page.evaluate(() => { location.hash = '#crawl'; });
+    await page.waitForTimeout(500);
+    need(await page.locator('#sched-bar').isVisible(), '流程页没有调度条');
   });
 
-  await check('设置页调度开关可用', async () => {
-    const card = page.locator('.set-card').filter({ hasText: '调度' });
-    const sw = card.locator('button.switch');
+  await check('流程页调度开关可用', async () => {
+    const sw = page.locator('#sched-bar button.switch');
     await sw.click();
     await page.waitForTimeout(500);
     let j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
