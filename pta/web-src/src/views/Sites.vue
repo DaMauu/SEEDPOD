@@ -2,38 +2,6 @@
   <div class="sites-wrap">
     <SitesStats :stats="stats" />
 
-    <SitesList
-      :page-rows="pageRows"
-      :sel="sel || ''"
-      :picks="picks"
-      :all-picked="allPicked"
-      :some-picked="somePicked"
-      :page="page"
-      :pages="pages"
-      :filtered-count="filtered.length"
-      @open="openSite"
-      @pick="togglePick"
-      @toggle-all="toggleAll"
-      @page="page = $event"
-    >
-      <template #detail="{ site }">
-        <SiteDetail v-if="sel === site.name" :key="site.name + ':' + detailNonce" :site="site" @close="closeSheet" @changed="loadAll" @removed="onSiteRemoved" />
-      </template>
-    </SitesList>
-
-    <SitesModals
-      :bulk-open="bulkOpen"
-      :picks-count="picks.length"
-      :bulk-form="bulkForm"
-      :busy-bulk="busy.bulk"
-      :add-open="addOpen"
-      :add-form="addForm"
-      @close-bulk="bulkOpen = false"
-      @apply-bulk="applyBulk"
-      @close-add="addOpen = false"
-      @add="addSite"
-    />
-
     <SitesToolbar
       :q="q"
       :status-filter="statusFilter"
@@ -57,6 +25,38 @@
       @pack="packOpen = true"
     />
 
+    <SitesList
+      :page-rows="pageRows"
+      :sel="sel || ''"
+      :picks="picks"
+      :all-picked="allPicked"
+      :some-picked="somePicked"
+      :page="page"
+      :pages="pages"
+      :filtered-count="filtered.length"
+      @open="openSite"
+      @pick="togglePick"
+      @toggle-all="toggleAll"
+      @page="page = $event"
+    >
+      <template #detail>
+        <SiteDetail v-if="selSite" :key="selSite.name + ':' + detailNonce" :site="selSite" @close="closeSheet" @changed="loadAll" @removed="onSiteRemoved" />
+      </template>
+    </SitesList>
+
+    <SitesModals
+      :bulk-open="bulkOpen"
+      :picks-count="picks.length"
+      :bulk-form="bulkForm"
+      :busy-bulk="busy.bulk"
+      :add-open="addOpen"
+      :add-form="addForm"
+      @close-bulk="bulkOpen = false"
+      @apply-bulk="applyBulk"
+      @close-add="addOpen = false"
+      @add="addSite"
+    />
+
     <Teleport to="body">
       <div v-if="packOpen" class="modal-mask" id="site-pack-modal">
         <div class="modal wide">
@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import SitesToolbar from '../components/SitesToolbar.vue'
 import SitesStats from '../components/SitesStats.vue'
 import SitesModals from '../components/SitesModals.vue'
@@ -148,6 +148,8 @@ const sites = computed(() => baseSites.value
     }
   }))
 
+const selSite = computed(() => sites.value.find(s => s.name === sel.value) || null)
+
 const filtered = computed(() => sites.value.filter(s => {
   if (statusFilter.value === 'on' && !s.enabled) return false
   if (statusFilter.value === 'off' && s.enabled) return false
@@ -180,36 +182,19 @@ const somePicked = computed(() => pageRows.value.some(s => picks.value.includes(
 const cookieCount = computed(() => sites.value.filter(s => s.cookieSaved).length)
 const stats = computed(() => {
   const list = sites.value
-  const total = list.length || 1
-  const count = { NP: 0, UNIT3D: 0, GZ: 0, OTHER: 0, '?': 0 }
-  list.forEach(s => {
-    const k = ['NP', 'UNIT3D', 'GZ', 'OTHER'].includes(s.arch) ? s.arch : '?'
-    count[k]++
-  })
-  const names = { NP: 'NexusPHP', UNIT3D: 'UNIT3D', GZ: 'Gazelle', OTHER: '其它', '?': '未确认' }
-  const colors = { NP: '#4f46e5', UNIT3D: '#6b62e8', GZ: '#8b84ee', OTHER: '#b3adf3', '?': '#c9cedb' }
-  const order = ['NP', 'UNIT3D', 'GZ', 'OTHER', '?']
-  const segs = order.filter(k => count[k]).map(k => ({ w: (count[k] / total * 100).toFixed(2), color: colors[k] }))
-  const legend = order.filter(k => count[k]).map(k => ({ name: names[k], count: count[k], color: colors[k] }))
-  const defList = Object.keys(defs.value).map(h => defs.value[h]).filter(Boolean)
-  const withCats = defList.filter(d => Object.keys(d.cats || {}).length > 0).length
-  const eng = {}
-  defList.forEach(d => { const k = d.engine || '?'; eng[k] = (eng[k] || 0) + 1 })
-  const ps = Object.keys(presets.value).map(h => presets.value[h]).filter(Boolean)
-  const confirmed = ps.filter(p => p.confirmed).length
-  let cov = '已适配 ' + defList.length + ' 站 · 有分类 ' + withCats + ' 站'
-  if (defList.length) cov += '（NP ' + (eng.nexusphp || 0) + ' · U3D ' + (eng.unit3d || 0) + ' · GZ ' + (eng.gazelle || 0) + '）'
-  if (ps.length) cov += ' · 预设已确认 ' + confirmed + ' / ' + ps.length
+  const total = list.length
+  const unknown = list.filter(s => s.login === 'none').length
   return {
-    total: list.length,
+    total: total,
     enabled: list.filter(s => s.enabled).length,
     loginFail: list.filter(s => s.login === 'fail').length,
-    unknown: list.filter(s => s.login === 'none').length,
-    segs, legend, cov
+    unknown: unknown,
+    checkedPct: total ? Math.round((total - unknown) / total * 100) : 0
   }
 })
 watch([q, statusFilter, archFilter, loginFilter, presetFilter, crawlFilter], () => { page.value = 1 })
 watch(pages, p => { if (page.value > p) page.value = p })
+watch(filtered, list => { if (sel.value && !list.some(s => s.name === sel.value)) sel.value = null })
 watch(q, () => {
   if (qTimer) clearTimeout(qTimer)
   qTimer = setTimeout(() => { page.value = 1 }, 200)
@@ -272,6 +257,12 @@ function openSite(host) {
   if (sel.value === host) { sel.value = null; return }
   sel.value = host
   detailNonce.value++
+  if (typeof window !== 'undefined' && window.innerWidth <= 900) {
+    nextTick(() => {
+      const pane = document.querySelector('.sites-detail-pane')
+      if (pane && pane.scrollIntoView) pane.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    })
+  }
 }
 function openAdd() { addForm.url = ''; addForm.arch = '?'; addForm.title = ''; addOpen.value = true }
 async function addSite() {
@@ -456,4 +447,25 @@ function onKey(e) {
 .sites-rows { flex: 0 0 auto; max-height: none; overflow: visible; }
 }
 .pack-modal-body { display: flex; flex-direction: column; gap: 12px; max-height: 70vh; }
+
+/* ===== 右侧站点详情：概览在上、设置在下，占满卡片 ===== */
+.sites-wrap :deep(.sites-detail-pane) { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #fff; }
+.sites-wrap :deep(.sites-detail-pane .site-expand) { flex: 1; min-height: 0; height: 100%; display: flex; flex-direction: column; padding: 16px 18px 12px; background: #fff; border: 0; border-radius: 0; }
+.sites-wrap :deep(.sites-detail-pane .sd-scroll) { display: block; flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; margin-right: -6px; }
+.sites-wrap :deep(.sites-detail-pane .sd-tabs) { grid-column: auto; margin: 8px 0 10px; }
+.sites-wrap :deep(.sites-detail-pane .sd-ov) { grid-column: auto; min-width: 0; }
+.sites-wrap :deep(.sites-detail-pane .sd-form) { grid-column: auto; margin-top: 0; min-width: 0; }
+.sites-wrap :deep(.sites-detail-pane .sd-compact) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 16px; align-items: start; }
+.sites-wrap :deep(.sites-detail-pane .sd-recent-wrap) { width: auto; max-width: none; justify-self: stretch; }
+.sites-wrap :deep(.sites-detail-pane .sd-form .set-fields) { grid-template-columns: 1fr; }
+.sites-wrap :deep(.sites-detail-pane .sd-form .set-field) { grid-template-columns: 120px minmax(0, 1fr); }
+.sites-wrap :deep(.sites-detail-pane .sd-form .set-field .ctl) { width: 100%; justify-content: flex-start; }
+.sites-wrap :deep(.sites-detail-pane .sd-form .set-field .ctl .input),
+.sites-wrap :deep(.sites-detail-pane .sd-form .set-field .ctl .select) { width: 100%; }
+.sites-wrap :deep(.sites-detail-pane .sd-form-actions) { padding-top: 10px; margin-top: 8px; }
+@media (max-width: 900px) {
+  .sites-wrap { height: auto; }
+  .sites-wrap :deep(.sites-detail-pane .site-expand) { padding: 12px 12px 10px; }
+  .sites-wrap :deep(.sites-detail-pane .sd-compact) { grid-template-columns: 1fr; }
+}
 </style>

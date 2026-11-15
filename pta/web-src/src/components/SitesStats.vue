@@ -1,44 +1,48 @@
 <template>
   <div class="sites-stats" id="sites-stats">
+    <div class="ss-progress">
+      <div class="ss-bar" :title="'已自检 ' + checked + ' / ' + stats.total">
+        <i :style="{ width: stats.checkedPct + '%' }"></i>
+      </div>
+      <span class="ss-cap">自检进度 {{ stats.checkedPct }}%</span>
+    </div>
     <div class="ss-nums">
       <div><span>总站点</span><b>{{ stats.total }}</b></div>
       <div><span>启用</span><b>{{ stats.enabled }}</b></div>
       <div><span>登录失效</span><b class="warn">{{ stats.loginFail }}</b></div>
       <div><span>还没自检</span><b>{{ stats.unknown }}</b></div>
     </div>
-    <div class="ss-arch">
-      <div class="ss-bar">
-        <i v-for="(x, i) in stats.segs" :key="i" class="seg" :style="{ width: x.w + '%', background: x.color }"></i>
-      </div>
-      <div class="ss-legend">
-        <span v-for="x in stats.legend" :key="x.name"><i class="dot" :style="{ background: x.color }"></i>{{ x.name }} {{ x.count }}</span>
-      </div>
-    </div>
-    <div class="ss-cov">{{ stats.cov }}</div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  stats: { type: Object, default: function () { return { total: 0, enabled: 0, loginFail: 0, unknown: 0, segs: [], legend: [], cov: '' } } }
+import { computed } from 'vue'
+const props = defineProps({
+  stats: { type: Object, default: function () { return { total: 0, enabled: 0, loginFail: 0, unknown: 0, checkedPct: 0 } } }
 })
+const checked = computed(() => Math.max(0, (Number(props.stats.total) || 0) - (Number(props.stats.unknown) || 0)))
 </script>
 
 <style scoped>
-.sites-stats { flex: 0 0 auto; display: flex; align-items: center; flex-wrap: nowrap; gap: 8px 16px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 8px 14px; margin-bottom: 8px; }
-.ss-nums { display: flex; gap: 16px; flex: 0 0 auto; }
-.ss-nums span { display: block; font-size: 10px; color: var(--muted-2); }
-.ss-nums b { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
+.sites-stats {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px 28px; flex-wrap: wrap;
+  background: #fff; border-radius: 12px; box-shadow: var(--shadow);
+  padding: 9px 16px; margin-bottom: 8px;
+}
+.ss-progress { flex: 1 1 260px; min-width: 180px; max-width: 520px; display: flex; align-items: center; gap: 10px; }
+.ss-bar { flex: 1 1 auto; height: 7px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
+.ss-bar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); transition: width .25s ease; }
+.ss-cap { flex: 0 0 auto; font-size: 10.5px; color: var(--muted-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ss-nums { display: flex; align-items: center; gap: 22px; flex: 0 0 auto; margin-left: auto; }
+.ss-nums div { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+.ss-nums span { font-size: 10.5px; color: var(--muted-2); }
+.ss-nums b { font-size: 16px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; }
 .ss-nums b.warn { color: var(--amber); }
-.ss-nums b.bad { color: var(--red); }
-.ss-arch { flex: 1 1 180px; min-width: 150px; }
-.ss-bar { display: flex; gap: 1px; height: 6px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
-.ss-bar .seg { display: block; height: 100%; }
-.ss-legend { display: flex; flex-wrap: wrap; gap: 3px 10px; margin-top: 4px; font-size: 10px; color: var(--muted); }
-.ss-legend .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
-.ss-cov { flex: 1 1 280px; margin-top: 0; font-size: 10.5px; color: var(--muted); line-height: 1.4; }
 @media (max-width: 900px) {
-  .sites-stats { flex-wrap: wrap; padding: 9px 12px; }
-  .ss-cov { flex: 1 1 100%; }
+  .sites-stats { padding: 9px 12px; gap: 8px 16px; }
+  .ss-progress { flex: 1 1 100%; max-width: none; }
+  .ss-nums { width: 100%; justify-content: space-between; gap: 10px; margin-left: 0; }
+  .ss-nums b { font-size: 15px; }
 }
 </style>

@@ -176,6 +176,33 @@ async function main() {
     need(await page.locator('#site-detail').count() === 0, 'Escape 没关闭抽屉');
   });
 
+  await check('站点页两栏、统计卡与分页', async () => {
+    await page.evaluate(() => { location.hash = '#sites'; });
+    await page.waitForTimeout(700);
+    const ui = await page.evaluate(() => {
+      const stats = document.querySelector('#sites-stats');
+      const prog = document.querySelector('#sites-stats .ss-progress').getBoundingClientRect();
+      const nums = document.querySelector('#sites-stats .ss-nums').getBoundingClientRect();
+      const work = document.querySelector('.sites-work').getBoundingClientRect();
+      const list = document.querySelector('.sites-work .sites-list').getBoundingClientRect();
+      const pane = document.querySelector('.sites-detail-pane').getBoundingClientRect();
+      const pager = document.querySelector('#sites-pager').getBoundingClientRect();
+      return {
+        hasCov: /已适配/.test(stats.innerText), progX: prog.x, numsX: nums.x,
+        workH: work.height, listH: list.height, paneH: pane.height,
+        listRight: list.right, paneLeft: pane.left, pagerBottom: pager.bottom, listBottom: list.bottom,
+        buttons: document.querySelectorAll('#sites-pager button').length,
+        links: document.querySelectorAll('#sites-pager .pager-link').length
+      };
+    });
+    need(!ui.hasCov, '统计卡还留着“已适配”文案');
+    need(ui.progX < ui.numsX, '进度条应该在总站点文字左边：' + JSON.stringify(ui));
+    need(ui.buttons === 0 && ui.links === 2, '分页不该再用按钮：' + JSON.stringify(ui));
+    need(ui.listRight <= ui.paneLeft + 1, '列表和详情没有左右分栏：' + JSON.stringify(ui));
+    need(ui.listH > 200 && ui.paneH > 200 && Math.abs(ui.listH - ui.workH) < 2, '两栏没有布满卡片：' + JSON.stringify(ui));
+    need(ui.listBottom - ui.pagerBottom < 24, '分页没贴在列表底部：' + JSON.stringify(ui));
+  });
+
   await check('面板添加站点与上传配置', async () => {
     await page.evaluate(() => { location.hash = '#dashboard'; });
     await page.waitForTimeout(200);

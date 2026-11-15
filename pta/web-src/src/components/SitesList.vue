@@ -1,12 +1,12 @@
 <template>
-  <div class="sites-panel">
-    <div class="st-head">
-      <span class="st-all"><input type="checkbox" id="site-all" aria-label="全选本站点" :checked="allPicked" :indeterminate.prop="somePicked" @change="emit('toggle-all', $event.target.checked)"></span>
-      <span></span><span>站点</span><span>架构</span><span>登录</span><span>预设</span><span>抓取</span><span>上次抓取</span>
-    </div>
-    <div class="sites-rows" id="sites-list">
-      <template v-for="s in pageRows" :key="s.name">
-        <div class="site-item" :class="{ on: sel === s.name }" @click="emit('open', s.name)">
+  <div class="sites-work">
+    <section class="sites-list">
+      <div class="st-head">
+        <span class="st-all"><input type="checkbox" id="site-all" aria-label="全选本站点" :checked="allPicked" :indeterminate.prop="somePicked" @change="emit('toggle-all', $event.target.checked)"></span>
+        <span></span><span>站点</span><span>架构</span><span>登录</span><span>预设</span>
+      </div>
+      <div class="sites-rows" id="sites-list">
+        <div v-for="s in pageRows" :key="s.name" class="site-item" :class="{ on: sel === s.name }" @click="emit('open', s.name)">
           <input type="checkbox" class="site-pick" :checked="picks.includes(s.name)" @click.stop @change="emit('pick', s.name)">
           <span class="st" :class="dotCls(s)"><i></i></span>
           <span class="si-txt"><b>{{ s.title }}</b></span>
@@ -16,17 +16,23 @@
           <span class="si-mode">{{ modeTxt(s) }}</span>
           <span class="si-last">{{ lastCrawlTxt(s) }}</span>
         </div>
-        <slot v-if="sel === s.name" name="detail" :site="s"></slot>
-      </template>
-      <div v-if="!pageRows.length" class="sites-empty">没有匹配的站点</div>
-    </div>
-    <div class="sites-pager" id="sites-pager">
-      <button class="btn ghost slim" :disabled="page <= 1" @click="emit('page', page - 1)">上一页</button>
-      <span class="soft">第 {{ page }} / {{ pages }} 页 · 共 {{ filteredCount }} 站</span>
-      <button class="btn ghost slim" :disabled="page >= pages" @click="emit('page', page + 1)">下一页</button>
-    </div>
+        <div v-if="!pageRows.length" class="sites-empty">没有匹配的站点</div>
+      </div>
+      <div class="sites-pager-wrap" id="sites-pager">
+        <div class="sites-pager">
+          <span class="pager-link" :class="{ off: page <= 1 }" @click="go(page - 1)">上一页</span>
+          <span class="pager-meta">第 {{ page }} / {{ pages }} 页 · 共 {{ filteredCount }} 站</span>
+          <span class="pager-link" :class="{ off: page >= pages }" @click="go(page + 1)">下一页</span>
+        </div>
+      </div>
+    </section>
+    <aside class="sites-detail-pane" :class="{ empty: !sel }">
+      <slot name="detail"></slot>
+      <div v-if="!sel" class="sites-detail-empty">选一个站点看概览和设置</div>
+    </aside>
   </div>
 </template>
+
 
 <script setup>
 const ARCH = {
@@ -35,7 +41,7 @@ const ARCH = {
 }
 const ENG_CODE = { nexusphp: 'NP', unit3d: 'U3D', gazelle: 'GZ' }
 
-defineProps({
+const props = defineProps({
   pageRows: { type: Array, default: function () { return [] } },
   sel: { type: String, default: '' },
   picks: { type: Array, default: function () { return [] } },
@@ -73,6 +79,11 @@ function presetTxt(s) {
   return code + (s.preset.groups ? ' ' + s.preset.groups + '组' : '') + (s.preset.confirmed ? '' : ' · 待确认')
 }
 function lastCrawlTxt(s) { return s.lastAt ? fmtWhen(s.lastAt) : '未抓取' }
+function go(n) {
+  const p = Number(props.pages) || 1
+  if (n < 1 || n > p || n === Number(props.page)) return
+  emit('page', n)
+}
 </script>
 
 <style scoped>
@@ -170,5 +181,31 @@ function lastCrawlTxt(s) { return s.lastAt ? fmtWhen(s.lastAt) : '未抓取' }
 .sites-wrap { height: auto; }
 .sites-panel { flex: 0 0 auto; }
 .sites-rows { flex: 0 0 auto; max-height: none; overflow: visible; }
+}
+
+/* ===== 站点列 + 右侧详情：布满卡片 ===== */
+.sites-work { flex: 1; min-height: 0; display: flex; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.sites-work .sites-list { width: clamp(360px, 42%, 560px); flex: 0 0 clamp(360px, 42%, 560px); min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #fff; }
+.sites-work .st-head { grid-template-columns: 24px 10px minmax(0, 1fr) 82px 66px 64px; gap: 10px; padding: 0 16px; height: 34px; }
+.sites-work .site-item { grid-template-columns: 24px 10px minmax(0, 1fr) 82px 66px 64px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
+.sites-work .si-txt b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; }
+.sites-work .si-mode, .sites-work .si-last { display: none; }
+.sites-work .sites-rows { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
+.sites-work .sites-pager-wrap { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
+.sites-work .sites-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.sites-work .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
+.sites-work .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
+.sites-work .pager-meta { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sites-detail-pane { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #fff; }
+.sites-detail-empty { margin: auto; color: var(--muted-2); font-size: 12.5px; }
+@media (max-width: 1100px) {
+  .sites-work .sites-list { width: 44%; flex-basis: 44%; }
+}
+@media (max-width: 900px) {
+  .sites-work { display: block; overflow: visible; }
+  .sites-work .si-preset { display: none; }
+  .sites-work .sites-list { width: auto; flex: none; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sites-work .sites-rows { max-height: none; overflow: visible; }
+  .sites-detail-pane { min-height: 0; }
 }
 </style>
