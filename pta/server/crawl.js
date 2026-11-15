@@ -57,7 +57,9 @@ function makeCrawl(ctx) {
       if (!block) return;
       it.descrBb = block.slice(0, 20000);
       if (ov) it.descr = ov.slice(0, 1000);
-      if (!it.subtitle && d.subtitle) it.subtitle = String(d.subtitle).slice(0, 300);
+      const subMode = String(flowConfig.value(flow, '中文副标题来源', '种子自带 → 豆影网页 → TMDB'));
+      if (d.subtitle && /^豆影网页/.test(subMode)) it.subtitle = String(d.subtitle).slice(0, 300);
+      else if (!it.subtitle && !/^只用种子自带/.test(subMode)) it.subtitle = String(d.subtitle).slice(0, 300);
       it.meta = { provider: r.provider, via: d.via || '', title: d.title || '', year: d.year || null, url: d.url || '' };
       it.metaAt = nowISO();
     } catch (e) { it.metaNote = '外部元数据失败'; }

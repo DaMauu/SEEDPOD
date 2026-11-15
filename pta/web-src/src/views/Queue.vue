@@ -110,6 +110,12 @@
                 <span v-if="t.target" class="t-sub">{{ t.target.engine }} · {{ Object.keys(t.target.fields || {}).length }} 字段</span>
                 <span v-if="t.target && (t.target.warnings || []).length" class="qd-stage-err">{{ t.target.warnings.join('；') }}</span>
                 <span v-else-if="!t.target" class="qd-stage-err">{{ t.error || '未就绪' }}</span>
+                <div v-if="t.target && t.target.fields" class="qd-plan-fields">
+                  <span v-for="(v, k) in t.target.fields" :key="k" class="chip np">{{ k }}：{{ String(v).slice(0, 60) }}</span>
+                </div>
+                <div v-if="t.target && (t.target.autoActions || []).length" class="qd-plan-actions">
+                  <span v-for="a in t.target.autoActions" :key="a" class="t-sub">· {{ a }}</span>
+                </div>
               </div>
             </div>
             <details class="qd-prepared-desc"><summary>简介预览</summary><pre>{{ sel.prepared.description || '（空）' }}</pre></details>
@@ -794,4 +800,6 @@ onUnmounted(() => {
 .qd-target-plans { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
 .qd-target-plan-head { font-size: 11px; font-weight: 600; color: var(--muted); }
 .qd-target-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.qd-plan-fields { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; }
+.qd-plan-actions { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; }
 </style>

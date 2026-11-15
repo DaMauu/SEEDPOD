@@ -138,6 +138,7 @@ function makeTarget(ctx) {
      禁转/限转只表示来源站限制，不往目标站勾，避免把自己锁死。 */
   const TAG_BLOCK = /^(禁转|限转|禁止转载|禁止转发|官方|应求)$/;
   function tagList(item) {
+    if (!flowConfig.on(flowConfig.read(ctx), '自动勾选标签', true)) return [];
     const raw = item && item.tags;
     let list = Array.isArray(raw) ? raw : String(raw == null ? '' : raw).split(/[,，、\s]+/);
     list = list.map(function (x) { return String(x == null ? '' : x).trim(); }).filter(Boolean);
@@ -167,8 +168,8 @@ function makeTarget(ctx) {
       resolution: res,
       audio: String(item.audio || ''),
       team: String(item.team || item.group || ''),
-      anonymous: item.anonymous ? '1' : '0',
-      anonymousYes: item.anonymous ? 'yes' : '',
+      anonymous: (item.anonymous !== undefined ? !!item.anonymous : flowConfig.on(flowConfig.read(ctx), '默认匿名', false)) ? '1' : '0',
+      anonymousYes: (item.anonymous !== undefined ? !!item.anonymous : flowConfig.on(flowConfig.read(ctx), '默认匿名', false)) ? 'yes' : '',
       typeId: String(item.typeId || ''),
       resolutionId: String(item.resolutionId || ''),
       year: String(item.year || ''),

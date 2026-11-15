@@ -52,6 +52,12 @@
               </div>
             </div>
           </div>
+          <div v-if="rxRows.length" class="preset-block">
+            <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
+              <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <div class="ctl"><RuleOrSpecial :r="r" /></div>
+            </div>
+          </div>
           <div class="limits-panel">
             <div v-for="l in limitItems" :key="l.k" class="limit-item">
               <div class="lbl">{{ l.label }}</div>
@@ -185,6 +191,7 @@ const limitItems = [
 const detail = ref(false)
 const autoDupe = ref(false)
 const fetchRows = computed(() => (rules.fetch[0] && rules.fetch[0].rows) || [])
+const rxRows = computed(() => (rules.fetch[1] && rules.fetch[1].rows) || [])
 const fetchSum = computed(() => {
   let n = 0
   fetchRows.value.forEach(r => { n += (r.sel || []).length })
@@ -343,7 +350,7 @@ async function saveFetch() {
   busy.fetch = true
   const [a, b] = await Promise.all([
     patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value }),
-    putFlow({ fetch: serialize(rules.fetch) })
+    putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny, allow: rx.allow })
   ])
   busy.fetch = false
   const bad = [a, b].find(j => !j || !j.ok)
