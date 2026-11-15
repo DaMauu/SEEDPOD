@@ -1,28 +1,5 @@
 <template>
   <div class="sites-wrap">
-    <SitesToolbar
-      :q="q"
-      :status-filter="statusFilter"
-      :arch-filter="archFilter"
-      :login-filter="loginFilter"
-      :preset-filter="presetFilter"
-      :crawl-filter="crawlFilter"
-      :status-tabs="statusTabs"
-      :picks-count="picks.length"
-      :cookie-count="cookieCount"
-      :busy-selfcheck="busy.selfcheck"
-      @update:q="q = $event"
-      @update:status-filter="statusFilter = $event"
-      @update:arch-filter="archFilter = $event"
-      @update:login-filter="loginFilter = $event"
-      @update:preset-filter="presetFilter = $event"
-      @update:crawl-filter="crawlFilter = $event"
-      @bulk="openBulk"
-      @selfcheck="selfcheckAll"
-      @add="openAdd"
-      @pack="packOpen = true"
-    />
-
     <SitesStats :stats="stats" />
 
     <SitesList
@@ -55,6 +32,29 @@
       @apply-bulk="applyBulk"
       @close-add="addOpen = false"
       @add="addSite"
+    />
+
+    <SitesToolbar
+      :q="q"
+      :status-filter="statusFilter"
+      :arch-filter="archFilter"
+      :login-filter="loginFilter"
+      :preset-filter="presetFilter"
+      :crawl-filter="crawlFilter"
+      :status-tabs="statusTabs"
+      :picks-count="picks.length"
+      :cookie-count="cookieCount"
+      :busy-selfcheck="busy.selfcheck"
+      @update:q="q = $event"
+      @update:status-filter="statusFilter = $event"
+      @update:arch-filter="archFilter = $event"
+      @update:login-filter="loginFilter = $event"
+      @update:preset-filter="presetFilter = $event"
+      @update:crawl-filter="crawlFilter = $event"
+      @bulk="openBulk"
+      @selfcheck="selfcheckAll"
+      @add="openAdd"
+      @pack="packOpen = true"
     />
 
     <Teleport to="body">
@@ -265,9 +265,11 @@ async function loadAll() {
   loadBusy = false
 }
 function ensure() {
-  if (viewVisible('sites') && loggedIn()) loadAll()
+  if (!viewVisible('sites')) { if (sel.value) sel.value = null; return }
+  if (loggedIn()) loadAll()
 }
 function openSite(host) {
+  if (sel.value === host) { sel.value = null; return }
   sel.value = host
   detailNonce.value++
 }

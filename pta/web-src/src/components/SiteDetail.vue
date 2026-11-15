@@ -18,18 +18,16 @@
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
                 <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
-                <button class="btn slim tabbtn" :class="{ active: tab === 'overview' }" type="button" @click.stop="tab = 'overview'">概览</button>
-                <button class="btn slim tabbtn" :class="{ active: tab === 'settings' }" type="button" @click.stop="tab = 'settings'">设置</button>
               </div>
               <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeSheet">✕</button>
             </div>
 
-            <div v-if="tab === 'settings'" class="sd-tabs">
-              <button v-for="t in setTabs" :key="t.v" class="btn slim tabbtn" :class="{ active: setTab === t.v }" type="button" @click.stop="setTab = t.v">{{ t.label }}</button>
-            </div>
 
             <div class="sd-scroll">
-              <div v-if="tab === 'overview'" class="sd-ov">
+            <div class="sd-tabs">
+              <button v-for="t in setTabs" :key="t.v" class="btn slim tabbtn" :class="{ active: setTab === t.v }" type="button" @click.stop="setTab = t.v">{{ t.label }}</button>
+            </div>
+              <div class="sd-ov">
                 <div class="sd-strip">
                   <span>已收录<b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></span>
                   <span>今日<b>{{ s.todayCount ? '+' + s.todayCount : '—' }}</b></span>
@@ -67,7 +65,7 @@
                 </div>
               </div>
 
-              <div v-else class="sd-form">
+              <div class="sd-form">
                 <template v-if="setTab === 'login'">
                   <div class="set-fields">
                     <div class="set-field">
@@ -244,7 +242,7 @@
               </div>
             </div>
 
-            <div v-if="tab === 'settings'" class="sd-form-actions">
+            <div class="sd-form-actions">
               <button class="btn primary slim" type="button" :disabled="busy.save" @click.stop="saveSite(s)">{{ busy.save ? '保存中…' : '保存设置' }}</button>
               <button class="btn ghost slim" type="button" :disabled="busy.save" @click.stop="resetSite(s)">恢复默认</button>
               <div class="spacer"></div>
@@ -280,7 +278,6 @@ const catPurposes = [
 ]
 const s = computed(function () { return props.site || {} })
 const host = computed(function () { return (props.site && props.site.name) || '' })
-const tab = ref('overview')
 const setTab = ref('login')
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
 const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDaily: '', ovDetail: false, priority: 'normal' })
@@ -731,7 +728,6 @@ onMounted(function () {
 })
 watch(host, function (h, old) {
   if (h && h !== old) {
-    tab.value = 'overview'
     setTab.value = 'login'
     fillForm(s.value)
     loadDetail(h)
@@ -1080,5 +1076,21 @@ watch(host, function (h, old) {
 .sites-wrap { height: auto; }
 .sites-panel { flex: 0 0 auto; }
 .sites-rows { flex: 0 0 auto; max-height: none; overflow: visible; }
+}
+/* 概览在左、设置在右，不再用大页签切换 */
+.site-expand .sd-scroll { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 0 22px; align-items: start; overflow-y: auto; }
+.site-expand .sd-tabs { grid-column: 2; grid-row: 1; margin: 0 0 10px; }
+.site-expand .sd-ov { grid-column: 1; grid-row: 1 / span 2; min-width: 0; }
+.site-expand .sd-form { grid-column: 2; grid-row: 2; min-width: 0; margin-top: 0; }
+.site-expand .sd-scroll .sd-compact { grid-template-columns: 1fr; gap: 12px; }
+.site-expand .sd-form .set-fields { grid-template-columns: 1fr; }
+.site-expand .sd-form .set-field { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 12px; }
+.site-expand .sd-form .set-field .ctl { width: 100%; justify-content: flex-start; }
+.site-expand .sd-form .set-field .ctl .input, .site-expand .sd-form .set-field .ctl .select { width: 100%; }
+.site-expand .sd-form .set-field:has(textarea) { display: block; }
+.site-expand .sd-form .set-field:has(textarea) .lbl { margin-bottom: 6px; }
+@media (max-width: 1000px) {
+  .site-expand .sd-scroll { display: block; overflow-y: auto; }
+  .site-expand .sd-tabs { margin: 0 0 10px; }
 }
 </style>

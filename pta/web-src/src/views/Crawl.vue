@@ -112,7 +112,7 @@
         </div>
       </section>
 
-      <section class="drawer open vue-card">
+      <section class="drawer open vue-card pub-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">发布</div></div>
           <div class="drawer-head-right">
@@ -537,14 +537,14 @@ const RuleOrSpecial = (props) => {
   const r = props.r
   const kind = specialOf(r)
   if (kind === 'target') {
-    return h('div', { class: 'target-pick' }, [
-      h('em', { class: 'tp-ava', id: 'tp-ava' }, targetSite.value ? initialsOf(targetSite.value.title || targetSite.value.host) : '?'),
-      h('div', { class: 'tp-info' }, [
-        h('b', { id: 'tp-name' }, targetSite.value ? (targetSite.value.title || targetSite.value.host) : '未选择'),
-        h('span', { id: 'tp-host' }, targetSite.value ? targetSite.value.host : '')
-      ]),
-      h('button', { class: 'btn ghost slim', id: 'tp-change', type: 'button', onClick: () => { targetQ.value = ''; targetOpen.value = true } }, '更换')
-    ])
+    const cur = targetSite.value
+    const kids = []
+    if (cur) kids.push(h('em', { class: 'tp-ava', id: 'tp-ava' }, initialsOf(cur.title || cur.host)))
+    kids.push(h('div', { class: 'tp-info' }, cur
+      ? [h('b', { id: 'tp-name' }, cur.title || cur.host), h('span', { id: 'tp-host' }, cur.host)]
+      : [h('b', { id: 'tp-name' }, '未选择目标站')]))
+    kids.push(h('button', { class: 'btn ghost slim', id: 'tp-change', type: 'button', onClick: () => { targetQ.value = ''; targetOpen.value = true } }, cur ? '更换' : '选择站点'))
+    return h('div', { class: 'target-pick' + (cur ? '' : ' empty') }, kids)
   }
   if (kind === 'tpl') {
     return h('div', { class: 'tpl-wrap' }, [
@@ -761,4 +761,61 @@ onUnmounted(() => {
 .drawers .drawer-title, .drawers :deep(.drawer-title) { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
 .drawers .drawer-desc, .drawers :deep(.drawer-desc) { margin-top: 3px; font-size: 11.5px; color: var(--muted-2); white-space: normal; }
 .drawers .drawer-meta, .drawers :deep(.drawer-meta) { font-size: 11.5px; color: var(--muted); }
-.drawers .drawer-body, .drawers :deep(.drawer-body) { padding: 2px 22px 10px; }</style>
+.drawers .drawer-body, .drawers :deep(.drawer-body) { padding: 2px 22px 10px; }
+/* ===== 发布区：三级层级 + 单行左右排布，无内嵌卡片/横线 ===== */
+.pub-card > .drawer-head { border-bottom: 0; background: #fff; }
+.pub-card .flow-group { background: transparent; border: 0; border-radius: 0; padding: 0; margin: 0 0 16px; }
+.pub-card .flow-group:last-child { margin-bottom: 0; }
+.pub-card .flow-group .flow-ttl {
+  display: flex; align-items: center; gap: 7px;
+  margin: 0 0 3px; padding: 0;
+  font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em;
+}
+.pub-card .flow-group .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
+.pub-card .flow-group .set-fields { display: flex; flex-direction: column; gap: 0; padding-left: 10px; }
+.pub-card .flow-group .set-fields .set-field,
+.pub-card .flow-group .set-fields .set-field.pick {
+  display: grid; grid-template-columns: 200px minmax(0, 1fr);
+  align-items: center; gap: 16px;
+  padding: 4px 0; margin: 0; border: 0; min-width: 0;
+}
+.pub-card .flow-group .set-fields .set-field.sec { display: block; padding: 11px 0 2px; border: 0; }
+.pub-card .flow-group .set-fields .set-field.sec:first-child { padding-top: 2px; }
+.pub-card .flow-group .set-fields .set-field .lbl { margin: 0; min-width: 0; }
+.pub-card .flow-group .set-fields .set-field .lbl span { font-size: 12.5px; font-weight: 400; color: #5b6573; line-height: 1.4; }
+.pub-card .flow-group .set-fields .set-field .ctl {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 8px; width: 100%; min-width: 0; flex-wrap: nowrap;
+}
+.pub-card .flow-group .set-fields .set-field .ctl > .input,
+.pub-card .flow-group .set-fields .set-field .ctl > .select { width: 100%; max-width: 460px; height: 30px; font-size: 12px; }
+.pub-card .flow-group .set-fields .set-field.wide { grid-column: 1 / -1; }
+.pub-card .flow-group .set-fields .set-field.wide .rx-test { width: 100%; }
+.pub-card .flow-group .set-fields .set-field.wide .rx-test .input { max-width: none; flex: 1 1 auto; }
+.pub-card .flow-group .set-fields .set-field .pick-row { display: flex; flex-wrap: nowrap; justify-content: flex-end; gap: 6px; max-width: none; overflow-x: auto; scrollbar-width: thin; }
+.pub-card .flow-group .set-fields .set-field .cat-chip { flex: 0 0 auto; }
+.pub-card .flow-group .sec-ttl { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted-2); letter-spacing: .06em; }
+.pub-card .flow-group .sec-ttl::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted-2); flex: 0 0 auto; }
+.pub-card .target-pick {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 34px; max-width: 100%; padding: 4px 5px 4px 9px;
+  border: 1px solid var(--line-2); border-radius: 9px; background: #fff;
+}
+.pub-card .target-pick.empty { border-style: dashed; background: var(--panel-2); }
+.pub-card .target-pick .tp-ava { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 6px; font-size: 9.5px; }
+.pub-card .target-pick .tp-info { display: flex; align-items: baseline; gap: 7px; min-width: 0; margin: 0 2px 0 0; text-align: left; }
+.pub-card .target-pick .tp-info b { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.pub-card .target-pick.empty .tp-info b { font-weight: 500; color: var(--muted); }
+.pub-card .target-pick .tp-info span { font-size: 11px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) {
+  .pub-card .flow-group .set-fields { padding-left: 0; }
+  .pub-card .flow-group .set-fields .set-field,
+  .pub-card .flow-group .set-fields .set-field.pick { grid-template-columns: 1fr; gap: 4px; }
+  .pub-card .flow-group .set-fields .set-field .ctl { justify-content: flex-start; flex-wrap: wrap; }
+  .pub-card .flow-group .set-fields .set-field .ctl > .input,
+  .pub-card .flow-group .set-fields .set-field .ctl > .select { max-width: none; }
+  .pub-card .flow-group .set-fields .set-field .pick-row { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
+  .pub-card .target-pick { width: 100%; }
+  .pub-card .target-pick .tp-info { flex-wrap: wrap; }
+}
+</style>

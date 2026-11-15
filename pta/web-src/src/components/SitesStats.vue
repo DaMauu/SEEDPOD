@@ -25,16 +25,20 @@ defineProps({
 </script>
 
 <style scoped>
-.sites-stats { flex: 0 0 auto; display: flex; align-items: center; flex-wrap: wrap; gap: 14px 27px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 13px 20px; margin-bottom: 12px; }
-.ss-nums { display: flex; gap: 26px; flex: 0 0 auto; }
-.ss-nums span { display: block; font-size: 10.5px; color: var(--muted-2); }
-.ss-nums b { font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
+.sites-stats { flex: 0 0 auto; display: flex; align-items: center; flex-wrap: nowrap; gap: 8px 16px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); padding: 8px 14px; margin-bottom: 8px; }
+.ss-nums { display: flex; gap: 16px; flex: 0 0 auto; }
+.ss-nums span { display: block; font-size: 10px; color: var(--muted-2); }
+.ss-nums b { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
 .ss-nums b.warn { color: var(--amber); }
 .ss-nums b.bad { color: var(--red); }
-.ss-arch { flex: 1 1 220px; min-width: 220px; }
-.ss-bar { display: flex; gap: 2px; height: 8px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
+.ss-arch { flex: 1 1 180px; min-width: 150px; }
+.ss-bar { display: flex; gap: 1px; height: 6px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
 .ss-bar .seg { display: block; height: 100%; }
-.ss-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 7px; font-size: 10.5px; color: var(--muted); }
-.ss-legend .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
-.ss-cov { flex: 1 1 100%; margin-top: 0; font-size: 11px; color: var(--muted); line-height: 1.65; }
+.ss-legend { display: flex; flex-wrap: wrap; gap: 3px 10px; margin-top: 4px; font-size: 10px; color: var(--muted); }
+.ss-legend .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+.ss-cov { flex: 1 1 280px; margin-top: 0; font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 900px) {
+  .sites-stats { flex-wrap: wrap; padding: 9px 12px; }
+  .ss-cov { flex: 1 1 100%; }
+}
 </style>

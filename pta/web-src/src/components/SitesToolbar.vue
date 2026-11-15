@@ -36,14 +36,14 @@
       <option value="today">今日抓过</option>
       <option value="never">还没抓过</option>
     </select>
-    <button class="btn ghost slim" id="bulk-open" :disabled="!picksCount" @click="emit('bulk')">
-      {{ picksCount ? '批量设置（' + picksCount + '）' : '批量设置' }}
+    <button class="btn ghost slim" id="bulk-open" :disabled="!picksCount" title="批量设置选中的站点" @click="emit('bulk')">
+      {{ picksCount ? '批量 ' + picksCount : '批量' }}
     </button>
     <button class="btn ghost slim" id="sites-pack-open" type="button" @click="emit('pack')">站点包</button>
     <button class="btn ghost slim" id="site-selfcheck" :disabled="busySelfcheck || !cookieCount" title="对有 cookie 的站点逐个跑一次会话自检；每个站只发一次 GET" @click="emit('selfcheck')">
-      {{ busySelfcheck ? '自检中…' : '自检有 cookie 的站' }}
+      {{ busySelfcheck ? '自检中…' : '自检' }}
     </button>
-    <button class="btn primary slim" type="button" @click="emit('add')">添加站点</button>
+    <button class="btn primary slim" id="site-add" type="button" title="添加站点" @click="emit('add')">添加</button>
   </div>
 </template>
 
@@ -64,15 +64,24 @@ const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter'
 </script>
 
 <style scoped>
-.sites-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-.sites-search { position: relative; width: 232px; }
-.sites-search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--muted-2); }
+.sites-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: nowrap; min-width: 0; }
+.sites-search { position: relative; width: 190px; flex: 0 0 190px; }
+.sites-search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--muted-2); }
 .sites-search input {
-  width: 100%; height: 36px; padding: 0 12px 0 33px; border-radius: 10px;
-  border: 1px solid var(--line-2); background: #fff; font: inherit; font-size: 12.5px; color: var(--ink);
+  width: 100%; height: 30px; padding: 0 10px 0 28px; border-radius: 8px;
+  border: 1px solid var(--line-2); background: #fff; font: inherit; font-size: 11.5px; color: var(--ink);
 }
 .sites-search input::placeholder { color: var(--muted-2); }
 .sites-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.09); }
+.sites-bar .seg-tabs { flex: 0 0 auto; }
+.sites-bar .seg-tabs button { height: 30px; padding: 0 8px; font-size: 11.5px; }
+.sites-bar .select { width: auto; max-width: 108px; height: 30px; font-size: 11px; padding: 0 7px; }
+.sites-bar .btn { height: 30px; padding: 0 9px; font-size: 11.5px; white-space: nowrap; }
+.sites-bar .spacer { flex: 1 1 auto; min-width: 4px; }
+@media (max-width: 1199px) {
+  .sites-bar { flex-wrap: wrap; gap: 6px; }
+  .sites-search { flex: 1 1 180px; width: auto; }
+}
 @media (max-width: 900px) {
   .sites-bar { flex-wrap: wrap; gap: 8px; }
   .sites-bar .input, .sites-bar .select { max-width: 100%; }

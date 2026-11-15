@@ -107,6 +107,28 @@ async function main() {
     need(await page.locator('.view[data-view="changelog"]:not([hidden])').count() === 1, '更新日志路由被重定向');
   });
 
+  await check('桌面导航纯图标、不压卡片、悬停切页', async () => {
+    await page.evaluate(() => { location.hash = '#dashboard'; });
+    await page.waitForTimeout(500);
+    const geo = await page.evaluate(() => {
+      const d = document.querySelector('.dock').getBoundingClientRect();
+      const m = document.querySelector('.main').getBoundingClientRect();
+      return { dock: [d.x, d.y, d.width, d.height], mainRight: m.x + m.width, label: getComputedStyle(document.querySelector('.dock-label')).display };
+    });
+    need(geo.label === 'none', '桌面导航还显示文字：' + JSON.stringify(geo));
+    need(geo.dock[0] >= geo.mainRight + 8, '桌面导航压到卡片：' + JSON.stringify(geo));
+    await page.evaluate(() => { window.__noReload = 1; });
+    await page.locator('.dock-item[data-view="sites"]').hover();
+    await page.waitForTimeout(500);
+    const hov = await page.evaluate(() => ({
+      marker: window.__noReload,
+      view: [...document.querySelectorAll('.view:not([hidden])')].map(v => v.getAttribute('data-view')),
+      hash: location.hash
+    }));
+    need(hov.marker === 1, '悬停切页刷新了页面');
+    need(hov.view.length === 1 && hov.view[0] === 'sites' && hov.hash === '#sites', '悬停没切到站点：' + JSON.stringify(hov));
+  });
+
   await check('总览数据块渲染', async () => {
     await page.evaluate(() => { location.hash = '#dashboard'; });
     await page.waitForTimeout(700);
@@ -142,9 +164,13 @@ async function main() {
     need(await page.locator('#site-detail').isVisible(), '详情没打开');
     const dtxt = await page.locator('#site-detail').innerText();
     need(/登录/.test(dtxt) && /抓取/.test(dtxt), '抽屉概览没渲染：' + dtxt.slice(0, 80));
-    await page.locator('#site-detail .tabbtn').filter({ hasText: '设置' }).click();
+    need(await page.locator('#site-detail textarea').count() === 1, '设置区 cookie 输入框缺失');
+    await items.first().click();
     await page.waitForTimeout(300);
-    need(await page.locator('#site-detail textarea').count() === 1, '设置页 cookie 输入框缺失');
+    need(await page.locator('#site-detail').count() === 0, '再次点击站点标题没收回');
+    await items.first().click();
+    await page.waitForTimeout(300);
+    need(await page.locator('#site-detail').count() === 1, '重新打开站点详情失败');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
     need(await page.locator('#site-detail').count() === 0, 'Escape 没关闭抽屉');
@@ -155,7 +181,7 @@ async function main() {
     await page.waitForTimeout(200);
     await page.evaluate(() => { location.hash = '#sites'; });
     await page.waitForTimeout(700);
-    await page.locator('.sites-bar button').filter({ hasText: '添加站点' }).click();
+    await page.locator('#site-add').click();
     await page.waitForTimeout(300);
     need(await page.locator('#site-add-modal').isVisible(), '添加站点弹窗没打开');
     const inputs = page.locator('#site-add-modal input');
@@ -167,8 +193,6 @@ async function main() {
     need(await page.locator('.site-item').count() === 4, '添加后站点数量不对：' + await page.locator('.site-item').count());
     need(/Added Site/.test(await page.locator('#sites-list').innerText()), '添加的站点没出现');
     need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
-    await page.locator('#site-detail .tabbtn').filter({ hasText: '设置' }).click();
-    await page.waitForTimeout(200);
     await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
     await page.waitForTimeout(300);
     need(await page.locator('#site-detail textarea').count() === 1, '上传配置文本域缺失');
@@ -199,8 +223,6 @@ async function main() {
     await page.waitForTimeout(500);
     await page.locator('.site-item').first().click();
     await page.waitForTimeout(600);
-    await page.locator('#site-detail .tabbtn').filter({ hasText: '设置' }).click();
-    await page.waitForTimeout(300);
     await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
     await page.waitForTimeout(400);
     const rows = page.locator('#site-detail .cm-row:not(.cm-head)');
@@ -251,6 +273,28 @@ async function main() {
     });
     need(await page.locator('.todo-badge').count() === todoCount, '未接标记数量不对');
     need(!(await page.locator('#rx-deny').isDisabled()), '排除正则被误禁用');
+    const pubUi = await page.evaluate(() => {
+      const card = document.querySelector('.pub-card');
+      const group = card && card.querySelector('.flow-group');
+      const field = card && card.querySelector('.flow-group .set-field');
+      if (!card || !group || !field) return null;
+      const gs = getComputedStyle(group);
+      const fs = getComputedStyle(field);
+      return {
+        groups: card.querySelectorAll('.flow-group').length,
+        bg: gs.backgroundColor,
+        border: gs.borderTopWidth,
+        borderBottom: fs.borderBottomWidth,
+        display: fs.display,
+        cols: fs.gridTemplateColumns,
+        target: (card.querySelector('#tp-name') || {}).textContent || ''
+      };
+    });
+    need(pubUi && pubUi.groups === 5, '发布分组数量不对：' + JSON.stringify(pubUi));
+    need(pubUi.bg === 'rgba(0, 0, 0, 0)' && pubUi.border === '0px', '发布分组不该有卡片：' + JSON.stringify(pubUi));
+    need(pubUi.borderBottom === '0px', '发布字段底下不该有横线：' + JSON.stringify(pubUi));
+    need(pubUi.display === 'grid' && pubUi.cols.split(' ').length === 2, '发布字段不是左右两列：' + JSON.stringify(pubUi));
+    need(/未选择目标站/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
   });
 
   await check('设置页有调度卡', async () => {

@@ -29,6 +29,8 @@
 | G13 | 站点覆盖与验证：3→10→100 站 | 🟡 覆盖面板已接 · 真实提交待权限 | G5、G10 | 177 定义 / 177 计划 ok / 9 ready；真实证据待做 |
 | G14 | 可选 Python sidecar：AI/OCR/pandas/Scrapy | ⚪ 可选 | 有具体需求再开 | 离线 JSON 任务，不换主后端 |
 
+> UI 收口（0.7.196）：桌面导航、站点页、发布区版式已重做；不改变下列 goal 状态。
+
 ## G0 · 项目地基（已完成）
 
 Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作为基线存在；后续 goal 不重选技术栈、不引入 Redis/消息队列/独立 worker/Postgres。

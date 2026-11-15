@@ -31,7 +31,7 @@
   </div>
 
   <nav class="dock" id="dock-root">
-    <a v-for="v in navViews" :key="v.key" class="dock-item" :class="{ active: current === v.key }" :href="'#' + v.key" :data-view="v.key" :title="v.label">
+    <a v-for="v in navViews" :key="v.key" class="dock-item" :class="{ active: current === v.key }" :href="'#' + v.key" :data-view="v.key" :title="v.label" @mouseenter="hoverView(v.key)">
       <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="v.icon" /></svg>
       <span class="dock-label">{{ v.label }}</span>
     </a>
@@ -120,6 +120,10 @@ function okConfirm() { const fn = confirmState.fn; closeConfirm(); if (fn) fn() 
 window.PTA = { toast: toast, confirm: confirmBox, MOCK: {} }
 
 let synthetic = false
+function hoverView(key) {
+  if (!authed.value || current.value === key) return
+  if (location.hash !== '#' + key) location.hash = '#' + key
+}
 function applyHash() {
   if (synthetic) { synthetic = false; return }
   let key = (location.hash || '#dashboard').slice(1).split('?')[0]

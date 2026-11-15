@@ -6,6 +6,10 @@
   white-space: nowrap; box-shadow: none;
   opacity: 1; visibility: visible; pointer-events: auto;
 }
+@media (min-width: 901px) {
+  .dock-item .dock-label { display: none; }
+  .dock-item { padding: 9px; gap: 0; }
+}
 .dock-item .dock-label::after { display: none; }
 .dock-icon { width: 18px; height: 18px; flex: 0 0 18px; display: block; }
 @media (max-width: 900px) {
@@ -33,4 +37,13 @@
 @media (max-width: 360px) {
   .dock .dock-label { font-size: 8.5px; }
   .dock-icon { width: 16px; height: 16px; flex-basis: 16px; }
+}
+
+/* desktop: icon-only rail sits outside the 1230px card, with a 12px gap */
+@media (min-width: 1400px) {
+  .dock { right: max(8px, calc(50vw - 684px)); }
+}
+@media (min-width: 1320px) and (max-width: 1399px) {
+  .main { max-width: 1150px; }
+  .dock { right: 8px; }
 }
