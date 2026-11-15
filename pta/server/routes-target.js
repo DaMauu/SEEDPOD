@@ -29,7 +29,7 @@ module.exports = function (app, ctx) {
     const flow = JSON.parse(row ? row.v : 'null') || {};
     const sets = flow.sets || {};
     const out = {};
-    ['dedupe', 'pub'].forEach(function (k) {
+    ['fetch', 'dedupe', 'pub'].forEach(function (k) {
       (Array.isArray(sets[k]) ? sets[k] : []).forEach(function (g) {
         (Array.isArray(g) ? g : []).forEach(function (r) {
           if (r && r.t && out[r.t] === undefined) out[r.t] = r;

@@ -5,7 +5,7 @@ const flowConfig = require('./flow-config');
 
 function flowRules(sets, rx) {
   const allRows = [];
-  ['dedupe', 'pub'].forEach(function (k) {
+  ['fetch', 'dedupe', 'pub'].forEach(function (k) {
     const arr = Array.isArray(sets[k]) ? sets[k] : [];
     arr.forEach(function (g) { if (Array.isArray(g)) g.forEach(function (r) { if (r) allRows.push(r); }); });
   });

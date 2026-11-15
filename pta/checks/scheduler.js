@@ -82,7 +82,7 @@ async function main() {
   await check('手动跑一轮：送审复用、发布失败留记录', async () => {
     await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[
+      body: JSON.stringify({ sets: { fetch: [[
         { t: '分辨率要求', v: '2160p 及以上' },
         { t: '体积范围', v: '10 GB 起' },
         { t: '必须带中字', on: true }

@@ -18,7 +18,7 @@
       </section>
       <section class="drawer open vue-card crawl-card">
         <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">① 抓取 · ② 初筛</div></div>
+          <div class="drawer-t"><div class="drawer-title">① 抓取</div></div>
           <div class="drawer-head-right crawl-head-tools">
             <select v-model="sourceHost" class="input slim crawl-source" id="crawl-site" title="从哪个站看抓取计划" @change="saveSource">
               <option value="">选来源站</option>
@@ -50,12 +50,6 @@
               <div class="cat-row pick-row">
                 <button v-for="c in (r.chips || [])" :key="c" class="cat-chip" :class="{ on: (r.sel || []).includes(c) }" type="button" :disabled="r.todo" @click="toggleFetchChip(r, c)">{{ c }}</button>
               </div>
-            </div>
-          </div>
-          <div v-if="rxRows.length" class="preset-block">
-            <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-              <div class="ctl"><RuleOrSpecial :r="r" /></div>
             </div>
           </div>
           <div class="limits-panel">
@@ -97,6 +91,24 @@
                 <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
                 <div class="ctl"><RuleControl :r="r" /></div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="drawer open vue-card">
+        <div class="drawer-head">
+          <div class="drawer-t"><div class="drawer-title">③ 初筛</div></div>
+          <div class="drawer-head-right">
+            <span class="drawer-meta">标题级条件 · 不通过不进队列</span>
+            <button class="btn primary slim" type="button" :disabled="busy.fetch" @click="saveFetch">{{ busy.fetch ? '保存中…' : '保存' }}</button>
+          </div>
+        </div>
+        <div class="drawer-body">
+          <div class="preset-block">
+            <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
+              <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <div class="ctl"><RuleOrSpecial :r="r" /></div>
             </div>
           </div>
         </div>
