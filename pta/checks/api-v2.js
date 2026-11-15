@@ -492,6 +492,13 @@ async function main() {
     need(bj.error && bj.error.code === 'BAD_HOST', '坏 host 错误码不对：' + JSON.stringify(bj));
   });
 
+  await check('站点覆盖统计接口', async () => {
+    const j = await (await fetchA(BASE + '/api/coverage')).json();
+    need(j.ok && typeof j.data.total === 'number', '覆盖接口结构不对：' + JSON.stringify(j));
+    need(typeof j.data.withCookie === 'number' && typeof j.data.ready === 'number', '覆盖计数缺失');
+    need(typeof j.data.planOk === 'number' && typeof j.data.planFail === 'number', '计划计数缺失');
+  });
+
   await check('凭据只回 hasCookie，不回明文', async () => {
     const put = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=secret-cookie' })

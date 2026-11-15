@@ -34,7 +34,7 @@
 - 安装时配置一次：
   - systemd：`Environment=PTA_SITE_PACK_KEY=...`
   - Docker：`environment: PTA_SITE_PACK_KEY: ...`
-- 缺密钥：不崩溃。记录明确日志，回退到私有 `data/` 站点定义；面板设置页显示“站点包未解密：缺 PTA_SITE_PACK_KEY”。
+- 缺密钥：不崩溃。记录明确日志，回退到私有 `data/` 站点定义；站点页“站点包”弹窗显示“站点包未解密：缺 PTA_SITE_PACK_KEY”。
 - 密钥轮换：用旧密钥解密 → 新密钥重新加密 → 提交新密文；旧版本无法解新包。
 - 站点包不授权任何站点访问；cookie 和上传权限仍然独立。
 
@@ -128,7 +128,7 @@
 - [x] 写 `build-site-pack.js` 生成器（`--dry` 先出覆盖率）
 - [x] 生成第一版 `pta/pack/site-pack.enc`（308 站，217,240 字节；密钥在部署环境）
 - [x] `target.js` / `crawl.js` 接入包加载优先级
-- [x] 设置页显示包状态、覆盖率、待确认例外；缺密钥有提示
+- [x] 站点页“站点包”弹窗显示包状态、覆盖率、待确认例外；缺密钥有提示
 - [x] `site-pack` 检查进 `run.sh`（5/5）
 - [x] 分类例外 UI：可筛选、确认、写私有 `data/site-defs`，不回写密文包
 - [ ] 分类自动匹配规则补到 80%+

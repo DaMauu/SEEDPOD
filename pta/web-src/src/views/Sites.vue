@@ -20,6 +20,7 @@
       @bulk="openBulk"
       @selfcheck="selfcheckAll"
       @add="openAdd"
+      @pack="packOpen = true"
     />
 
     <SitesStats :stats="stats" />
@@ -55,6 +56,21 @@
       @close-add="addOpen = false"
       @add="addSite"
     />
+
+    <Teleport to="body">
+      <div v-if="packOpen" class="modal-mask" id="site-pack-modal">
+        <div class="modal wide">
+          <div class="modal-head">
+            <h2>站点包与覆盖</h2>
+            <button class="btn ghost slim" type="button" @click="packOpen = false">关闭</button>
+          </div>
+          <div class="modal-scroll pack-modal-body">
+            <SitePackPanel />
+            <SiteCoveragePanel />
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -65,6 +81,8 @@ import SitesStats from '../components/SitesStats.vue'
 import SitesModals from '../components/SitesModals.vue'
 import SitesList from '../components/SitesList.vue'
 import SiteDetail from '../components/SiteDetail.vue'
+import SitePackPanel from '../components/SitePackPanel.vue'
+import SiteCoveragePanel from '../components/SiteCoveragePanel.vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 
@@ -87,6 +105,7 @@ const picks = ref([])
 const page = ref(1)
 const sel = ref(null)
 const detailNonce = ref(0)
+const packOpen = ref(false)
 const addOpen = ref(false)
 const addForm = reactive({ url: '', arch: '?', title: '' })
 const busy = reactive({ selfcheck: false, bulk: false })
@@ -434,4 +453,5 @@ function onKey(e) {
 .sites-panel { flex: 0 0 auto; }
 .sites-rows { flex: 0 0 auto; max-height: none; overflow: visible; }
 }
+.pack-modal-body { display: flex; flex-direction: column; gap: 12px; max-height: 70vh; }
 </style>

@@ -39,6 +39,7 @@
     <button class="btn ghost slim" id="bulk-open" :disabled="!picksCount" @click="emit('bulk')">
       {{ picksCount ? '批量设置（' + picksCount + '）' : '批量设置' }}
     </button>
+    <button class="btn ghost slim" id="sites-pack-open" type="button" @click="emit('pack')">站点包</button>
     <button class="btn ghost slim" id="site-selfcheck" :disabled="busySelfcheck || !cookieCount" title="对有 cookie 的站点逐个跑一次会话自检；每个站只发一次 GET" @click="emit('selfcheck')">
       {{ busySelfcheck ? '自检中…' : '自检有 cookie 的站' }}
     </button>
@@ -59,7 +60,7 @@ defineProps({
   cookieCount: { type: Number, default: 0 },
   busySelfcheck: Boolean
 })
-const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'bulk', 'selfcheck', 'add'])
+const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'bulk', 'selfcheck', 'add', 'pack'])
 </script>
 
 <style scoped>

@@ -59,6 +59,30 @@ module.exports = function (app, ctx) {
 
   app.get('/api/targets', async () => ok(target.list()));
 
+  app.get('/api/coverage', async (req, reply) => {
+    try {
+      const list = target.list();
+      const sample = { title: 'Coverage Test 2024 1080p Blu-ray', cat: 'movie', res: '1080p', size: '20 GB', site: 'coverage.example' };
+      const out = { total: list.length, withCookie: 0, ready: 0, upload: 0, verify: 0, planOk: 0, planFail: 0, errors: {} };
+      list.forEach(function (t) {
+        if (t.hasCookie) out.withCookie++;
+        if (t.ready) out.ready++;
+        if (t.uploadPath) out.upload++;
+        if (t.verifyPath) out.verify++;
+        const p = target.plan(t.host, sample);
+        if (p.ok) out.planOk++;
+        else {
+          out.planFail++;
+          const k = p.code || 'PLAN_FAILED';
+          out.errors[k] = (out.errors[k] || 0) + 1;
+        }
+      });
+      return ok(reply, out);
+    } catch (e) {
+      return bad(reply, 'COVERAGE_FAILED', String(e && e.message || e).slice(0, 160), 500);
+    }
+  });
+
   const DETECT_AT = new Map();
   app.post('/api/targets/:host/detect-form', async (req, reply) => {
     const host = req.params.host;

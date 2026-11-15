@@ -60,8 +60,6 @@
         </div>
       </section>
 
-      <SitePackPanel />
-
       <section class="set-card">
         <div class="set-card-head">
           <div class="set-card-t">
@@ -141,7 +139,6 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
-import SitePackPanel from '../components/SitePackPanel.vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 

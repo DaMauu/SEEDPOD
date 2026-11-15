@@ -260,6 +260,7 @@ async function main() {
     need(/调度/.test(txt), '没有调度卡');
     need(/当前版本/.test(txt), '没有版本信息');
     need(/凭据密钥/.test(txt), '没有凭据密钥状态');
+    need(!/站点包|站点覆盖/.test(txt), '设置页不该出现站点包/覆盖卡');
   });
 
   await check('设置页调度开关可用', async () => {
@@ -275,11 +276,16 @@ async function main() {
     need(j.ok && j.data.on === false, 'UI 没关闭调度');
   });
 
-  await check('设置页站点包状态', async () => {
-    await page.evaluate(() => { location.hash = '#settings'; });
-    await page.waitForTimeout(700);
-    const txt = await page.locator('#set-panel').innerText();
-    need(/站点包/.test(txt) && /未解密/.test(txt), '站点包卡缺失：' + txt.slice(0, 200));
+  await check('站点页站点包入口', async () => {
+    await page.evaluate(() => { location.hash = '#sites'; });
+    await page.waitForTimeout(800);
+    await page.locator('#sites-pack-open').click();
+    await page.waitForTimeout(600);
+    need(await page.locator('#site-pack-modal').isVisible(), '站点包弹窗没打开');
+    const txt = await page.locator('#site-pack-modal').innerText();
+    need(/站点包/.test(txt) && /未解密/.test(txt), '站点包弹窗内容不对：' + txt.slice(0, 200));
+    need(/站点覆盖/.test(txt), '站点覆盖卡不在弹窗里');
+    await page.locator('#site-pack-modal .modal-head button').filter({ hasText: '关闭' }).click();
   });
 
   await check('调度 API 默认关闭、可开关', async () => {
