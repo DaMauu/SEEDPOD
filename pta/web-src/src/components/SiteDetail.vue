@@ -17,15 +17,15 @@
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
                 <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
+                <div class="sd-tabs" id="sd-tabs">
+                  <button v-for="t in setTabs" :key="t.v" class="tabbtn" :class="{ active: setTab === t.v }" type="button" @click.stop="setTab = t.v">{{ t.label }}</button>
+                </div>
               </div>
               <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeSheet">✕</button>
             </div>
 
 
             <div class="sd-scroll">
-            <div class="sd-tabs">
-              <button v-for="t in setTabs" :key="t.v" class="btn slim tabbtn" :class="{ active: setTab === t.v }" type="button" @click.stop="setTab = t.v">{{ t.label }}</button>
-            </div>
               <div class="sd-ov">
                 <div class="sd-strip">
                   <span>已收录<b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></span>
@@ -776,9 +776,9 @@ watch(host, function (h, old) {
 @media (max-width: 1100px) {
 .sites-list { width: 100%; flex: none; max-height: 360px; }
 }
-.sd-tabs { display: flex; gap: 2px; margin: 16px 0 0; border-bottom: 1px solid var(--line); }
-.sd-tabs button { border: 0; background: none; padding: 9px 12px; font: inherit; font-size: 12.5px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-.sd-tabs button.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+.sd-tabs { display: flex; align-items: center; gap: 3px; margin: 0; flex: 0 0 auto; }
+.sd-tabs .tabbtn { height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; font-size: 11px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.sd-tabs .tabbtn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 .sd-form { margin-top: 4px; display: grid; gap: 14px; }
 .sd-field { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 0; font-size: 12.5px; color: var(--muted); }
 .sd-field + .sd-field { border-top: 1px solid #f5f6f8; }
@@ -916,6 +916,8 @@ watch(host, function (h, old) {
 .site-expand .sd-id h2 { font-size: 16px; margin-bottom: 2px; }
 .site-expand .sd-actions { grid-column: 2; display: flex; gap: 5px; flex-wrap: nowrap; align-items: center; }
 .site-expand .sd-actions .btn { height: 26px; padding: 0 8px; font-size: 11px; white-space: nowrap; }
+.site-expand .sd-actions .select, .site-expand .sd-actions .switch { height: 26px; }
+.site-expand .sd-actions { overflow-x: auto; }
 .site-expand .sheet-x { position: absolute; top: 0; right: 0; }
 .site-expand .sd-scroll { overflow: visible; }
 .site-expand .sd-top { grid-template-columns: minmax(0, 1fr) auto; }
@@ -1078,7 +1080,6 @@ watch(host, function (h, old) {
 }
 /* 概览在左、设置在右，不再用大页签切换 */
 .site-expand .sd-scroll { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 0 22px; align-items: start; overflow-y: auto; }
-.site-expand .sd-tabs { grid-column: 2; grid-row: 1; margin: 0 0 10px; }
 .site-expand .sd-ov { grid-column: 1; grid-row: 1 / span 2; min-width: 0; }
 .site-expand .sd-form { grid-column: 2; grid-row: 2; min-width: 0; margin-top: 0; }
 .site-expand .sd-scroll .sd-compact { grid-template-columns: 1fr; gap: 12px; }
@@ -1090,6 +1091,5 @@ watch(host, function (h, old) {
 .site-expand .sd-form .set-field:has(textarea) .lbl { margin-bottom: 6px; }
 @media (max-width: 1000px) {
   .site-expand .sd-scroll { display: block; overflow-y: auto; }
-  .site-expand .sd-tabs { margin: 0 0 10px; }
 }
 </style>
