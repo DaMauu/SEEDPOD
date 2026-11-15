@@ -70,7 +70,7 @@
 
       <section class="drawer open vue-card dedupe-card">
         <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">③ 查重</div></div>
+          <div class="drawer-t"><div class="drawer-title">② 查重</div></div>
           <div class="drawer-head-right">
             <span class="drawer-meta">{{ autoDupe ? '自动查重已开' : '自动查重已关' }}</span>
             <button class="btn primary slim" id="crawl-screen-run" type="button" :disabled="busy.screen" @click="screenRun">{{ busy.screen ? '筛选中…' : '按条件筛选' }}</button>
