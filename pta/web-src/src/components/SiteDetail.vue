@@ -16,9 +16,6 @@
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
                 <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
-                <div class="sd-tabs" id="sd-tabs">
-                  <button v-for="t in setTabs" :key="t.v" class="tabbtn" :class="{ active: setTab === t.v }" type="button" @click.stop="setTab = t.v">{{ t.label }}</button>
-                </div>
               </div>
               <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeSheet">✕</button>
             </div>
@@ -38,17 +35,17 @@
                       <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
                     </div>
                     <div class="sd-block">
-                      <h4>抓取</h4>
-                      <div class="sd-row"><span>上次结果</span><b :class="(s.lastAt ? 'ok' : 'idle') + '-t'">{{ s.lastAt ? '已抓取' : '未抓取' }}</b></div>
-                      <div class="sd-row"><span>今日已跑</span><b>{{ s.todayCount }} 次</b></div>
-                      <div class="sd-row"><span>方式</span><b>{{ modeTxt(s) }}</b></div>
-                    </div>
-                    <div class="sd-block">
                       <h4>抓取参数</h4>
                       <div class="sd-row"><span>预设来源</span><b>{{ kindTxt(s) }}</b></div>
                       <div class="sd-row"><span>分类参数</span><b>{{ catRangeTxt(s) }}</b></div>
                       <div class="sd-row"><span>抓取状态</span><b :class="s.enabled ? (s.lastAt ? 'ok-t' : 'idle-t') : 'idle-t'">{{ s.enabled ? (s.lastAt ? '正常' : '待抓取') : '已停用' }}</b></div>
                       <div class="sd-row"><span>词条</span><b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></div>
+                    </div>
+                    <div class="sd-block">
+                      <h4>抓取</h4>
+                      <div class="sd-row"><span>上次结果</span><b :class="(s.lastAt ? 'ok' : 'idle') + '-t'">{{ s.lastAt ? '已抓取' : '未抓取' }}</b></div>
+                      <div class="sd-row"><span>今日已跑</span><b>{{ s.todayCount }} 次</b></div>
+                      <div class="sd-row"><span>方式</span><b>{{ modeTxt(s) }}</b></div>
                     </div>
                   </div>
                   <div class="sd-recent-wrap">
@@ -64,7 +61,8 @@
               </div>
 
               <div class="sd-form">
-                <template v-if="setTab === 'login'">
+                <div class="sd-sec">
+                  <h4 class="sd-sec-ttl">概览</h4>
                   <div class="set-fields">
                     <div class="set-field">
                       <div class="lbl"><span>站点地址</span></div>
@@ -83,9 +81,10 @@
                     <button class="btn ghost slim" id="sd-cookie-test" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" @click.stop="selfcheckOne(s)">自检</button>
                     <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
                   </div>
-                </template>
+                </div>
 
-                <template v-else-if="setTab === 'search'">
+                <div class="sd-sec">
+                  <h4 class="sd-sec-ttl">搜索预设</h4>
                   <div class="set-fields">
                     <div class="set-field"><div class="lbl"><span>引擎</span></div><div class="ctl"><span class="fixed-val ref">{{ engineTxt(s) }}</span></div></div>
                     <div class="set-field"><div class="lbl"><span>预设来源</span></div><div class="ctl"><span class="fixed-val ref">{{ sourceTxt(s) }}</span></div></div>
@@ -112,9 +111,10 @@
                   <div class="sd-cookie-bar">
                     <span class="sd-cookie-res">预设确认入口未接：这里只读；确认状态来自私有包 site-search.local.json。</span>
                   </div>
-                </template>
+                </div>
 
-                                <template v-else-if="setTab === 'upload'">
+                <div class="sd-sec">
+                  <h4 class="sd-sec-ttl">上传配置</h4>
                   <div class="set-fields">
                     <div class="sd-block cm-block">
                       <h4>分类映射</h4>
@@ -184,9 +184,10 @@
                     <button class="btn primary slim" type="button" :disabled="defSaving" @click.stop="saveDef">{{ defSaving ? '保存中…' : '保存定义' }}</button>
                     <span class="sd-cookie-res">{{ defMsg }}</span>
                   </div>
-                </template>
+                </div>
 
-                <template v-else>
+                <div class="sd-sec">
+                  <h4 class="sd-sec-ttl">站点覆盖</h4>
                   <div class="set-fields">
                     <div class="set-field">
                       <div class="lbl"><span>单独设置本站</span></div>
@@ -236,7 +237,7 @@
                       <div class="ctl"><span class="fixed-val ref">{{ catMapTxt(s) }}</span></div>
                     </div>
                   </div>
-                </template>
+                </div>
               </div>
             </div>
 
@@ -267,7 +268,6 @@ const archOptions = [
   { v: 'NP', label: 'NexusPHP' }, { v: 'UNIT3D', label: 'UNIT3D' }, { v: 'GZ', label: 'Gazelle' },
   { v: 'OTHER', label: '其它' }, { v: '?', label: '未确认' }
 ]
-const setTabs = [{ v: 'login', label: '登录' }, { v: 'search', label: '搜索预设' }, { v: 'upload', label: '上传配置' }, { v: 'override', label: '站点覆盖' }]
 const catPurposes = [
   { v: 'movie', label: '电影' }, { v: 'tv', label: '剧集' }, { v: 'doc', label: '纪录片' },
   { v: 'anime', label: '动漫' }, { v: 'music', label: '音乐' }, { v: 'sport', label: '体育' },
@@ -276,7 +276,6 @@ const catPurposes = [
 ]
 const s = computed(function () { return props.site || {} })
 const host = computed(function () { return (props.site && props.site.name) || '' })
-const setTab = ref('login')
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
 const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDaily: '', ovDetail: false, priority: 'normal' })
 const defText = ref('')
@@ -726,7 +725,6 @@ onMounted(function () {
 })
 watch(host, function (h, old) {
   if (h && h !== old) {
-    setTab.value = 'login'
     fillForm(s.value)
     loadDetail(h)
   }
@@ -775,7 +773,9 @@ watch(host, function (h, old) {
 @media (max-width: 1100px) {
 .sites-list { width: 100%; flex: none; max-height: 360px; }
 }
-.sd-tabs { display: flex; align-items: center; gap: 3px; margin: 0; flex: 0 0 auto; }
+.sd-sec-ttl { margin: 16px 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.sd-sec-ttl:first-child { margin-top: 4px; }
+.sd-tabs { display: none; }
 .sd-tabs .tabbtn { height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; font-size: 11px; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .sd-tabs .tabbtn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 .sd-form { margin-top: 4px; display: grid; gap: 14px; }

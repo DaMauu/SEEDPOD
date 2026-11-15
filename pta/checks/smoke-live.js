@@ -164,7 +164,7 @@ async function main() {
     need(await page.locator('#site-detail').isVisible(), '详情没打开');
     const dtxt = await page.locator('#site-detail').innerText();
     need(/登录/.test(dtxt) && /抓取/.test(dtxt), '抽屉概览没渲染：' + dtxt.slice(0, 80));
-    need(await page.locator('#site-detail textarea').count() === 1, '设置区 cookie 输入框缺失');
+    need(await page.locator('#site-detail textarea').count() >= 1, '设置区 cookie 输入框缺失');
     await items.first().click();
     await page.waitForTimeout(300);
     need(await page.locator('#site-detail').count() === 0, '再次点击站点标题没收回');
@@ -220,9 +220,7 @@ async function main() {
     need(await page.locator('.site-item').count() === 4, '添加后站点数量不对：' + await page.locator('.site-item').count());
     need(/Added Site/.test(await page.locator('#sites-list').innerText()), '添加的站点没出现');
     need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
-    await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
-    await page.waitForTimeout(300);
-    need(await page.locator('#site-detail textarea').count() === 1, '上传配置文本域缺失');
+    need(await page.locator('#site-detail textarea').count() >= 1, '上传配置文本域缺失');
     await page.locator('#site-detail .cm-actions button').filter({ hasText: '加一条' }).click();
     await page.waitForTimeout(200);
     const cm = page.locator('#site-detail .cm-row').last();
@@ -250,8 +248,6 @@ async function main() {
     await page.waitForTimeout(500);
     await page.locator('.site-item').first().click();
     await page.waitForTimeout(600);
-    await page.locator('#site-detail .sd-tabs .tabbtn').filter({ hasText: '上传配置' }).click();
-    await page.waitForTimeout(400);
     const rows = page.locator('#site-detail .cm-row:not(.cm-head)');
     need(await rows.count() === 2, '数组映射行数不对：' + await rows.count());
     await rows.first().locator('select').selectOption('tv');

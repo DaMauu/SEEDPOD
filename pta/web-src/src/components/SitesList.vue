@@ -188,7 +188,7 @@ function go(n) {
 .sites-work .site-item { grid-template-columns: 24px 64px minmax(0, 1fr) 10px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
 .sites-work .si-txt b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; }
 .sites-work .si-mode, .sites-work .si-last { display: none; }
-.sites-work .sites-rows { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
+.sites-work .sites-rows { flex: 1; min-height: 0; max-height: none; overflow: hidden; }
 .sites-work .sites-pager-wrap { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
 .sites-work .sites-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
 .sites-work .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
