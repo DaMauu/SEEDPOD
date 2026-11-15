@@ -217,6 +217,11 @@ async function main() {
     need(real.code === 1 && /真上传没打开/.test(real.stderr), '真上传门禁不对：code=' + real.code + ' err=' + real.stderr.slice(0, 80));
   });
 
+  await check('本地 clients 列出下载器', async function () {
+    const j = parse(await cliLocal(['clients', '--json']));
+    need(Array.isArray(j) && j.some(function (x) { return x.kind === 'qb' && x.id; }), 'clients 列表不对：' + JSON.stringify(j));
+  });
+
   await check('本地 inject 默认演练、真注入门禁', async function () {
     const j = parse(await cliLocal(['inject', queueId2, '--json']));
     need(j.dryRun === true && j.client === 'qb' && j.wouldAdd === true, 'inject 演练不对：' + JSON.stringify(j));

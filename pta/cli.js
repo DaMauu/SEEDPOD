@@ -23,6 +23,7 @@ function usage() {
   pta screen [--limit 50] [--host <host>] [--json]
   pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--mediainfo file] [--bdinfo file] [--json]
   pta images <queueId> [--host 站内|Pixhost|Imgbox|本地图床] [--real] [--retries 2] [--json]
+  pta clients [--test] [--json]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
@@ -216,6 +217,26 @@ async function main() {
       return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') +
         ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0) + (p.media && p.media.summary ? ' · ' + p.media.summary : '');
     });
+    return;
+  }
+  if (cmd === 'clients') {
+    const human = function (list) {
+      const x = list || [];
+      return '下载器 ' + x.length + ' 台 · ' + x.map(function (d) { return d.id + ' ' + d.kind + (opts.test ? (d.ok ? ' 在线' : ' 离线') : ''); }).join(' · ');
+    };
+    if (!USE_HTTP) {
+      const x = await core().clients({ test: !!opts.test });
+      print(x, opts, human);
+      return;
+    }
+    const list = await api('/api/downloaders');
+    if (!opts.test) { print(list, opts, human); return; }
+    const out = [];
+    for (const d of list) {
+      const r = await api('/api/downloaders/' + encodeURIComponent(d.id) + '/test', { method: 'POST' });
+      out.push({ id: d.id, kind: d.kind, ok: !!r.pass, version: r.version || '', message: r.pass ? '连接通过' : (r.error || '连接失败') });
+    }
+    print(out, opts, human);
     return;
   }
   if (cmd === 'images') {

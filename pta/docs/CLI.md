@@ -51,12 +51,14 @@ node pta/cli.js status
 | `preview <queueId>` | 返回完整准备结果，阶段推进到 previewed | 本地，不发外部请求 |
 | `advance <queueId>` | draft → prepared → previewed 自动推进；后续提示用 target-upload/publish | 本地 |
 | `run --stage prepared\|previewed` | 批量准备/预览可处理队列 | 本地 |
+| `clients [--test]` | 列下载器；`--test` 只读探测 qB/watch 连通性 | 只读 |
 
 输出：
 
 ```bash
 node pta/cli.js status --json
 node pta/cli.js queue --status pending --limit 20
+node pta/cli.js clients --test
 ```
 
 ## 三、现状
@@ -84,6 +86,7 @@ SQLite + data/
 
 ```bash
 pta status
+pta clients [--test]
 pta crawl --site <host> --limit 100 [--real]
 pta screen --limit 50 [--host <host>]
 pta queue --stage <stage> [--json]

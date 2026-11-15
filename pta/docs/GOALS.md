@@ -18,7 +18,7 @@
 | G2 | 可靠性债：公共函数、空 catch、TODO/console | ✅ 完成（0.7.169） | 无 | 空 catch 0、审计 87 |
 | G3 | 拆 `Sites.vue` | ✅ 完成（0.7.184） | G2 完成后 | Sites.vue 436 行；smoke 22/22、responsive 32 项 |
 | G4 | 40 条未接规则分诊 | ✅ 完成（0.7.187） | 用户逐条决定 | 8 做/17 删/15 暂缓；保留缺读者 0 |
-| G5 | 真实目标站发布 + 真实 qB/watch | 🔴 blocked · 等真实环境 | 用户提供目标站/下载器 | 真实发布/回查记录 |
+| G5 | 真实目标站发布 + 真实 qB/watch | 🔴 blocked · qB 403 + 目标站权限 | 用户修 qB 白名单/账号并给目标站 | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | ✅ 完成（0.7.185） | G2/G3 后 | 例外 UI、Docker、备份恢复演练均通过 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
 | G8 | 原生单 release 上传准备与站点提交 | ✅ 完成（0.7.172） | G7、G9、G4、G5 | prepared payload 已接 target-upload |
@@ -117,7 +117,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 **依赖**：
 
 - 有上传权限的目标站 + 用户授权
-- 真实 qBittorrent Web 地址或 watch 目录（只放部署环境，不进仓库）
+- qB WebUI 允许本机访问（IP 白名单/账号/防暴力设置）或可用 watch 目录
 - 真发布保持默认关，验证通过后再讨论开启
 
 **验收**：
@@ -275,7 +275,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 
 ## 推进规则
 
-1. G4/G6 已完成；G5/G10/G12/G13 等真实权限/环境，没有可自动推进的 goal；G14 可选。
+1. G4/G6 已完成；G5 等 qB 白名单/账号 + 目标站权限；G10/G12/G13 等真实权限/环境；G14 可选。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。

@@ -7,6 +7,8 @@ const { makeCrawl } = require('../server/crawl');
 const { makeTarget } = require('../server/target');
 const { makePublisher } = require('../server/publish');
 const { makeRelease } = require('../server/release');
+const { makeQb } = require('../server/qb');
+const watchClient = require('../server/clients/watch');
 const { makeTargetService } = require('../server/target-service');
 const imagehost = require('../server/imagehost');
 const flowConfig = require('../server/flow-config');
@@ -36,6 +38,7 @@ function createCore(opts) {
   const jparse = s => { try { return JSON.parse(s); } catch (e) { return null; } };
   const now = () => new Date().toISOString();
   const KEYRING = secretbox.loadKey(DATA_DIR);
+  const qb = makeQb(DATA_DIR);
 
   const ctx = {
     db, DATA_DIR, one, all, jparse,
@@ -143,6 +146,32 @@ function createCore(opts) {
     }));
   }
 
+  async function clients(input) {
+    const b = input || {};
+    const rows = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data) || {}; });
+    const out = [];
+    for (const d of rows) {
+      const item = { id: d.id || '', name: d.name || '', kind: d.kind || 'qb' };
+      if (b.test) {
+        try {
+          let r;
+          if (item.kind === 'watch') r = watchClient.test({ dir: d.watchPath });
+          else if (item.kind === 'qb') r = await qb.probeDownloader({ url: d.url, user: d.user, pass: qb.dlPass(d) });
+          else { item.ok = false; item.message = '这个下载器类型已移除'; out.push(item); continue; }
+          item.ok = !!r.pass;
+          item.version = r.version || '';
+          item.steps = (r.steps || []).map(function (s) { return { step: s.step || '', status: Number(s.status) || 0, ok: !!s.ok, error: s.error || '' }; });
+          item.message = r.pass ? '连接通过' : (r.error || (item.steps.filter(function (s) { return s.status >= 400 || s.ok === false; })[0] || {}).step || '连接失败');
+        } catch (e) {
+          item.ok = false;
+          item.message = String(e && e.message || e).slice(0, 160);
+        }
+      }
+      out.push(item);
+    }
+    return out;
+  }
+
   async function inject(input) {
     const b = input || {};
     const id = String(b.queueId || '').trim();
@@ -214,6 +243,7 @@ function createCore(opts) {
     targetUpload: targetUpload,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
     inject: inject,
+    clients: clients,
     images: images,
     verify: verify,
     close: () => { try { db.close() } catch (e) { console.warn('[seedpod] close:', e && e.message ? e.message : e) } }
