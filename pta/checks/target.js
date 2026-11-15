@@ -23,6 +23,7 @@ let deleteHits = 0;
 let deleteBody = null;
 let deleteBodyReasons = [];
 let mockDeleted2 = false;
+let downloadHits = 0;
 let child = null;
 let mock = null;
 
@@ -183,6 +184,7 @@ function startMock(hash, torrentBuf) {
       return;
     }
     if (req.method === 'GET' && u.pathname === '/download.php') {
+      downloadHits++;
       res.writeHead(200, { 'content-type': 'application/x-bittorrent' });
       res.end(torrentBuf);
       return;
@@ -214,7 +216,7 @@ function startMock(hash, torrentBuf) {
 async function main() {
   const torrent = makeTorrent();
   const hash = infoHash(torrent);
-  mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = [];
+  mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = []; downloadHits = 0;
   mock = await startMock(hash, torrent);
   mockPort = mock.address().port;
   const pack = {
@@ -502,6 +504,8 @@ async function main() {
     const tt = g.body.data.targetResults && g.body.data.targetResults['127.0.0.1'] && g.body.data.targetResults['127.0.0.1'].targetTorrent;
     need(tt && tt.infohash === hash && tt.sameInfohash === true, '没抓目标站生成的种子：' + JSON.stringify(tt));
     need(tt.path && fs.existsSync(tt.path), '目标站种子文件没落盘：' + (tt.path || ''));
+    need(tt.source === 'cleaned', '目标种不是预生成的清洗种：' + JSON.stringify({ source: tt.source }));
+    need(downloadHits === 0, '默认不该再下载目标站发布种子，实际 ' + downloadHits + ' 次');
     need(g.body.data.targetUpload && g.body.data.targetUpload.targetTorrent && g.body.data.targetUpload.targetTorrent.sameInfohash === true, 'targetUpload 没记目标站种子');
     need(g.body.data.stage === 'submitted', '状态机不是 submitted：' + g.body.data.stage);
     need(g.body.data.stageEvidence && g.body.data.stageEvidence.infohash, '没有提交证据 infohash');

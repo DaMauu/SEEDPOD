@@ -187,3 +187,8 @@
 
 - 观察：上传页可能给通用 tracker，也可能给带 passkey 的个人 tracker；不同站点不一样。发布成功后详情页下载的目标站种子才是最终权威。
 - 决定：CLI 先收集候选（缓存目标种、上传页 tracker、usercp/passkey、显式 `--announce`），优先 passkey，generic 仅作兜底；接口只回来源/类型，不回明文。发布后抓目标站生成种子并用其 tracker 辅种。
+
+## 2026-11-19 · 预生成目标种
+
+- 观察：多数 NexusPHP 发布后的种子只是把 announce 换成目标站 passkey，info 不变；发布后再下载一次是多余请求。
+- 决定：提交前直接生成目标种（源种 info + 目标 announce），源种和目标种都缓存 0600；qB 直接用目标种辅种。发布后默认不下载目标站种子，`--fetch-published` 仅做异常校验。

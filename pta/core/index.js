@@ -143,7 +143,8 @@ function createCore(opts) {
     return unwrap(await ctx.targetService.upload(String(b.host), {
       queueId: b.queueId, torrentBase64: b.torrentBase64,
       dryRun: b.dryRun !== false, verify: b.verify,
-      cleanAnnounce: b.cleanAnnounce, autoClean: b.autoClean
+      cleanAnnounce: b.cleanAnnounce, autoClean: b.autoClean,
+      fetchPublishedTorrent: b.fetchPublishedTorrent
     }));
   }
 

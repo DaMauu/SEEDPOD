@@ -148,6 +148,20 @@ function makeTargetService(ctx, target) {
       if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', t.err); saveQueue(item.data); }
       return { ok: false, code: 'TORRENT_UNAVAILABLE', message: t.err, http: 400 };
     }
+    let sourceTorrent = null;
+    let sourceTorrentError = '';
+    if (!dryRun) {
+      const srcMeta = target.torrentMeta(t.buf);
+      if (srcMeta && srcMeta.hash) {
+        try {
+          const dir = path.join(DATA_DIR, 'torrents');
+          fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+          const file = path.join(dir, 'source-' + srcMeta.hash + '.torrent');
+          if (!fs.existsSync(file)) fs.writeFileSync(file, t.buf, { mode: 0o600 });
+          sourceTorrent = { infohash: srcMeta.hash, size: t.buf.length, path: file };
+        } catch (e) { sourceTorrentError = '源种保存失败'; }
+      } else sourceTorrentError = '源种解析不出 infohash';
+    }
     let cleaned = false;
     let cleanAnnounce = String(b.cleanAnnounce || '').trim();
     if (!cleanAnnounce && b.autoClean !== false) cleanAnnounce = cachedAnnounce(host);
@@ -167,6 +181,25 @@ function makeTargetService(ctx, target) {
     if (cleanAnnounce) {
       try { t.buf = torrentClean.replaceAnnounce(t.buf, cleanAnnounce); cleaned = true; }
       catch (e) { return { ok: false, code: 'CLEAN_FAILED', message: '种子清洗失败：' + String(e && e.message || e).slice(0, 120), http: 400 }; }
+    }
+    let targetTorrent = null;
+    let targetTorrentError = '';
+    if (!dryRun && cleaned) {
+      const tgtMeta = target.torrentMeta(t.buf);
+      if (tgtMeta && tgtMeta.hash) {
+        try {
+          const dir = path.join(DATA_DIR, 'torrents');
+          fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+          const safeHost = String(host).replace(/[^a-z0-9.-]/gi, '_');
+          const file = path.join(dir, safeHost + '-' + tgtMeta.hash + '.torrent');
+          fs.writeFileSync(file, t.buf, { mode: 0o600 });
+          targetTorrent = {
+            host: host, infohash: tgtMeta.hash, size: t.buf.length, path: file,
+            sameInfohash: !sourceTorrent || tgtMeta.hash === sourceTorrent.infohash,
+            source: 'cleaned'
+          };
+        } catch (e) { targetTorrentError = '目标种保存失败'; }
+      } else targetTorrentError = '目标种解析不出 infohash';
     }
     const uploadItem = preparedItem(item.data, host);
     const plan = preparedPlan(item.data, host);
@@ -211,9 +244,9 @@ function makeTargetService(ctx, target) {
       saveQueue(item.data);
       return { ok: false, code: 'VERIFY_FAILED', message: msg, http: 502, data: { host: host, verify: verified || null } };
     }
-    let targetTorrent = null;
-    let targetTorrentError = '';
-    if (verified && verified.found) {
+    let publishedTorrent = null;
+    let publishedTorrentError = '';
+    if (b.fetchPublishedTorrent === true && verified && verified.found) {
       const detailsUrl = (r.data && r.data.detailsUrl) || (verified && verified.url) || '';
       if (detailsUrl) {
         const tt = await target.fetchDetailsTorrent(host, detailsUrl);
@@ -222,33 +255,34 @@ function makeTargetService(ctx, target) {
             const dir = path.join(DATA_DIR, 'torrents');
             fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
             const safeHost = String(host).replace(/[^a-z0-9.-]/gi, '_');
-            const file = path.join(dir, safeHost + '-' + tt.data.meta.hash + '.torrent');
+            const file = path.join(dir, safeHost + '-' + tt.data.meta.hash + '.published.torrent');
             fs.writeFileSync(file, tt.data.buf, { mode: 0o600 });
-            targetTorrent = {
+            publishedTorrent = {
               host: host, infohash: tt.data.meta.hash, size: tt.data.buf.length, path: file,
-              sameInfohash: tt.data.meta.hash === (r.data.infohash || '')
+              sameInfohash: tt.data.meta.hash === (r.data.infohash || ''), source: 'published'
             };
-          } catch (e) {
-            targetTorrentError = '目标站种子保存失败';
-          }
-        } else {
-          targetTorrentError = tt.message || tt.code || '目标站种子抓取失败';
-        }
+          } catch (e) { publishedTorrentError = '目标站发布种子保存失败'; }
+        } else publishedTorrentError = tt.message || tt.code || '目标站发布种子抓取失败';
       }
     }
     const result = {
       stage: 'submitted', infohash: r.data.infohash || '',
       detailsUrl: r.data.detailsUrl || '', status: r.data.status || 0,
-      verified: !!(verified && verified.found), targetTorrent: targetTorrent,
-      targetTorrentError: targetTorrentError, cleaned: cleaned, error: ''
+      verified: !!(verified && verified.found), sourceTorrent: sourceTorrent,
+      sourceTorrentError: sourceTorrentError, targetTorrent: targetTorrent,
+      targetTorrentError: targetTorrentError, publishedTorrent: publishedTorrent,
+      publishedTorrentError: publishedTorrentError, cleaned: cleaned, error: ''
     };
     setTargetResult(item.data, host, result);
+    item.data.targetUpload.sourceTorrent = sourceTorrent ? { infohash: sourceTorrent.infohash, size: sourceTorrent.size } : null;
     item.data.targetUpload.targetTorrent = targetTorrent ? {
       infohash: targetTorrent.infohash, size: targetTorrent.size, sameInfohash: targetTorrent.sameInfohash
     } : null;
     const evidence = {
       host: host, infohash: result.infohash, detailsUrl: result.detailsUrl,
-      verified: result.verified, targetTorrent: result.targetTorrent, cleaned: cleaned, targets: item.data.targetResults
+      verified: result.verified, sourceTorrent: result.sourceTorrent,
+      targetTorrent: result.targetTorrent, publishedTorrent: result.publishedTorrent,
+      cleaned: cleaned, targets: item.data.targetResults
     };
     if (allDone(item.data)) {
       stage.set(item.data, 'submitted', { evidence: evidence });

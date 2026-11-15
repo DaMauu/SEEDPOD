@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.209 · 2026-11-19
+
+### G10 预生成目标种，跳过发布后下载
+- 源种存 `data/torrents/source-<hash>.torrent`；清洗后的目标种存 `<host>-<hash>.torrent`，均 0600。
+- 目标站上传前就生成权威目标种（源种 + 目标 announce/passkey，info 不变），qB 直接用这个辅种，不再默认下载发布后的种子。
+- `--fetch-published` 仅用于异常校验：发布后抓目标站生成种子，对比 infohash；默认不请求。
+- target 17/17、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.208 · 2026-11-19
 
 ### G10 announce 候选检查

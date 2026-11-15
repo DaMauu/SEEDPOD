@@ -32,7 +32,7 @@ function usage() {
   pta publish <queueId> [--real] [--json]
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
-  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--announce url|h1=url,h2=url] [--real] [--json]
+  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--announce url|h1=url,h2=url] [--fetch-published] [--real] [--json]
   pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
   pta target-announce --host <target> [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
@@ -458,7 +458,7 @@ async function main() {
     const ann = opts.announce ? readAnnounceMap(String(opts.announce)) : { single: '', map: null };
     if (ann.single && targets.length > 1) die('多目标清洗请用 --announce h1=url,h2=url，避免把同一个 passkey 发给所有站', 2);
     if (ann.map && !targets.length) die('--announce host=url 需要配合 --targets 使用', 2);
-    const body = { queueId: id, dryRun: !opts.real, torrentBase64: hostTorrent || b64 || undefined, targetTorrents: torrentMap || undefined, cleanAnnounce: ann.single || undefined, targetAnnounces: ann.map || undefined, verify: opts.verify };
+    const body = { queueId: id, dryRun: !opts.real, torrentBase64: hostTorrent || b64 || undefined, targetTorrents: torrentMap || undefined, cleanAnnounce: ann.single || undefined, targetAnnounces: ann.map || undefined, verify: opts.verify, fetchPublishedTorrent: !!opts['fetch-published'] };
     if (!USE_HTTP) {
       if (targets.length) {
         const x = await core().targetUploadMany(Object.assign({}, body, { targets: targets }));
