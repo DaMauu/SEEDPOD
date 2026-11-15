@@ -86,7 +86,7 @@ import SiteCoveragePanel from '../components/SiteCoveragePanel.vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 
-const PER_PAGE = 11
+const PER_PAGE = 14
 const baseSites = ref([])
 const configs = ref({})
 const hidden = ref([])
