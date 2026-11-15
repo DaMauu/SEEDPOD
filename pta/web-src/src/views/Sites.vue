@@ -184,12 +184,23 @@ const stats = computed(() => {
   const list = sites.value
   const total = list.length
   const unknown = list.filter(s => s.login === 'none').length
+  const count = { NP: 0, UNIT3D: 0, GZ: 0, OTHER: 0, '?': 0 }
+  list.forEach(s => {
+    const k = ['NP', 'UNIT3D', 'GZ', 'OTHER'].includes(s.arch) ? s.arch : '?'
+    count[k]++
+  })
+  const names = { NP: 'NexusPHP', UNIT3D: 'UNIT3D', GZ: 'Gazelle', OTHER: '其它', '?': '未确认' }
+  const colors = { NP: '#4f46e5', UNIT3D: '#6b62e8', GZ: '#8b84ee', OTHER: '#b3adf3', '?': '#c9cedb' }
+  const order = ['NP', 'UNIT3D', 'GZ', 'OTHER', '?']
+  const segs = order.filter(k => count[k]).map(k => ({ w: total ? (count[k] / total * 100).toFixed(2) : 0, color: colors[k] }))
+  const legend = order.filter(k => count[k]).map(k => ({ name: names[k], count: count[k], color: colors[k] }))
   return {
     total: total,
     enabled: list.filter(s => s.enabled).length,
     loginFail: list.filter(s => s.login === 'fail').length,
     unknown: unknown,
-    checkedPct: total ? Math.round((total - unknown) / total * 100) : 0
+    checkedPct: total ? Math.round((total - unknown) / total * 100) : 0,
+    segs, legend
   }
 })
 watch([q, statusFilter, archFilter, loginFilter, presetFilter, crawlFilter], () => { page.value = 1 })

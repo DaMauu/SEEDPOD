@@ -9,7 +9,6 @@
                   <span class="chip" :class="s.preset ? 'np' : 'unk'">搜索预设 {{ s.preset ? (s.preset.confirmed ? '已确认' : '待确认') : '未确认' }}</span>
                 </div>
                 <span class="sd-url">{{ s.url }} · {{ s.name }}</span>
-                <span class="sd-selfcheck" id="sd-selfcheck">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没做过连接自检' }}</span>
               </div>
               <div class="sd-actions">
                 <button class="switch sm" :class="{ on: s.enabled }" type="button" title="启用或停用这个站的抓取" @click.stop="toggleEnabled(s)"><i></i></button>
@@ -915,8 +914,8 @@ watch(host, function (h, old) {
 .site-expand .sd-top .ava.lg { grid-row: 1 / span 2; }
 .site-expand .sd-id { grid-column: 2; }
 .site-expand .sd-id h2 { font-size: 16px; margin-bottom: 2px; }
-.site-expand .sd-actions { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; }
-.site-expand .sd-actions .btn { height: 26px; padding: 0 10px; font-size: 11.5px; }
+.site-expand .sd-actions { grid-column: 2; display: flex; gap: 5px; flex-wrap: nowrap; align-items: center; }
+.site-expand .sd-actions .btn { height: 26px; padding: 0 8px; font-size: 11px; white-space: nowrap; }
 .site-expand .sheet-x { position: absolute; top: 0; right: 0; }
 .site-expand .sd-scroll { overflow: visible; }
 .site-expand .sd-top { grid-template-columns: minmax(0, 1fr) auto; }
@@ -1028,8 +1027,8 @@ watch(host, function (h, old) {
 .site-item .st{justify-self:start}
 .sd-preset-url{display:block;font-size:11px;color:var(--accent);word-break:break-all;margin:5px 0;text-decoration:none}
 .sd-preset-url:hover{text-decoration:underline}
-.sd-actions { flex-wrap: wrap; }
-.sd-arch-sel { width: 106px; height: 28px; font-size: 11.5px; padding: 0 6px; }
+.sd-actions { flex-wrap: nowrap; }
+.sd-arch-sel { width: 96px; height: 26px; font-size: 11px; padding: 0 4px; flex: 0 0 auto; }
 .sd-actions > button.switch.sm i { width: 30px; height: 17px; }
 .sd-actions > button.switch.sm i::after { width: 13px; height: 13px; }
 .sd-actions > button.switch.sm.on i::after { left: 15px; }
