@@ -8,7 +8,6 @@
                   <span class="pill2" :class="s.enabled ? 'on' : 'off'">{{ s.enabled ? '启用中' : '已停用' }}</span>
                   <span class="chip" :class="s.preset ? 'np' : 'unk'">搜索预设 {{ s.preset ? (s.preset.confirmed ? '已确认' : '待确认') : '未确认' }}</span>
                 </div>
-                <span class="sd-url">{{ s.url }} · {{ s.name }}</span>
               </div>
               <div class="sd-actions">
                 <button class="switch sm" :class="{ on: s.enabled }" type="button" title="启用或停用这个站的抓取" @click.stop="toggleEnabled(s)"><i></i></button>
@@ -27,12 +26,6 @@
 
             <div class="sd-scroll">
               <div class="sd-ov">
-                <div class="sd-strip">
-                  <span>已收录<b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></span>
-                  <span>今日<b>{{ s.todayCount ? '+' + s.todayCount : '—' }}</b></span>
-                  <span>上次<b>{{ s.lastAt ? fmtWhen(s.lastAt) : '未抓取' }}</b></span>
-                  <span>下次<b>{{ s.enabled ? '手动触发（点「抓一页」）' : '已停用' }}</b></span>
-                </div>
                 <div class="sd-compact">
                   <div class="sd-col">
                     <div class="sd-block">
@@ -970,8 +963,9 @@ watch(host, function (h, old) {
 .site-expand .sd-recent-wrap .sd-recent { padding: 4px 0; font-size: 11.5px; border-top: 1px solid #f1f3f7; }
 .site-expand .sd-recent-wrap .sd-recent:first-of-type { border-top: 0; }
 .st-head { border-bottom: 1px solid var(--line); }
-.site-expand .sd-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.site-expand .sd-title-row h2 { margin: 0; font-size: 15px; }
+.site-expand .sd-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+.site-expand .sd-title-row h2 { margin: 0; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-expand .sd-title-row .pill2, .site-expand .sd-title-row .chip { flex: 0 0 auto; }
 .site-expand .sd-id .sd-url { display: block; margin-top: 2px; }
 .site-expand .sd-form .set-field .lbl { flex: 0 0 132px; }
 .site-expand .sd-form .set-field .ctl { width: 300px; }
