@@ -185,8 +185,8 @@ function go(n) {
 /* ===== 站点列 + 右侧详情：布满卡片 ===== */
 .sites-work { flex: 1; min-height: 0; display: flex; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .sites-work .sites-list { width: clamp(320px, 34%, 460px); flex: 0 0 clamp(320px, 34%, 460px); min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #fff; }
-.sites-work .st-head { grid-template-columns: 24px 74px minmax(0, 1fr) 10px 66px 56px 74px; gap: 10px; padding: 0 16px; height: 34px; }
-.sites-work .site-item { grid-template-columns: 24px 74px minmax(0, 1fr) 10px 66px 56px 74px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
+.sites-work .st-head { grid-template-columns: 24px 64px minmax(0, 1fr) 10px 56px; gap: 10px; padding: 0 16px; height: 34px; }
+.sites-work .site-item { grid-template-columns: 24px 64px minmax(0, 1fr) 10px 56px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
 .sites-work .si-txt b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; }
 .sites-work .si-mode, .sites-work .si-last { display: none; }
 .sites-work .sites-rows { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
