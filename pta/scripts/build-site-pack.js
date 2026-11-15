@@ -65,6 +65,15 @@ function normalizeSite(host, def, packSite) {
     if (upload.fields && typeof upload.fields === 'object') site.upload.fields = upload.fields;
   }
   if (d.verify && typeof d.verify === 'object') site.verify = { path: d.verify.path || '' };
+  if (d.tagMap && typeof d.tagMap === 'object' && !Array.isArray(d.tagMap)) {
+    const tm = {};
+    Object.keys(d.tagMap).forEach(function (k) {
+      const v = String(d.tagMap[k] || '');
+      if (/^[a-z][a-z0-9_]{0,30}$/i.test(v)) tm[k] = v;
+    });
+    if (Object.keys(tm).length) site.tagMap = tm;
+  }
+  if (d.tagValue !== undefined && d.tagValue !== '') site.tagValue = String(d.tagValue);
   return site;
 }
 

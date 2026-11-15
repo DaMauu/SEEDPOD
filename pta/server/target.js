@@ -7,6 +7,7 @@ const secretbox = require('./secretbox');
 const form = require('./form');
 const adapters = require('./adapters');
 const sitePack = require('./site-pack');
+const meta = require('./meta');
 const { makeQb } = require('./qb');
 const torrentClean = require('./torrent-clean');
 
@@ -103,7 +104,9 @@ function makeTarget(ctx) {
     };
     const verify = Object.assign({ path: e.verifyPath }, built.verify || {}, p.verify || def.verify || {});
     return { host: host, engine: engine, base: base, upload: upload, verify: verify,
-      catMap: catMapOf(p, def, built) };
+      catMap: catMapOf(p, def, built),
+      tagMap: Object.assign({}, built.tagMap || {}, (p.tagMap || def.tagMap || {})),
+      tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes') };
   }
 
   function list() {
@@ -129,10 +132,24 @@ function makeTarget(ctx) {
     return out.sort(function (a, b) { return a.host.localeCompare(b.host); });
   }
 
+  /* 来源站标签：优先用条目里的 tags；没有就从标题推（国配/粤语/中字/DIY 这类）。
+     禁转/限转只表示来源站限制，不往目标站勾，避免把自己锁死。 */
+  const TAG_BLOCK = /^(禁转|限转|禁止转载|禁止转发|官方|应求)$/;
+  function tagList(item) {
+    const raw = item && item.tags;
+    let list = Array.isArray(raw) ? raw : String(raw == null ? '' : raw).split(/[,，、\s]+/);
+    list = list.map(function (x) { return String(x == null ? '' : x).trim(); }).filter(Boolean);
+    if (!list.length) {
+      try { list = meta.parseRelease(String((item && item.title) || '')).tags || []; } catch (e) { list = []; }
+    }
+    return list.filter(function (x, i, a) { return !TAG_BLOCK.test(x) && a.indexOf(x) === i; });
+  }
+
   function vars(item) {
     const res = String(item.res || '');
     const size = String(item.size || '');
     return {
+      tags: tagList(item).join(','),
       title: String(item.title || '').replace(/\s+/g, ' ').trim(),
       subtitle: [item.cn, res, size].filter(Boolean).join(' · '),
       description: String(item.intro || [item.title, res ? res + ' 原盘' : '', item.site ? '来源 ' + item.site : ''].filter(Boolean).join('，') + '。'),
@@ -174,6 +191,16 @@ function makeTarget(ctx) {
       const val = expand(t.upload.fields[k], v);
       if (val !== '') fields[k] = val;
     });
+    const tags = tagList(item);
+    const tagFields = [];
+    const tagMap = t.tagMap || {};
+    tags.forEach(function (label) {
+      const field = String(tagMap[label] || '');
+      if (!/^[a-z][a-z0-9_]{0,30}$/i.test(field)) return;
+      if (fields[field] !== undefined) return;
+      fields[field] = t.tagValue || 'yes';
+      tagFields.push(field);
+    });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
     const hasCookie = !!(c && c.cookie);
@@ -186,6 +213,7 @@ function makeTarget(ctx) {
     return { ok: true, data: {
       host: t.host, engine: t.engine, url: t.base + t.upload.path, method: 'POST',
       fileField: t.upload.fileField, fields: fields,
+      tags: tags, tagFields: tagFields,
       verifyUrl: t.base + expand(t.verify.path || '', uv),
       hasCookie: hasCookie, ready: !!(hasCookie && t.upload.path && fieldCount),
       warnings: warnings

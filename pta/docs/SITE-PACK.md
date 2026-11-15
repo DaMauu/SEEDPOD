@@ -49,6 +49,8 @@
 
 合并规则：按 host 合并；私有字段覆盖内置字段；`catMap`、`upload.fields` 这类对象做浅合并，私有优先；不允许内置包覆盖用户 cookie 或凭据。
 
+标签映射：站点可选配 `tagMap`（中文标签 → 上传表单复选框字段名）与 `tagValue`（默认 `yes`），例如 `{"中字":"zhongzi","国语":"guoyu"}`。上传时只勾安全项；`禁转/限转/官方/应求` 一律不自动勾，避免替用户做限制或身份声明。没配 `tagMap` 的站点不勾任何标签。
+
 ## 5. 生成流程（离线）
 
 脚本：`pta/scripts/build-site-pack.js`（待写）。
@@ -63,7 +65,7 @@
 
 1. 读取并规范化：只保留运行需要的字段，剔除 `login`、`note`、`source`、`list` 等非运行字段。
 2. 分类自动匹配：站点分类标签 → 库内用途（movie/tv/doc/music/anime/sport/game/book/software/adult/other）。关键词表 + 规则 + 已有 purpose；低置信度保留 `other`，输出例外清单。
-3. 上传字段：优先站点自己的 `uploadMap`；没有就用引擎默认值（NexusPHP：`/upload.php` + `/takeupload.php`，`small_descr`、`type`、`uplver`）。
+3. 上传字段：优先站点自己的 `uploadMap`；没有就用引擎默认值（NexusPHP：`/upload.php` + `/takeupload.php`，`small_descr`、`type`、`uplver`）。标签映射 `tagMap`/`tagValue` 原样带入包内。
 4. 生成明文包到临时文件（仅本机，0600），校验没有 `cookie/password/secret/token` 字段。
 5. 用 `PTA_SITE_PACK_KEY` 加密，写 `pta/pack/site-pack.enc`；明文临时文件删除。
 6. 输出报告：站点数、分类数、自动匹配率、例外数、包版本；**不打印站名/网址**。

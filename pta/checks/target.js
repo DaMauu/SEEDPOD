@@ -238,7 +238,9 @@ async function main() {
           fields: { name: '{title}', small_desc: '{subtitle}', descr: '{description}', anon: '{anonymous}' }
         },
         verify: { path: '/torrents.php?search={title}' },
-        catMap: { movie: '401' }
+        catMap: { movie: '401' },
+        tagMap: { '国语': 'guoyu', '国配': 'guoyu', '粤语': 'yueyu', '中字': 'zhongzi', 'DIY原盘': 'diy' },
+        tagValue: 'yes'
       },
       'unit3d.example': { engine: 'unit3d', base: 'http://127.0.0.1:' + mockPort },
       'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort },
@@ -373,6 +375,31 @@ async function main() {
     need(multi3.body.data.targets[0].data.cleaned === true, '清洗标记没出来');
     need(multi3.body.data.targets[0].data.torrent.hash === hash, '清洗后 infohash 变了');
     need(hits.length === 0, '清洗干跑发了请求：' + hits.length);
+  });
+
+  await check('目标站标签按来源标签勾选，挡掉禁转/官方', async function () {
+    async function planOf(payload) {
+      const add = await json(BASE + '/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(Object.assign({ site: 'source.example', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB' }, payload))
+      });
+      need(add.status === 200 && add.body.ok, '建队列失败');
+      const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+      });
+      need(p.status === 200 && p.body.ok, '计划失败：' + JSON.stringify(p.body && p.body.error));
+      return p.body.data;
+    }
+    const a = await planOf({ title: 'Tag Map Test 2024 1080p Blu-ray', cn: '标签测试', intro: 'x', tags: ['国语', '中字', '禁转', '官方'] });
+    need(a.fields.guoyu === 'yes', '国语没勾：' + JSON.stringify(a.fields));
+    need(a.fields.zhongzi === 'yes', '中字没勾：' + JSON.stringify(a.fields));
+    need(a.fields.jinzhuan === undefined, '不该勾禁转');
+    need(a.fields.guanfang === undefined, '不该勾官方');
+    need(JSON.stringify(a.tags) === JSON.stringify(['国语', '中字']), '标签列表没过滤：' + JSON.stringify(a.tags));
+    const b = await planOf({ title: 'Foo 2024 国配 中字 1080p Blu-ray', cn: '标题推断', intro: 'x' });
+    need(b.fields.guoyu === 'yes' && b.fields.zhongzi === 'yes', '标题标签没推断出来：' + JSON.stringify({ tags: b.tags, fields: b.fields }));
+    const c = await planOf({ title: 'Bar 2024 1080p Blu-ray', cn: '无标签', intro: 'x', tags: ['粤语'] });
+    need(c.fields.yueyu === 'yes' && c.fields.guoyu === undefined, '粤语映射不对：' + JSON.stringify(c.fields));
   });
 
   await check('UNIT3D / Gazelle 默认映射', async function () {
