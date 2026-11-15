@@ -20,6 +20,11 @@ function strip(html) {
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
     .replace(/\s+/g, ' ').trim();
 }
+function hostFromName(f) {
+  const m = /^([a-z0-9][a-z0-9.-]*\.[a-z]{2,})/i.exec(String(f || ''));
+  return m ? m[1].toLowerCase() : '';
+}
+
 function hostOf(html) {
   const canon = /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i.exec(html) ||
     /<meta[^>]+property=["']og:url["'][^>]+content=["']([^"']+)["']/i.exec(html);
@@ -66,7 +71,7 @@ function catsOf(html) {
   const out = {};
   Object.keys(rows).forEach(function (id) {
     const best = Object.keys(rows[id]).sort(function (a, b) { return rows[id][b] - rows[id][a] || a.length - b.length; })[0];
-    if (best) out[id] = best;
+    if (best) out[id] = { label: best, all: Object.keys(rows[id]) };
   });
   return out;
 }
@@ -76,22 +81,41 @@ function canonOf(label) {
   return '';
 }
 
+function readManifest(dir) {
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(dir, '..', 'manifest.json'), 'utf8'));
+    const arr = Array.isArray(j) ? j : (Array.isArray(j.files) ? j.files : []);
+    const out = {};
+    arr.forEach(function (x) {
+      if (!x || !x.file) return;
+      out[String(x.file)] = { host: String(x.host || '').toLowerCase(), kind: String(x.kind || ''), url: String(x.url || '') };
+    });
+    return out;
+  } catch (e) { return {}; }
+}
+
 function main() {
   const files = fs.readdirSync(DIR).filter(function (f) { return /\.html?$/i.test(f); });
+  const manifest = readManifest(DIR);
   const perHost = {};
-  let empty = 0, noHost = 0;
+  const rawHost = {};
+  let empty = 0, noHost = 0, fromName = 0;
   const unresolved = {};
   for (const f of files) {
     const buf = fs.readFileSync(path.join(DIR, f));
     if (!buf.length) { empty++; continue; }
     const html = decode(buf);
-    const host = hostOf(html);
+    const mf = manifest[f] || null;
+    let host = (mf && mf.host) || hostOf(html);
+    if (!host) { host = hostFromName(f); if (host) fromName++; }
     if (!host) { noHost++; continue; }
     const cats = catsOf(html);
     if (!Object.keys(cats).length) continue;
     perHost[host] = perHost[host] || {};
+    rawHost[host] = rawHost[host] || {};
     Object.keys(cats).forEach(function (id) {
-      const label = cats[id];
+      const label = cats[id].label;
+      rawHost[host][id] = label;
       const cn = canonOf(label);
       if (!cn) { unresolved[label] = (unresolved[label] || 0) + 1; return; }
       if (!perHost[host][cn]) perHost[host][cn] = id;
@@ -109,6 +133,8 @@ function main() {
   hosts.forEach(function (h) {
     const cur = all.sites[h] || {};
     cur.cat = Object.assign({}, perHost[h], cur.cat || {});
+    cur.raw = Object.assign({}, rawHost[h] || {}, cur.raw || {});
+    cur.at = new Date().toISOString();
     all.sites[h] = cur;
   });
   siteMaps.writeAll(DATA, all);

@@ -3,19 +3,19 @@ const siteMaps = require('./site-maps');
 
 const CAT = [
   ['电影', /电影|movie|film/i],
-  ['剧集', /剧集|电视剧|tv\s*series|series/i],
-  ['动漫', /动漫|动画|anime|animation/i],
+  ['剧集', /剧集|电视剧|tv\s*series|series|tv\s*packs?/i],
+  ['动漫', /动漫|动画|anime|animation|漫画|comics?/i],
   ['综艺', /综艺|tv\s*show|variety/i],
   ['纪录片', /纪录|documentary|docu/i],
-  ['音乐', /音乐|music|音乐短片|\bmv\b/i],
+  ['音乐', /音乐|music|音乐短片|演唱会?|音频|\bmv\b/i],
   ['体育', /体育|sport/i],
-  ['电子书', /电子书|ebook|e-book|book/i],
+  ['电子书', /电子书|ebook|e-book|book|有声书|audiobook/i],
   ['软件', /软件|software|app/i],
-  ['学习', /学习|study|教育/i],
+  ['学习', /学习|study|教育|tutorial/i],
   ['短剧', /短剧|short/i],
   ['舞台演出', /舞台|stage/i],
-  ['游戏', /游戏|game/i],
-  ['其他', /其他|其它|other|misc/i]
+  ['游戏', /游戏|game|playstation|xbox|nintendo|rom\s*packs?|android/i],
+  ['其他', /其他|其它|other|misc|图片/i]
 ];
 
 function pickField(fields, names, labelRe) {
@@ -63,12 +63,20 @@ module.exports = function (app, ctx) {
     const teamField = pickField(fields, ['team', 'team_id', 'group', 'group_id'], /制作组|制作团队|小组|team|group/i);
     const catOptions = catField ? (catField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const teamOptions = teamField ? (teamField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
-    return ok({
-      host: host,
-      detected: { catField: catField ? catField.name : '', teamField: teamField ? teamField.name : '' },
-      cat: matchCats(catOptions),
+    const form = {
+      at: new Date().toISOString(),
+      catField: catField ? catField.name : '',
+      teamField: teamField ? teamField.name : '',
       catOptions: catOptions,
       teamOptions: teamOptions
+    };
+    return ok({
+      host: host,
+      detected: { catField: form.catField, teamField: form.teamField },
+      cat: matchCats(catOptions),
+      catOptions: catOptions,
+      teamOptions: teamOptions,
+      form: form
     });
   });
 };

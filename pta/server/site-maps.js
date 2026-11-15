@@ -34,7 +34,7 @@ function cleanMap(obj, max) {
 function getHost(DATA_DIR, host) {
   const all = readAll(DATA_DIR);
   const s = all.sites[String(host || '').toLowerCase()] || {};
-  return { cat: cleanMap(s.cat), team: cleanMap(s.team) };
+  return { cat: cleanMap(s.cat), team: cleanMap(s.team), raw: cleanMap(s.raw, 500), form: s.form || null, at: s.at || '' };
 }
 
 function setHost(DATA_DIR, host, body) {
@@ -45,7 +45,19 @@ function setHost(DATA_DIR, host, body) {
     cat: cleanMap(body && body.cat),
     team: cleanMap(body && body.team)
   };
-  if (!Object.keys(next.cat).length && !Object.keys(next.team).length) delete all.sites[h];
+  const raw = cleanMap(body && body.raw, 500);
+  if (Object.keys(raw).length) next.raw = raw;
+  if (body && body.form && typeof body.form === 'object') {
+    next.form = {
+      at: String(body.form.at || new Date().toISOString()),
+      catField: String(body.form.catField || ''),
+      teamField: String(body.form.teamField || ''),
+      catOptions: Array.isArray(body.form.catOptions) ? body.form.catOptions.slice(0, 300) : [],
+      teamOptions: Array.isArray(body.form.teamOptions) ? body.form.teamOptions.slice(0, 300) : []
+    };
+  }
+  if (Object.keys(next.cat).length || Object.keys(next.team).length || next.raw || next.form) next.at = new Date().toISOString();
+  if (!Object.keys(next.cat).length && !Object.keys(next.team).length && !next.raw && !next.form) delete all.sites[h];
   else all.sites[h] = next;
   writeAll(DATA_DIR, all);
   return next;

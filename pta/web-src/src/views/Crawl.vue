@@ -264,6 +264,7 @@ const mapTargets = ref([])
 const mapCatRows = ref([])
 const mapTeamRows = ref([])
 const mapMsg = ref('')
+const mapForm = ref(null)
 const mapLoading = ref(false)
 function mapRowsOf(obj) { return Object.keys(obj || {}).map(k => ({ k, v: String(obj[k] || '') })) }
 async function openMaps() {
@@ -292,6 +293,7 @@ async function detectMap() {
   mapLoading.value = false
   if (!j || !j.ok) { mapMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
   mapCatRows.value = mapRowsOf(j.data.cat)
+  mapForm.value = j.data.form || null
   const tc = (j.data.teamOptions || []).length
   mapMsg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
 }
@@ -300,7 +302,7 @@ async function saveMap() {
   const cat = {}, team = {}
   mapCatRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) cat[String(r.k).trim()] = String(r.v).trim() })
   mapTeamRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) team[String(r.k).trim()] = String(r.v).trim() })
-  const r = await fetch('/api/maps/' + encodeURIComponent(mapHost.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team }) })
+  const r = await fetch('/api/maps/' + encodeURIComponent(mapHost.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team, form: mapForm.value }) })
   const j = await r.json().catch(() => null)
   mapMsg.value = j && j.ok ? '已保存到 data/site-maps.json' : ((j && j.error && j.error.message) || '保存失败')
 }
