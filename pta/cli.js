@@ -32,6 +32,7 @@ function usage() {
   pta publish <queueId> [--real] [--json]
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
+  pta target-prepare <queueId> [--targets h1,h2] [--torrent file] [--announce h1=url,h2=url] [--json]
   pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--announce url|h1=url,h2=url] [--fetch-published] [--real] [--json]
   pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
   pta target-announce --host <target> [--json]
@@ -443,6 +444,31 @@ async function main() {
     print(d, opts, function (x) {
       if (!x.length) return '没有目标站定义（data/site-pack.json 或 site-defs 为空）';
       return x.map(function (t) { return t.host + '  ' + t.engine + '  ' + (t.ready ? '就绪' : (t.hasCookie ? '缺配置' : '缺 cookie')); }).join('\n');
+    });
+    return;
+  }
+  if (cmd === 'target-prepare') {
+    const id = args[0];
+    if (!id) die('target-prepare 需要 queueId', 2);
+    const targets = opts.targets ? String(opts.targets).split(',').map(function (x) { return x.trim(); }).filter(Boolean) : [];
+    if (!targets.length) die('target-prepare 需要 --targets h1,h2', 2);
+    const b64 = readTorrent(opts.torrent);
+    const ann = opts.announce ? readAnnounceMap(String(opts.announce)) : { single: '', map: null };
+    const body = { queueId: id, targets: targets, torrentBase64: b64 || undefined, targetAnnounces: ann.map || undefined };
+    if (!USE_HTTP) {
+      const x = await core().targetPrepare(body);
+      print(x, opts, function (v) {
+        const ok = (v.targets || []).filter(function (t) { return t.ok; }).length;
+        const failed = (v.targets || []).filter(function (t) { return !t.ok; }).length;
+        return '源种 ' + v.source.infohash + ' · 目标种 ' + ok + '/' + v.targets.length + (failed ? ' · 失败 ' + failed : '');
+      });
+      return;
+    }
+    const d = await api('/api/queue/' + encodeURIComponent(id) + '/targets/prepare', { method: 'POST', body: body });
+    print(d, opts, function (v) {
+      const ok = (v.targets || []).filter(function (t) { return t.ok; }).length;
+      const failed = (v.targets || []).filter(function (t) { return !t.ok; }).length;
+      return '源种 ' + v.source.infohash + ' · 目标种 ' + ok + '/' + v.targets.length + (failed ? ' · 失败 ' + failed : '');
     });
     return;
   }

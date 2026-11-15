@@ -294,6 +294,61 @@ function makeTargetService(ctx, target) {
     return { ok: true, data: Object.assign({}, r.data, { verify: verified, targetResults: item.data.targetResults }) };
   }
 
+  async function prepareTorrents(body) {
+    const b = body || {};
+    const item = loadQueue(b.queueId);
+    if (!item) return { ok: false, code: 'NOT_FOUND', message: '队列条目不存在', http: 404 };
+    let hosts = Array.isArray(b.targets) ? b.targets : (typeof b.targets === 'string' ? b.targets.split(',') : []);
+    hosts = hosts.map(function (h) { return String(h || '').trim().toLowerCase(); }).filter(Boolean);
+    if (!hosts.length) hosts = targetHosts(item.data);
+    if (!hosts.length) return { ok: false, code: 'NO_TARGET', message: '没有配置目标站', http: 400 };
+    const tr = await torrentFor(b, item.data);
+    if (tr.err) return { ok: false, code: 'TORRENT_UNAVAILABLE', message: tr.err, http: 400 };
+    const srcMeta = target.torrentMeta(tr.buf);
+    if (!srcMeta || !srcMeta.hash) return { ok: false, code: 'BAD_TORRENT', message: '源种解析不出 infohash', http: 400 };
+    const dir = path.join(DATA_DIR, 'torrents');
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const sourceFile = path.join(dir, 'source-' + srcMeta.hash + '.torrent');
+    if (!fs.existsSync(sourceFile)) fs.writeFileSync(sourceFile, tr.buf, { mode: 0o600 });
+    const raw = b.targetAnnounces;
+    const perAnnounce = {};
+    if (Array.isArray(raw)) raw.forEach(function (x) { if (x && x.host) perAnnounce[String(x.host).toLowerCase()] = x.announce || x.url || ''; });
+    else if (raw && typeof raw === 'object') Object.keys(raw).forEach(function (h) { perAnnounce[String(h).toLowerCase()] = raw[h]; });
+    const out = [];
+    for (const host of hosts) {
+      let announce = String(b.cleanAnnounce || '').trim();
+      if (hosts.length > 1) announce = '';
+      if (!announce) announce = String(perAnnounce[host] || '').trim();
+      if (!announce) announce = cachedAnnounce(host);
+      if (!announce) {
+        const cand = await target.announceCandidates(host);
+        if (cand.ok) {
+          const list = cand.data.candidates || [];
+          const pick = list.filter(function (x) { return x.kind === 'passkey'; })[0]
+            || list.filter(function (x) { return x.kind === 'generic'; })[0]
+            || null;
+          if (pick) announce = pick.announce;
+        }
+      }
+      if (!announce) {
+        out.push({ host: host, ok: false, code: 'NEED_TARGET_ANNOUNCE', message: '没找到目标站 announce/passkey' });
+        continue;
+      }
+      try {
+        const cleaned = torrentClean.replaceAnnounce(tr.buf, announce);
+        const meta = target.torrentMeta(cleaned);
+        if (!meta || !meta.hash) throw new Error('目标种解析不出 infohash');
+        const safeHost = String(host).replace(/[^a-z0-9.-]/gi, '_');
+        const file = path.join(dir, safeHost + '-' + meta.hash + '.torrent');
+        fs.writeFileSync(file, cleaned, { mode: 0o600 });
+        out.push({ host: host, ok: true, infohash: meta.hash, size: cleaned.length, path: file, sameInfohash: meta.hash === srcMeta.hash, source: 'cleaned' });
+      } catch (e) {
+        out.push({ host: host, ok: false, code: 'CLEAN_FAILED', message: String(e && e.message || e).slice(0, 120) });
+      }
+    }
+    return { ok: true, data: { queueId: item.id, source: { infohash: srcMeta.hash, path: sourceFile, size: tr.buf.length }, targets: out } };
+  }
+
   async function uploadMany(body) {
     const b = body || {};
     const item = loadQueue(b.queueId);
@@ -386,7 +441,7 @@ function makeTargetService(ctx, target) {
     return { ok: true, data: out };
   }
 
-  return { upload: upload, uploadMany: uploadMany, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
+  return { upload: upload, uploadMany: uploadMany, prepareTorrents: prepareTorrents, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
 module.exports = { makeTargetService };

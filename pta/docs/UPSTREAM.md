@@ -192,3 +192,13 @@
 
 - 观察：多数 NexusPHP 发布后的种子只是把 announce 换成目标站 passkey，info 不变；发布后再下载一次是多余请求。
 - 决定：提交前直接生成目标种（源种 info + 目标 announce），源种和目标种都缓存 0600；qB 直接用目标种辅种。发布后默认不下载目标站种子，`--fetch-published` 仅做异常校验。
+
+## 2026-11-19 · qB 多 tracker 与辅种
+
+- 观察：qB 以 infohash 为种子唯一键，同 hash 再 add 副本不会成为第二个种子；跨站辅种应给现有种子追加目标 tracker。
+- 决定：新增 qB `addTrackers`/`trackerStatus`；目标 tracker 来自预生成目标种，发布前可能返回未注册，发布后轮询 status=2 视为 working。
+
+## 2026-11-19 · 提交前生成目标种
+
+- 目标种在提交前生成：源种 info 不变，只换目标 announce/announce-list；源种和目标种都缓存 0600。
+- 这样 qB 可以在下载完成后直接追加目标 tracker 辅种，不需要等发布后下载目标站生成种子。

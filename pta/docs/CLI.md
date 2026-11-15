@@ -55,6 +55,7 @@ sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部�
 | `screen` | 查重/筛选词条 | 本地 |
 | `publish <queueId>` | 发布到下载器 | 干跑，`--real` 才真发 |
 | `targets` | 列目标站定义与就绪状态 | 只读 |
+| `target-prepare <queueId> --targets h1,h2` | 提交前生成各站目标种（清洗 announce，info 不变），源种/目标种存私有 data | 只写私有文件 |
 | `target-upload <queueId> --host <target> [--targets h1,h2] [--torrents h1=file,h2=file] [--announce h1=url,h2=url] [--fetch-published]` | 提交到目标站；`--torrents` 每站种子，`--announce` 清洗 announce，`--fetch-published` 额外校验发布后种子 | 干跑，`--real` 才真发 |
 | `target-delete <id|detailsUrl> --host <target>` | 删除目标站种子，原因默认“其他/测试” | 干跑，`--check` 只查状态，`--real` 才真删 |
 | `target-announce --host <target>` | 列目标站 announce 候选来源/类型，不回明文 | 只读 |

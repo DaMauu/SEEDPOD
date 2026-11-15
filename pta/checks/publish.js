@@ -8,8 +8,10 @@ const os = require('os');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
+const { makeQb } = require(path.join(ROOT, 'server', 'qb.js'));
 const PORT = Number(process.env.PTA_CHECK_PORT || 8095);
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-pub-'));
+const qbMod = makeQb(DATA);
 const BASE = 'http://127.0.0.1:' + PORT;
 const USER = 'check';
 const PASS = 'check-pass';
@@ -20,6 +22,7 @@ const TORRENT = Buffer.concat([Buffer.from('d8:announce15:http://mock/ann4:info'
 const results = [];
 let cookie = '';
 let addHits = 0, lastAddCookie = '', lastAddType = '', lastAddLen = 0;
+let trackerAdds = 0, lastTrackerBody = '';
 let sourceHits = 0, lastSourceCookie = '';
 
 function check(name, fn) {
@@ -55,6 +58,21 @@ async function main() {
     if (url === '/api/v2/auth/login') {
       res.setHeader('set-cookie', 'SID=test-sid; Path=/');
       res.writeHead(200); res.end('Ok.');
+      return;
+    }
+    if (url === '/api/v2/torrents/addTrackers') {
+      const chunks = [];
+      req.on('data', c => chunks.push(c));
+      req.on('end', function () {
+        trackerAdds++;
+        lastTrackerBody = Buffer.concat(chunks).toString('utf8');
+        res.writeHead(200); res.end('Ok.');
+      });
+      return;
+    }
+    if (url === '/api/v2/torrents/trackers') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify([{ url: 'https://target.example/announce.php?passkey=x', status: 2, msg: 'Working', tier: 0, num_peers: 2, num_seeds: 1, num_leeches: 1 }]));
       return;
     }
     if (url === '/api/v2/torrents/add') {
@@ -116,6 +134,16 @@ async function main() {
     body: JSON.stringify({ name: 'mock-qb', url: qb.base, user: 'u', pass: 'p' })
   })).json();
   need(dl.ok && dl.data.id, '下载器创建失败：' + JSON.stringify(dl));
+
+  await check('qB 追加目标 tracker 与状态查询', async function () {
+    const dlObj = { url: qb.base, user: 'u', pass: 'p' };
+    const add = await qbMod.addTrackers(dlObj, HASH, ['https://target.example/announce.php?passkey=x']);
+    need(add.ok && add.count === 1, '追加 tracker 失败：' + JSON.stringify(add));
+    need(trackerAdds === 1 && /hash=/.test(lastTrackerBody) && /target\.example/.test(lastTrackerBody), '追加 tracker 请求不对：' + lastTrackerBody.slice(0, 120));
+    const st = await qbMod.trackerStatus(dlObj, HASH);
+    need(st.ok && st.trackers.length === 1, 'tracker 状态失败：' + JSON.stringify(st));
+    need(st.trackers[0].working === true && st.trackers[0].numPeers === 2, 'tracker 工作状态不对：' + JSON.stringify(st.trackers[0]));
+  });
 
   const cred = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
     method: 'PUT', headers: { 'content-type': 'application/json' },

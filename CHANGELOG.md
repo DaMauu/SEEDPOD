@@ -1,5 +1,20 @@
 # 更新日志
 
+## v0.7.211 · 2026-11-19
+
+### G12 提交前生成目标种
+- 新增 `target-prepare <queueId> --targets h1,h2`：先取源种，按站生成目标种（只换 announce，info 不变），源种/目标种都存 `data/torrents/` 0600。
+- 预生成阶段不发上传请求；qB 后续可直接用目标种/追加目标 tracker，不再等发布后下载。
+- target 18/18、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
+## v0.7.210 · 2026-11-19
+
+### G12 qB 多 tracker 与状态监控
+- qB 适配新增 `addTrackers` / `trackerStatus`：同一个 infohash 只保留一个种子，给已下载种子追加多个目标 tracker，不重复 add 副本。
+- `trackerStatus` 返回 status/msg/peers，`status=2` 视为 working；未注册/未联系可直接看到。
+- mock qB 6/6 通过；预生成目标种已能提供目标 tracker/passkey。
+- 下一步接状态机：下载完成 → 追加 tracker → 发布 → tracker working 即完成辅种。
+
 ## v0.7.209 · 2026-11-19
 
 ### G10 预生成目标种，跳过发布后下载

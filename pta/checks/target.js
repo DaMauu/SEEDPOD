@@ -369,6 +369,21 @@ async function main() {
     need(hits.length === 0, '清洗干跑发了请求：' + hits.length);
   });
 
+  await check('提交前生成每站目标种', async function () {
+    const before = hits.length;
+    const j = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/prepare', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64') })
+    });
+    need(j.status === 200 && j.body.ok, '目标种预生成失败：' + j.status);
+    const d = j.body.data;
+    need(d.source && d.source.infohash === hash && fs.existsSync(d.source.path), '源种没落盘：' + JSON.stringify(d.source));
+    const t = (d.targets || [])[0];
+    need(t && t.ok && t.infohash === hash && t.sameInfohash === true, '目标种不对：' + JSON.stringify(t));
+    need(t.path && fs.existsSync(t.path), '目标种没落盘：' + (t.path || ''));
+    need(hits.length === before, '预生成目标种不该上传');
+  });
+
   await check('UNIT3D / Gazelle 默认映射', async function () {
     async function mk(title, targetSite) {
       const r = await json(BASE + '/api/queue', {

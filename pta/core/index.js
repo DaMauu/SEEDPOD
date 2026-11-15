@@ -148,6 +148,12 @@ function createCore(opts) {
     }));
   }
 
+  async function targetPrepare(input) {
+    const b = input || {};
+    if (!b.queueId) throw new Error('target-prepare 需要 queueId');
+    return unwrap(await ctx.targetService.prepareTorrents(b));
+  }
+
   async function targetDelete(input) {
     const b = input || {};
     if (!b.host) throw new Error('target-delete 需要 --host <target>');
@@ -301,6 +307,7 @@ function createCore(opts) {
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
     targetDelete: targetDelete,
+    targetPrepare: targetPrepare,
     targetAnnounce: targetAnnounce,
     probe: probe,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),

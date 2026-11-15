@@ -1,6 +1,18 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 06:15（当前 v0.7.209 / 预生成目标种）
+最后更新：2026-11-19 07:15（当前 v0.7.211 / 提交前生成目标种）
+
+## 2026-11-19 提交前生成目标种（v0.7.211）
+
+- `target-prepare`：提交前按站生成目标种，源种/目标种双缓存 0600，不发上传请求。
+- 目标种只换 announce/announce-list，info 不变；qB 后续直接用目标 tracker 辅种。
+- target 18/18、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过；下一步接下载完成/发布状态机。
+
+## 2026-11-19 qB 多 tracker 与状态监控（v0.7.210）
+
+- qB 适配新增 `addTrackers` / `trackerStatus`；同 infohash 不重复 add，只给现有种子追加目标 tracker。
+- tracker status=2 视为 working；未注册/未联系可读 msg/status。
+- mock qB 6/6、全量 run.sh 通过；下一步接下载完成→追加 tracker→发布→working 状态机。
 
 ## 2026-11-19 预生成目标种（v0.7.209）
 
