@@ -1,6 +1,21 @@
 <template>
   <div class="drawers">
     <div id="crawl-panel">
+      <section class="flow-gates" id="flow-gates">
+        <div class="fg-main">
+          <span class="fg-title">发布闸门</span>
+          <span class="fg-note">自动发布关闭时，只准备/预览，不提交目标站。</span>
+        </div>
+        <div class="fg-switches">
+          <label>真抓取 <button class="switch" id="gate-crawl" :class="{ on: gates.realCrawl }" type="button" role="switch" :aria-checked="String(gates.realCrawl)" @click="toggleGate('realCrawl')"><i></i></button></label>
+          <label>自动发布 <button class="switch" id="gate-publish" :class="{ on: gates.realPublish }" type="button" role="switch" :aria-checked="String(gates.realPublish)" @click="toggleGate('realPublish')"><i></i></button></label>
+          <label>图床实传 <button class="switch" id="gate-images" :class="{ on: gates.realImages }" type="button" role="switch" :aria-checked="String(gates.realImages)" @click="toggleGate('realImages')"><i></i></button></label>
+        </div>
+        <div class="fg-actions">
+          <button class="btn primary slim" id="flow-prepare" type="button" :disabled="busy.prepare" @click="prepareNext">{{ busy.prepare ? '准备中…' : '准备下一批（不发布）' }}</button>
+          <a class="btn ghost slim" href="#queue">去待审核</a>
+        </div>
+      </section>
       <section class="drawer open vue-card crawl-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">抓取</div></div>
@@ -193,7 +208,8 @@ const targetHost = ref('')
 const targetOpen = ref(false)
 const targetQ = ref('')
 const plan = reactive({ on: false, host: '', urls: [], warnings: [], dailyMax: 0, interval: 0, engine: '', catGroups: 0, catIds: 0, estimatedQueries: 0, today: '' })
-const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, screen: false })
+const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, prepare: false, screen: false })
+const gates = reactive({ realCrawl: false, realPublish: false, realImages: false, loaded: false })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
   const cells = []
@@ -447,9 +463,70 @@ const RuleOrSpecial = (props) => {
 }
 RuleOrSpecial.props = { r: { type: Object, required: true } }
 
+async function loadGates() {
+  const j = await getJson('/api/config')
+  if (j && j.ok && j.data && j.data.user) {
+    gates.realCrawl = !!j.data.user.realCrawl
+    gates.realPublish = !!j.data.user.realPublish
+    gates.realImages = !!j.data.user.realImages
+    gates.loaded = true
+  }
+}
+async function applyGate(key, next) {
+  const body = {}
+  body[key] = next
+  const j = await patchUser(body)
+  if (j && j.ok) {
+    gates[key] = next
+    toast((next ? '已开启 ' : '已关闭 ') + ({ realCrawl: '真抓取', realPublish: '自动发布', realImages: '图床实传' }[key] || key))
+  } else {
+    toast((j && j.error && j.error.message) || '闸门保存失败')
+  }
+}
+function toggleGate(key) {
+  const next = !gates[key]
+  if (next && key === 'realPublish') {
+    confirmBox('开启自动发布？', '开启后调度/批量发布会真实提交到目标站；建议保持关闭，先在待审核页手动提交。', () => applyGate(key, true))
+    return
+  }
+  if (next && key === 'realCrawl') {
+    confirmBox('开启真抓取？', '开启后会真实访问来源站；请确认站点授权、频率和每天上限。', () => applyGate(key, true))
+    return
+  }
+  if (next && key === 'realImages') {
+    confirmBox('开启图床实传？', '开启后截图会真实上传到图床；先确认图床配置和额度。', () => applyGate(key, true))
+    return
+  }
+  applyGate(key, next)
+}
+async function prepareNext() {
+  if (busy.prepare) return
+  busy.prepare = true
+  const a = await getJson('/api/release/run', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ stage: 'prepared', limit: 20 })
+  })
+  if (!a || !a.ok) {
+    busy.prepare = false
+    toast((a && a.error && a.error.message) || '准备失败')
+    return
+  }
+  const b = await getJson('/api/release/run', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ stage: 'previewed', limit: 20 })
+  })
+  busy.prepare = false
+  if (!b || !b.ok) {
+    toast('已准备 ' + ((a.data && a.data.prepared) || 0) + ' 条，预览失败；不会自动发布')
+    return
+  }
+  toast('已准备 ' + ((a.data && a.data.prepared) || 0) + ' · 已预览 ' + ((b.data && b.data.previewed) || 0) + ' · 不会自动发布')
+}
+
 function ensure() {
   if (!viewVisible('crawl') || !loggedIn()) return
   if (!sites.value.length) loadSites()
+  if (!gates.loaded) loadGates()
   loadFlow()
 }
 onMounted(() => {
@@ -710,5 +787,19 @@ onUnmounted(() => {
 @media (max-width: 900px) {
   .crawl-head-tools { width: 100%; }
   .crawl-source { width: 100%; max-width: none; }
+}
+
+/* 发布闸门：默认关，准备/预览不提交 */
+.flow-gates { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); }
+.fg-main { display: flex; flex-direction: column; gap: 2px; min-width: 200px; }
+.fg-title { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.fg-note { font-size: 10.5px; color: var(--muted-2); }
+.fg-switches { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.fg-switches label { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.fg-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.fg-actions .btn { height: 28px; padding: 0 10px; font-size: 11.5px; white-space: nowrap; }
+@media (max-width: 900px) {
+  .fg-main { min-width: 100%; }
+  .fg-actions { margin-left: 0; width: 100%; }
 }
 </style>
