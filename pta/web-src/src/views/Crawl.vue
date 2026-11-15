@@ -68,7 +68,6 @@
           </div>
 
           <div class="crawl-foot">
-            <div class="crawl-note">{{ fetchNote }}</div>
             <label class="detail-sw">
               <span>抓详情页</span>
               <button class="switch" :class="{ on: detail }" type="button" role="switch" :aria-checked="String(detail)" @click="toggleDetail"><i></i></button>
@@ -107,7 +106,7 @@
         </div>
       </section>
 
-      <section class="drawer open vue-card">
+      <section class="drawer open vue-card filter-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">③ 初筛</div></div>
           <div class="drawer-head-right">
@@ -792,7 +791,7 @@ onUnmounted(() => {
 .crawl-card :deep(.limit-item){display:flex;flex-direction:column;gap:6px;min-width:0}
 .crawl-card :deep(.limit-item .lbl){font-size:12px;color:var(--muted,#6b7280)}
 .crawl-card :deep(.limit-item .input){width:100%;height:32px;padding:0 10px;font-size:13px}
-.crawl-card :deep(.crawl-foot){display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line,#eef0f4)}
+.crawl-card :deep(.crawl-foot){display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:10px;padding-top:0;border-top:0}
 .crawl-card :deep(.crawl-note){font-size:12px;color:var(--muted-2,#9ca3af);line-height:1.5}
 .crawl-card :deep(.detail-sw){display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted,#6b7280);cursor:pointer}
 .crawl-card :deep(.detail-sw .switch){flex:0 0 auto}
@@ -809,7 +808,13 @@ onUnmounted(() => {
 .crawl-card :deep(.crawl-foot){flex-direction:column;align-items:flex-start;gap:10px}
 }
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
+.dedupe-card :deep(.drawer-body){display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.dedupe-card :deep(.flow-group){background:transparent;border:0;border-radius:0;padding:0;margin:0}
+.dedupe-card :deep(.flow-ttl){margin-bottom:6px}
 .flow-group :deep(.flow-ttl){font-size:12px;font-weight:600;color:var(--muted);margin:0 0 1px}
+.filter-card :deep(.preset-row){grid-template-columns:112px minmax(0,1fr);align-items:center;gap:10px}
+.filter-card :deep(.preset-row .cat-row){margin-left:0;gap:4px}
+.filter-card :deep(.preset-row .pick-row){flex-wrap:nowrap}
 .flow-sum { font-size: 11px; color: var(--muted); opacity: .85; margin: 0 0 6px; }
 /* 未接徽标固定在右侧同一行；右侧芯片行统一左对齐 */
 .crawl-card :deep(.preset-row .lbl), .flow-group :deep(.set-field .lbl) { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
