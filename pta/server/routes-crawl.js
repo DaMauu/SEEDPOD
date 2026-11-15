@@ -6,6 +6,7 @@ const adapters = require('./adapters');
 const limits = require('./limits');
 const flowConfig = require('./flow-config');
 const dupeClassify = require('./dupe-classify');
+const sitePack = require('./site-pack');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -26,6 +27,55 @@ module.exports = function (app, ctx) {
     try { return { cookie: secretbox.decrypt(r.cookie, KEYRING.key) }; } catch (e) { return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } }; }
   };
   const cfgRow = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
+
+  function catsOf(host) {
+    const def0 = readDef(host) || {};
+    const built = sitePack.siteOf(host) || {};
+    const def = Object.assign({}, built, def0);
+    const list = Array.isArray(def.catList) ? def.catList
+      : Array.isArray(def.catMap) ? def.catMap.map(function (x) { return { id: x.id, label: x.label || x.purpose || '', purpose: x.purpose }; })
+        : [];
+    return list.filter(function (x) { return x && x.id != null; })
+      .map(function (x) { return { id: String(x.id), label: String(x.label || x.purpose || x.id), purpose: String(x.purpose || '') }; });
+  }
+  function presetOf(host) { return readPresets()[host] || null; }
+  function selectedIds(host) {
+    const p = presetOf(host);
+    const cats = (p && p.cats) || {};
+    const out = [];
+    Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { out.push(String(id)); }); });
+    return out;
+  }
+
+  app.get('/api/crawl/cats/:host', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const list = catsOf(host);
+    const sel = selectedIds(host);
+    return ok({ host: host, cats: list.map(function (c) { return Object.assign({}, c, { on: !sel.length || sel.indexOf(c.id) >= 0 }); }), selected: sel });
+  });
+
+  app.put('/api/crawl/cats/:host', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    if (!/^[a-z0-9][a-z0-9.-]*$/.test(host)) return bad(reply, 'BAD_HOST', '站点名不合法');
+    const ids = (Array.isArray(req.body && req.body.ids) ? req.body.ids : []).map(function (x) { return String(x); });
+    const list = catsOf(host);
+    if (!list.length) return bad(reply, 'NO_CATS', '这个站还没有分类定义', 400);
+    const known = {};
+    list.forEach(function (c) { known[c.id] = c; });
+    const cats = {};
+    ids.filter(function (id) { return known[id]; }).forEach(function (id) {
+      const g = known[id].label || known[id].purpose || '其他';
+      (cats[g] = cats[g] || []).push(id);
+    });
+    const file = path.join(DATA_DIR, 'site-search.local.json');
+    let raw = {};
+    try { raw = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (e) { raw = {}; }
+    const sites = raw.sites && typeof raw.sites === 'object' ? raw.sites : raw;
+    sites[host] = Object.assign({}, sites[host] || {}, { cats: cats, updatedAt: now() });
+    const out = raw.sites ? raw : { sites: sites };
+    fs.writeFileSync(file, JSON.stringify(out, null, 2) + '\n', { mode: 0o600 });
+    return ok({ host: host, ids: ids.filter(function (id) { return known[id]; }), groups: Object.keys(cats).length });
+  });
 
   /* ---- 抓取计划：只读本地配置，不发请求 ---- */
   app.get('/api/crawl/plan', async (req, reply) => {

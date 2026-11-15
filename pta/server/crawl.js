@@ -117,8 +117,17 @@ function makeCrawl(ctx) {
     if (!def.engine) return { err: { code: 'NO_ENGINE', message: '这个站还没识别出引擎' } };
     const cookie = cookieOf(host);
     if (!cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
-    const catMap = Array.isArray(def.catList) ? def.catList
+    let catMap = Array.isArray(def.catList) ? def.catList
       : (Array.isArray(def.catMap) ? def.catMap : catListFromCats(def.cats));
+    /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
+    try {
+      const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {};
+      const sites = raw.sites || raw;
+      const cats = (sites[host] && sites[host].cats) || {};
+      const sel = [];
+      Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { sel.push(String(id)); }); });
+      if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
+    } catch (e) { /* 没预设就全抓 */ }
     const catIdxRaw = Number(opts.catIdx >= 0 ? opts.catIdx : 0);
     const st0 = readState();
     const rec0 = st0[host] || {};

@@ -44,6 +44,13 @@
             </ul>
             <em>只读本地配置拼的地址，没有发请求；要抓某一页去站点页点「抓一页」</em>
           </div>
+          <div v-if="catRows.length" class="preset-block">
+            <div class="lbl"><span>抓取分类</span><em class="drawer-meta">{{ catOnCount }}/{{ catRows.length }}</em></div>
+            <div class="cat-row pick-row">
+              <button v-for="c in catRows" :key="c.id" class="cat-chip" :class="{ on: c.on }" type="button" :disabled="!sourceHost" @click="toggleCat(c)">{{ c.label }}</button>
+            </div>
+            <div class="rule-hint">只抓选中的分类；全不选等于全抓。分类 id 按站保存。</div>
+          </div>
           <div class="preset-block">
             <div v-for="r in fetchRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
               <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
@@ -356,6 +363,23 @@ function clampLimit(k, e) {
 }
 function saveSource() {
   try { localStorage.setItem('pta.crawlSite', sourceHost.value) } catch (e) { reportError('Crawl', e) }
+  loadCats()
+}
+const catRows = ref([])
+const catOnCount = computed(() => catRows.value.filter(c => c.on).length)
+async function loadCats() {
+  if (!sourceHost.value) { catRows.value = []; return }
+  const j = await getJson('/api/crawl/cats/' + encodeURIComponent(sourceHost.value))
+  catRows.value = (j && j.ok && j.data && j.data.cats) || []
+}
+async function toggleCat(c) {
+  c.on = !c.on
+  let ids = catRows.value.filter(x => x.on).map(x => x.id)
+  if (!ids.length) { catRows.value.forEach(x => { x.on = true }); ids = catRows.value.map(x => x.id) }
+  await fetch('/api/crawl/cats/' + encodeURIComponent(sourceHost.value), {
+    method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids })
+  })
 }
 function pickTarget(host) {
   targetHost.value = host
@@ -503,6 +527,7 @@ async function loadSites() {
     targetHost.value = localStorage.getItem('pta.target') || ''
   } catch (e) { reportError('Crawl', e) }
   if (!siteOptions.value.some(s => s.host === sourceHost.value)) sourceHost.value = ''
+  loadCats()
   if (!siteOptions.value.some(s => s.host === targetHost.value)) targetHost.value = ''
 }
 
