@@ -38,8 +38,10 @@ module.exports = function (app, ctx) {
     else if (def.catMap && typeof def.catMap === 'object') {
       list = Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k, purpose: k }; });
     }
+    const seen = {};
     return list.filter(function (x) { return x && x.id != null; })
-      .map(function (x) { return { id: String(x.id), label: String(x.label || x.purpose || x.id), purpose: String(x.purpose || '') }; });
+      .map(function (x) { return { id: String(x.id), label: String(x.label || x.purpose || x.id), purpose: String(x.purpose || '') }; })
+      .filter(function (x) { if (seen[x.id]) return false; seen[x.id] = true; return true; });
   }
   function presetOf(host) { return readPresets()[host] || null; }
   function selectedIds(host) {

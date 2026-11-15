@@ -122,6 +122,8 @@ function makeCrawl(ctx) {
         : (def.catMap && typeof def.catMap === 'object'
           ? Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k }; })
           : catListFromCats(def.cats)));
+    const seenCat = {};
+    catMap = catMap.filter(function (x) { if (!x || x.id == null) return false; const k = String(x.id); if (seenCat[k]) return false; seenCat[k] = true; return true; });
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
     try {
       const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {};
