@@ -8,6 +8,71 @@
     "sum": "未设置",
     "rows": [
       {
+        "t": "类型",
+        "type": "custom",
+        "chips": [
+          "电影",
+          "剧集",
+          "综艺",
+          "动漫",
+          "纪录片",
+          "音乐",
+          "体育",
+          "演唱会",
+          "MV",
+          "有声书",
+          "电子书",
+          "软件",
+          "游戏",
+          "其他"
+        ],
+        "sel": [],
+        "hint": "对应站点搜索的类别；具体 id 用上面的「抓取分类」按站选",
+        "todo": true,
+        "label": "类型（搜索预设）"
+      },
+      {
+        "t": "媒介",
+        "type": "custom",
+        "chips": [
+          "原盘(Full Disc)",
+          "UHD 原盘",
+          "3D 原盘",
+          "Remux",
+          "Encode",
+          "Blu-ray",
+          "HDDVD",
+          "DVD",
+          "HDTV",
+          "WEB-DL",
+          "WEBRip",
+          "TVRip",
+          "VHS",
+          "其他"
+        ],
+        "sel": [],
+        "hint": "锁到站点的 medium / type 字段",
+        "todo": true,
+        "label": "媒介（搜索预设）"
+      },
+      {
+        "t": "分辨率",
+        "type": "custom",
+        "chips": [
+          "480p",
+          "576p",
+          "720p",
+          "1080i",
+          "1080p",
+          "2160p",
+          "4320p/8K"
+        ],
+        "sel": [],
+        "hint": "按分辨率筛搜索结果",
+        "todo": true,
+        "label": "分辨率（搜索预设）"
+      },
+      {
         "t": "优惠",
         "type": "custom",
         "chips": [
