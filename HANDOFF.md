@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 15:00（当前 v0.7.187 / G4 完成）
+最后更新：2026-11-18 16:00（当前 v0.7.188 / 移除 rTorrent/Deluge 兼容）
+
+## 2026-11-18 移除 rTorrent/Deluge 兼容（v0.7.188）
+
+- 用户决定不再为 PTA 开发 rTorrent/Deluge 下载器兼容；产品只保留 qBittorrent + watch。
+- 删除 rtorrent.js / deluge.js / clients-ext；routes-qb、publish 只接受 qb/watch，旧类型返回 UNSUPPORTED_DOWNLOADER。
+- 面板类型选项只剩 qB / watch；旧记录显示“已弃用”，编辑时改成 qB 或 watch。
+- clients 7/7、smoke 23/23、全量 run.sh 通过。
+- G5 改为“真实目标站 + 真实 qB/watch 环境”，仍等真实站点权限。
 
 ## 2026-11-18 G4 规则分诊执行（v0.7.187）
 

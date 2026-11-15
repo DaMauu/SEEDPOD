@@ -20,7 +20,7 @@
 | G2 | 可靠性债 | 100% | 空 catch 0、TODO 0、审计 87 |
 | G3 | 拆 Sites.vue | 100% | Sites.vue 436 行；toolbar/stats/list/detail/modals |
 | G4 | 40 条规则分诊 | 100% | 做 8、删 17、暂缓 15；规则 33/18/15，缺读者 0 |
-| G5 | 真实环境验证 | 50% | 测试站抓取/提交通过；真实 rTorrent/Deluge 待做 |
+| G5 | 真实环境验证 | 50% | 测试站抓取/提交通过；真实目标站/qB watch 待做 |
 | G6 | 站点包例外 UI + Docker/备份 | 100% | 例外 UI、Docker compose、备份恢复演练 |
 | G7 | 发布状态机 | 100% | submitted/injected 幂等、失败重试 |
 | G8 | 原生单 release 上传 | 100% | prepared 字段接 target-upload |
@@ -34,7 +34,7 @@
 ## 当前阻塞
 
 - G10 真实多站：需要 2–3 个有上传权限的目标站。
-- G5：需要真实 rTorrent/Deluge 环境。
+- G5：需要真实目标站权限 + qB/watch 环境；rTorrent/Deluge 已移除。
 - G13：需要真实站点覆盖与回查证据。
 - G12：依赖 G13，暂不可开。
 - G14：可选，等明确 AI/OCR/pandas/Scrapy 需求。

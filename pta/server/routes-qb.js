@@ -3,16 +3,14 @@ const path = require('path');
 const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
-const rtorrent = require('./clients/rtorrent');
-const deluge = require('./clients/deluge');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const KEYRING = secretbox.loadKey(DATA_DIR);
   const qb = makeQb(DATA_DIR);
   const now = () => new Date().toISOString();
-  const KINDS = ['qb', 'watch', 'rtorrent', 'deluge'];
-  const kindOf = (v) => KINDS.indexOf(v) >= 0 ? v : 'qb';
+  const KINDS = ['qb', 'watch'];
+  const kindOf = (v) => KINDS.indexOf(v) >= 0 ? v : '';
 
   const dlPass = function (d) {
     const v = String((d && d.pass) || '');
@@ -33,7 +31,8 @@ module.exports = function (app, ctx) {
 
   app.post('/api/downloaders', async (req, reply) => {
     const b = req.body || {};
-    const kind = kindOf(b.kind);
+    const kind = kindOf(b.kind || 'qb');
+    if (!kind) return bad(reply, 'UNSUPPORTED_DOWNLOADER', '只支持 qBittorrent 和 watch 目录', 400);
     let url = '', watchPath = '';
     if (kind === 'watch') {
       const w = watch.normDir(b.watchPath);
@@ -58,14 +57,14 @@ module.exports = function (app, ctx) {
     if (!d) return bad(reply, 'NOT_FOUND', '下载器不存在', 404);
     const b = req.body || {};
     if (b.name !== undefined) d.name = String(b.name).slice(0, 60);
-    if (b.kind !== undefined) d.kind = kindOf(b.kind);
+    if (b.kind !== undefined) { const k = kindOf(b.kind); if (!k) return bad(reply, 'UNSUPPORTED_DOWNLOADER', '只支持 qBittorrent 和 watch 目录', 400); d.kind = k; }
     if (b.watchPath !== undefined) { const w = watch.normDir(b.watchPath); if (w.err) return bad(reply, 'BAD_WATCH_PATH', w.err); d.watchPath = w.dir; }
     if (b.url !== undefined) { const u = qb.normDlUrl(b.url); if (!u) return bad(reply, 'BAD_URL', '地址必须是 http/https 开头'); d.url = u; }
     if (b.user !== undefined) d.user = String(b.user).slice(0, 100);
     if (b.pass !== undefined) d.pass = b.pass ? secretbox.encrypt(String(b.pass).slice(0, 200), KEYRING.key) : '';
     if (b.disableAuth !== undefined) d.disableAuth = !!b.disableAuth;
     if (d.kind === 'watch' && !d.watchPath) return bad(reply, 'BAD_WATCH_PATH', 'watch 目录不能为空');
-    if (d.kind !== 'watch' && !d.url) return bad(reply, 'BAD_URL', 'qB 地址不能为空');
+    if (d.kind !== 'watch' && !d.url) return bad(reply, 'BAD_URL', '下载器地址不能为空');
     save(d);
     return ok(reply, publicDl(d));
   });
@@ -79,12 +78,11 @@ module.exports = function (app, ctx) {
 
   app.post('/api/downloaders/probe', async (req, reply) => {
     const b = req.body || {};
-    const kind = kindOf(b.kind);
+    const kind = kindOf(b.kind || 'qb');
+    if (!kind) return bad(reply, 'UNSUPPORTED_DOWNLOADER', '只支持 qBittorrent 和 watch 目录', 400);
     if (kind === 'watch') return ok(reply, watch.test({ dir: b.watchPath }));
     const url = qb.normDlUrl(b.url || '');
     if (!url) return bad(reply, 'BAD_URL', '地址要填成 http://主机:端口');
-    if (kind === 'rtorrent') return ok(reply, await rtorrent.test({ url: url, user: b.user, pass: b.pass }));
-    if (kind === 'deluge') return ok(reply, await deluge.test({ url: url, pass: b.pass }));
     const r = await qb.probeDownloader({ url: url, user: b.user, pass: b.pass });
     return ok(reply, r);
   });
@@ -94,9 +92,8 @@ module.exports = function (app, ctx) {
     if (!d) return bad(reply, 'NOT_FOUND', '下载器不存在', 404);
     let r;
     if (d.kind === 'watch') r = watch.test({ dir: d.watchPath });
-    else if (d.kind === 'rtorrent') r = await rtorrent.test({ url: d.url, user: d.user, pass: dlPass(d) });
-    else if (d.kind === 'deluge') r = await deluge.test({ url: d.url, pass: dlPass(d) });
-    else r = await qb.probeDownloader({ url: d.url, user: d.user, pass: dlPass(d) });
+    else if (d.kind === 'qb' || !d.kind) r = await qb.probeDownloader({ url: d.url, user: d.user, pass: dlPass(d) });
+    else return bad(reply, 'UNSUPPORTED_DOWNLOADER', '这个下载器类型已移除，请改成 qB 或 watch', 400);
     d.lastProbe = { at: now(), pass: !!r.pass, version: r.version || '', freeSpace: Number(r.freeSpace) || 0,
       totalSpace: Number(r.totalSpace) || 0, savePath: r.savePath || (d.kind === 'watch' ? d.watchPath : '') || '' };
     save(d);

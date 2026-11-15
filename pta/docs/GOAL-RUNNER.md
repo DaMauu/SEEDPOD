@@ -48,7 +48,7 @@
 - 没有可自动推进的 goal 时，明确列出需要的权限/环境，不要伪造真实站点证据。
 - G3 拆 Sites.vue、G6 站点包例外+Docker/备份，在 G10/G11 之后或并行做，但不要抢 active。
 - G4 40 条规则分诊：需要用户逐条拍板；先出建议表，不要替用户决定。
-- G5 真实 rTorrent/Deluge：需要用户环境；没有就标 blocked，不占用 active。
+- G5 真实目标站/qB watch：需要用户环境；没有就标 blocked，不占用 active。
 - G14 Python sidecar：只有出现明确 AI/OCR/pandas/Scrapy 需求才开，不提前接。
 
 什么时候停：

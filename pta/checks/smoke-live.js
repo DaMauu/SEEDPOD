@@ -385,6 +385,9 @@ async function main() {
     await page.waitForTimeout(350);
     need(await page.locator('#node-modal-vue').isVisible(), '下载器设置弹窗没打开');
     need(await page.locator('#node-modal-vue input[type=password]').count() === 1, '密码输入框缺失');
+    const kindOpts = await page.locator('#node-modal-vue select').first().locator('option').allTextContents();
+    need(!kindOpts.some(function (x) { return /rTorrent|Deluge/i.test(x); }), '下载器类型还含 r/d：' + kindOpts.join(','));
+
     await page.locator('#node-modal-vue .modal-foot button').filter({ hasText: '取消' }).click();
     await page.waitForTimeout(200);
     need(await page.locator('#node-modal-vue').count() === 0, '取消没关闭弹窗');

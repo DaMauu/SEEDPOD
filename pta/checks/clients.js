@@ -217,6 +217,17 @@ async function main() {
     need(r.body.data.retry === true && r.body.data.nextRetryAt, '失败重试标记不对：' + JSON.stringify(r.body.data));
   });
 
+  await check('rTorrent/Deluge 类型已移除', async function () {
+    for (const kind of ['rtorrent', 'deluge']) {
+      const j = await json(BASE + '/api/downloaders', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: kind, url: 'http://127.0.0.1:1' })
+      });
+      need(j.status === 400 && j.body && j.body.error && j.body.error.code === 'UNSUPPORTED_DOWNLOADER',
+        kind + ' 没被拒：' + j.status + ' ' + JSON.stringify(j.body && j.body.error));
+    }
+  });
+
   child.kill();
   src.server.close();
   try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}

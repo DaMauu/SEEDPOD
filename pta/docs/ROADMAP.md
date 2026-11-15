@@ -100,7 +100,7 @@
 | --- | --- | --- | --- |
 | M5 | 元数据/命名/分类/简介 ✅ | 0.7.112 本地解析 + 0.7.124 外部元数据（无 key Wikipedia、有 key TMDB）；meta 11/11、meta-ext 5/5 | TMDB key（用户提供） |
 | M6 | MediaInfo/截图/图床/种子 ✅ | 0.7.113 模块 + 0.7.114 API + 0.7.116 队列页入口（media 7/7、media-api 6/6） | ffmpeg（已有）、mediainfo（可选） |
-| M7 | 客户端抽象 ✅ | qB + watch + rTorrent + Deluge（0.7.121，clients 5/5、clients-ext 4/4，本地 mock） | 本地 mock |
+| M7 | 客户端抽象 ✅ | qB + watch（0.7.188 移除 rTorrent/Deluge；clients 7/7，本地 mock） | 本地 mock |
 | M8 | 站点提交适配 ✅ | 0.7.111 三引擎骨架 + 0.7.122 面板添加站点/上传定义；mock target 6/6 | 真实站配置存 data/，不进仓库 |
 | M9 | CLI + Docker ✅ | 0.7.117：`pta` CLI 支持 status/queue/crawl/screen/publish/targets/target-upload/verify，默认干跑；cli 7/7；Docker 两阶段已有 | 现有后端 |
 | M10 | 通知/重试 ✅ | 0.7.118 Telegram 通知 + 0.7.119 failed 重试（notify 7/7、clients 5/5） | M8 |
@@ -157,7 +157,7 @@
 - 不要求先起 HTTP；CLI 直接读 SQLite 和 data/。
 - 验收：临时库只用 CLI 跑通 mock 全链路；面板 smoke/responsive 不回退。
 
-状态（0.7.167）：`prepare / preview / advance / run` 已落地；在授权测试站完成真实抓取、查重、准备、提交和回查（测试种子需用户自行删除）；真实 rTorrent/Deluge 和 core 抽取仍待做。命令契约见 `pta/docs/CLI.md`。
+状态（0.7.188）：`prepare / preview / advance / run` 已落地；在授权测试站完成真实抓取、查重、准备、提交和回查（测试种子需用户自行删除）；真实目标站/qB watch 和 core 抽取仍待做。命令契约见 `pta/docs/CLI.md`。
 
 执行协议：`pta/docs/GOAL-RUNNER.md`；当前 goal 队列见 `pta/docs/GOALS.md`（G10 多目标发布）。
 

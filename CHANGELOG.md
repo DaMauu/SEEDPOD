@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.188 · 2026-11-18
+
+### 移除 rTorrent/Deluge 下载器兼容
+- 产品范围决定：不再为 PTA 开发 rTorrent/Deluge 下载器兼容；下载器只保留 qBittorrent + watch 目录。
+- 删除 `pta/server/clients/rtorrent.js`、`deluge.js` 和 `clients-ext` 夹具；移除 run.sh 的 clients-ext。
+- 下载器 API 只接受 `qb` / `watch`，旧类型返回 `UNSUPPORTED_DOWNLOADER`；发布/注入遇到旧类型明确报错，不再落到 qB。
+- 面板下载器类型只有 qBittorrent / watch；旧记录显示“已弃用”，编辑时改成 qB 或 watch。
+- clients 7/7、smoke 23/23、全量 run.sh 通过。
+
 ## v0.7.187 · 2026-11-18
 
 ### G4 规则分诊执行

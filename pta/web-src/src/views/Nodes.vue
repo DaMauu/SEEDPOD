@@ -3,7 +3,7 @@
     <div class="drawer-head">
       <div class="drawer-t">
         <div class="drawer-title">下载器</div>
-        <div class="drawer-desc">qBittorrent 的 Web 地址；密码只存密文，不回显。</div>
+        <div class="drawer-desc">qBittorrent Web 地址或 watch 目录；密码只存密文，不回显。</div>
       </div>
       <div class="drawer-head-right">
         <span class="drawer-meta" id="nodes-drawer-meta">{{ meta }}</span>
@@ -18,11 +18,11 @@
           <span v-if="freeAll">余量 {{ fmtBytes(freeAll) }}</span>
         </div>
         <div class="nodes-grid" id="nodes-grid">
-          <div v-if="!nodes.length" class="empty">还没有下载器，点右上角「新增下载器」，填 qBittorrent 的地址和账号密码。</div>
+          <div v-if="!nodes.length" class="empty">还没有下载器，点右上角「新增下载器」，选 qBittorrent 或 watch 目录。</div>
           <div v-for="nd in nodes" :key="nd.id" class="node-row" :class="tone(nd)">
             <div class="nr-name">
               <b>{{ nd.name || hostOf(nd.url) }}</b>
-              <span class="nr-tag">{{ nd.kind === 'watch' ? 'watch' : (nd.user || 'qB') }}</span>
+              <span class="nr-tag">{{ kindLabel(nd.kind) }}{{ nd.user ? ' · ' + nd.user : '' }}</span>
             </div>
             <div class="nr-host mono">{{ nd.kind === 'watch' ? nd.watchPath : hostOf(nd.url) }}</div>
             <div class="nr-disk">
@@ -51,17 +51,15 @@
         <label class="field"><span>类型</span>
           <select v-model="form.kind" class="select">
             <option value="qb">qBittorrent</option>
-            <option value="rtorrent">rTorrent</option>
-            <option value="deluge">Deluge</option>
             <option value="watch">watch 目录</option>
           </select></label>
         <template v-if="form.kind === 'qb'">
           <label class="field"><span>Web 地址</span>
             <input v-model="form.url" class="input" placeholder="http://主机:端口，qB 的 Web 地址就是它的 API 地址"></label>
           <div class="modal-two">
-            <label class="field"><span>用户名（qB / rTorrent）</span>
+            <label class="field"><span>用户名（qB）</span>
               <input v-model="form.user" class="input" placeholder="admin"></label>
-            <label class="field"><span>密码（qB / Deluge / rTorrent）</span>
+            <label class="field"><span>密码（qB）</span>
               <input v-model="form.pass" class="input" type="password" :placeholder="editing ? '留空表示不改已存的密码' : '不设置就留空'" autocomplete="new-password"></label>
           </div>
           <div class="set-field">
@@ -113,6 +111,11 @@ const cats = ref([])
 const catsMsg = ref('')
 let timer = null
 
+function kindLabel(kind) {
+  if (kind === 'watch') return 'watch'
+  if (kind === 'qb' || !kind) return 'qB'
+  return '已弃用'
+}
 function hostOf(url) {
   return String(url || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '')
 }
@@ -157,8 +160,9 @@ function openAdd() {
 }
 function openEdit(nd) {
   editing.value = nd.id
+  if (nd.kind && nd.kind !== 'qb' && nd.kind !== 'watch') toast('旧下载器类型已移除，请改成 qB 或 watch')
   Object.assign(form, {
-    kind: nd.kind || 'qb',
+    kind: nd.kind === 'watch' ? 'watch' : 'qb',
     name: nd.name || '',
     url: nd.url || '',
     user: nd.user || '',
@@ -262,7 +266,7 @@ async function testConn() {
   if (editing.value) { await load(); if (window.__ptaLoadOverview) window.__ptaLoadOverview() }
 }
 async function loadCats(nd) {
-  if (form.kind === 'watch') { cats.value = []; catsMsg.value = 'watch 目录没有分类'; return }
+  if (form.kind !== 'qb') { cats.value = []; catsMsg.value = '只有 qB 有分类'; return }
   const node = nd || nodes.value.find(x => x.id === editing.value)
   if (!node || !node.id) { catsMsg.value = '先保存下载器，再读它的分类'; return }
   if (busy.cats) return

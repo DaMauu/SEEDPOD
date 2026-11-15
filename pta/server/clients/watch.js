@@ -1,4 +1,4 @@
-/* watch 目录客户端：把 .torrent 写进目录，由外部客户端（rTorrent/Deluge/ Transmission）监视。
+/* watch 目录客户端：把 .torrent 写进目录，由外部客户端监视。
    不联网；只做本地文件写入与可写性探测。 */
 const fs = require('fs');
 const path = require('path');

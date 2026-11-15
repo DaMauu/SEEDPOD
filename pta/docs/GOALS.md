@@ -18,7 +18,7 @@
 | G2 | 可靠性债：公共函数、空 catch、TODO/console | ✅ 完成（0.7.169） | 无 | 空 catch 0、审计 87 |
 | G3 | 拆 `Sites.vue` | ✅ 完成（0.7.184） | G2 完成后 | Sites.vue 436 行；smoke 22/22、responsive 32 项 |
 | G4 | 40 条未接规则分诊 | ✅ 完成（0.7.187） | 用户逐条决定 | 8 做/17 删/15 暂缓；保留缺读者 0 |
-| G5 | 真实目标站发布 + 真实 rTorrent/Deluge | 🔴 blocked · 等真实 daemon | 用户提供真实 daemon | 真实发布/回查记录 |
+| G5 | 真实目标站发布 + 真实 qB/watch | 🔴 blocked · 等真实环境 | 用户提供目标站/下载器 | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | ✅ 完成（0.7.185） | G2/G3 后 | 例外 UI、Docker、备份恢复演练均通过 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
 | G8 | 原生单 release 上传准备与站点提交 | ✅ 完成（0.7.172） | G7、G9、G4、G5 | prepared payload 已接 target-upload |
@@ -112,18 +112,18 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 
 ## G5 · 真实环境验证
 
-**目标**：验证真实目标站发布和真实 rTorrent/Deluge 适配器。
+**目标**：验证真实目标站发布和真实 qB / watch 环境。
 
 **依赖**：
 
 - 有上传权限的目标站 + 用户授权
-- 真实 rTorrent / Deluge 地址和账号（只放部署环境，不进仓库）
+- 真实 qBittorrent Web 地址或 watch 目录（只放部署环境，不进仓库）
 - 真发布保持默认关，验证通过后再讨论开启
 
 **验收**：
 
 - 目标站：识别上传表单、提交、回查标题/分类/截图
-- rTorrent/Deluge：连接、列种、添加、校验
+- qB/watch：连接、添加、校验；rTorrent/Deluge 已从产品移除
 - 全程不记录 cookie/密码/IP 到仓库或回复
 
 ## G6 · 站点包例外 UI + Docker/备份复验
@@ -197,7 +197,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 3. 查重：目标站搜索、已有原盘/DIY、体积容差、失败处理；结果作为证据，不自动越过人工确认。
 4. 预览：提交前生成完整 payload，dry run 可看字段和最终标题/简介/截图。
 5. 提交：multipart 上传、匿名/modq、失败重试、提交后回查标题/分类/截图。
-6. 注入：拿到 tracker 注册种子后再注入 qB / rTorrent / Deluge / watch；重复操作必须幂等。
+6. 注入：拿到 tracker 注册种子后再注入 qB / watch；重复操作必须幂等。
 7. UI：每个阶段可审查、可回退、可重试，错误说清楚“怎么办”。
 
 **依赖**：

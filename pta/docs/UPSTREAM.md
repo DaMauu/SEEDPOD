@@ -157,3 +157,9 @@
 - 观察：qB 加种是 multipart `/api/v2/torrents/add`；watch 是原子写 `.torrent`；dry-run 只需给出 wouldAdd/wouldWrite、保存路径、hash、幂等和重试状态。
 - 决定：`publisher.injectPlan` 统一 qB/watch/rtorrent/deluge 计划；真注入复用 `publishItem`；已 injected 直接 skipped；failed+stageFailedFrom=injected 标记 retry。
 - 待做：真实 rTorrent/Deluge 环境仍由 G5 验证。
+
+## 2026-11-18 · 产品范围：移除 rTorrent/Deluge
+
+- 用户决定不再为 PTA 开发 rTorrent/Deluge 下载器兼容，产品只保留 qBittorrent + watch 目录。
+- 移除 rtorrent.js / deluge.js / clients-ext 夹具；下载器 API 旧类型返回 UNSUPPORTED_DOWNLOADER。
+- 历史 M7 记录保留，但当前验收不再要求 rTorrent/Deluge；G5 改为真实目标站 + qB/watch。
