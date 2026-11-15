@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.269 · 2026-11-16
+
+### 分类别名再扩 + 未归类清单
+- 影片/影 片→电影、Drama→剧集、Doc→纪录片、Trailer/Sample→其他。
+- 86 站 / 554 条映射；未归类 490 条导出到 data/sitecat-unmapped.csv（host,id,label）。
+
 ## v0.7.268 · 2026-11-16
 
 ### sitecat 二次导入与路由合并

@@ -2,11 +2,11 @@
 const siteMaps = require('./site-maps');
 
 const CAT = [
-  ['电影', /电影|movie|film/i],
-  ['剧集', /剧集|电视剧|tv\s*series|series|tv\s*packs?|^tv$/i],
+  ['电影', /电影|movie|film|影片|影\s*片/i],
+  ['剧集', /剧集|电视剧|tv\s*series|series|tv\s*packs?|^tv$|drama/i],
   ['动漫', /动漫|动画|anime|animation|漫画|comics?|manga|\bova\b/i],
   ['综艺', /综艺|tv\s*show|variety/i],
-  ['纪录片', /纪录|documentary|docu/i],
+  ['纪录片', /纪录|documentary|docu|\bdoc\b/i],
   ['音乐', /音乐|music|音乐短片|演唱会?|音频|音轨|\bmv\b|\bep\b|\balbum\b|\bsingle\b|\bremix\b|\bost\b|soundtrack|\blive\s*album\b|bootleg|compilation|interview|\bflac\b|\bmp3\b|mixtape|\bdemo\b|hq\s*audio|\baudio\b/i],
   ['体育', /体育|sport/i],
   ['电子书', /电子书|ebook|e-book|book|有声书|audiobook/i],
@@ -15,7 +15,7 @@ const CAT = [
   ['短剧', /短剧|short/i],
   ['舞台演出', /舞台|stage/i],
   ['游戏', /游戏|game|playstation|xbox|nintendo|rom\s*packs?|android/i],
-  ['其他', /其他|其它|other|misc|图片/i]
+  ['其他', /其他|其它|other|misc|图片|trailer|sample/i]
 ];
 
 function pickField(fields, names, labelRe) {
