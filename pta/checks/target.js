@@ -336,7 +336,7 @@ async function main() {
     need(d.url.indexOf('/takeupload.php') >= 0, '上传地址不对：' + d.url);
     need(d.fileField === 'file', '文件字段不对');
     need(d.fields.name === 'Target Upload Test 2024 1080p Blu-ray', '标题映射不对：' + d.fields.name);
-    need(d.fields.small_desc === '目标站测试', '副标题映射不对');
+    need(d.fields.small_desc === '目标站测试 · 1080p · 20 GB', '副标题映射不对：' + d.fields.small_desc);
     need(d.fields.descr === '测试简介', '简介映射不对');
     need(d.fields.anon === '0', '匿名映射不对');
     need(d.verifyUrl.indexOf('/torrents.php?search=') >= 0, '回查地址不对');
@@ -501,7 +501,7 @@ async function main() {
     need(d.verify && d.verify.found === true, '提交后回查没找到');
     need(hits.length === 1, '应发 1 次上传，实际 ' + hits.length);
     need(hits[0].fields.name === 'Target Upload Test 2024 1080p Blu-ray', '目标站收到的标题不对');
-    need(hits[0].fields.small_desc === '目标站测试', '目标站收到的副标题不对');
+    need(hits[0].fields.small_desc === '目标站测试 · 1080p · 20 GB', '目标站收到的副标题不对：' + hits[0].fields.small_desc);
     need(hits[0].file && hits[0].file.field === 'file' && hits[0].file.bytes > 0, '种子文件没到目标站');
     need(hits[0].cookie === 'mock-cookie', 'cookie 没带上');
     const g = await json(BASE + '/api/queue/' + encodeURIComponent(qid));

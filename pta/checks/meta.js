@@ -113,6 +113,8 @@ check('buildNames 生成规范名/副标题/简介', () => {
   need(b.releaseTitle.indexOf('The.Matrix.1999.2160p') === 0, '规范名：' + b.releaseTitle);
   need(b.subtitle.indexOf('2160p') >= 0 && b.subtitle.indexOf('60 GB') >= 0, '副标题：' + b.subtitle);
   need(b.description.indexOf('1999') >= 0 && b.description.indexOf('FRDS') >= 0, '简介：' + b.description);
+  const c = buildNames({ title: 'Sample 2026 1080p', cn: 'Sample', res: '1080p', size: '20 GB' });
+  need(c.subtitle === 'Sample · 1080p · 20 GB', '副标题没拼上分辨率/体积：' + c.subtitle);
 });
 
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));

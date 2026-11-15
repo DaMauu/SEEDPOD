@@ -134,7 +134,7 @@ function makeTarget(ctx) {
     const size = String(item.size || '');
     return {
       title: String(item.title || '').replace(/\s+/g, ' ').trim(),
-      subtitle: String(item.cn || [res, size].filter(Boolean).join(' · ')),
+      subtitle: [item.cn, res, size].filter(Boolean).join(' · '),
       description: String(item.intro || [item.title, res ? res + ' 原盘' : '', item.site ? '来源 ' + item.site : ''].filter(Boolean).join('，') + '。'),
       catId: String(item.catId || ''),
       category: String(item.cat || item.catId || ''),
@@ -449,13 +449,30 @@ function makeTarget(ctx) {
     return { ok: true, data: data };
   }
 
-  function downloadLinkFromDetails(text, base) {
+  function downloadLinksFromDetails(text, base) {
     const safe = String(text || '').replace(/&amp;/g, '&');
-    const m = /(?:href|src)=["']([^"']*(?:download\.php\?[^"']*?\bid=\d+|torrents?\.php\?action=download[^"']*|torrents?\/download\/\d+|\/download\/\d+)[^"']*)["']/i.exec(safe)
-      || /(download\.php\?[^"'\s<>]*?\bid=\d+[^"'\s<>]*)/i.exec(safe);
-    if (!m) return '';
-    const raw = m[1];
-    try { return new URL(raw, base + '/').toString(); } catch (e) { return ''; }
+    const raw = [];
+    const patterns = [
+      /(?:href|src)=["']([^"']*(?:download\.php\?[^"']*?\bid=\d+|torrents?\.php\?action=download[^"']*|torrents?\/download\/\d+|\/download\/\d+)[^"']*)["']/gi,
+      /(download\.php\?[^"'\s<>]*?\bid=\d+[^"'\s<>]*)/gi
+    ];
+    patterns.forEach(function (re) {
+      let m;
+      while ((m = re.exec(safe))) if (m[1]) raw.push(m[1]);
+    });
+    const seen = {};
+    const out = [];
+    raw.forEach(function (x) {
+      try {
+        const u = new URL(x, base + '/');
+        if (!/^https?:$/i.test(u.protocol)) return;
+        const key = u.toString();
+        if (seen[key]) return;
+        seen[key] = true;
+        out.push(key);
+      } catch (e) {}
+    });
+    return out;
   }
   async function discoverAnnounce(host) {
     const t = resolve(host);
@@ -592,21 +609,24 @@ function makeTarget(ctx) {
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status, http: 502 };
     const html = await page.text().catch(function () { return ''; });
     if (/takelogin\.php|login\.php|请先登录/i.test(html)) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页要重新登录，cookie 可能失效', http: 401 };
-    const link = downloadLinkFromDetails(html, t.base);
-    if (!link) return { ok: false, code: 'NO_DOWNLOAD_LINK', message: '详情页没找到下载种子链接', http: 422 };
-    const dlHost = (function () { try { return new URL(link).hostname.toLowerCase(); } catch (e) { return ''; } })();
-    if (dlHost !== baseHost && !dlHost.endsWith('.' + baseHost)) return { ok: false, code: 'BAD_DOWNLOAD_HOST', message: '种子下载域名和站点不一致，为免 cookie 外泄先停下', http: 400 };
-    let res;
-    try { res = await fetch(link, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(30000) }); }
-    catch (e) { return { ok: false, code: 'DOWNLOAD_UNREACHABLE', message: '种子下载连不上', http: 502 }; }
-    if (res.status !== 200) return { ok: false, code: 'DOWNLOAD_HTTP_' + res.status, message: '种子下载返回 ' + res.status, http: 502 };
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (!buf.length) return { ok: false, code: 'EMPTY_TORRENT', message: '下载到的种子是空文件', http: 502 };
-    if (buf.length > 10 * 1024 * 1024) return { ok: false, code: 'TORRENT_TOO_LARGE', message: '下载到的种子超过 10MB', http: 502 };
-    if (buf[0] !== 0x64) return { ok: false, code: 'NOT_TORRENT', message: '下载到的不是种子文件', http: 502 };
-    const meta = torrentMeta(buf);
-    if (!meta.hash) return { ok: false, code: 'BAD_TORRENT', message: '目标站种子解析不出 infohash', http: 502 };
-    return { ok: true, data: { buf: buf, meta: meta, downloadUrl: link, pageUrl: pageUrl } };
+    const links = downloadLinksFromDetails(html, t.base);
+    if (!links.length) return { ok: false, code: 'NO_DOWNLOAD_LINK', message: '详情页没找到下载种子链接', http: 422 };
+    let last = '';
+    for (const link of links.slice(0, 8)) {
+      const dlHost = (function () { try { return new URL(link).hostname.toLowerCase(); } catch (e) { return ''; } })();
+      if (dlHost !== baseHost && !dlHost.endsWith('.' + baseHost)) { last = 'BAD_DOWNLOAD_HOST'; continue; }
+      let res;
+      try { res = await fetch(link, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(30000) }); }
+      catch (e) { last = 'DOWNLOAD_UNREACHABLE'; continue; }
+      if (res.status !== 200) { last = 'DOWNLOAD_HTTP_' + res.status; continue; }
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (!buf.length || buf.length > 10 * 1024 * 1024) { last = buf.length ? 'TORRENT_TOO_LARGE' : 'EMPTY_TORRENT'; continue; }
+      if (buf[0] !== 0x64) { last = 'NOT_TORRENT'; continue; }
+      const meta = torrentMeta(buf);
+      if (!meta.hash) { last = 'BAD_TORRENT'; continue; }
+      return { ok: true, data: { buf: buf, meta: meta, downloadUrl: link, pageUrl: pageUrl } };
+    }
+    return { ok: false, code: last || 'NO_TORRENT', message: '详情页下载链接里没有可用种子', http: 502 };
   }
 
   async function detectUploadForm(host) {

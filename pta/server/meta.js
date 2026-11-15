@@ -148,7 +148,7 @@ function buildNames(item) {
   const title = String(it.cn || p.title || it.title || '').trim();
   const releaseTitle = [p.title, p.year, se, p.resolution, p.source, p.codec, p.audio,
     p.hdr.join('+'), p.group].filter(Boolean).join('.').replace(/\s+/g, '.');
-  const subtitle = [title, it.res || p.resolution, it.size].filter(Boolean).join(' · ');
+  const subtitle = [it.cn || title, it.res || p.resolution, it.size].filter(Boolean).join(' · ');
   const desc = it.intro || [
     p.title + (p.year ? '（' + p.year + '）' : '') + (se ? ' ' + se : ''),
     [p.resolution, p.source, p.codec, p.audio].filter(Boolean).join(' '),
