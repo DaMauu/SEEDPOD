@@ -812,10 +812,10 @@ onUnmounted(() => {
 .dedupe-card :deep(.flow-group){background:transparent;border:0;border-radius:0;padding:0;margin:0}
 .dedupe-card :deep(.flow-ttl){margin-bottom:6px}
 .flow-group :deep(.flow-ttl){font-size:12px;font-weight:600;color:var(--muted);margin:0 0 1px}
-.filter-card :deep(.preset-row){display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:10px;padding:6px 0}
-.filter-card :deep(.preset-row .lbl){font-size:12.5px;color:var(--muted);min-width:0;white-space:nowrap}
-.filter-card :deep(.preset-row .cat-row){margin-left:0;gap:4px}
-.filter-card :deep(.preset-row .pick-row){flex-wrap:nowrap}
+.filter-card :deep(.preset-row){display:grid;grid-template-columns:96px minmax(0,1fr);align-items:start;gap:14px;padding:7px 0}
+.filter-card :deep(.preset-row .lbl){font-size:12.5px;color:var(--muted);min-width:0;padding-top:3px;white-space:normal;line-height:1.35}
+.filter-card :deep(.preset-row .cat-row){margin-left:50px;gap:4px;justify-content:flex-start}
+.filter-card :deep(.preset-row .cat-chip){height:24px;padding:0 8px;border-radius:5px;font-size:11px;line-height:24px}
 .flow-sum { font-size: 11px; color: var(--muted); opacity: .85; margin: 0 0 6px; }
 /* 未接徽标固定在右侧同一行；右侧芯片行统一左对齐 */
 .crawl-card :deep(.preset-row .lbl), .flow-group :deep(.set-field .lbl) { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
