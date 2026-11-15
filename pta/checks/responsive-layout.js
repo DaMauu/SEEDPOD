@@ -89,7 +89,6 @@ async function run() {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
     const pageErrors = []
     page.on('pageerror', e => pageErrors.push(e.message))
-    await page.addInitScript(() => { try { localStorage.setItem('pta.mode', 'dev') } catch (e) {} })
 
     await page.goto(BASE + '/#dashboard', { waitUntil: 'load' })
     await page.waitForTimeout(700)

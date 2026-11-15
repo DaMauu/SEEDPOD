@@ -89,8 +89,7 @@ const VIEWS = [
   { key: 'changelog', label: '更新日志', icon: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7' },
   { key: 'settings', label: '设置', icon: 'M4 6h16M4 12h16M4 18h16M8 4v4M16 10v4M11 16v4' }
 ]
-const mode = (function () { try { return localStorage.getItem('pta.mode') === 'dev' ? 'dev' : 'basic'; } catch (e) { return 'basic'; } })()
-const navViews = VIEWS.filter(function (v) { return v.key !== 'changelog' || mode === 'dev' })
+const navViews = VIEWS
 const current = ref('dashboard')
 const currentMeta = computed(function () { return VIEWS.filter(function (v) { return v.key === current.value; })[0] || VIEWS[0] })
 const serviceOnline = ref(false)
@@ -124,7 +123,6 @@ let synthetic = false
 function applyHash() {
   if (synthetic) { synthetic = false; return }
   let key = (location.hash || '#dashboard').slice(1).split('?')[0]
-  if (key === 'changelog' && mode !== 'dev') key = 'dashboard'
   if (!VIEWS.some(function (v) { return v.key === key; })) key = 'dashboard'
   current.value = key
   window.__ptaCurrent = key

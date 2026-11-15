@@ -4,27 +4,6 @@
       <section class="set-card">
         <div class="set-card-head">
           <div class="set-card-t">
-            <h2 class="set-h2">版本模式</h2>
-            <p class="set-desc">基础版只留日常要用的；开发版多出更新日志页。切换后自动刷新。</p>
-          </div>
-          <button class="btn primary slim set-save" type="button" @click="saveMode">保存</button>
-        </div>
-        <div class="set-fields">
-          <div class="set-field">
-            <div class="lbl"><span>界面模式</span><i>开发版才显示更新日志</i></div>
-            <div class="ctl">
-              <select v-model="mode" class="select">
-                <option value="basic">基础版</option>
-                <option value="dev">开发版</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="set-card">
-        <div class="set-card-head">
-          <div class="set-card-t">
             <h2 class="set-h2">面板账号</h2>
             <p class="set-desc">面板账号由服务器环境变量决定，面板里不改密码，也不存明文。</p>
           </div>
@@ -166,7 +145,6 @@ import SitePackPanel from '../components/SitePackPanel.vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 
-const mode = ref((localStorage.getItem('pta.mode') === 'dev') ? 'dev' : 'basic')
 const version = ref('读取中…')
 const user = ref('读取中…')
 const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '', lastResult: null })
@@ -271,11 +249,6 @@ async function testNotify() {
 }
 function ensure() {
   if (viewVisible('settings') && loggedIn()) load()
-}
-function saveMode() {
-  try { localStorage.setItem('pta.mode', mode.value === 'dev' ? 'dev' : 'basic') } catch (e) { reportError('Settings', e) }
-  toast('已切到' + (mode.value === 'dev' ? '开发版' : '基础版') + '，正在刷新')
-  setTimeout(() => location.reload(), 500)
 }
 function logout() {
   confirmBox('退出登录', '会清掉当前浏览器的会话 cookie，下次要重新登录。退出？', () => {

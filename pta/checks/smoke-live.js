@@ -100,6 +100,13 @@ async function main() {
     });
   }
 
+  await check('更新日志常驻导航', async () => {
+    need(await page.locator('.dock-item[data-view="changelog"]').count() === 1, '底部导航没有更新日志');
+    await page.evaluate(() => { location.hash = '#changelog'; });
+    await page.waitForTimeout(500);
+    need(await page.locator('.view[data-view="changelog"]:not([hidden])').count() === 1, '更新日志路由被重定向');
+  });
+
   await check('总览数据块渲染', async () => {
     await page.evaluate(() => { location.hash = '#dashboard'; });
     await page.waitForTimeout(700);
