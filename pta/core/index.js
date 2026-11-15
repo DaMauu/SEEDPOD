@@ -146,7 +146,8 @@ function createCore(opts) {
     }));
   }
 
-  function coverage() {
+  function coverage(input) {
+    const b = input || {};
     const list = ctx.target.list();
     const out = { total: list.length, withCookie: 0, ready: 0, upload: 0, verify: 0, engines: {}, sites: list };
     list.forEach(function (t) {
@@ -157,6 +158,17 @@ function createCore(opts) {
       const e = t.engine || '?';
       out.engines[e] = (out.engines[e] || 0) + 1;
     });
+    if (b.plan) {
+      const sample = { title: 'Coverage Test 2024 1080p Blu-ray', cat: 'movie', res: '1080p', size: '20 GB', site: 'coverage.example' };
+      const errors = {};
+      let ok = 0;
+      list.forEach(function (t) {
+        const p = ctx.target.plan(t.host, sample);
+        if (p.ok) ok++;
+        else errors[p.code || 'PLAN_FAILED'] = (errors[p.code || 'PLAN_FAILED'] || 0) + 1;
+      });
+      out.plan = { ok: ok, failed: list.length - ok, errors: errors };
+    }
     return out;
   }
 

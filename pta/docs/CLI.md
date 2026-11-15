@@ -62,7 +62,7 @@ sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部�
 | `advance <queueId>` | draft → prepared → previewed 自动推进；后续提示用 target-upload/publish | 本地 |
 | `run --stage prepared\|previewed` | 批量准备/预览可处理队列 | 本地 |
 | `clients [--test]` | 列下载器；`--test` 只读探测 qB/watch 连通性 | 只读 |
-| `coverage [--list]` | 离线统计目标站定义/cookie/上传/回查就绪数 | 只读，不联网 |
+| `coverage [--list] [--plan]` | 离线统计目标站定义/cookie/上传/回查就绪数；`--plan` 逐站生成上传 payload | 只读，不联网 |
 
 输出：
 
@@ -70,7 +70,7 @@ sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部�
 node pta/cli.js status --json
 node pta/cli.js queue --status pending --limit 20
 node pta/cli.js clients --test
-node pta/cli.js coverage --json
+node pta/cli.js coverage --json --plan
 ```
 
 ## 三、现状

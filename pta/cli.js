@@ -24,7 +24,7 @@ function usage() {
   pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--mediainfo file] [--bdinfo file] [--json]
   pta images <queueId> [--host 站内|Pixhost|Imgbox|本地图床] [--real] [--retries 2] [--json]
   pta clients [--test] [--json]
-  pta coverage [--json] [--list]
+  pta coverage [--json] [--list] [--plan]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
@@ -254,13 +254,15 @@ async function main() {
     const human = function (x) {
       const eng = Object.keys(x.engines || {}).map(function (k) { return k + ' ' + x.engines[k]; }).join(' / ');
       let s = '目标站 ' + x.total + ' · 有 cookie ' + x.withCookie + ' · 可发布 ' + x.ready + ' · 上传定义 ' + x.upload + ' · 回查 ' + x.verify + (eng ? ' · ' + eng : '');
+      if (x.plan) s += ' · 上传计划 ' + x.plan.ok + '/' + x.total + (x.plan.failed ? '（失败 ' + x.plan.failed + '）' : '');
       if (opts.list) s += '\n' + (x.sites || []).map(function (t) { return t.host + '  ' + (t.engine || '?') + '  ' + (t.ready ? '就绪' : (t.hasCookie ? '缺上传/字段' : '缺 cookie')); }).join('\n');
       return s;
     };
     if (!USE_HTTP) {
-      print(core().coverage(), opts, human);
+      print(core().coverage({ plan: !!opts.plan }), opts, human);
       return;
     }
+    if (opts.plan) die('coverage --plan 只在本地模式可用（不启 HTTP）', 2);
     print(summarize(await api('/api/targets')), opts, human);
     return;
   }
