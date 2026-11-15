@@ -3,7 +3,7 @@
     <section class="sites-list">
       <div class="st-head">
         <span class="st-all"><input type="checkbox" id="site-all" aria-label="全选本站点" :checked="allPicked" :indeterminate.prop="somePicked" @change="emit('toggle-all', $event.target.checked)"></span>
-        <span>架构</span><span>站点</span><span></span><span>登录</span>
+        <span>架构</span><span>站点</span><span></span>
       </div>
       <div class="sites-rows" id="sites-list">
         <div v-for="s in pageRows" :key="s.name" class="site-item" :class="{ on: sel === s.name }" @click="emit('open', s.name)">
