@@ -1,4 +1,6 @@
-/* 调度器：按固定间隔跑抓取 → 送审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
+/* 调度器：按固定间隔跑抓取 → 送审 → 终审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
+const flowConfig = require('./flow-config');
+
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
   const KEY = 'scheduler';
@@ -54,6 +56,47 @@ function makeScheduler(ctx, deps) {
       }
 
       steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
+
+      /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
+      const flow = flowConfig.read(ctx);
+      const needIntro = flowConfig.on(flow, '必须有简介', false);
+      const needSub = flowConfig.on(flow, '必须有副标题', false);
+      const bdMode = String(flowConfig.value(flow, 'BDInfo', '不要求'));
+      const shotMin = Math.max(0, Number(flowConfig.value(flow, '截图至少几张', 0)) || 0);
+      const missMode = String(flowConfig.value(flow, '不满足时', '转待确认'));
+      const reviewRows = all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT 20");
+      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [] };
+      for (const row of reviewRows) {
+        const prep = deps.release ? deps.release.prepare(row.id, {}) : { ok: false };
+        const cur = one('SELECT status, data FROM queue WHERE id = ?', row.id);
+        const d = jparse(cur ? cur.data : row.data) || {};
+        const p = (d.prepared) || {};
+        const missing = [];
+        if (needIntro && !String(d.intro || '').trim()) missing.push('简介');
+        if (needSub && !String(d.subtitle || '').trim()) missing.push('副标题');
+        if (shotMin > 0 && Number(p.shots || 0) < shotMin) missing.push('截图 ' + Number(p.shots || 0) + '/' + shotMin);
+        if (bdMode !== '不要求' && !(p.media && p.media.kind)) missing.push('BDInfo');
+        const t0 = (p.targets || [])[0] || null;
+        if (!t0 || !t0.target) missing.push('目标站未就绪');
+        else {
+          if (!t0.target.fields || !t0.target.fields.type) missing.push('分类映射');
+          if (t0.target.ready === false) missing.push('目标站未就绪');
+        }
+        d.review = { at: new Date().toISOString(), ok: missing.length === 0, missing: missing };
+        let status = cur ? cur.status : row.status;
+        if (!missing.length) {
+          review.ready++;
+          if (ctx.allowReal('realPublish')) status = 'approved';
+        } else {
+          review.hold++;
+          if (missMode === '直接跳过') { status = 'skipped'; review.skipped++; }
+          if (review.reasons.length < 5) review.reasons.push({ id: row.id, missing: missing });
+        }
+        d.status = status;
+        ctx.db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
+          .run(status, JSON.stringify(d), new Date().toISOString(), row.id);
+      }
+      steps.review = review;
 
       if (ctx.allowReal('realPublish')) {
         const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT 5");

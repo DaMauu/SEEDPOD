@@ -253,6 +253,7 @@ async function build() {
   ctx.scheduler = require('./scheduler').makeScheduler(ctx, {
     crawl: ctx.crawl,
     screen: require('./screen'),
+    release: require('./release').makeRelease(ctx),
     publish: publisher
   });
   ctx.scheduler.start();

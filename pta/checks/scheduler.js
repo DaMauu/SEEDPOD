@@ -107,9 +107,29 @@ async function main() {
     need(j.data.screen.skipped === 2, '送审 skipped 不对：' + j.data.screen.skipped);
     need(j.data.publish && j.data.publish.failed === 1, '发布失败没记录：' + JSON.stringify(j.data.publish));
     need(j.data.crawl && j.data.crawl.sites === 0, '空库不该有抓取站：' + JSON.stringify(j.data.crawl));
+    need(j.data.review && typeof j.data.review.checked === 'number', '终审步骤缺失：' + JSON.stringify(j.data.review));
     const st = await (await fetchA(BASE + '/api/scheduler')).json();
     need(st.data.lastRunAt > 0, 'lastRunAt 没写');
     need(st.data.lastResult && st.data.lastResult.publish.failed === 1, 'lastResult 没保存');
+  });
+
+  await check('终审：缺简介不自动放行', async () => {
+    await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '必须有简介', on: true }]] }, rx: {} })
+    });
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Review No Intro 2024 1080p', site: 'demo-a.example', targetSite: 'target.example', status: 'pending' })
+    })).json();
+    need(add.ok, '建待审条目失败');
+    const run = await (await fetchA(BASE + '/api/scheduler/run', { method: 'POST' })).json();
+    need(run.ok && run.data.review, '终审没跑');
+    need(run.data.review.hold >= 1, '缺简介应转人工：' + JSON.stringify(run.data.review));
+    const cur = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(cur.data.review && cur.data.review.ok === false, '条目没记终审结果');
+    need((cur.data.review.missing || []).indexOf('简介') >= 0, '没标缺简介：' + JSON.stringify(cur.data.review));
+    need(cur.data.status === 'pending', '缺简介不该自动通过：' + cur.data.status);
   });
 
   await check('可以暂停', async () => {
