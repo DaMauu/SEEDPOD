@@ -73,52 +73,62 @@
 ],
   "pub": [
   {
-    "name": "发到哪",
-    "sum": "发到哪个站 · 已有资源怎么办",
+    "name": "③ 补齐与准备",
+    "sum": "源站缺什么就从这补",
     "rows": [
       {
-        "t": "发布到",
-        "type": "custom",
-        "same": "tgt",
-        "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
-        "hint": "所有库内资源都归到这个站"
-      },
-      {
-        "t": "目标站已有原盘",
+        "t": "中文副标题来源",
         "type": "select",
-        "v": "跳过不收",
+        "v": "种子自带 → 豆影网页 → TMDB",
         "opts": [
-          "跳过不收",
-          "标重复后仍收"
-        ],
-        "todo": true
+          "种子自带 → 豆影网页 → TMDB",
+          "豆影网页 → 豆瓣 → TMDB",
+          "只用种子自带，没有就用英文"
+        ]
       },
       {
-        "t": "目标站只有 DIY",
+        "t": "匹配来源顺序",
         "type": "select",
-        "v": "可发（标复核）",
+        "v": "TMDB → 豆瓣 → 站点标题",
         "opts": [
-          "可发（标复核）",
-          "跳过"
-        ],
-        "todo": true
+          "TMDB → 豆瓣 → 站点标题",
+          "豆瓣 → TMDB → 站点标题",
+          "只用站点标题"
+        ]
       },
       {
-        "t": "不满足时",
-        "type": "pick",
-        "v": "转待确认",
+        "t": "简介图片",
+        "type": "select",
+        "v": "转存到图床",
         "opts": [
-          "转待确认",
-          "直接跳过"
+          "转存到图床",
+          "保留外链",
+          "不保留图片"
         ],
-        "hint": "上面的条件没达标时怎么处理",
-        "todo": true
+        "hint": "外链会失效，转存最稳"
+      },
+      {
+        "t": "自动附加 MediaInfo",
+        "type": "switch",
+        "on": true,
+        "hint": "简介末尾自动追加 MediaInfo/BDInfo"
+      },
+      {
+        "t": "允许联网补简介",
+        "type": "switch",
+        "on": true,
+        "hint": "详情页没简介时查豆影/豆瓣/维基"
+      },
+      {
+        "t": "主演最多几个",
+        "type": "text",
+        "v": "3"
       }
     ]
   },
   {
-    "name": "什么条件才发",
-    "sum": "不满足就转待确认或跳过",
+    "name": "④ 终审与决策",
+    "sum": "齐了才发 · 缺了转人工",
     "rows": [
       {
         "t": "分辨率要求",
@@ -190,56 +200,46 @@
     ]
   },
   {
-    "name": "发布时填什么",
-    "sum": "副标题 · 简介 · 标签 · 字段",
+    "name": "⑤ 发布（站点要求）",
+    "sum": "每个站怎么填",
     "rows": [
       {
-        "t": "中文副标题来源",
-        "type": "select",
-        "v": "种子自带 → 豆影网页 → TMDB",
-        "opts": [
-          "种子自带 → 豆影网页 → TMDB",
-          "豆影网页 → 豆瓣 → TMDB",
-          "只用种子自带，没有就用英文"
-        ]
+        "t": "发布到",
+        "type": "custom",
+        "same": "tgt",
+        "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
+        "hint": "所有库内资源都归到这个站"
       },
       {
-        "t": "匹配来源顺序",
+        "t": "目标站已有原盘",
         "type": "select",
-        "v": "TMDB → 豆瓣 → 站点标题",
+        "v": "跳过不收",
         "opts": [
-          "TMDB → 豆瓣 → 站点标题",
-          "豆瓣 → TMDB → 站点标题",
-          "只用站点标题"
-        ]
-      },
-      {
-        "t": "简介图片",
-        "type": "select",
-        "v": "转存到图床",
-        "opts": [
-          "转存到图床",
-          "保留外链",
-          "不保留图片"
+          "跳过不收",
+          "标重复后仍收"
         ],
-        "hint": "外链会失效，转存最稳"
+        "todo": true
       },
       {
-        "t": "自动附加 MediaInfo",
-        "type": "switch",
-        "on": true,
-        "hint": "简介末尾自动追加 MediaInfo/BDInfo"
+        "t": "目标站只有 DIY",
+        "type": "select",
+        "v": "可发（标复核）",
+        "opts": [
+          "可发（标复核）",
+          "跳过"
+        ],
+        "todo": true
       },
       {
-        "t": "允许联网补简介",
-        "type": "switch",
-        "on": true,
-        "hint": "详情页没简介时查豆影/豆瓣/维基"
-      },
-      {
-        "t": "主演最多几个",
-        "type": "text",
-        "v": "3"
+        "t": "不满足时",
+        "type": "pick",
+        "v": "转待确认",
+        "opts": [
+          "转待确认",
+          "直接跳过"
+        ],
+        "hint": "上面的条件没达标时怎么处理",
+        "todo": true
       },
       {
         "t": "自动勾选标签",
@@ -256,8 +256,8 @@
     ]
   },
   {
-    "name": "发完做什么",
-    "sum": "校验 · 抓种 · 辅种 · 失败处理",
+    "name": "⑥ 发完",
+    "sum": "校验 · 抓种 · 辅种",
     "rows": [
       {
         "t": "发布后校验",
@@ -288,7 +288,13 @@
         "type": "switch",
         "on": false,
         "hint": "关掉=autoTMM false，不自动移动文件"
-      },
+      }
+    ]
+  },
+  {
+    "name": "⑦ 失败与通知",
+    "sum": "重试与停手",
+    "rows": [
       {
         "t": "图片上传重试",
         "type": "text",

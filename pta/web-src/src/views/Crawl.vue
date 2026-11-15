@@ -18,7 +18,7 @@
       </section>
       <section class="drawer open vue-card crawl-card">
         <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">抓取</div></div>
+          <div class="drawer-t"><div class="drawer-title">① 抓取 · ② 初筛</div></div>
           <div class="drawer-head-right crawl-head-tools">
             <select v-model="sourceHost" class="input slim crawl-source" id="crawl-site" title="从哪个站看抓取计划" @change="saveSource">
               <option value="">选来源站</option>
