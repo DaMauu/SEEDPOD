@@ -113,7 +113,7 @@ function makeTargetService(ctx, target) {
     }
     const flow = flowMap();
     const shotRule = flow['截图至少几张'];
-    const minShots = shotRule ? Math.max(0, Number(shotRule.v) || 0) : 3;
+    const minShots = shotRule ? Math.max(0, Number(shotRule.v) || 0) : 0;
     const shotCount = Array.isArray(item.data.shots) ? item.data.shots.length : 0;
     if (!dryRun && minShots > 0 && shotCount < minShots) {
       stage.fail(item.data, item.data.stage || 'previewed', '截图不足：至少 ' + minShots + ' 张');
