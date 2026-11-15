@@ -292,6 +292,16 @@ async function main() {
     });
     need(groupCount === expectedGroups, '规则组数量不对：' + groupCount + '/' + expectedGroups);
     need(await page.locator('.limits-panel input').count() === 4, '请求限制输入数量不对');
+    need(await page.locator('#crawl-dry-run').count() === 0, '本地演练按钮还在');
+    need(await page.locator('#crawl-live-run').count() === 0, '全局抓一页应该移除');
+    need(await page.locator('#crawl-plan-btn').count() === 1, '抓取计划按钮缺失');
+    const crawlSel = page.locator('#crawl-site');
+    if (await crawlSel.locator('option').count() > 1) {
+      await crawlSel.selectOption({ index: 1 });
+      await page.locator('#crawl-plan-btn').click();
+      await page.waitForTimeout(500);
+      need(await page.locator('#crawl-plan-box').isVisible(), '抓取计划没展开');
+    }
     const todoCount = await page.evaluate(() => {
       const R = window.PTA_RULES || {};
       let n = 0;

@@ -468,4 +468,15 @@ function onKey(e) {
   .sites-wrap :deep(.sites-detail-pane .site-expand) { padding: 12px 12px 10px; }
   .sites-wrap :deep(.sites-detail-pane .sd-compact) { grid-template-columns: 1fr; }
 }
+
+/* 移动端：站点页不再锁视口高度，详情和页脚按文档流往下排 */
+@media (max-width: 900px) {
+  :global(.view[data-view="sites"]) { height: auto; display: block; }
+  .sites-wrap { height: auto; }
+  .sites-wrap :deep(.sites-detail-pane .sd-top) { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding-right: 0; }
+  .sites-wrap :deep(.sites-detail-pane .sd-id) { width: 100%; padding-right: 32px; }
+  .sites-wrap :deep(.sites-detail-pane .sd-title-row) { flex-wrap: wrap; }
+  .sites-wrap :deep(.sites-detail-pane .sd-actions) { width: 100%; justify-content: flex-start; }
+  .sites-wrap :deep(.sites-detail-pane .sheet-x) { position: absolute; top: 12px; right: 12px; }
+}
 </style>

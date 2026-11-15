@@ -1,65 +1,34 @@
 <template>
   <div class="drawers">
     <div id="crawl-panel">
-      <section class="drawer open crawl-dry">
-        <div class="drawer-head">
-          <div class="drawer-t">
-            <div class="drawer-title">本地演练（不发请求）</div>
-            <div class="drawer-desc">按设置跑一遍抓取 → 查重 → 发布的步骤，只走本地步骤，不发真实请求。</div>
-          </div>
-          <div class="drawer-head-right">
-            <span class="drawer-meta" id="crawl-dry-meta">{{ dryMeta }}</span>
-            <select v-model="sourceHost" class="input slim" id="crawl-site" title="从哪个站抓" @change="saveSource">
-              <option value="">选来源站</option>
-              <option v-for="s in siteOptions" :key="s.host" :value="s.host">{{ s.title }}</option>
-            </select>
-            <select v-model="limit" class="input slim" id="crawl-limit" title="这一轮抓多少条词条（是条数，不是页数）" @change="saveLimit">
-              <option value="5">5 条（试）</option>
-              <option value="10">10 条</option>
-              <option value="50">50 条</option>
-              <option value="100">100 条</option>
-              <option value="200">200 条</option>
-            </select>
-            <button class="btn ghost slim" id="crawl-plan-btn" title="只读本地配置，不发请求" :disabled="busy.plan" @click="showPlan">{{ busy.plan ? '读取中…' : '看地址' }}</button>
-            <button class="btn slim" id="crawl-live-run" :disabled="busy.live" @click="liveRun">{{ busy.live ? '抓取中…' : '抓一页' }}</button>
-            <button class="btn primary slim" id="crawl-dry-run" :disabled="busy.dry" @click="dryRun">{{ busy.dry ? '演练中…' : '开始演练' }}</button>
-          </div>
-        </div>
-        <div class="drawer-body" id="crawl-dry-body" :hidden="!plan.on && !dry.on">
-          <div class="dl-dry" id="crawl-dry-box">
-            <template v-if="dry.on">
-              <div class="dl-dry-head"><b>演练 · {{ dry.host }}</b><span class="dl-dry-p">{{ dry.progress }}%</span></div>
-              <ul>
-                <li v-for="(s, i) in dry.steps" :key="i" :class="s.state === 'done' ? 'done' : 'wait'"><i></i>{{ s.name }}</li>
-              </ul>
-              <em>只跑本地步骤，不访问任何真实站点</em>
-            </template>
-            <template v-else-if="plan.on">
-              <div class="dl-dry-head"><b>抓取计划 · {{ plan.host }}</b><span class="dl-dry-p">{{ plan.catGroups }} 组 / {{ plan.catIds }} 个 id</span></div>
-              <div class="dl-dry-note">引擎 {{ plan.engine || '未识别' }} · 间隔至少 {{ plan.interval }} 秒 · 单站每天最多 {{ plan.dailyMax }} 次 · 预估 {{ plan.estimatedQueries }} 次查询</div>
-              <div class="dl-dry-note" id="crawl-plan-today">{{ plan.today }}</div>
-              <div v-for="u in plan.urls" :key="u.cat + '-' + u.catId" class="dl-dry-note" style="word-break:break-all">
-                GET {{ u.url }}
-              </div>
-              <ul v-if="plan.warnings.length" class="dl-dry-warn">
-                <li v-for="(w, i) in plan.warnings" :key="i">{{ w }}</li>
-              </ul>
-              <em>只是读出本地配置拼的地址，没有发请求；抓一页会按类目轮转</em>
-            </template>
-            <em v-else>还没跑过</em>
-          </div>
-        </div>
-      </section>
-
       <section class="drawer open vue-card crawl-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">抓取</div></div>
-          <div class="drawer-head-right">
+          <div class="drawer-head-right crawl-head-tools">
+            <select v-model="sourceHost" class="input slim crawl-source" id="crawl-site" title="从哪个站看抓取计划" @change="saveSource">
+              <option value="">选来源站</option>
+              <option v-for="s in siteOptions" :key="s.host" :value="s.host">{{ s.title }}</option>
+            </select>
+            <button class="btn ghost slim" id="crawl-plan-btn" type="button" title="只读本地配置，不发请求" :disabled="busy.plan" @click="showPlan">{{ busy.plan ? '读取中…' : '看地址' }}</button>
             <span class="drawer-meta">{{ fetchSum }}</span>
             <button class="btn primary slim" type="button" :disabled="busy.fetch" @click="saveFetch">{{ busy.fetch ? '保存中…' : '保存' }}</button>
           </div>
         </div>
         <div class="drawer-body">
+          <div v-if="plan.on" class="crawl-plan-box" id="crawl-plan-box">
+            <div class="crawl-plan-head">
+              <b>抓取计划 · {{ plan.host }}</b>
+              <span>{{ plan.catGroups }} 组 / {{ plan.catIds }} 个 id</span>
+              <button class="btn ghost slim" type="button" @click="plan.on = false">收起</button>
+            </div>
+            <div class="crawl-plan-note">引擎 {{ plan.engine || '未识别' }} · 间隔至少 {{ plan.interval }} 秒 · 单站每天最多 {{ plan.dailyMax }} 次 · 预估 {{ plan.estimatedQueries }} 次查询</div>
+            <div class="crawl-plan-note" id="crawl-plan-today">{{ plan.today }}</div>
+            <div v-for="u in plan.urls" :key="u.cat + '-' + u.catId" class="crawl-plan-note crawl-plan-url">GET {{ u.url }}</div>
+            <ul v-if="plan.warnings.length" class="crawl-plan-warn">
+              <li v-for="(w, i) in plan.warnings" :key="i">{{ w }}</li>
+            </ul>
+            <em>只读本地配置拼的地址，没有发请求；要抓某一页去站点页点「抓一页」</em>
+          </div>
           <div class="preset-block">
             <div v-for="r in fetchRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
               <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
@@ -220,15 +189,11 @@ const sites = ref([])
 const siteStatus = ref({})
 const siteCfg = ref({})
 const sourceHost = ref('')
-const limit = ref('100')
 const targetHost = ref('')
 const targetOpen = ref(false)
 const targetQ = ref('')
-const dryMeta = ref('未运行')
 const plan = reactive({ on: false, host: '', urls: [], warnings: [], dailyMax: 0, interval: 0, engine: '', catGroups: 0, catIds: 0, estimatedQueries: 0, today: '' })
-const dry = reactive({ on: false, host: '', progress: 0, steps: [], done: false })
-const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, live: false, dry: false, screen: false })
-let dryTimer = null
+const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, screen: false })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
   const cells = []
@@ -271,9 +236,6 @@ function clampLimit(k, e) {
 }
 function saveSource() {
   try { localStorage.setItem('pta.crawlSite', sourceHost.value) } catch (e) { reportError('Crawl', e) }
-}
-function saveLimit() {
-  try { localStorage.setItem('pta.crawlLimit', limit.value) } catch (e) { reportError('Crawl', e) }
 }
 function pickTarget(host) {
   targetHost.value = host
@@ -418,7 +380,6 @@ async function loadSites() {
   if (cj && cj.ok) siteCfg.value = cj.data.sites || {}
   try {
     sourceHost.value = localStorage.getItem('pta.crawlSite') || ''
-    limit.value = localStorage.getItem('pta.crawlLimit') || '100'
     targetHost.value = localStorage.getItem('pta.target') || ''
   } catch (e) { reportError('Crawl', e) }
   if (!siteOptions.value.some(s => s.host === sourceHost.value)) sourceHost.value = ''
@@ -433,7 +394,6 @@ async function showPlan() {
   busy.plan = false
   if (!j || !j.ok) { toast((j && j.error && j.error.message) || '拿不到抓取计划'); return }
   const d = j.data || {}
-  dry.on = false
   Object.assign(plan, {
     on: true, host: d.siteHost || sourceHost.value,
     urls: Array.isArray(d.searchUrls) ? d.searchUrls : [],
@@ -449,88 +409,6 @@ async function showPlan() {
     plan.today = '今天已抓 ' + (x.count || 0) + '/' + (x.dailyMax || 0) + ' 次' + (wait ? ' · 还要等 ' + wait + ' 秒' : ' · 现在可以抓') +
       ' · 上次 ' + (x.lastAt ? new Date(x.lastAt).toLocaleString('zh-CN', { hour12: false }).slice(5, 16) : '还没抓过')
   } else plan.today = ''
-}
-
-async function liveRun() {
-  if (!sourceHost.value) { toast('先在右上角「选来源站」里挑一个站'); return }
-  if (busy.live) return
-  busy.live = true
-  dryMeta.value = '正在抓 ' + sourceHost.value + ' …'
-  const j = await getJson('/api/crawl/run', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ host: sourceHost.value, limit: Number(limit.value) || 100, dryRun: false })
-  })
-  busy.live = false
-  if (!j || !j.ok) {
-    const code = j && j.error && j.error.code
-    let msg = (j && j.error && j.error.message) || '抓取失败'
-    if (code === 'NO_COOKIE' || code === 'LOGIN_REQUIRED') msg += '：去站点页的「登录」页签把这个站的 cookie 存进来'
-    dryMeta.value = msg
-    toast(msg)
-    return
-  }
-  const d = j.data || {}
-  const line = '第 ' + d.page + ' 页 · 抓回 ' + d.rows + ' 行 · 新增 ' + d.added + ' · 更新 ' + d.updated +
-    (d.daily ? ' · 今日第 ' + d.daily.count + ' 次' : '') + (d.nextPage ? ' · 下次第 ' + d.nextPage + ' 页' : '')
-  dryMeta.value = line
-  toast(line)
-  if (window.__ptaLoadOverview) window.__ptaLoadOverview()
-}
-
-function stopDry() {
-  if (dryTimer) { clearInterval(dryTimer); dryTimer = null }
-  busy.dry = false
-}
-async function dryRun() {
-  if (!sourceHost.value) { toast('先在右上角「选来源站」里挑一个站，再开始演练'); return }
-  if (busy.dry) return
-  busy.dry = true
-  const j = await getJson('/api/tasks', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ type: 'crawl', siteHost: sourceHost.value, dryRun: true })
-  })
-  if (!j || !j.ok) {
-    busy.dry = false
-    toast((j && j.error && j.error.message) || '提交演练失败')
-    return
-  }
-  dry.on = true
-  plan.on = false
-  dry.host = sourceHost.value
-  dry.progress = 0
-  dry.done = false
-  dry.steps = (j.data.steps || []).map(s => ({ name: s.name, state: s.state }))
-  dryMeta.value = '0%'
-  const id = j.data.id
-  if (dryTimer) clearInterval(dryTimer)
-  dryTimer = setInterval(async () => {
-    const t = await getJson('/api/tasks/' + encodeURIComponent(id))
-    if (!t || !t.ok) { stopDry(); toast('任务查询失败'); return }
-    const d = t.data || {}
-    dry.progress = d.progress || 0
-    dry.steps = (d.steps || []).map(s => ({ name: s.name, state: s.state }))
-    dry.done = d.state === 'done'
-    dryMeta.value = d.state === 'done' ? '已完成' : dry.progress + '%'
-    if (['done', 'failed', 'canceled'].indexOf(d.state) >= 0) {
-      stopDry()
-      toast(d.state === 'done' ? '演练完成 · ' + dry.steps.length + ' 步' : '演练中断：' + d.state)
-    }
-  }, 400)
-}
-async function loadLastDry() {
-  const j = await getJson('/api/tasks')
-  if (!j || !j.ok || !Array.isArray(j.data)) return
-  const list = j.data.filter(t => t && t.dryRun && t.type === 'crawl')
-    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
-  const last = list[0]
-  if (!last) return
-  const when = String(last.createdAt || '').slice(5, 16).replace('T', ' ')
-  dryMeta.value = '上次 ' + when + ' · ' + (last.state === 'done' ? '完成' : last.state)
-  dry.on = true
-  dry.host = last.siteHost || ''
-  dry.progress = last.progress || 0
-  dry.done = last.state === 'done'
-  dry.steps = (last.steps || []).map(s => ({ name: s.name, state: s.state }))
 }
 
 const RuleOrSpecial = (props) => {
@@ -577,11 +455,9 @@ function ensure() {
 onMounted(() => {
   window.addEventListener('hashchange', ensure)
   ensure()
-  loadLastDry()
 })
 onUnmounted(() => {
   window.removeEventListener('hashchange', ensure)
-  stopDry()
 })
 </script>
 
@@ -817,5 +693,22 @@ onUnmounted(() => {
   .pub-card .flow-group .set-fields .set-field .pick-row { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
   .pub-card .target-pick { width: 100%; }
   .pub-card .target-pick .tp-info { flex-wrap: wrap; }
+}
+
+/* 抓取计划：并入抓取卡，不再单开“本地演练” */
+.crawl-head-tools { flex-wrap: wrap; }
+.crawl-source { width: 150px; max-width: 180px; height: 28px; font-size: 11.5px; }
+.crawl-plan-box { margin: 8px 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfd; }
+.crawl-plan-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.crawl-plan-head b { font-size: 12.5px; color: var(--ink); }
+.crawl-plan-head span { font-size: 11px; color: var(--muted); }
+.crawl-plan-head .btn { margin-left: auto; height: 24px; padding: 0 8px; font-size: 11px; }
+.crawl-plan-note { margin-top: 4px; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.crawl-plan-url { word-break: break-all; }
+.crawl-plan-warn { margin: 6px 0 0 16px; color: var(--amber); font-size: 11px; }
+.crawl-plan-box em { display: block; margin-top: 6px; font-style: normal; font-size: 10.5px; color: var(--muted-2); }
+@media (max-width: 900px) {
+  .crawl-head-tools { width: 100%; }
+  .crawl-source { width: 100%; max-width: none; }
 }
 </style>
