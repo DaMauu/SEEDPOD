@@ -49,7 +49,13 @@
                       <div class="sd-row"><span>上次结果</span><b :class="(s.lastAt ? 'ok' : 'idle') + '-t'">{{ s.lastAt ? '已抓取' : '未抓取' }}</b></div>
                       <div class="sd-row"><span>今日已跑</span><b>{{ s.todayCount }} 次</b></div>
                       <div class="sd-row"><span>方式</span><b>{{ modeTxt(s) }}</b></div>
-                      <div class="sd-row"><span>范围</span><b>{{ catRangeTxt(s) }}</b></div>
+                    </div>
+                    <div class="sd-block">
+                      <h4>抓取参数</h4>
+                      <div class="sd-row"><span>预设来源</span><b>{{ kindTxt(s) }}</b></div>
+                      <div class="sd-row"><span>分类参数</span><b>{{ catRangeTxt(s) }}</b></div>
+                      <div class="sd-row"><span>抓取状态</span><b :class="s.enabled ? (s.lastAt ? 'ok-t' : 'idle-t') : 'idle-t'">{{ s.enabled ? (s.lastAt ? '正常' : '待抓取') : '已停用' }}</b></div>
+                      <div class="sd-row"><span>词条</span><b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></div>
                     </div>
                   </div>
                   <div class="sd-recent-wrap">
@@ -1010,7 +1016,8 @@ watch(host, function (h, old) {
 .site-expand .sd-recent-wrap { justify-self: end; }
 .site-expand .sd-compact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px; align-items: start; margin-top: 12px; }
-.site-expand .sd-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.site-expand .sd-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; height: 100%; align-self: stretch; }
+.site-expand .sd-col .sd-block { flex: 1 1 0; }
 .site-expand .sd-block, .site-expand .sd-recent-wrap {
   background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
   width: auto; max-width: none; justify-self: stretch; }
