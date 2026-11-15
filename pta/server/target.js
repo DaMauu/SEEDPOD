@@ -8,6 +8,7 @@ const form = require('./form');
 const adapters = require('./adapters');
 const sitePack = require('./site-pack');
 const { makeQb } = require('./qb');
+const torrentClean = require('./torrent-clean');
 
 const ENGINES = {
   nexusphp: {
@@ -496,6 +497,84 @@ function makeTarget(ctx) {
     return { ok: false, code: 'NO_ANNOUNCE', message: '没找到目标站 announce/passkey；可用 --announce 显式指定', http: 409 };
   }
 
+  function candidateKind(url) {
+    return /[?&]passkey=/i.test(String(url || '')) ? 'passkey' : 'generic';
+  }
+  function cachedTargetCandidates(host) {
+    const dir = path.join(DATA_DIR, 'torrents');
+    let files;
+    try { files = fs.readdirSync(dir); } catch (e) { return []; }
+    const prefix = String(host).replace(/[^a-z0-9.-]/gi, '_') + '-';
+    const out = [];
+    files.filter(function (f) { return f.indexOf(prefix) === 0 && /\.torrent$/i.test(f); })
+      .map(function (f) { try { return { f: f, m: fs.statSync(path.join(dir, f)).mtimeMs }; } catch (e) { return null; } })
+      .filter(Boolean).sort(function (a, b) { return b.m - a.m; })
+      .forEach(function (x) {
+        try {
+          const a = torrentClean.announceOf(fs.readFileSync(path.join(dir, x.f)));
+          if (a) out.push({ source: 'cached-target-torrent', kind: candidateKind(a), hasPasskey: candidateKind(a) === 'passkey', announce: a });
+        } catch (e) {}
+      });
+    return out;
+  }
+  function uploadPageCandidates(html, base) {
+    const safe = String(html || '').replace(/&amp;/g, '&');
+    const raw = [];
+    const patterns = [
+      /(?:href|src)=["']([^"']*announce[^"']*)["']/gi,
+      /(https?:\/\/[^\s"'<>]+\/announce[^\s"'<>]*)/gi,
+      /(announce\.php\?[^\s"'<>]*)/gi
+    ];
+    patterns.forEach(function (re) {
+      let m;
+      while ((m = re.exec(safe))) if (m[1]) raw.push(m[1]);
+    });
+    const seen = {};
+    const out = [];
+    raw.forEach(function (x) {
+      try {
+        const u = new URL(x, base + '/');
+        if (!/^https?:$/i.test(u.protocol)) return;
+        const key = u.toString();
+        if (seen[key]) return;
+        seen[key] = true;
+        out.push({ source: 'upload-page', kind: candidateKind(key), hasPasskey: candidateKind(key) === 'passkey', announce: key });
+      } catch (e) {}
+    });
+    return out;
+  }
+
+  async function announceCandidates(host) {
+    const t = resolve(host);
+    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
+    const c = cookieOf(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
+    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+    const all = cachedTargetCandidates(host);
+    const formPath = t.upload.formPath || t.upload.path;
+    try {
+      const res = await fetch(t.base + formPath, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+      if (res.status === 200) {
+        const html = await res.text().catch(function () { return ''; });
+        if (!/takelogin\.php|login\.php|请先登录/i.test(html)) {
+          uploadPageCandidates(html, t.base).forEach(function (x) {
+            if (!all.some(function (y) { return y.announce === x.announce; })) all.push(x);
+          });
+        }
+      }
+    } catch (e) {}
+    const u = await discoverAnnounce(host);
+    if (u.ok) {
+      const kind = candidateKind(u.data.announce);
+      if (!all.some(function (y) { return y.announce === u.data.announce; })) {
+        all.push({ source: 'usercp', kind: kind, hasPasskey: kind === 'passkey', announce: u.data.announce });
+      }
+    }
+    if (!all.length) return { ok: false, code: 'NO_ANNOUNCE', message: '没找到目标站 announce/passkey；可用 --announce 显式指定', http: 409 };
+    return { ok: true, data: { host: host, baseHost: baseHost, candidates: all } };
+  }
+
   async function fetchDetailsTorrent(host, detailsUrl) {
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
@@ -573,7 +652,7 @@ function makeTarget(ctx) {
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,
-    deleteTorrent: deleteTorrent, discoverAnnounce: discoverAnnounce, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
+    deleteTorrent: deleteTorrent, discoverAnnounce: discoverAnnounce, announceCandidates: announceCandidates, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
 }
 
 module.exports = { makeTarget, ENGINES };

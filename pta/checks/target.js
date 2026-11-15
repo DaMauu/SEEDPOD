@@ -288,6 +288,15 @@ async function main() {
     need(no.status === 400 && no.body.error.code === 'NO_COOKIE', '没 cookie 不该请求：' + no.status + ' ' + JSON.stringify(no.body && no.body.error));
   });
 
+  await check('announce 候选只回类型不回明文', async function () {
+    const j = await json(BASE + '/api/targets/127.0.0.1/announce', { method: 'POST' });
+    need(j.status === 200 && j.body.ok, 'announce 候选失败：' + j.status);
+    const list = j.body.data.candidates || [];
+    need(list.length > 0, '没有 announce 候选');
+    need(list.some(function (c) { return c.source === 'upload-page' && c.kind === 'passkey' && c.hasPasskey === true; }), '上传页 passkey 候选没识别：' + JSON.stringify(list));
+    need(list.every(function (c) { return c.announce === undefined; }), '接口回了 announce 明文');
+  });
+
   await check('批量只读探测上传字段', async function () {
     const j = await json(BASE + '/api/probe', {
       method: 'POST', headers: { 'content-type': 'application/json' },

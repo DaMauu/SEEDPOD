@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.208 · 2026-11-19
+
+### G10 announce 候选检查
+- `target-announce` / `announceCandidates`：收集缓存目标种、上传页 tracker 链接、usercp/个人页 passkey，区分 `passkey` 与 `generic`。
+- 目标站上传优先用 `passkey` 候选；只有通用链接时也先清洗（不含源站 passkey），站点拒绝再要求 `--announce`。
+- 接口/CLI 只回候选来源和类型，不回 announce/passkey 明文；发布成功后仍以目标站生成的种子为最终 tracker。
+- target 17/17、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.207 · 2026-11-19
 
 ### G10 禁止源种直传

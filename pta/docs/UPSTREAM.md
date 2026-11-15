@@ -182,3 +182,8 @@
 - 源站 passkey 不应出现在目标站。目标上传前必须清洗 announce；找不到目标 announce 就失败，不回退源种。
 - announce 自动发现顺序：已有目标站种子缓存 → usercp/个人页 passkey → 显式 `--announce`。
 - 源种用于 qB 下载，目标站生成种子用于辅种；两类种子都保留在私有 `data/torrents/`。
+
+## 2026-11-19 · announce 候选与目标站 tracker
+
+- 观察：上传页可能给通用 tracker，也可能给带 passkey 的个人 tracker；不同站点不一样。发布成功后详情页下载的目标站种子才是最终权威。
+- 决定：CLI 先收集候选（缓存目标种、上传页 tracker、usercp/passkey、显式 `--announce`），优先 passkey，generic 仅作兜底；接口只回来源/类型，不回明文。发布后抓目标站生成种子并用其 tracker 辅种。

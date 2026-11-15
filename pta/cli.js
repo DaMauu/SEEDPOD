@@ -34,6 +34,7 @@ function usage() {
   pta targets [--json]
   pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--announce url|h1=url,h2=url] [--real] [--json]
   pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
+  pta target-announce --host <target> [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
 环境：
@@ -506,6 +507,22 @@ async function main() {
     const d = await api('/api/probe', { method: 'POST', body: body });
     print(d, opts, function (v) {
       return '探测 ' + v.total + ' 站 · 检查 ' + v.checked + ' · OK ' + v.ok + ' · 缺字段 ' + v.missing + ' · 失败 ' + v.failed + ' · 无 cookie ' + v.noCookie;
+    });
+    return;
+  }
+  if (cmd === 'target-announce') {
+    if (!opts.host) die('target-announce 需要 --host <target>', 2);
+    const body = {};
+    if (!USE_HTTP) {
+      const x = await core().targetAnnounce({ host: String(opts.host) });
+      print(x, opts, function (v) {
+        return '候选 ' + v.candidates.length + ' · ' + v.candidates.map(function (c) { return c.source + '/' + c.kind; }).join(' · ');
+      });
+      return;
+    }
+    const d = await api('/api/targets/' + encodeURIComponent(String(opts.host)) + '/announce', { method: 'POST', body: body });
+    print(d, opts, function (v) {
+      return '候选 ' + v.candidates.length + ' · ' + v.candidates.map(function (c) { return c.source + '/' + c.kind; }).join(' · ');
     });
     return;
   }

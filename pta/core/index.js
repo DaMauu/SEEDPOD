@@ -167,6 +167,17 @@ function createCore(opts) {
     return r.data;
   }
 
+  async function targetAnnounce(input) {
+    const b = input || {};
+    if (!b.host) throw new Error('target-announce 需要 --host <target>');
+    const r = await ctx.target.announceCandidates(String(b.host));
+    if (!r.ok) throw new Error(r.message || r.code || 'announce 探测失败');
+    return {
+      host: r.data.host,
+      candidates: (r.data.candidates || []).map(function (x) { return { source: x.source, kind: x.kind, hasPasskey: !!x.hasPasskey }; })
+    };
+  }
+
   function coverage(input) {
     const b = input || {};
     const list = ctx.target.list();
@@ -289,6 +300,7 @@ function createCore(opts) {
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
     targetDelete: targetDelete,
+    targetAnnounce: targetAnnounce,
     probe: probe,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
     inject: inject,

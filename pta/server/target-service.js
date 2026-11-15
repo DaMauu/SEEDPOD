@@ -152,8 +152,14 @@ function makeTargetService(ctx, target) {
     let cleanAnnounce = String(b.cleanAnnounce || '').trim();
     if (!cleanAnnounce && b.autoClean !== false) cleanAnnounce = cachedAnnounce(host);
     if (!cleanAnnounce && b.requireClean !== false) {
-      const a = await target.discoverAnnounce(host);
-      if (a.ok) cleanAnnounce = a.data.announce;
+      const cand = await target.announceCandidates(host);
+      if (cand.ok) {
+        const list = cand.data.candidates || [];
+        const pick = list.filter(function (x) { return x.kind === 'passkey'; })[0]
+          || list.filter(function (x) { return x.kind === 'generic'; })[0]
+          || null;
+        if (pick) cleanAnnounce = pick.announce;
+      }
     }
     if (!cleanAnnounce && b.requireClean !== false) {
       return { ok: false, code: 'NEED_TARGET_ANNOUNCE', message: '没找到目标站 announce/passkey；源种不会直传，请用 --announce 指定后再提交', http: 409 };

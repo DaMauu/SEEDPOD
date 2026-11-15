@@ -65,6 +65,15 @@ module.exports = function (app, ctx) {
     return ok(reply, r.data);
   });
 
+  app.post('/api/targets/:host/announce', async (req, reply) => {
+    const r = await target.announceCandidates(req.params.host);
+    if (!r.ok) return bad(reply, r.code || 'ANNOUNCE_FAILED', r.message || 'announce 探测失败', r.http || 400);
+    return ok(reply, {
+      host: r.data.host,
+      candidates: (r.data.candidates || []).map(function (x) { return { source: x.source, kind: x.kind, hasPasskey: !!x.hasPasskey }; })
+    });
+  });
+
   app.post('/api/targets/:host/delete', async (req, reply) => {
     const b = req.body || {};
     const r = await target.deleteTorrent(req.params.host, { id: b.id, url: b.url }, {

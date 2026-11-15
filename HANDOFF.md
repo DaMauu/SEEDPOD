@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 05:10（当前 v0.7.207 / 禁止源种直传）
+最后更新：2026-11-19 05:45（当前 v0.7.208 / announce 候选检查）
+
+## 2026-11-19 announce 候选检查（v0.7.208）
+
+- 新增 `target-announce`：列缓存目标种、上传页 tracker、usercp/passkey 候选，区分 passkey/generic；只回类型不回明文。
+- 上传优先 passkey，只有 generic 时也先清洗（无源站 passkey），失败再要求 `--announce`。
+- 发布成功后的目标站生成种子仍是最终 tracker 来源。
+- target 17/17、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
 
 ## 2026-11-19 禁止源种直传（v0.7.207）
 
