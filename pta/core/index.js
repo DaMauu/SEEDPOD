@@ -154,6 +154,18 @@ function createCore(opts) {
     }));
   }
 
+  async function probe(input) {
+    const b = input || {};
+    const r = await ctx.targetService.probe(b);
+    if (!r.ok) throw new Error(r.message || r.code || '探测失败');
+    if (b.write) {
+      const file = path.join(DATA_DIR, 'site-probe.json');
+      fs.writeFileSync(file, JSON.stringify({ at: now(), data: r.data }, null, 2) + '\n', { mode: 0o600 });
+      r.data.reportFile = 'site-probe.json';
+    }
+    return r.data;
+  }
+
   function coverage(input) {
     const b = input || {};
     const list = ctx.target.list();
@@ -276,6 +288,7 @@ function createCore(opts) {
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
     targetDelete: targetDelete,
+    probe: probe,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
     inject: inject,
     clients: clients,

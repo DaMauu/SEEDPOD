@@ -210,7 +210,65 @@ function makeTargetService(ctx, target) {
     return { ok: true, data: { queueId: item.id, dryRun: b.dryRun !== false, targets: out, allOk: out.every(function (x) { return x.ok }) } };
   }
 
-  return { upload: upload, uploadMany: uploadMany, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
+  async function probe(body) {
+    const b = body || {};
+    const hosts = Array.isArray(b.hosts) ? b.hosts.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(Boolean) : [];
+    const limit = Math.max(1, Math.min(50, Number(b.limit) || 20));
+    const delay = Math.max(0, Math.min(10000, b.delay === undefined ? 1200 : Number(b.delay) || 0));
+    const sample = { title: 'Probe Test 2026 1080p', cat: 'movie', res: '1080p', size: '20 GB', source: 'Blu-ray', codec: 'AVC', audio: '国语', team: 'Probe', anonymous: true };
+    const list = target.list().filter(function (t) {
+      if (hosts.length && hosts.indexOf(t.host) < 0) return false;
+      return b.all ? true : t.hasCookie;
+    }).slice(0, limit);
+    const out = { total: list.length, checked: 0, ok: 0, missing: 0, failed: 0, noCookie: 0, sites: [] };
+    for (const t of list) {
+      if (!t.hasCookie) {
+        out.noCookie++;
+        out.sites.push({ host: t.host, engine: t.engine, status: 'no_cookie', ready: false });
+        continue;
+      }
+      const d = await target.detectUploadForm(t.host);
+      if (!d.ok) {
+        out.failed++;
+        out.sites.push({ host: t.host, engine: t.engine, status: 'error', code: d.code || 'DETECT_FAILED', message: d.message || '' });
+      } else {
+        const plan = target.plan(t.host, sample);
+        const formNames = new Set((d.data.fields || []).map(function (f) { return f.name; }));
+        const planFields = plan.ok ? Object.keys(plan.data.fields || {}) : [];
+        const criticalNames = ['name', 'small_descr', 'descr', 'type', 'type_id', 'category', 'category_id'].filter(function (n) { return planFields.indexOf(n) >= 0; });
+        const missingCritical = criticalNames.filter(function (n) { return !formNames.has(n); });
+        const extraPlanFields = planFields.filter(function (n) { return !formNames.has(n); });
+        const hasFileField = !!d.data.fileField;
+        const status = !plan.ok ? 'plan_failed' : (!hasFileField ? 'no_file_field' : (missingCritical.length ? 'missing_fields' : 'ok'));
+        if (status === 'ok') out.ok++; else out.missing++;
+        const cats = (d.data.fields || []).filter(function (f) {
+          return /^(type|type_id|category|category_id|cat)$/i.test(f.name) || /categor/i.test(f.name);
+        }).map(function (f) {
+          return { name: f.name, label: f.label || '', options: (f.options || []).slice(0, 40) };
+        });
+        out.sites.push({
+          host: t.host, engine: t.engine, status: status, ready: !!t.ready,
+          formPath: d.data.formPath || '', fileField: d.data.fileField || '',
+          fileFieldCurrent: plan.ok ? (plan.data.fileField || '') : '',
+          fileFieldMismatch: !!(plan.ok && d.data.fileField && plan.data.fileField && d.data.fileField !== plan.data.fileField),
+          hasFileField: hasFileField, formCount: d.data.formCount || 0,
+          fieldCount: (d.data.fields || []).length,
+          fields: (d.data.fields || []).slice(0, 60).map(function (f) {
+            return { name: f.name, type: f.type || '', label: f.label || '', template: f.template || '', options: (f.options || []).length };
+          }),
+          planFields: planFields, missing: missingCritical, missingCritical: missingCritical,
+          extraPlanFields: extraPlanFields, categories: cats,
+          catMapCount: (target.resolve(t.host) && target.resolve(t.host).catMap || []).length,
+          warnings: plan.ok ? (plan.data.warnings || []) : []
+        });
+        out.checked++;
+      }
+      if (delay && out.sites.length < list.length) await new Promise(function (r) { setTimeout(r, delay); });
+    }
+    return { ok: true, data: out };
+  }
+
+  return { upload: upload, uploadMany: uploadMany, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
 module.exports = { makeTargetService };

@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.202 · 2026-11-19
+
+### G13 批量只读探测
+- 新增 `probe` CLI/API：对有 cookie 的目标站各 GET 一次上传页，解析字段、分类、文件字段；`--write` 写私有 `data/site-probe.json`。
+- `detectUploadForm` 改为优先选带文件字段、字段最多的表单，避免把页面搜索框误当上传表单。
+- 首批 10 个有 cookie 目标站：8 个表单可用，2 个 `NO_FORM`；修正一个站的文件字段 `file → torrentfile`。
+- target 15/15、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.201 · 2026-11-19
 
 ### 删除本地演练，抓取计划并入抓取卡

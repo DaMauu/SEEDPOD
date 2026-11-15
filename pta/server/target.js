@@ -484,8 +484,10 @@ function makeTarget(ctx) {
     }
     const forms = form.parse(html);
     if (!forms.length) return { ok: false, code: 'NO_FORM', message: '没识别到上传表单，可以继续手工编辑字段表', http: 422 };
-    const f = forms[0];
-    return { ok: true, data: { url: url, path: t.upload.path, formPath: formPath, fileField: f.fileField || '', fields: f.fields, forms: forms } };
+    const withFile = forms.filter(function (x) { return !!x.fileField; })
+      .sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; });
+    const f = withFile[0] || forms.slice().sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; })[0];
+    return { ok: true, data: { url: url, path: t.upload.path, formPath: formPath, formCount: forms.length, fileField: f.fileField || '', fields: f.fields, forms: forms } };
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,

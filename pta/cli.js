@@ -25,6 +25,7 @@ function usage() {
   pta images <queueId> [--host 站内|Pixhost|Imgbox|本地图床] [--real] [--retries 2] [--json]
   pta clients [--test] [--json]
   pta coverage [--json] [--list] [--plan]
+  pta probe [--all] [--limit 20] [--delay 1200] [--hosts h1,h2] [--write] [--json]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
@@ -451,6 +452,28 @@ async function main() {
     print(d, opts, function (x) {
       if (x.dryRun) return '干跑 · ' + x.url + ' · 字段 ' + Object.keys(x.fields || {}).join(',');
       return '已提交 ' + (x.status || '') + (x.detailsUrl ? ' · ' + x.detailsUrl : '') + (x.verify ? ' · 回查 ' + (x.verify.found ? '已找到' : '未找到') : '');
+    });
+    return;
+  }
+  if (cmd === 'probe') {
+    const body = {
+      all: !!opts.all,
+      limit: Math.max(1, Math.min(50, Number(opts.limit) || 20)),
+      delay: opts.delay === undefined ? 1200 : Math.max(0, Math.min(10000, Number(opts.delay) || 0)),
+      hosts: opts.hosts ? String(opts.hosts).split(',').map(function (x) { return x.trim(); }).filter(Boolean) : [],
+      write: !!opts.write
+    };
+    if (!USE_HTTP) {
+      const x = await core().probe(body);
+      print(x, opts, function (v) {
+        return '探测 ' + v.total + ' 站 · 检查 ' + v.checked + ' · OK ' + v.ok + ' · 缺字段 ' + v.missing + ' · 失败 ' + v.failed + ' · 无 cookie ' + v.noCookie + (v.reportFile ? ' · 报告 ' + v.reportFile : '');
+      });
+      return;
+    }
+    delete body.write;
+    const d = await api('/api/probe', { method: 'POST', body: body });
+    print(d, opts, function (v) {
+      return '探测 ' + v.total + ' 站 · 检查 ' + v.checked + ' · OK ' + v.ok + ' · 缺字段 ' + v.missing + ' · 失败 ' + v.failed + ' · 无 cookie ' + v.noCookie;
     });
     return;
   }

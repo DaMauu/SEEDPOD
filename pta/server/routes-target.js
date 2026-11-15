@@ -59,6 +59,12 @@ module.exports = function (app, ctx) {
 
   app.get('/api/targets', async () => ok(target.list()));
 
+  app.post('/api/probe', async (req, reply) => {
+    const r = await targetService.probe(req.body || {});
+    if (!r.ok) return bad(reply, r.code || 'PROBE_FAILED', r.message || '探测失败', r.http || 400);
+    return ok(reply, r.data);
+  });
+
   app.post('/api/targets/:host/delete', async (req, reply) => {
     const b = req.body || {};
     const r = await target.deleteTorrent(req.params.host, { id: b.id, url: b.url }, {

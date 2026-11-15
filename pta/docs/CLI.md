@@ -64,6 +64,7 @@ sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部�
 | `run --stage prepared\|previewed` | 批量准备/预览可处理队列 | 本地 |
 | `clients [--test]` | 列下载器；`--test` 只读探测 qB/watch 连通性 | 只读 |
 | `coverage [--list] [--plan]` | 离线统计目标站定义/cookie/上传/回查就绪数；`--plan` 逐站生成上传 payload | 只读，不联网 |
+| `probe [--all] [--limit 20] [--hosts h1,h2] [--write]` | 对有 cookie 的目标站各 GET 一次上传页，解析字段/分类/缺失项；`--write` 写 `data/site-probe.json` | 只读，不提交 |
 
 输出：
 

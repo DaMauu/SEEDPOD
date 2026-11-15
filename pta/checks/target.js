@@ -260,6 +260,20 @@ async function main() {
     need(no.status === 400 && no.body.error.code === 'NO_COOKIE', '没 cookie 不该请求：' + no.status + ' ' + JSON.stringify(no.body && no.body.error));
   });
 
+  await check('批量只读探测上传字段', async function () {
+    const j = await json(BASE + '/api/probe', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ hosts: ['127.0.0.1'], limit: 1, delay: 0 })
+    });
+    need(j.status === 200 && j.body.ok, '探测失败：' + j.status + ' ' + JSON.stringify(j.body && j.body.error));
+    const d = j.body.data;
+    need(d.checked === 1 && d.sites.length === 1 && d.sites[0].host === '127.0.0.1', '探测结果不对：' + JSON.stringify(d));
+    need(d.sites[0].fieldCount > 0 && Array.isArray(d.sites[0].fields), '没解析出上传字段');
+    need(d.sites[0].status === 'ok' || d.sites[0].status === 'missing_fields', '探测状态不对：' + d.sites[0].status);
+    need(d.sites[0].fileField === 'torrent', '探测到的文件字段不对：' + d.sites[0].fileField);
+    need(d.sites[0].fileFieldMismatch === true && d.sites[0].fileFieldCurrent === 'file', '文件字段差异没报出来：' + JSON.stringify(d.sites[0]));
+  });
+
   await check('队列条目与干跑表单映射', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
