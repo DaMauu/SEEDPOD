@@ -760,7 +760,7 @@ onUnmounted(() => {
 .crawl-card :deep(.preset-row .cat-row){display:flex;flex-wrap:wrap;gap:6px;padding:0}
 .crawl-card :deep(.preset-row .cat-chip){height:24px;padding:0 8px;border-radius:5px;font-size:11px;line-height:24px}
 .crawl-card :deep(.preset-row .lbl > span){white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
-.crawl-card :deep(.preset-row .cat-row){gap:4px;margin-left:10px}
+.crawl-card :deep(.preset-row .cat-row){gap:4px;margin-left:24px}
 .crawl-card :deep(.preset-row .lbl){align-items:flex-start;padding-top:3px}
 .crawl-card :deep(.limits-panel){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px;margin-top:16px;padding:14px 16px;background:var(--panel-2,#f9fafb);border:1px solid var(--line,#eef0f4);border-radius:10px}
 .crawl-card :deep(.limit-item){display:flex;flex-direction:column;gap:6px;min-width:0}
