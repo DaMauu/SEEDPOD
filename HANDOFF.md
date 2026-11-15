@@ -7,6 +7,7 @@
 - 制作组：只认数字 id 或 `valueMaps.team`；没映射留空并在预览标红。分类同理。
 - 开关：`自动附加 MediaInfo`、`允许联网补简介`，默认开。
 - 计划输出 `autoActions`（换 tracker / 抓权威种子 / skip_checking）和 `anonymous`。
+- 两个猫站私有定义补了 catMap（movie 401 / tv 404 / anime 403 / show 405 / doc 402 / music 406 / sport 407 / other 412），只在数据目录。
 - target 21/21、全量通过；规则 35 条（20 已接）。
 
 ## 2026-11-15 豆影无 key 抓取（v0.7.221）
