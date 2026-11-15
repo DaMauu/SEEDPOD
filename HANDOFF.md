@@ -1,6 +1,15 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 09:45（当前 v0.7.215 / 发布字段实测修复）
+最后更新：2026-11-15 11:50（当前 v0.7.216 / 真实种子跨站辅种跑通）
+
+## 2026-11-15 真实 BDInfo 种子跨站辅种跑通（v0.7.216）
+
+- 源种：猫主站 `2012 2009 BluRay 1080p x264 DD5.1 ISO-CMCT`，7.90 GB，BDInfo 0.5.6，41 做种；qB `dl_002` 实测约 10–15 MB/s，13 分钟下完。
+- 目标站：猫测试站发布成功（id 2713），回查命中；标题、副标题（`2012/2012世界末日 · 1080p · 7.90 GB`）、简介 3 张外链图、匿名均正常。
+- 权威种子 infohash `5a4749…` 与源种 `ba20db…` 不同（目标站会重写 seed 信息），`crossseed` 用 `skip_checking=true` + `/downloads` 加进 qB，目标 tracker 状态 2（working），详情页显示 1 个做种者。
+- 收口：目标站测试种已删除（详情页留删除记录）；qB 两个任务已移除并删数据；`realPublish=false`；测试队列条目已删除。
+- qB：新增 `removeTorrent`，`resumeTorrent`/`stopTorrent` 做 `/start`→`/resume`、`/stop`→`/pause` 回退；`findTorrent` 回速度/连接数/ETA/tracker；publish 检查 8/8。
+- 已知未做：目标站标签（国语/中字等）未映射；图片已验证可显示。
 
 ## 2026-11-19 发布字段实测修复（v0.7.215）
 

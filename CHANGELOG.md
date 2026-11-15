@@ -1,5 +1,15 @@
 # 更新日志
 
+## v0.7.216 · 2026-11-15
+
+### 真实种子跨站辅种跑通 + qB 控制补齐
+- qB 新增 `removeTorrent`（可选 `deleteFiles`）、`resumeTorrent`、`stopTorrent`；启动/暂停按 qB v5 优先 `/start`、`/stop`，404 回退 `/resume`、`/pause`。
+- `findTorrent` 回 `dlspeed/upspeed/numSeeds/eta/tracker/amountLeft/size`，排查下载进度不用另开接口。
+- publish 检查加一项：start→resume、stop→pause 回退与 delete 带 `deleteFiles`，现在 8/8。
+- 真实流程实测（猫主站 → 猫测试站）：7.90 GB MiniBD 源种 13 分钟下完；目标站发布回查通过；权威种子 infohash 与源种不同，`crossseed` 用 `skip_checking=true` + 源种 save path 加进 qB，目标 tracker 状态 working，目标站显示 1 个做种者。
+- 实测后已删除目标站测试种、移除 qB 两个任务并删除数据、恢复 `realPublish=false`、删除测试队列条目。
+- 已知未做：目标站标签（国语/中字等）仍未映射；图片链接已验证可显示。
+
 ## v0.7.215 · 2026-11-19
 
 ### 发布字段实测修复

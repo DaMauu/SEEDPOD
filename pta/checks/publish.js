@@ -23,6 +23,7 @@ const results = [];
 let cookie = '';
 let addHits = 0, lastAddCookie = '', lastAddType = '', lastAddLen = 0;
 let trackerAdds = 0, lastTrackerBody = '';
+let resumeHits = 0, pauseHits = 0, deleteHits = 0, lastDeleteBody = '';
 let lastAddBody = '';
 let sourceHits = 0, lastSourceCookie = '';
 
@@ -67,6 +68,20 @@ async function main() {
       req.on('end', function () {
         trackerAdds++;
         lastTrackerBody = Buffer.concat(chunks).toString('utf8');
+        res.writeHead(200); res.end('Ok.');
+      });
+      return;
+    }
+    if (url === '/api/v2/torrents/start') { res.writeHead(404); res.end('Not Found'); return; }
+    if (url === '/api/v2/torrents/resume') { resumeHits++; res.writeHead(200); res.end('Ok.'); return; }
+    if (url === '/api/v2/torrents/stop') { res.writeHead(404); res.end('Not Found'); return; }
+    if (url === '/api/v2/torrents/pause') { pauseHits++; res.writeHead(200); res.end('Ok.'); return; }
+    if (url === '/api/v2/torrents/delete') {
+      const chunks = [];
+      req.on('data', c => chunks.push(c));
+      req.on('end', function () {
+        deleteHits++;
+        lastDeleteBody = Buffer.concat(chunks).toString('utf8');
         res.writeHead(200); res.end('Ok.');
       });
       return;
@@ -222,6 +237,20 @@ async function main() {
     need(add.ok === true, '加权威种子失败：' + JSON.stringify(add));
     need(/skip_checking/.test(lastAddBody) && /true/.test(lastAddBody), '没有 skip_checking=true');
     need(/\/downloads/.test(lastAddBody), '没有使用源种 savePath');
+  });
+
+  await check('qB 启动/暂停/删除兼容不同版本', async function () {
+    const dlObj = { url: qb.base, user: 'u', pass: 'p' };
+    const r1 = await qbMod.resumeTorrent(dlObj, HASH);
+    need(r1.ok === true, 'resume 失败：' + JSON.stringify(r1));
+    need(resumeHits === 1, 'resume 没回退到 /resume：' + resumeHits);
+    const r2 = await qbMod.stopTorrent(dlObj, HASH);
+    need(r2.ok === true, 'stop 失败：' + JSON.stringify(r2));
+    need(pauseHits === 1, 'stop 没回退到 /pause：' + pauseHits);
+    const r3 = await qbMod.removeTorrent(dlObj, HASH, { deleteFiles: true });
+    need(r3.ok === true, 'remove 失败：' + JSON.stringify(r3));
+    need(deleteHits === 1, 'delete 次数不对：' + deleteHits);
+    need(/deleteFiles=true/.test(lastDeleteBody), 'delete 没带 deleteFiles=true');
   });
 
   child.kill();

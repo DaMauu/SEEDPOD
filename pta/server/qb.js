@@ -243,14 +243,14 @@ async function findTorrent(d, hash, name) {
       if (r.res.status === 200) {
         const list = await r.res.json().catch(function () { return []; });
         const t = Array.isArray(list) ? list[0] : null;
-        if (t) return { found: true, hash: t.hash || hash, name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0, savePath: String(t.save_path || ''), contentPath: String(t.content_path || ''), category: String(t.category || '') };
+        if (t) return { found: true, hash: t.hash || hash, name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0, savePath: String(t.save_path || ''), contentPath: String(t.content_path || ''), category: String(t.category || ''), dlspeed: Number(t.dlspeed) || 0, upspeed: Number(t.upspeed) || 0, numSeeds: Number(t.num_seeds) || 0, numLeechs: Number(t.num_leechs) || 0, numComplete: Number(t.num_complete) || 0, numIncomplete: Number(t.num_incomplete) || 0, eta: Number(t.eta) || 0, tracker: String(t.tracker || ''), amountLeft: Number(t.amount_left) || 0, size: Number(t.size) || 0 };
       }
     }
     const all = await qbGet(d, '/api/v2/torrents/info', '');
     if (all.res.status === 200) {
       const list = await all.res.json().catch(function () { return []; });
       const t = (Array.isArray(list) ? list : []).filter(function (x) { return (hash && x.hash === hash) || (name && x.name === name); })[0];
-      if (t) return { found: true, hash: t.hash || hash || '', name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0, savePath: String(t.save_path || ''), contentPath: String(t.content_path || ''), category: String(t.category || '') };
+      if (t) return { found: true, hash: t.hash || hash || '', name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0, savePath: String(t.save_path || ''), contentPath: String(t.content_path || ''), category: String(t.category || ''), dlspeed: Number(t.dlspeed) || 0, upspeed: Number(t.upspeed) || 0, numSeeds: Number(t.num_seeds) || 0, numLeechs: Number(t.num_leechs) || 0, numComplete: Number(t.num_complete) || 0, numIncomplete: Number(t.num_incomplete) || 0, eta: Number(t.eta) || 0, tracker: String(t.tracker || ''), amountLeft: Number(t.amount_left) || 0, size: Number(t.size) || 0 };
     }
     return { found: false };
   } catch (e) {
@@ -340,6 +340,55 @@ async function addTrackers(d, hash, urls) {
   }
 }
 
+async function resumeTorrent(d, hash) {
+  if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
+  const h = String(hash || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{40}$/i.test(h)) return { ok: false, error: 'BAD_HASH', message: 'infohash 不合法' };
+  const body = new URLSearchParams();
+  body.set('hashes', h);
+  try {
+    let r = await qbPostForm(d, '/api/v2/torrents/start', body);
+    if (r.res.status === 404) r = await qbPostForm(d, '/api/v2/torrents/resume', body);
+    if (r.res.status !== 200 && r.res.status !== 204) return { ok: false, error: 'QB_RESUME_FAILED', status: r.res.status, message: 'qB 返回 ' + r.res.status };
+    return { ok: true, status: r.res.status };
+  } catch (e) {
+    return { ok: false, error: 'QB_RESUME_FAILED', message: String(e && e.message || e).slice(0, 160) };
+  }
+}
+
+async function stopTorrent(d, hash) {
+  if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
+  const h = String(hash || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{40}$/i.test(h)) return { ok: false, error: 'BAD_HASH', message: 'infohash 不合法' };
+  const body = new URLSearchParams();
+  body.set('hashes', h);
+  try {
+    let r = await qbPostForm(d, '/api/v2/torrents/stop', body);
+    if (r.res.status === 404) r = await qbPostForm(d, '/api/v2/torrents/pause', body);
+    if (r.res.status !== 200 && r.res.status !== 204) return { ok: false, error: 'QB_STOP_FAILED', status: r.res.status, message: 'qB 返回 ' + r.res.status };
+    return { ok: true, status: r.res.status };
+  } catch (e) {
+    return { ok: false, error: 'QB_STOP_FAILED', message: String(e && e.message || e).slice(0, 160) };
+  }
+}
+
+async function removeTorrent(d, hash, opts) {
+  if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
+  const h = String(hash || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{40}$/i.test(h)) return { ok: false, error: 'BAD_HASH', message: 'infohash 不合法' };
+  const o = opts || {};
+  const body = new URLSearchParams();
+  body.set('hashes', h);
+  body.set('deleteFiles', o.deleteFiles ? 'true' : 'false');
+  try {
+    const r = await qbPostForm(d, '/api/v2/torrents/delete', body);
+    if (r.res.status !== 200 && r.res.status !== 204) return { ok: false, error: 'QB_DELETE_FAILED', status: r.res.status, message: 'qB 返回 ' + r.res.status };
+    return { ok: true, status: r.res.status, deleteFiles: !!o.deleteFiles };
+  } catch (e) {
+    return { ok: false, error: 'QB_DELETE_FAILED', message: String(e && e.message || e).slice(0, 160) };
+  }
+}
+
 async function trackerStatus(d, hash) {
   if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
   const h = String(hash || '').trim().toLowerCase();
@@ -362,6 +411,6 @@ async function trackerStatus(d, hash) {
   }
 }
 
-return { probeDownloader, qbCategories, addTorrent, addTrackers, trackerStatus, parseTorrent, findTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
+return { probeDownloader, qbCategories, addTorrent, addTrackers, resumeTorrent, stopTorrent, removeTorrent, trackerStatus, parseTorrent, findTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
 }
 module.exports = { makeQb };
