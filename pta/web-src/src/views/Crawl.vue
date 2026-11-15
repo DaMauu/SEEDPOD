@@ -46,7 +46,7 @@
           </div>
           <div class="preset-block">
             <div v-for="r in fetchRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
               <div class="cat-row pick-row">
                 <button v-for="c in (r.chips || [])" :key="c" class="cat-chip" :class="{ on: (r.sel || []).includes(c) }" type="button" :disabled="r.todo" @click="toggleFetchChip(r, c)">{{ c }}</button>
               </div>
@@ -88,7 +88,7 @@
                 </div>
               </div>
               <div v-for="r in (g.rows || [])" :key="r.t" class="set-field" :class="{ todo: r.todo }">
-                <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
                 <div class="ctl"><RuleControl :r="r" /></div>
               </div>
             </div>
@@ -107,7 +107,7 @@
         <div class="drawer-body">
           <div class="preset-block">
             <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
               <div class="ctl"><RuleOrSpecial :r="r" /></div>
             </div>
           </div>
@@ -129,7 +129,7 @@
                 <div v-if="cell.rows.length > 1" class="set-field pair">
                   <div v-for="r in cell.rows" :key="r.t" class="pair-item" :class="{ grow: r.type !== 'switch', todo: r.todo }">
                     <template v-if="r.type === 'switch'">
-                      <span class="pair-lbl">{{ r.t }}<em v-if="r.todo" class="todo-badge">未接</em></span>
+                      <span class="pair-lbl">{{ r.label || r.t }}<em v-if="r.todo" class="todo-badge">未接</em></span>
                       <button class="switch" :class="{ on: r.on }" type="button" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
                     </template>
                     <template v-else>
@@ -141,7 +141,7 @@
                   <div class="sec-ttl">{{ cell.rows[0].t }}</div>
                 </div>
                 <div v-else class="set-field" :class="{ wide: cell.rows[0].wide, pick: cell.rows[0].type === 'pick' || cell.rows[0].inline, todo: cell.rows[0].todo }">
-                  <div class="lbl"><span>{{ cell.rows[0].t }}</span><em v-if="cell.rows[0].todo" class="todo-badge">未接</em></div>
+                  <div class="lbl"><span>{{ cell.rows[0].label || cell.rows[0].t }}</span><em v-if="cell.rows[0].todo" class="todo-badge">未接</em></div>
                   <div class="ctl"><RuleOrSpecial :r="cell.rows[0]" /></div>
                 </div>
               </template>

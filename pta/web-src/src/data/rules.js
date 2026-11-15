@@ -39,7 +39,8 @@
           "1080p 及以上",
           "2160p 及以上"
         ],
-        "hint": "抓的时候全抓，发之前按这个卡"
+        "hint": "抓的时候全抓，发之前按这个卡",
+        "label": "最低分辨率"
       },
       {
         "t": "体积范围",
@@ -50,7 +51,8 @@
           "5 GB 起",
           "10 GB 起",
           "20 GB 起"
-        ]
+        ],
+        "label": "最小体积"
       },
       {
         "t": "最大体积",
@@ -61,31 +63,36 @@
           "50 GB",
           "80 GB",
           "120 GB"
-        ]
+        ],
+        "label": "最大体积"
       },
       {
         "t": "必须带中字",
         "type": "switch",
         "on": true,
-        "hint": "成品没有中文字幕就不发"
+        "hint": "成品没有中文字幕就不发",
+        "label": "没中字就不收"
       },
       {
         "t": "排除匹配",
         "type": "custom",
         "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
-        "hint": "支持正则，限 200 字；只决定转不转，不影响请求"
+        "hint": "支持正则，限 200 字；只决定转不转，不影响请求",
+        "label": "命中这些词就不转"
       },
       {
         "t": "白名单匹配",
         "type": "custom",
         "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
-        "hint": "和排除同时命中时，排除优先"
+        "hint": "和排除同时命中时，排除优先",
+        "label": "只转命中这些词的"
       },
       {
         "t": "测试匹配",
         "type": "custom",
         "html": "<div class=\"rx-test\"><input class=\"input\" id=\"rx-sample\" placeholder=\"粘贴一条标题试一下\"><button class=\"btn ghost slim\" id=\"rx-run\" type=\"button\">测试</button><em id=\"rx-out\">未测试</em></div>",
-        "wide": true
+        "wide": true,
+        "label": "试一下上面的规则"
       }
     ]
   }
@@ -99,13 +106,15 @@
         "t": "目标站搜索",
         "type": "switch",
         "on": true,
-        "hint": "关闭后手动查重不请求目标站"
+        "hint": "关闭后手动查重不请求目标站",
+        "label": "发布前先搜目标站有没有"
       },
       {
         "t": "体积容差",
         "type": "text",
         "v": "2",
-        "hint": "体积差在这个百分比内算同一条"
+        "hint": "体积差在这个百分比内算同一条",
+        "label": "大小差多少算同一部（%）"
       }
     ]
   },
@@ -121,7 +130,8 @@
           "跳过不收",
           "标重复后仍收"
         ],
-        "todo": true
+        "todo": true,
+        "label": "目标站已有完整蓝光镜像"
       },
       {
         "t": "目标站只有 DIY",
@@ -131,7 +141,8 @@
           "可发（标复核）",
           "跳过"
         ],
-        "todo": true
+        "todo": true,
+        "label": "目标站只有 DIY 原盘"
       }
     ]
   }
@@ -149,7 +160,8 @@
           "种子自带 → 豆影网页 → TMDB",
           "豆影网页 → 豆瓣 → TMDB",
           "只用种子自带，没有就用英文"
-        ]
+        ],
+        "label": "副标题从哪来"
       },
       {
         "t": "匹配来源顺序",
@@ -159,7 +171,8 @@
           "TMDB → 豆瓣 → 站点标题",
           "豆瓣 → TMDB → 站点标题",
           "只用站点标题"
-        ]
+        ],
+        "label": "简介和资料去哪查"
       },
       {
         "t": "简介图片",
@@ -170,24 +183,28 @@
           "保留外链",
           "不保留图片"
         ],
-        "hint": "外链会失效，转存最稳"
+        "hint": "外链会失效，转存最稳",
+        "label": "简介里的图片"
       },
       {
         "t": "自动附加 MediaInfo",
         "type": "switch",
         "on": true,
-        "hint": "简介末尾自动追加 MediaInfo/BDInfo"
+        "hint": "简介末尾自动追加 MediaInfo/BDInfo",
+        "label": "自动附加 MediaInfo"
       },
       {
         "t": "允许联网补简介",
         "type": "switch",
         "on": true,
-        "hint": "详情页没简介时查豆影/豆瓣/维基"
+        "hint": "详情页没简介时查豆影/豆瓣/维基",
+        "label": "允许联网补简介"
       },
       {
         "t": "主演最多几个",
         "type": "text",
-        "v": "3"
+        "v": "3",
+        "label": "简介里主演最多几个"
       }
     ]
   },
@@ -199,7 +216,8 @@
         "t": "必须有简介",
         "type": "switch",
         "on": true,
-        "hint": "抓不到中文简介就不自动发"
+        "hint": "抓不到中文简介就不自动发",
+        "label": "没简介就不发"
       },
       {
         "t": "BDInfo",
@@ -209,19 +227,22 @@
           "必须存在且校验通过",
           "有就行，不校验",
           "不要求"
-        ]
+        ],
+        "label": "BDInfo 校验"
       },
       {
         "t": "截图至少几张",
         "type": "text",
         "v": "0",
         "hint": "0 = 不检查；简介里的截图全部转载",
-        "inline": true
+        "inline": true,
+        "label": "截图至少几张"
       },
       {
         "t": "年份必须一致",
         "type": "switch",
-        "on": true
+        "on": true,
+        "label": "年份必须一致"
       }
     ]
   },
@@ -234,7 +255,8 @@
         "type": "custom",
         "same": "tgt",
         "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
-        "hint": "所有库内资源都归到这个站"
+        "hint": "所有库内资源都归到这个站",
+        "label": "发布到哪个站"
       },
       {
         "t": "不满足时",
@@ -245,19 +267,22 @@
           "直接跳过"
         ],
         "hint": "上面的条件没达标时怎么处理",
-        "todo": true
+        "todo": true,
+        "label": "条件不满足时"
       },
       {
         "t": "自动勾选标签",
         "type": "switch",
         "on": true,
-        "hint": "按来源标签勾国语/中字等；禁转/官方不勾"
+        "hint": "按来源标签勾国语/中字等；禁转/官方不勾",
+        "label": "自动勾选标签"
       },
       {
         "t": "默认匿名",
         "type": "switch",
         "on": false,
-        "hint": "新条目没单独设置时按这个发"
+        "hint": "新条目没单独设置时按这个发",
+        "label": "默认匿名发布"
       }
     ]
   },
@@ -269,31 +294,36 @@
         "t": "发布后校验",
         "type": "switch",
         "on": true,
-        "hint": "发布后自动去目标站核对；关掉就只提交不回查"
+        "hint": "发布后自动去目标站核对；关掉就只提交不回查",
+        "label": "发布后回查"
       },
       {
         "t": "发布后抓权威种子",
         "type": "switch",
         "on": true,
-        "hint": "发布成功抓目标站种子存 data/torrents"
+        "hint": "发布成功抓目标站种子存 data/torrents",
+        "label": "发布后抓目标站种子"
       },
       {
         "t": "上传前清洗 tracker",
         "type": "switch",
         "on": true,
-        "hint": "关掉会按源种直传，源站 tracker 会带到目标站"
+        "hint": "关掉会按源种直传，源站 tracker 会带到目标站",
+        "label": "上传前换掉源站 tracker"
       },
       {
         "t": "辅种跳过校验",
         "type": "switch",
         "on": true,
-        "hint": "qB skip_checking 复用源种保存路径"
+        "hint": "qB skip_checking 复用源种保存路径",
+        "label": "辅种不重新校验"
       },
       {
         "t": "qB 自动种子管理",
         "type": "switch",
         "on": false,
-        "hint": "关掉=autoTMM false，不自动移动文件"
+        "hint": "关掉=autoTMM false，不自动移动文件",
+        "label": "qB 自动移动文件"
       }
     ]
   },
@@ -305,14 +335,16 @@
         "t": "图片上传重试",
         "type": "text",
         "v": "2 次",
-        "inline": true
+        "inline": true,
+        "label": "图片上传重试"
       },
       {
         "t": "连续失败几次暂停该站",
         "type": "text",
         "v": "5",
         "inline": true,
-        "todo": true
+        "todo": true,
+        "label": "连续失败几次暂停该站"
       }
     ]
   }
