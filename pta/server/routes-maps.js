@@ -16,9 +16,13 @@ const CAT = [
   ['舞台演出', /舞台|stage|perf\b|concert/i],
   ['游戏', /游戏|game|playstation|ps[2-5]\b|xbox|nintendo|wii|rom\s*packs?|jocuri|játékok/i],
   ['成人', /xxx|adult|softcore|18\+|erotic|hentai|porn/i],
-  ['原盘', /untouched|full\s*disc|blu-?ray\s*iso|bd\/dvd\s*iso|\biso\b|remux|4k\s*ultra\s*hd/i],
+  ['原盘', /untouched|full\s*disc|blu-?ray\s*iso|bd\/dvd\s*iso|\biso\b|4k\s*ultra\s*hd/i],
+  ['Remux', /remux/i],
   ['压制', /encode|x264|x265|hdtv|webrip|web-rips?|dvdrip|rips?\b|sdrips|divx|xvid|upscaled/i],
-  ['其他', /其他|其它|other|misc|图片|imagini|image|pics|wallpaper|trailer|sample|unknown|待定|uncategorised|all\s*categories|choose|select|pre-release|^[-—]+$/i]
+  ['图片', /image|imagini|pics|pictures|wallpaper/i],
+  ['样品', /sample|sampler/i],
+  ['预告', /trailer|preview|teaser/i],
+  ['其他', /其他|其它|other|misc|图片|unknown|待定|uncategorised|all\s*categories|choose|select|^[-—]+$/i]
 ];
 
 function pickField(fields, names, labelRe) {
