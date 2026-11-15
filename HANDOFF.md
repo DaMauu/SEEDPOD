@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 03:10（当前 v0.7.203 / 全部站点停用，等 cookie）
+最后更新：2026-11-19 03:35（当前 v0.7.204 / 多目标每站种子）
+
+## 2026-11-19 多目标每站种子（v0.7.204）
+
+- `target-upload --torrents host=文件,host2=文件2` 支持每个目标站独立种子；未配置的站回退公共种子。
+- HTTP 接口接受 `targetTorrents` 对象/数组；target-service 按站替换 `torrentBase64`。
+- target 15/15、cli 17/17、smoke 26/26、全量 run.sh 通过；真实多站提交仍待 cookie/授权。
 
 ## 2026-11-19 全部站点停用（运行时）
 

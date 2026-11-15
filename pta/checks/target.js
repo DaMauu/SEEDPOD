@@ -78,6 +78,24 @@ function makeTorrent() {
     Buffer.from('e')
   ]);
 }
+function makeTorrent2() {
+  const announce = 'http://127.0.0.1:1/announce';
+  const name = 'target-test-2';
+  const info = Buffer.concat([
+    Buffer.from('d6:lengthi1048576e4:name' + Buffer.byteLength(name) + ':'),
+    Buffer.from(name),
+    Buffer.from('6:pieces20:'),
+    Buffer.from('b'.repeat(20)),
+    Buffer.from('e')
+  ]);
+  return Buffer.concat([
+    Buffer.from('d8:announce' + Buffer.byteLength(announce) + ':'),
+    Buffer.from(announce),
+    Buffer.from('4:info'),
+    info,
+    Buffer.from('e')
+  ]);
+}
 function infoHash(buf) {
   const i = buf.indexOf(Buffer.from('4:info'));
   return crypto.createHash('sha1').update(buf.slice(i + 6, buf.length - 1)).digest('hex');
@@ -311,6 +329,15 @@ async function main() {
     need(multi.status === 200 && multi.body.ok, '多目标接口失败：' + multi.status);
     need(Array.isArray(multi.body.data.targets) && multi.body.data.targets.length === 1 && multi.body.data.targets[0].ok, '多目标干跑结果不对');
     need(hits.length === 0, '多目标干跑发了请求：' + hits.length);
+    const second = makeTorrent2();
+    const multi2 = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64'), targetTorrents: { '127.0.0.1': second.toString('base64') }, dryRun: true })
+    });
+    need(multi2.status === 200 && multi2.body.ok, '每站种子干跑失败：' + multi2.status);
+    const m2 = multi2.body.data.targets[0] && multi2.body.data.targets[0].data && multi2.body.data.targets[0].data.torrent;
+    need(m2 && m2.hash === infoHash(second), '多目标没用每站指定种子：' + JSON.stringify(m2));
+    need(hits.length === 0, '每站种子干跑发了请求：' + hits.length);
   });
 
   await check('UNIT3D / Gazelle 默认映射', async function () {

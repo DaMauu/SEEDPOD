@@ -32,7 +32,7 @@ function usage() {
   pta publish <queueId> [--real] [--json]
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
-  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--real] [--torrent file] [--json]
+  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--real] [--json]
   pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
@@ -85,6 +85,18 @@ function readTorrent(p) {
   if (!st.isFile()) die('不是文件：' + p, 2);
   if (st.size > 10 * 1024 * 1024) die('种子超过 10MB', 2);
   return fs.readFileSync(p).toString('base64');
+}
+function readTorrentMap(spec) {
+  const out = {};
+  String(spec || '').split(',').forEach(function (pair) {
+    const i = pair.indexOf('=');
+    if (i <= 0) return;
+    const host = pair.slice(0, i).trim().toLowerCase();
+    const file = pair.slice(i + 1).trim();
+    if (!host || !file) die('--torrents 格式应为 host=文件,host2=文件2', 2);
+    out[host] = readTorrent(file);
+  });
+  return out;
 }
 function readTextFile(p, label) {
   const fs = require('fs');
@@ -425,7 +437,10 @@ async function main() {
     const targets = opts.targets ? String(opts.targets).split(',').map(x => x.trim()).filter(Boolean) : [];
     if (!targets.length && !opts.host) die('target-upload 需要 --host <target> 或 --targets h1,h2', 2);
     const b64 = readTorrent(opts.torrent);
-    const body = { queueId: id, dryRun: !opts.real, torrentBase64: b64 || undefined, verify: opts.verify };
+    const torrentMap = opts.torrents ? readTorrentMap(String(opts.torrents)) : null;
+    const hostKey = opts.host ? String(opts.host).toLowerCase() : '';
+    const hostTorrent = hostKey && torrentMap ? torrentMap[hostKey] : '';
+    const body = { queueId: id, dryRun: !opts.real, torrentBase64: hostTorrent || b64 || undefined, targetTorrents: torrentMap || undefined, verify: opts.verify };
     if (!USE_HTTP) {
       if (targets.length) {
         const x = await core().targetUploadMany(Object.assign({}, body, { targets: targets }));

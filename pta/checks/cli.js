@@ -55,9 +55,9 @@ function cliLocal(args) {
     });
   });
 }
-function tinyTorrent(file) {
+function tinyTorrent(file, name) {
   const announce = 'http://127.0.0.1:1/announce';
-  const name = 'cli-local-test';
+  name = name || 'cli-local-test';
   const info = Buffer.concat([
     Buffer.from('d6:lengthi1048576e4:name' + Buffer.byteLength(name) + ':'),
     Buffer.from(name),
@@ -247,6 +247,11 @@ async function main() {
     const planned = (prep.prepared && prep.prepared.targets && prep.prepared.targets[0] && prep.prepared.targets[0].target.fields) || {};
     const first = u.targets[0].data || {};
     Object.keys(planned).forEach(function (k) { need(first.fields[k] === planned[k], '上传字段没使用 prepared：' + k); });
+    const torrent2 = tinyTorrent(path.join(DATA, 'tiny2.torrent'), 'cli-local-test-2');
+    const u2 = parse(await cliLocal(['target-upload', queueId2, '--targets', 'target.example,target2.example', '--torrent', torrent, '--torrents', 'target.example=' + torrent + ',target2.example=' + torrent2, '--json']));
+    const h1 = u2.targets[0] && u2.targets[0].data && u2.targets[0].data.torrent && u2.targets[0].data.torrent.hash;
+    const h2 = u2.targets[1] && u2.targets[1].data && u2.targets[1].data.torrent && u2.targets[1].data.torrent.hash;
+    need(h1 && h2 && h1 !== h2, '每站种子没区分：' + JSON.stringify({ h1: h1, h2: h2 }));
   });
 
   await check('本地 coverage 统计目标站与上传计划', async function () {

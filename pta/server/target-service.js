@@ -202,9 +202,18 @@ function makeTargetService(ctx, target) {
     hosts = hosts.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(Boolean);
     if (!hosts.length) hosts = targetHosts(item.data);
     if (!hosts.length) return { ok: false, code: 'NO_TARGET', message: '没有配置目标站', http: 400 };
+    const perTarget = {};
+    const raw = b.targetTorrents;
+    if (Array.isArray(raw)) {
+      raw.forEach(function (x) { if (x && x.host) perTarget[String(x.host).toLowerCase()] = x.torrentBase64 || x.torrent || ''; });
+    } else if (raw && typeof raw === 'object') {
+      Object.keys(raw).forEach(function (h) { perTarget[String(h).toLowerCase()] = raw[h]; });
+    }
     const out = [];
     for (const host of hosts) {
-      const r = await upload(host, b);
+      const one = Object.assign({}, b);
+      if (perTarget[host]) one.torrentBase64 = perTarget[host];
+      const r = await upload(host, one);
       out.push({ host: host, ok: !!r.ok, code: r.code || '', message: r.message || '', data: r.data || null });
     }
     return { ok: true, data: { queueId: item.id, dryRun: b.dryRun !== false, targets: out, allOk: out.every(function (x) { return x.ok }) } };
