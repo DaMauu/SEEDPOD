@@ -112,9 +112,6 @@
           </div>
         </div>
         <div class="drawer-body">
-          <div class="filter-head">
-            <div class="filter-title">初筛条件</div>
-          </div>
           <div class="preset-block">
             <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
               <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
