@@ -146,6 +146,14 @@ function createCore(opts) {
     }));
   }
 
+  async function targetDelete(input) {
+    const b = input || {};
+    if (!b.host) throw new Error('target-delete 需要 --host <target>');
+    return unwrap(await ctx.target.deleteTorrent(String(b.host), { id: b.id, url: b.url }, {
+      dryRun: b.dryRun !== false, check: !!b.check, reason: b.reason, reasonType: b.reasonType
+    }));
+  }
+
   function coverage(input) {
     const b = input || {};
     const list = ctx.target.list();
@@ -267,6 +275,7 @@ function createCore(opts) {
     publish: async (id, body) => unwrap(await ctx.publisher.publishItem(id, body || {})),
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
+    targetDelete: targetDelete,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
     inject: inject,
     clients: clients,

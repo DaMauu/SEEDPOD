@@ -32,6 +32,7 @@ function usage() {
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
   pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--real] [--torrent file] [--json]
+  pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
 环境：
@@ -450,6 +451,34 @@ async function main() {
     print(d, opts, function (x) {
       if (x.dryRun) return '干跑 · ' + x.url + ' · 字段 ' + Object.keys(x.fields || {}).join(',');
       return '已提交 ' + (x.status || '') + (x.detailsUrl ? ' · ' + x.detailsUrl : '') + (x.verify ? ' · 回查 ' + (x.verify.found ? '已找到' : '未找到') : '');
+    });
+    return;
+  }
+  if (cmd === 'target-delete') {
+    const spec = args[0];
+    if (!spec) die('target-delete 需要种子 id 或 details.php?id=... 链接', 2);
+    if (!opts.host) die('target-delete 需要 --host <target>', 2);
+    const body = {
+      id: spec, url: spec,
+      reason: opts.reason ? String(opts.reason) : '测试',
+      reasonType: opts['reason-type'] ? String(opts['reason-type']) : '其他',
+      check: !!opts.check,
+      dryRun: !opts.real
+    };
+    if (!USE_HTTP) {
+      const x = await core().targetDelete(Object.assign({ host: String(opts.host) }, body));
+      print(x, opts, function (v) {
+        if (v.check) return (v.deleted ? '已删除' : '未删除') + ' · id ' + v.id + ' · details ' + v.checkStatus;
+        if (v.dryRun) return '删除计划 · id ' + v.id + ' · 原因 ' + (v.reasonTypeLabel || v.reasonType || '—') + ' / ' + v.reason;
+        return (v.deleted ? '已删除' : '删除未确认') + ' · id ' + v.id + ' · details ' + v.checkStatus;
+      });
+      return;
+    }
+    const d = await api('/api/targets/' + encodeURIComponent(String(opts.host)) + '/delete', { method: 'POST', body: body });
+    print(d, opts, function (v) {
+      if (v.check) return (v.deleted ? '已删除' : '未删除') + ' · id ' + v.id + ' · details ' + v.checkStatus;
+      if (v.dryRun) return '删除计划 · id ' + v.id + ' · 原因 ' + (v.reasonTypeLabel || v.reasonType || '—') + ' / ' + v.reason;
+      return (v.deleted ? '已删除' : '删除未确认') + ' · id ' + v.id + ' · details ' + v.checkStatus;
     });
     return;
   }

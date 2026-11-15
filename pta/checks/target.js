@@ -17,6 +17,12 @@ const results = [];
 const hits = [];
 let cookie = '';
 let mockPort = 0;
+let mockDeleted = false;
+let deletedId = '';
+let deleteHits = 0;
+let deleteBody = null;
+let deleteBodyReasons = [];
+let mockDeleted2 = false;
 let child = null;
 let mock = null;
 
@@ -110,6 +116,43 @@ function startMock(hash) {
       });
       return;
     }
+    if (req.method === 'GET' && u.pathname === '/edit.php') {
+      const id = u.searchParams.get('id') || '42';
+      res.writeHead(200, { 'content-type': 'text/html' });
+      if (id === '43') {
+        res.end('<html><body><form action="delete.php" method="post">'
+          + '<input type="hidden" name="id" value="43">'
+          + '<input type="radio" name="reasontype" value="1">断种 '
+          + '<input type="radio" name="reasontype" value="2">重复 <input type="text" name="reason[]">'
+          + '<input type="radio" name="reasontype" value="3">劣质 <input type="text" name="reason[]">'
+          + '<input type="radio" name="reasontype" value="4">违规 <input type="text" name="reason[]">'
+          + '<input type="radio" name="reasontype" value="5" checked>其他 <input type="text" name="reason[]">'
+          + '<input type="submit" value="删除"></form></body></html>');
+      } else {
+        res.end('<html><body><form action="delete.php" method="post">'
+          + '<input type="hidden" name="id" value="42"><input type="hidden" name="force" value="0"><input type="hidden" name="type" value="torrent">'
+          + '<input type="radio" name="reason_type" value="1">断种 '
+          + '<input type="radio" name="reason_type" value="0">其他 具体原因 '
+          + '<textarea name="reason_input"></textarea>'
+          + '<input type="submit" id="delete-torrent" value="删除"></form></body></html>');
+      }
+      return;
+    }
+    if (req.method === 'POST' && u.pathname === '/delete.php') {
+      const chunks = [];
+      req.on('data', function (c) { chunks.push(c); });
+      req.on('end', function () {
+        const p = new URLSearchParams(Buffer.concat(chunks).toString('utf8'));
+        deleteBody = Object.fromEntries(p);
+        deleteBodyReasons = p.getAll('reason[]');
+        deleteHits++;
+        deletedId = String(deleteBody.id || '42');
+        mockDeleted = true;
+        res.writeHead(302, { location: '/details.php?id=' + deletedId });
+        res.end();
+      });
+      return;
+    }
     if (req.method === 'GET' && u.pathname === '/upload-form') {
       const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'upload-form.html'), 'utf8');
       res.writeHead(200, { 'content-type': 'text/html' });
@@ -118,6 +161,14 @@ function startMock(hash) {
     }
     if (req.method === 'GET' && (u.pathname === '/torrents.php' || u.pathname === '/details.php')) {
       res.writeHead(200, { 'content-type': 'text/html' });
+      if (mockDeleted && deletedId === '43') {
+        res.end('<html><body>错误 没有该ID的种子</body></html>');
+        return;
+      }
+      if (mockDeleted) {
+        res.end('<html><body>该种子曾被 MOCK 删除 原因：Other: 测试 [回收站]</body></html>');
+        return;
+      }
       if (/echo[ +]only/i.test(decodeURIComponent(u.search || ''))) {
         res.end('<html><body><input name="search" value="Echo Only 2024 1080p"><div>没有找到结果</div></body></html>');
         return;
@@ -135,6 +186,7 @@ function startMock(hash) {
 async function main() {
   const torrent = makeTorrent();
   const hash = infoHash(torrent);
+  mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = [];
   mock = await startMock(hash);
   mockPort = mock.address().port;
   const pack = {
@@ -386,6 +438,50 @@ async function main() {
     });
     need(again.status === 409 && again.body.error && again.body.error.code === 'ALREADY_SUBMITTED', '重复提交没被拦住');
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
+  });
+
+  await check('删除测试种：dry-run、真删与回查', async function () {
+    const dry = await json(BASE + '/api/targets/127.0.0.1/delete', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: '42' })
+    });
+    need(dry.status === 200 && dry.body.ok, '删除 dry-run 失败：' + dry.status);
+    need(dry.body.data.reasonType === '0' && dry.body.data.reasonField === 'reason_input', '删除表单没解析对：' + JSON.stringify(dry.body.data));
+    need(dry.body.data.sent === false && deleteHits === 0, 'dry-run 不该发删除请求');
+    const real = await json(BASE + '/api/targets/127.0.0.1/delete', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: '42', dryRun: false, reason: '测试', reasonType: '其他' })
+    });
+    need(real.status === 200 && real.body.ok && real.body.data.deleted === true, '真删没确认：' + real.status + ' ' + JSON.stringify(real.body));
+    need(deleteHits === 1 && deleteBody, '删除请求没发出');
+    need(deleteBody.id === '42' && deleteBody.reason_type === '0' && deleteBody.reason_input === '测试' && deleteBody.type === 'torrent', '删除表单字段不对：' + JSON.stringify(deleteBody));
+    const chk = await json(BASE + '/api/targets/127.0.0.1/delete', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: '42', check: true })
+    });
+    need(chk.status === 200 && chk.body.ok && chk.body.data.deleted === true, '删除状态回查不对：' + JSON.stringify(chk.body));
+    mockDeleted = false; deleteHits = 0; deleteBody = null;
+  });
+
+  await check('删除表单兼容 reasontype + reason[]', async function () {
+    const dry = await json(BASE + '/api/targets/127.0.0.1/delete', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: '43', reason: '测试', reasonType: '其他' })
+    });
+    need(dry.status === 200 && dry.body.ok, '第二种删除 dry-run 失败：' + dry.status);
+    need(dry.body.data.reasonType === '5' && dry.body.data.reasonField === 'reason[]', '第二种删除表单没解析对：' + JSON.stringify(dry.body.data));
+    const real = await json(BASE + '/api/targets/127.0.0.1/delete', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: '43', dryRun: false, reason: '测试', reasonType: '其他' })
+    });
+    need(real.status === 200 && real.body.ok && real.body.data.deleted === true, '第二种真删没确认：' + real.status + ' ' + JSON.stringify(real.body));
+    need(JSON.stringify(deleteBodyReasons) === JSON.stringify(['', '', '', '测试']), 'reason[] 索引不对：' + JSON.stringify(deleteBodyReasons));
+    const chk = await json(BASE + '/api/targets/127.0.0.1/delete', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: '43', check: true })
+    });
+    need(chk.status === 200 && chk.body.ok && chk.body.data.deleted === true, '没有该ID的种子应判为已删：' + JSON.stringify(chk.body));
+    mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = [];
   });
 
   await check('回查不把搜索框回显当命中', async function () {

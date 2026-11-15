@@ -145,6 +145,13 @@ function makeTargetService(ctx, target) {
       return r;
     }
     if (dryRun) return r;
+    if (r.data && r.data.uncertain) {
+      const msg = '提交返回 200，但没拿到详情页/成功提示：' + String(r.data.responseHint || '').slice(0, 180);
+      setTargetResult(item.data, host, { stage: 'failed', error: msg, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString() });
+      if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', msg);
+      saveQueue(item.data);
+      return { ok: false, code: 'UPLOAD_UNCONFIRMED', message: msg, http: 502, data: r.data };
+    }
     item.data.targetUpload = {
       host: host, at: now(), url: r.data.url, detailsUrl: r.data.detailsUrl || '',
       infohash: r.data.infohash || '', status: r.data.status || 0, message: r.data.message || ''

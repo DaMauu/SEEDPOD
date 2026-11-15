@@ -56,6 +56,7 @@ sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部�
 | `publish <queueId>` | 发布到下载器 | 干跑，`--real` 才真发 |
 | `targets` | 列目标站定义与就绪状态 | 只读 |
 | `target-upload <queueId> --host <target>` | 提交到目标站 | 干跑，`--real` 才真发 |
+| `target-delete <id|detailsUrl> --host <target>` | 删除目标站种子，原因默认“其他/测试” | 干跑，`--check` 只查状态，`--real` 才真删 |
 | `verify <queueId> --host <target>` | 发布后回查 | 只读 |
 | `prepare <queueId>` | 生成单 release 的标题/副标题/简介/目标字段，落库到 queue | 本地，不发外部请求 |
 | `preview <queueId>` | 返回完整准备结果，阶段推进到 previewed | 本地，不发外部请求 |

@@ -254,7 +254,8 @@ function makeTarget(ctx) {
     const text = await res.text().catch(function () { return ''; });
     const location = res.headers.get('location') || '';
     const origin = (function () { try { return new URL(p.data.url).origin; } catch (e) { return p.data.url; } })();
-    const whereRaw = location || detailsFrom(text, origin) || '';
+    const successText = /上传成功|发布成功|种子已|success|torrent.{0,20}(uploaded|created)/i.test(text);
+    const whereRaw = location || (successText ? detailsFrom(text, origin) : '') || '';
     const where = /^https?:\/\//i.test(whereRaw) ? whereRaw
       : (function () { try { return new URL(whereRaw, origin + '/').toString(); } catch (e) { return ''; } })();
     const loginHit = /takelogin\.php|name=["']?username|请先登录|not\s+authorized|login/i.test(text) && !/logout|上传成功|success/i.test(text);
@@ -264,11 +265,14 @@ function makeTarget(ctx) {
           : ('目标站返回 ' + res.status + (text ? '：' + text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : '')),
         http: 502, data: { status: res.status } };
     }
-    const successText = /上传成功|发布成功|种子已|success|torrent.{0,20}(uploaded|created)/i.test(text);
     const uncertain = !where && !successText;
+    const hintText = textOf(text);
+    const hi = hintText.search(/上传失败|上传成功|发布成功|错误|Error/i);
+    const responseHint = (hi >= 0 ? hintText.slice(hi) : hintText).slice(0, 300);
     return { ok: true, data: {
       dryRun: false, sent: true, status: res.status, url: p.data.url, detailsUrl: where,
       infohash: meta.hash, torrent: meta, fields: Object.keys(p.data.fields), uncertain: uncertain,
+      responseHint: responseHint,
       message: uncertain ? '提交返回 200，但没拿到详情页/成功提示，需人工确认' : '已提交到目标站'
     } };
   }
@@ -318,6 +322,132 @@ function makeTarget(ctx) {
   }
 
   /* 手动识别目标站上传页：只发一次 GET，不提交、不重试；必须已有 cookie。 */
+  function attrsOf(tag) {
+    const out = {};
+    const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g;
+    let m;
+    while ((m = re.exec(String(tag || '')))) out[m[1].toLowerCase()] = m[3] !== undefined ? m[3] : (m[4] !== undefined ? m[4] : m[5]);
+    return out;
+  }
+  function textOf(html) {
+    return String(html || '').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  }
+  function parseDeleteForm(html) {
+    const forms = [];
+    const re = /<form\b([^>]*)>([\s\S]*?)<\/form>/gi;
+    let m;
+    while ((m = re.exec(String(html || '')))) forms.push({ attrs: attrsOf(m[1]), body: m[2] });
+    const f = forms.filter(function (x) { return /delete\.php/i.test(String(x.attrs.action || '')) || /reason/i.test(x.body); })[0];
+    if (!f) return null;
+    const hidden = {}, submit = [], radios = [], reasonFields = [];
+    let current = null;
+    const tagRe = /<(input|textarea)\b([^>]*)>/gi;
+    let tm;
+    while ((tm = tagRe.exec(f.body))) {
+      const tag = String(tm[1] || '').toLowerCase();
+      const a = attrsOf(tm[2]);
+      if (!a.name) continue;
+      const type = String(a.type || 'text').toLowerCase();
+      if (tag === 'input' && type === 'hidden') hidden[a.name] = a.value || '';
+      if (tag === 'input' && type === 'submit') submit.push({ name: a.name, value: a.value || '' });
+      if (tag === 'input' && type === 'radio' && /^reason_?type$/i.test(a.name)) {
+        current = { name: a.name, value: String(a.value || ''), index: tm.index, reasonFields: [], reasonIdx: [] };
+        radios.push(current);
+      } else if ((tag === 'textarea' && /reason/i.test(a.name)) || (tag === 'input' && (type === 'text' || type === '') && /^reason/i.test(a.name))) {
+        const ri = reasonFields.length;
+        reasonFields.push(a.name);
+        if (current) { current.reasonFields.push(a.name); current.reasonIdx.push(ri); }
+      }
+    }
+    radios.forEach(function (r, i) {
+      const end = i + 1 < radios.length ? radios[i + 1].index : f.body.length;
+      r.label = textOf(f.body.slice(r.index, end)).slice(0, 120);
+    });
+    return {
+      action: f.attrs.action || 'delete.php', hidden: hidden, submit: submit,
+      radioName: radios.length ? radios[0].name : '', radios: radios,
+      reasonFields: reasonFields, reasonField: reasonFields[0] || ''
+    };
+  }
+  async function checkDeletedOnSite(t, id, headers) {
+    let deleted = false, checkStatus = 0, hint = '';
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const chk = await fetch(t.base + '/details.php?id=' + encodeURIComponent(id), { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+        checkStatus = chk.status;
+        const text = await chk.text().catch(function () { return ''; });
+        hint = textOf(text).slice(0, 200);
+        deleted = chk.status === 404 || /该种子曾被[\s\S]{0,120}删除|种子已被删除|该种子已删除|无效的种子|种子不存在|没有该ID的种子|not\s+found|没有找到/i.test(text);
+      } catch (e) { checkStatus = 0; }
+      if (deleted || attempt === 1) break;
+      await new Promise(function (r) { setTimeout(r, 1200); });
+    }
+    return { deleted: deleted, checkStatus: checkStatus, hint: hint };
+  }
+  async function deleteTorrent(host, spec, opts) {
+    const o = opts || {};
+    const t = resolve(host);
+    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
+    const raw = String((spec && (spec.id || spec.url)) || spec || '').trim();
+    let id = /^\d+$/.test(raw) ? raw : '';
+    if (!id) {
+      const mm = /(?:details\.php\?id=|\/torrents?\/)(\d+)/i.exec(raw);
+      if (mm) id = mm[1];
+    }
+    if (!id) return { ok: false, code: 'BAD_TORRENT_ID', message: '需要种子 id 或 details.php?id=... 详情链接', http: 400 };
+    const c = cookieOf(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
+    const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+    if (o.check) {
+      const chkRes = await checkDeletedOnSite(t, id, headers);
+      return { ok: true, data: Object.assign({ dryRun: true, check: true, sent: false, id: id, reason: String(o.reason || '测试').slice(0, 500), reasonType: String(o.reasonType || '其他') }, chkRes) };
+    }
+    let edit;
+    try {
+      edit = await fetch(t.base + '/edit.php?id=' + encodeURIComponent(id), { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+    } catch (e) {
+      return { ok: false, code: 'TARGET_UNREACHABLE', message: '目标站连不上', http: 502 };
+    }
+    if (edit.status >= 300 && edit.status < 400) return { ok: false, code: 'LOGIN_REQUIRED', message: '编辑页跳转了，cookie 可能已失效', http: 401 };
+    if (edit.status !== 200) return { ok: false, code: 'HTTP_' + edit.status, message: '编辑页返回 ' + edit.status, http: 502 };
+    const html = await edit.text().catch(function () { return ''; });
+    const form = parseDeleteForm(html);
+    if (!form) return { ok: false, code: 'NO_DELETE_FORM', message: '编辑页没找到删除表单', http: 422 };
+    const wantLabel = String(o.reasonType || '其他');
+    let radio = form.radios.filter(function (r) { return r.label.indexOf(wantLabel) >= 0 || (wantLabel === '其他' && /其他|other/i.test(r.label)); })[0] || null;
+    if (!radio && /^\d+$/.test(wantLabel)) radio = form.radios.filter(function (r) { return r.value === wantLabel; })[0] || null;
+    const reason = String(o.reason || '测试').slice(0, 500);
+    if (!form.reasonField && !radio) return { ok: false, code: 'NO_DELETE_REASON', message: '删除表单没有原因字段，先人工确认', http: 422 };
+    const plan = {
+      id: id, action: form.action, reasonType: radio ? radio.value : '', reasonTypeLabel: radio ? radio.label.replace(/\s+/g, ' ').slice(0, 40) : '',
+      reasonField: form.reasonField, reason: reason, fields: Object.keys(form.hidden)
+    };
+    if (o.dryRun !== false) return { ok: true, data: Object.assign({ dryRun: true, sent: false }, plan) };
+    if (!ctx.allowReal('realPublish')) return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true 再试', http: 409 };
+    const body = new URLSearchParams();
+    Object.keys(form.hidden).forEach(function (k) { body.set(k, form.hidden[k]); });
+    if (radio) body.set(form.radioName, radio.value);
+    const selectedIdx = radio && radio.reasonIdx && radio.reasonIdx.length ? radio.reasonIdx : [0];
+    form.reasonFields.forEach(function (n, i) { body.append(n, selectedIdx.indexOf(i) >= 0 ? reason : ''); });
+    form.submit.forEach(function (b) { if (b.name) body.set(b.name, b.value); });
+    let res;
+    try {
+      res = await fetch(new URL(form.action, t.base + '/').toString(), {
+        method: 'POST', headers: Object.assign({ 'content-type': 'application/x-www-form-urlencoded' }, headers),
+        body: body.toString(), redirect: 'manual', signal: AbortSignal.timeout(30000)
+      });
+    } catch (e) {
+      return { ok: false, code: 'DELETE_UNREACHABLE', message: '删除请求发不出去', http: 502 };
+    }
+    if (res.status >= 400) return { ok: false, code: 'DELETE_REJECTED', message: '删除请求返回 ' + res.status, http: 502 };
+    const chkRes = await checkDeletedOnSite(t, id, headers);
+    const deleted = chkRes.deleted;
+    const data = Object.assign({ dryRun: false, sent: true, status: res.status, location: !!res.headers.get('location'), deleted: deleted, checkStatus: chkRes.checkStatus }, plan);
+    if (!deleted) return { ok: false, code: 'DELETE_UNCONFIRMED', message: '删除请求已提交，但详情页仍能打开，请人工确认', http: 502, data: data };
+    return { ok: true, data: data };
+  }
+
   async function detectUploadForm(host) {
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有上传页配置', http: 400 };
@@ -359,7 +489,7 @@ function makeTarget(ctx) {
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,
-    fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
+    deleteTorrent: deleteTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
 }
 
 module.exports = { makeTarget, ENGINES };
