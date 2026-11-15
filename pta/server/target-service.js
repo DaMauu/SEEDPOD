@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const stage = require('./stage');
+const torrentClean = require('./torrent-clean');
 
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
@@ -99,6 +100,18 @@ function makeTargetService(ctx, target) {
     return out;
   }
 
+  function cachedAnnounce(host) {
+    const dir = path.join(DATA_DIR, 'torrents');
+    let files;
+    try { files = fs.readdirSync(dir); } catch (e) { return ''; }
+    const prefix = String(host).replace(/[^a-z0-9.-]/gi, '_') + '-';
+    const list = files.filter(function (f) { return f.indexOf(prefix) === 0 && /\.torrent$/i.test(f); })
+      .map(function (f) { try { return { f: f, m: fs.statSync(path.join(dir, f)).mtimeMs }; } catch (e) { return null; } })
+      .filter(Boolean).sort(function (a, b) { return b.m - a.m; });
+    if (!list.length) return '';
+    try { return torrentClean.announceOf(fs.readFileSync(path.join(dir, list[0].f))); } catch (e) { return ''; }
+  }
+
   async function upload(host, body) {
     const b = body || {};
     const item = loadQueue(b.queueId);
@@ -135,6 +148,20 @@ function makeTargetService(ctx, target) {
       if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', t.err); saveQueue(item.data); }
       return { ok: false, code: 'TORRENT_UNAVAILABLE', message: t.err, http: 400 };
     }
+    let cleaned = false;
+    let cleanAnnounce = String(b.cleanAnnounce || '').trim();
+    if (!cleanAnnounce && b.autoClean !== false) cleanAnnounce = cachedAnnounce(host);
+    if (!cleanAnnounce && b.requireClean !== false) {
+      const a = await target.discoverAnnounce(host);
+      if (a.ok) cleanAnnounce = a.data.announce;
+    }
+    if (!cleanAnnounce && b.requireClean !== false) {
+      return { ok: false, code: 'NEED_TARGET_ANNOUNCE', message: '没找到目标站 announce/passkey；源种不会直传，请用 --announce 指定后再提交', http: 409 };
+    }
+    if (cleanAnnounce) {
+      try { t.buf = torrentClean.replaceAnnounce(t.buf, cleanAnnounce); cleaned = true; }
+      catch (e) { return { ok: false, code: 'CLEAN_FAILED', message: '种子清洗失败：' + String(e && e.message || e).slice(0, 120), http: 400 }; }
+    }
     const uploadItem = preparedItem(item.data, host);
     const plan = preparedPlan(item.data, host);
     const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });
@@ -146,6 +173,7 @@ function makeTargetService(ctx, target) {
       }
       return r;
     }
+    if (r.data) r.data.cleaned = cleaned;
     if (dryRun) return r;
     if (r.data && r.data.uncertain) {
       const msg = '提交返回 200，但没拿到详情页/成功提示：' + String(r.data.responseHint || '').slice(0, 180);
@@ -156,7 +184,8 @@ function makeTargetService(ctx, target) {
     }
     item.data.targetUpload = {
       host: host, at: now(), url: r.data.url, detailsUrl: r.data.detailsUrl || '',
-      infohash: r.data.infohash || '', status: r.data.status || 0, message: r.data.message || ''
+      infohash: r.data.infohash || '', status: r.data.status || 0, message: r.data.message || '',
+      cleaned: cleaned
     };
     let verified = null;
     const verifyRule = flow['发布后校验'];
@@ -205,7 +234,7 @@ function makeTargetService(ctx, target) {
       stage: 'submitted', infohash: r.data.infohash || '',
       detailsUrl: r.data.detailsUrl || '', status: r.data.status || 0,
       verified: !!(verified && verified.found), targetTorrent: targetTorrent,
-      targetTorrentError: targetTorrentError, error: ''
+      targetTorrentError: targetTorrentError, cleaned: cleaned, error: ''
     };
     setTargetResult(item.data, host, result);
     item.data.targetUpload.targetTorrent = targetTorrent ? {
@@ -213,7 +242,7 @@ function makeTargetService(ctx, target) {
     } : null;
     const evidence = {
       host: host, infohash: result.infohash, detailsUrl: result.detailsUrl,
-      verified: result.verified, targetTorrent: result.targetTorrent, targets: item.data.targetResults
+      verified: result.verified, targetTorrent: result.targetTorrent, cleaned: cleaned, targets: item.data.targetResults
     };
     if (allDone(item.data)) {
       stage.set(item.data, 'submitted', { evidence: evidence });
@@ -240,10 +269,19 @@ function makeTargetService(ctx, target) {
     } else if (raw && typeof raw === 'object') {
       Object.keys(raw).forEach(function (h) { perTarget[String(h).toLowerCase()] = raw[h]; });
     }
+    const perAnnounce = {};
+    const rawAnn = b.targetAnnounces;
+    if (Array.isArray(rawAnn)) {
+      rawAnn.forEach(function (x) { if (x && x.host) perAnnounce[String(x.host).toLowerCase()] = x.announce || x.url || ''; });
+    } else if (rawAnn && typeof rawAnn === 'object') {
+      Object.keys(rawAnn).forEach(function (h) { perAnnounce[String(h).toLowerCase()] = rawAnn[h]; });
+    }
     const out = [];
     for (const host of hosts) {
       const one = Object.assign({}, b);
       if (perTarget[host]) one.torrentBase64 = perTarget[host];
+      if (perAnnounce[host]) one.cleanAnnounce = perAnnounce[host];
+      else if (hosts.length > 1) one.cleanAnnounce = '';
       const r = await upload(host, one);
       out.push({ host: host, ok: !!r.ok, code: r.code || '', message: r.message || '', data: r.data || null });
     }

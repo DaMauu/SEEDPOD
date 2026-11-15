@@ -456,6 +456,46 @@ function makeTarget(ctx) {
     const raw = m[1];
     try { return new URL(raw, base + '/').toString(); } catch (e) { return ''; }
   }
+  async function discoverAnnounce(host) {
+    const t = resolve(host);
+    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
+    const c = cookieOf(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
+    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    if (!baseHost) return { ok: false, code: 'BAD_BASE', message: '站点 base 不合法', http: 400 };
+    const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+    const pages = ['/usercp.php', '/usercp.php?action=personal'];
+    let uid = '';
+    try {
+      const idx = await fetch(t.base + '/index.php', { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(15000) });
+      const html = await idx.text().catch(function () { return ''; });
+      const m = /userdetails\.php\?id=(\d+)/i.exec(html);
+      if (m) uid = m[1];
+    } catch (e) {}
+    if (uid) pages.push('/userdetails.php?id=' + uid);
+    for (const path of pages) {
+      let res;
+      try { res = await fetch(t.base + path, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(15000) }); }
+      catch (e) { continue; }
+      if (res.status !== 200) continue;
+      const html = await res.text().catch(function () { return ''; });
+      if (/takelogin\.php|login\.php|请先登录/i.test(html)) continue;
+      const safe = html.replace(/&amp;/g, '&');
+      const m = /(https?:\/\/[^\s"'<>]+\/announce\.php\?[^\s"'<>]*passkey=[A-Za-z0-9]+|announce\.php\?[^\s"'<>]*passkey=[A-Za-z0-9]+)/i.exec(safe);
+      if (m) {
+        const raw = m[1];
+        try {
+          const u = new URL(raw, t.base + '/');
+          if (u.hostname.toLowerCase() !== baseHost && !u.hostname.toLowerCase().endsWith('.' + baseHost)) continue;
+          return { ok: true, data: { announce: u.toString(), source: path } };
+        } catch (e) {}
+      }
+      const pk = /passkey=([A-Za-z0-9]{16,64})/i.exec(safe);
+      if (pk) return { ok: true, data: { announce: t.base + '/announce.php?passkey=' + pk[1], source: path } };
+    }
+    return { ok: false, code: 'NO_ANNOUNCE', message: '没找到目标站 announce/passkey；可用 --announce 显式指定', http: 409 };
+  }
+
   async function fetchDetailsTorrent(host, detailsUrl) {
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
@@ -533,7 +573,7 @@ function makeTarget(ctx) {
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,
-    deleteTorrent: deleteTorrent, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
+    deleteTorrent: deleteTorrent, discoverAnnounce: discoverAnnounce, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
 }
 
 module.exports = { makeTarget, ENGINES };

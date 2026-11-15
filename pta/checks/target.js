@@ -171,6 +171,11 @@ function startMock(hash, torrentBuf) {
       });
       return;
     }
+    if (req.method === 'GET' && u.pathname === '/usercp.php') {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<html><body><a href="announce.php?passkey=testpass123">announce</a></body></html>');
+      return;
+    }
     if (req.method === 'GET' && u.pathname === '/upload-form') {
       const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'upload-form.html'), 'utf8');
       res.writeHead(200, { 'content-type': 'text/html' });
@@ -343,6 +348,14 @@ async function main() {
     const m2 = multi2.body.data.targets[0] && multi2.body.data.targets[0].data && multi2.body.data.targets[0].data.torrent;
     need(m2 && m2.hash === infoHash(second), '多目标没用每站指定种子：' + JSON.stringify(m2));
     need(hits.length === 0, '每站种子干跑发了请求：' + hits.length);
+    const multi3 = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64'), targetAnnounces: { '127.0.0.1': 'https://target.example/announce.php?passkey=test' }, dryRun: true })
+    });
+    need(multi3.status === 200 && multi3.body.ok, '清洗干跑失败：' + multi3.status);
+    need(multi3.body.data.targets[0].data.cleaned === true, '清洗标记没出来');
+    need(multi3.body.data.targets[0].data.torrent.hash === hash, '清洗后 infohash 变了');
+    need(hits.length === 0, '清洗干跑发了请求：' + hits.length);
   });
 
   await check('UNIT3D / Gazelle 默认映射', async function () {
@@ -467,6 +480,7 @@ async function main() {
     need(up.status === 200 && up.body.ok, '提交失败：' + up.status + ' ' + JSON.stringify(up.body && up.body.error));
     const d = up.body.data;
     need(d.sent === true && d.detailsUrl.indexOf('details.php?id=42') >= 0, '没拿到详情地址：' + d.detailsUrl);
+    need(d.cleaned === true, '目标站上传前没清洗种子');
     need(d.verify && d.verify.found === true, '提交后回查没找到');
     need(hits.length === 1, '应发 1 次上传，实际 ' + hits.length);
     need(hits[0].fields.name === 'Target Upload Test 2024 1080p Blu-ray', '目标站收到的标题不对');
@@ -488,6 +502,16 @@ async function main() {
     });
     need(again.status === 409 && again.body.error && again.body.error.code === 'ALREADY_SUBMITTED', '重复提交没被拦住');
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
+  });
+
+  await check('缓存目标站 announce 自动清洗', async function () {
+    const j = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: true })
+    });
+    need(j.status === 200 && j.body.ok, '自动清洗干跑失败：' + j.status);
+    need(j.body.data.cleaned === true, '缓存 announce 没触发自动清洗：' + JSON.stringify(j.body.data && { cleaned: j.body.data.cleaned }));
+    need(j.body.data.torrent && j.body.data.torrent.hash === hash, '自动清洗后 infohash 变了');
   });
 
   await check('删除测试种：dry-run、真删与回查', async function () {

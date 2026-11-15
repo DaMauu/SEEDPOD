@@ -32,7 +32,7 @@ function usage() {
   pta publish <queueId> [--real] [--json]
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
-  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--real] [--json]
+  pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--announce url|h1=url,h2=url] [--real] [--json]
   pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
@@ -97,6 +97,20 @@ function readTorrentMap(spec) {
     out[host] = readTorrent(file);
   });
   return out;
+}
+function readAnnounceMap(spec) {
+  const raw = String(spec || '').trim();
+  if (!raw) return { single: '', map: null };
+  if (/^https?:\/\//i.test(raw)) return { single: raw, map: null };
+  const map = {};
+  raw.split(',').forEach(function (pair) {
+    const i = pair.indexOf('=');
+    if (i <= 0) return;
+    const host = pair.slice(0, i).trim().toLowerCase();
+    const url = pair.slice(i + 1).trim();
+    if (host && /^https?:\/\//i.test(url)) map[host] = url;
+  });
+  return { single: '', map: map };
 }
 function readTextFile(p, label) {
   const fs = require('fs');
@@ -440,7 +454,10 @@ async function main() {
     const torrentMap = opts.torrents ? readTorrentMap(String(opts.torrents)) : null;
     const hostKey = opts.host ? String(opts.host).toLowerCase() : '';
     const hostTorrent = hostKey && torrentMap ? torrentMap[hostKey] : '';
-    const body = { queueId: id, dryRun: !opts.real, torrentBase64: hostTorrent || b64 || undefined, targetTorrents: torrentMap || undefined, verify: opts.verify };
+    const ann = opts.announce ? readAnnounceMap(String(opts.announce)) : { single: '', map: null };
+    if (ann.single && targets.length > 1) die('多目标清洗请用 --announce h1=url,h2=url，避免把同一个 passkey 发给所有站', 2);
+    if (ann.map && !targets.length) die('--announce host=url 需要配合 --targets 使用', 2);
+    const body = { queueId: id, dryRun: !opts.real, torrentBase64: hostTorrent || b64 || undefined, targetTorrents: torrentMap || undefined, cleanAnnounce: ann.single || undefined, targetAnnounces: ann.map || undefined, verify: opts.verify };
     if (!USE_HTTP) {
       if (targets.length) {
         const x = await core().targetUploadMany(Object.assign({}, body, { targets: targets }));
@@ -451,7 +468,7 @@ async function main() {
       }
       const x = await core().targetUpload(Object.assign({}, body, { host: String(opts.host) }));
       print(x, opts, function (v) {
-        if (v.dryRun) return '干跑 · ' + v.url + ' · 字段 ' + Object.keys(v.fields || {}).join(',');
+        if (v.dryRun) return '干跑' + (v.cleaned ? '（已清洗）' : '') + ' · ' + v.url + ' · 字段 ' + Object.keys(v.fields || {}).join(',');
         return '已提交 ' + (v.status || '') + (v.detailsUrl ? ' · ' + v.detailsUrl : '') + (v.verify ? ' · 回查 ' + (v.verify.found ? '已找到' : '未找到') : '');
       });
       return;

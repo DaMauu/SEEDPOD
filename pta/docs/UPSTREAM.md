@@ -170,3 +170,15 @@
 - 决定：默认“源种直传”；提交并回查成功后，解析详情页下载链接，抓取目标站生成的 `.torrent`，校验 infohash 不变，保存到 `data/torrents/`（0600），供后续 qB/watch 注入或跨站辅种。
 - 未做：站点拒绝源种时的自动清洗 fallback。先把目标站种子抓回来；需要清洗时用 `--torrents` 手工给清洗种，或后续做 announce 替换器。
 - 安全：目标种子含 passkey，只落私有 data，不进仓库、不打印；下载链接只允许同站域名，避免 cookie 外泄。
+
+## 2026-11-19 · 自动清洗种子
+
+- 目标：站点不自动替换源种 announce/passkey 时，提交前把 announce 换成目标站地址，保留 info 原始字节，infohash 不变，便于 qB 跨站辅种。
+- 决定：新增 `torrent-clean` 纯函数；`target-upload --announce` 显式指定，或复用 `data/torrents/` 里已有目标站种子的 announce 自动清洗。announce/passkey 只在内存/临时文件，不写库、不打印。
+- 未做：站点第一次上传、没有任何目标站种子可复用时的 passkey 自动发现；当前先源种直传，失败再人工给 `--announce`。
+
+## 2026-11-19 · 禁止源种直传
+
+- 源站 passkey 不应出现在目标站。目标上传前必须清洗 announce；找不到目标 announce 就失败，不回退源种。
+- announce 自动发现顺序：已有目标站种子缓存 → usercp/个人页 passkey → 显式 `--announce`。
+- 源种用于 qB 下载，目标站生成种子用于辅种；两类种子都保留在私有 `data/torrents/`。

@@ -1,5 +1,21 @@
 # 更新日志
 
+## v0.7.207 · 2026-11-19
+
+### G10 禁止源种直传
+- 目标站上传前强制清洗 announce：源种只用于下载，绝不把源站 passkey 传到目标站。
+- 目标 announce 自动发现顺序：`data/torrents/` 缓存目标种 → usercp/个人页 passkey → 显式 `--announce`；都找不到就报 `NEED_TARGET_ANNOUNCE`，不提交。
+- 源种和目标种都保留：源种用于 qB 下载，目标站生成种子用于后续辅种。
+- target 16/16、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
+## v0.7.206 · 2026-11-19
+
+### G10 自动清洗种子
+- 新增 `torrent-clean`：替换 `announce` / `announce-list`，保留 `info` 原始字节，infohash 不变，才能跨站辅种。
+- `target-upload` 支持 `--announce url` 或 `--announce h1=url,h2=url`；目标站已有缓存种子时，自动复用其 announce 清洗源种。
+- 清洗只发生在内存/提交前；announce/passkey 不写库、不打印。目标站生成种子仍按 0.7.205 抓取并存 0600。
+- torrent-clean 4/4、target 16/16、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.205 · 2026-11-19
 
 ### G10 目标站生成种子抓取

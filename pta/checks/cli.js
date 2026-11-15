@@ -240,7 +240,8 @@ async function main() {
     }));
     const torrent = tinyTorrent(path.join(DATA, 'tiny.torrent'));
     const prep = parse(await cliLocal(['prepare', queueId2, '--targets', 'target.example,target2.example,bad.example', '--json']));
-    const u = parse(await cliLocal(['target-upload', queueId2, '--targets', 'target.example,target2.example,bad.example', '--torrent', torrent, '--json']));
+    const ann = 'target.example=https://target.example/announce.php?passkey=a,target2.example=https://target2.example/announce.php?passkey=b';
+    const u = parse(await cliLocal(['target-upload', queueId2, '--targets', 'target.example,target2.example,bad.example', '--torrent', torrent, '--announce', ann, '--json']));
     need(u.dryRun === true && Array.isArray(u.targets) && u.targets.length === 3, '多目标干跑数量不对');
     need(u.targets.filter(function (x) { return x.ok; }).length === 2, '多目标干跑成功数不对');
     need(u.targets.some(function (x) { return !x.ok && x.host === 'bad.example'; }), '缺定义的站没被单独标记失败');
@@ -248,10 +249,12 @@ async function main() {
     const first = u.targets[0].data || {};
     Object.keys(planned).forEach(function (k) { need(first.fields[k] === planned[k], '上传字段没使用 prepared：' + k); });
     const torrent2 = tinyTorrent(path.join(DATA, 'tiny2.torrent'), 'cli-local-test-2');
-    const u2 = parse(await cliLocal(['target-upload', queueId2, '--targets', 'target.example,target2.example', '--torrent', torrent, '--torrents', 'target.example=' + torrent + ',target2.example=' + torrent2, '--json']));
+    const u2 = parse(await cliLocal(['target-upload', queueId2, '--targets', 'target.example,target2.example', '--torrent', torrent, '--torrents', 'target.example=' + torrent + ',target2.example=' + torrent2, '--announce', ann, '--json']));
     const h1 = u2.targets[0] && u2.targets[0].data && u2.targets[0].data.torrent && u2.targets[0].data.torrent.hash;
     const h2 = u2.targets[1] && u2.targets[1].data && u2.targets[1].data.torrent && u2.targets[1].data.torrent.hash;
     need(h1 && h2 && h1 !== h2, '每站种子没区分：' + JSON.stringify({ h1: h1, h2: h2 }));
+    const u3 = parse(await cliLocal(['target-upload', queueId2, '--host', 'target.example', '--torrent', torrent, '--announce', 'https://target.example/announce.php?passkey=x', '--json']));
+    need(u3.cleaned === true, '单站清洗标记没出来：' + JSON.stringify(u3));
   });
 
   await check('本地 coverage 统计目标站与上传计划', async function () {

@@ -37,6 +37,7 @@ run backup backup.js
 run publish publish.js
 run scheduler scheduler.js
 run detect detect.js
+run torrent-clean torrent-clean.js
 run target target.js
 run meta meta.js
 run mediainfo mediainfo.js

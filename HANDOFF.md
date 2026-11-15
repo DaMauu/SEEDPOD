@@ -1,6 +1,19 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 04:05（当前 v0.7.205 / 目标站生成种子抓取）
+最后更新：2026-11-19 05:10（当前 v0.7.207 / 禁止源种直传）
+
+## 2026-11-19 禁止源种直传（v0.7.207）
+
+- 目标站上传强制清洗 announce；源种只用于下载，不再直传目标站，避免泄漏源站 passkey。
+- 目标 announce 自动发现：缓存目标种 → usercp/个人页 passkey → `--announce`；找不到就不提交。
+- 源种和目标种都保留；target 16/16、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
+## 2026-11-19 自动清洗种子（v0.7.206）
+
+- `torrent-clean` 替换 announce/announce-list，保留 info 原始字节，infohash 不变；非法 announce/解析失败直接拒绝。
+- 目标站有缓存种子时自动复用其 announce；也可 `--announce h1=url,h2=url` 显式指定。
+- 清洗在提交前内存完成，passkey 不写库、不打印；目标站生成种子仍存 `data/torrents/` 0600。
+- torrent-clean 4/4、target 16/16、cli 17/17、smoke 26/26、全量 run.sh 通过；真实多站仍等 cookie/授权。
 
 ## 2026-11-19 目标站生成种子抓取（v0.7.205）
 
