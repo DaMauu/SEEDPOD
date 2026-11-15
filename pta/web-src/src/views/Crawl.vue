@@ -755,10 +755,13 @@ onUnmounted(() => {
 }
 .crawl-card :deep(.drawer-body){padding:4px 20px 18px}
 .crawl-card :deep(.preset-block){display:flex;flex-direction:column;gap:2px}
-.crawl-card :deep(.preset-row){display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;gap:14px;padding:7px 0}
+.crawl-card :deep(.preset-row){display:grid;grid-template-columns:116px minmax(0,1fr);align-items:start;gap:12px;padding:7px 0}
 .crawl-card :deep(.preset-row .lbl){font-size:12.5px;color:var(--muted,#6b7280);min-width:0}
 .crawl-card :deep(.preset-row .cat-row){display:flex;flex-wrap:wrap;gap:6px;padding:0}
-.crawl-card :deep(.preset-row .cat-chip){height:28px;padding:0 12px;border-radius:6px;font-size:12px;line-height:28px}
+.crawl-card :deep(.preset-row .cat-chip){height:24px;padding:0 8px;border-radius:5px;font-size:11px;line-height:24px}
+.crawl-card :deep(.preset-row .lbl > span){white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+.crawl-card :deep(.preset-row .cat-row){gap:4px}
+.crawl-card :deep(.preset-row .lbl){align-items:flex-start;padding-top:3px}
 .crawl-card :deep(.limits-panel){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px;margin-top:16px;padding:14px 16px;background:var(--panel-2,#f9fafb);border:1px solid var(--line,#eef0f4);border-radius:10px}
 .crawl-card :deep(.limit-item){display:flex;flex-direction:column;gap:6px;min-width:0}
 .crawl-card :deep(.limit-item .lbl){font-size:12px;color:var(--muted,#6b7280)}
@@ -771,7 +774,7 @@ onUnmounted(() => {
 .crawl-card :deep(.limits-panel){grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:640px) {
-.crawl-card :deep(.preset-row){grid-template-columns:84px minmax(0,1fr);gap:8px;align-items:center}
+.crawl-card :deep(.preset-row){grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:start}
 }
 @media (max-width:640px) {
 .crawl-card :deep(.limits-panel){grid-template-columns:1fr}
