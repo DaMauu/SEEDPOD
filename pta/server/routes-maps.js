@@ -2,20 +2,23 @@
 const siteMaps = require('./site-maps');
 
 const CAT = [
-  ['电影', /电影|movie|film|影片|影\s*片/i],
-  ['剧集', /剧集|电视剧|tv\s*series|series|tv\s*packs?|^tv$|drama/i],
+  ['电影', /电影|movie|film|影片|影\s*片|cinema/i],
+  ['剧集', /剧集|电视剧|^电视$|tv\s*series|series|tv\s*packs?|^tv$|drama|star\s*plus|zee\s*tv|sab\s*tv|&tv|life\s*ok|dangal|star\s*bharat|ishara|shemaroo|jio\s*tv|colors|sony|mtv/i],
   ['动漫', /动漫|动画|anime|animation|漫画|comics?|manga|\bova\b/i],
   ['综艺', /综艺|tv\s*show|variety/i],
-  ['纪录片', /纪录|documentary|docu|\bdoc\b/i],
-  ['音乐', /音乐|music|音乐短片|演唱会?|音频|音轨|\bmv\b|\bep\b|\balbum\b|\bsingle\b|\bremix\b|\bost\b|soundtrack|\blive\s*album\b|bootleg|compilation|interview|\bflac\b|\bmp3\b|mixtape|\bdemo\b|hq\s*audio|\baudio\b/i],
-  ['体育', /体育|sport/i],
+  ['纪录片', /纪录|documentary|docu|\bdoc\b|docs/i],
+  ['音乐', /音乐|music|音乐短片|演唱会?|音频|音轨|专辑|原声|单曲|精选|混音|访谈|样带|重混音|\bmv\b|\bep\b|\balbum\b|\bsingle\b|\bremix\b|\bost\b|soundtrack|\blive\s*album\b|bootleg|compilation|interview|\bflac\b|\bmp3\b|mixtape|\bdemo\b|hq\s*audio|\baudio\b|classical|ghazal|instrumental|muzica|manele|videoclip|klipek|lossless|dance/i],
+  ['体育', /体育|sport|nba|nfl|mlb|nhl|ufc|mma|f1|formula|soccer|basket|football|tennis|golf|rugby|cricket|hockey|wrestling|boxing|cycling|racing|motogp|nascar|volleyball|handball|snooker|billiard|bowling|chess|darts|gymnastic|athletic|swimming|weightlifting|climbing|crossfit|baseball|softball|sailing|surfing|skate|ski|archery|fencing|rowing|equestrian|league|derby|cup|open/i],
   ['电子书', /电子书|ebook|e-book|book|有声书|audiobook/i],
-  ['软件', /软件|software|app/i],
+  ['软件', /软件|software|app|program|programok|programe|linux|mac|windows|android|mobile|0day/i],
   ['学习', /学习|study|教育|tutorial|教\s*学/i],
   ['短剧', /短剧|short/i],
-  ['舞台演出', /舞台|stage/i],
-  ['游戏', /游戏|game|playstation|xbox|nintendo|rom\s*packs?|android/i],
-  ['其他', /其他|其它|other|misc|图片|trailer|sample/i]
+  ['舞台演出', /舞台|stage|perf\b|concert/i],
+  ['游戏', /游戏|game|playstation|ps[2-5]\b|xbox|nintendo|wii|rom\s*packs?|jocuri|játékok/i],
+  ['成人', /xxx|adult|softcore|18\+|erotic|hentai|porn/i],
+  ['原盘', /untouched|full\s*disc|blu-?ray\s*iso|bd\/dvd\s*iso|\biso\b|remux|4k\s*ultra\s*hd/i],
+  ['压制', /encode|x264|x265|hdtv|webrip|web-rips?|dvdrip|rips?\b|sdrips|divx|xvid|upscaled/i],
+  ['其他', /其他|其它|other|misc|图片|imagini|image|pics|wallpaper|trailer|sample|unknown|待定|uncategorised|all\s*categories|choose|select|pre-release|^[-—]+$/i]
 ];
 
 function pickField(fields, names, labelRe) {

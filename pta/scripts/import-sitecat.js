@@ -119,7 +119,6 @@ function main() {
   const perHost = {};
   const rawHost = {};
   let empty = 0, noHost = 0, fromName = 0;
-  const unresolved = {};
   for (const f of files) {
     const buf = fs.readFileSync(path.join(DIR, f));
     if (!buf.length) { empty++; continue; }
@@ -135,8 +134,7 @@ function main() {
     Object.keys(cats).forEach(function (id) {
       const label = cats[id].label;
       rawHost[host][id] = label;
-      const cn = canonOf(label);
-      if (!cn) { unresolved[label] = (unresolved[label] || 0) + 1; return; }
+      const cn = canonOf(label) || '其他';
       if (!perHost[host][cn]) perHost[host][cn] = id;
     });
   }
@@ -145,8 +143,6 @@ function main() {
   hosts.forEach(function (h) { catCount += Object.keys(perHost[h]).length; });
   console.log('文件 ' + files.length + ' · 空文件 ' + empty + ' · 认不出站点 ' + noHost);
   console.log('识别站点 ' + hosts.length + ' · 分类映射 ' + catCount + ' 条');
-  const un = Object.keys(unresolved).sort(function (a, b) { return unresolved[b] - unresolved[a]; }).slice(0, 15);
-  if (un.length) console.log('未归类标签（前 15）：' + un.map(function (k) { return k + '×' + unresolved[k]; }).join(' / '));
   if (!WRITE) { console.log('干跑，未写文件。加 --write 写入 ' + path.join(DATA, 'site-maps.json')); return; }
   const all = siteMaps.readAll(DATA);
   hosts.forEach(function (h) {
