@@ -44,6 +44,7 @@ function makeCrawl(ctx) {
   async function fillIntroFromMeta(it) {
     if (!cfg().realCrawl) return;
     const flow = flowConfig.read(ctx);
+    if (!flowConfig.on(flow, '允许联网补简介', true)) return;
     const order = String(flowConfig.value(flow, '匹配来源顺序', 'TMDB → 豆瓣 → 站点标题'));
     if (order === '只用站点标题') return;
     try {

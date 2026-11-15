@@ -73,6 +73,17 @@ function normalizeSite(host, def, packSite) {
     });
     if (Object.keys(tm).length) site.tagMap = tm;
   }
+  if (d.valueMaps && typeof d.valueMaps === 'object' && !Array.isArray(d.valueMaps)) {
+    const vm = {};
+    Object.keys(d.valueMaps).forEach(function (k) {
+      const m = d.valueMaps[k];
+      if (!m || typeof m !== 'object' || Array.isArray(m)) return;
+      const one = {};
+      Object.keys(m).forEach(function (a) { const b = String(m[a] == null ? '' : m[a]); if (b) one[a] = b; });
+      if (Object.keys(one).length) vm[k] = one;
+    });
+    if (Object.keys(vm).length) site.valueMaps = vm;
+  }
   if (d.tagValue !== undefined && d.tagValue !== '') site.tagValue = String(d.tagValue);
   return site;
 }

@@ -70,13 +70,15 @@ function makeRelease(ctx) {
     const media = mediaText ? mediainfo.parse(mediaText) : null;
     const mediaBlock = media && media.kind ? mediainfo.toBBCode(media) : '';
     let description = names.description;
-    if (mediaBlock && b.attachMedia !== false) {
+    const flow = flowConfig.read(ctx);
+    const attachMedia = b.attachMedia !== undefined ? b.attachMedia !== false : flowConfig.on(flow, '自动附加 MediaInfo', true);
+    if (mediaBlock && attachMedia) {
       const already = description.indexOf(media.raw) >= 0 ||
         /\[(?:quote|code|hide)(?:=[^\]]*)?\][\s\S]*?(?:Disc Title|Complete name)\s*:/i.test(description);
       if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 20000);
     }
     const imageLinks = (Array.isArray(item.imageLinks) ? item.imageLinks : []).filter(function (x) { return x && x.url; });
-    const imageMode = String(flowConfig.value(flowConfig.read(ctx), '简介图片', '转存到图床'));
+    const imageMode = String(flowConfig.value(flow, '简介图片', '转存到图床'));
     if (imageMode === '不保留图片') {
       description = description.replace(/\[img\][\s\S]*?\[\/img\]/gi, '').trim();
     } else if (imageMode !== '保留外链' && imageLinks.length) {

@@ -106,7 +106,8 @@ function makeTarget(ctx) {
     return { host: host, engine: engine, base: base, upload: upload, verify: verify,
       catMap: catMapOf(p, def, built),
       tagMap: Object.assign({}, built.tagMap || {}, (p.tagMap || def.tagMap || {})),
-      tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes') };
+      tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes'),
+      valueMaps: Object.assign({}, (built.valueMaps || {}), (p.valueMaps || def.valueMaps || {})) };
   }
 
   function list() {
@@ -206,11 +207,20 @@ function makeTarget(ctx) {
       fields[field] = t.tagValue || 'yes';
       tagFields.push(field);
     });
+    const warnings = [];
+    /* 制作组：只认数字 id 或站点映射，组名直接塞下拉会填错 */
+    const teamRaw = String(v.team || '').trim();
+    const teamMap = (t.valueMaps && t.valueMaps.team) || {};
+    if (teamRaw) {
+      if (/^\d+$/.test(teamRaw)) fields.team_sel = teamRaw;
+      else if (teamMap[teamRaw] != null) fields.team_sel = String(teamMap[teamRaw]);
+      else { delete fields.team_sel; warnings.push('制作组 ' + teamRaw + ' 没映射到站点 id，已留空'); }
+    }
+    if (!v.catId) warnings.push('分类没映射，type 留空');
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
     const hasCookie = !!(c && c.cookie);
     const fieldCount = Object.keys(fields).length;
-    const warnings = [];
     if (!hasCookie) warnings.push('没有 cookie');
     if (!t.upload.path) warnings.push('没有上传地址');
     if (!fieldCount) warnings.push('上传字段为空');
@@ -219,6 +229,12 @@ function makeTarget(ctx) {
       host: t.host, engine: t.engine, url: t.base + t.upload.path, method: 'POST',
       fileField: t.upload.fileField, fields: fields,
       tags: tags, tagFields: tagFields,
+      autoActions: [
+        '上传前把 tracker 换成目标站通用 announce（源站 tracker 不保留）',
+        '发布后自动抓目标站权威种子落盘',
+        '辅种时 qB skip_checking 复用源种保存路径'
+      ],
+      anonymous: !!item.anonymous,
       verifyUrl: t.base + expand(t.verify.path || '', uv),
       hasCookie: hasCookie, ready: !!(hasCookie && t.upload.path && fieldCount),
       warnings: warnings

@@ -240,7 +240,8 @@ async function main() {
         verify: { path: '/torrents.php?search={title}' },
         catMap: { movie: '401' },
         tagMap: { '国语': 'guoyu', '国配': 'guoyu', '粤语': 'yueyu', '中字': 'zhongzi', 'DIY原盘': 'diy' },
-        tagValue: 'yes'
+        tagValue: 'yes',
+        valueMaps: { team: { 'CMCT': '8' } }
       },
       'unit3d.example': { engine: 'unit3d', base: 'http://127.0.0.1:' + mockPort },
       'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort },
@@ -389,6 +390,29 @@ async function main() {
     });
     need(p.status === 200 && p.body.ok, '计划失败');
     need(p.body.data.fields.small_desc === '源站副标题 / 别名 [国配中字]', '副标题没原样用源副标题：' + p.body.data.fields.small_desc);
+  });
+
+  await check('制作组只认数字或映射，没映射留空并提示', async function () {
+    async function planOf(team) {
+      const add = await json(BASE + '/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'Team Map Test 2024 1080p', cn: '组映射', intro: 'x', team, targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB' })
+      });
+      need(add.status === 200 && add.body.ok, '建队列失败');
+      const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+      });
+      need(p.status === 200 && p.body.ok, '计划失败');
+      return p.body.data;
+    }
+    const mapped = await planOf('CMCT');
+    need(mapped.fields.team_sel === '8', '映射没生效：' + mapped.fields.team_sel);
+    const numeric = await planOf('12');
+    need(numeric.fields.team_sel === '12', '数字 id 应直通：' + numeric.fields.team_sel);
+    const unknown = await planOf('SomeGroup');
+    need(unknown.fields.team_sel === undefined, '没映射不该硬塞：' + unknown.fields.team_sel);
+    need((unknown.warnings || []).some(function (x) { return /没映射/.test(x); }), '没提示没映射：' + JSON.stringify(unknown.warnings));
+    need(Array.isArray(unknown.autoActions) && unknown.autoActions.length === 3, '自动动作没列出');
   });
 
   await check('目标站标签按来源标签勾选，挡掉禁转/官方', async function () {

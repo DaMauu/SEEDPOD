@@ -251,6 +251,18 @@
           "hint": "外链会失效，转存最稳"
         },
         {
+          "t": "自动附加 MediaInfo",
+          "type": "switch",
+          "on": true,
+          "hint": "简介末尾自动追加 MediaInfo/BDInfo"
+        },
+        {
+          "t": "允许联网补简介",
+          "type": "switch",
+          "on": true,
+          "hint": "详情页没简介时查豆影/豆瓣/维基"
+        },
+        {
           "t": "截图来源",
           "type": "select",
           "v": "从 BDInfo 自动截取",
