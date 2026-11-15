@@ -32,9 +32,12 @@ module.exports = function (app, ctx) {
     const def0 = readDef(host) || {};
     const built = sitePack.siteOf(host) || {};
     const def = Object.assign({}, built, def0);
-    const list = Array.isArray(def.catList) ? def.catList
-      : Array.isArray(def.catMap) ? def.catMap.map(function (x) { return { id: x.id, label: x.label || x.purpose || '', purpose: x.purpose }; })
-        : [];
+    let list = [];
+    if (Array.isArray(def.catList)) list = def.catList;
+    else if (Array.isArray(def.catMap)) list = def.catMap.map(function (x) { return { id: x.id, label: x.label || x.purpose || '', purpose: x.purpose }; });
+    else if (def.catMap && typeof def.catMap === 'object') {
+      list = Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k, purpose: k }; });
+    }
     return list.filter(function (x) { return x && x.id != null; })
       .map(function (x) { return { id: String(x.id), label: String(x.label || x.purpose || x.id), purpose: String(x.purpose || '') }; });
   }

@@ -118,7 +118,10 @@ function makeCrawl(ctx) {
     const cookie = cookieOf(host);
     if (!cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
     let catMap = Array.isArray(def.catList) ? def.catList
-      : (Array.isArray(def.catMap) ? def.catMap : catListFromCats(def.cats));
+      : (Array.isArray(def.catMap) ? def.catMap
+        : (def.catMap && typeof def.catMap === 'object'
+          ? Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k }; })
+          : catListFromCats(def.cats)));
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
     try {
       const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {};
