@@ -106,9 +106,10 @@
             <div v-if="(sel.prepared.targets || []).length" class="qd-target-plans">
               <div class="qd-target-plan-head">多目标预检</div>
               <div v-for="t in sel.prepared.targets" :key="t.host" class="qd-target-plan">
-                <span class="badge" :class="t.target ? 'green' : 'red'">{{ t.host }}</span>
+                <span class="badge" :class="t.target ? (t.target.ready === false ? 'amber' : 'green') : 'red'">{{ t.host }}</span>
                 <span v-if="t.target" class="t-sub">{{ t.target.engine }} · {{ Object.keys(t.target.fields || {}).length }} 字段</span>
-                <span v-else class="qd-stage-err">{{ t.error || '未就绪' }}</span>
+                <span v-if="t.target && (t.target.warnings || []).length" class="qd-stage-err">{{ t.target.warnings.join('；') }}</span>
+                <span v-else-if="!t.target" class="qd-stage-err">{{ t.error || '未就绪' }}</span>
               </div>
             </div>
             <details class="qd-prepared-desc"><summary>简介预览</summary><pre>{{ sel.prepared.description || '（空）' }}</pre></details>

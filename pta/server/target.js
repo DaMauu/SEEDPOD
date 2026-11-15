@@ -174,10 +174,20 @@ function makeTarget(ctx) {
       if (val !== '') fields[k] = val;
     });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
+    const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
+    const hasCookie = !!(c && c.cookie);
+    const fieldCount = Object.keys(fields).length;
+    const warnings = [];
+    if (!hasCookie) warnings.push('没有 cookie');
+    if (!t.upload.path) warnings.push('没有上传地址');
+    if (!fieldCount) warnings.push('上传字段为空');
+    if (!t.verify.path) warnings.push('没有回查地址');
     return { ok: true, data: {
       host: t.host, engine: t.engine, url: t.base + t.upload.path, method: 'POST',
       fileField: t.upload.fileField, fields: fields,
-      verifyUrl: t.base + expand(t.verify.path || '', uv)
+      verifyUrl: t.base + expand(t.verify.path || '', uv),
+      hasCookie: hasCookie, ready: !!(hasCookie && t.upload.path && fieldCount),
+      warnings: warnings
     } };
   }
 
