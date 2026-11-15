@@ -23,6 +23,10 @@
           <select class="select slim sb-every" :value="String(sched.everyMinutes)" @change="setEvery">
             <option v-for="n in [30, 60, 120, 240]" :key="n" :value="String(n)">{{ n }} 分钟</option>
           </select>
+          <label class="sb-f">请求间隔 <input v-model.number="limits.interval" class="input num sb-num" type="number" :min="8" :max="600" @change="saveLimits"> 秒</label>
+          <label class="sb-f">窗口 <input v-model.number="limits.windowMinutes" class="input num sb-num" type="number" :min="1" :max="1440" @change="saveLimits"> 分钟</label>
+          <label class="sb-f">窗口最多 <input v-model.number="limits.maxPerWindow" class="input num sb-num" type="number" :min="1" :max="1000" @change="saveLimits"> 次</label>
+          <label class="sb-f">失败暂停 <input v-model.number="limits.breaker" class="input num sb-num" type="number" :min="1" :max="10" @change="saveLimits"> 次</label>
           <button class="btn ghost slim" type="button" :disabled="sched.running" @click="runSched">{{ sched.running ? '跑着呢…' : '立即跑一次' }}</button>
         </div>
       </section>
@@ -62,12 +66,7 @@
               </div>
             </div>
           </div>
-          <div class="limits-panel">
-            <div v-for="l in limitItems" :key="l.k" class="limit-item">
-              <div class="lbl">{{ l.label }}</div>
-              <input v-model.number="limits[l.k]" class="input num" type="number" :min="limitRanges[l.k][0]" :max="limitRanges[l.k][1]" @change="clampLimit(l.k, $event)">
-            </div>
-          </div>
+
           <div class="crawl-foot">
             <div class="crawl-note">{{ fetchNote }}</div>
             <label class="detail-sw">
@@ -347,6 +346,14 @@ async function saveSched() {
 }
 function toggleSched() { sched.on = !sched.on; saveSched() }
 function setEvery(e) { sched.everyMinutes = Number(e.target.value) || 60; saveSched() }
+async function saveLimits() {
+  limits.interval = Math.min(600, Math.max(8, Number(limits.interval) || 60))
+  limits.windowMinutes = Math.min(1440, Math.max(1, Number(limits.windowMinutes) || 60))
+  limits.maxPerWindow = Math.min(1000, Math.max(1, Number(limits.maxPerWindow) || 20))
+  limits.breaker = Math.min(10, Math.max(1, Number(limits.breaker) || 3))
+  await patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value })
+  toast('请求限制已保存')
+}
 async function runSched() {
   if (sched.running) return
   sched.running = true
@@ -415,6 +422,17 @@ async function saveTypes() {
   await fetch('/api/crawl/types/' + encodeURIComponent(sourceHost.value), {
     method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ types: row.sel || [] })
+  })
+}
+async function saveFilters() {
+  if (!sourceHost.value) return
+  const get = (t) => {
+    const r = ((rules.fetch[0] && rules.fetch[0].rows) || []).find(x => x.t === t)
+    return (r && r.sel) || []
+  }
+  await fetch('/api/crawl/filters/' + encodeURIComponent(sourceHost.value), {
+    method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ selected: { medium: get('媒介'), standard: get('分辨率'), spstate: get('优惠') } })
   })
 }
 function pickTarget(host) {
@@ -508,7 +526,8 @@ async function saveFetch() {
   const [a, b] = await Promise.all([
     patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value }),
     putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny, allow: rx.allow }),
-    saveTypes()
+    saveTypes(),
+    saveFilters()
   ])
   busy.fetch = false
   const bad = [a, b].find(j => !j || !j.ok)
@@ -748,6 +767,8 @@ onUnmounted(() => {
 .sb-actions { display:flex; align-items:center; gap:10px; flex:0 0 auto; }
 .sb-sw { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); }
 .sb-every { height:26px; font-size:11.5px; width:96px; }
+.sb-f { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); white-space:nowrap; }
+.sb-num { width:56px; height:26px; font-size:11px; text-align:center; }
 @media (max-width:900px){
   .sched-bar { flex-wrap:wrap; padding:7px 11px; }
   .sb-main { flex:1 1 100%; }

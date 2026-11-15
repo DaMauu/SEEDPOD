@@ -287,7 +287,7 @@ async function main() {
       return (R.dedupe || []).length + (R.pub || []).length;
     });
     need(groupCount === expectedGroups, '规则组数量不对：' + groupCount + '/' + expectedGroups);
-    need(await page.locator('.limits-panel input').count() === 4, '请求限制输入数量不对');
+    need(await page.locator('#sched-bar .sb-num').count() === 4, '调度条请求限制输入数量不对');
     need(await page.locator('#flow-gates').count() === 1, '没有发布闸门');
     need(!/\bon\b/.test(await page.locator('#gate-publish').getAttribute('class') || ''), '自动发布默认应为关');
     need(await page.locator('#flow-prepare').count() === 1, '没有准备下一批按钮');

@@ -9,6 +9,7 @@ const marksMod = require('./marks');
 const cursor = require('./cursor');
 const limits = require('./limits');
 const sitePack = require('./site-pack');
+const siteMaps = require('./site-maps');
 const flowConfig = require('./flow-config');
 const metaExt = require('./meta-ext');
 
@@ -138,7 +139,18 @@ function makeCrawl(ctx) {
     const rec0 = st0[host] || {};
     const catIdx = opts.catIdx >= 0 && opts.catIdx !== '' ? catIdxRaw : Number(rec0.catIdx || 0);
     const ids = catMap.length ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : [];
-    const url0 = adapters.buildSearchUrl(def, '', ids);
+    let url0 = adapters.buildSearchUrl(def, '', ids);
+    try {
+      const flt = siteMaps.getHost(DATA_DIR, host).filters;
+      const sv = (flt && flt.selectedValues) || {};
+      if (Object.keys(sv).length) {
+        const u = new URL(url0);
+        ['medium', 'standard', 'spstate'].forEach(function (k) {
+          (sv[k] || []).forEach(function (v) { u.searchParams.append(k, String(v)); });
+        });
+        url0 = u.toString();
+      }
+    } catch (e) { /* 过滤参数拼不上就按原地址抓 */ }
     const lim = limitsOf(host);
     const state = readState();
     const today = new Date().toISOString().slice(0, 10);

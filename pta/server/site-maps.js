@@ -34,7 +34,7 @@ function cleanMap(obj, max) {
 function getHost(DATA_DIR, host) {
   const all = readAll(DATA_DIR);
   const s = all.sites[String(host || '').toLowerCase()] || {};
-  return { cat: cleanMap(s.cat), team: cleanMap(s.team), raw: cleanMap(s.raw, 500), form: s.form || null, at: s.at || '' };
+  return { cat: cleanMap(s.cat), team: cleanMap(s.team), raw: cleanMap(s.raw, 500), form: s.form || null, filters: s.filters || null, at: s.at || '' };
 }
 
 function setHost(DATA_DIR, host, body) {
@@ -63,6 +63,18 @@ function setHost(DATA_DIR, host, body) {
   return next;
 }
 
+function setFilters(DATA_DIR, host, filters) {
+  const h = String(host || '').trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9.-]*$/.test(h)) throw new Error('站点名不合法');
+  const all = readAll(DATA_DIR);
+  const cur = all.sites[h] || {};
+  cur.filters = filters && typeof filters === 'object' ? filters : {};
+  cur.at = new Date().toISOString();
+  all.sites[h] = cur;
+  writeAll(DATA_DIR, all);
+  return cur.filters;
+}
+
 function summary(DATA_DIR) {
   const all = readAll(DATA_DIR);
   const out = {};
@@ -73,4 +85,4 @@ function summary(DATA_DIR) {
   return out;
 }
 
-module.exports = { readAll, writeAll, getHost, setHost, summary, fileOf, cleanMap };
+module.exports = { readAll, writeAll, getHost, setHost, setFilters, summary, fileOf, cleanMap };

@@ -113,6 +113,92 @@ module.exports = function (app, ctx) {
     return ok({ host: host, types: want, ids: ids });
   });
 
+  function defOf(host) {
+    const def0 = readDef(host) || {};
+    const built = sitePack.siteOf(host) || {};
+    return Object.assign({}, built, def0);
+  }
+  const FILTER_RULES = {
+    medium: /原盘|remux|encode|blu-?ray|dvd|hdtv|web-?dl|webrip|tvrip|vhs|uhd|3d/i,
+    standard: /480p|576p|720p|1080i|1080p|2160p|4k|8k|4320p/i,
+    spstate: /免费|2x|50%|30%|普通|free/i
+  };
+  function filterFieldName(name) {
+    const n = String(name || '').toLowerCase();
+    if (/spstate|discount|free|优惠/.test(n)) return 'spstate';
+    if (/standard|resolution|分辨/.test(n)) return 'standard';
+    if (/medium|source|媒介/.test(n)) return 'medium';
+    return '';
+  }
+  async function detectFilters(host) {
+    const def = defOf(host);
+    if (!def.base) return { ok: false, code: 'NO_DEF', message: '没有站点定义' };
+    const c = readCookie(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err.message };
+    const path0 = String(def.searchPath || '/torrents.php');
+    const url = def.base.replace(/\/+$/, '') + path0;
+    let html = '';
+    try {
+      const r = await fetch(url, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+      if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
+      html = await r.text();
+    } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
+    const form = require('./form');
+    const forms = form.parse(html);
+    const map = { medium: {}, standard: {}, spstate: {} };
+    for (const f of forms) {
+      for (const fld of (f.fields || [])) {
+        const key = filterFieldName(fld.name);
+        if (!key || !Array.isArray(fld.options)) continue;
+        for (const o of fld.options) {
+          const label = String(o.label || '').trim();
+          const val = String(o.value || '').trim();
+          if (!label || !val || val === '0' || /请选择|全部|不限|choose|select|all/i.test(label)) continue;
+          if (!map[key][label]) map[key][label] = val;
+        }
+      }
+    }
+    return { ok: true, data: { host, url, map } };
+  }
+
+  app.get('/api/crawl/filters/:host', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const f = siteMaps.getHost(DATA_DIR, host).filters || null;
+    return ok({ host, filters: f });
+  });
+
+  app.post('/api/crawl/filters/:host/detect', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const r = await detectFilters(host);
+    if (!r.ok) return bad(reply, r.code, r.message);
+    return ok(r.data);
+  });
+
+  app.put('/api/crawl/filters/:host', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const sel = (req.body && req.body.selected) || {};
+    let cur = siteMaps.getHost(DATA_DIR, host).filters || null;
+    if (!cur || !cur.map || !Object.keys(cur.map).length) {
+      const d = await detectFilters(host);
+      if (d.ok) cur = { map: d.data.map, selectedLabels: {}, selectedValues: {} };
+      else if (!cur) cur = { map: {}, selectedLabels: {}, selectedValues: {} };
+    }
+    cur.selectedLabels = cur.selectedLabels || {};
+    cur.selectedValues = cur.selectedValues || {};
+    for (const key of ['medium', 'standard', 'spstate']) {
+      const labels = Array.isArray(sel[key]) ? sel[key].map(String) : [];
+      cur.selectedLabels[key] = labels;
+      const vals = [];
+      for (const lab of labels) {
+        const v = (cur.map && cur.map[key] || {})[lab];
+        if (v != null && vals.indexOf(String(v)) < 0) vals.push(String(v));
+      }
+      cur.selectedValues[key] = vals;
+    }
+    siteMaps.setFilters(DATA_DIR, host, cur);
+    return ok({ host, filters: cur });
+  });
+
   app.get('/api/crawl/cats/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
     const list = catsOf(host);
