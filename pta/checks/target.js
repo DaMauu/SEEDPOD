@@ -238,7 +238,7 @@ async function main() {
           fields: { name: '{title}', small_desc: '{subtitle}', descr: '{description}', anon: '{anonymous}' }
         },
         verify: { path: '/torrents.php?search={title}' },
-        catMap: { movie: '401' },
+        catMap: { '电影': '401', '剧集': '404', '纪录片': '402' },
         tagMap: { '国语': 'guoyu', '国配': 'guoyu', '粤语': 'yueyu', '中字': 'zhongzi', 'DIY原盘': 'diy' },
         tagValue: 'yes',
         valueMaps: { team: { 'CMCT': '8' } }
@@ -390,6 +390,24 @@ async function main() {
     });
     need(p.status === 200 && p.body.ok, '计划失败');
     need(p.body.data.fields.small_desc === '源站副标题 / 别名 [国配中字]', '副标题没原样用源副标题：' + p.body.data.fields.small_desc);
+  });
+
+  await check('分类映射以中文为准', async function () {
+    async function planOf(cat) {
+      const add = await json(BASE + '/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'Cat Map Test 2024 1080p', cn: '分类映射', intro: 'x', cat, targetSite: '127.0.0.1', status: 'approved', res: '1080p', size: '20 GB' })
+      });
+      need(add.status === 200 && add.body.ok, '建队列失败');
+      const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+      });
+      need(p.status === 200 && p.body.ok, '计划失败');
+      return p.body.data;
+    }
+    need((await planOf('movie')).fields.type === '401', 'movie 没映射到 401');
+    need((await planOf('电影')).fields.type === '401', '中文电影没映射到 401');
+    need((await planOf('doc')).fields.type === '402', 'doc 没映射到纪录片 402');
   });
 
   await check('制作组只认数字或映射，没映射留空并提示', async function () {

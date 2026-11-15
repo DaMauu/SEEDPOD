@@ -190,9 +190,19 @@ function makeTarget(ctx) {
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包，提交不了', http: 400 };
     const v = vars(item);
     if (!v.catId) {
-      const mapped = t.catMap[item.cat] != null ? t.catMap[item.cat] : t.catMap[String(item.cat || '')];
+      /* 分类映射以中文为准：movie → 电影 → 本站 401；也允许直接写中文分类 */
+      const ALIAS = {
+        movie: ['电影'], tv: ['剧集', '电视剧'], anime: ['动漫', '动画'], show: ['综艺'],
+        doc: ['纪录', '纪录片'], music: ['音乐', 'MV', '音乐短片', '舞台演出'],
+        sport: ['体育'], book: ['电子书', '书'], software: ['软件'], study: ['学习'],
+        game: ['游戏'], other: ['其他', '其它']
+      };
+      const raw = String(item.cat || '').trim();
+      const keys = [raw].concat(ALIAS[raw.toLowerCase()] || []);
+      let mapped = null;
+      for (const k of keys) { if (k && t.catMap[k] != null) { mapped = t.catMap[k]; break; } }
       if (mapped != null) v.catId = String(mapped);
-      else if (/^\d+$/.test(String(item.cat || ''))) v.catId = String(item.cat);
+      else if (/^\d+$/.test(raw)) v.catId = raw;
     }
     const fields = {};
     Object.keys(t.upload.fields || {}).forEach(function (k) {
