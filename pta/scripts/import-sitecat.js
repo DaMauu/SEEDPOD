@@ -61,7 +61,7 @@ function catsOf(html) {
     const hit = /[?&]cat=(\d+)/i.exec(href) || /[?&]cat(\d+)=1/i.exec(href);
     if (hit) add(hit[1], m[2]);
   }
-  const sre = /<select\b[^>]*name=["']([^"']*cat[^"']*)["'][^>]*>([\s\S]*?)<\/select>/gi;
+  const sre = /<select\b[^>]*name=["']([^"']*(?:cat|type|category)[^"']*)["'][^>]*>([\s\S]*?)<\/select>/gi;
   while ((m = sre.exec(html))) {
     const body = m[2];
     const ore = /<option\b[^>]*value=["'](\d+)["'][^>]*>([\s\S]{0,60}?)<\/option>/gi;
