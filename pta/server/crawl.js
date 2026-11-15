@@ -259,6 +259,38 @@ function makeCrawl(ctx) {
         }
       }
     }
+    /* 媒介/分辨率：站点搜索页不支持参数时，抓完按标题本地过滤 */
+    try {
+      const flt = siteMaps.getHost(DATA_DIR, host).filters;
+      const labels = (flt && flt.selectedLabels) || {};
+      const MEDIA = {
+        '原盘': /full\s*disc|bdmv|blu-?ray\s*iso|\biso\b|原盘/i,
+        'UHD 原盘': /uhd.*(disc|iso)|2160p.*(disc|iso)|4k.*(disc|iso)/i,
+        '3D 原盘': /3d.*(disc|iso|blu-?ray)/i,
+        'Remux': /remux/i,
+        'Encode': /encode|x264|x265|h\.?26[45]/i,
+        'Blu-ray': /blu-?ray/i,
+        'HDDVD': /hddvd/i,
+        'DVD': /\bdvd/i,
+        'HDTV': /hdtv/i,
+        'WEB-DL': /web-?dl/i,
+        'WEBRip': /web-?rip/i,
+        'TVRip': /tvrip/i,
+        'VHS': /vhs/i
+      };
+      const medSel = (labels.medium || []).map(function (x) { return MEDIA[x]; }).filter(Boolean);
+      const resSel = (labels.standard || []).map(function (x) { return String(x).toLowerCase(); });
+      if (medSel.length || resSel.length) {
+        const keep = items.filter(function (it) {
+          const t = String(it.title || '');
+          const res = String(it.res || '');
+          const okRes = !resSel.length || resSel.some(function (x) { return (res || t).toLowerCase().indexOf(x) >= 0; });
+          const okMed = !medSel.length || medSel.some(function (re) { return re.test(t); });
+          return okRes && okMed;
+        });
+        if (keep.length !== items.length) { detail.filtered = items.length - keep.length; items.length = 0; keep.forEach(function (x) { items.push(x); }); }
+      }
+    } catch (e) { /* 过滤失败按原结果 */ }
     const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0 };
     rec.lastAt = lastReqAt;
     rec.times = (rec.times || []).filter(function (t) { return t > nowMs - lim.windowMs; });

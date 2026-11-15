@@ -809,9 +809,9 @@ onUnmounted(() => {
 .filter-head { display: flex; align-items: baseline; gap: 10px; padding: 2px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
 .filter-title { font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em; }
 .filter-sub { font-size: 11px; color: var(--muted-2); }
-.filter-card :deep(.preset-row){display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;gap:12px;padding:3px 0}
-.filter-card :deep(.preset-row .lbl){font-size:12.5px;color:var(--ink);font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.filter-card :deep(.preset-row .ctl){display:flex;align-items:center;gap:4px;padding-left:62px;min-width:0}
+.filter-card :deep(.preset-row){display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:14px;padding:3px 0}
+.filter-card :deep(.preset-row .lbl){font-size:12.5px;color:var(--ink);font-weight:500;min-width:0;white-space:nowrap;line-height:1.3}
+.filter-card :deep(.preset-row .ctl){display:flex;align-items:center;gap:4px;padding-left:86px;min-width:0}
 .filter-card :deep(.preset-row .cat-row){margin-left:0;gap:4px;justify-content:flex-start}
 .filter-card :deep(.preset-row .cat-chip){height:24px;padding:0 8px;border-radius:5px;font-size:11px;line-height:24px}
 .flow-sum { font-size: 11px; color: var(--muted); opacity: .85; margin: 0 0 6px; }

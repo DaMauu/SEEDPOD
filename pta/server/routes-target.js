@@ -119,6 +119,7 @@ module.exports = function (app, ctx) {
     return ok(reply, r.data);
   });
 
+  /* 源资源标题：发布 name 用源种原名；这里提供回填接口（规则：源资源标题） */
   app.post('/api/queue/:id/fill-source-title', async (req, reply) => {
     const row = one('SELECT id, data FROM queue WHERE id = ?', req.params.id);
     if (!row) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);

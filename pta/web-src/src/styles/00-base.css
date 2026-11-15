@@ -47,7 +47,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 13.5px/1.6 Inter, "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+  font: 13.5px/1.6 Consolas, "Microsoft YaHei", "Microsoft YaHei UI", Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
