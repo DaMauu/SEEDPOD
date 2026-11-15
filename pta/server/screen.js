@@ -1,6 +1,7 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
 const marksMod = require('./marks');
+const flowConfig = require('./flow-config');
 
 function flowRules(sets, rx) {
   const allRows = [];
@@ -40,6 +41,7 @@ function screenCatalog(ctx, opts) {
   const flow = JSON.parse(flowRow ? flowRow.v : 'null') || {};
   const rx = flow.rx || {};
   const rules = flowRules(flow.sets || {}, rx);
+  rules.requireIntro = flowConfig.on(flowConfig.read(ctx), '必须有简介', false);
 
   const norm = (s2) => String(s2 || '').toLowerCase().replace(/[\s\-_.]+/g, '');
   const seenTitles = new Set();
@@ -76,6 +78,7 @@ function screenCatalog(ctx, opts) {
     else if (rules.minSizeGB && bytes && bytes < rules.minSizeGB * 1073741824) reason = '体积偏小';
     else if (rules.maxSizeGB && bytes && bytes > rules.maxSizeGB * 1073741824) reason = '体积偏大';
     else if (rules.requireChinese && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(title)) reason = '没有中字';
+    else if (rules.requireIntro && !String(it.intro || it.descr || '').trim()) reason = '缺简介';
     else if (seenTitles.has(norm(title))) reason = '已有同片';
     else if (it.infohash && seenHashes.has(String(it.infohash).toLowerCase())) reason = '已有同片';
 

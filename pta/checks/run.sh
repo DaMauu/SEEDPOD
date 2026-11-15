@@ -27,6 +27,8 @@ fi
 run smoke smoke-live.js
 run responsive responsive-layout.js
 run adapter adapter.js
+run dupe-classify dupe-classify.js
+run flow-config flow-config.js
 run security security.js
 run api api-v2.js
 run form form.js

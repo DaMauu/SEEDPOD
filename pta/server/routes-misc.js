@@ -5,6 +5,7 @@ const screen = require('./screen');
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
+const flowConfig = require('./flow-config');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -25,7 +26,10 @@ module.exports = function (app, ctx) {
   app.get('/api/meta/providers', async () => ok(metaExt.providers()));
   app.post('/api/meta/fetch', async (req, reply) => {
     const b = req.body || {};
-    const r = await metaExt.fetchMeta({ title: b.title, year: b.year, type: b.type, provider: b.provider, key: b.key });
+    const flow = flowConfig.read(ctx);
+    const r = await metaExt.fetchMeta({ title: b.title, year: b.year, type: b.type, provider: b.provider, key: b.key,
+      requireYear: flowConfig.on(flow, '年份必须一致', false),
+      castLimit: flowConfig.number(flow, '主演最多几个', 8) });
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r);
   });

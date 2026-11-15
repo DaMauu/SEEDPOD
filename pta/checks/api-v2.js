@@ -170,6 +170,30 @@ async function main() {
     need(get.data.rx.deny === 'CAM', 'rx.deny 没保存');
   });
 
+  await check('目标站搜索开关读流程规则', async () => {
+    const off = await (await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { dedupe: [[{ t: '目标站搜索', on: false }]] } })
+    })).json();
+    need(off.ok, '关目标站搜索失败');
+    const r = await fetchA(BASE + '/api/dupe/check', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'target.example' })
+    });
+    need(r.status === 409, '关闭时应 409，实际 ' + r.status);
+    const j = await r.json();
+    need(j.error && j.error.code === 'DUPE_DISABLED', '错误码不对：' + JSON.stringify(j));
+    const on = await (await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { dedupe: [[{ t: '目标站搜索', on: true }]] } })
+    })).json();
+    need(on.ok, '开目标站搜索失败');
+    const r2 = await fetchA(BASE + '/api/dupe/check', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'target.example' })
+    });
+    const j2 = await r2.json();
+    need(!(j2.error && j2.error.code === 'DUPE_DISABLED'), '开启后仍被开关拦住');
+  });
+
   await check('词条写入与筛选条件生效', async () => {
     const items = [
       { site: 'demo-a.example', title: 'Fixture A 2020 1080p 中字', res: '1080p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
@@ -206,6 +230,22 @@ async function main() {
     need(/已有/.test(JSON.stringify(j.data.byReason)), '没有重复原因');
     need(/禁转/.test(JSON.stringify(j.data.byReason)), '没有禁转原因');
     need(/限转/.test(JSON.stringify(j.data.byReason)), '没有限转原因');
+  });
+
+  await check('必须有简介规则拦送审', async () => {
+    await (await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: 'demo-a.example', title: 'No Intro 2024 2160p 中字', res: '2160p', size: '20 GB', sizeBytes: 20 * 1024 ** 3 }] })
+    })).json();
+    const flow = await (await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '必须有简介', on: true }]] } })
+    })).json();
+    need(flow.ok, '写必须有简介失败');
+    const j = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ limit: 10 })
+    })).json();
+    need(j.ok && j.data.skipped === 1 && /缺简介/.test(JSON.stringify(j.data.byReason)), '缺简介没被拦：' + JSON.stringify(j.data));
   });
 
   await check('队列里有 1 条待审核', async () => {
@@ -334,6 +374,26 @@ async function main() {
     need(/\/img\/1\.jpg/.test(got2.data.imageLinks[0].url), 'imageLinks 地址不对：' + JSON.stringify(got2.data.imageLinks));
     need(got2.data.prepared && /\[img\]http:\/\/127\.0\.0\.1:/.test(got2.data.prepared.description), '简介没替换图床链接：' + ((got2.data.prepared && got2.data.prepared.description) || '').slice(-200));
     need(got2.data.prepared.description.indexOf('data:image') < 0, '简介里还留着 data URL');
+    const flowOff = await (await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '简介图片', v: '不保留图片' }]] } })
+    })).json();
+    need(flowOff.ok, '写简介图片规则失败');
+    await fetchA(BASE + '/api/queue/' + add.data.id + '/prepare', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
+    });
+    const noImg = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(noImg.data.prepared.description.indexOf('[img]') < 0, '不保留图片仍在简介里：' + noImg.data.prepared.description.slice(-160));
+    const flowOn = await (await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '简介图片', v: '转存到图床' }]] } })
+    })).json();
+    need(flowOn.ok, '恢复简介图片规则失败');
+    await fetchA(BASE + '/api/queue/' + add.data.id + '/prepare', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
+    });
+    const withImg = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(withImg.data.prepared.description.indexOf('[img]http://127.0.0.1:') >= 0, '转存模式没写回图床链接');
   });
 
   await check('队列批量按 fromStatus', async () => {

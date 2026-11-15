@@ -9,6 +9,7 @@ const { makePublisher } = require('../server/publish');
 const { makeRelease } = require('../server/release');
 const { makeTargetService } = require('../server/target-service');
 const imagehost = require('../server/imagehost');
+const flowConfig = require('../server/flow-config');
 const screen = require('../server/screen');
 const adapters = require('../server/adapters');
 const secretbox = require('../server/secretbox');
@@ -162,7 +163,8 @@ function createCore(opts) {
     const provider = String(b.imageHost || it.imageHost || '站内');
     const dryRun = b.dryRun !== false;
     if (!dryRun && !ctx.allowReal('realImages')) throw new Error('图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试');
-    const r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: !dryRun && ctx.allowReal('realImages'), retries: b.retries, delayMs: b.delayMs });
+    const retries = b.retries !== undefined ? b.retries : flowConfig.number(flowConfig.read(ctx), '图片上传重试', 2);
+    const r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: !dryRun && ctx.allowReal('realImages'), retries: retries, delayMs: b.delayMs });
     it.imagePlan = { at: now(), provider: r.provider, dryRun: r.dryRun, total: r.total, uploaded: r.uploaded, failed: r.failed, code: r.code, message: r.message };
     if (!dryRun && r.items.some(function (x) { return x.ok; })) {
       it.imageHost = provider;

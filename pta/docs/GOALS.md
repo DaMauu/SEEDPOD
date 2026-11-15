@@ -17,7 +17,7 @@
 | G1 | 响应式自动验收进 `run.sh` | ✅ 完成（0.7.163） | 无 | `responsive-layout.js` 32 项通过 |
 | G2 | 可靠性债：公共函数、空 catch、TODO/console | ✅ 完成（0.7.169） | 无 | 空 catch 0、审计 87 |
 | G3 | 拆 `Sites.vue` | ✅ 完成（0.7.184） | G2 完成后 | Sites.vue 436 行；smoke 22/22、responsive 32 项 |
-| G4 | 40 条未接规则分诊 | 🟡 建议表已出 · 等拍板 | 用户逐条决定 | `RULES-TRIAGE-G4.md`；`audit-rules.js` 0 缺读者 |
+| G4 | 40 条未接规则分诊 | ✅ 完成（0.7.187） | 用户逐条决定 | 8 做/17 删/15 暂缓；保留缺读者 0 |
 | G5 | 真实目标站发布 + 真实 rTorrent/Deluge | 🔴 blocked · 等真实 daemon | 用户提供真实 daemon | 真实发布/回查记录 |
 | G6 | 站点包例外 UI + Docker/备份复验 | ✅ 完成（0.7.185） | G2/G3 后 | 例外 UI、Docker、备份恢复演练均通过 |
 | G7 | 发布工作流状态机：阶段落库、幂等、恢复 | ✅ 完成（0.7.170） | G2 | submitted/injected 幂等断言通过 |
@@ -275,7 +275,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 
 ## 推进规则
 
-1. G6 已完成；G4 建议表已出，等拍板；G5/G10/G12/G13 等真实权限/环境，没有可自动推进的 goal；G14 可选。
+1. G4/G6 已完成；G5/G10/G12/G13 等真实权限/环境，没有可自动推进的 goal；G14 可选。
 2. 每个 goal 完成：升版本 → `run.sh` → 部署 → 更新 CHANGELOG/HANDOFF/本文件。
 3. 需要用户拍板或环境的 goal 标 blocked，不占用 active 位。
 4. 质量审计不得低于基线 83；单文件/单功能出现「差」先修。

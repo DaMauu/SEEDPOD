@@ -8,67 +8,6 @@
       "sum": "未设置",
       "rows": [
         {
-          "t": "类型",
-          "type": "custom",
-          "chips": [
-            "电影",
-            "剧集",
-            "综艺",
-            "动漫",
-            "纪录片",
-            "音乐",
-            "体育",
-            "演唱会",
-            "MV",
-            "有声书",
-            "电子书",
-            "软件",
-            "游戏",
-            "其他"
-          ],
-          "sel": [],
-          "hint": "对应站点搜索的类别，决定列表里会出现什么",
-          "todo": true
-        },
-        {
-          "t": "媒介",
-          "type": "custom",
-          "chips": [
-            "原盘(Full Disc)",
-            "UHD 原盘",
-            "3D 原盘",
-            "Remux",
-            "Encode",
-            "Blu-ray",
-            "HDDVD",
-            "DVD",
-            "HDTV",
-            "WEB-DL",
-            "WEBRip",
-            "TVRip",
-            "VHS",
-            "其他"
-          ],
-          "sel": [],
-          "hint": "锁到站点的 medium / type 字段",
-          "todo": true
-        },
-        {
-          "t": "分辨率",
-          "type": "custom",
-          "chips": [
-            "480p",
-            "576p",
-            "720p",
-            "1080i",
-            "1080p",
-            "2160p",
-            "4320p/8K"
-          ],
-          "sel": [],
-          "todo": true
-        },
-        {
           "t": "优惠",
           "type": "custom",
           "chips": [
@@ -96,32 +35,14 @@
         {
           "t": "目标站搜索",
           "type": "switch",
-          "on": false,
-          "hint": "开启后手动查重会请求一次目标站，受窗口额度限制",
-          "todo": true
+          "on": true,
+          "hint": "关闭后手动查重不请求目标站"
         },
         {
           "t": "体积容差",
           "type": "text",
           "v": "2",
-          "hint": "体积差在这个百分比内算同一条",
-          "todo": true
-        }
-      ]
-    },
-    {
-      "name": "有效期与失败",
-      "sum": "查过多久算过期",
-      "rows": [
-        {
-          "t": "请求失败",
-          "type": "select",
-          "v": "重试 2 次后标失败",
-          "opts": [
-            "重试 2 次后标失败",
-            "直接跳过"
-          ],
-          "todo": true
+          "hint": "体积差在这个百分比内算同一条"
         }
       ]
     },
@@ -163,14 +84,6 @@
           "same": "tgt",
           "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
           "hint": "所有库内资源都归到这个站"
-        },
-        {
-          "t": "多目标站",
-          "type": "switch",
-          "same": "tgt",
-          "on": false,
-          "hint": "还没接：先只支持一个目标站，这个开关先存配置",
-          "todo": true
         },
         {
           "t": "门槛",
@@ -231,8 +144,7 @@
           "t": "必须有简介",
           "type": "switch",
           "on": true,
-          "hint": "抓不到中文简介就不自动发",
-          "todo": true
+          "hint": "抓不到中文简介就不自动发"
         },
         {
           "t": "必须带中字",
@@ -248,8 +160,7 @@
             "必须存在且校验通过",
             "有就行，不校验",
             "不要求"
-          ],
-          "todo": true
+          ]
         },
         {
           "t": "截图至少几张",
@@ -277,8 +188,7 @@
           "t": "图片上传重试",
           "type": "text",
           "v": "2 次",
-          "inline": true,
-          "todo": true
+          "inline": true
         },
         {
           "t": "连续失败几次暂停该站",
@@ -303,29 +213,6 @@
             "豆影网页 → 豆瓣 → TMDB",
             "只用种子自带，没有就用英文"
           ],
-          "todo": true
-        },
-        {
-          "t": "匹配范围",
-          "type": "select",
-          "v": "",
-          "opts": [
-            "标题",
-            "标题 + 副标题",
-            "标题 + 简介首段"
-          ],
-          "hint": "只读这段文本，不改任何字段",
-          "todo": true
-        },
-        {
-          "t": "写错时",
-          "type": "select",
-          "v": "",
-          "opts": [
-            "回退成纯文本匹配",
-            "整条跳过等人工"
-          ],
-          "hint": "语法错、超时、超长都走这条",
           "todo": true
         },
         {
@@ -361,19 +248,7 @@
             "保留外链",
             "不保留图片"
           ],
-          "hint": "外链会失效，转存最稳",
-          "todo": true
-        },
-        {
-          "t": "图床",
-          "type": "select",
-          "v": "站内图床（浏览器上传）",
-          "opts": [
-            "站内图床（浏览器上传）",
-            "外链图床 API"
-          ],
-          "hint": "先记录选择，上传到图床还没接",
-          "todo": true
+          "hint": "外链会失效，转存最稳"
         },
         {
           "t": "截图来源",
@@ -397,8 +272,7 @@
         {
           "t": "年份必须一致",
           "type": "switch",
-          "on": true,
-          "todo": true
+          "on": true
         },
         {
           "t": "匹配来源顺序",
@@ -412,53 +286,9 @@
           "todo": true
         },
         {
-          "t": "简介获取方式",
-          "wide": true,
-          "chips": [
-            "① 本地已抓数据",
-            "② 源站详情页",
-            "③ TMDB",
-            "④ IMDB",
-            "⑤ 豆瓣",
-            "⑥ 豆影",
-            "⑦ 电影词条名",
-            "⑧ 交叉匹配（TMDB+IMDB+豆瓣+豆影）"
-          ],
-          "sel": [
-            "① 本地已抓数据",
-            "② 源站详情页",
-            "③ TMDB",
-            "④ IMDB",
-            "⑤ 豆瓣",
-            "⑥ 豆影",
-            "⑧ 交叉匹配（TMDB+IMDB+豆瓣+豆影）"
-          ],
-          "hint": "按序号优先取有中文简介的来源；抓取卡开着「抓详情页」走①，关掉走②；⑧ 要四家都拿到一致结果才用",
-          "todo": true
-        },
-        {
-          "t": "豆瓣抓取间隔（秒）",
-          "type": "text",
-          "v": "3",
-          "hint": "太快会出验证码",
-          "todo": true
-        },
-        {
           "t": "主演最多几个",
           "type": "text",
-          "v": "3",
-          "todo": true
-        },
-        {
-          "t": "缺字段时",
-          "type": "select",
-          "v": "省略该段",
-          "opts": [
-            "省略该段",
-            "写「未知」",
-            "转待确认"
-          ],
-          "todo": true
+          "v": "3"
         },
         {
           "t": "发布后校验",
@@ -473,46 +303,6 @@
       "sum": "发种表单里要填的标签",
       "rows": [
         {
-          "t": "来源",
-          "type": "pick",
-          "v": "Blu-ray",
-          "opts": [
-            "Blu-ray",
-            "HDTV",
-            "WEB-DL",
-            "DVD",
-            "其他"
-          ],
-          "todo": true
-        },
-        {
-          "t": "媒介",
-          "type": "pick",
-          "v": "Blu-ray",
-          "opts": [
-            "Blu-ray",
-            "Encode",
-            "Remux",
-            "UHD Blu-ray",
-            "DVD",
-            "其他"
-          ],
-          "todo": true
-        },
-        {
-          "t": "编码",
-          "type": "pick",
-          "v": "AVC",
-          "opts": [
-            "AVC",
-            "HEVC",
-            "VC-1",
-            "MPEG-2",
-            "其他"
-          ],
-          "todo": true
-        },
-        {
           "t": "字幕类型",
           "type": "pick",
           "v": "中文字幕",
@@ -522,22 +312,6 @@
             "英文字幕",
             "无字幕"
           ],
-          "todo": true
-        },
-        {
-          "t": "制作组",
-          "type": "text",
-          "v": "",
-          "ph": "留空按目标站默认",
-          "inline": true,
-          "todo": true
-        },
-        {
-          "t": "音轨",
-          "type": "text",
-          "v": "",
-          "ph": "留空按源种自动填",
-          "inline": true,
           "todo": true
         }
       ]
@@ -580,19 +354,6 @@
           "v": "2",
           "hint": "同一个站并行任务数，别把站刷爆",
           "inline": true,
-          "todo": true
-        },
-        {
-          "t": "只在此机器下载",
-          "type": "pick",
-          "v": "自动挑磁盘最多的",
-          "opts": [
-            "自动挑磁盘最多的",
-            "固定 B",
-            "固定 C",
-            "固定 D",
-            "固定 E"
-          ],
           "todo": true
         }
       ]

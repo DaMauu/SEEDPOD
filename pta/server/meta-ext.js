@@ -43,7 +43,7 @@ async function wikipedia(title, year) {
   return null;
 }
 
-async function tmdb(title, year, type, key) {
+async function tmdb(title, year, type, key, castLimit) {
   const k = tmdbKey(key);
   if (!k) return { skipped: true, reason: 'no_key' };
   const kind = type === 'tv' ? 'tv' : 'movie';
@@ -56,6 +56,7 @@ async function tmdb(title, year, type, key) {
   const d = await getJson(detail);
   const date = String(d.release_date || d.first_air_date || '');
   const credits = d.credits || {};
+  const castMax = Math.max(1, Math.min(20, Number(castLimit) || 8));
   return {
     source: 'tmdb', id: hit.id,
     title: d.title || d.name || hit.title || title,
@@ -64,7 +65,7 @@ async function tmdb(title, year, type, key) {
     overview: String(d.overview || '').trim(),
     poster: d.poster_path ? ('https://image.tmdb.org/t/p/w500' + d.poster_path) : '',
     directors: (credits.crew || []).filter(function (x) { return x.job === 'Director'; }).map(function (x) { return x.name; }),
-    cast: (credits.cast || []).slice(0, 8).map(function (x) { return x.name; }),
+    cast: (credits.cast || []).slice(0, castMax).map(function (x) { return x.name; }),
     url: 'https://www.themoviedb.org/' + kind + '/' + hit.id
   };
 }
@@ -76,13 +77,19 @@ async function fetchMeta(opts) {
   const provider = b.provider === 'tmdb' || b.provider === 'wikipedia' ? b.provider : (tmdbKey() ? 'tmdb' : 'wikipedia');
   try {
     if (provider === 'tmdb') {
-      const r = await tmdb(title, b.year, b.type, b.key);
+      const r = await tmdb(title, b.year, b.type, b.key, b.castLimit);
       if (r && r.skipped) return { ok: false, code: 'NO_TMDB_KEY', message: '没有配置 TMDB API key（环境变量 TMDB_API_KEY）', http: 400 };
       if (!r) return { ok: false, code: 'NOT_FOUND', message: 'TMDB 没查到这部片', http: 404 };
+      if (b.requireYear && b.year && r.year && Number(r.year) !== Number(b.year)) {
+        return { ok: false, code: 'YEAR_MISMATCH', message: '年份不一致：请求 ' + b.year + '，结果 ' + r.year, http: 422 };
+      }
       return { ok: true, provider: 'tmdb', data: r };
     }
     const r = await wikipedia(title, b.year);
     if (!r) return { ok: false, code: 'NOT_FOUND', message: 'Wikipedia 没查到这部片', http: 404 };
+    if (b.requireYear && b.year && r.year && Number(r.year) !== Number(b.year)) {
+      return { ok: false, code: 'YEAR_MISMATCH', message: '年份不一致：请求 ' + b.year + '，结果 ' + r.year, http: 422 };
+    }
     return { ok: true, provider: 'wikipedia', data: r };
   } catch (e) {
     return { ok: false, code: 'UPSTREAM_FAILED', message: String(e && e.message || e).slice(0, 160), http: 502 };

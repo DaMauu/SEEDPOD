@@ -453,7 +453,7 @@ async function imageAction(dryRun) {
   try {
     const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/images', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageHost: form.imageHost, dryRun, retries: 2 })
+      body: JSON.stringify({ imageHost: form.imageHost, dryRun })
     })).json()
     if (j && j.ok) {
       toast(dryRun ? ('图床演练：' + j.data.total + ' 张，没有上传') : ('图床上传：成功 ' + j.data.uploaded + '，失败 ' + j.data.failed))

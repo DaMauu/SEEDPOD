@@ -1,6 +1,7 @@
 /* 截图上传与发布（Fastify v2）。发布默认只演练：真发帖要等站点表单适配验证后再开。 */
 const { makePublisher } = require('./publish');
 const imagehost = require('./imagehost');
+const flowConfig = require('./flow-config');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
@@ -63,9 +64,10 @@ module.exports = function (app, ctx) {
     if (!dryRun && !allowReal) {
       return bad(reply, 'REAL_IMAGES_DISABLED', '图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
     }
+    const retries = b.retries !== undefined ? b.retries : flowConfig.number(flowConfig.read(ctx), '图片上传重试', 2);
     let r;
     try {
-      r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: allowReal, retries: b.retries, delayMs: b.delayMs });
+      r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: allowReal, retries: retries, delayMs: b.delayMs });
     } catch (e) {
       return bad(reply, 'IMAGE_HOST_FAILED', String(e && e.message || e).slice(0, 240), 502);
     }

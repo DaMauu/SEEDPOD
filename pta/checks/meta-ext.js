@@ -38,7 +38,7 @@ async function main() {
     if (u.pathname === '/3/movie/603') {
       res.end(JSON.stringify({ id: 603, title: 'The Matrix', original_title: 'The Matrix', release_date: '1999-03-31',
         overview: 'A hacker learns the truth.', poster_path: '/abc.jpg',
-        credits: { crew: [{ job: 'Director', name: 'Lana Wachowski' }, { job: 'Director', name: 'Lilly Wachowski' }], cast: [{ name: 'Keanu Reeves' }] } }));
+        credits: { crew: [{ job: 'Director', name: 'Lana Wachowski' }, { job: 'Director', name: 'Lilly Wachowski' }], cast: [{ name: 'Keanu Reeves' }, { name: 'Laurence Fishburne' }] } }));
       return;
     }
     res.statusCode = 404; res.end('{}');
@@ -54,6 +54,15 @@ async function main() {
     need(r.data.title === 'The Matrix' && r.data.year === 1999, '标题/年份不对');
     need(r.data.overview.indexOf('hacker') >= 0, '简介不对');
     need(r.data.directors.length === 2 && r.data.cast[0] === 'Keanu Reeves', '导演/演员不对');
+  });
+
+  await check('主演数量与年份一致规则', async function () {
+    const one = await fetchMeta({ title: 'The Matrix', year: 1999, castLimit: 1 });
+    need(one.ok && one.data.cast.length === 1, '主演数量没按规则裁剪：' + JSON.stringify(one.data && one.data.cast));
+    const bad = await fetchMeta({ title: 'The Matrix', year: 2000, requireYear: true });
+    need(bad.ok === false && bad.code === 'YEAR_MISMATCH', '年份不一致没拦住：' + JSON.stringify(bad));
+    const ok = await fetchMeta({ title: 'The Matrix', year: 2000, requireYear: false });
+    need(ok.ok && ok.data.year === 1999, '关闭年份校验后不该拦：' + JSON.stringify(ok));
   });
 
   await check('Wikipedia 无 key：搜索 + 摘要', async function () {

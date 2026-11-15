@@ -221,8 +221,8 @@ async function main() {
   if (cmd === 'images') {
     const id = args[0];
     if (!id) die('images 需要 queueId', 2);
-    const retries = opts.retries === undefined ? 2 : Math.max(0, Math.min(4, Number(opts.retries) || 0));
-    const body = { imageHost: opts.host ? String(opts.host) : '', retries: retries, dryRun: !opts.real };
+    const body = { imageHost: opts.host ? String(opts.host) : '', dryRun: !opts.real };
+    if (opts.retries !== undefined) body.retries = Math.max(0, Math.min(4, Number(opts.retries) || 0));
     const human = function (x) {
       return '图床 ' + (x.provider || '—') + ' · ' + (x.dryRun ? '演练' : (x.uploaded + ' 成功 / ' + x.failed + ' 失败')) + ' · 共 ' + (x.total || 0) + ' 张' + (x.message ? ' · ' + x.message : '');
     };

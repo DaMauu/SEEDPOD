@@ -329,6 +329,33 @@ async function main() {
     need(del.status === 200 && del.body.ok, '清理无图队列失败');
   });
 
+  await check('BDInfo 门槛拦真发布', async function () {
+    const put = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', v: '必须存在且校验通过' }]] } })
+    });
+    need(put.status === 200 && put.body.ok, '写 BDInfo 门槛失败');
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'No BDInfo Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+        shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
+    });
+    need(add.status === 200 && add.body.ok, '建无 BDInfo 队列失败');
+    const before = hits.length;
+    const r = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: add.body.data.id, torrentBase64: torrent.toString('base64'), dryRun: false })
+    });
+    need(r.status === 400 && r.body && r.body.error && r.body.error.code === 'BDINFO_REQUIRED', 'BDInfo 门槛没拦住：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
+    need(hits.length === before, 'BDInfo 不足不该发请求');
+    const off = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', v: '不要求' }]] } })
+    });
+    need(off.status === 200 && off.body.ok, '恢复 BDInfo 不要求失败');
+    await json(BASE + '/api/queue/' + encodeURIComponent(add.body.data.id), { method: 'DELETE' });
+  });
+
   await check('真提交与目标站回查', async function () {
     const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },

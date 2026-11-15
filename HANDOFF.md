@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 14:00（当前 v0.7.186 / G4 建议表）
+最后更新：2026-11-18 15:00（当前 v0.7.187 / G4 完成）
+
+## 2026-11-18 G4 规则分诊执行（v0.7.187）
+
+- 8 条接读者：目标站搜索（/api/dupe/check）、体积容差（dupe-classify）、必须有简介（screen）、BDInfo（target-service 真发布门槛）、图片上传重试（routes-publish/core）、简介图片（release）、年份一致/主演数量（meta-ext）。
+- 17 条从 rules.js 删除；15 条继续禁用（优惠、原盘/DIY、下载完成、地区版本、不满足时、连续失败、副标题来源、截图来源、相似度、来源顺序、字幕类型、做种数、免费/优惠、单站并发）。
+- 新增 `flow-config.js` / `dupe-classify.js`；规则体检 33 总 / 18 保留 / 15 未接 / 缺读者 0。
+- dupe-classify 4/4、flow-config 3/3、target 12/12、meta-ext 6/6、api-v2 28/28、smoke 23/23。
+- G4 完成；剩余全部等真实权限/环境或 G14 需求。
 
 ## 2026-11-18 G4 规则分诊建议表（v0.7.186）
 

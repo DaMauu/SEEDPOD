@@ -3,6 +3,7 @@
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const imagehost = require('./imagehost');
+const flowConfig = require('./flow-config');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
@@ -75,7 +76,10 @@ function makeRelease(ctx) {
       if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 20000);
     }
     const imageLinks = (Array.isArray(item.imageLinks) ? item.imageLinks : []).filter(function (x) { return x && x.url; });
-    if (imageLinks.length) {
+    const imageMode = String(flowConfig.value(flowConfig.read(ctx), '简介图片', '转存到图床'));
+    if (imageMode === '不保留图片') {
+      description = description.replace(/\[img\][\s\S]*?\[\/img\]/gi, '').trim();
+    } else if (imageMode !== '保留外链' && imageLinks.length) {
       const shots = Array.isArray(item.shots) ? item.shots : [];
       imageLinks.forEach(function (l, i) {
         const shot = shots.filter(function (s) { return s && s.name === l.name; })[0] || shots[i];

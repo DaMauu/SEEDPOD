@@ -229,7 +229,12 @@ async function main() {
   await check('流程卡与未接规则', async () => {
     await page.evaluate(() => { location.hash = '#crawl'; });
     await page.waitForTimeout(700);
-    need(await page.locator('.flow-group').count() === 8, '规则组数量不对');
+    const groupCount = await page.locator('.flow-group').count();
+    const expectedGroups = await page.evaluate(() => {
+      const R = window.PTA_RULES || {};
+      return (R.dedupe || []).length + (R.pub || []).length;
+    });
+    need(groupCount === expectedGroups, '规则组数量不对：' + groupCount + '/' + expectedGroups);
     need(await page.locator('.limits-panel input').count() === 4, '请求限制输入数量不对');
     const todoCount = await page.evaluate(() => {
       const R = window.PTA_RULES || {};

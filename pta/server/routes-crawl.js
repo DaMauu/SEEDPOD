@@ -4,33 +4,14 @@ const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const limits = require('./limits');
-
-const DISC_RE = /(?:UHD|Blu-?Ray|BluRay|BDMV|Full\s*Disc|原盘|ISO\b)/i;
-const SKIP_RE = /(?:Remux|Encode|WEB-?DL|WEBRip|HDTV|DVDRip|x264|x265|H\.?264|H\.?265|AVC|HEVC)/i;
-const DIY_RE = /\bDIY\b/i;
-const UHD_RE = /(?:2160p|\b4K\b|\bUHD\b)/i;
+const flowConfig = require('./flow-config');
+const dupeClassify = require('./dupe-classify');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
   const cut = s.search(/\b(?:1080p|2160p|1080i|720p|576p|480p|UHD|Blu-?Ray|REMUX|WEB-?DL|WEBRip|HDTV|AVC|HEVC|x264|x265|DTS|TrueHD|LPCM|Atmos)\b/i);
   if (cut > 0) s = s.slice(0, cut).trim();
   return s.split(/\s+/).slice(0, 8).join(' ');
-}
-function classify(srcTitle, srcGB, rows) {
-  const src4k = UHD_RE.test(srcTitle);
-  let diy = null;
-  for (const r of rows || []) {
-    const t = String(r.title || '');
-    if (!t || !DISC_RE.test(t) || SKIP_RE.test(t)) continue;
-    if (UHD_RE.test(t) !== src4k) continue;
-    const gb = Number(r.sizeBytes) ? Number(r.sizeBytes) / 1073741824 : 0;
-    const sizeOk = !(srcGB > 0 && gb > 0) || Math.abs(gb - srcGB) <= 2.5 || Math.abs(gb - srcGB) / srcGB <= 0.05;
-    if (!sizeOk) continue;
-    if (DIY_RE.test(t)) { if (!diy) diy = r; continue; }
-    return { status: 'dupe', row: r };
-  }
-  if (diy) return { status: 'diy', row: diy };
-  return { status: 'clean', row: null };
 }
 
 module.exports = function (app, ctx) {
@@ -82,6 +63,11 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     const host = String(b.host || '').trim().toLowerCase();
     if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '目标站域名不合法');
+    const flow = flowConfig.read(ctx);
+    if (!flowConfig.on(flow, '目标站搜索', true)) {
+      return bad(reply, 'DUPE_DISABLED', '目标站搜索已在流程页关闭；打开后再试', 409);
+    }
+    const tolerance = flowConfig.number(flow, '体积容差', 0);
     const ck = readCookie(host);
     if (ck.err) return bad(reply, ck.err.code, ck.err.message, 409);
     const def = readDef(host);
@@ -106,7 +92,7 @@ module.exports = function (app, ctx) {
         const html = await res.text().catch(function () { return ''; });
         const list = res.status === 200 ? adapters.parseList(html, def.engine || '') : [];
         const srcGB = Number(it.sizeBytes) ? Number(it.sizeBytes) / 1073741824 : 0;
-        const verdict = classify(it.title, srcGB, list);
+        const verdict = dupeClassify.classify(it.title, srcGB, list, tolerance);
         rec.status = verdict.status;
         rec.rows = list.length;
         rec.ms = Date.now() - t0;

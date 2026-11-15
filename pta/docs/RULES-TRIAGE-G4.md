@@ -4,6 +4,12 @@
 事实源：`pta/web-src/src/data/rules.js`、`pta/docs/RULES-RECONCILIATION.md`、当前 `pta/server/` 读者。
 规则体检：总数 50，保留 10，未接 40，保留规则缺读者 0。
 
+## 执行结果（2026-11-18）
+
+- 8 条“做”已接服务端读者；17 条“删”已从 `rules.js` 移除；15 条“暂缓”继续 `todo:true`。
+- 规则体检：总数 33、保留 18、未接 15、保留规则缺读者 0。
+- 新增检查：`dupe-classify` 4/4、`flow-config` 3/3；target 12/12、meta-ext 6/6、api-v2 28/28、smoke 23/23。
+
 ## 怎么用
 
 - 每条只选一个：**做**（接服务端读者）/ **删**（从 rules.js 和页面移除）/ **暂缓**（保留禁用，等真实站点或后续 goal）。

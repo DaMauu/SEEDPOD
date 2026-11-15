@@ -117,6 +117,17 @@ function makeTargetService(ctx, target) {
       saveQueue(item.data);
       return { ok: false, code: 'SHOTS_REQUIRED', message: '截图不足：至少 ' + minShots + ' 张，当前 ' + shotCount + ' 张', http: 400 };
     }
+    const bdRule = flow['BDInfo'];
+    const bdMode = bdRule && bdRule.v ? String(bdRule.v) : '不要求';
+    if (!dryRun && bdMode !== '不要求') {
+      const pm = item.data.prepared && item.data.prepared.media;
+      const bdOk = !!(pm && pm.kind && (bdMode !== '必须存在且校验通过' || pm.summary));
+      if (!bdOk) {
+        stage.fail(item.data, item.data.stage || 'previewed', 'BDInfo 门槛未过：' + bdMode);
+        saveQueue(item.data);
+        return { ok: false, code: 'BDINFO_REQUIRED', message: 'BDInfo 门槛未过：' + bdMode, http: 400 };
+      }
+    }
     const t = await torrentFor(b, item.data);
     if (t.err) {
       if (!dryRun) { stage.fail(item.data, item.data.stage || 'previewed', t.err); saveQueue(item.data); }
