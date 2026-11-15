@@ -7,6 +7,7 @@ const secretbox = require('./secretbox');
 const form = require('./form');
 const adapters = require('./adapters');
 const sitePack = require('./site-pack');
+const siteMaps = require('./site-maps');
 const meta = require('./meta');
 const { makeQb } = require('./qb');
 const torrentClean = require('./torrent-clean');
@@ -104,11 +105,14 @@ function makeTarget(ctx) {
       fields: Object.assign({}, e.fields, (built.upload && built.upload.fields) || {}, pm.fields || {})
     };
     const verify = Object.assign({ path: e.verifyPath }, built.verify || {}, p.verify || def.verify || {});
+    const maps = siteMaps.getHost(DATA_DIR, host);
+    const valueMaps = Object.assign({}, (built.valueMaps || {}), (p.valueMaps || def.valueMaps || {}));
+    valueMaps.team = Object.assign({}, valueMaps.team || {}, maps.team);
     return { host: host, engine: engine, base: base, upload: upload, verify: verify,
-      catMap: catMapOf(p, def, built),
+      catMap: Object.assign({}, catMapOf(p, def, built), maps.cat),
       tagMap: Object.assign({}, built.tagMap || {}, (p.tagMap || def.tagMap || {})),
       tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes'),
-      valueMaps: Object.assign({}, (built.valueMaps || {}), (p.valueMaps || def.valueMaps || {})) };
+      valueMaps: valueMaps };
   }
 
   function list() {

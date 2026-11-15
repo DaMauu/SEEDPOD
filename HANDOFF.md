@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-15 20:05（当前 v0.7.232 / 流程页说明文字）
+最后更新：2026-11-15 20:45（当前 v0.7.233 / 站点映射总表）
+
+## 2026-11-15 站点映射总表（v0.7.233）
+
+- `data/site-maps.json` 一个文件存全部站点映射；target.resolve 合并 catMap 与 valueMaps.team。
+- API：GET/PUT /api/maps[/:host]、POST /api/maps/:host/detect（读上传页下拉，中文匹配分类）。
+- 流程页「站点映射」弹窗：选站、自动识别、改表、保存。
+- target 23/23，全量通过。
 
 ## 2026-11-15 流程页说明文字（v0.7.232）
 

@@ -410,7 +410,29 @@ async function main() {
     need((await planOf('doc')).fields.type === '402', 'doc 没映射到纪录片 402');
   });
 
+  await check('站点映射总表覆盖分类和制作组', async function () {
+    const put = await json(BASE + '/api/maps/127.0.0.1', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cat: { '电影': '999' }, team: { 'CMCT': '77' } })
+    });
+    need(put.status === 200 && put.body.ok, '映射保存失败');
+    const maps = await json(BASE + '/api/maps');
+    need(maps.status === 200 && maps.body.data.sites['127.0.0.1'].cat['电影'] === '999', '总表没存上');
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Site Map Test 2024 1080p', cn: '映射总表', intro: 'x', cat: 'movie', team: 'CMCT', targetSite: '127.0.0.1', status: 'approved', res: '1080p', size: '20 GB' })
+    });
+    const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, '计划失败');
+    need(p.body.data.fields.type === '999', '总表分类没覆盖：' + p.body.data.fields.type);
+    need(p.body.data.fields.team_sel === '77', '总表制作组没覆盖：' + p.body.data.fields.team_sel);
+    need(!(p.body.data.warnings || []).some(function (x) { return /制作组.*没映射/.test(x); }), '有映射还报没映射');
+  });
+
   await check('制作组只认数字或映射，没映射留空并提示', async function () {
+    await json(BASE + '/api/maps/127.0.0.1', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat: {}, team: {} }) });
     async function planOf(team) {
       const add = await json(BASE + '/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },

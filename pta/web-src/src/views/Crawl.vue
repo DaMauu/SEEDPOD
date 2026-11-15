@@ -121,6 +121,7 @@
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">发布</div></div>
           <div class="drawer-head-right">
+            <button class="btn ghost slim" type="button" @click="openMaps">站点映射</button>
             <button class="btn primary slim" type="button" :disabled="busy.pub" @click="savePub">{{ busy.pub ? '保存中…' : '保存' }}</button>
           </div>
         </div>
@@ -154,6 +155,39 @@
           </div>
         </div>
       </section>
+    </div>
+
+    <div v-if="mapOpen" class="modal-mask">
+      <div class="modal map-modal">
+        <div class="modal-head">
+          <h2>站点映射（分类 / 制作组）</h2>
+          <button class="btn ghost slim" type="button" @click="mapOpen = false">关闭</button>
+        </div>
+        <div class="map-body">
+          <div class="map-top">
+            <select v-model="mapHost" class="select" @change="loadMap">
+              <option v-for="t in mapTargets" :key="t.host" :value="t.host">{{ t.host }}</option>
+            </select>
+            <button class="btn ghost slim" type="button" :disabled="mapLoading" @click="detectMap">{{ mapLoading ? '识别中…' : '自动识别' }}</button>
+            <button class="btn primary slim" type="button" @click="saveMap">保存</button>
+          </div>
+          <div v-if="mapMsg" class="rule-hint">{{ mapMsg }}</div>
+          <h3>分类（我们这边 → 这个站的值）</h3>
+          <div v-for="(row, i) in mapCatRows" :key="'c' + i" class="map-row">
+            <input v-model="row.k" class="input" placeholder="电影">
+            <input v-model="row.v" class="input" placeholder="401">
+            <button class="btn ghost slim" type="button" @click="mapCatRows.splice(i, 1)">删</button>
+          </div>
+          <button class="btn ghost slim" type="button" @click="mapCatRows.push({ k: '', v: '' })">加一行</button>
+          <h3>制作组（组名 → 这个站的值）</h3>
+          <div v-for="(row, i) in mapTeamRows" :key="'t' + i" class="map-row">
+            <input v-model="row.k" class="input" placeholder="CMCT">
+            <input v-model="row.v" class="input" placeholder="8">
+            <button class="btn ghost slim" type="button" @click="mapTeamRows.splice(i, 1)">删</button>
+          </div>
+          <button class="btn ghost slim" type="button" @click="mapTeamRows.push({ k: '', v: '' })">加一行</button>
+        </div>
+      </div>
     </div>
 
     <Nodes />
@@ -217,6 +251,52 @@ const fetchSum = computed(() => {
 const fetchNote = computed(() => '每 ' + limits.interval + ' 秒最多一次 · ' + limits.windowMinutes + ' 分钟内最多 ' + limits.maxPerWindow + ' 次请求')
 
 const rx = reactive({ deny: '', allow: '', sample: '', out: '未测试', outClass: '' })
+const mapOpen = ref(false)
+const mapHost = ref('')
+const mapTargets = ref([])
+const mapCatRows = ref([])
+const mapTeamRows = ref([])
+const mapMsg = ref('')
+const mapLoading = ref(false)
+function mapRowsOf(obj) { return Object.keys(obj || {}).map(k => ({ k, v: String(obj[k] || '') })) }
+async function openMaps() {
+  mapOpen.value = true
+  mapMsg.value = ''
+  if (!mapTargets.value.length) {
+    const j = await getJson('/api/targets')
+    mapTargets.value = (j && j.ok && j.data) || []
+  }
+  if (!mapHost.value && mapTargets.value.length) mapHost.value = mapTargets.value[0].host
+  await loadMap()
+}
+async function loadMap() {
+  if (!mapHost.value) return
+  const j = await getJson('/api/maps')
+  const s = (j && j.ok && j.data && j.data.sites && j.data.sites[mapHost.value]) || {}
+  mapCatRows.value = mapRowsOf(s.cat)
+  mapTeamRows.value = mapRowsOf(s.team)
+}
+async function detectMap() {
+  if (!mapHost.value || mapLoading.value) return
+  mapLoading.value = true
+  mapMsg.value = '识别中…'
+  const r = await fetch('/api/maps/' + encodeURIComponent(mapHost.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
+  const j = await r.json().catch(() => null)
+  mapLoading.value = false
+  if (!j || !j.ok) { mapMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
+  mapCatRows.value = mapRowsOf(j.data.cat)
+  const tc = (j.data.teamOptions || []).length
+  mapMsg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
+}
+async function saveMap() {
+  if (!mapHost.value) return
+  const cat = {}, team = {}
+  mapCatRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) cat[String(r.k).trim()] = String(r.v).trim() })
+  mapTeamRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) team[String(r.k).trim()] = String(r.v).trim() })
+  const r = await fetch('/api/maps/' + encodeURIComponent(mapHost.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team }) })
+  const j = await r.json().catch(() => null)
+  mapMsg.value = j && j.ok ? '已保存到 data/site-maps.json' : ((j && j.error && j.error.message) || '保存失败')
+}
 const tpl = ref('')
 const tplPreview = computed(() => {
   let t = tpl.value || ''
@@ -628,6 +708,12 @@ onUnmounted(() => {
 .flow-group :deep(.flow-ttl){font-size:12px;font-weight:600;color:var(--muted);margin:0 0 1px}
 .flow-sum { font-size: 11px; color: var(--muted); opacity: .85; margin: 0 0 6px; }
 .rule-hint { font-size: 11px; color: var(--muted); opacity: .85; line-height: 1.45; margin-top: 2px; }
+.map-modal { width: 640px; max-width: calc(100vw - 32px); }
+.map-body { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow: auto; }
+.map-top { display: flex; gap: 8px; align-items: center; }
+.map-top .select { flex: 1; }
+.map-row { display: flex; gap: 8px; align-items: center; }
+.map-row .input { flex: 1; }
 .flow-group :deep(.set-fields){display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 18px}
 .flow-group :deep(.set-field){display:block;padding:5px 0;border-bottom:0;min-width:0}
 .flow-group :deep(.set-field .lbl){margin-bottom:3px}
