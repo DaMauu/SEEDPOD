@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.262 · 2026-11-16
+
+### Telegram bot 本地补丁自动化
+- 新增 scripts/patch-telegram-bot.sh：引用回复 + 回复键盘只留一行两个按钮。
+- systemd drop-in（opencode-tg.service.d/patch.conf）在每次启动前自动重打，bot 升级后重启即生效。
+- 键盘去掉 agent 与上下文消耗按钮，只留模型/变体一行。
+
 ## v0.7.261 · 2026-11-16
 
 ### 预设行行名完整显示、芯片紧凑
