@@ -430,10 +430,15 @@ async function saveFilters() {
     const r = ((rules.fetch[0] && rules.fetch[0].rows) || []).find(x => x.t === t)
     return (r && r.sel) || []
   }
-  await fetch('/api/crawl/filters/' + encodeURIComponent(sourceHost.value), {
+  const body = { selected: { medium: get('媒介'), standard: get('分辨率'), spstate: get('优惠') } }
+  const r = await fetch('/api/crawl/filters/' + encodeURIComponent(sourceHost.value), {
     method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ selected: { medium: get('媒介'), standard: get('分辨率'), spstate: get('优惠') } })
+    body: JSON.stringify(body)
   })
+  const j = await r.json().catch(() => null)
+  const vals = (j && j.ok && j.data && j.data.filters && j.data.filters.selectedValues) || {}
+  const missing = Object.keys(body.selected).filter(k => body.selected[k].length && !(vals[k] || []).length)
+  if (missing.length) toast('本站搜索页没有这些选项：' + missing.join('/'))
 }
 function pickTarget(host) {
   targetHost.value = host

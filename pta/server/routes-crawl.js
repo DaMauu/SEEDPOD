@@ -245,10 +245,20 @@ module.exports = function (app, ctx) {
     if (!def) warnings.push('没有站点定义，拼不出搜索 URL');
     const searchUrls = [];
     if (def && def.base) {
+      const flt = siteMaps.getHost(DATA_DIR, host).filters;
+      const sv = (flt && flt.selectedValues) || {};
       groups.forEach(function (k) {
         (cats[k] || []).forEach(function (id) {
           if (searchUrls.length >= 10) return;
-          searchUrls.push({ cat: k, catId: id, url: adapters.buildSearchUrl(def, '{q}', [id]) });
+          let u = adapters.buildSearchUrl(def, '{q}', [id]);
+          try {
+            const uu = new URL(u);
+            ['medium', 'standard', 'spstate'].forEach(function (key) {
+              (sv[key] || []).forEach(function (v) { uu.searchParams.append(key, String(v)); });
+            });
+            u = uu.toString();
+          } catch (e) { /* 保留原地址 */ }
+          searchUrls.push({ cat: k, catId: id, url: u });
         });
       });
     }
