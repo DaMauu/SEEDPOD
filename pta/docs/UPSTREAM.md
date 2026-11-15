@@ -90,7 +90,7 @@
 - 来源：NexusPHP `takeupload.php`、UNIT3D `/torrents/create`、Gazelle `/upload.php` 的公开表单结构；UA/upbrr 只读流水线分层与校验顺序，未取代码。
 - 观察到的行为：三家引擎都是 multipart 表单；字段名和必填项因站而异；提交成功后返回详情页或跳转；回查通常用标题或 infohash 搜一次。
 - 许可/可用性：不复制上游代码、表单配置或站名；字段映射由用户私有包提供。
-- 我们的决定：引擎只给默认路径和字段骨架，`data/site-pack.json` 的 `upload` 覆盖；先干跑出字段，真提交受 `realPublish` 约束；用本地 mock 上传页做夹具，不碰真实站。
+- 我们的决定：引擎只给默认路径和字段骨架，`data/site-pack.json` 的 `upload` 覆盖；先干跑出字段，真提交受 `realPublish` 约束；用本地 mock 上传页做固定样本，不碰真实站。
 - 我们怎么实现：`pta/server/target.js` 纯映射 + `routes-target.js` API；`pta/checks/target.js` 覆盖 NexusPHP 真提交与 UNIT3D/Gazelle 干跑（6/6）。
 
 ## 2026-11-15 · M5 标题解析与命名
@@ -119,7 +119,7 @@
 - 来源：Wikipedia API、TMDB API 公开文档；UA/upbrr 只作流程参考，未取代码/配置/key。
 - 观察：无 key 可用 Wikipedia 搜索+摘要；有 key 用 TMDB 搜索+详情+credits，能拿导演/演员/海报。
 - 许可/可用性：公共 API；TMDB key 用户自己提供，不进仓库。
-- 决定：`meta-ext.js` 两个 provider，失败回退本地标题解析；mock 夹具测试，不拿真实数据写死。
+- 决定：`meta-ext.js` 两个 provider，失败回退本地标题解析；mock 固定样本测试，不拿真实数据写死。
 
 ## 2026-11-16 · 上传页路径与字段（clean-room）
 
@@ -161,7 +161,7 @@
 ## 2026-11-18 · 产品范围：移除 rTorrent/Deluge
 
 - 用户决定不再为 PTA 开发 rTorrent/Deluge 下载器兼容，产品只保留 qBittorrent + watch 目录。
-- 移除 rtorrent.js / deluge.js / clients-ext 夹具；下载器 API 旧类型返回 UNSUPPORTED_DOWNLOADER。
+- 移除 rtorrent.js / deluge.js / clients-ext 固定样本；下载器 API 旧类型返回 UNSUPPORTED_DOWNLOADER。
 - 历史 M7 记录保留，但当前验收不再要求 rTorrent/Deluge；G5 改为真实目标站 + qB/watch。
 
 ## 2026-11-19 · 源种直传与目标站种子抓取

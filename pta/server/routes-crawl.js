@@ -7,6 +7,7 @@ const limits = require('./limits');
 const flowConfig = require('./flow-config');
 const dupeClassify = require('./dupe-classify');
 const sitePack = require('./site-pack');
+const siteMaps = require('./site-maps');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -38,6 +39,8 @@ module.exports = function (app, ctx) {
     else if (def.catMap && typeof def.catMap === 'object') {
       list = Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k, purpose: k }; });
     }
+    const maps = siteMaps.getHost(DATA_DIR, host);
+    Object.keys(maps.cat || {}).forEach(function (k) { list.push({ id: maps.cat[k], label: k, purpose: k }); });
     const seen = {};
     return list.filter(function (x) { return x && x.id != null; })
       .map(function (x) { return { id: String(x.id), label: String(x.label || x.purpose || x.id), purpose: String(x.purpose || '') }; })

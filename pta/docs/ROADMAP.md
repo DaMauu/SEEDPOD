@@ -131,7 +131,7 @@
 - 验收宽度：360 / 390 / 768 / 1280；新增页面加 1440。
 - 页面专属规则进 SFC scoped；页面外层 `.view` 用 `:global`；子组件用 `:deep`。
 - 小屏规则：列表整页滚、筛选两列网格、卡片同宽、按钮不压缩、徽标贴右、长标题换行。
-- 自动化：把横向滚动/按钮溢出检查接进 `run.sh`，用空数据、长标题、305 站做夹具。
+- 自动化：把横向滚动/按钮溢出检查接进 `run.sh`，用空数据、长标题、305 站做固定样本。
 
 状态（2026-11-17）：八页 scoped、页面外框清零、360/390 小屏修复完成；R2 自动检查已接入 `run.sh`（`responsive-layout.js`，8 页 × 4 宽度）。规范见 `pta/docs/RESPONSIVE.md`。
 
@@ -142,7 +142,7 @@
 - G7 发布状态机：`source → metadata → rules → dupe → media → preview → submitted → injected`，阶段落 SQLite，幂等、可恢复、可重试。
 - G8 原生上传：ffprobe/可选 BDInfo、截图、命名/简介、站点包规则、查重证据、预览、multipart 提交、回查、客户端注入。
 - 仍然单进程 + SQLite；不引入 Redis / 消息队列 / 独立 worker / Postgres。
-- 真实提交依赖 G5 的站点权限和真实 daemon；之前用本地 mock 夹具。
+- 真实提交依赖 G5 的站点权限和真实 daemon；之前用本地 mock 固定样本。
 - 验收：mock 全链路 + 一次授权真实发布；不重复提交；不复制 UA/upbrr 代码/配置/品牌。
 
 详细 goal 卡见 `pta/docs/GOALS.md`。

@@ -24,7 +24,7 @@
 | G8 | 原生单 release 上传准备与站点提交 | ✅ 完成（0.7.172） | G7、G9、G4、G5 | prepared payload 已接 target-upload |
 | G9 | CLI-first 核心层：抓取/查重/发布都可命令行 | ✅ 完成（0.7.171） | G7 | 本地 CLI 12/12，不启 HTTP |
 | G10 | 多目标发布框架 | 🟡 单目标真实全链路已通 · 多目标同发待验 | G8、G9 | 一条 release 多站 dry run/提交/回查 |
-| G11 | 上传准备 1:1：元数据/命名/简介/截图/BDInfo/图床 | ✅ 完成（0.7.183） | G8 | MediaInfo/BDInfo、图床、客户端注入演练均有夹具 |
+| G11 | 上传准备 1:1：元数据/命名/简介/截图/BDInfo/图床 | ✅ 完成（0.7.183） | G8 | MediaInfo/BDInfo、图床、客户端注入演练均有固定样本 |
 | G12 | 全自动流水线：抓取→查重→准备→多站发布 | 🟡 权威种子/crossseed/图片/标签/副标题/简介已接 · 状态机待做 | G10、G11、G13 | 一条命令推进，失败可恢复 |
 | G13 | 站点覆盖与验证：3→10→100 站 | 🟡 覆盖面板 + 批量探测 + 3 站真实证据 | G5、G10 | 177 定义 / 177 计划 ok；10 站探测，8 表单可用；3 站真实 |
 | G14 | 可选 Python sidecar：AI/OCR/pandas/Scrapy | ⚪ 可选 | 有具体需求再开 | 离线 JSON 任务，不换主后端 |
@@ -43,7 +43,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 
 - `pta/checks/responsive-layout.js`
 - 接入 `pta/checks/run.sh`
-- 夹具：305 站、长标题、空/有数据队列、日志、下载器、目标站
+- 固定样本：305 站、长标题、空/有数据队列、日志、下载器、目标站
 - 当前 32 项通过
 
 **证据**：`响应式布局 · 4 宽度 × 8 页 / 32 项通过`。
@@ -184,7 +184,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 新增 `pta/core/index.js`：本地上下文 + status/queue/crawl/screen/prepare/preview/advance/run/publish/targets/target-upload/verify。
 - 新增 `pta/server/target-service.js`：HTTP 路由与 CLI core 共用提交/幂等/阶段逻辑。
 - CLI 默认本地模式，不要求 HTTP；`PTA_BASE` / `--http` 保留远程模式。
-- 本地 CLI 夹具 12/12：status、queue、prepare、preview、advance、run、publish 干跑、target-upload 干跑。
+- 本地 CLI 固定样本 12/12：status、queue、prepare、preview、advance、run、publish 干跑、target-upload 干跑。
 - 面板 smoke/responsive 不回退；`run.sh` 全绿。
 - 备注：crawl/dupe 的 Fastify 路由还未全部收成 core thin adapter，后续可继续。
 
@@ -207,7 +207,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - G7 的阶段状态机先落地。
 - G9 的 CLI/core 分层先落地。
 - G4 规则分诊决定哪些条件保留。
-- G5 提供真实目标站权限和真实 daemon 才能做最终验收；之前用本地 mock 夹具。
+- G5 提供真实目标站权限和真实 daemon 才能做最终验收；之前用本地 mock 固定样本。
 
 **完成（0.7.172）**：
 
@@ -233,7 +233,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - `prepare --targets h1,h2` 生成每站独立 payload；`preview` 返回 `targets`。
 - `target-upload --targets h1,h2` 逐站干跑；单站失败只标该站，不阻断其他站。
 - 单站提交/回查仍复用 target-service；阶段/证据按目标站记录 `targetResults`。
-- CLI 夹具：2 个有定义站 + 1 个缺定义站，2 成功/1 失败。
+- CLI 固定样本：2 个有定义站 + 1 个缺定义站，2 成功/1 失败。
 - 回查已改为解析结果行；测试站实际 0 行，不再假阳性（0.7.175）。
 - 面板已支持多目标芯片多选，提交按钮走多目标接口（0.7.176）。
 - 面板显示按站结果，失败目标站可单独重试（0.7.177）。

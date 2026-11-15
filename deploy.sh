@@ -27,6 +27,10 @@ fi
 rsync -rc --delete \
   --exclude "data/" \
   --exclude "*.log" \
+  --exclude "checks/" \
+  --exclude "fixtures/" \
+  --exclude "docs/" \
+  --exclude "scripts/" \
   "$SRC/pta/" "$DEPLOY_DIR/pta/"
 rsync -c "$SRC/package.json" "$SRC/CHANGELOG.md" "$DEPLOY_DIR/"
 sudo -n systemctl restart "$SERVICE_NAME"

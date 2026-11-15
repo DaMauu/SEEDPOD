@@ -73,4 +73,4 @@ module.exports = function (app, ctx) {
   });
 };
 
-module.exports._test = { matchCats, pickField };
+module.exports._test = { matchCats, pickField, CAT };
