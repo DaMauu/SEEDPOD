@@ -23,6 +23,7 @@ const results = [];
 let cookie = '';
 let addHits = 0, lastAddCookie = '', lastAddType = '', lastAddLen = 0;
 let trackerAdds = 0, lastTrackerBody = '';
+let lastAddBody = '';
 let sourceHits = 0, lastSourceCookie = '';
 
 function check(name, fn) {
@@ -82,7 +83,9 @@ async function main() {
         addHits++;
         lastAddCookie = req.headers.cookie || '';
         lastAddType = req.headers['content-type'] || '';
-        lastAddLen = Buffer.concat(chunks).length;
+        const body = Buffer.concat(chunks);
+        lastAddLen = body.length;
+        lastAddBody = body.toString('utf8');
         res.writeHead(200); res.end('Ok.');
       });
       return;
@@ -90,7 +93,7 @@ async function main() {
     if (url === '/api/v2/app/version') { res.writeHead(200); res.end('v5.0.0'); return; }
     if (url === '/api/v2/torrents/info') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify([{ hash: HASH, name: 'test', state: 'downloading', progress: 0 }]));
+      res.end(JSON.stringify([{ hash: HASH, name: 'test', state: 'downloading', progress: 0, save_path: '/downloads', content_path: '/downloads/test', category: 'test' }]));
       return;
     }
     res.writeHead(404); res.end('');
@@ -209,6 +212,16 @@ async function main() {
     need(j.data.qb && j.data.qb.verified === true, 'qb.verified 不是 true');
     need(j.data.qb.hash === HASH, 'qb.hash 不对：' + j.data.qb.hash);
     need(j.data.qb.state === 'downloading', 'qb.state 不对：' + j.data.qb.state);
+  });
+
+  await check('qB 用 skip_checking 加权威种子', async function () {
+    const dlObj = { url: qb.base, user: 'u', pass: 'p' };
+    const found = await qbMod.findTorrent(dlObj, HASH);
+    need(found.found && found.savePath === '/downloads', 'findTorrent 没回 savePath：' + JSON.stringify(found));
+    const add = await qbMod.addTorrent(dlObj, TORRENT, { savePath: found.savePath, skipChecking: true });
+    need(add.ok === true, '加权威种子失败：' + JSON.stringify(add));
+    need(/skip_checking/.test(lastAddBody) && /true/.test(lastAddBody), '没有 skip_checking=true');
+    need(/\/downloads/.test(lastAddBody), '没有使用源种 savePath');
   });
 
   child.kill();

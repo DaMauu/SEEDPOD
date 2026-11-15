@@ -32,9 +32,9 @@ function usage() {
   pta publish <queueId> [--real] [--json]
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
-  pta target-prepare <queueId> [--targets h1,h2] [--torrent file] [--announce h1=url,h2=url] [--json]
   pta target-upload <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--torrents h1=file,h2=file] [--announce url|h1=url,h2=url] [--fetch-published] [--real] [--json]
   pta target-delete <id|detailsUrl> --host <target> [--reason 测试] [--reason-type 其他] [--check] [--real] [--json]
+  pta crossseed <queueId> --host <target> [--downloader id] [--real] [--json]
   pta target-announce --host <target> [--json]
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
@@ -447,31 +447,6 @@ async function main() {
     });
     return;
   }
-  if (cmd === 'target-prepare') {
-    const id = args[0];
-    if (!id) die('target-prepare 需要 queueId', 2);
-    const targets = opts.targets ? String(opts.targets).split(',').map(function (x) { return x.trim(); }).filter(Boolean) : [];
-    if (!targets.length) die('target-prepare 需要 --targets h1,h2', 2);
-    const b64 = readTorrent(opts.torrent);
-    const ann = opts.announce ? readAnnounceMap(String(opts.announce)) : { single: '', map: null };
-    const body = { queueId: id, targets: targets, torrentBase64: b64 || undefined, targetAnnounces: ann.map || undefined };
-    if (!USE_HTTP) {
-      const x = await core().targetPrepare(body);
-      print(x, opts, function (v) {
-        const ok = (v.targets || []).filter(function (t) { return t.ok; }).length;
-        const failed = (v.targets || []).filter(function (t) { return !t.ok; }).length;
-        return '源种 ' + v.source.infohash + ' · 目标种 ' + ok + '/' + v.targets.length + (failed ? ' · 失败 ' + failed : '');
-      });
-      return;
-    }
-    const d = await api('/api/queue/' + encodeURIComponent(id) + '/targets/prepare', { method: 'POST', body: body });
-    print(d, opts, function (v) {
-      const ok = (v.targets || []).filter(function (t) { return t.ok; }).length;
-      const failed = (v.targets || []).filter(function (t) { return !t.ok; }).length;
-      return '源种 ' + v.source.infohash + ' · 目标种 ' + ok + '/' + v.targets.length + (failed ? ' · 失败 ' + failed : '');
-    });
-    return;
-  }
   if (cmd === 'target-upload') {
     const id = args[0];
     if (!id) die('target-upload 需要 queueId', 2);
@@ -535,6 +510,21 @@ async function main() {
       return '探测 ' + v.total + ' 站 · 检查 ' + v.checked + ' · OK ' + v.ok + ' · 缺字段 ' + v.missing + ' · 失败 ' + v.failed + ' · 无 cookie ' + v.noCookie;
     });
     return;
+  }
+  if (cmd === 'crossseed') {
+    const id = args[0];
+    if (!id) die('crossseed 需要 queueId', 2);
+    if (!opts.host) die('crossseed 需要 --host <target>', 2);
+    const body = { queueId: id, host: String(opts.host), downloader: opts.downloader ? String(opts.downloader) : '', dryRun: !opts.real };
+    if (!USE_HTTP) {
+      const x = await core().crossseed(body);
+      print(x, opts, function (v) {
+        if (v.dryRun) return '辅种计划 · 源种 ' + v.sourceHash + ' → 目标 ' + v.targetHash + ' · 保存路径 ' + (v.savePath || '—') + ' · 跳过校验';
+        return '已加目标种子 · ' + v.targetHash + ' · 跳过校验';
+      });
+      return;
+    }
+    die('crossseed 目前只支持本地模式（去掉 PTA_BASE/--http）', 2);
   }
   if (cmd === 'target-announce') {
     if (!opts.host) die('target-announce 需要 --host <target>', 2);

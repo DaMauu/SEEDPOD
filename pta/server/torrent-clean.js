@@ -44,10 +44,10 @@ function skipValue(buf, i) {
   return bad('未知 bencode 类型');
 }
 
-function topEntries(buf) {
-  if (!Buffer.isBuffer(buf) || buf[0] !== 0x64) bad('种子应以 d 开头');
+function dictEntriesAt(buf, at) {
+  if (!Buffer.isBuffer(buf) || buf[at] !== 0x64) bad('种子应以 d 开头');
   const entries = [];
-  let i = 1;
+  let i = at + 1;
   while (i < buf.length && buf[i] !== 0x65) {
     const k = readString(buf, i);
     const key = k.value.toString('utf8');
@@ -57,8 +57,9 @@ function topEntries(buf) {
     i = end;
   }
   if (buf[i] !== 0x65) bad('字典未结束');
-  return entries;
+  return { entries: entries, end: i + 1 };
 }
+function topEntries(buf) { return dictEntriesAt(buf, 0).entries; }
 
 function strBuf(s) {
   const b = Buffer.from(String(s), 'utf8');
@@ -99,10 +100,35 @@ function replaceAnnounce(buf, announce) {
   return next;
 }
 
+function setInfoField(buf, key, value) {
+  const k = String(key || '');
+  if (['name', 'length', 'files', 'pieces', 'piece length'].indexOf(k) >= 0) bad('不能改文件布局字段：' + k);
+  if (['source', 'private'].indexOf(k) < 0) bad('只允许改 info.source / info.private');
+  const top = dictEntriesAt(buf, 0);
+  const info = top.entries.filter(function (e) { return e.key === 'info'; })[0];
+  if (!info) bad('缺少 info');
+  const infoDict = dictEntriesAt(info.valueRaw, 0);
+  const valueRaw = k === 'private' ? Buffer.from('i' + (value ? '1' : '0') + 'e') : strBuf(String(value));
+  let found = false;
+  const parts = infoDict.entries.map(function (e) {
+    if (e.key !== k) return Buffer.concat([e.keyRaw, e.valueRaw]);
+    found = true;
+    return Buffer.concat([e.keyRaw, valueRaw]);
+  });
+  if (!found) parts.push(Buffer.concat([strBuf(k), valueRaw]));
+  const nextInfo = Buffer.concat([Buffer.from('d'), Buffer.concat(parts), Buffer.from('e')]);
+  const topParts = top.entries.map(function (e) {
+    if (e.key === 'info') return Buffer.concat([e.keyRaw, nextInfo]);
+    return Buffer.concat([e.keyRaw, e.valueRaw]);
+  });
+  const next = Buffer.concat([Buffer.from('d'), Buffer.concat(topParts), Buffer.from('e')]);
+  return { buf: next, beforeInfohash: infoHashOf(buf), infohash: infoHashOf(next), key: k, value: value };
+}
+
 function clean(buf, announce) {
   const before = announceOf(buf);
   const out = replaceAnnounce(buf, announce);
   return { buf: out, announce: String(announce), beforeAnnounce: before, infohash: infoHashOf(out) };
 }
 
-module.exports = { announceOf: announceOf, infoHashOf: infoHashOf, replaceAnnounce: replaceAnnounce, clean: clean };
+module.exports = { announceOf: announceOf, infoHashOf: infoHashOf, replaceAnnounce: replaceAnnounce, setInfoField: setInfoField, clean: clean };

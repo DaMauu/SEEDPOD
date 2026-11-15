@@ -1,6 +1,21 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 07:45（当前 v0.7.212 / 多目标查重前置）
+最后更新：2026-11-19 09:00（当前 v0.7.214 / 权威种子辅种）
+
+## 2026-11-19 改为权威种子辅种（v0.7.214）
+
+- 放弃预生成副本，`target-prepare` 入口删除；上传只清洗成目标站通用 announce。
+- 发布成功后默认抓详情页权威种子，存 `data/torrents/` 0600；副本/同 hash 多份不再使用。
+- 新增 `crossseed`：源种下载完成后，权威种子加 qB，`skip_checking=true`，save path 复用源种；不硬链接。
+- qB addTorrent 支持 skip_checking，findTorrent 回 savePath/contentPath。
+- target 18/18、torrent-clean 6/6、cli 17/17、publish 7/7、smoke 26/26、全量 run.sh 通过。
+
+## 2026-11-19 每站独立 infohash 的目标种（v0.7.213）
+
+- `torrent-clean` 支持改 `info.source`/`info.private`：改变 infohash、保留文件布局；`info.name` 等布局字段禁止改。
+- `target-prepare` 支持 `targetTransforms`，按站生成独立目标种；qB 才能作为独立条目添加。
+- 同 infohash 不允许挂多 tracker 当多份用；布局不同需硬链接/软链接。
+- torrent-clean 6/6、target 20/20、cli 17/17、publish 6/6、smoke 26/26、全量 run.sh 通过。
 
 ## 2026-11-19 多目标查重前置（v0.7.212）
 

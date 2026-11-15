@@ -1,5 +1,22 @@
 # 更新日志
 
+## v0.7.214 · 2026-11-19
+
+### G12 改为权威种子辅种
+- 删除 `target-prepare` 预生成副本入口；不再假设同 infohash 可多份。
+- 上传前只把 tracker 清洗成目标站通用 announce，不保留源站 tracker；发布成功后默认抓详情页权威种子，存 0600。
+- 新增 `crossseed <queueId> --host <target>`：源种下载完成后，把权威种子加进 qB，`skip_checking=true`，保存路径用源种 save path；不硬链接。
+- qB `addTorrent` 支持 `skip_checking`，`findTorrent` 回 `savePath/contentPath`。
+- target 18/18、torrent-clean 6/6、cli 17/17、publish 7/7、smoke 26/26、全量 run.sh 通过。
+
+## v0.7.213 · 2026-11-19
+
+### G12 每站独立 infohash 的目标种
+- `torrent-clean` 新增 `setInfoField`：只允许改 `info.source` / `info.private`，会改变 infohash 但保留文件布局；`info.name/length/files/pieces` 直接拒绝。
+- `target-prepare` 支持 `targetTransforms`：按站改 source/private，生成目标站对应的独立目标种；不再假设同 infohash 可以多份。
+- 明确 qB 模型：同 infohash 不能多份；要独立条目必须目标种有独立 infohash，文件布局不同再配硬链接/软链接。
+- torrent-clean 6/6、target 20/20、cli 17/17、publish 6/6、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.212 · 2026-11-19
 
 ### G12 多目标查重前置

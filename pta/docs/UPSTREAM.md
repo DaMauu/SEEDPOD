@@ -208,3 +208,16 @@
 - 多目标发布前逐站查重；已有同标题/同 infohash 的目标站标 `TARGET_EXISTS`，不生成副本、不发布。
 - 副本 `.torrent` 内只保留目标站 announce，源站 tracker 必须替换掉；但 qB 以 infohash 为唯一键，同 infohash 不能作为多个独立种子。
 - 若要求 qB 里 3 个独立条目、每条只带一个目标 tracker，必须改 `info`（如 name）导致 infohash 变化，并准备对应数据/重命名；否则只能一个种子挂多个目标 tracker（且移除源 tracker）。
+
+## 2026-11-19 · 每站独立 infohash 与辅种模型
+
+- 参考 cross-seed / ptool / xseed 资料：qB 以 infohash 唯一；同 hash 多 tracker 会造成统计串站/封号风险，不能当多份辅种。
+- 私有站上传常改 `info.source`（部分还改 private/name）；`info` 变则 hash 变，qB 才能作为独立条目。
+- 决定：只改 `info.source`/`info.private` 生成独立目标种，保留文件布局；`info.name` 改路径，需 hardlink/reflink 才能跳过校验，暂不自动改。
+- 每站 source 值需从该站已有种子 diff 学习或配置；下一步做规则表和 link 目录。
+
+## 2026-11-19 · 最终辅种方案：权威种子
+
+- 放弃预生成副本；上传只清洗目标站通用 announce，发布成功后抓详情页权威种子。
+- 权威种子加 qB 时 `skip_checking=true`，save path 复用源种；文件结构一致，不用硬链接。
+- 同 infohash 的站不能加第二份，直接报错；不伪造、不串 tracker。

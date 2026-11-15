@@ -46,6 +46,25 @@ async function main() {
     need(text.indexOf('source.example') < 0, '旧 announce-list 还在');
     need(text.indexOf('target.example') >= 0, '新 announce-list 不在');
   });
+  await check('改 info.source/private 会改 hash 但不改文件名', function () {
+    const srcHash = clean.infoHashOf(src);
+    const out = clean.setInfoField(src, 'source', '[target] Example');
+    need(clean.infoHashOf(out.buf) !== srcHash, '改 source 后 hash 没变');
+    need(out.beforeInfohash === srcHash, 'before hash 不对');
+    need(qb.parseTorrent(out.buf).name === 'clean-test', '改 source 后 info.name 变了');
+    need(out.buf.toString('utf8').indexOf('[target] Example') >= 0, 'source 没写进去');
+    need(clean.announceOf(out.buf).indexOf('source.example') >= 0, '改 source 不该动 announce');
+    const p = clean.setInfoField(src, 'private', 1);
+    need(clean.infoHashOf(p.buf) !== srcHash, '改 private 后 hash 没变');
+    need(p.buf.toString('utf8').indexOf('7:privatei1e') >= 0, 'private 没写进去');
+  });
+
+  await check('拒绝改文件布局字段', function () {
+    let ok = false;
+    try { clean.setInfoField(src, 'name', 'x'); } catch (e) { ok = true; }
+    need(ok, '改 info.name 没被拒绝');
+  });
+
   await check('拒绝空/非 http announce', function () {
     let ok = false;
     try { clean.replaceAnnounce(src, 'not-a-url'); } catch (e) { ok = true; }

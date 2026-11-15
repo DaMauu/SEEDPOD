@@ -1,6 +1,6 @@
 # 开发进度（PROGRESS）
 
-最后更新：2026-11-19 07:45
+最后更新：2026-11-19 09:00
 当前 goal：**G10 多目标发布**
 当前 goal 进度：**99%**
 运行状态：**全部站点停用 · 调度关 · 真发布关 · 队列 0**
@@ -40,6 +40,18 @@
 - G12：依赖 G13，暂不可开。
 - G14：可选，等明确 AI/OCR/pandas/Scrapy 需求。
 - 没有可自动推进的 goal；需要用户给权限/环境或拍板后才能继续。
+
+## 2026-11-19 改为权威种子辅种（v0.7.214）
+
+- 放弃预生成副本；上传只清洗通用 tracker，发布后抓权威种子。
+- `crossseed` 用 qB skip_checking + 源种 save path 加权威种子；不硬链接。
+- target 18/18、torrent-clean 6/6、cli 17/17、publish 7/7、smoke 26/26、全量 run.sh 通过。
+
+## 2026-11-19 每站独立 infohash（v0.7.213）
+
+- 支持改 info.source/private 生成独立目标种；info.name 等布局字段禁止改。
+- qB 独立条目靠不同 infohash；同 infohash 不挂多 tracker 当多份。
+- torrent-clean 6/6、target 20/20、全量 run.sh 通过；下一步做每站 source 规则和 hardlink/link。
 
 ## 2026-11-19 多目标查重前置（v0.7.212）
 

@@ -243,14 +243,14 @@ async function findTorrent(d, hash, name) {
       if (r.res.status === 200) {
         const list = await r.res.json().catch(function () { return []; });
         const t = Array.isArray(list) ? list[0] : null;
-        if (t) return { found: true, hash: t.hash || hash, name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0 };
+        if (t) return { found: true, hash: t.hash || hash, name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0, savePath: String(t.save_path || ''), contentPath: String(t.content_path || ''), category: String(t.category || '') };
       }
     }
     const all = await qbGet(d, '/api/v2/torrents/info', '');
     if (all.res.status === 200) {
       const list = await all.res.json().catch(function () { return []; });
       const t = (Array.isArray(list) ? list : []).filter(function (x) { return (hash && x.hash === hash) || (name && x.name === name); })[0];
-      if (t) return { found: true, hash: t.hash || hash || '', name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0 };
+      if (t) return { found: true, hash: t.hash || hash || '', name: t.name || name || '', state: t.state || '', progress: Number(t.progress) || 0, savePath: String(t.save_path || ''), contentPath: String(t.content_path || ''), category: String(t.category || '') };
     }
     return { found: false };
   } catch (e) {
@@ -271,6 +271,7 @@ async function addTorrent(d, buf, opts) {
     if (o.category) f.append('category', String(o.category));
     if (o.tags) f.append('tags', String(o.tags));
     f.append('paused', o.paused ? 'true' : 'false');
+    if (o.skipChecking) f.append('skip_checking', 'true');
     f.append('autoTMM', 'false');
     return f;
   }

@@ -375,21 +375,6 @@ async function main() {
     need(hits.length === 0, '清洗干跑发了请求：' + hits.length);
   });
 
-  await check('提交前生成每站目标种', async function () {
-    const before = hits.length;
-    const j = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/prepare', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64') })
-    });
-    need(j.status === 200 && j.body.ok, '目标种预生成失败：' + j.status);
-    const d = j.body.data;
-    need(d.source && d.source.infohash === hash && fs.existsSync(d.source.path), '源种没落盘：' + JSON.stringify(d.source));
-    const t = (d.targets || [])[0];
-    need(t && t.ok && t.infohash === hash && t.sameInfohash === true, '目标种不对：' + JSON.stringify(t));
-    need(t.path && fs.existsSync(t.path), '目标种没落盘：' + (t.path || ''));
-    need(hits.length === before, '预生成目标种不该上传');
-  });
-
   await check('UNIT3D / Gazelle 默认映射', async function () {
     async function mk(title, targetSite) {
       const r = await json(BASE + '/api/queue', {
@@ -525,8 +510,8 @@ async function main() {
     const tt = g.body.data.targetResults && g.body.data.targetResults['127.0.0.1'] && g.body.data.targetResults['127.0.0.1'].targetTorrent;
     need(tt && tt.infohash === hash && tt.sameInfohash === true, '没抓目标站生成的种子：' + JSON.stringify(tt));
     need(tt.path && fs.existsSync(tt.path), '目标站种子文件没落盘：' + (tt.path || ''));
-    need(tt.source === 'cleaned', '目标种不是预生成的清洗种：' + JSON.stringify({ source: tt.source }));
-    need(downloadHits === 0, '默认不该再下载目标站发布种子，实际 ' + downloadHits + ' 次');
+    need(tt.source === 'published', '目标种不是发布后的权威种子：' + JSON.stringify({ source: tt.source }));
+    need(downloadHits === 1, '默认应抓一次目标站发布种子，实际 ' + downloadHits + ' 次');
     need(g.body.data.targetUpload && g.body.data.targetUpload.targetTorrent && g.body.data.targetUpload.targetTorrent.sameInfohash === true, 'targetUpload 没记目标站种子');
     need(g.body.data.stage === 'submitted', '状态机不是 submitted：' + g.body.data.stage);
     need(g.body.data.stageEvidence && g.body.data.stageEvidence.infohash, '没有提交证据 infohash');
@@ -538,17 +523,7 @@ async function main() {
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
   });
 
-  await check('目标站已有资源时跳过生成与发布', async function () {
-    const j = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/prepare', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64') })
-    });
-    need(j.status === 200 && j.body.ok, '查重预生成失败：' + j.status);
-    const t = (j.body.data.targets || [])[0];
-    need(t && t.skipped === true && t.code === 'TARGET_EXISTS', '已有资源没跳过：' + JSON.stringify(t));
-  });
-
-  await check('缓存目标站 announce 自动清洗', async function () {
+  await check('上传前通用 announce 清洗', async function () {
     const j = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: true })
@@ -556,6 +531,23 @@ async function main() {
     need(j.status === 200 && j.body.ok, '自动清洗干跑失败：' + j.status);
     need(j.body.data.cleaned === true, '缓存 announce 没触发自动清洗：' + JSON.stringify(j.body.data && { cleaned: j.body.data.cleaned }));
     need(j.body.data.torrent && j.body.data.torrent.hash === hash, '自动清洗后 infohash 变了');
+  });
+
+  await check('上传前查重：已有资源跳过且不发请求', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Target Upload Test 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', shots: ['a', 'b', 'c'] })
+    });
+    need(add.status === 200 && add.body.ok, '建重复队列失败');
+    const id = add.body.data.id;
+    const before = hits.length;
+    const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: id, torrentBase64: torrent.toString('base64'), dryRun: false })
+    });
+    need(up.status === 200 && up.body && up.body.error && up.body.error.code === 'TARGET_EXISTS', '已有资源没跳过：' + up.status + ' ' + JSON.stringify(up.body && up.body.error));
+    need(hits.length === before, '已有资源跳过后仍发了上传');
+    await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
   });
 
   await check('删除测试种：dry-run、真删与回查', async function () {

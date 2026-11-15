@@ -148,10 +148,38 @@ function createCore(opts) {
     }));
   }
 
-  async function targetPrepare(input) {
+  async function crossseed(input) {
     const b = input || {};
-    if (!b.queueId) throw new Error('target-prepare 需要 queueId');
-    return unwrap(await ctx.targetService.prepareTorrents(b));
+    if (!b.queueId) throw new Error('crossseed 需要 queueId');
+    const host = String(b.host || '').toLowerCase();
+    if (!host) throw new Error('crossseed 需要 --host <target>');
+    const item = ctx.targetService.loadQueue(b.queueId);
+    if (!item) throw new Error('队列条目不存在');
+    const results = item.data.targetResults || {};
+    const tr = results[host] || {};
+    const pub = tr.publishedTorrent || tr.targetTorrent;
+    if (!pub || !pub.path || !fs.existsSync(pub.path)) throw new Error('没有发布后的权威种子，先完成目标站发布');
+    const sourceHash = (tr.sourceTorrent && tr.sourceTorrent.infohash) || item.data.infohash || '';
+    if (!sourceHash) throw new Error('没有源种 infohash');
+    const rows = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data); }).filter(function (x) { return x && (x.kind || 'qb') === 'qb'; });
+    const dl = rows.filter(function (x) { return !b.downloader || String(x.id) === String(b.downloader); })[0];
+    if (!dl) throw new Error('没有匹配的 qB 下载器');
+    const found = await qb.findTorrent(dl, sourceHash);
+    if (!found.found) throw new Error('源种不在 qB 里，先添加源种');
+    if (Number(found.progress) < 0.999) throw new Error('源种还没下载完成：' + Math.round((Number(found.progress) || 0) * 100) + '%');
+    const buf = fs.readFileSync(pub.path);
+    const meta = qb.parseTorrent(buf);
+    if (!meta.hash) throw new Error('权威种子解析不出 infohash');
+    if (meta.hash === sourceHash) throw new Error('权威种子和源种同 infohash，qB 不能加第二份');
+    const plan = { queueId: item.id, host: host, downloader: dl.id, sourceHash: sourceHash, targetHash: meta.hash, savePath: found.savePath || '', skipChecking: true, dryRun: b.dryRun !== false };
+    if (b.dryRun !== false) return plan;
+    const r = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: true, paused: false, category: found.category || '' });
+    if (!r.ok) throw new Error(r.message || r.error || 'qB 加权威种子失败');
+    tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: true };
+    results[host] = tr;
+    item.data.targetResults = results;
+    ctx.targetService.saveQueue(item.data);
+    return Object.assign(plan, { ok: true });
   }
 
   async function targetDelete(input) {
@@ -307,7 +335,7 @@ function createCore(opts) {
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,
     targetDelete: targetDelete,
-    targetPrepare: targetPrepare,
+    crossseed: crossseed,
     targetAnnounce: targetAnnounce,
     probe: probe,
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
