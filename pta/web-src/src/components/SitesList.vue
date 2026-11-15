@@ -3,16 +3,15 @@
     <section class="sites-list">
       <div class="st-head">
         <span class="st-all"><input type="checkbox" id="site-all" aria-label="全选本站点" :checked="allPicked" :indeterminate.prop="somePicked" @change="emit('toggle-all', $event.target.checked)"></span>
-        <span></span><span>站点</span><span>预设</span><span>登录</span><span>架构</span>
+        <span>架构</span><span>站点</span><span></span><span>登录</span>
       </div>
       <div class="sites-rows" id="sites-list">
         <div v-for="s in pageRows" :key="s.name" class="site-item" :class="{ on: sel === s.name }" @click="emit('open', s.name)">
           <input type="checkbox" class="site-pick" :checked="picks.includes(s.name)" @click.stop @change="emit('pick', s.name)">
-          <span class="st" :class="dotCls(s)"><i></i></span>
-          <span class="si-txt"><b>{{ s.title }}</b></span>
-          <span class="si-preset" :class="{ on: !!s.preset }">{{ presetTxt(s) }}</span>
-          <span class="si-login" :class="dotCls(s)">{{ loginTxt(s) }}</span>
           <span class="si-arch"><em class="chip" :class="archCls(s)">{{ archLabel(s) }}</em></span>
+          <span class="si-txt"><b>{{ s.title }}</b></span>
+          <span class="st" :class="dotCls(s)"><i></i></span>
+          <span class="si-login" :class="dotCls(s)">{{ loginTxt(s) }}</span>
           <span class="si-mode">{{ modeTxt(s) }}</span>
           <span class="si-last">{{ lastCrawlTxt(s) }}</span>
         </div>
@@ -156,7 +155,7 @@ function go(n) {
 .si-preset.on{color:var(--accent);font-weight:600}
 .site-item .st{flex:0 0 8px;width:8px;justify-content:center}
 .site-item .st i{width:7px;height:7px}
-.st-head, .site-item{grid-template-columns:26px 10px minmax(0,1fr) 96px 84px 84px 56px 92px;gap:12px}
+.st-head, .site-item{grid-template-columns:26px 84px minmax(0,1fr) 10px 84px 56px 92px;gap:12px}
 .site-item .st{justify-self:start}
 .sites-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 0; font-size: 12px; color: var(--muted); }
 @media (max-width: 900px) {
@@ -186,8 +185,8 @@ function go(n) {
 /* ===== 站点列 + 右侧详情：布满卡片 ===== */
 .sites-work { flex: 1; min-height: 0; display: flex; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .sites-work .sites-list { width: clamp(360px, 42%, 560px); flex: 0 0 clamp(360px, 42%, 560px); min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #fff; }
-.sites-work .st-head { grid-template-columns: 24px 10px minmax(0, 1fr) 82px 66px 74px; gap: 10px; padding: 0 16px; height: 34px; }
-.sites-work .site-item { grid-template-columns: 24px 10px minmax(0, 1fr) 82px 66px 74px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
+.sites-work .st-head { grid-template-columns: 24px 74px minmax(0, 1fr) 10px 66px 56px 74px; gap: 10px; padding: 0 16px; height: 34px; }
+.sites-work .site-item { grid-template-columns: 24px 74px minmax(0, 1fr) 10px 66px 56px 74px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
 .sites-work .si-txt b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; }
 .sites-work .si-mode, .sites-work .si-last { display: none; }
 .sites-work .sites-rows { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
