@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.212 · 2026-11-19
+
+### G12 多目标查重前置
+- `target-prepare` 逐目标站查重：已有同标题/同 infohash 时标 `TARGET_EXISTS`，跳过目标种生成。
+- 真实上传前再查一次；已有资源只记录 skip，不提交、不发布；`allOk` 把 skipped 视为不失败。
+- target 19/19、torrent-clean 4/4、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.211 · 2026-11-19
 
 ### G12 提交前生成目标种

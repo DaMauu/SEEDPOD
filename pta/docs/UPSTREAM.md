@@ -202,3 +202,9 @@
 
 - 目标种在提交前生成：源种 info 不变，只换目标 announce/announce-list；源种和目标种都缓存 0600。
 - 这样 qB 可以在下载完成后直接追加目标 tracker 辅种，不需要等发布后下载目标站生成种子。
+
+## 2026-11-19 · 多目标查重与副本 tracker
+
+- 多目标发布前逐站查重；已有同标题/同 infohash 的目标站标 `TARGET_EXISTS`，不生成副本、不发布。
+- 副本 `.torrent` 内只保留目标站 announce，源站 tracker 必须替换掉；但 qB 以 infohash 为唯一键，同 infohash 不能作为多个独立种子。
+- 若要求 qB 里 3 个独立条目、每条只带一个目标 tracker，必须改 `info`（如 name）导致 infohash 变化，并准备对应数据/重命名；否则只能一个种子挂多个目标 tracker（且移除源 tracker）。

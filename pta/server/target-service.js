@@ -203,6 +203,17 @@ function makeTargetService(ctx, target) {
     }
     const uploadItem = preparedItem(item.data, host);
     const plan = preparedPlan(item.data, host);
+    if (!dryRun && b.preCheckDupe !== false) {
+      let pre = null;
+      try { pre = await target.verify(host, uploadItem, t.buf, {}); } catch (e) { pre = null; }
+      if (pre && pre.ok && pre.data && pre.data.found) {
+        const msg = '目标站已有这条资源，跳过';
+        setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: pre.data });
+        if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
+        saveQueue(item.data);
+        return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: pre.data } };
+      }
+    }
     const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });
     if (!r.ok) {
       if (!dryRun) {
@@ -316,6 +327,12 @@ function makeTargetService(ctx, target) {
     else if (raw && typeof raw === 'object') Object.keys(raw).forEach(function (h) { perAnnounce[String(h).toLowerCase()] = raw[h]; });
     const out = [];
     for (const host of hosts) {
+      let pre = null;
+      try { pre = await target.verify(host, item.data, tr.buf, {}); } catch (e) { pre = { ok: false, message: '目标站查重失败' }; }
+      if (pre && pre.ok && pre.data && pre.data.found) {
+        out.push({ host: host, ok: false, skipped: true, code: 'TARGET_EXISTS', message: '目标站已有这条资源', verify: { found: true, title: pre.data.title || '', mode: pre.data.mode || '' } });
+        continue;
+      }
       let announce = String(b.cleanAnnounce || '').trim();
       if (hosts.length > 1) announce = '';
       if (!announce) announce = String(perAnnounce[host] || '').trim();
@@ -378,9 +395,9 @@ function makeTargetService(ctx, target) {
       if (perAnnounce[host]) one.cleanAnnounce = perAnnounce[host];
       else if (hosts.length > 1) one.cleanAnnounce = '';
       const r = await upload(host, one);
-      out.push({ host: host, ok: !!r.ok, code: r.code || '', message: r.message || '', data: r.data || null });
+      out.push({ host: host, ok: !!r.ok, skipped: !!r.skipped, code: r.code || '', message: r.message || '', data: r.data || null });
     }
-    return { ok: true, data: { queueId: item.id, dryRun: b.dryRun !== false, targets: out, allOk: out.every(function (x) { return x.ok }) } };
+    return { ok: true, data: { queueId: item.id, dryRun: b.dryRun !== false, targets: out, allOk: out.every(function (x) { return x.ok || x.skipped; }) } };
   }
 
   async function probe(body) {

@@ -24,6 +24,7 @@ let deleteBody = null;
 let deleteBodyReasons = [];
 let mockDeleted2 = false;
 let downloadHits = 0;
+let published = false;
 let child = null;
 let mock = null;
 
@@ -130,6 +131,7 @@ function startMock(hash, torrentBuf) {
           else fields[nm[1]] = valBuf.toString('utf8');
         });
         hits.push({ fields: fields, file: file, cookie: req.headers.cookie || '' });
+        published = true;
         res.writeHead(200, { 'content-type': 'text/html' });
         res.end('<html><body>上传成功 <a href="details.php?id=42">详情</a></body></html>');
       });
@@ -191,6 +193,10 @@ function startMock(hash, torrentBuf) {
     }
     if (req.method === 'GET' && (u.pathname === '/torrents.php' || u.pathname === '/details.php')) {
       res.writeHead(200, { 'content-type': 'text/html' });
+      if (u.pathname === '/torrents.php' && !published) {
+        res.end('<html><body><div>没有找到结果</div></body></html>');
+        return;
+      }
       if (mockDeleted && deletedId === '43') {
         res.end('<html><body>错误 没有该ID的种子</body></html>');
         return;
@@ -216,7 +222,7 @@ function startMock(hash, torrentBuf) {
 async function main() {
   const torrent = makeTorrent();
   const hash = infoHash(torrent);
-  mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = []; downloadHits = 0;
+  mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = []; downloadHits = 0; published = false;
   mock = await startMock(hash, torrent);
   mockPort = mock.address().port;
   const pack = {
@@ -530,6 +536,16 @@ async function main() {
     });
     need(again.status === 409 && again.body.error && again.body.error.code === 'ALREADY_SUBMITTED', '重复提交没被拦住');
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
+  });
+
+  await check('目标站已有资源时跳过生成与发布', async function () {
+    const j = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/prepare', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64') })
+    });
+    need(j.status === 200 && j.body.ok, '查重预生成失败：' + j.status);
+    const t = (j.body.data.targets || [])[0];
+    need(t && t.skipped === true && t.code === 'TARGET_EXISTS', '已有资源没跳过：' + JSON.stringify(t));
   });
 
   await check('缓存目标站 announce 自动清洗', async function () {
