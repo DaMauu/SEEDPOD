@@ -94,9 +94,28 @@ function readManifest(dir) {
   } catch (e) { return {}; }
 }
 
+function readRoutes(dir) {
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(dir, '..', 'routes.json'), 'utf8'));
+    const out = {};
+    (Array.isArray(j) ? j : []).forEach(function (x) {
+      if (!x || !x.host) return;
+      out[String(x.host).toLowerCase()] = {
+        engine: String(x.engine || ''),
+        browseUrl: String(x.browseUrl || ''),
+        uploadUrl: String(x.uploadUrl || ''),
+        browseOk: !!x.browseOk,
+        uploadOk: !!x.uploadOk
+      };
+    });
+    return out;
+  } catch (e) { return {}; }
+}
+
 function main() {
   const files = fs.readdirSync(DIR).filter(function (f) { return /\.html?$/i.test(f); });
   const manifest = readManifest(DIR);
+  const routes = readRoutes(DIR);
   const perHost = {};
   const rawHost = {};
   let empty = 0, noHost = 0, fromName = 0;
@@ -134,6 +153,7 @@ function main() {
     const cur = all.sites[h] || {};
     cur.cat = Object.assign({}, perHost[h], cur.cat || {});
     cur.raw = Object.assign({}, rawHost[h] || {}, cur.raw || {});
+    if (routes[h]) cur.route = Object.assign({}, routes[h], { at: new Date().toISOString() });
     cur.at = new Date().toISOString();
     all.sites[h] = cur;
   });
