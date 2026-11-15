@@ -35,6 +35,16 @@ node pta/cli.js status
 
 或者加 `--http`，同样需要 `PTA_BASE` 和登录环境变量。
 
+## 本地 CLI 读生产数据
+
+如果面板由 systemd/Docker 用独立密钥文件启动，CLI 必须带同一份环境，否则会按 `data/.secret` 规则找 key，可能生成错误的本地 key：
+
+```bash
+sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部署 env 文件>
+```
+
+`--env-file` 只补未设置的变量，不覆盖当前 shell 已导出的值；不会打印密钥、密码或 URL。
+
 ## 二、现在能做什么
 
 | 命令 | 作用 | 默认 |
@@ -52,6 +62,7 @@ node pta/cli.js status
 | `advance <queueId>` | draft → prepared → previewed 自动推进；后续提示用 target-upload/publish | 本地 |
 | `run --stage prepared\|previewed` | 批量准备/预览可处理队列 | 本地 |
 | `clients [--test]` | 列下载器；`--test` 只读探测 qB/watch 连通性 | 只读 |
+| `coverage [--list]` | 离线统计目标站定义/cookie/上传/回查就绪数 | 只读，不联网 |
 
 输出：
 
@@ -59,6 +70,7 @@ node pta/cli.js status
 node pta/cli.js status --json
 node pta/cli.js queue --status pending --limit 20
 node pta/cli.js clients --test
+node pta/cli.js coverage --json
 ```
 
 ## 三、现状
@@ -87,6 +99,7 @@ SQLite + data/
 ```bash
 pta status
 pta clients [--test]
+pta coverage [--list]
 pta crawl --site <host> --limit 100 [--real]
 pta screen --limit 50 [--host <host>]
 pta queue --stage <stage> [--json]

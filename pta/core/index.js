@@ -146,6 +146,20 @@ function createCore(opts) {
     }));
   }
 
+  function coverage() {
+    const list = ctx.target.list();
+    const out = { total: list.length, withCookie: 0, ready: 0, upload: 0, verify: 0, engines: {}, sites: list };
+    list.forEach(function (t) {
+      if (t.hasCookie) out.withCookie++;
+      if (t.ready) out.ready++;
+      if (t.uploadPath) out.upload++;
+      if (t.verifyPath) out.verify++;
+      const e = t.engine || '?';
+      out.engines[e] = (out.engines[e] || 0) + 1;
+    });
+    return out;
+  }
+
   async function clients(input) {
     const b = input || {};
     const rows = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data) || {}; });
@@ -244,6 +258,7 @@ function createCore(opts) {
     targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
     inject: inject,
     clients: clients,
+    coverage: coverage,
     images: images,
     verify: verify,
     close: () => { try { db.close() } catch (e) { console.warn('[seedpod] close:', e && e.message ? e.message : e) } }

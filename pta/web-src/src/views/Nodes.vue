@@ -30,7 +30,8 @@
               <div v-if="totalOf(nd)" class="nr-bar"><i :style="{ width: pct(nd).toFixed(0) + '%' }"></i></div>
               <span v-if="totalOf(nd)" class="nr-pct">已用 {{ pct(nd).toFixed(0) }}%</span>
             </div>
-            <span v-if="online(nd)" class="badge green">在线</span>
+            <span v-if="nd.hasPass && nd.passReadable === false" class="badge red" title="存储的密码用当前密钥解不开">密码失效</span>
+            <span v-else-if="online(nd)" class="badge green">在线</span>
             <span v-else class="badge red">离线</span>
             <button class="link-btn nr-set" type="button" @click="openEdit(nd)">设置</button>
           </div>
@@ -60,7 +61,8 @@
             <label class="field"><span>用户名（qB）</span>
               <input v-model="form.user" class="input" placeholder="admin"></label>
             <label class="field"><span>密码（qB）</span>
-              <input v-model="form.pass" class="input" type="password" :placeholder="editing ? '留空表示不改已存的密码' : '不设置就留空'" autocomplete="new-password"></label>
+              <input v-model="form.pass" class="input" type="password" :placeholder="passPlaceholder" autocomplete="new-password">
+              <span v-if="passBroken" class="soft">存储的密码用当前密钥解不开：请重新输入密码并保存。</span></label>
           </div>
           <div class="set-field">
             <div class="lbl"><span>免密登录</span></div>
@@ -107,6 +109,8 @@ const editing = ref('')
 const form = reactive({ kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
 const busy = reactive({ save: false, test: false, cats: false })
 const testResult = ref('')
+const passBroken = ref(false)
+const passPlaceholder = computed(function () { return passBroken.value ? '旧密码解不开，重新输入' : (editing.value ? '留空表示不改已存的密码' : '不设置就留空'); })
 const cats = ref([])
 const catsMsg = ref('')
 let timer = null
@@ -154,6 +158,7 @@ function openAdd() {
   editing.value = ''
   Object.assign(form, { kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
   testResult.value = ''
+  passBroken.value = false
   cats.value = []
   catsMsg.value = ''
   modalOpen.value = true
@@ -171,6 +176,7 @@ function openEdit(nd) {
     watchPath: nd.watchPath || ''
   })
   testResult.value = ''
+  passBroken.value = !!(nd.hasPass && nd.passReadable === false)
   cats.value = []
   catsMsg.value = ''
   modalOpen.value = true

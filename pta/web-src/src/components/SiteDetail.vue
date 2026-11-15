@@ -17,7 +17,7 @@
                 <select class="select slim sd-arch-sel" id="sd-arch" :value="s.arch" title="站点架构" @click.stop @change="setArch(s, $event)">
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
-                <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
+                <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
                 <button class="btn slim tabbtn" :class="{ active: tab === 'overview' }" type="button" @click.stop="tab = 'overview'">概览</button>
                 <button class="btn slim tabbtn" :class="{ active: tab === 'settings' }" type="button" @click.stop="tab = 'settings'">设置</button>
               </div>
@@ -42,7 +42,7 @@
                       <h4>登录</h4>
                       <div class="sd-row"><span>状态</span><b :class="dotCls(s) + '-t'">{{ loginTxt(s) }}</b></div>
                       <div class="sd-row"><span>方式</span><b>Cookie</b></div>
-                      <div class="sd-row"><span>登录凭据</span><b>{{ s.cookieSaved ? '已保存' : '未保存' }}</b></div>
+                      <div class="sd-row"><span>登录凭据</span><b :class="s.cookieSaved && s.cookieReadable === false ? 'bad-t' : ''">{{ s.cookieSaved ? (s.cookieReadable ? '已保存' : '已保存但解不开，请重新导入') : '未保存' }}</b></div>
                       <div class="sd-row"><span>引擎</span><b>{{ engineTxt(s) }}</b></div>
                       <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
                       <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
@@ -77,14 +77,14 @@
                   </div>
                   <div class="set-fields">
                     <div class="set-field">
-                      <div class="lbl"><span>Cookie（{{ s.cookieSaved ? '已保存' + cookieWhen(s) : '未保存' }}）</span></div>
+                      <div class="lbl"><span>Cookie（{{ s.cookieSaved ? (s.cookieReadable ? '已保存' + cookieWhen(s) : '已保存但解不开') : '未保存' }}）</span></div>
                       <div class="ctl">
-                        <textarea v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved ? '已保存的 cookie 不回显；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2'"></textarea>
+                        <textarea v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 不回显；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
                       </div>
                     </div>
                   </div>
                   <div class="sd-cookie-bar">
-                    <button class="btn ghost slim" id="sd-cookie-test" type="button" :disabled="busy.selfcheck || !s.cookieSaved" @click.stop="selfcheckOne(s)">自检</button>
+                    <button class="btn ghost slim" id="sd-cookie-test" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" @click.stop="selfcheckOne(s)">自检</button>
                     <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
                   </div>
                 </template>

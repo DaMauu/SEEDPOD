@@ -142,7 +142,11 @@ module.exports = function (app, ctx) {
   /* ---- 凭据：只回 hasCookie，不回明文 ---- */
   app.get('/api/credentials', async () => {
     const rows = all('SELECT host, cookie, updated_at FROM credentials');
-    return ok(rows.map(function (r) { return { host: r.host, hasCookie: !!r.cookie, updatedAt: r.updated_at || null }; }));
+    return ok(rows.map(function (r) {
+      let readable = false;
+      if (r.cookie) { try { readable = !!secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { readable = false; } }
+      return { host: r.host, hasCookie: !!r.cookie, readable: readable, updatedAt: r.updated_at || null };
+    }));
   });
   app.put('/api/credentials/:host', async (req, reply) => {
     const host = req.params.host;
@@ -150,6 +154,7 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     if (b.cookie !== undefined) {
       const cookie = String(b.cookie || '');
+      if (cookie && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 PTA_SECRET_FILE/PTA_SECRET，再保存 cookie', 409);
       if (cookie.length > 4096) return bad(reply, 'BAD_REQUEST', 'cookie 太长');
       const enc = cookie ? secretbox.encrypt(cookie, KEYRING.key) : null;
       db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET cookie=excluded.cookie, updated_at=excluded.updated_at')

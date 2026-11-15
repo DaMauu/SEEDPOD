@@ -24,6 +24,7 @@ function usage() {
   pta prepare <queueId> [--host <target>] [--targets h1,h2] [--torrent file] [--mediainfo file] [--bdinfo file] [--json]
   pta images <queueId> [--host 站内|Pixhost|Imgbox|本地图床] [--real] [--retries 2] [--json]
   pta clients [--test] [--json]
+  pta coverage [--json] [--list]
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
@@ -37,7 +38,8 @@ function usage() {
   默认直接读本地 SQLite（不启后端）；设置 PTA_BASE 或加 --http 才走 HTTP。
   PTA_BASE   HTTP 模式地址，默认 http://127.0.0.1:8080
   PTA_USER / PTA_PASS   面板账号（或 PTA_COOKIE 直接给会话）
-  --real 才真抓/真发；默认干跑。`);
+  --real 才真抓/真发；默认干跑。
+  --env-file <file>  读取部署环境（如 /etc/seedpod.env），不覆盖已设置变量。`);
 }
 function die(msg, code) {
   console.error(msg);
@@ -113,6 +115,23 @@ for (let i = 0; i < argv.length; i++) {
     else { opts[k] = v; i++; }
   } else args.push(a);
 }
+function loadEnvFile(file) {
+  const fs = require('fs');
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch (e) { die('读不到 env 文件：' + file, 2); }
+  text.split(/\r?\n/).forEach(function (line) {
+    line = line.trim();
+    if (!line || line.startsWith('#')) return;
+    const i = line.indexOf('=');
+    if (i < 0) return;
+    const k = line.slice(0, i).trim();
+    let v = line.slice(i + 1).trim();
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+    if (k && process.env[k] === undefined) process.env[k] = v;
+  });
+}
+const ENV_FILE = opts['env-file'] || process.env.PTA_ENV_FILE;
+if (ENV_FILE) loadEnvFile(String(ENV_FILE));
 
 async function main() {
   if (cmd === 'status') {
@@ -217,6 +236,32 @@ async function main() {
       return '已准备 ' + x.id + ' · ' + (p.title || '无标题') + ' · 目标 ' + (p.targetHost || '未选') +
         ' · 字段 ' + Object.keys((p.target && p.target.fields) || {}).length + ' · 图 ' + (p.shots || 0) + (p.media && p.media.summary ? ' · ' + p.media.summary : '');
     });
+    return;
+  }
+  if (cmd === 'coverage') {
+    const summarize = function (list) {
+      const out = { total: list.length, withCookie: 0, ready: 0, upload: 0, verify: 0, engines: {}, sites: list };
+      list.forEach(function (t) {
+        if (t.hasCookie) out.withCookie++;
+        if (t.ready) out.ready++;
+        if (t.uploadPath) out.upload++;
+        if (t.verifyPath) out.verify++;
+        const e = t.engine || '?';
+        out.engines[e] = (out.engines[e] || 0) + 1;
+      });
+      return out;
+    };
+    const human = function (x) {
+      const eng = Object.keys(x.engines || {}).map(function (k) { return k + ' ' + x.engines[k]; }).join(' / ');
+      let s = '目标站 ' + x.total + ' · 有 cookie ' + x.withCookie + ' · 可发布 ' + x.ready + ' · 上传定义 ' + x.upload + ' · 回查 ' + x.verify + (eng ? ' · ' + eng : '');
+      if (opts.list) s += '\n' + (x.sites || []).map(function (t) { return t.host + '  ' + (t.engine || '?') + '  ' + (t.ready ? '就绪' : (t.hasCookie ? '缺上传/字段' : '缺 cookie')); }).join('\n');
+      return s;
+    };
+    if (!USE_HTTP) {
+      print(core().coverage(), opts, human);
+      return;
+    }
+    print(summarize(await api('/api/targets')), opts, human);
     return;
   }
   if (cmd === 'clients') {

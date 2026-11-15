@@ -249,6 +249,12 @@ async function main() {
     Object.keys(planned).forEach(function (k) { need(first.fields[k] === planned[k], '上传字段没使用 prepared：' + k); });
   });
 
+  await check('本地 coverage 统计目标站', async function () {
+    const j = parse(await cliLocal(['coverage', '--json']));
+    need(j.total >= 2 && Array.isArray(j.sites), 'coverage 站点数不对：' + JSON.stringify(j));
+    need(typeof j.ready === 'number' && typeof j.upload === 'number' && j.engines && j.engines.nexusphp >= 2, 'coverage 统计不对：' + JSON.stringify(j));
+  });
+
   await check('缺 --host 时退出码 2', async function () {
     const r = await cli(['verify', queueId]);
     need(r.code === 2, '退出码不是 2：' + r.code);

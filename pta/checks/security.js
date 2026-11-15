@@ -55,6 +55,24 @@ check('密钥可从独立文件读取', () => {
   }
 });
 
+check('显式密钥文件无效时不生成 data/.secret', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-nokey-'));
+  const prevFile = process.env.PTA_SECRET_FILE, prevEnv = process.env.PTA_SECRET;
+  delete process.env.PTA_SECRET;
+  process.env.PTA_SECRET_FILE = path.join(dir, 'missing-secret');
+  try {
+    const got = box.loadKey(dir);
+    need(got.ok === false && got.source === 'invalid-secret-file', '来源不对：' + JSON.stringify({ ok: got.ok, source: got.source }));
+    need(!fs.existsSync(path.join(dir, '.secret')), '无效密钥文件时不该生成 data/.secret');
+    const st = box.status(dir);
+    need(st.ok === false && st.source === 'invalid-secret-file', 'status 不对：' + JSON.stringify(st));
+  } finally {
+    if (prevFile === undefined) delete process.env.PTA_SECRET_FILE; else process.env.PTA_SECRET_FILE = prevFile;
+    if (prevEnv !== undefined) process.env.PTA_SECRET = prevEnv;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
 const failed = results.filter(r => !r[0]).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

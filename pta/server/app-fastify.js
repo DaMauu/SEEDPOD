@@ -1,7 +1,8 @@
 /* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
    旧 server/app.js 已删除，只保留 v2。 */
 const path = require('path');
-const sitePack = require('./site-pack')
+const sitePack = require('./site-pack');
+const secretbox = require('./secretbox');
 const fs = require('fs');
 const crypto = require('crypto');
 const Fastify = require('fastify');
@@ -21,6 +22,7 @@ const VERSION = PKG.version;
 const DEV_DATE = '2026-11-14';
 const DEP = PKG.dependencies || {};
 const DEV_DEP = PKG.devDependencies || {};
+const KEYRING = secretbox.loadKey(DATA_DIR);
 const trimVer = (v) => String(v || '').replace(/^[~^]/, '');
 const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vite) + ' + SFC（构建）';
 const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
@@ -135,7 +137,8 @@ async function build() {
       version: VERSION, devDate: DEV_DATE, node: process.version,
       stack: { front: FRONT_STACK, back: BACK_STACK },
       counts: counts(),
-      pack: sitePack.status()
+      pack: sitePack.status(),
+      crypto: secretbox.status(DATA_DIR)
     }
   }));
 
@@ -190,7 +193,9 @@ async function build() {
   function publicDls() {
     return all('SELECT data FROM downloaders').map(function (r) {
       const d = jparse(r.data) || {};
-      return { id: d.id, name: d.name, kind: d.kind || 'qb', url: d.url || '', watchPath: d.watchPath || '', user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
+      let passReadable = false;
+      if (d.pass) { try { passReadable = !!secretbox.decrypt(d.pass, KEYRING.key); } catch (e) { passReadable = false; } }
+      return { id: d.id, name: d.name, kind: d.kind || 'qb', url: d.url || '', watchPath: d.watchPath || '', user: d.user || '', hasPass: !!d.pass, passReadable: passReadable, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
     });
   }
 

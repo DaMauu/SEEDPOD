@@ -17,27 +17,41 @@ function parseKey(raw) {
 }
 
 function loadKey(dataDir) {
-  const fromEnv = parseKey(process.env.PTA_SECRET);
-  if (fromEnv) return { key: fromEnv, source: 'env' };
+  const explicit = String(process.env.PTA_SECRET || '').trim();
+  if (explicit) {
+    const fromEnv = parseKey(explicit);
+    if (fromEnv) return { key: fromEnv, source: 'env', ok: true };
+    // 显式给了密钥但解不开：不要回退生成新 key，避免把旧密文“洗掉”
+    console.warn('[seedpod] PTA_SECRET 格式不对，拒绝生成新 key');
+    return { key: crypto.randomBytes(32), source: 'invalid-env-secret', ok: false, reason: 'PTA_SECRET 格式不对' };
+  }
   const secretFile = String(process.env.PTA_SECRET_FILE || '').trim();
   if (secretFile) {
     try {
       const k = parseKey(fs.readFileSync(secretFile, 'utf8'));
-      if (k) return { key: k, source: 'secret-file' };
+      if (k) return { key: k, source: 'secret-file', ok: true };
     } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
+    // 显式指定了密钥文件但读不到/无效：不要偷偷写 data/.secret
+    console.warn('[seedpod] PTA_SECRET_FILE 读不到或格式不对，拒绝生成 data/.secret');
+    return { key: crypto.randomBytes(32), source: 'invalid-secret-file', ok: false, reason: 'PTA_SECRET_FILE 读不到或格式不对' };
   }
   const file = path.join(dataDir, '.secret');
   try {
     const k = parseKey(fs.readFileSync(file, 'utf8'));
-    if (k) return { key: k, source: 'file' };
+    if (k) return { key: k, source: 'file', ok: true };
   } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   const generated = crypto.randomBytes(32);
   try {
     fs.writeFileSync(file, generated.toString('hex') + '\n', { mode: 0o600 });
   } catch (e) {
-    return { key: generated, source: 'memory' };
+    return { key: generated, source: 'memory', ok: false, reason: '数据目录不可写，密钥只在内存' };
   }
-  return { key: generated, source: 'generated' };
+  return { key: generated, source: 'generated', ok: true };
+}
+
+function status(dataDir) {
+  const k = loadKey(dataDir);
+  return { ok: k.ok !== false, source: k.source, reason: k.reason || '' };
 }
 
 function encrypt(plain, key) {
@@ -58,4 +72,4 @@ function decrypt(payload, key) {
   return Buffer.concat([d.update(ct), d.final()]).toString('utf8');
 }
 
-module.exports = { loadKey: loadKey, encrypt: encrypt, decrypt: decrypt, parseKey: parseKey };
+module.exports = { loadKey: loadKey, status: status, encrypt: encrypt, decrypt: decrypt, parseKey: parseKey };

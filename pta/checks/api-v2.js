@@ -151,6 +151,7 @@ async function main() {
     need(j.ok, 'ok 不为 true');
     need(j.data.version, '缺少 version');
     need(/Fastify/i.test(j.data.stack.back), '后端栈没写 Fastify：' + j.data.stack.back);
+    need(j.data.crypto && typeof j.data.crypto.ok === 'boolean', '缺少凭据密钥状态');
   });
 
   await check('config 有 sys/user/limits', async () => {
@@ -501,6 +502,7 @@ async function main() {
     const j = JSON.parse(list);
     need(Array.isArray(j.data) && j.data[0].hasCookie === true, '列表没有 hasCookie');
     need(j.data[0].cookie === undefined, '列表回了 cookie 字段');
+    need(j.data[0].readable === true, 'cookie 可读状态不对：' + JSON.stringify(j.data[0]));
   });
 
   await check('下载器密码不回显', async () => {
@@ -509,6 +511,7 @@ async function main() {
       body: JSON.stringify({ name: 'fixture', url: 'http://127.0.0.1:9999', pass: 'secret-pass' })
     })).json();
     need(add.ok && add.data.hasPass === true, '新增失败');
+    need(add.data.passReadable === true, '密码可读状态不对：' + JSON.stringify(add.data));
     const list = await (await fetchA(BASE + '/api/downloaders')).text();
     need(list.indexOf('secret-pass') < 0, '响应里出现了密码明文');
   });

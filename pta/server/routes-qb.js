@@ -19,8 +19,9 @@ module.exports = function (app, ctx) {
     return v;
   };
   const publicDl = function (d) {
+    const passReadable = !!d.pass && !!dlPass(d);
     return { id: d.id, name: d.name || '', kind: d.kind || 'qb', url: d.url || '', watchPath: d.watchPath || '',
-      user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
+      user: d.user || '', hasPass: !!d.pass, passReadable: passReadable, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
   };
   function rows() { return all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data) || {}; }); }
   function save(d) {
@@ -31,6 +32,7 @@ module.exports = function (app, ctx) {
 
   app.post('/api/downloaders', async (req, reply) => {
     const b = req.body || {};
+    if (b.pass && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 PTA_SECRET_FILE/PTA_SECRET，再保存密码', 409);
     const kind = kindOf(b.kind || 'qb');
     if (!kind) return bad(reply, 'UNSUPPORTED_DOWNLOADER', '只支持 qBittorrent 和 watch 目录', 400);
     let url = '', watchPath = '';
@@ -56,6 +58,7 @@ module.exports = function (app, ctx) {
     const d = find(req.params.id);
     if (!d) return bad(reply, 'NOT_FOUND', '下载器不存在', 404);
     const b = req.body || {};
+    if (b.pass && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 PTA_SECRET_FILE/PTA_SECRET，再保存密码', 409);
     if (b.name !== undefined) d.name = String(b.name).slice(0, 60);
     if (b.kind !== undefined) { const k = kindOf(b.kind); if (!k) return bad(reply, 'UNSUPPORTED_DOWNLOADER', '只支持 qBittorrent 和 watch 目录', 400); d.kind = k; }
     if (b.watchPath !== undefined) { const w = watch.normDir(b.watchPath); if (w.err) return bad(reply, 'BAD_WATCH_PATH', w.err); d.watchPath = w.dir; }

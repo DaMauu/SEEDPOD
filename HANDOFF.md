@@ -1,6 +1,21 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 17:00（当前 v0.7.189 / qB 探测）
+最后更新：2026-11-18 19:00（当前 v0.7.191 / 密钥状态与 qB 验证）
+
+## 2026-11-18 密钥状态与 qB 验证（v0.7.191）
+
+- 之前 CLI 读生产数据没带 `PTA_SECRET_FILE`，在 `data/.secret` 生成了错误 key；已隔离为 `.secret.wrong-20261115-1145`，服务端仍用独立密钥文件。
+- 显式密钥无效时不再生成 `data/.secret`；保存密码/cookie 在密钥不可用时返回 `CRYPTO_UNAVAILABLE`。
+- 设置页显示凭据密钥来源/是否可用；下载器显示密码是否可解；站点 cookie 显示是否可解。
+- `PTA_DATA=/opt/seedpod/data node pta/cli.js clients --test --env-file /etc/seedpod.env`：两台 qB 都 online（v5.1.2 / v5.2.4）。
+- G5 75%：qB 已验证；真实目标站提交/回查仍缺权限。G13 20%。
+
+## 2026-11-18 G13 离线覆盖审计（v0.7.190）
+
+- 新增 `pta coverage [--list]`；只读本地定义/凭据，不联网。
+- 生产：177 个可解析目标站、9 个有 cookie 且 ready、177 个有上传/回查路径；306 清单里其余缺 base/engine 或定义。
+- 9 个 ready 不是真实提交证据；G13 仍等真实目标站权限。
+- CLI 17/17，全量 run.sh 通过。
 
 ## 2026-11-18 G5 qB 探测（v0.7.189）
 

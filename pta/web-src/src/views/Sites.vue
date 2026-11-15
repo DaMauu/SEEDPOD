@@ -118,6 +118,7 @@ const sites = computed(() => baseSites.value
       priority: c.priority || 'normal',
       config: c,
       cookieSaved: !!(cd && cd.hasCookie),
+      cookieReadable: !!(cd && cd.readable),
       cookieUpdatedAt: (cd && cd.updatedAt) || '',
       login: st ? (st.pass ? 'ok' : 'fail') : 'none',
       loginAt: st ? st.at : '',

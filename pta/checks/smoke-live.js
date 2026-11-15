@@ -252,6 +252,7 @@ async function main() {
     const txt = await page.locator('#set-panel').innerText();
     need(/调度/.test(txt), '没有调度卡');
     need(/当前版本/.test(txt), '没有版本信息');
+    need(/凭据密钥/.test(txt), '没有凭据密钥状态');
   });
 
   await check('设置页调度开关可用', async () => {

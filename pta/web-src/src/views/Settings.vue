@@ -139,6 +139,10 @@
             <div class="ctl"><span class="fixed-val ref">{{ version }}</span></div>
           </div>
           <div class="set-field">
+            <div class="lbl"><span>凭据密钥</span><i>密码/cookie 的加密密钥；只显示来源，不显示密钥</i></div>
+            <div class="ctl"><span class="fixed-val ref" :class="keyState.ok === false ? 'bad-t' : ''">{{ keyText }}</span></div>
+          </div>
+          <div class="set-field">
             <div class="lbl"><span>数据目录</span></div>
             <div class="ctl"><span class="fixed-val ref">由服务端 PTA_DATA 指定，站点定义、词条库、队列、日志都在里面</span></div>
           </div>
@@ -167,6 +171,7 @@ const version = ref('读取中…')
 const user = ref('读取中…')
 const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '', lastResult: null })
 const notify = reactive({ telegram: false, webhook: false, source: '', chat: '', token: '', events: 'error', saving: false, testing: false, testMsg: '' })
+const keyState = reactive({ ok: null, source: '', reason: '' })
 let timer = null
 let loaded = false
 
@@ -174,6 +179,15 @@ const lastText = computed(() => {
   if (!sched.lastRunAt) return '还没跑过'
   const t = new Date(sched.lastRunAt).toLocaleString()
   return sched.lastError ? t + ' · ' + sched.lastError : t
+})
+const keyText = computed(() => {
+  if (keyState.ok === false) return '不可用：' + (keyState.reason || '检查 PTA_SECRET_FILE / PTA_SECRET')
+  if (keyState.source === 'env') return '环境变量 PTA_SECRET'
+  if (keyState.source === 'secret-file') return '独立密钥文件'
+  if (keyState.source === 'file') return 'data/.secret'
+  if (keyState.source === 'generated') return '首次生成 data/.secret'
+  if (keyState.source === 'memory') return '仅内存，重启会丢'
+  return keyState.source || '未读取'
 })
 
 function applySched(data) {
@@ -190,16 +204,18 @@ function applySched(data) {
 async function load() {
   if (loaded || !loggedIn()) return
   try {
-    const [h, s, sc, nt] = await Promise.all([
+    const [h, s, sc, nt, dv] = await Promise.all([
       fetch('/api/health', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/session', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/scheduler', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
-      fetch('/api/notify', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
+      fetch('/api/notify', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
+      fetch('/api/dev', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
     ])
     if (h && h.ok) version.value = 'v' + h.data.version
     if (s && s.ok) user.value = s.data.user || '—'
     if (sc && sc.ok) applySched(sc.data)
     if (nt && nt.ok) applyNotify(nt.data)
+    if (dv && dv.ok && dv.data && dv.data.crypto) Object.assign(keyState, dv.data.crypto)
     loaded = true
   } catch (e) { reportError('Settings', e) }
 }
