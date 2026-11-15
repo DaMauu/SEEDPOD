@@ -1,5 +1,6 @@
 /* 目标站提交与回查（Fastify v2）。
    干跑默认；真提交必须 realPublish=true；cookie 只从加密凭据读。 */
+const fs = require('fs');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
@@ -116,6 +117,34 @@ module.exports = function (app, ctx) {
     if (r.code !== 'NO_COOKIE' && r.code !== 'NO_TARGET_DEF') DETECT_AT.set(host, Date.now());
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r.data);
+  });
+
+  app.post('/api/queue/:id/fill-source-title', async (req, reply) => {
+    const row = one('SELECT id, data FROM queue WHERE id = ?', req.params.id);
+    if (!row) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
+    const it = jparse(row.data) || {};
+    let name = '';
+    try {
+      const t = it.targetResults && it.targetResults[String(it.targetSite || '').toLowerCase()];
+      const src = t && t.sourceTorrent && t.sourceTorrent.path;
+      if (src && fs.existsSync(src)) {
+        const meta = target.torrentMeta(fs.readFileSync(src));
+        name = (meta && meta.name) || '';
+      }
+    } catch (e) { name = ''; }
+    if (!name) {
+      const f = await target.fetchSourceTorrent(it);
+      if (f.err) return bad(reply, 'SOURCE_TORRENT_FAILED', f.err, 400);
+      const meta = target.torrentMeta(f.buf);
+      name = (meta && meta.name) || '';
+    }
+    if (!name) return bad(reply, 'NO_TORRENT_NAME', '源种里没有标题', 422);
+    it.title = String(name).slice(0, 300);
+    it.sourceTitle = it.title;
+    it.sourceTitleAt = new Date().toISOString();
+    db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
+      .run(it.title, JSON.stringify(it), new Date().toISOString(), row.id);
+    return ok(reply, { id: row.id, title: it.title });
   });
 
   app.post('/api/targets/:host/plan', async (req, reply) => {

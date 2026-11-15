@@ -99,7 +99,7 @@
           </section>
 
           <section v-if="sel.prepared" class="sd-card qd-prepared">
-            <h3>上传准备</h3>
+            <div class="qd-prepared-head"><h3>上传准备</h3><button class="btn ghost slim" type="button" @click="fillSourceTitle">回填源标题</button></div>
             <div class="t-sub">标题：{{ sel.prepared.title || '—' }}</div>
             <div class="t-sub">副标题：{{ sel.prepared.subtitle || '—' }}</div>
             <div class="t-sub">媒体：{{ sel.prepared.media ? sel.prepared.media.summary : '未填' }} · 图床 {{ (sel.prepared.imageLinks || []).length }} 张 · 截图 {{ sel.prepared.shots || 0 }}</div>
@@ -341,6 +341,13 @@ function setTab(v) { tab.value = v; page.value = 1; load(1) }
 function debounced() {
   if (qTimer) clearTimeout(qTimer)
   qTimer = setTimeout(() => { page.value = 1; load(1) }, 300)
+}
+async function fillSourceTitle() {
+  if (!sel.value) return
+  const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/fill-source-title', { method: 'POST', credentials: 'same-origin' })
+  const j = await r.json().catch(() => null)
+  if (j && j.ok) { toast('标题已回填：' + j.data.title); await refresh() }
+  else toast((j && j.error && j.error.message) || '回填失败')
 }
 async function refresh() {
   if (sel.value) await select(sel.value.id)
@@ -666,6 +673,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.qd-prepared-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .shot { position: relative; }
 .shot-del {
   position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;

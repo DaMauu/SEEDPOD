@@ -37,6 +37,11 @@ function toggleChip(c) {
 }
 function onButton() {
   const t = String(props.r.t || '')
+  if (t.indexOf('源资源标题') >= 0) {
+    if (window.PTA && window.PTA.toast) window.PTA.toast('在待审核页选中条目，点「回填源标题」')
+    location.hash = '#queue'
+    return
+  }
   if (t.indexOf('目标站') >= 0 || t.indexOf('站点分类') >= 0) {
     if (window.PTA && window.PTA.toast) window.PTA.toast('分类映射在站点页逐站配置')
     location.hash = '#sites'
