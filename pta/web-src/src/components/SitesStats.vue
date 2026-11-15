@@ -25,17 +25,17 @@ defineProps({
 
 <style scoped>
 .sites-stats {
-  flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-  gap: 8px 28px; flex-wrap: nowrap;
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 8px 24px; flex-wrap: nowrap;
   background: #fff; border-radius: 12px; box-shadow: var(--shadow);
   padding: 8px 14px; margin-bottom: 8px;
 }
-.ss-progress { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.ss-progress { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 14px; }
 .ss-bar { flex: 0 0 200px; width: 200px; max-width: 42%; display: flex; gap: 2px; height: 7px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
 .ss-bar .sbar-seg { display: block; height: 100%; border-radius: 0; padding: 0; background: none; }
-.ss-legend { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; color: var(--muted-2); line-height: 1.2; }
+.ss-legend { flex: 1 1 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: 10px; color: var(--muted-2); line-height: 1.2; }
 .ss-legend .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
-.ss-nums { display: flex; align-items: center; gap: 18px; flex: 0 0 auto; margin-left: 0; }
+.ss-nums { display: flex; align-items: center; gap: 22px; flex: 0 0 auto; margin-left: 8px; }
 .ss-nums div { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 .ss-nums span { font-size: 10px; color: var(--muted-2); }
 .ss-nums b { font-size: 15px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; }
