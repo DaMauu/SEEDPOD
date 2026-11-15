@@ -1,9 +1,11 @@
 /* 目标站提交服务：HTTP 路由和 CLI core 共用。
    默认干跑；真提交门禁、截图门槛、阶段、幂等都在这里。 */
+const fs = require('fs');
+const path = require('path');
 const stage = require('./stage');
 
 function makeTargetService(ctx, target) {
-  const { db, one, jparse } = ctx;
+  const { db, one, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
 
   function loadQueue(id) {
@@ -174,15 +176,44 @@ function makeTargetService(ctx, target) {
       saveQueue(item.data);
       return { ok: false, code: 'VERIFY_FAILED', message: msg, http: 502, data: { host: host, verify: verified || null } };
     }
+    let targetTorrent = null;
+    let targetTorrentError = '';
+    if (verified && verified.found) {
+      const detailsUrl = (r.data && r.data.detailsUrl) || (verified && verified.url) || '';
+      if (detailsUrl) {
+        const tt = await target.fetchDetailsTorrent(host, detailsUrl);
+        if (tt.ok) {
+          try {
+            const dir = path.join(DATA_DIR, 'torrents');
+            fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+            const safeHost = String(host).replace(/[^a-z0-9.-]/gi, '_');
+            const file = path.join(dir, safeHost + '-' + tt.data.meta.hash + '.torrent');
+            fs.writeFileSync(file, tt.data.buf, { mode: 0o600 });
+            targetTorrent = {
+              host: host, infohash: tt.data.meta.hash, size: tt.data.buf.length, path: file,
+              sameInfohash: tt.data.meta.hash === (r.data.infohash || '')
+            };
+          } catch (e) {
+            targetTorrentError = '目标站种子保存失败';
+          }
+        } else {
+          targetTorrentError = tt.message || tt.code || '目标站种子抓取失败';
+        }
+      }
+    }
     const result = {
       stage: 'submitted', infohash: r.data.infohash || '',
       detailsUrl: r.data.detailsUrl || '', status: r.data.status || 0,
-      verified: !!(verified && verified.found), error: ''
+      verified: !!(verified && verified.found), targetTorrent: targetTorrent,
+      targetTorrentError: targetTorrentError, error: ''
     };
     setTargetResult(item.data, host, result);
+    item.data.targetUpload.targetTorrent = targetTorrent ? {
+      infohash: targetTorrent.infohash, size: targetTorrent.size, sameInfohash: targetTorrent.sameInfohash
+    } : null;
     const evidence = {
       host: host, infohash: result.infohash, detailsUrl: result.detailsUrl,
-      verified: result.verified, targets: item.data.targetResults
+      verified: result.verified, targetTorrent: result.targetTorrent, targets: item.data.targetResults
     };
     if (allDone(item.data)) {
       stage.set(item.data, 'submitted', { evidence: evidence });

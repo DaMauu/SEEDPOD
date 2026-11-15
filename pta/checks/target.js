@@ -101,7 +101,7 @@ function infoHash(buf) {
   return crypto.createHash('sha1').update(buf.slice(i + 6, buf.length - 1)).digest('hex');
 }
 
-function startMock(hash) {
+function startMock(hash, torrentBuf) {
   const server = http.createServer(function (req, res) {
     const u = new URL(req.url, 'http://127.0.0.1');
     if (req.method === 'POST' && u.pathname === '/takeupload.php') {
@@ -177,6 +177,11 @@ function startMock(hash) {
       res.end(html);
       return;
     }
+    if (req.method === 'GET' && u.pathname === '/download.php') {
+      res.writeHead(200, { 'content-type': 'application/x-bittorrent' });
+      res.end(torrentBuf);
+      return;
+    }
     if (req.method === 'GET' && (u.pathname === '/torrents.php' || u.pathname === '/details.php')) {
       res.writeHead(200, { 'content-type': 'text/html' });
       if (mockDeleted && deletedId === '43') {
@@ -191,7 +196,7 @@ function startMock(hash) {
         res.end('<html><body><input name="search" value="Echo Only 2024 1080p"><div>没有找到结果</div></body></html>');
         return;
       }
-      res.end('<html><body><a href="details.php?id=42">Target Upload Test 2024 1080p Blu-ray</a><div>' + hash + '</div></body></html>');
+      res.end('<html><body><a href="details.php?id=42">Target Upload Test 2024 1080p Blu-ray</a><div>' + hash + '</div><a href="download.php?id=42">下载</a></body></html>');
       return;
     }
     res.writeHead(404); res.end('no');
@@ -205,7 +210,7 @@ async function main() {
   const torrent = makeTorrent();
   const hash = infoHash(torrent);
   mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = [];
-  mock = await startMock(hash);
+  mock = await startMock(hash, torrent);
   mockPort = mock.address().port;
   const pack = {
     version: 1,
@@ -471,6 +476,10 @@ async function main() {
     const g = await json(BASE + '/api/queue/' + encodeURIComponent(qid));
     need(g.body.data.targetUpload && g.body.data.targetUpload.host === '127.0.0.1', '队列没记 targetUpload');
     need(g.body.data.targetVerify && g.body.data.targetVerify.found === true, '队列没记 targetVerify');
+    const tt = g.body.data.targetResults && g.body.data.targetResults['127.0.0.1'] && g.body.data.targetResults['127.0.0.1'].targetTorrent;
+    need(tt && tt.infohash === hash && tt.sameInfohash === true, '没抓目标站生成的种子：' + JSON.stringify(tt));
+    need(tt.path && fs.existsSync(tt.path), '目标站种子文件没落盘：' + (tt.path || ''));
+    need(g.body.data.targetUpload && g.body.data.targetUpload.targetTorrent && g.body.data.targetUpload.targetTorrent.sameInfohash === true, 'targetUpload 没记目标站种子');
     need(g.body.data.stage === 'submitted', '状态机不是 submitted：' + g.body.data.stage);
     need(g.body.data.stageEvidence && g.body.data.stageEvidence.infohash, '没有提交证据 infohash');
     const again = await json(BASE + '/api/targets/127.0.0.1/upload', {

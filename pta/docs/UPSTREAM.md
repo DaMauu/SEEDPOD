@@ -163,3 +163,10 @@
 - 用户决定不再为 PTA 开发 rTorrent/Deluge 下载器兼容，产品只保留 qBittorrent + watch 目录。
 - 移除 rtorrent.js / deluge.js / clients-ext 夹具；下载器 API 旧类型返回 UNSUPPORTED_DOWNLOADER。
 - 历史 M7 记录保留，但当前验收不再要求 rTorrent/Deluge；G5 改为真实目标站 + qB/watch。
+
+## 2026-11-19 · 源种直传与目标站种子抓取
+
+- 观察：部分 NexusPHP 站允许直接上传源站 `.torrent`，发布时由站点替换 announce/passkey；发布成功后的详情页提供目标站生成的种子下载链接。用户提到的 autofeed 一键转发也是这个行为，但代码/品牌不复制。
+- 决定：默认“源种直传”；提交并回查成功后，解析详情页下载链接，抓取目标站生成的 `.torrent`，校验 infohash 不变，保存到 `data/torrents/`（0600），供后续 qB/watch 注入或跨站辅种。
+- 未做：站点拒绝源种时的自动清洗 fallback。先把目标站种子抓回来；需要清洗时用 `--torrents` 手工给清洗种，或后续做 announce 替换器。
+- 安全：目标种子含 passkey，只落私有 data，不进仓库、不打印；下载链接只允许同站域名，避免 cookie 外泄。

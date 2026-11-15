@@ -448,6 +448,48 @@ function makeTarget(ctx) {
     return { ok: true, data: data };
   }
 
+  function downloadLinkFromDetails(text, base) {
+    const safe = String(text || '').replace(/&amp;/g, '&');
+    const m = /(?:href|src)=["']([^"']*(?:download\.php\?[^"']*?\bid=\d+|torrents?\.php\?action=download[^"']*|torrents?\/download\/\d+|\/download\/\d+)[^"']*)["']/i.exec(safe)
+      || /(download\.php\?[^"'\s<>]*?\bid=\d+[^"'\s<>]*)/i.exec(safe);
+    if (!m) return '';
+    const raw = m[1];
+    try { return new URL(raw, base + '/').toString(); } catch (e) { return ''; }
+  }
+  async function fetchDetailsTorrent(host, detailsUrl) {
+    const t = resolve(host);
+    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
+    const c = cookieOf(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
+    let pageUrl;
+    try { pageUrl = new URL(detailsUrl, t.base + '/').toString(); } catch (e) { return { ok: false, code: 'BAD_DETAILS_URL', message: '详情地址不合法', http: 400 }; }
+    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    const pageHost = (function () { try { return new URL(pageUrl).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    if (!baseHost || (pageHost !== baseHost && !pageHost.endsWith('.' + baseHost))) return { ok: false, code: 'BAD_DETAILS_HOST', message: '详情页域名和站点不一致，为免 cookie 外泄先停下', http: 400 };
+    const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+    let page;
+    try { page = await fetch(pageUrl, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(20000) }); }
+    catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上', http: 502 }; }
+    if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status, http: 502 };
+    const html = await page.text().catch(function () { return ''; });
+    if (/takelogin\.php|login\.php|请先登录/i.test(html)) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页要重新登录，cookie 可能失效', http: 401 };
+    const link = downloadLinkFromDetails(html, t.base);
+    if (!link) return { ok: false, code: 'NO_DOWNLOAD_LINK', message: '详情页没找到下载种子链接', http: 422 };
+    const dlHost = (function () { try { return new URL(link).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    if (dlHost !== baseHost && !dlHost.endsWith('.' + baseHost)) return { ok: false, code: 'BAD_DOWNLOAD_HOST', message: '种子下载域名和站点不一致，为免 cookie 外泄先停下', http: 400 };
+    let res;
+    try { res = await fetch(link, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(30000) }); }
+    catch (e) { return { ok: false, code: 'DOWNLOAD_UNREACHABLE', message: '种子下载连不上', http: 502 }; }
+    if (res.status !== 200) return { ok: false, code: 'DOWNLOAD_HTTP_' + res.status, message: '种子下载返回 ' + res.status, http: 502 };
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!buf.length) return { ok: false, code: 'EMPTY_TORRENT', message: '下载到的种子是空文件', http: 502 };
+    if (buf.length > 10 * 1024 * 1024) return { ok: false, code: 'TORRENT_TOO_LARGE', message: '下载到的种子超过 10MB', http: 502 };
+    if (buf[0] !== 0x64) return { ok: false, code: 'NOT_TORRENT', message: '下载到的不是种子文件', http: 502 };
+    const meta = torrentMeta(buf);
+    if (!meta.hash) return { ok: false, code: 'BAD_TORRENT', message: '目标站种子解析不出 infohash', http: 502 };
+    return { ok: true, data: { buf: buf, meta: meta, downloadUrl: link, pageUrl: pageUrl } };
+  }
+
   async function detectUploadForm(host) {
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有上传页配置', http: 400 };
@@ -491,7 +533,7 @@ function makeTarget(ctx) {
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,
-    deleteTorrent: deleteTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
+    deleteTorrent: deleteTorrent, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
 }
 
 module.exports = { makeTarget, ENGINES };

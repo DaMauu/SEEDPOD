@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.205 · 2026-11-19
+
+### G10 目标站生成种子抓取
+- 发布成功并回查命中后，解析详情页下载链接，抓目标站生成的 `.torrent`，校验 infohash 不变，存 `data/torrents/` 0600。
+- `targetResults` / `targetUpload` 记录目标站种子 infohash、大小、是否同 infohash；失败只记 `targetTorrentError`，不拖累已成功的上传。
+- 默认策略明确为“源种直传，站点自己替换 announce/passkey”；站点拒绝源种时的自动清洗 fallback 仍未做。
+- target 15/15、cli 17/17、smoke 26/26、全量 run.sh 通过。
+
 ## v0.7.204 · 2026-11-19
 
 ### G10 多目标每站种子
