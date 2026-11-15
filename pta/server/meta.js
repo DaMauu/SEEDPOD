@@ -141,15 +141,10 @@ function parseRelease(raw) {
   return out;
 }
 
-/* 副标题：源站副标题优先，缺分辨率和体积才补，重复不拼 */
-function composeSubtitle(item, title, res, size) {
+/* 副标题：只用源副标题（或中文名），不拼分辨率/体积 */
+function composeSubtitle(item) {
   const it = item || {};
-  const base = String(it.subtitle || it.cn || title || '').trim();
-  const parts = base ? [base] : [];
-  const low = base.toLowerCase();
-  if (res && low.indexOf(String(res).toLowerCase()) < 0) parts.push(String(res));
-  if (size && base.indexOf(String(size)) < 0) parts.push(String(size));
-  return parts.join(' · ').slice(0, 200);
+  return String(it.subtitle || it.cn || '').trim().slice(0, 200);
 }
 
 function buildNames(item) {
@@ -159,7 +154,7 @@ function buildNames(item) {
   const title = String(it.cn || p.title || it.title || '').trim();
   const releaseTitle = [p.title, p.year, se, p.resolution, p.source, p.codec, p.audio,
     p.hdr.join('+'), p.group].filter(Boolean).join('.').replace(/\s+/g, '.');
-  const subtitle = composeSubtitle(it, title, it.res || p.resolution, it.size);
+  const subtitle = composeSubtitle(it);
   const desc = it.intro || [
     p.title + (p.year ? '（' + p.year + '）' : '') + (se ? ' ' + se : ''),
     [p.resolution, p.source, p.codec, p.audio].filter(Boolean).join(' '),

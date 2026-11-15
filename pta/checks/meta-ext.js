@@ -31,6 +31,10 @@ async function main() {
       }
       return;
     }
+    if (u.pathname === '/j/subject_suggest') {
+      res.end(JSON.stringify([{ id: '1292052', title: 'The Matrix', year: '1999', img: 'https://img.example/m.jpg', url: 'https://movie.douban.com/subject/1292052/?suggest=x', sub_title: '黑客帝国' }]));
+      return;
+    }
     if (u.pathname === '/3/search/movie') {
       res.end(JSON.stringify({ results: [{ id: 603, title: 'The Matrix' }] }));
       return;
@@ -46,6 +50,7 @@ async function main() {
 
   process.env.PTA_WIKI_API = mock.base + '/w/api.php';
   process.env.PTA_TMDB_API = mock.base + '/3';
+  process.env.PTA_DOUBAN_API = mock.base;
   process.env.TMDB_API_KEY = 'test-key';
 
   await check('TMDB 有 key：搜索 + 详情', async function () {
@@ -71,9 +76,17 @@ async function main() {
     need(r.data.title === 'The Matrix' && r.data.overview.indexOf('hacker') >= 0, '摘要不对');
   });
 
+  await check('无 key 网页模式：豆瓣海报 + Wikipedia 简介', async function () {
+    const r = await fetchMeta({ title: 'The Matrix', year: 1999, provider: 'web' });
+    need(r.ok && r.provider === 'web', '没走网页模式：' + JSON.stringify(r));
+    need(String(r.data.poster).indexOf('img.example') >= 0, '豆瓣海报没拿到：' + r.data.poster);
+    need(String(r.data.overview).indexOf('hacker') >= 0, 'Wikipedia 简介没拿到');
+    need(r.data.aliases[0] === '黑客帝国', '豆瓣别名没拿到：' + JSON.stringify(r.data.aliases));
+  });
+
   await check('providers 只回 bool，不回 key', async function () {
     const p = providers();
-    need(p.wikipedia === true && p.tmdb === true, 'providers 不对：' + JSON.stringify(p));
+    need(p.wikipedia === true && p.tmdb === true && p.douban === true && p.web === true, 'providers 不对：' + JSON.stringify(p));
     need(!('key' in p), 'providers 泄露 key');
   });
 

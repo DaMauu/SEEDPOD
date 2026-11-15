@@ -111,14 +111,14 @@ check('buildNames 生成规范名/副标题/简介', () => {
   const b = buildNames({ title: 'The.Matrix.1999.2160p.UHD.BluRay.REMUX.HEVC.DV.TrueHD.7.1.Atmos-FRDS', size: '60 GB', site: 'demo-a.example' });
   need(b.title === 'The Matrix', '标题：' + b.title);
   need(b.releaseTitle.indexOf('The.Matrix.1999.2160p') === 0, '规范名：' + b.releaseTitle);
-  need(b.subtitle.indexOf('2160p') >= 0 && b.subtitle.indexOf('60 GB') >= 0, '副标题：' + b.subtitle);
+  need(b.subtitle === '', '没有副标题/中文名时应留空：' + JSON.stringify(b.subtitle));
   need(b.description.indexOf('1999') >= 0 && b.description.indexOf('FRDS') >= 0, '简介：' + b.description);
   const c = buildNames({ title: 'Sample 2026 1080p', cn: 'Sample', res: '1080p', size: '20 GB' });
-  need(c.subtitle === 'Sample · 1080p · 20 GB', '副标题没拼上分辨率/体积：' + c.subtitle);
+  need(c.subtitle === 'Sample', '副标题不该拼分辨率/体积：' + c.subtitle);
   const d = buildNames({ title: 'Sample 2026 1080p', subtitle: 'Sample / 样品 [国配中字] MiniBD', res: '1080p', size: '7.90 GB' });
-  need(d.subtitle === 'Sample / 样品 [国配中字] MiniBD · 1080p · 7.90 GB', '源副标题没优先拼：' + d.subtitle);
-  const e = buildNames({ title: 'Sample 2026 1080p', subtitle: 'Sample · 1080p · 7.90 GB', res: '1080p', size: '7.90 GB' });
-  need(e.subtitle === 'Sample · 1080p · 7.90 GB', '副标题重复拼了：' + e.subtitle);
+  need(d.subtitle === 'Sample / 样品 [国配中字] MiniBD', '源副标题没原样用：' + d.subtitle);
+  const e = buildNames({ title: 'Sample 2026 1080p', res: '1080p', size: '7.90 GB' });
+  need(e.subtitle === '', '没有副标题/中文名时应留空：' + JSON.stringify(e.subtitle));
 });
 
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));

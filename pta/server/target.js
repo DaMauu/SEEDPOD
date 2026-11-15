@@ -145,15 +145,9 @@ function makeTarget(ctx) {
     return list.filter(function (x, i, a) { return !TAG_BLOCK.test(x) && a.indexOf(x) === i; });
   }
 
-  /* 副标题：源站副标题优先，缺 res/size 才补，避免重复 */
-  function composeSubtitle(item, res, size) {
-    const base = String(item.subtitle || item.cn || '').trim();
-    const parts = [];
-    if (base) parts.push(base);
-    const low = base.toLowerCase();
-    if (res && low.indexOf(res.toLowerCase()) < 0) parts.push(res);
-    if (size && base.indexOf(size) < 0) parts.push(size);
-    return parts.join(' · ').slice(0, 200);
+  /* 副标题：只用源副标题或中文名，不拼分辨率和体积 */
+  function composeSubtitle(item) {
+    return String(item && (item.subtitle || item.cn) || '').trim().slice(0, 200);
   }
 
   function vars(item) {
@@ -162,7 +156,7 @@ function makeTarget(ctx) {
     return {
       tags: tagList(item).join(','),
       title: String(item.title || '').replace(/\s+/g, ' ').trim(),
-      subtitle: composeSubtitle(item, res, size),
+      subtitle: composeSubtitle(item),
       description: String(item.intro || [item.title, res ? res + ' 原盘' : '', item.site ? '来源 ' + item.site : ''].filter(Boolean).join('，') + '。'),
       catId: String(item.catId || ''),
       category: String(item.cat || item.catId || ''),

@@ -116,13 +116,13 @@ async function main() {
   });
   need(dl.status === 200 && dl.body.ok, '下载器创建失败');
   const item = await json('/api/queue', {
-    method: 'POST', body: { title: 'CLI Publish 2020 1080p', site: 'source.example',
+    method: 'POST', body: { title: 'CLI Publish 2020 1080p', cn: 'CLI 发布', subtitle: 'CLI 发布 / 副标题', site: 'source.example',
       targetSite: 'target.example', status: 'approved', size: '20 GB' }
   });
   need(item.status === 200 && item.body.ok, '队列创建失败');
   queueId = item.body.data.id;
   const item2 = await json('/api/queue', {
-    method: 'POST', body: { title: 'CLI Prepare 2021 2160p', site: 'source.example',
+    method: 'POST', body: { title: 'CLI Prepare 2021 2160p', cn: 'CLI 准备', subtitle: 'CLI 准备 / 副标题', site: 'source.example',
       targetSite: 'target.example', status: 'pending', size: '60 GB' }
   });
   need(item2.status === 200 && item2.body.ok, '第二个队列创建失败');

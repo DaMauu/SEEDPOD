@@ -338,7 +338,7 @@ async function main() {
     need(d.url.indexOf('/takeupload.php') >= 0, '上传地址不对：' + d.url);
     need(d.fileField === 'file', '文件字段不对');
     need(d.fields.name === 'Target Upload Test 2024 1080p Blu-ray', '标题映射不对：' + d.fields.name);
-    need(d.fields.small_desc === '目标站测试 · 1080p · 20 GB', '副标题映射不对：' + d.fields.small_desc);
+    need(d.fields.small_desc === '目标站测试', '副标题映射不对：' + d.fields.small_desc);
     need(d.fields.descr === '测试简介', '简介映射不对');
     need(d.fields.anon === '0', '匿名映射不对');
     need(d.verifyUrl.indexOf('/torrents.php?search=') >= 0, '回查地址不对');
@@ -388,7 +388,7 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
     });
     need(p.status === 200 && p.body.ok, '计划失败');
-    need(p.body.data.fields.small_desc === '源站副标题 / 别名 [国配中字] · 1080p · 7.90 GB', '副标题没优先用源副标题：' + p.body.data.fields.small_desc);
+    need(p.body.data.fields.small_desc === '源站副标题 / 别名 [国配中字]', '副标题没原样用源副标题：' + p.body.data.fields.small_desc);
   });
 
   await check('目标站标签按来源标签勾选，挡掉禁转/官方', async function () {
@@ -462,7 +462,7 @@ async function main() {
     need(p1.status === 200 && p1.body.ok, '默认计划失败：' + JSON.stringify(p1.body && p1.body.error));
     const f1 = p1.body.data.fields;
     need(f1.name === 'Nexus Default Test 2024 1080p', '标题默认映射不对');
-    need(f1.small_descr === '1080p · 20 GB', '副标题默认映射不对：' + f1.small_descr);
+    need(f1.small_descr === undefined, '没副标题/中文名时不该硬拼：' + f1.small_descr);
     need(f1.type === '401', '分类数组没转成目标分类：' + f1.type);
     need(f1.uplver === 'yes', '匿名默认值不对：' + f1.uplver);
     const id2 = await mk('Nexus Default Test 2024 1080p', false);
@@ -552,7 +552,7 @@ async function main() {
     need(d.verify && d.verify.found === true, '提交后回查没找到');
     need(hits.length === 1, '应发 1 次上传，实际 ' + hits.length);
     need(hits[0].fields.name === 'Target Upload Test 2024 1080p Blu-ray', '目标站收到的标题不对');
-    need(hits[0].fields.small_desc === '目标站测试 · 1080p · 20 GB', '目标站收到的副标题不对：' + hits[0].fields.small_desc);
+    need(hits[0].fields.small_desc === '目标站测试', '目标站收到的副标题不对：' + hits[0].fields.small_desc);
     need(hits[0].file && hits[0].file.field === 'file' && hits[0].file.bytes > 0, '种子文件没到目标站');
     need(hits[0].cookie === 'mock-cookie', 'cookie 没带上');
     const g = await json(BASE + '/api/queue/' + encodeURIComponent(qid));
