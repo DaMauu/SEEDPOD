@@ -377,6 +377,20 @@ async function main() {
     need(hits.length === 0, '清洗干跑发了请求：' + hits.length);
   });
 
+  await check('目标站副标题优先用源副标题', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Source Sub Test 2024 1080p Blu-ray', subtitle: '源站副标题 / 别名 [国配中字]', cn: '源站副标题', intro: 'x',
+        site: 'source.example', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '7.90 GB' })
+    });
+    need(add.status === 200 && add.body.ok, '建队列失败');
+    const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, '计划失败');
+    need(p.body.data.fields.small_desc === '源站副标题 / 别名 [国配中字] · 1080p · 7.90 GB', '副标题没优先用源副标题：' + p.body.data.fields.small_desc);
+  });
+
   await check('目标站标签按来源标签勾选，挡掉禁转/官方', async function () {
     async function planOf(payload) {
       const add = await json(BASE + '/api/queue', {

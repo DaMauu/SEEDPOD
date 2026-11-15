@@ -31,6 +31,21 @@ function hit(src, text) {
   try { return new RegExp(src, 'i').test(text); } catch (e) { return text.toLowerCase().indexOf(String(src).toLowerCase()) >= 0; }
 }
 
+/* 来源标签 "国语 粤语 中字" → 数组；副标题首段当中文名 */
+function tagListOf(raw) {
+  const list = Array.isArray(raw) ? raw : String(raw || '').split(/[,，、\/|]+|\s{2,}/);
+  return list.map(function (x) { return String(x || '').trim(); })
+    .filter(function (x) { return x && x.length <= 20; })
+    .filter(function (x, i, a) { return a.indexOf(x) === i; })
+    .slice(0, 20);
+}
+function cnOf(subtitle) {
+  const s = String(subtitle || '').trim();
+  if (!s) return '';
+  const first = s.split(/[\/|｜【\[]/)[0].replace(/^[\s:：-]+|[\s:：-]+$/g, '').trim();
+  return (first || s).slice(0, 60);
+}
+
 function screenCatalog(ctx, opts) {
   const { db, one, all, jparse } = ctx;
   const now = () => new Date().toISOString();
@@ -91,7 +106,11 @@ function screenCatalog(ctx, opts) {
     }
     const item = { id: 'q_' + String(++seq).padStart(4, '0'), status: 'pending', createdAt: now(), title: title,
       res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
-      downloadUrl: it.downloadUrl || '', siteId: it.siteId || '' };
+      downloadUrl: it.downloadUrl || '', siteId: it.siteId || '',
+      subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),
+      year: it.year || '', category: it.category || '',
+      intro: String(it.intro || it.descrBb || it.descr || '').slice(0, 20000),
+      tags: tagListOf(it.tags) };
     db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
       .run(item.id, 'pending', title, JSON.stringify(item), item.createdAt, now());
     seenTitles.add(norm(title));

@@ -115,6 +115,10 @@ check('buildNames 生成规范名/副标题/简介', () => {
   need(b.description.indexOf('1999') >= 0 && b.description.indexOf('FRDS') >= 0, '简介：' + b.description);
   const c = buildNames({ title: 'Sample 2026 1080p', cn: 'Sample', res: '1080p', size: '20 GB' });
   need(c.subtitle === 'Sample · 1080p · 20 GB', '副标题没拼上分辨率/体积：' + c.subtitle);
+  const d = buildNames({ title: 'Sample 2026 1080p', subtitle: 'Sample / 样品 [国配中字] MiniBD', res: '1080p', size: '7.90 GB' });
+  need(d.subtitle === 'Sample / 样品 [国配中字] MiniBD · 1080p · 7.90 GB', '源副标题没优先拼：' + d.subtitle);
+  const e = buildNames({ title: 'Sample 2026 1080p', subtitle: 'Sample · 1080p · 7.90 GB', res: '1080p', size: '7.90 GB' });
+  need(e.subtitle === 'Sample · 1080p · 7.90 GB', '副标题重复拼了：' + e.subtitle);
 });
 
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));

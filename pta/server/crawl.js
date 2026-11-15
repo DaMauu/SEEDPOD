@@ -9,6 +9,8 @@ const marksMod = require('./marks');
 const cursor = require('./cursor');
 const limits = require('./limits');
 const sitePack = require('./site-pack');
+const flowConfig = require('./flow-config');
+const metaExt = require('./meta-ext');
 
 const BUSY = new Set();
 
@@ -37,6 +39,27 @@ function makeCrawl(ctx) {
     if (!r || !r.cookie) return '';
     try { return secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { return ''; }
   };
+
+  /* 源站详情页没有简介时，用公开影片库补一条；只在真抓取时联网 */
+  async function fillIntroFromMeta(it) {
+    if (!cfg().realCrawl) return;
+    const flow = flowConfig.read(ctx);
+    const order = String(flowConfig.value(flow, '匹配来源顺序', 'TMDB → 豆瓣 → 站点标题'));
+    if (order === '只用站点标题') return;
+    try {
+      const r = await metaExt.fetchMeta({ title: it.title, year: it.year, type: it.category || 'movie' });
+      if (!r.ok || !r.data) { it.metaNote = r.code || 'NOT_FOUND'; return; }
+      const d = r.data;
+      const ov = String(d.overview || '').trim();
+      const head = [d.title + (d.year ? '（' + d.year + '）' : ''), ov].filter(Boolean).join('\n\n');
+      const block = [head ? '[quote]' + head + '[/quote]' : '', d.poster ? '[img]' + d.poster + '[/img]' : ''].filter(Boolean).join('\n\n');
+      if (!block) return;
+      it.descrBb = block.slice(0, 20000);
+      if (ov) it.descr = ov.slice(0, 1000);
+      it.meta = { provider: r.provider, title: d.title || '', year: d.year || null, url: d.url || '' };
+      it.metaAt = nowISO();
+    } catch (e) { it.metaNote = '外部元数据失败'; }
+  }
 
   function limitsOf(host) {
     const siteCfg = one('SELECT data FROM sites WHERE host = ?', host);
@@ -191,6 +214,8 @@ function makeCrawl(ctx) {
             if (d.subtitle) it.subtitle = d.subtitle;
             if (d.infohash && !it.infohash) it.infohash = d.infohash;
             if (d.descr) it.descr = d.descr;
+            if (d.descrBb) it.descrBb = d.descrBb;
+            if (!it.descr && !it.descrBb) await fillIntroFromMeta(it);
             if (d.poster) it.poster = d.poster;
             if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
             it.detailAt = nowISO();

@@ -221,11 +221,31 @@ check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', (
   need(d.subtitle === '中英字幕', '副标题不对：' + d.subtitle);
   need(d.infohash === 'abcdef0123456789abcdef0123456789abcdef01', 'infohash 没转小写：' + d.infohash);
   need(/夹具/.test(d.descr) && /DTS-HD/.test(d.descr), '简介不对：' + d.descr);
+  need(/夹具/.test(d.descrBb || '') && !/<img|<br/i.test(d.descrBb || ''), '简介 BBCode 不对：' + String(d.descrBb).slice(0, 120));
   need(/\/p\/1001\.jpg/.test(d.poster), '海报不对：' + d.poster);
   need(d.fullDisc === true, '原盘判定不对');
   need(/Fixture Movie/.test(d.pageTitle), '页面标题不对：' + d.pageTitle);
   const empty = adapters.parseDetail('<html><body><p>nothing</p></body></html>');
   need(empty.sizeBytes === undefined && empty.medium === undefined, '空页面不该编出字段：' + JSON.stringify(empty));
+});
+
+check('详情页简介转 BBCode 保留图片', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const h = '<html><body><div id="kdescr">第一段<br>第二段<img src="https://img.example/a.jpg"><a href="https://x.example">链接</a></div></body></html>';
+  const d = adapters.parseDetail(h);
+  need(/\[img\]https:\/\/img\.example\/a\.jpg\[\/img\]/.test(d.descrBb || ''), '图片没转 BBCode：' + String(d.descrBb));
+  need(!/<img|<br|<a\s/i.test(d.descrBb || ''), 'BBCode 里还有 HTML：' + String(d.descrBb));
+  need(/第一段\n第二段/.test(d.descrBb || ''), '换行没保留：' + JSON.stringify(d.descrBb));
+  need(/链接/.test(d.descrBb || ''), '链接文字丢了：' + String(d.descrBb));
+});
+
+check('简介截图全部转载不截断', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const imgs = Array.from({ length: 12 }, function (_, i) { return '<img src="https://img.example/shot-' + (i + 1) + '.jpg">'; }).join('<br>');
+  const d = adapters.parseDetail('<html><body><div id="kdescr">截图：' + imgs + '</div></body></html>');
+  const got = (d.descrBb || '').match(/\[img\]/g) || [];
+  need(got.length === 12, '截图数量不对：' + got.length);
+  need(/shot-12\.jpg/.test(d.descrBb || ''), '最后一张被截掉了');
 });
 
 check('翻页地址拼接', () => {

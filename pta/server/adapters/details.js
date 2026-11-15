@@ -11,6 +11,22 @@ function decode(s) {
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(Number(d)); });
 }
 function text(s) { return decode(String(s || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim(); }
+/* 简介 HTML → BBCode：保留图片与换行，其余标签丢掉；目标站 descr 直接可用 */
+function toBbcode(html) {
+  let s = String(html || '');
+  s = s.replace(/<br\s*\/?>/gi, '\n');
+  s = s.replace(/<\/(?:p|div|li|tr|h\d)>/gi, '\n');
+  s = s.replace(/<img\b[^>]*(?:data-src|src)\s*=\s*["']([^"']+)["'][^>]*>/gi, function (_, src) {
+    const u = decode(src).trim();
+    return /^https?:\/\//i.test(u) ? '[img]' + u + '[/img]\n' : '';
+  });
+  s = s.replace(/<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, function (_, href, txt) {
+    const t = text(txt);
+    return t || (/^https?:\/\//i.test(href) ? decode(href) : '');
+  });
+  s = s.replace(/<[^>]+>/g, ' ');
+  return decode(s).replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]{2,}/g, ' ').trim();
+}
 function attr(s, name) {
   const m = new RegExp(name + '\\s*=\\s*["\']([^"\']*)["\']', 'i').exec(String(s || ''));
   return m ? decode(m[1]) : '';
@@ -86,6 +102,8 @@ function parse(html) {
   if (d) {
     const plain = text(d[1]);
     if (plain) out.descr = plain.slice(0, 1000);
+    const bb = toBbcode(d[1]);
+    if (bb) out.descrBb = bb.slice(0, 20000);
   }
 
   /* 海报 */
