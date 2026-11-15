@@ -48,13 +48,34 @@ else:
     print('引用补丁已存在')
 
 k = io.open(kb, encoding='utf-8').read()
-needle = '    keyboard.text(agentText).text(contextText).row();\n'
-if needle in k:
-    k = k.replace(needle, '', 1)
+changed = False
+for needle in [
+    '    keyboard.text(agentText).text(contextText).row();\n',
+    '    keyboard.text(modelText).text(variantText).row();\n'
+]:
+    if needle in k:
+        k = k.replace(needle, '', 1)
+        changed = True
+if changed:
     io.open(kb, 'w', encoding='utf-8').write(k)
-    print('已去掉 agent/上下文按钮')
+    print('已去掉 agent/上下文/模型/变体按钮')
 else:
-    print('键盘补丁已存在或版本不同')
+    print('键盘按钮补丁已存在或版本不同')
+
+k = io.open(kb, encoding='utf-8').read()
+if '// no fixed buttons' not in k:
+    old_ret = "    return keyboard.resized().persistent();\n}"
+    new_ret = ("    // no fixed buttons: 没有排队/目标按钮时不显示键盘\n"
+               "    if (queuedPromptLabels.length === 0 && goalLabels.length === 0) {\n"
+               "        return removeKeyboard();\n"
+               "    }\n"
+               "    return keyboard.resized().persistent();\n}")
+    if old_ret not in k:
+        raise SystemExit('键盘兜底补丁：找不到返回语句，版本可能变了')
+    io.open(kb, 'w', encoding='utf-8').write(k.replace(old_ret, new_ret, 1))
+    print('已加空键盘兜底')
+else:
+    print('空键盘兜底已存在')
 PY
 
 if [ "$RESTART" = "1" ]; then

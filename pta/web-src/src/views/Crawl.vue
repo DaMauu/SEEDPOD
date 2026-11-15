@@ -787,7 +787,8 @@ onUnmounted(() => {
 .flow-sum { font-size: 11px; color: var(--muted); opacity: .85; margin: 0 0 6px; }
 /* 未接徽标固定在右侧同一行；右侧芯片行统一左对齐 */
 .crawl-card :deep(.preset-row .lbl), .flow-group :deep(.set-field .lbl) { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
-.crawl-card :deep(.preset-row .lbl > span), .flow-group :deep(.set-field .lbl > span) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-group :deep(.set-field .lbl > span) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crawl-card :deep(.preset-row .lbl > span) { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.35; }
 .todo-badge { flex: 0 0 auto; margin-left: 0; }
 .crawl-card :deep(.preset-row .cat-row), .crawl-card :deep(.preset-row .pick-row),
 .flow-group :deep(.set-field .cat-row), .flow-group :deep(.set-field .pick-row) { justify-content: flex-start; }
