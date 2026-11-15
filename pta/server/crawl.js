@@ -52,11 +52,12 @@ function makeCrawl(ctx) {
       const d = r.data;
       const ov = String(d.overview || '').trim();
       const head = [d.title + (d.year ? '（' + d.year + '）' : ''), ov].filter(Boolean).join('\n\n');
-      const block = [head ? '[quote]' + head + '[/quote]' : '', d.poster ? '[img]' + d.poster + '[/img]' : ''].filter(Boolean).join('\n\n');
+      const block = String(d.bbcode || '').trim() || [head ? '[quote]' + head + '[/quote]' : '', d.poster ? '[img]' + d.poster + '[/img]' : ''].filter(Boolean).join('\n\n');
       if (!block) return;
       it.descrBb = block.slice(0, 20000);
       if (ov) it.descr = ov.slice(0, 1000);
-      it.meta = { provider: r.provider, title: d.title || '', year: d.year || null, url: d.url || '' };
+      if (!it.subtitle && d.subtitle) it.subtitle = String(d.subtitle).slice(0, 300);
+      it.meta = { provider: r.provider, via: d.via || '', title: d.title || '', year: d.year || null, url: d.url || '' };
       it.metaAt = nowISO();
     } catch (e) { it.metaNote = '外部元数据失败'; }
   }

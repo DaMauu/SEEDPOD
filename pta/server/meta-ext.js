@@ -15,6 +15,7 @@ function getJson(url, timeout, headers) {
 function tmdbKey(key) { return String(key || process.env.TMDB_API_KEY || '').trim(); }
 function tmdbBase() { return String(process.env.PTA_TMDB_API || DEFAULT_TMDB).replace(/\/+$/, ''); }
 function doubanBase() { return String(process.env.PTA_DOUBAN_API || DEFAULT_DOUBAN).replace(/\/+$/, ''); }
+function douyingBase() { return String(process.env.PTA_DOUYING_API || 'https://doubaninfo.com').replace(/\/+$/, ''); }
 function wikiBase(lang) {
   return process.env.PTA_WIKI_API || ('https://' + lang + '.wikipedia.org/w/api.php');
 }
@@ -68,19 +69,120 @@ async function doubanSearch(title, year) {
   };
 }
 
+/* 豆影（DoubanInfo）网页请求：POST /api.php 不需要 key，返回豆瓣/IMDb/TMDB 合并后的 JSON。
+   网页前端就是用这个接口；我们只取字段，自己拼 BBCode。 */
+async function postForm(url, fields, timeout) {
+  const body = new URLSearchParams();
+  Object.keys(fields || {}).forEach(function (k) { body.set(k, String(fields[k] == null ? '' : fields[k])); });
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'user-agent': UA, referer: douyingBase() + '/', origin: douyingBase(),
+      'content-type': 'application/x-www-form-urlencoded;charset=UTF-8', 'x-requested-with': 'XMLHttpRequest'
+    },
+    body: body.toString(), signal: AbortSignal.timeout(timeout || 20000)
+  });
+  const t = await r.text();
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return t;
+}
+
+function splitList(v) {
+  if (Array.isArray(v)) return v.map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+  return String(v == null ? '' : v).split(/\s*\/\s*/).map(function (x) { return x.trim(); }).filter(Boolean);
+}
+
+async function douying(title, year) {
+  const raw = [title, year].filter(Boolean).join(' ');
+  const text = await postForm(douyingBase() + '/api.php', { url: raw }, 20000);
+  if (/^(错误|获取.*失败)/.test(text)) throw new Error(text.slice(0, 80));
+  let j = null;
+  try { j = JSON.parse(text); } catch (e) { throw new Error('豆影返回不是 JSON'); }
+  const rows = (j && Array.isArray(j.results) ? j.results : []).filter(function (x) {
+    return x && x.success !== false && (x.chinese_title || x.title);
+  });
+  const want = String(year || '');
+  const hit = (want && rows.filter(function (x) { return String(x.year || '') === want; })[0]) ||
+    rows.slice().sort(function (a, b) { return (Number(b._affix_score) || 0) - (Number(a._affix_score) || 0); })[0];
+  if (!hit) return null;
+  const mainTitle = String(hit.chinese_title || hit.title || title);
+  const aliases = splitList(hit.aka).filter(function (x) { return x !== mainTitle; });
+  return {
+    source: 'douying', id: String(hit.sid || ''),
+    title: mainTitle,
+    originalTitle: String(hit.original_title || ''),
+    year: Number(hit.year) || Number(year) || null,
+    overview: String(hit.summary || '').trim(),
+    poster: String(hit.poster || hit.cover || ''),
+    url: hit.sid ? 'https://movie.douban.com/subject/' + hit.sid + '/' : '',
+    aliases: aliases,
+    subtitle: [mainTitle].concat(aliases.slice(0, 2)).join(' / ').slice(0, 200),
+    directors: splitList(hit.director), writers: splitList(hit.writer),
+    cast: splitList(hit.cast), genre: splitList(hit.genre),
+    region: String(hit.region || ''), language: String(hit.language || ''),
+    releaseDate: String(hit.release_date || ''), runtime: String(hit.runtime || hit.duration || ''),
+    imdbId: String(hit.imdb_id || ''), imdbRating: String(hit.imdb_rating || ''), imdbVotes: String(hit.imdb_votes || ''),
+    doubanRating: String(hit.douban_rating || ''), doubanVotes: String(hit.douban_votes || ''),
+    awards: splitList(hit.awards)
+  };
+}
+
+function douyingSubtitle(d) {
+  if (!d) return '';
+  const names = [d.title].concat((d.aliases || []).filter(function (x) { return x && x !== d.title; })).slice(0, 3);
+  return names.join(' / ').slice(0, 200);
+}
+
+function douyingBbcode(d) {
+  if (!d) return '';
+  const lines = [];
+  if (d.poster) lines.push('[img]' + d.poster + '[/img]', '');
+  const push = function (k, v) { if (v) lines.push('◎' + k + '　' + v); };
+  push('译　名', (d.aliases || []).slice(0, 8).join(' / '));
+  push('片　名', d.originalTitle || '');
+  push('年　代', d.year || '');
+  push('产　地', d.region);
+  push('类　别', (d.genre || []).join(' / '));
+  push('语　言', d.language);
+  push('上映日期', d.releaseDate);
+  push('IMDb', [d.imdbRating, d.imdbId].filter(Boolean).join(' · '));
+  push('豆瓣评分', d.doubanRating ? d.doubanRating + (d.doubanVotes ? ' (' + d.doubanVotes + '人评价)' : '') : '');
+  push('片　长', d.runtime);
+  push('导　演', (d.directors || []).join(' / '));
+  push('编　剧', (d.writers || []).join(' / '));
+  push('主　演', (d.cast || []).slice(0, 8).join(' / '));
+  if (d.overview) lines.push('', '◎简　介', '', d.overview);
+  if ((d.awards || []).length) {
+    lines.push('', '◎获奖情况', '');
+    (d.awards || []).slice(0, 6).forEach(function (x) { lines.push('　　' + x); });
+  }
+  return lines.join('\n').trim().slice(0, 20000);
+}
+
 async function web(title, year, type) {
-  let db = null, wiki = null;
+  let dy = null, db = null, wiki = null;
+  try { dy = await douying(title, year); } catch (e) { dy = null; }
   try { db = await doubanSearch(title, year); } catch (e) { db = null; }
-  try { wiki = await wikipedia(title, (db && db.year) || year, type); } catch (e) { wiki = null; }
+  try { wiki = await wikipedia(title, (dy && dy.year) || (db && db.year) || year, type); } catch (e) { wiki = null; }
+  if (dy) {
+    return Object.assign({}, dy, {
+      source: 'web', via: 'douying',
+      overview: dy.overview || (wiki && wiki.overview) || '',
+      bbcode: douyingBbcode(dy),
+      subtitle: douyingSubtitle(dy)
+    });
+  }
   if (!db && !wiki) return null;
   return {
-    source: 'web',
+    source: 'web', via: db ? 'douban+wiki' : 'wiki',
     title: (wiki && wiki.title) || (db && db.title) || title,
     year: (db && db.year) || (wiki && wiki.year) || Number(year) || null,
     overview: (wiki && wiki.overview) || '',
     poster: (db && db.poster) || '',
     url: (db && db.url) || (wiki && wiki.url) || '',
-    aliases: db && db.subtitle && db.subtitle !== db.title ? [db.subtitle] : []
+    aliases: db && db.subtitle && db.subtitle !== db.title ? [db.subtitle] : [],
+    subtitle: (db && db.title) || '',
+    bbcode: ''
   };
 }
 
@@ -115,7 +217,7 @@ async function fetchMeta(opts) {
   const b = opts || {};
   const title = String(b.title || '').trim();
   if (!title) return { ok: false, code: 'BAD_TITLE', message: '标题不能为空', http: 400 };
-  const provider = ['tmdb', 'wikipedia', 'douban', 'web'].indexOf(String(b.provider || '')) >= 0 ? String(b.provider) : (tmdbKey() ? 'tmdb' : 'web');
+  const provider = ['tmdb', 'wikipedia', 'douban', 'douying', 'web'].indexOf(String(b.provider || '')) >= 0 ? String(b.provider) : (tmdbKey() ? 'tmdb' : 'web');
   try {
     if (provider === 'tmdb') {
       const r = await tmdb(title, b.year, b.type, b.key, b.castLimit);
@@ -128,6 +230,10 @@ async function fetchMeta(opts) {
     }
     let r;
     if (provider === 'douban') r = await doubanSearch(title, b.year);
+    else if (provider === 'douying') {
+      const dy = await douying(title, b.year);
+      r = dy ? Object.assign({}, dy, { bbcode: douyingBbcode(dy), subtitle: douyingSubtitle(dy) }) : null;
+    }
     else if (provider === 'web') r = await web(title, b.year, b.type);
     else r = await wikipedia(title, b.year, b.type);
     if (!r) return { ok: false, code: 'NOT_FOUND', message: (provider === 'wikipedia' ? 'Wikipedia' : provider === 'douban' ? '豆瓣' : '公开网页') + ' 没查到这部片', http: 404 };
@@ -141,7 +247,7 @@ async function fetchMeta(opts) {
 }
 
 function providers() {
-  return { wikipedia: true, tmdb: !!tmdbKey(), douban: true, web: true };
+  return { wikipedia: true, tmdb: !!tmdbKey(), douban: true, douying: true, web: true };
 }
 
-module.exports = { fetchMeta, providers, wikipedia, tmdb, doubanSearch, web };
+module.exports = { fetchMeta, providers, wikipedia, tmdb, doubanSearch, douying, douyingBbcode, douyingSubtitle, web };

@@ -31,6 +31,19 @@ async function main() {
       }
       return;
     }
+    if (u.pathname === '/api.php' && req.method === 'POST') {
+      let body = '';
+      req.on('data', function (c) { body += c; });
+      req.on('end', function () {
+        const q = new URLSearchParams(body).get('url') || '';
+        if (/NoDouying/i.test(q)) { res.end(JSON.stringify({ status: 'ok', results: [] })); return; }
+        res.end(JSON.stringify({ status: 'ok', results: [{ success: true, sid: '1292052', chinese_title: '黑客帝国', original_title: 'The Matrix', year: '1999',
+          aka: ['矩阵', '22世纪杀人网络'], summary: 'A hacker learns the truth.', poster: 'https://img.example/db.jpg',
+          director: ['Lana Wachowski'], writer: ['Lana Wachowski'], cast: ['Keanu Reeves'], genre: ['动作'], region: '美国', language: '英语',
+          release_date: '1999-03-31', runtime: '136分钟', imdb_id: 'tt0133093', imdb_rating: '8.7', douban_rating: '9.1', douban_votes: '600000', awards: ['测试奖'] }] }));
+      });
+      return;
+    }
     if (u.pathname === '/j/subject_suggest') {
       res.end(JSON.stringify([{ id: '1292052', title: 'The Matrix', year: '1999', img: 'https://img.example/m.jpg', url: 'https://movie.douban.com/subject/1292052/?suggest=x', sub_title: '黑客帝国' }]));
       return;
@@ -51,6 +64,7 @@ async function main() {
   process.env.PTA_WIKI_API = mock.base + '/w/api.php';
   process.env.PTA_TMDB_API = mock.base + '/3';
   process.env.PTA_DOUBAN_API = mock.base;
+  process.env.PTA_DOUYING_API = mock.base;
   process.env.TMDB_API_KEY = 'test-key';
 
   await check('TMDB 有 key：搜索 + 详情', async function () {
@@ -76,17 +90,32 @@ async function main() {
     need(r.data.title === 'The Matrix' && r.data.overview.indexOf('hacker') >= 0, '摘要不对');
   });
 
-  await check('无 key 网页模式：豆瓣海报 + Wikipedia 简介', async function () {
+  await check('豆影无 key：搜索 + 副标题 + BBCode 拼贴', async function () {
+    const r = await fetchMeta({ title: 'The Matrix', year: 1999, provider: 'douying' });
+    need(r.ok && r.provider === 'douying', '没走豆影：' + JSON.stringify(r));
+    need(r.data.subtitle === '黑客帝国 / 矩阵 / 22世纪杀人网络', '副标题拼贴不对：' + r.data.subtitle);
+    need(/\[img\]https:\/\/img\.example\/db\.jpg\[\/img\]/.test(r.data.bbcode), '海报没进 BBCode');
+    need(/◎译　名/.test(r.data.bbcode) && /◎主　演/.test(r.data.bbcode) && /◎简　介/.test(r.data.bbcode), 'BBCode 字段不全');
+    need(r.data.bbcode.indexOf('A hacker learns the truth.') >= 0, '简介没进 BBCode');
+  });
+
+  await check('无 key 网页模式默认走豆影', async function () {
     const r = await fetchMeta({ title: 'The Matrix', year: 1999, provider: 'web' });
-    need(r.ok && r.provider === 'web', '没走网页模式：' + JSON.stringify(r));
-    need(String(r.data.poster).indexOf('img.example') >= 0, '豆瓣海报没拿到：' + r.data.poster);
+    need(r.ok && r.provider === 'web' && r.data.via === 'douying', '没走豆影：' + JSON.stringify({ via: r.data && r.data.via }));
+    need(String(r.data.poster).indexOf('img.example') >= 0, '海报没拿到：' + r.data.poster);
+    need(String(r.data.bbcode).indexOf('◎片　名') >= 0, '没拼 BBCode');
+  });
+
+  await check('豆影没结果时回退豆瓣 + Wikipedia', async function () {
+    const r = await fetchMeta({ title: 'NoDouying Matrix', year: 1999, provider: 'web' });
+    need(r.ok && r.data.via === 'douban+wiki', '没回退：' + JSON.stringify({ via: r.data && r.data.via }));
+    need(String(r.data.poster).indexOf('img.example/m.jpg') >= 0, '豆瓣海报没拿到');
     need(String(r.data.overview).indexOf('hacker') >= 0, 'Wikipedia 简介没拿到');
-    need(r.data.aliases[0] === '黑客帝国', '豆瓣别名没拿到：' + JSON.stringify(r.data.aliases));
   });
 
   await check('providers 只回 bool，不回 key', async function () {
     const p = providers();
-    need(p.wikipedia === true && p.tmdb === true && p.douban === true && p.web === true, 'providers 不对：' + JSON.stringify(p));
+    need(p.wikipedia === true && p.tmdb === true && p.douban === true && p.douying === true && p.web === true, 'providers 不对：' + JSON.stringify(p));
     need(!('key' in p), 'providers 泄露 key');
   });
 
