@@ -30,12 +30,12 @@ defineProps({
   background: #fff; border-radius: 12px; box-shadow: var(--shadow);
   padding: 9px 16px; margin-bottom: 8px;
 }
-.ss-progress { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 16px; }
-.ss-bar { flex: 0 0 400px; width: 400px; max-width: 54%; display: flex; gap: 0; height: 8px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
+.ss-progress { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 22px; }
+.ss-bar { flex: 0 0 320px; width: 320px; max-width: 46%; display: flex; gap: 0; height: 8px; border-radius: 99px; overflow: hidden; background: #eef0f6; }
 .ss-bar .sbar-seg { display: block; height: 100%; border-radius: 0; padding: 0; background: none; }
 .ss-legend { flex: 1 1 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 3px 12px; font-size: 10.5px; color: var(--muted-2); line-height: 1.2; }
 .ss-legend .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
-.ss-nums { display: flex; align-items: center; gap: 13px; flex: 0 0 auto; margin-left: 4px; }
+.ss-nums { display: flex; align-items: center; gap: 15px; flex: 0 0 auto; margin-left: 10px; }
 .ss-nums div { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 .ss-nums span { font-size: 10px; color: var(--muted-2); }
 .ss-nums b { font-size: 15px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; }
