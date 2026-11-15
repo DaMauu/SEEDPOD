@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 02:45（当前 v0.7.203 / 流程页发布闸门）
+最后更新：2026-11-19 03:10（当前 v0.7.203 / 全部站点停用，等 cookie）
+
+## 2026-11-19 全部站点停用（运行时）
+
+- 306/306 站点已设为 `enabled=false`；调度关；`realCrawl/realPublish/realImages` 全为 false；队列 0。
+- 停用前启用清单保存在私有 `data/enabled-sites-before-disable.json`（0600），恢复时按清单逐个打开。
+- 10 个 cookie 保留，未删除；探测暂停，发现记录在 `pta/docs/PROBE.md` 和私有 `data/probe-notes.md`。
+- 目的：等 cookie 补齐和人工检查期间，不会自动抓取或发布。
 
 ## 2026-11-19 流程页发布闸门（v0.7.203）
 
