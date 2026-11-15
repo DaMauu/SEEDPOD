@@ -4,7 +4,6 @@
       <section class="flow-gates" id="flow-gates">
         <div class="fg-main">
           <span class="fg-title">发布闸门</span>
-          <span class="fg-note">自动发布关闭时，只准备/预览，不提交目标站。</span>
         </div>
         <div class="fg-switches">
           <label>真抓取 <button class="switch" id="gate-crawl" :class="{ on: gates.realCrawl }" type="button" role="switch" :aria-checked="String(gates.realCrawl)" @click="toggleGate('realCrawl')"><i></i></button></label>
@@ -88,7 +87,6 @@
         <div class="drawer-body">
           <div v-for="(g, gi) in rules.dedupe" :key="g.name" class="flow-group" :class="g.cls">
             <div class="flow-ttl">{{ g.name }}</div>
-            <div v-if="g.sum" class="flow-sum">{{ g.sum }}</div>
             <div class="set-fields">
               <div v-if="gi === 0" class="set-field">
                 <div class="lbl"><span>自动查重</span></div>
@@ -99,7 +97,6 @@
               <div v-for="r in (g.rows || [])" :key="r.t" class="set-field" :class="{ todo: r.todo }">
                 <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
                 <div class="ctl"><RuleControl :r="r" /></div>
-                <div v-if="r.hint" class="rule-hint">{{ r.hint }}</div>
               </div>
             </div>
           </div>
@@ -117,13 +114,11 @@
         <div class="drawer-body">
           <div class="filter-head">
             <div class="filter-title">初筛条件</div>
-            <div class="filter-sub">只看标题就能判断；不通过不进队列</div>
           </div>
           <div class="preset-block">
             <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
               <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
               <div class="ctl"><RuleOrSpecial :r="r" /></div>
-              <div v-if="r.hint" class="rule-hint">{{ r.hint }}</div>
             </div>
           </div>
         </div>
@@ -140,7 +135,6 @@
         <div class="drawer-body">
           <div v-for="g in pubGroups" :key="g.name" class="flow-group" :class="g.cls">
             <div class="flow-ttl">{{ g.name }}</div>
-            <div v-if="g.sum" class="flow-sum">{{ g.sum }}</div>
             <div class="set-fields">
               <template v-for="(cell, ci) in g.cells" :key="cell.same || ci">
                 <div v-if="cell.rows.length > 1" class="set-field pair">
@@ -160,7 +154,6 @@
                 <div v-else class="set-field" :class="{ wide: cell.rows[0].wide, pick: cell.rows[0].type === 'pick' || cell.rows[0].inline, todo: cell.rows[0].todo }">
                   <div class="lbl"><span>{{ cell.rows[0].label || cell.rows[0].t }}</span><em v-if="cell.rows[0].todo" class="todo-badge">未接</em></div>
                   <div class="ctl"><RuleOrSpecial :r="cell.rows[0]" /></div>
-                  <div v-if="cell.rows[0].hint" class="rule-hint">{{ cell.rows[0].hint }}</div>
                 </div>
               </template>
             </div>
