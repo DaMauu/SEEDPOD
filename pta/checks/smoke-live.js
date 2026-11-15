@@ -330,7 +330,7 @@ async function main() {
         target: (card.querySelector('#tp-name') || {}).textContent || ''
       };
     });
-    need(pubUi && pubUi.groups === 5, '发布分组数量不对：' + JSON.stringify(pubUi));
+    need(pubUi && pubUi.groups >= 5, '发布分组数量不对：' + JSON.stringify(pubUi));
     need(pubUi.bg === 'rgba(0, 0, 0, 0)' && pubUi.border === '0px', '发布分组不该有卡片：' + JSON.stringify(pubUi));
     need(pubUi.borderBottom === '0px', '发布字段底下不该有横线：' + JSON.stringify(pubUi));
     need(pubUi.display === 'grid' && pubUi.cols.split(' ').length === 2, '发布字段不是左右两列：' + JSON.stringify(pubUi));

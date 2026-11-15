@@ -4,6 +4,7 @@ const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
 const stage = require('./stage');
+const flowConfig = require('./flow-config');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
@@ -167,6 +168,7 @@ function makePublisher(ctx) {
     const add = await qb.addTorrent(dl, got.buf, {
       savePath: b.savePath || it.savePath,
       category: b.category || it.category,
+      autoTMM: flowConfig.on(flowConfig.read(ctx), 'qB 自动种子管理', false),
       filename: String(it.title || 'upload').slice(0, 60) + '.torrent'
     });
     if (!add.ok) {

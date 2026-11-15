@@ -171,9 +171,10 @@ function createCore(opts) {
     const meta = qb.parseTorrent(buf);
     if (!meta.hash) throw new Error('权威种子解析不出 infohash');
     if (meta.hash === sourceHash) throw new Error('权威种子和源种同 infohash，qB 不能加第二份');
-    const plan = { queueId: item.id, host: host, downloader: dl.id, sourceHash: sourceHash, targetHash: meta.hash, savePath: found.savePath || '', skipChecking: true, dryRun: b.dryRun !== false };
+    const skip = flowConfig.on(flowConfig.read(ctx), '辅种跳过校验', true);
+    const plan = { queueId: item.id, host: host, downloader: dl.id, sourceHash: sourceHash, targetHash: meta.hash, savePath: found.savePath || '', skipChecking: skip, dryRun: b.dryRun !== false };
     if (b.dryRun !== false) return plan;
-    const r = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: true, paused: false, category: found.category || '' });
+    const r = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: skip, paused: false, category: found.category || '' });
     if (!r.ok) throw new Error(r.message || r.error || 'qB 加权威种子失败');
     tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: true };
     results[host] = tr;

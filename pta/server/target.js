@@ -10,6 +10,7 @@ const sitePack = require('./site-pack');
 const meta = require('./meta');
 const { makeQb } = require('./qb');
 const torrentClean = require('./torrent-clean');
+const flowConfig = require('./flow-config');
 
 const ENGINES = {
   nexusphp: {
@@ -229,11 +230,20 @@ function makeTarget(ctx) {
       host: t.host, engine: t.engine, url: t.base + t.upload.path, method: 'POST',
       fileField: t.upload.fileField, fields: fields,
       tags: tags, tagFields: tagFields,
-      autoActions: [
-        '上传前把 tracker 换成目标站通用 announce（源站 tracker 不保留）',
-        '发布后自动抓目标站权威种子落盘',
-        '辅种时 qB skip_checking 复用源种保存路径'
-      ],
+      autoActions: (function () {
+        const f = flowConfig.read(ctx);
+        return [
+          flowConfig.on(f, '上传前清洗 tracker', true)
+            ? '上传前把 tracker 换成目标站通用 announce（源站 tracker 不保留）'
+            : '不清洗 tracker：按源种直传，目标站可能拒',
+          flowConfig.on(f, '发布后抓权威种子', true)
+            ? '发布后自动抓目标站权威种子落盘'
+            : '发布后不抓权威种子',
+          flowConfig.on(f, '辅种跳过校验', true)
+            ? '辅种时 qB skip_checking，复用源种保存路径'
+            : '辅种时会完整校验'
+        ];
+      })(),
       anonymous: !!item.anonymous,
       verifyUrl: t.base + expand(t.verify.path || '', uv),
       hasCookie: hasCookie, ready: !!(hasCookie && t.upload.path && fieldCount),

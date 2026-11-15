@@ -413,6 +413,19 @@ async function main() {
     need(unknown.fields.team_sel === undefined, '没映射不该硬塞：' + unknown.fields.team_sel);
     need((unknown.warnings || []).some(function (x) { return /没映射/.test(x); }), '没提示没映射：' + JSON.stringify(unknown.warnings));
     need(Array.isArray(unknown.autoActions) && unknown.autoActions.length === 3, '自动动作没列出');
+    need(/换成目标站通用 announce/.test(unknown.autoActions[0]), '默认应清洗 tracker：' + unknown.autoActions[0]);
+    const offFlow = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: false }]] } })
+    });
+    need(offFlow.status === 200 && offFlow.body.ok, '关清洗失败');
+    const offPlan = await planOf('CMCT');
+    need(/不清洗 tracker/.test(offPlan.autoActions[0]), '关掉后动作没变：' + offPlan.autoActions[0]);
+    const onFlow = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }]] } })
+    });
+    need(onFlow.status === 200 && onFlow.body.ok, '恢复清洗失败');
   });
 
   await check('目标站标签按来源标签勾选，挡掉禁转/官方', async function () {
@@ -606,6 +619,22 @@ async function main() {
     need(j.status === 200 && j.body.ok, '自动清洗干跑失败：' + j.status);
     need(j.body.data.cleaned === true, '缓存 announce 没触发自动清洗：' + JSON.stringify(j.body.data && { cleaned: j.body.data.cleaned }));
     need(j.body.data.torrent && j.body.data.torrent.hash === hash, '自动清洗后 infohash 变了');
+    const off = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: false }]] } })
+    });
+    need(off.status === 200 && off.body.ok, '关清洗失败');
+    const raw = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: true })
+    });
+    need(raw.status === 200 && raw.body.ok, '关清洗干跑失败');
+    need(raw.body.data.cleaned === false, '关掉开关后仍清洗了');
+    const on = await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }]] } })
+    });
+    need(on.status === 200 && on.body.ok, '恢复清洗失败');
   });
 
   await check('上传前查重：已有资源跳过且不发请求', async function () {

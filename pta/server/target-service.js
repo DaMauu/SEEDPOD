@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const stage = require('./stage');
 const torrentClean = require('./torrent-clean');
+const flowConfig = require('./flow-config');
 
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
@@ -150,6 +151,8 @@ function makeTargetService(ctx, target) {
         } catch (e) { sourceTorrentError = '源种保存失败'; }
       } else sourceTorrentError = '源种解析不出 infohash';
     }
+    const flowCfg = flowConfig.read(ctx);
+    const wantClean = b.clean !== undefined ? !!b.clean : flowConfig.on(flowCfg, '上传前清洗 tracker', true);
     let cleaned = false;
     let cleanAnnounce = String(b.cleanAnnounce || '').trim();
     if (!cleanAnnounce) {
@@ -164,11 +167,13 @@ function makeTargetService(ctx, target) {
       const tgt = target.resolve(host);
       if (tgt && tgt.base) cleanAnnounce = String(tgt.base).replace(/\/+$/, '') + '/announce.php';
     }
-    if (!cleanAnnounce) {
-      return { ok: false, code: 'NEED_TARGET_ANNOUNCE', message: '没找到目标站通用 announce；源种不会直传，请用 --announce 指定后再提交', http: 409 };
+    if (wantClean) {
+      if (!cleanAnnounce) {
+        return { ok: false, code: 'NEED_TARGET_ANNOUNCE', message: '没找到目标站通用 announce；源种不会直传，请用 --announce 指定后再提交', http: 409 };
+      }
+      try { t.buf = torrentClean.replaceAnnounce(t.buf, cleanAnnounce); cleaned = true; }
+      catch (e) { return { ok: false, code: 'CLEAN_FAILED', message: '种子清洗失败：' + String(e && e.message || e).slice(0, 120), http: 400 }; }
     }
-    try { t.buf = torrentClean.replaceAnnounce(t.buf, cleanAnnounce); cleaned = true; }
-    catch (e) { return { ok: false, code: 'CLEAN_FAILED', message: '种子清洗失败：' + String(e && e.message || e).slice(0, 120), http: 400 }; }
     const uploadItem = preparedItem(item.data, host);
     const plan = preparedPlan(item.data, host);
     if (!dryRun && b.preCheckDupe !== false) {
@@ -225,7 +230,8 @@ function makeTargetService(ctx, target) {
     }
     let publishedTorrent = null;
     let publishedTorrentError = '';
-    if (b.fetchPublishedTorrent !== false && verified && verified.found) {
+    const wantPublished = b.fetchPublishedTorrent !== undefined ? b.fetchPublishedTorrent !== false : flowConfig.on(flowCfg, '发布后抓权威种子', true);
+    if (wantPublished && verified && verified.found) {
       const detailsUrl = (r.data && r.data.detailsUrl) || (verified && verified.url) || '';
       if (detailsUrl) {
         const tt = await target.fetchDetailsTorrent(host, detailsUrl);

@@ -237,6 +237,7 @@ async function main() {
     need(add.ok === true, '加权威种子失败：' + JSON.stringify(add));
     need(/skip_checking/.test(lastAddBody) && /true/.test(lastAddBody), '没有 skip_checking=true');
     need(/\/downloads/.test(lastAddBody), '没有使用源种 savePath');
+    need(/name="autoTMM"[\s\S]{0,120}false/.test(lastAddBody), 'autoTMM 默认应为 false');
   });
 
   await check('qB 启动/暂停/删除兼容不同版本', async function () {

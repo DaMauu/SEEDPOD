@@ -272,7 +272,7 @@ async function addTorrent(d, buf, opts) {
     if (o.tags) f.append('tags', String(o.tags));
     f.append('paused', o.paused ? 'true' : 'false');
     if (o.skipChecking) f.append('skip_checking', 'true');
-    f.append('autoTMM', 'false');
+    f.append('autoTMM', o.autoTMM ? 'true' : 'false');
     return f;
   }
   async function post(cookie) {

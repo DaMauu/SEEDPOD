@@ -311,6 +311,36 @@
       ]
     },
     {
+      "name": "发布行为",
+      "sum": "上传与辅种时自动做什么",
+      "rows": [
+        {
+          "t": "上传前清洗 tracker",
+          "type": "switch",
+          "on": true,
+          "hint": "关掉会按源种直传，源站 tracker 会带到目标站"
+        },
+        {
+          "t": "发布后抓权威种子",
+          "type": "switch",
+          "on": true,
+          "hint": "发布成功抓目标站种子存 data/torrents"
+        },
+        {
+          "t": "辅种跳过校验",
+          "type": "switch",
+          "on": true,
+          "hint": "qB skip_checking 复用源种保存路径"
+        },
+        {
+          "t": "qB 自动种子管理",
+          "type": "switch",
+          "on": false,
+          "hint": "关掉=autoTMM false，不自动移动文件"
+        }
+      ]
+    },
+    {
       "name": "发布字段",
       "sum": "发种表单里要填的标签",
       "rows": [
