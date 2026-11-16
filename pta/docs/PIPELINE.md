@@ -22,8 +22,8 @@
   - 查重每条每站 1 次搜索，命中才多 1 次详情；都按搜索间隔排队
 - 不设请求次数上限；`dedupe.requests` 显示本轮实际查重请求数。
 - 终审仍会卡「查重未完成」：没排到查重的条目不会先发布。
-- 环境变量：`PTA_REQ_SEARCH_GAP_MS`（默认 30000）、`PTA_REQ_WRITE_GAP_MS`（默认 10000）、
-  `PTA_REQ_JITTER`（默认 0.2）。
+- 环境变量：`SEARCH_WAIT_SEC`（默认 30 秒）、`UPLOAD_WAIT_SEC`（默认 10 秒）、
+  `WAIT_RANDOM_PERCENT`（默认 20）。旧的 `PTA_REQ_*` 仍兼容。
 - 参考项目：cross-seed（30 秒搜索间隔、400 次/天、摊开积压）、Scrapy AutoThrottle（按延迟自适应）、
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。

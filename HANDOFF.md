@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 03:40（当前 v0.7.339 / cross-seed 节奏）
+最后更新：2026-11-17 04:10（当前 v0.7.340 / 直白参数名）
+
+## 2026-11-17 直白参数名（v0.7.340）
+
+- `SEARCH_WAIT_SEC` / `UPLOAD_WAIT_SEC` / `WAIT_RANDOM_PERCENT` / `CRAWL_DAILY_MAX`；旧名兼容。
 
 ## 2026-11-17 cross-seed 节奏（v0.7.339）
 

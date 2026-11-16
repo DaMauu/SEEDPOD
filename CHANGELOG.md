@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.340 · 2026-11-17
+
+### 参数改直白名字
+- 请求节奏改用不带项目名的名字：`SEARCH_WAIT_SEC`、`UPLOAD_WAIT_SEC`、`WAIT_RANDOM_PERCENT`。
+- 抓取日限改用 `CRAWL_DAILY_MAX`。
+- 旧 `PTA_REQ_*` / `PTA_DAILY_MAX` 保留兼容，现有部署不用改。
+
 ## v0.7.339 · 2026-11-17
 
 ### 请求间隔按 cross-seed 基线

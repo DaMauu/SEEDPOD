@@ -18,9 +18,9 @@ const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-queue-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));
 const one = (s, ...a) => db.prepare(s).get(...a);
 const ctx = { db, one };
-process.env.PTA_REQ_SEARCH_GAP_MS = '80';
-process.env.PTA_REQ_WRITE_GAP_MS = '30';
-process.env.PTA_REQ_JITTER = '0';
+process.env.SEARCH_WAIT_SEC = '0.08';
+process.env.UPLOAD_WAIT_SEC = '0.03';
+process.env.WAIT_RANDOM_PERCENT = '0';
 const queue = makeRequestQueue(ctx);
 function clear() { db.prepare("DELETE FROM meta WHERE k = 'target-req-queue'").run(); }
 
@@ -51,6 +51,18 @@ async function main() {
     await Promise.all([queue.wait('write'), queue.wait('write'), queue.wait('write')]);
     const ms = Date.now() - t0;
     need(ms >= 55, '三个并发没串行：' + ms);
+  });
+
+  await check('旧 PTA_ 名字仍兼容', function () {
+    delete process.env.SEARCH_WAIT_SEC;
+    delete process.env.UPLOAD_WAIT_SEC;
+    delete process.env.WAIT_RANDOM_PERCENT;
+    process.env.PTA_REQ_SEARCH_GAP_MS = '120';
+    process.env.PTA_REQ_WRITE_GAP_MS = '60';
+    process.env.PTA_REQ_JITTER = '0';
+    const old = makeRequestQueue(ctx);
+    const st = old.status();
+    need(st.searchGapMs === 120 && st.writeGapMs === 60, '旧名字没兼容：' + JSON.stringify(st));
   });
 
   await check('状态里能看到两种间隔', function () {
