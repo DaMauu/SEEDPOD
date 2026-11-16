@@ -70,7 +70,7 @@ function catMapOf(p, def, built) {
 }
 
 function makeTarget(ctx) {
-  const { DATA_DIR, one } = ctx;
+  const { DATA_DIR, one, db } = ctx;
   const KEYRING = secretbox.loadKey(DATA_DIR);
   const qb = makeQb(DATA_DIR);
   const packPath = path.join(DATA_DIR, 'site-pack.json');
@@ -116,6 +116,37 @@ function makeTarget(ctx) {
       tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes'),
       form: maps.form || null,
       valueMaps: valueMaps };
+  }
+
+  /* 目标站请求节流：所有目标站请求共用间隔（默认 7 秒），每站每天默认 200 次。
+     查重、详情、上传、回查、权威种、删除都走这里，避免“查完立刻传”。 */
+  const REQ_GAP = Math.max(0, Number(process.env.PTA_TARGET_GAP_MS == null ? 7000 : process.env.PTA_TARGET_GAP_MS) || 0);
+  const REQ_DAY_MAX = Math.max(1, Number(process.env.PTA_TARGET_DAILY_MAX) || 200);
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
+  function readReqState() {
+    const row = one("SELECT v FROM meta WHERE k = 'target-req-state'");
+    try { return JSON.parse(row ? row.v : 'null') || {}; } catch (e) { return {}; }
+  }
+  function saveReqState(st) {
+    db.prepare("INSERT INTO meta(k, v) VALUES('target-req-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
+  }
+  async function throttle(host) {
+    const h = String(host || '').toLowerCase();
+    if (!h) return { ok: false, code: 'NO_HOST', message: '没有目标站', http: 400 };
+    const day = new Date().toISOString().slice(0, 10);
+    const st = readReqState();
+    const rec = st[h] || {};
+    if (rec.day !== day) { rec.day = day; rec.dayCount = 0; }
+    if (Number(rec.dayCount) >= REQ_DAY_MAX) {
+      return { ok: false, code: 'TARGET_DAILY_LIMIT', message: '目标站 ' + h + ' 今天请求已达 ' + REQ_DAY_MAX + ' 次', http: 429 };
+    }
+    const wait = Math.max(0, (Number(rec.lastAt) || 0) + REQ_GAP - Date.now());
+    if (wait > 0) await sleep(wait);
+    rec.lastAt = Date.now();
+    rec.dayCount = (Number(rec.dayCount) || 0) + 1;
+    st[h] = rec;
+    saveReqState(st);
+    return { ok: true };
   }
 
   function list() {
@@ -308,6 +339,8 @@ function makeTarget(ctx) {
   function torrentMeta(buf) { return qb.parseTorrent(buf); }
 
   async function fetchSourceTorrent(item) {
+    const gate = await throttle(item && item.site);
+    if (!gate.ok) return { err: gate.message || gate.code || '来源站请求受限' };
     /* 列表页给的下载地址常是 download.php?id=…，按来源站 base 补成绝对地址 */
     let dlUrl = String(item.downloadUrl || '');
     if (dlUrl && !/^https?:\/\//i.test(dlUrl)) {
@@ -353,6 +386,9 @@ function makeTarget(ctx) {
   }
 
   async function submit(host, item, buf, opts) {
+
+    const gate = await throttle(host);
+    if (!gate.ok) return gate;
     const p = opts && opts.plan ? { ok: true, data: opts.plan } : plan(host, item);
     if (!p.ok) return p;
     const meta = torrentMeta(buf);
@@ -407,6 +443,9 @@ function makeTarget(ctx) {
   }
 
   async function verify(host, item, buf, opts) {
+
+    const gate = await throttle(host);
+    if (!gate.ok) return gate;
     const p = plan(host, item);
     if (!p.ok) return p;
     const c = cookieOf(host);
@@ -522,6 +561,9 @@ function makeTarget(ctx) {
     return { deleted: deleted, checkStatus: checkStatus, hint: hint };
   }
   async function deleteTorrent(host, spec, opts) {
+
+    const gate = await throttle(host);
+    if (!gate.ok) return gate;
     const o = opts || {};
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
@@ -729,6 +771,9 @@ function makeTarget(ctx) {
 
   /* 读目标站详情页的媒介/副标题/简介/标签，用于查重时判断原盘/DIY/限转 */
   async function fetchDetailsInfo(host, detailsUrl) {
+
+    const gate = await throttle(host);
+    if (!gate.ok) return gate;
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有站点定义' };
     const c = cookieOf(host);
@@ -753,6 +798,9 @@ function makeTarget(ctx) {
   }
 
   async function fetchDetailsTorrent(host, detailsUrl) {
+
+    const gate = await throttle(host);
+    if (!gate.ok) return gate;
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
     const c = cookieOf(host);
@@ -771,6 +819,9 @@ function makeTarget(ctx) {
     if (/takelogin\.php|login\.php|请先登录/i.test(html)) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页要重新登录，cookie 可能失效', http: 401 };
     const links = downloadLinksFromDetails(html, t.base);
     if (!links.length) return { ok: false, code: 'NO_DOWNLOAD_LINK', message: '详情页没找到下载种子链接', http: 422 };
+    /* 详情页一个间隔，下载种子再一个间隔 */
+    const gate2 = await throttle(host);
+    if (!gate2.ok) return gate2;
     let last = '';
     for (const link of links.slice(0, 8)) {
       const dlHost = (function () { try { return new URL(link).hostname.toLowerCase(); } catch (e) { return ''; } })();
