@@ -66,6 +66,8 @@ async function main() {
   process.env.PTA_DOUBAN_API = mock.base;
   process.env.PTA_DOUYING_API = mock.base;
   process.env.TMDB_API_KEY = 'test-key';
+  process.env.PTA_META_CACHE = '0';
+  process.env.PTA_META_MIN_GAP = '0';
 
   await check('TMDB 有 key：搜索 + 详情', async function () {
     const r = await fetchMeta({ title: 'The Matrix', year: 1999 });

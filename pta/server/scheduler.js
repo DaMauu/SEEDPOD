@@ -88,16 +88,34 @@ function makeScheduler(ctx, deps) {
     const s = read();
     try {
       if (ctx.allowReal('realCrawl')) {
-        const sites = all('SELECT host, data FROM sites').map(function (r) { return Object.assign({}, jparse(r.data) || {}, { host: r.host }); })
-          .filter(function (x) { return x && x.enabled !== false && x.host; }).slice(0, 10);
-        let ok = 0, failed = 0;
+        /* 站点轮转：优先级高的先跑；同优先级按上次抓取时间从早到晚，间隔没到的跳过 */
+        const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+        const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+        const gapMs = Math.max(8, Math.min(Number(cfg.interval) || 60, 600)) * 1000;
+        const stateRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
+        const crawlState = JSON.parse(stateRow ? stateRow.v : 'null') || {};
+        const nowMs = Date.now();
+        const allSites = all('SELECT host, data FROM sites').map(function (r) { return Object.assign({}, jparse(r.data) || {}, { host: r.host }); })
+          .filter(function (x) { return x && x.enabled !== false && x.host; })
+          .map(function (x) {
+            const rec = crawlState[x.host] || {};
+            return Object.assign(x, { lastAt: Number(rec.lastAt) || 0, priority: Number(x.priority) || 0 });
+          })
+          .sort(function (a, b) { return (b.priority - a.priority) || (a.lastAt - b.lastAt) || a.host.localeCompare(b.host); });
+        const due = allSites.filter(function (x) { return !x.lastAt || nowMs - x.lastAt >= gapMs; });
+        const sites = due.slice(0, 10);
+        let ok = 0, failed = 0, skipped = 0;
+        const BENIGN = /^(TOO_SOON|WINDOW_LIMIT|DAILY_LIMIT|BUSY)$/;
         for (const x of sites) {
           try {
             const r = await deps.crawl.crawlOnce(x.host, { limit: 100 });
-            if (r && r.err) failed++; else ok++;
-          } catch (e) { failed++; }
+            if (r && r.err) {
+              if (BENIGN.test(r.err.code)) skipped++;
+              else { failed++; bumpSiteFail(x.host, r.err.message || r.err.code); }
+            } else { ok++; resetSiteFail(x.host); }
+          } catch (e) { failed++; bumpSiteFail(x.host, e && e.message ? e.message : '抓取异常'); }
         }
-        steps.crawl = { sites: sites.length, ok: ok, failed: failed };
+        steps.crawl = { sites: sites.length, ok: ok, failed: failed, skipped: skipped, waiting: allSites.length - due.length };
       } else {
         steps.crawl = { skipped: 'realCrawl off' };
       }
@@ -122,9 +140,16 @@ function makeScheduler(ctx, deps) {
         it.dupeResults = it.dupeResults || {};
         let anyOpen = false;
         for (const host of hosts) {
+          /* 本轮之前查过且可发：不重复请求目标站 */
+          const prev = it.dupeResults[host];
+          if (it.dupePassedAt && prev && !prev.skip) { anyOpen = true; continue; }
           let chk = { found: false, skip: false };
-          try { chk = await targetService.checkDupe(host, it, null); }
-          catch (e) { dedupe.errors.push({ id: row.id, host: host, error: String(e && e.message || e).slice(0, 120) }); anyOpen = true; continue; }
+          try { chk = await targetService.checkDupe(host, it, null); resetSiteFail(host); }
+          catch (e) {
+            dedupe.errors.push({ id: row.id, host: host, error: String(e && e.message || e).slice(0, 120) });
+            bumpSiteFail(host, '查重失败：' + String(e && e.message || e).slice(0, 120));
+            anyOpen = true; continue;
+          }
           it.dupeResults[host] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: new Date().toISOString() };
           if (chk.found && chk.skip) continue;
           anyOpen = true;
@@ -195,34 +220,44 @@ function makeScheduler(ctx, deps) {
       steps.hooksReview = await pipeline.run('review', ctx, steps);
 
       if (ctx.allowReal('realPublish')) {
+        const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+        const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+        /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
+        const conc = Math.max(1, Math.min(5, Number(cfg.concurrency) || 1));
         const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT 5");
         let ok = 0, failed = 0;
         const errors = [];
-        for (const row of rows) {
-          const it = jparse(row.data) || {};
-          if (!it.targetSite || !it.downloadUrl) continue;
-          const r = await deps.publish.publishItem(row.id, { dryRun: false });
-          if (r.ok) {
-            ok++;
-            resetSiteFail(it.targetSite || it.site);
-            const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
-            const done = cur ? (jparse(cur.data) || null) : null;
-            if (done) {
-              for (const host of Object.keys(done.targetResults || {})) {
-                const tr = done.targetResults[host] || {};
-                if (tr.publishedTorrent && !tr.crossseed) {
-                  try { await crossseed.run({ id: row.id, data: done }, host, {}); } catch (e) { /* 辅种失败不影响发布 */ }
+        const queueRows = rows.slice();
+        async function worker() {
+          while (queueRows.length) {
+            const row = queueRows.shift();
+            const it = jparse(row.data) || {};
+            if (!it.targetSite || !it.downloadUrl) continue;
+            const r = await deps.publish.publishItem(row.id, { dryRun: false });
+            if (r.ok) {
+              ok++;
+              resetSiteFail(it.targetSite || it.site);
+              const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
+              const done = cur ? (jparse(cur.data) || null) : null;
+              if (done) {
+                for (const host of Object.keys(done.targetResults || {})) {
+                  const tr = done.targetResults[host] || {};
+                  if (tr.publishedTorrent && !tr.crossseed) {
+                    try { await crossseed.run({ id: row.id, data: done }, host, {}); } catch (e) { /* 辅种失败不影响发布 */ }
+                  }
                 }
               }
+            } else {
+              failed++;
+              bumpSiteFail(it.targetSite || it.site, r.message || r.code);
+              if (errors.length < 3) errors.push({ id: row.id, code: r.code, message: r.message });
             }
           }
-          else {
-            failed++;
-            bumpSiteFail(it.targetSite || it.site, r.message || r.code);
-            if (errors.length < 3) errors.push({ id: row.id, code: r.code, message: r.message });
-          }
         }
-        steps.publish = { checked: rows.length, ok: ok, failed: failed, errors: errors };
+        const workers = [];
+        for (let i = 0; i < Math.min(conc, rows.length); i++) workers.push(worker());
+        await Promise.all(workers);
+        steps.publish = { checked: rows.length, ok: ok, failed: failed, errors: errors, concurrency: conc };
       } else {
         steps.publish = { skipped: 'realPublish off' };
       }

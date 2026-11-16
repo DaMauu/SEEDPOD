@@ -5,12 +5,46 @@ const DEFAULT_TMDB = 'https://api.themoviedb.org/3';
 const DEFAULT_DOUBAN = 'https://movie.douban.com';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36';
 
-function getJson(url, timeout, headers) {
-  return fetch(url, { headers: Object.assign({ 'user-agent': UA, 'accept-language': 'zh-CN,zh;q=0.9' }, headers || {}), signal: AbortSignal.timeout(timeout || 10000) })
-    .then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    });
+/* 外部接口缓存与礼貌间隔：同一 URL 6 小时内只打一次，同域名请求至少隔 800ms。
+   设置 PTA_META_CACHE=0 可关缓存，PTA_META_MIN_GAP 可改间隔（毫秒）。 */
+const CACHE = new Map();
+const CACHE_TTL = 6 * 3600 * 1000;
+const CACHE_MAX = 300;
+const HOST_LAST = new Map();
+const MIN_GAP = Math.max(0, Number(process.env.PTA_META_MIN_GAP == null ? 800 : process.env.PTA_META_MIN_GAP) || 0);
+const CACHE_ON = String(process.env.PTA_META_CACHE || '1') !== '0';
+
+function cacheGet(key) {
+  if (!CACHE_ON) return null;
+  const hit = CACHE.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > CACHE_TTL) { CACHE.delete(key); return null; }
+  return JSON.parse(hit.body);
+}
+function cacheSet(key, value) {
+  if (!CACHE_ON) return;
+  if (CACHE.size >= CACHE_MAX) { const first = CACHE.keys().next().value; if (first !== undefined) CACHE.delete(first); }
+  CACHE.set(key, { at: Date.now(), body: JSON.stringify(value) });
+}
+async function polite(url) {
+  if (!MIN_GAP) return;
+  let host = '';
+  try { host = new URL(url).host.toLowerCase(); } catch (e) { host = ''; }
+  if (!host || host === '127.0.0.1' || host === 'localhost' || host.indexOf('127.0.0.1:') === 0) return;
+  const last = HOST_LAST.get(host) || 0;
+  const wait = Math.max(0, MIN_GAP - (Date.now() - last));
+  if (wait) await new Promise(function (r) { setTimeout(r, wait); });
+  HOST_LAST.set(host, Date.now());
+}
+async function getJson(url, timeout, headers) {
+  const cached = cacheGet('GET ' + url);
+  if (cached) return cached;
+  await polite(url);
+  const r = await fetch(url, { headers: Object.assign({ 'user-agent': UA, 'accept-language': 'zh-CN,zh;q=0.9' }, headers || {}), signal: AbortSignal.timeout(timeout || 10000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  cacheSet('GET ' + url, j);
+  return j;
 }
 function tmdbKey(key) { return String(key || process.env.TMDB_API_KEY || '').trim(); }
 function tmdbBase() { return String(process.env.PTA_TMDB_API || DEFAULT_TMDB).replace(/\/+$/, ''); }
@@ -74,6 +108,10 @@ async function doubanSearch(title, year) {
 async function postForm(url, fields, timeout) {
   const body = new URLSearchParams();
   Object.keys(fields || {}).forEach(function (k) { body.set(k, String(fields[k] == null ? '' : fields[k])); });
+  const key = 'POST ' + url + '\n' + body.toString();
+  const cached = cacheGet(key);
+  if (cached) return cached;
+  await polite(url);
   const r = await fetch(url, {
     method: 'POST',
     headers: {
@@ -84,6 +122,7 @@ async function postForm(url, fields, timeout) {
   });
   const t = await r.text();
   if (!r.ok) throw new Error('HTTP ' + r.status);
+  cacheSet(key, t);
   return t;
 }
 

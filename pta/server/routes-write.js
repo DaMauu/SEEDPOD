@@ -180,8 +180,8 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: false, retryMax: 2, retryBackoffMin: 15, targetHost: '' };
-  const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] };
+  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: false, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1 };
+  const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10], concurrency: [1, 5] };
   function readCfg() {
     const row = one("SELECT v FROM meta WHERE k = 'config'");
     return Object.assign({}, DEF, JSON.parse(row ? row.v : 'null') || {});
@@ -190,7 +190,7 @@ module.exports = function (app, ctx) {
   app.patch('/api/config/user', async (req, reply) => {
     const b = req.body || {};
     const cfg = readCfg();
-    for (const k of ['interval', 'windowMinutes', 'maxPerWindow', 'breaker']) {
+    for (const k of ['interval', 'windowMinutes', 'maxPerWindow', 'breaker', 'concurrency']) {
       if (b[k] === undefined) continue;
       const n = Number(b[k]);
       if (!Number.isInteger(n)) return bad(reply, 'BAD_REQUEST', k + ' 必须是整数');
