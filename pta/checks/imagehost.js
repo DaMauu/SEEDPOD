@@ -23,6 +23,11 @@ const server = http.createServer(function (req, res) {
     hits++;
     const body = Buffer.concat(chunks).toString('latin1');
     bodies.push({ url: req.url, body: body, type: req.headers['content-type'] || '' });
+    if (req.method === 'GET' && req.url.indexOf('/mirror/') === 0) {
+      res.writeHead(200, { 'content-type': req.url.indexOf('.png') >= 0 ? 'image/png' : 'image/jpeg' });
+      res.end(Buffer.from(PNG.split(',')[1], 'base64'));
+      return;
+    }
     if (req.url === '/retry' && retryHits++ === 0) {
       res.writeHead(500, { 'content-type': 'text/plain' });
       res.end('first fail');
@@ -92,6 +97,33 @@ async function main() {
     need(!p.ok && p.code === 'IMAGE_HOST_UNVERIFIED', 'Pixhost 应拒绝：' + JSON.stringify(p));
     const s = await imagehost.process('站内', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true });
     need(s.ok && s.code === 'IMAGE_HOST_MANUAL' && s.uploaded === 0, '站内结果不对：' + JSON.stringify(s));
+  });
+
+  await check('远程图片转存图床并替换链接', async function () {
+    process.env.PTA_IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+    const a = 'http://127.0.0.1:' + port + '/mirror/a.png';
+    const b = 'http://127.0.0.1:' + port + '/mirror/b.jpg';
+    const desc = '简介\n[img]' + a + '[/img]\n[img]' + b + '[/img]';
+    const r = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
+    need(r.ok && r.uploaded === 2 && r.failed === 0, '转存结果不对：' + JSON.stringify({ ok: r.ok, uploaded: r.uploaded, failed: r.failed, code: r.code }));
+    need(r.description.indexOf(a) < 0 && r.description.indexOf(b) < 0, '源链接没替换：' + r.description);
+    need(/\/img\/\d+\.jpg/.test(r.description), '没换成图床链接：' + r.description);
+  });
+
+  await check('远程图片缓存后不再重复上传', async function () {
+    const a = 'http://127.0.0.1:' + port + '/mirror/a.png';
+    const desc = '简介\n[img]' + a + '[/img]';
+    const first = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
+    const before = hits;
+    const again = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true, known: first.map });
+    need(again.ok && again.uploaded === 0, '缓存后还上传了：' + JSON.stringify({ uploaded: again.uploaded, code: again.code }));
+    need(hits === before, '缓存后还发了请求：' + (hits - before));
+    need(again.description.indexOf(a) < 0, '缓存后没替换：' + again.description);
+  });
+
+  await check('内网图片地址不抓', async function () {
+    const r = await imagehost.mirrorDescription('[img]http://127.0.0.1:' + port + '/mirror/x.png[/img]', { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0 });
+    need(!r.ok && r.failed === 1 && r.uploaded === 0, '内网地址没拦住：' + JSON.stringify({ ok: r.ok, failed: r.failed }));
   });
 
   await check('replaceDescription 去掉 data URL 并只保留新链接', function () {

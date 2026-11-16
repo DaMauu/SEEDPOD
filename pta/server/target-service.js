@@ -5,6 +5,7 @@ const path = require('path');
 const stage = require('./stage');
 const torrentClean = require('./torrent-clean');
 const flowConfig = require('./flow-config');
+const imagehost = require('./imagehost');
 
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
@@ -227,6 +228,31 @@ function makeTargetService(ctx, target) {
         stage.fail(item.data, item.data.stage || 'previewed', 'BDInfo 门槛未过：' + bdMode);
         saveQueue(item.data);
         return { ok: false, code: 'BDINFO_REQUIRED', message: 'BDInfo 门槛未过：' + bdMode, http: 400 };
+      }
+    }
+    /* 源站 BBCode 里的远程图片：按规则转存图床，失败保留外链不阻断发布 */
+    if (!dryRun && String(item.data.descrBb || '').trim()) {
+      const flowCfg = flowConfig.read(ctx);
+      const imgMode = String(flowConfig.value(flowCfg, '简介图片', '转存到图床'));
+      if (imgMode === '转存到图床') {
+        const known = (item.data.imageMirror && item.data.imageMirror.map) || {};
+        const provider = String(item.data.imageHost || (process.env.PTA_IMAGE_HOST_URL ? 'custom' : 'none'));
+        const allowReal = typeof ctx.allowReal === 'function' ? ctx.allowReal('realImages') : false;
+        let mr = null;
+        try {
+          mr = await imagehost.mirrorDescription(item.data.descrBb, {
+            provider: provider, mode: imgMode, dryRun: false, allowReal: allowReal,
+            retries: 1, known: known,
+            referer: item.data.site ? 'https://' + item.data.site + '/' : ''
+          });
+        } catch (e) { mr = { ok: false, code: 'IMAGE_MIRROR_FAILED', message: String(e && e.message || e).slice(0, 120) }; }
+        if (mr) {
+          item.data.imageMirror = Object.assign({}, mr, { at: now(), map: Object.assign({}, known, mr.map || {}) });
+          delete item.data.imageMirror.description;
+          if (mr.description) item.data.descrBb = mr.description;
+          if (mr.uploaded > 0) item.data.descrMirroredAt = now();
+          saveQueue(item.data);
+        }
       }
     }
     const t = await torrentFor(b, item.data);

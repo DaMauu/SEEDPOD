@@ -137,6 +137,95 @@ async function processShots(providerName, shots, opts) {
     endpoint: cfg.endpoint, field: cfg.field, items: items
   };
 }
+/* 源站 BBCode 里的远程图片：下载后转存图床，替换成图床链接。
+   只处理 [img]http(s)://...[/img]；失败保留外链，不阻断发布。 */
+const MIRROR_MAX = 8;
+const MIRROR_MAX_BYTES = 8 * 1024 * 1024;
+const MIRROR_TOTAL_BYTES = 40 * 1024 * 1024;
+
+function isPrivateUrl(raw, allowPrivate) {
+  if (allowPrivate) return false;
+  let u;
+  try { u = new URL(String(raw || '')); } catch (e) { return true; }
+  if (!/^https?:$/.test(u.protocol)) return true;
+  const h = u.hostname.toLowerCase();
+  if (!h || h === 'localhost' || h === '::1' || h.endsWith('.local') || h.endsWith('.internal')) return true;
+  if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(h)) return true;
+  const m = /^172\.(\d+)\./.exec(h);
+  if (m && Number(m[1]) >= 16 && Number(m[1]) <= 31) return true;
+  if (h.indexOf(':') >= 0) return true;
+  return false;
+}
+function extractImages(description) {
+  const out = [];
+  const seen = new Set();
+  const re = /\[img\](\s*https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi;
+  let m;
+  while ((m = re.exec(String(description || '')))) {
+    const url = m[1].trim();
+    if (seen.has(url)) continue;
+    seen.add(url);
+    out.push(url);
+  }
+  return out;
+}
+async function mirrorDescription(description, opts) {
+  const o = opts || {};
+  const mode = String(o.mode || '转存到图床');
+  const urls = extractImages(description);
+  if (!urls.length) return { ok: true, code: 'NO_REMOTE_IMAGES', total: 0, uploaded: 0, failed: 0, description: String(description || '') };
+  if (mode !== '转存到图床') return { ok: true, code: 'IMAGE_MODE_KEEP', total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
+  if (o.dryRun !== false) return { ok: true, code: 'IMAGE_DRY_RUN', dryRun: true, total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
+  if (!o.allowReal) return { ok: false, code: 'REAL_IMAGES_DISABLED', total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
+  const provider = providerKey(o.provider || '');
+  const cfg = configFor(provider);
+  if (!cfg.verified) return { ok: false, code: 'IMAGE_HOST_UNVERIFIED', total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
+  if (!/^https?:\/\//i.test(cfg.endpoint)) return { ok: false, code: 'IMAGE_HOST_NOT_CONFIGURED', total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
+  const map = Object.assign({}, o.known || {});
+  const list = urls.filter(function (u) { return !map[u]; }).slice(0, MIRROR_MAX);
+  let uploaded = 0, failed = 0, bytes = 0, lastError = '';
+  for (let i = 0; i < list.length; i++) {
+    const url = list[i];
+    if (isPrivateUrl(url, o.allowPrivate === true)) { failed++; lastError = '内网地址不抓'; continue; }
+    if (i > 0) await sleep(o.delayMs == null ? 800 : o.delayMs);
+    try {
+      const res = await fetch(url, {
+        headers: Object.assign({ 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          o.referer ? { referer: String(o.referer) } : {}),
+        redirect: 'follow', signal: AbortSignal.timeout(o.timeoutMs || 20000)
+      });
+      if (!res.ok) throw new Error('图片返回 HTTP ' + res.status);
+      if (isPrivateUrl(res.url, o.allowPrivate === true)) throw new Error('图片跳转到内网地址');
+      const type = String(res.headers.get('content-type') || '').toLowerCase();
+      if (type && type.indexOf('image/') !== 0) throw new Error('不是图片：' + type.slice(0, 40));
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (!buf.length) throw new Error('图片是空文件');
+      if (buf.length > MIRROR_MAX_BYTES) throw new Error('图片超过 8MB');
+      if (bytes + buf.length > MIRROR_TOTAL_BYTES) { failed++; lastError = '图片总量超过 40MB'; break; }
+      bytes += buf.length;
+      const mime = type || 'image/jpeg';
+      const ext = mime.indexOf('png') >= 0 ? 'png' : (mime.indexOf('webp') >= 0 ? 'webp' : (mime.indexOf('gif') >= 0 ? 'gif' : 'jpg'));
+      const up = await uploadOne({ name: 'mirror-' + (i + 1) + '.' + ext, url: 'data:' + mime + ';base64,' + buf.toString('base64') }, cfg, { retries: o.retries == null ? 1 : o.retries, delayMs: 300 });
+      if (!up.ok) throw new Error(up.error || '图床上传失败');
+      map[url] = up.url;
+      uploaded++;
+    } catch (e) {
+      failed++;
+      lastError = String(e && e.message || e).slice(0, 120);
+    }
+  }
+  let out = String(description || '');
+  Object.keys(map).forEach(function (u) {
+    out = out.split('[img]' + u + '[/img]').join('[img]' + map[u] + '[/img]');
+  });
+  return {
+    ok: uploaded > 0 || failed === 0,
+    code: failed === 0 ? 'IMAGES_MIRRORED' : (uploaded ? 'IMAGES_MIRRORED_PARTIAL' : 'IMAGES_MIRROR_FAILED'),
+    total: urls.length, tried: list.length, uploaded: uploaded, failed: failed,
+    message: lastError, description: out, map: map
+  };
+}
+
 function replaceDescription(description, links) {
   let out = String(description == null ? '' : description);
   const list = Array.isArray(links) ? links.filter(function (x) { return x && x.url; }) : [];
@@ -147,4 +236,4 @@ function replaceDescription(description, links) {
   return out.slice(0, 20000);
 }
 
-module.exports = { process: processShots, replaceDescription: replaceDescription, providerKey: providerKey, configFor: configFor, dataUrlOf: dataUrlOf };
+module.exports = { process: processShots, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, providerKey: providerKey, configFor: configFor, dataUrlOf: dataUrlOf };
