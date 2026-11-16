@@ -112,7 +112,12 @@ module.exports = function (app, ctx) {
 
   app.post('/api/scheduler/run', async (req, reply) => {
     const b = req.body || {};
-    const r = await ctx.scheduler.runNow({ steps: Array.isArray(b.steps) ? b.steps : null });
+    const r = await ctx.scheduler.runNow({
+      steps: Array.isArray(b.steps) ? b.steps : null,
+      batchLimit: b.batchLimit,
+      screenLimit: b.screenLimit,
+      publishLimit: b.publishLimit
+    });
     if (!r.ok) return bad(reply, 'SCHEDULER_BUSY', r.error, 409);
     return ok(reply, r.steps);
   });

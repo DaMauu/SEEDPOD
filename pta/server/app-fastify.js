@@ -131,7 +131,12 @@ async function build() {
     const a = Buffer.from(got), b = Buffer.from(token);
     if (!a.length || a.length !== b.length || !crypto.timingSafeEqual(a, b)) return bad(reply, 'UNAUTHORIZED', 'token 不对', 401);
     const body = req.body || {};
-    const r = await ctx.scheduler.runNow({ steps: Array.isArray(body.steps) ? body.steps : null });
+    const r = await ctx.scheduler.runNow({
+      steps: Array.isArray(body.steps) ? body.steps : null,
+      batchLimit: body.batchLimit,
+      screenLimit: body.screenLimit,
+      publishLimit: body.publishLimit
+    });
     if (!r.ok) return bad(reply, 'SCHEDULER_BUSY', r.error, 409);
     return ok(reply, { steps: r.steps, stepsFilter: Array.isArray(body.steps) ? body.steps : null });
   });

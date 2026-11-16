@@ -89,6 +89,9 @@ function makeScheduler(ctx, deps) {
     const steps = { startedAt: startedAt, crawl: null, screen: null, publish: null, retry: null };
     const only = opts && Array.isArray(opts.steps) && opts.steps.length ? opts.steps : null;
     const want = function (name) { return !only || only.indexOf(name) >= 0; };
+    const batch = Math.max(1, Math.min(20, Number(opts && opts.batchLimit) || 20));
+    const screenLimit = Math.max(1, Math.min(200, Number(opts && opts.screenLimit) || 200));
+    const publishLimit = Math.max(1, Math.min(5, Number(opts && opts.publishLimit) || 5));
     const s = read();
     try {
       if (!want('crawl')) {
@@ -129,7 +132,7 @@ function makeScheduler(ctx, deps) {
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
 
       if (want('screen')) {
-        steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
+        steps.screen = deps.screen.screenCatalog(ctx, { limit: screenLimit });
         steps.hooksScreen = await pipeline.run('screen', ctx, steps);
       } else {
         steps.screen = { skipped: 'step not selected' };
@@ -137,7 +140,7 @@ function makeScheduler(ctx, deps) {
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
       const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false };
-      const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT 20") : [];
+      const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + batch) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;
       for (const row of pend) {
         const it = jparse(row.data) || {};
@@ -187,7 +190,7 @@ function makeScheduler(ctx, deps) {
       const bdMode = String(flowConfig.value(flow, 'BDInfo', '不要求'));
       const shotMin = Math.max(0, Number(flowConfig.value(flow, '截图至少几张', 0)) || 0);
       const missMode = String(flowConfig.value(flow, '不满足时', '转待确认'));
-      const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT 20") : [];
+      const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT " + batch) : [];
       const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review'), filled: 0 };
       let fillTries = 0;
       for (const row of reviewRows) {
@@ -246,7 +249,7 @@ function makeScheduler(ctx, deps) {
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
         /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
         const conc = Math.max(1, Math.min(5, Number(cfg.concurrency) || 1));
-        const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT 5");
+        const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT " + publishLimit);
         let ok = 0, failed = 0;
         const errors = [];
         const queueRows = rows.slice();
