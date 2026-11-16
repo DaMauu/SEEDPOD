@@ -140,7 +140,7 @@ function makeScheduler(ctx, deps) {
       }
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
-      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false };
+      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false };
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + batch) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;
       for (const row of pend) {
@@ -165,6 +165,7 @@ function makeScheduler(ctx, deps) {
             bumpSiteFail(host, '查重失败：' + String(e && e.message || e).slice(0, 120));
             anyOpen = true; continue;
           }
+          if (chk.disabled) { dedupe.disabled = true; anyOpen = true; continue; }
           it.dupeResults[host] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: new Date().toISOString() };
           if (chk.found && chk.skip) continue;
           anyOpen = true;
