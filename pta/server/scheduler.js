@@ -1,6 +1,7 @@
 /* 调度器：按固定间隔跑抓取 → 送审 → 终审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
 const flowConfig = require('./flow-config');
 const { makeCrossseed } = require('./crossseed');
+const pipeline = require('./pipeline');
 
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
@@ -98,7 +99,10 @@ function makeScheduler(ctx, deps) {
         steps.crawl = { skipped: 'realCrawl off' };
       }
 
+      steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
+
       steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
+      steps.hooksScreen = await pipeline.run('screen', ctx, steps);
 
       /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
       const flow = flowConfig.read(ctx);
@@ -140,6 +144,7 @@ function makeScheduler(ctx, deps) {
           .run(status, JSON.stringify(d), new Date().toISOString(), row.id);
       }
       steps.review = review;
+      steps.hooksReview = await pipeline.run('review', ctx, steps);
 
       if (ctx.allowReal('realPublish')) {
         const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT 5");
@@ -174,6 +179,8 @@ function makeScheduler(ctx, deps) {
         steps.publish = { skipped: 'realPublish off' };
       }
 
+      steps.hooksPublish = await pipeline.run('publish', ctx, steps);
+
       if (ctx.allowReal('realPublish')) {
         const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
@@ -203,6 +210,8 @@ function makeScheduler(ctx, deps) {
       } else {
         steps.retry = { skipped: 'realPublish off' };
       }
+
+      steps.hooksCrossseed = await pipeline.run('crossseed', ctx, steps);
 
       const crawlFail = (steps.crawl && steps.crawl.failed) || 0;
       const pubFail = (steps.publish && steps.publish.failed) || 0;

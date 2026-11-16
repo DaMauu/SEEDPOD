@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.299 · 2026-11-16
+
+### 流水线钩子注册表
+- 新增 server/pipeline.js：五个阶段（crawl/screen/review/publish/crossseed）+ 启动自动加载 server/steps/*.js。
+- 调度每阶段后执行已注册钩子；钩子报错只记录，不影响整轮。
+- 文档 pta/docs/PIPELINE.md：新功能只需说“进自动流程、放在哪一步”。
+
 ## v0.7.298 · 2026-11-16
 
 ### 流水线串联到辅种

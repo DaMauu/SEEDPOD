@@ -249,6 +249,7 @@ async function build() {
   require('./routes-notify')(app, ctx);
   require('./routes-extra')(app, ctx);
 
+  require('./pipeline').loadSteps();
   const publisher = require('./publish').makePublisher(ctx);
   ctx.publisher = publisher;
   ctx.scheduler = require('./scheduler').makeScheduler(ctx, {
