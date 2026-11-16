@@ -182,10 +182,18 @@ function makeTargetService(ctx, target) {
       if (pre && pre.ok && pre.data && pre.data.found) {
         const foundTitle = String(pre.data.title || '');
         const isDiy = /diy/i.test(foundTitle);
-        const isFullDisc = /原盘|full\s*disc|bdmv|\.iso|remux/i.test(foundTitle);
+        const isRemux = /remux/i.test(foundTitle);
+        const fullWords = String(flowConfig.value(flowCfg, '原盘判定关键词', '原盘|Full Disc|BDMV|ISO'))
+          .split('|').map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+        const fullRe = new RegExp(fullWords.map(function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'i');
+        const isFullDisc = fullRe.test(foundTitle) && !isRemux && !isDiy;
+        const restricted = /禁转|限转/.test(foundTitle);
+        const ruleRestrict = String(flowConfig.value(flowCfg, '禁转/限转处理', '跳过发布'));
         const ruleDiy = String(flowConfig.value(flowCfg, '目标站只有 DIY', '可发（标复核）'));
         const ruleFull = String(flowConfig.value(flowCfg, '目标站已有原盘', '跳过不收'));
-        const skip = isDiy ? ruleDiy === '跳过' : (isFullDisc ? ruleFull === '跳过不收' : true);
+        let skip = isDiy ? ruleDiy === '跳过' : (isFullDisc ? ruleFull === '跳过不收' : true);
+        if (restricted && ruleRestrict === '跳过发布') skip = true;
+        if (restricted && ruleRestrict === '标复核后仍发') skip = false;
         if (skip) {
           const msg = '目标站已有这条资源，跳过';
           setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: pre.data });

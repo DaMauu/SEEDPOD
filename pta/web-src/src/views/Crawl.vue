@@ -75,9 +75,27 @@
         </div>
       </section>
 
+      <section class="drawer open vue-card filter-card">
+        <div class="drawer-head">
+          <div class="drawer-t"><div class="drawer-title">② 初筛</div></div>
+          <div class="drawer-head-right">
+            <span class="drawer-meta">标题级条件 · 不通过不进队列</span>
+            <button class="btn primary slim" type="button" :disabled="busy.fetch" @click="saveFetch">{{ busy.fetch ? '保存中…' : '保存' }}</button>
+          </div>
+        </div>
+        <div class="drawer-body">
+          <div class="preset-block">
+            <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
+              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <div class="ctl"><RuleOrSpecial :r="r" /></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="drawer open vue-card dedupe-card">
         <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">② 查重</div></div>
+          <div class="drawer-t"><div class="drawer-title">③ 查重</div></div>
           <div class="drawer-head-right">
             <span class="drawer-meta">{{ autoDupe ? '自动查重已开' : '自动查重已关' }}</span>
             <button class="btn primary slim" id="crawl-screen-run" type="button" :disabled="busy.screen" @click="screenRun">{{ busy.screen ? '筛选中…' : '按条件筛选' }}</button>
@@ -98,24 +116,6 @@
                 <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
                 <div class="ctl"><RuleControl :r="r" /></div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="drawer open vue-card filter-card">
-        <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">③ 初筛</div></div>
-          <div class="drawer-head-right">
-            <span class="drawer-meta">标题级条件 · 不通过不进队列</span>
-            <button class="btn primary slim" type="button" :disabled="busy.fetch" @click="saveFetch">{{ busy.fetch ? '保存中…' : '保存' }}</button>
-          </div>
-        </div>
-        <div class="drawer-body">
-          <div class="preset-block">
-            <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-              <div class="ctl"><RuleOrSpecial :r="r" /></div>
             </div>
           </div>
         </div>
