@@ -111,7 +111,8 @@ module.exports = function (app, ctx) {
   });
 
   app.post('/api/scheduler/run', async (req, reply) => {
-    const r = await ctx.scheduler.runNow();
+    const b = req.body || {};
+    const r = await ctx.scheduler.runNow({ steps: Array.isArray(b.steps) ? b.steps : null });
     if (!r.ok) return bad(reply, 'SCHEDULER_BUSY', r.error, 409);
     return ok(reply, r.steps);
   });

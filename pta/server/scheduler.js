@@ -80,14 +80,18 @@ function makeScheduler(ctx, deps) {
     saveFails(map);
   }
 
-  async function runNow() {
+  async function runNow(opts) {
     if (running) return { ok: false, error: '上一轮还没跑完' };
     running = true;
     const startedAt = new Date().toISOString();
     const steps = { startedAt: startedAt, crawl: null, screen: null, publish: null, retry: null };
+    const only = opts && Array.isArray(opts.steps) && opts.steps.length ? opts.steps : null;
+    const want = function (name) { return !only || only.indexOf(name) >= 0; };
     const s = read();
     try {
-      if (ctx.allowReal('realCrawl')) {
+      if (!want('crawl')) {
+        steps.crawl = { skipped: 'step not selected' };
+      } else if (ctx.allowReal('realCrawl')) {
         /* 站点轮转：优先级高的先跑；同优先级按上次抓取时间从早到晚，间隔没到的跳过 */
         const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
@@ -122,12 +126,17 @@ function makeScheduler(ctx, deps) {
 
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
 
-      steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
-      steps.hooksScreen = await pipeline.run('screen', ctx, steps);
+      if (want('screen')) {
+        steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
+        steps.hooksScreen = await pipeline.run('screen', ctx, steps);
+      } else {
+        steps.screen = { skipped: 'step not selected' };
+      }
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
-      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [] };
-      const pend = all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT 20");
+      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false };
+      const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT 20") : [];
+      if (!want('dedupe')) dedupe.skippedStep = true;
       for (const row of pend) {
         const it = jparse(row.data) || {};
         const hosts = [];
@@ -176,8 +185,8 @@ function makeScheduler(ctx, deps) {
       const bdMode = String(flowConfig.value(flow, 'BDInfo', '不要求'));
       const shotMin = Math.max(0, Number(flowConfig.value(flow, '截图至少几张', 0)) || 0);
       const missMode = String(flowConfig.value(flow, '不满足时', '转待确认'));
-      const reviewRows = all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT 20");
-      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [] };
+      const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT 20") : [];
+      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review') };
       for (const row of reviewRows) {
         const pre = jparse(row.data) || {};
         if (pre.downloadUrl && !pre.sourceTitleAt) {
@@ -219,7 +228,7 @@ function makeScheduler(ctx, deps) {
       steps.review = review;
       steps.hooksReview = await pipeline.run('review', ctx, steps);
 
-      if (ctx.allowReal('realPublish')) {
+      if (want('publish') && ctx.allowReal('realPublish')) {
         const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
         /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
@@ -259,7 +268,7 @@ function makeScheduler(ctx, deps) {
         await Promise.all(workers);
         steps.publish = { checked: rows.length, ok: ok, failed: failed, errors: errors, concurrency: conc };
       } else {
-        steps.publish = { skipped: 'realPublish off' };
+        steps.publish = { skipped: want('publish') ? 'realPublish off' : 'step not selected' };
       }
 
       steps.hooksPublish = await pipeline.run('publish', ctx, steps);
