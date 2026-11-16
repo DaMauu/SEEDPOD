@@ -449,6 +449,33 @@ function originalFromThumb(raw) {
   return u.toString();
 }
 
+/* 同一张源图只传一次：源 URL → 图床 URL 持久化到 meta，跨条目复用 */
+function mirrorDb() {
+  const dir = path.resolve(require('./env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+  try { return { db: openDB(path.join(dir, 'seedpod.db')), dir: dir }; } catch (e) { return null; }
+}
+function readMirrorCache() {
+  const h = mirrorDb();
+  if (!h) return {};
+  try {
+    const row = h.db.prepare("SELECT v FROM meta WHERE k = 'image-mirror-cache'").get();
+    h.db.close();
+    const j = JSON.parse(row ? row.v : 'null');
+    return j && typeof j === 'object' ? j : {};
+  } catch (e) { try { h.db.close(); } catch (e2) {} return {}; }
+}
+function writeMirrorCache(map) {
+  const h = mirrorDb();
+  if (!h) return;
+  try {
+    const keys = Object.keys(map);
+    const out = {};
+    keys.slice(-800).forEach(function (k) { out[k] = map[k]; });
+    h.db.prepare("INSERT INTO meta(k, v) VALUES('image-mirror-cache', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(out));
+    h.db.close();
+  } catch (e) { try { h.db.close(); } catch (e2) {} }
+}
+
 function isOurImageHost(raw) {
   const h = hostOfUrl(raw);
   return h === 'img.pterclub.net' || h === 's3.pterclub.net';
@@ -468,7 +495,9 @@ async function mirrorDescription(description, opts) {
   if (!cfg.verified) return { ok: false, code: 'IMAGE_HOST_UNVERIFIED', total: items.length, uploaded: 0, failed: 0, skipped: 0, removed: 0, description: String(description || '') };
   if (!/^https?:\/\//i.test(cfg.endpoint)) return { ok: false, code: 'IMAGE_HOST_NOT_CONFIGURED', total: items.length, uploaded: 0, failed: 0, skipped: 0, removed: 0, description: String(description || '') };
 
-  const map = Object.assign({}, o.known || {});
+  const cache = readMirrorCache();
+  const map = Object.assign({}, cache, o.known || {});
+  const cacheNew = {};
   const remove = new Set();
   const pageByImg = {};
   const wrapRe = /\[url=([^\]]+)\]\s*\[img([^\]]*)\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]\s*\[\/url\]/gi;
@@ -513,6 +542,7 @@ async function mirrorDescription(description, opts) {
       map[url] = direct;
       if (resolved.page) map[resolved.page] = direct;
       if (page) map[page] = direct;
+      cacheNew[url] = direct;
       skipped++;
       continue;
     }
@@ -535,6 +565,7 @@ async function mirrorDescription(description, opts) {
       map[url] = up.url;
       if (resolved.page) map[resolved.page] = up.url;
       if (page) map[page] = up.url;
+      cacheNew[url] = up.url;
       uploaded++;
     } catch (e) {
       failed++;
@@ -558,6 +589,7 @@ async function mirrorDescription(description, opts) {
   });
   out = out.replace(/\[url=[^\]]+\]\s*\[\/url\]/gi, '');
 
+  if (Object.keys(cacheNew).length) writeMirrorCache(Object.assign({}, cache, cacheNew));
   return {
     ok: uploaded > 0 || (failed === 0 && skipped >= 0),
     code: failed === 0 ? 'IMAGES_MIRRORED' : (uploaded || skipped ? 'IMAGES_MIRRORED_PARTIAL' : 'IMAGES_MIRROR_FAILED'),
