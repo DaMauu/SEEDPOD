@@ -202,7 +202,7 @@
           <h2>选择主站</h2>
           <button class="btn ghost slim" type="button" @click="targetOpen = false">关闭</button>
         </div>
-        <p class="modal-sub">发布前会先查这个站有没有同样的资源；只列已启用且自检通过的站。</p>
+        <p class="modal-sub">发布前会先查这个站有没有同样的资源；只列有 cookie、上传配置完整的站。</p>
         <input v-model="targetQ" class="input" placeholder="搜索站点名 / 域名" autocomplete="off">
         <div class="target-list" id="target-list">
           <button v-for="t in targetOptions" :key="t.host" class="target-item" :class="{ on: targetHost === t.host }" type="button" @click="pickTarget(t.host)">
@@ -311,6 +311,7 @@ const tplPreview = computed(() => {
 const sites = ref([])
 const siteStatus = ref({})
 const siteCfg = ref({})
+const targetSites = ref([])
 const sourceHost = ref('')
 const targetHost = ref('')
 const targetOpen = ref(false)
@@ -371,13 +372,16 @@ const siteOptions = computed(() => sites.value.map(s => ({ host: s.host, title: 
 const targetSite = computed(() => sites.value.find(s => s.host === targetHost.value) || null)
 const targetOptions = computed(() => {
   const q = targetQ.value.trim().toLowerCase()
-  return sites.value.filter(s => {
-    const cfg = siteCfg.value[s.host] || {}
-    if (cfg.enabled === false) return false
-    const st = siteStatus.value[s.host]
-    if (!st || !st.pass) return false
-    return !q || ((s.title || '') + ' ' + s.host).toLowerCase().includes(q)
-  }).map(s => ({ host: s.host, title: s.title || s.host }))
+  const base = targetSites.value.length
+    ? targetSites.value
+    : sites.value.filter(s => {
+      const cfg = siteCfg.value[s.host] || {}
+      if (cfg.enabled === false) return false
+      const st = siteStatus.value[s.host]
+      return st && st.pass
+    })
+  return base.filter(s => !q || ((s.title || '') + ' ' + s.host).toLowerCase().includes(q))
+    .map(s => ({ host: s.host, title: s.title || s.host }))
 })
 
 function specialOf(r) { return SPECIAL[r.t] || '' }
@@ -571,17 +575,21 @@ async function screenRun() {
 
 // 页面独立：需要 siteStatus/siteCfg 驱动目标站列表，不能和 Queue 的简化版共用。
 async function loadSites() {
-  const [sj, cj] = await Promise.all([getJson('/api/sites'), getJson('/api/site-config')])
+  const [sj, cj, tj] = await Promise.all([getJson('/api/sites'), getJson('/api/site-config'), getJson('/api/targets')])
   if (sj && sj.ok) {
     sites.value = Array.isArray(sj.data.sites) ? sj.data.sites : []
     siteStatus.value = sj.data.status || {}
   }
   if (cj && cj.ok) siteCfg.value = cj.data.sites || {}
+  if (tj && tj.ok && Array.isArray(tj.data)) {
+    targetSites.value = tj.data.filter(t => t.hasCookie && t.ready).map(t => ({ host: t.host, title: (sites.value.find(s => s.host === t.host) || {}).title || t.host }))
+  }
   try {
     sourceHost.value = localStorage.getItem('pta.crawlSite') || ''
     targetHost.value = localStorage.getItem('pta.target') || ''
   } catch (e) { reportError('Crawl', e) }
   if (!siteOptions.value.some(s => s.host === sourceHost.value)) sourceHost.value = ''
+  if (targetSites.value.length && !targetSites.value.some(s => s.host === targetHost.value)) targetHost.value = ''
   loadTypes()
   loadSched()
   if (!siteOptions.value.some(s => s.host === targetHost.value)) targetHost.value = ''
@@ -709,10 +717,10 @@ async function prepareNext() {
   toast('已准备 ' + ((a.data && a.data.prepared) || 0) + ' · 已预览 ' + ((b.data && b.data.previewed) || 0) + ' · 不会自动发布')
 }
 
-function ensure() {
+async function ensure() {
   if (!viewVisible('crawl') || !loggedIn()) return
-  if (!sites.value.length) loadSites()
-  if (!gates.loaded) loadGates()
+  if (!sites.value.length) await loadSites()
+  if (!gates.loaded) await loadGates()
   loadFlow()
 }
 onMounted(() => {
