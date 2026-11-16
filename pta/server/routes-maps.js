@@ -16,7 +16,7 @@ const CAT = [
   ['舞台演出', /舞台|stage|perf\b|concert/i],
   ['游戏', /游戏|game|playstation|ps[2-5]\b|xbox|nintendo|wii|rom\s*packs?|jocuri|játékok/i],
   ['成人', /xxx|adult|softcore|18\+|erotic|hentai|porn/i],
-  ['原盘', /untouched|full\s*disc|blu-?ray\s*iso|bd\/dvd\s*iso|\biso\b|4k\s*ultra\s*hd/i],
+  ['原盘', /untouched|full\s*disc|blu-?ray\s*iso|bd\/dvd\s*iso|\biso\b|4k\s*ultra\s*hd|\bbdmv\b|\b(?:bd|dvd)\s*iso\b/i],
   ['Remux', /remux/i],
   ['压制', /encode|x264|x265|hdtv|webrip|web-rips?|dvdrip|rips?\b|sdrips|divx|xvid|upscaled/i],
   ['图片', /image|imagini|pics|pictures|wallpaper/i],
@@ -33,11 +33,18 @@ function pickField(fields, names, labelRe) {
   })[0] || null;
 }
 
+function squeezeLabel(s) {
+  /* 有些站把中文写成「电 影」「综 艺」，去掉汉字之间的空格再匹配 */
+  return String(s || '').replace(/([\u4e00-\u9fa5])\s+(?=[\u4e00-\u9fa5])/g, '$1');
+}
 function matchCats(options) {
   const out = {};
   const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
   CAT.forEach(function (pair) {
-    const hit = list.filter(function (o) { return pair[1].test(String(o.label || '')); })[0];
+    const hit = list.filter(function (o) {
+      const label = String(o.label || '');
+      return pair[1].test(label) || pair[1].test(squeezeLabel(label));
+    })[0];
     if (hit) out[pair[0]] = String(hit.value);
   });
   return out;
@@ -88,4 +95,4 @@ module.exports = function (app, ctx) {
   });
 };
 
-module.exports._test = { matchCats, pickField, CAT };
+module.exports._test = { matchCats, squeezeLabel, pickField, CAT };

@@ -319,14 +319,42 @@ function makeTargetService(ctx, target) {
       if (chk.found) item.data.dupeReview = { host: host, kind: chk.kind, title: chk.title, at: now() };
       item.data.dupePassedAt = now();
     }
-    const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });
-    if (!r.ok) {
-      if (!dryRun) {
-        setTargetResult(item.data, host, { stage: 'failed', error: r.message || r.code, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString() });
-        if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', r.message || r.code);
-        saveQueue(item.data);
+    /* 上次提交成功但回查没跟上：先重新回查，找到了就不重复上传 */
+    const verifyRule = flow['发布后校验'];
+    const shouldVerify = b.verify !== undefined ? !!b.verify : (verifyRule ? verifyRule.on !== false : true);
+    let verified = null;
+    let reused = false;
+    const prev = targetResults(item.data)[String(host).toLowerCase()];
+    if (!dryRun && shouldVerify && prev && prev.detailsUrl && !prev.verified) {
+      for (let i = 0; i < 2 && !reused; i++) {
+        if (i) await new Promise(function (r2) { setTimeout(r2, 3000); });
+        const v = await target.verify(host, uploadItem, t.buf, {});
+        if (v.ok && v.data && v.data.found) {
+          verified = v.data;
+          reused = true;
+          item.data.targetVerify = Object.assign({}, v.data, { at: now() });
+          prev.verified = true;
+          prev.stage = 'submitted';
+          prev.error = '';
+          delete prev.nextRetryAt;
+          if (v.data.detailsUrl) prev.detailsUrl = v.data.detailsUrl;
+          setTargetResult(item.data, host, prev);
+        }
       }
-      return r;
+    }
+    let r;
+    if (reused) {
+      r = { ok: true, data: { url: '', detailsUrl: prev.detailsUrl || '', infohash: prev.infohash || '', status: 200, message: '已提交过，回查确认存在' } };
+    } else {
+      r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });
+      if (!r.ok) {
+        if (!dryRun) {
+          setTargetResult(item.data, host, { stage: 'failed', error: r.message || r.code, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString() });
+          if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', r.message || r.code);
+          saveQueue(item.data);
+        }
+        return r;
+      }
     }
     if (r.data) r.data.cleaned = cleaned;
     if (dryRun) return r;
@@ -338,23 +366,24 @@ function makeTargetService(ctx, target) {
       return { ok: false, code: 'UPLOAD_UNCONFIRMED', message: msg, http: 502, data: r.data };
     }
     item.data.targetUpload = {
-      host: host, at: now(), url: r.data.url, detailsUrl: r.data.detailsUrl || '',
-      infohash: r.data.infohash || '', status: r.data.status || 0, message: r.data.message || '',
+      host: host, at: now(), url: r.data.url || '', detailsUrl: r.data.detailsUrl || item.data.targetUpload && item.data.targetUpload.detailsUrl || '',
+      infohash: r.data.infohash || (prev && prev.infohash) || '', status: r.data.status || 0, message: r.data.message || '',
       cleaned: cleaned
     };
-    let verified = null;
-    const verifyRule = flow['发布后校验'];
-    const shouldVerify = b.verify !== undefined ? !!b.verify : (verifyRule ? verifyRule.on !== false : true);
-    if (shouldVerify) {
-      const v = await target.verify(host, uploadItem, t.buf, { url: r.data.detailsUrl || undefined });
-      if (v.ok) {
-        verified = v.data;
-        item.data.targetVerify = Object.assign({}, v.data, { at: now() });
+    /* 回查：详情页 → 搜索，各给 2 次机会，容忍索引延迟 */
+    if (shouldVerify && !verified) {
+      for (let i = 0; i < 3 && !verified; i++) {
+        if (i) await new Promise(function (r2) { setTimeout(r2, 3000); });
+        const v = await target.verify(host, uploadItem, t.buf, { url: i === 0 ? (r.data.detailsUrl || undefined) : undefined });
+        if (v.ok && v.data && v.data.found) {
+          verified = v.data;
+          item.data.targetVerify = Object.assign({}, v.data, { at: now() });
+        }
       }
     }
     if (shouldVerify && (!verified || !verified.found)) {
       const msg = '提交返回 200，但回查未找到（可能待审核/索引延迟）';
-      const failed = { stage: 'failed', error: msg, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString(), verify: verified || null };
+      const failed = { stage: 'failed', error: msg, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString(), verify: verified || null, detailsUrl: item.data.targetUpload.detailsUrl || '' };
       setTargetResult(item.data, host, failed);
       if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', msg);
       saveQueue(item.data);

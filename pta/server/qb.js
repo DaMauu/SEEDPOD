@@ -389,6 +389,24 @@ async function removeTorrent(d, hash, opts) {
   }
 }
 
+async function listTorrents(d, filter) {
+  if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
+  const f = String(filter || 'all');
+  try {
+    const r = await qbGet(d, '/api/v2/torrents/info?filter=' + encodeURIComponent(f), '');
+    if (r.res.status !== 200) return { ok: false, error: 'QB_LIST_FAILED', status: r.res.status, message: 'qB 返回 ' + r.res.status };
+    const list = await r.res.json().catch(function () { return []; });
+    return { ok: true, torrents: (Array.isArray(list) ? list : []).map(function (t) {
+      return { hash: String(t.hash || '').toLowerCase(), name: String(t.name || ''), size: Number(t.size) || 0,
+        progress: Number(t.progress) || 0, state: String(t.state || ''), savePath: String(t.save_path || ''),
+        category: String(t.category || ''), dlspeed: Number(t.dlspeed) || 0, upspeed: Number(t.upspeed) || 0,
+        numSeeds: Number(t.num_seeds) || 0, numLeechs: Number(t.num_leechs) || 0, addedOn: Number(t.added_on) || 0 };
+    }) };
+  } catch (e) {
+    return { ok: false, error: e && e.name === 'TimeoutError' ? 'TIMEOUT' : 'QB_LIST_FAILED', message: String(e && e.message || e).slice(0, 160) };
+  }
+}
+
 async function trackerStatus(d, hash) {
   if (!d || !d.url) return { ok: false, error: 'NO_DOWNLOADER', message: '没有可用的下载器' };
   const h = String(hash || '').trim().toLowerCase();
@@ -411,6 +429,6 @@ async function trackerStatus(d, hash) {
   }
 }
 
-return { probeDownloader, qbCategories, addTorrent, addTrackers, resumeTorrent, stopTorrent, removeTorrent, trackerStatus, parseTorrent, findTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
+return { probeDownloader, qbCategories, addTorrent, addTrackers, resumeTorrent, stopTorrent, removeTorrent, listTorrents, trackerStatus, parseTorrent, findTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
 }
 module.exports = { makeQb };

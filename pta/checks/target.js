@@ -220,6 +220,20 @@ function startMock(hash, torrentBuf) {
 }
 
 async function main() {
+  await check('分类标签带空格也能匹配', async function () {
+    const maps = require(path.join(ROOT, 'server', 'routes-maps.js'));
+    const m = maps._test.matchCats([
+      { value: '1', label: '电 影' },
+      { value: '2', label: '综 艺' },
+      { value: '3', label: '其 它' },
+      { value: '4', label: 'BDMV' }
+    ]);
+    need(m['电影'] === '1', '「电 影」没匹配：' + JSON.stringify(m));
+    need(m['综艺'] === '2', '「综 艺」没匹配');
+    need(m['其他'] === '3', '「其 它」没匹配');
+    need(m['原盘'] === '4', 'BDMV 没归原盘');
+  });
+
   const torrent = makeTorrent();
   const hash = infoHash(torrent);
   mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = []; downloadHits = 0; published = false;
