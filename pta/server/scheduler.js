@@ -141,7 +141,7 @@ function makeScheduler(ctx, deps) {
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
       const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false, requests: 0 };
-      const dedupeLimit = Math.min(10, batch);
+      const dedupeLimit = batch;
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;
       let stopDedupe = false;
