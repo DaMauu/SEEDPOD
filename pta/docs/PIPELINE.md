@@ -28,6 +28,14 @@
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
+## 简介图片转存
+
+- 解析 `[img]` 和 `[img=300x300]`，保留尺寸属性。
+- 图片页（ibb/imgur/imgbox/postimages/pixhost/sm.ms 等）自动解析 `og:image` 拿原图直链。
+- 缩略图（imgbox/imgur/pixhost 等）优先从 `[url=图床页面]` 或缩略图规则还原原图，不转缩略图。
+- 猫站图床黑名单（imgur/imgbb/smms/路过/流浪/Audiences/picgd/Z4A/Ubits/Gifyu）最终简介里不保留；能下载就转存猫站图床，失败则删图。
+- `[url=图床页面][img]…[/img][/url]` 的链接和图片一起替换成新图床地址。
+
 ## 新功能怎么进自动流程
 
 不用你记细节，只要一句话：**「这个功能要进自动流程，放在 X 之后」**。剩下由代码处理。

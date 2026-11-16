@@ -58,6 +58,16 @@ const server = http.createServer(function (req, res) {
       res.end(JSON.stringify({ status_code: 200, image: { url: 'http://127.0.0.1:' + server.address().port + '/chevereto/' + hits + '.jpg' } }));
       return;
     }
+    if (req.method === 'GET' && req.url.indexOf('/page/') === 0) {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<html><head><meta property="og:image" content="/orig/1.png"></head><body>page</body></html>');
+      return;
+    }
+    if (req.method === 'GET' && req.url.indexOf('/orig/') === 0) {
+      res.writeHead(200, { 'content-type': 'image/png' });
+      res.end(Buffer.from(PNG.split(',')[1], 'base64'));
+      return;
+    }
     if (req.method === 'GET' && req.url.indexOf('/mirror/') === 0) {
       if (req.url.indexOf('/big.png') >= 0) {
         res.writeHead(200, { 'content-type': 'image/png' });
@@ -163,6 +173,40 @@ async function main() {
     const url = 'http://127.0.0.1:' + port + '/mirror/big.png';
     const r = await imagehost.mirrorDescription('[img]' + url + '[/img]', { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
     need(r.ok && r.uploaded === 1 && r.failed === 0, '9MB 图片没转：' + JSON.stringify({ uploaded: r.uploaded, failed: r.failed, code: r.code, error: r.message }));
+  });
+
+  await check('图床页面解析原图并回填', async function () {
+    const page = 'http://127.0.0.1:' + port + '/page/1';
+    const desc = '[center][url=' + page + '][img=300x300]' + page + '[/img][/url][/center]';
+    const r = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
+    need(r.ok && r.uploaded === 1, '页面原图没上传：' + JSON.stringify({ uploaded: r.uploaded, failed: r.failed, error: r.message }));
+    need(r.description.indexOf('/page/1') < 0, '图床页面链接没替换：' + r.description);
+    need(/\[img=300x300\]http:\/\/127\.0\.0\.1:\d+\/img\/\d+\.jpg\[\/img\]/.test(r.description), '尺寸属性没保留：' + r.description);
+    need(/\[url=http:\/\/127\.0\.0\.1:\d+\/img\/\d+\.jpg\]/.test(r.description), '外链没替换：' + r.description);
+  });
+
+  await check('缩略图从页面解析成原图', async function () {
+    const page = 'http://127.0.0.1:' + port + '/page/1';
+    const thumb = 'http://127.0.0.1:' + port + '/thumbs/thumb.jpg';
+    const desc = '[url=' + page + '][img=300x300]' + thumb + '[/img][/url]';
+    const r = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
+    need(r.ok && r.uploaded === 1, '缩略图没解析上传：' + JSON.stringify({ uploaded: r.uploaded, error: r.message }));
+    need(r.description.indexOf('/thumbs/') < 0 && r.description.indexOf('/page/1') < 0, '缩略图/页面链接没替换：' + r.description);
+    need(/\[img=300x300\]/.test(r.description), '尺寸属性没保留：' + r.description);
+  });
+
+  await check('常见图床缩略图还原规则', function () {
+    need(imagehost.isLikelyThumb('https://thumbs2.imgbox.com/ab/cd/xyz_t.jpg'), 'imgbox 缩略图没识别');
+    need(imagehost.isLikelyThumb('https://i.imgur.com/abcdt.jpg'), 'imgur 缩略图没识别');
+    need(imagehost.originalFromThumb('https://thumbs2.imgbox.com/ab/cd/xyz_t.jpg') === 'https://images2.imgbox.com/ab/cd/xyz_o.jpg', 'imgbox 还原不对：' + imagehost.originalFromThumb('https://thumbs2.imgbox.com/ab/cd/xyz_t.jpg'));
+    need(imagehost.originalFromThumb('https://i.imgur.com/abcdt.jpg') === 'https://i.imgur.com/abcd.jpg', 'imgur 还原不对：' + imagehost.originalFromThumb('https://i.imgur.com/abcdt.jpg'));
+  });
+
+  await check('图床黑名单识别', async function () {
+    need(imagehost.isBlacklisted('https://i.ibb.co/x/a.png'), 'ibb 没进黑名单');
+    need(imagehost.isBlacklisted('https://imgur.com/a'), 'imgur 没进黑名单');
+    need(imagehost.isBlacklisted('https://z4a.net/x.jpg'), 'z4a 没进黑名单');
+    need(!imagehost.isBlacklisted('https://img.pterclub.net/x.jpg'), '猫站图床不该进黑名单');
   });
 
   await check('远程图片缓存后不再重复上传', async function () {
