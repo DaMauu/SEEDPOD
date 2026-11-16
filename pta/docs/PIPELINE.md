@@ -15,11 +15,14 @@
 
 - 同一目标站的所有请求（查重、详情、上传、回查、权威种、删除）共用 7 秒间隔。
 - 查重每轮最多 10 条；每条每站 1 次搜索，命中才多 1 次详情。
-- **全局查重预算**：所有目标站共用，默认每天 200 次（搜索+详情都算），每轮最多 12 次。
-  多目标会按站累加，例：3 个目标 × 10 条 = 最多 60 次/轮，不是每站各 200。
-- 额度用完：查重阶段停，`dedupe.budgetExhausted=true`；终审把没查过的条目记为「查重未完成」，
-  发布前再查一次也会被拒，不会绕过查重。
-- 每站还有 200 次/天的兜底；环境变量：`PTA_DEDUPE_DAILY_MAX`、`PTA_DEDUPE_ROUND_MAX`、
+- **时间窗限速**（代替日额度）：
+  - 每站：10 分钟内最多 10 次，最小间隔 6 秒
+  - 全局：10 分钟内最多 30 次，多目标共用，防止目标站翻倍
+  - 一次搜索算 1 次，命中后读详情再算 1 次
+- 触发限速：查重阶段停，`dedupe.rateLimited=true` 并给 `retryAfterMs`；
+  终审把没查过的条目记为「查重未完成」，发布前复核也会拒绝，不会绕过查重。
+- 每站另有 200 次/天兜底；环境变量：`PTA_DEDUPE_SITE_MAX`、`PTA_DEDUPE_SITE_MIN`、
+  `PTA_DEDUPE_GLOBAL_MAX`、`PTA_DEDUPE_GLOBAL_MIN`、`PTA_DEDUPE_MIN_GAP_MS`、
   `PTA_TARGET_GAP_MS`、`PTA_TARGET_DAILY_MAX`。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
