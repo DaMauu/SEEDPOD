@@ -36,7 +36,7 @@ run site-pack site-pack.js
 run backup backup.js
 run publish publish.js
 run scheduler scheduler.js
-run dedupe-rate dedupe-rate.js
+run request-queue request-queue.js
 run detect detect.js
 run torrent-clean torrent-clean.js
 run target target.js

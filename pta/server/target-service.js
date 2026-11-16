@@ -6,12 +6,10 @@ const stage = require('./stage');
 const torrentClean = require('./torrent-clean');
 const flowConfig = require('./flow-config');
 const imagehost = require('./imagehost');
-const { makeDedupeRate } = require('./dedupe-rate');
 
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
-  const dedupeRate = makeDedupeRate(ctx);
 
   function loadQueue(id) {
     const row = one('SELECT id, data FROM queue WHERE id = ?', String(id || ''));
@@ -174,15 +172,11 @@ function makeTargetService(ctx, target) {
     const flowCfg = flowConfig.read(ctx);
     /* 流程页关掉“目标站搜索”就不查重，尊重用户设置，少打目标站 */
     if (!flowConfig.on(flowCfg, '目标站搜索', true)) return { found: false, disabled: true };
-    const b1 = await dedupeRate.take(host);
-    if (!b1.ok) return { found: false, rateLimited: true, limit: b1.limit, retryAfterMs: b1.retryAfterMs || 0, rate: dedupeRate.status() };
     let pre = null;
     try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); } catch (e) { pre = null; }
     if (!pre || !pre.ok || !pre.data || !pre.data.found) return { found: false };
     let foundTitle = String(pre.data.title || '');
     if (pre.data.detailsUrl) {
-      const b2 = await dedupeRate.take(host);
-      if (!b2.ok) return { found: false, rateLimited: true, limit: b2.limit, retryAfterMs: b2.retryAfterMs || 0, rate: dedupeRate.status() };
       try {
         const di = await target.fetchDetailsInfo(host, pre.data.detailsUrl);
         if (di.ok) foundTitle += ' ' + [di.data.subtitle, di.data.descr, di.data.tags, di.data.medium].filter(Boolean).join(' ');
@@ -315,9 +309,6 @@ function makeTargetService(ctx, target) {
     }
     if (!dryRun && b.preCheckDupe !== false && !(item.data.dupePassedAt && dres)) {
       const chk = await checkDupe(host, item.data, t.buf);
-      if (chk.rateLimited) {
-        return { ok: false, code: 'DEDUPE_RATE_LIMITED', message: '查重请求触发限速，先不发布', http: 429, data: { host: host, retryAfterMs: chk.retryAfterMs || 0 } };
-      }
       if (chk.found && chk.skip) {
         const msg = '目标站已有这条资源，跳过';
         setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: chk.verify });

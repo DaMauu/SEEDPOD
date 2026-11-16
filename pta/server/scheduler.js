@@ -5,7 +5,6 @@ const pipeline = require('./pipeline');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { makeMetaFill } = require('./meta-fill');
-const { makeDedupeRate } = require('./dedupe-rate');
 
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
@@ -15,7 +14,6 @@ function makeScheduler(ctx, deps) {
   const target = makeTarget(ctx);
   const targetService = makeTargetService(ctx, target);
   const metaFill = makeMetaFill(ctx);
-  const dedupeRate = makeDedupeRate(ctx);
   let timer = null;
   let running = false;
 
@@ -142,7 +140,7 @@ function makeScheduler(ctx, deps) {
       }
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
-      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false, rateLimited: false, retryAfterMs: 0 };
+      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false, requests: 0 };
       const dedupeLimit = Math.min(10, batch);
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;
@@ -163,18 +161,12 @@ function makeScheduler(ctx, deps) {
           const prev = it.dupeResults[host];
           if (it.dupePassedAt && prev && !prev.skip) { anyOpen = true; continue; }
           let chk = { found: false, skip: false };
+          dedupe.requests++;
           try { chk = await targetService.checkDupe(host, it, null); resetSiteFail(host); }
           catch (e) {
             dedupe.errors.push({ id: row.id, host: host, error: String(e && e.message || e).slice(0, 120) });
             bumpSiteFail(host, '查重失败：' + String(e && e.message || e).slice(0, 120));
             anyOpen = true; continue;
-          }
-          if (chk.rateLimited) {
-            dedupe.rateLimited = true;
-            dedupe.retryAfterMs = chk.retryAfterMs || 0;
-            dedupe.rate = chk.rate || dedupeRate.status();
-            stopDedupe = true;
-            break;
           }
           if (chk.disabled) { dedupe.disabled = true; anyOpen = true; continue; }
           it.dupeResults[host] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: new Date().toISOString() };
@@ -194,7 +186,6 @@ function makeScheduler(ctx, deps) {
             .run(JSON.stringify(it), new Date().toISOString(), row.id);
         }
       }
-      dedupe.rate = dedupeRate.status();
       steps.dedupe = dedupe;
       steps.hooksDedupe = await pipeline.run('dedupe', ctx, steps);
 
