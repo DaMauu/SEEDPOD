@@ -29,9 +29,9 @@ function makeMetaFill(ctx) {
       const head = [d.title + (d.year ? '（' + d.year + '）' : ''), ov].filter(Boolean).join('\n\n');
       const block = String(d.bbcode || '').trim() || [head ? '[quote]' + head + '[/quote]' : '', d.poster ? '[img]' + d.poster + '[/img]' : ''].filter(Boolean).join('\n\n');
       if (!block) return { ok: false, code: 'EMPTY' };
-      item.descrBb = block.slice(0, 20000);
+      item.descrBb = block.slice(0, 60000);
       if (ov) item.descr = ov.slice(0, 1000);
-      if (!item.intro) item.intro = block.slice(0, 20000);
+      if (!item.intro) item.intro = block.slice(0, 60000);
       const subMode = String(flowConfig.value(flow, '中文副标题来源', '种子自带 → 豆影网页 → TMDB'));
       if (d.subtitle && /^豆影网页/.test(subMode)) item.subtitle = String(d.subtitle).slice(0, 300);
       else if (!item.subtitle && !/^只用种子自带/.test(subMode)) item.subtitle = String(d.subtitle).slice(0, 300);

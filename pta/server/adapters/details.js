@@ -14,6 +14,13 @@ function text(s) { return decode(String(s || '').replace(/<[^>]+>/g, ' ')).repla
 /* 简介 HTML → BBCode：保留图片与换行，其余标签丢掉；目标站 descr 直接可用 */
 function toBbcode(html) {
   let s = String(html || '');
+  /* 源码块保留成 [code]，引用保留成 [quote]，避免 BBCode 结构被拍平 */
+  s = s.replace(/<div\b[^>]*class=["'][^"']*codemain[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, function (_, inner) { return '\n[code]\n' + inner + '\n[/code]\n'; })
+    .replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, function (_, inner) { return '\n[code]' + text(inner) + '[/code]\n'; })
+    .replace(/<fieldset\b[^>]*>/gi, '\n[quote]\n')
+    .replace(/<\/fieldset>/gi, '\n[/quote]\n')
+    .replace(/<legend\b[^>]*>/gi, '').replace(/<\/legend>/gi, '\n')
+    .replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/gi, function (_, inner) { return '\n[quote]' + text(inner) + '[/quote]\n'; });
   s = s.replace(/<br\s*\/?>/gi, '\n');
   s = s.replace(/<\/(?:p|div|li|tr|h\d)>/gi, '\n');
   s = s.replace(/<img\b[^>]*(?:data-src|src)\s*=\s*["']([^"']+)["'][^>]*>/gi, function (_, src) {
@@ -25,7 +32,7 @@ function toBbcode(html) {
     return t || (/^https?:\/\//i.test(href) ? decode(href) : '');
   });
   s = s.replace(/<[^>]+>/g, ' ');
-  return decode(s).replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]{2,}/g, ' ').trim();
+  return decode(s).replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]{2,}/g, ' ').trim().slice(0, 60000);
 }
 function attr(s, name) {
   const m = new RegExp(name + '\\s*=\\s*["\']([^"\']*)["\']', 'i').exec(String(s || ''));
@@ -66,6 +73,24 @@ function pick(map, names) {
   return '';
 }
 
+/* kdescr 里常套着多层 div（引用、表格、图片），不能用第一个 </div> 截断 */
+function extractDivByAttr(html, attr, value) {
+  const re = new RegExp('<div\\b[^>]*' + attr + '\\s*=\\s*["\'][^"\']*' + value + '[^"\']*["\'][^>]*>', 'i');
+  const m = re.exec(html);
+  if (!m) return '';
+  let i = m.index + m[0].length;
+  let depth = 1;
+  const tagRe = /<div\b[^>]*>|<\/div>/gi;
+  tagRe.lastIndex = i;
+  let t;
+  while ((t = tagRe.exec(html))) {
+    if (/^<div/i.test(t[0])) depth++;
+    else depth--;
+    if (depth === 0) return html.slice(i, t.index);
+  }
+  return html.slice(i);
+}
+
 function parse(html) {
   const s = String(html || '');
   const rows = tableRows(s);
@@ -104,13 +129,13 @@ function parse(html) {
   if (uploader) out.uploader = uploader;
 
   /* 简介：kdescr 是 NexusPHP 的固定容器；没有就退到第一个描述块 */
-  const d = /<div\b[^>]*id=["']kdescr["'][^>]*>([\s\S]*?)<\/div>/i.exec(s)
-    || /<div\b[^>]*class=["'][^"']*(?:description|kdescr)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i.exec(s);
-  if (d) {
-    const plain = text(d[1]);
-    if (plain) out.descr = plain.slice(0, 1000);
-    const bb = toBbcode(d[1]);
-    if (bb) out.descrBb = bb.slice(0, 20000);
+  let descHtml = extractDivByAttr(s, 'id', 'kdescr');
+  if (!descHtml) descHtml = extractDivByAttr(s, 'class', '(?:description|kdescr)');
+  if (descHtml) {
+    const plain = text(descHtml);
+    if (plain) out.descr = plain.slice(0, 1200);
+    const bb = toBbcode(descHtml);
+    if (bb) out.descrBb = bb.slice(0, 60000);
   }
 
   /* 海报 */

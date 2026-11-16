@@ -411,11 +411,11 @@ async function mirrorDescription(description, opts) {
 function replaceDescription(description, links) {
   let out = String(description == null ? '' : description);
   const list = Array.isArray(links) ? links.filter(function (x) { return x && x.url; }) : [];
-  if (!list.length) return out.slice(0, 20000);
+  if (!list.length) return out.slice(0, 60000);
   out = out.replace(/\[img\]data:image\/[^\[\]]+\[\/img\]/gi, '').trim();
   const block = list.map(function (x) { return '[img]' + x.url + '[/img]'; }).join('\n');
   if (block && out.indexOf(block) < 0) out = out ? out + '\n\n' + block : block;
-  return out.slice(0, 20000);
+  return out.slice(0, 60000);
 }
 
 module.exports = { process: processShots, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };

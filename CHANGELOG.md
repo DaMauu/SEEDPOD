@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.344 · 2026-11-17
+
+### 简介 BBCode 完整提取
+- 修 kdescr 被第一个 </div> 截断：改成平衡 div 提取，mediaInfo/引用/图片不再丢。
+- HTML 转 BBCode 保留 [quote]、[code]、[img] 结构；简介上限提到 60000 字。
+- 初筛/终审把 descrBb 同步到 intro，待审核页简介框显示完整 BBCode。
+- 实测猫站详情：454 字 → 2920 字，含 quote/code/mediaInfo/2 张图。
+
 ## v0.7.343 · 2026-11-17
 
 ### 发布阶段补禁转拦截

@@ -75,7 +75,7 @@ function makeRelease(ctx) {
     if (mediaBlock && attachMedia) {
       const already = description.indexOf(media.raw) >= 0 ||
         /\[(?:quote|code|hide)(?:=[^\]]*)?\][\s\S]*?(?:Disc Title|Complete name)\s*:/i.test(description);
-      if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 20000);
+      if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 60000);
     }
     const imageLinks = (Array.isArray(item.imageLinks) ? item.imageLinks : []).filter(function (x) { return x && x.url; });
     const imageMode = String(flowConfig.value(flow, '简介图片', '转存到图床'));

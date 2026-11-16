@@ -213,7 +213,7 @@ function makeScheduler(ctx, deps) {
             try { di = await target.fetchDetailsInfo(pre.site, pre.detailsUrl); } catch (e) { di = null; }
             if (di && di.ok && di.data) {
               const dd = di.data;
-              if (dd.descrBb) pre.descrBb = dd.descrBb;
+              if (dd.descrBb) { pre.descrBb = dd.descrBb; pre.intro = dd.descrBb; }
               if (dd.descr) pre.descr = dd.descr;
               if (dd.subtitle && !pre.subtitle) pre.subtitle = dd.subtitle;
               if (dd.tags && !pre.tags) pre.tags = dd.tags;

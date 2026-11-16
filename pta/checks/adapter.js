@@ -229,6 +229,19 @@ check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', (
   need(empty.sizeBytes === undefined && empty.medium === undefined, '空页面不该编出字段：' + JSON.stringify(empty));
 });
 
+check('简介嵌套 div 不截断，pre 变 code', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const html = '<html><body><div id="kdescr"><div class="quote">引用文字</div><p>正文段落</p>'
+    + '<table><tr><td>General</td><td>Video</td></tr></table>'
+    + '<pre>[img]https://img.example/a.jpg[/img]</pre>'
+    + '<div class="images"><img src="https://img.example/1.jpg"><img src="https://img.example/2.jpg"></div></div></body></html>';
+  const d = adapters.parseDetail(html);
+  need(/正文段落/.test(d.descrBb), '嵌套正文丢了：' + String(d.descrBb).slice(0, 200));
+  need(/General/.test(d.descrBb), '表格内容丢了');
+  need(/\[code\]/.test(d.descrBb) && /a\.jpg/.test(d.descrBb), 'pre 没变 code');
+  need(/1\.jpg/.test(d.descrBb) && /2\.jpg/.test(d.descrBb), '图片丢了：' + String(d.descrBb).slice(0, 300));
+});
+
 check('详情页简介转 BBCode 保留图片', () => {
   const adapters = require(path.join(ROOT, 'server', 'adapters'));
   const h = '<html><body><div id="kdescr">第一段<br>第二段<img src="https://img.example/a.jpg"><a href="https://x.example">链接</a></div></body></html>';

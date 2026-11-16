@@ -205,7 +205,7 @@ function makeTarget(ctx) {
   function expand(s, v) {
     return String(s == null ? '' : s).replace(/\{([a-zA-Z0-9_]+)\}/g, function (_, k) {
       return v[k] != null ? String(v[k]) : '';
-    }).slice(0, 20000);
+    }).slice(0, 60000);
   }
 
   function plan(host, item) {
