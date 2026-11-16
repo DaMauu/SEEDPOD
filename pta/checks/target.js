@@ -642,6 +642,21 @@ async function main() {
     await json(BASE + '/api/queue/' + encodeURIComponent(add.body.data.id), { method: 'DELETE' });
   });
 
+  await check('禁转源在发布阶段被拦住', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Restricted Test 2024 1080p Blu-ray 禁转', targetSite: '127.0.0.1', status: 'approved', size: '20 GB' })
+    });
+    need(add.status === 200 && add.body.ok, '建禁转条目失败');
+    const before = hits.length;
+    const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: add.body.data.id, torrentBase64: torrent.toString('base64'), dryRun: false })
+    });
+    need(up.status === 409 && up.body.error && up.body.error.code === 'RESTRICTED_SOURCE', '禁转没拦住：' + JSON.stringify(up.body));
+    need(hits.length === before, '禁转条目仍发了上传请求');
+  });
+
   await check('真提交与目标站回查', async function () {
     const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },

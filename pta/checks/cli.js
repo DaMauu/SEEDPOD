@@ -37,7 +37,7 @@ async function json(url, opts) {
 function cli(args) {
   return new Promise(function (resolve) {
     execFile(process.execPath, [path.join(ROOT, 'cli.js')].concat(args), {
-      env: Object.assign({}, process.env, { PTA_BASE: BASE, PTA_USER: USER, PTA_PASS: PASS }),
+      env: Object.assign({}, process.env, { PANEL_URL: BASE, PANEL_USER: USER, PANEL_PASS: PASS }),
       timeout: 20000
     }, function (err, stdout, stderr) {
       resolve({ code: err ? (typeof err.code === 'number' ? err.code : 1) : 0,
@@ -46,10 +46,11 @@ function cli(args) {
   });
 }
 function cliLocal(args) {
-  const env = Object.assign({}, process.env, { PTA_DATA: DATA });
+  const env = Object.assign({}, process.env, { DATA_DIR: DATA, PTA_DATA: DATA });
+  delete env.PANEL_URL; delete env.PANEL_USER; delete env.PANEL_PASS; delete env.ALLOW_REAL;
   delete env.PTA_BASE; delete env.PTA_USER; delete env.PTA_PASS; delete env.PTA_ALLOW_REAL;
   return new Promise(function (resolve) {
-    execFile(process.execPath, [path.join(ROOT, 'cli.js')].concat(args), { env, timeout: 20000 }, function (err, stdout, stderr) {
+    execFile(process.execPath, [path.join(ROOT, 'cli.js')].concat(args), { env, timeout: 60000 }, function (err, stdout, stderr) {
       resolve({ code: err ? (typeof err.code === 'number' ? err.code : 1) : 0,
         stdout: String(stdout || ''), stderr: String(stderr || '') });
     });
@@ -77,7 +78,7 @@ function tinyTorrent(file, name) {
 }
 function parse(r) {
   try { return JSON.parse(r.stdout); }
-  catch (e) { throw new Error('CLI 输出不是 JSON：' + r.stdout.slice(0, 100) + ' / ' + r.stderr.slice(0, 100)); }
+  catch (e) { throw new Error('CLI 输出不是 JSON（code ' + r.code + '）：' + r.stdout.slice(0, 150) + ' / ' + r.stderr.slice(0, 150)); }
 }
 async function waitUp() {
   const end = Date.now() + 8000;
@@ -92,6 +93,7 @@ async function main() {
   const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
+      PANEL_PORT: String(PORT), DATA_DIR: DATA, WEB_DIR: path.join(ROOT, 'web', 'dist'),
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),
       PTA_USER: USER, PTA_PASS: PASS
     }),

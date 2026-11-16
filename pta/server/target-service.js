@@ -6,6 +6,7 @@ const stage = require('./stage');
 const torrentClean = require('./torrent-clean');
 const flowConfig = require('./flow-config');
 const imagehost = require('./imagehost');
+const marks = require('./marks');
 
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
@@ -252,6 +253,19 @@ function makeTargetService(ctx, target) {
           if (mr.description) item.data.descrBb = mr.description;
           if (mr.uploaded > 0) item.data.descrMirroredAt = now();
           saveQueue(item.data);
+        }
+      }
+    }
+    /* 禁转/限转是硬规则：发布阶段再拦一次，防止手工条目绕过初筛/终审 */
+    if (!dryRun) {
+      const restrictRule = flow['禁转/限转处理'];
+      const mode = restrictRule && restrictRule.v ? String(restrictRule.v) : '跳过发布';
+      if (mode === '跳过发布') {
+        const reason = marks.complianceReason(item.data, Date.now());
+        if (reason) {
+          stage.fail(item.data, item.data.stage || 'previewed', '源种' + reason + '，按规则不发布');
+          saveQueue(item.data);
+          return { ok: false, code: 'RESTRICTED_SOURCE', message: '源种' + reason + '，按规则不发布', http: 409 };
         }
       }
     }
