@@ -16,16 +16,29 @@ function makeCrossseed(ctx) {
     if (!h) return { ok: false, error: 'NO_HOST' };
     const results = item.data.targetResults || {};
     const tr = results[h] || {};
+    /* 失败也记一笔，调度会按 retryAt 重试；成功后清掉错误 */
+    function markFail(code, extra) {
+      const prev = tr.crossseed || {};
+      tr.crossseed = Object.assign({}, extra || {}, {
+        at: now(), ok: false, error: code,
+        attempts: (Number(prev.attempts) || 0) + 1,
+        retryAt: new Date(Date.now() + 15 * 60000).toISOString()
+      });
+      results[h] = tr;
+      item.data.targetResults = results;
+      ctx.targetService.saveQueue(item.data);
+      return { ok: false, error: code };
+    }
     const pub = tr.publishedTorrent || tr.targetTorrent;
-    if (!pub || !pub.path || !fs.existsSync(pub.path)) return { ok: false, error: 'NO_PUBLISHED_TORRENT' };
+    if (!pub || !pub.path || !fs.existsSync(pub.path)) return markFail('NO_PUBLISHED_TORRENT');
     const sourceHash = (tr.sourceTorrent && tr.sourceTorrent.infohash) || item.data.infohash || '';
     if (!sourceHash) return { ok: false, error: 'NO_SOURCE_HASH' };
     const rows = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data); }).filter(function (x) { return x && (x.kind || 'qb') === 'qb'; });
     const dl = rows.filter(function (x) { return !o.downloader || String(x.id) === String(o.downloader); })[0];
     if (!dl) return { ok: false, error: 'NO_QB' };
     const found = await qb.findTorrent(dl, sourceHash);
-    if (!found.found) return { ok: false, error: 'SOURCE_NOT_IN_QB' };
-    if (Number(found.progress) < 0.999) return { ok: false, error: 'SOURCE_INCOMPLETE', progress: Number(found.progress) || 0 };
+    if (!found.found) return markFail('SOURCE_NOT_IN_QB');
+    if (Number(found.progress) < 0.999) return markFail('SOURCE_INCOMPLETE', { progress: Number(found.progress) || 0 });
     const buf = fs.readFileSync(pub.path);
     const meta = qb.parseTorrent(buf);
     if (!meta.hash) return { ok: false, error: 'BAD_TARGET_TORRENT' };
@@ -43,7 +56,10 @@ function makeCrossseed(ctx) {
       trackerOk = (st.trackers || []).some(function (x) { return x.working; });
       if (t.found && Number(t.progress) >= 0.999 && trackerOk) { verified = true; break; }
     }
-    tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: verified, state: state, trackerWorking: trackerOk };
+    tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: verified, state: state, trackerWorking: trackerOk,
+      attempts: (Number((tr.crossseed && tr.crossseed.attempts) || 0) + 1),
+      error: verified ? '' : 'NOT_VERIFIED',
+      retryAt: verified ? '' : new Date(Date.now() + 15 * 60000).toISOString() };
     if (!verified) {
       results[h] = tr;
       item.data.targetResults = results;

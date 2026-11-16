@@ -323,6 +323,33 @@ function makeScheduler(ctx, deps) {
 
       steps.hooksPublish = await pipeline.run('publish', ctx, steps);
 
+      /* 辅种重试：已发布但辅种没成功（源数据没下完、tracker 没起来）的，按 retryAt 再试 */
+      if (want('crossseed') && ctx.allowReal('realPublish')) {
+        const csRows = all("SELECT id, data FROM queue WHERE status = 'published' ORDER BY updated_at DESC LIMIT 50");
+        const cs = { checked: 0, ok: 0, failed: 0, errors: [] };
+        for (const row of csRows) {
+          if (cs.checked >= 10) break;
+          const it = jparse(row.data) || {};
+          for (const host of Object.keys(it.targetResults || {})) {
+            if (cs.checked >= 10) break;
+            const tr = it.targetResults[host] || {};
+            if (tr.crossseed && tr.crossseed.ok) continue;
+            if (!tr.publishedTorrent) continue;
+            const retryAt = Date.parse((tr.crossseed && tr.crossseed.retryAt) || '') || 0;
+            if (retryAt > Date.now()) continue;
+            cs.checked++;
+            let r;
+            try { r = await crossseed.run({ id: row.id, data: it }, host, {}); }
+            catch (e) { r = { ok: false, error: String(e && e.message || e).slice(0, 120) }; }
+            if (r.ok) cs.ok++;
+            else { cs.failed++; if (cs.errors.length < 3) cs.errors.push({ id: row.id, host: host, error: r.error }); }
+          }
+        }
+        steps.crossseedRetry = cs;
+      } else {
+        steps.crossseedRetry = { skipped: want('crossseed') ? 'realPublish off' : 'step not selected' };
+      }
+
       if (ctx.allowReal('realPublish')) {
         const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
