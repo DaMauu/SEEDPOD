@@ -84,6 +84,8 @@ function screenCatalog(ctx, opts) {
     const it = jparse(r.data) || {};
     checked++;
     const title = String(it.title || '');
+    const detailText = [title, it.tags, it.subtitle, it.descr, it.intro].filter(Boolean).join(' ');
+    const hasDetail = !!(it.tags || it.subtitle || it.descr || it.intro);
     const res = String(it.res || '').toLowerCase() || match.resOf(title);
     const bytes = Number(it.sizeBytes) || match.sizeBytesOf(it) || 0;
     let reason = marksMod.complianceReason(it, Date.now());
@@ -92,7 +94,7 @@ function screenCatalog(ctx, opts) {
     else if (rules.res.length && res && rules.res.indexOf(res) < 0) reason = '分辨率不符 ' + res;
     else if (rules.minSizeGB && bytes && bytes < rules.minSizeGB * 1073741824) reason = '体积偏小';
     else if (rules.maxSizeGB && bytes && bytes > rules.maxSizeGB * 1073741824) reason = '体积偏大';
-    else if (rules.requireChinese && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(title)) reason = '没有中字';
+    else if (rules.requireChinese && hasDetail && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(detailText)) reason = '没有中字';
     else if (rules.requireIntro && !String(it.intro || it.descr || '').trim()) reason = '缺简介';
     else if (seenTitles.has(norm(title))) reason = '已有同片';
     else if (it.infohash && seenHashes.has(String(it.infohash).toLowerCase())) reason = '已有同片';
