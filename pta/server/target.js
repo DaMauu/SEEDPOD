@@ -12,6 +12,7 @@ const meta = require('./meta');
 const { makeQb } = require('./qb');
 const torrentClean = require('./torrent-clean');
 const match = require('./match');
+const targetDefaults = require('./target-defaults');
 const flowConfig = require('./flow-config');
 
 const ENGINES = {
@@ -172,6 +173,8 @@ function makeTarget(ctx) {
       source: String(item.source || ''),
       codec: String(item.codec || ''),
       resolution: res,
+      region: String(item.region || ''),
+      language: String(item.language || ''),
       audio: String(item.audio || ''),
       team: String(item.team || item.group || ''),
       anonymous: (item.anonymous !== undefined ? !!item.anonymous : flowConfig.on(flowConfig.read(ctx), '默认匿名', false)) ? '1' : '0',
@@ -235,17 +238,26 @@ function makeTarget(ctx) {
       else { delete fields.team_sel; warnings.push('制作组 ' + teamRaw + ' 没映射到站点 id，已留空'); }
     }
     if (!v.catId) warnings.push('分类没映射，type 留空');
-    /* 必填下拉没映射时用站点表单里的默认值（第一个非零选项），避免“你必须选择地区” */
+    /* 必填下拉没映射时：先按源地区/媒介对选项，再退站点默认值，避免“你必须选择地区” */
     const REQUIRED = ['type', 'source_sel', 'team_sel', 'standard_sel', 'codec_sel', 'audiocodec_sel', 'medium_sel'];
     const defaults = (t.form && t.form.defaults) || {};
+    const selects = (t.form && t.form.selects) || {};
     REQUIRED.forEach(function (k) {
-      if (fields[k] === undefined && defaults[k] != null && defaults[k] !== '') {
+      if (fields[k] !== undefined) return;
+      const opts = selects[k];
+      let auto = '';
+      if (Array.isArray(opts) && opts.length) auto = targetDefaults.betterDefault(opts, item);
+      if (auto) {
+        fields[k] = auto;
+        warnings.push('必填字段 ' + k + ' 按源信息选 ' + auto);
+        return;
+      }
+      if (defaults[k] != null && defaults[k] !== '') {
         fields[k] = String(defaults[k]);
         warnings.push('必填字段 ' + k + ' 用默认值 ' + defaults[k]);
       }
     });
     /* 下拉值必须在站点选项里；不在就按标签纠正，纠不了留空 */
-    const selects = (t.form && t.form.selects) || {};
     Object.keys(fields).forEach(function (k) {
       const opts = selects[k];
       if (!Array.isArray(opts) || !opts.length) return;

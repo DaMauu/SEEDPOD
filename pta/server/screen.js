@@ -118,6 +118,8 @@ function screenCatalog(ctx, opts) {
       downloadUrl: it.downloadUrl || '', siteId: it.siteId || '',
       subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),
       year: it.year || '', category: it.category || '',
+      region: String(it.region || '').slice(0, 60), language: String(it.language || '').slice(0, 60),
+      medium: String(it.medium || '').slice(0, 60), fullDisc: it.fullDisc === true,
       intro: String(it.intro || it.descrBb || it.descr || '').slice(0, 20000),
       tags: tagListOf(it.tags) };
     db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')

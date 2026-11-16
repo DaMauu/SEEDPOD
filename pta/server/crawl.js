@@ -242,6 +242,8 @@ function makeCrawl(ctx) {
             if (d.category && !it.catName) it.catName = d.category;
             if (d.medium) it.medium = d.medium;
             if (d.subtitle) it.subtitle = d.subtitle;
+            if (d.region) it.region = d.region;
+            if (d.language) it.language = d.language;
             if (d.infohash && !it.infohash) it.infohash = d.infohash;
             if (d.descr) it.descr = d.descr;
             if (d.descrBb) it.descrBb = d.descrBb;

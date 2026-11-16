@@ -38,6 +38,8 @@ const LABELS = {
   medium: ['媒介', '类型', 'Type', 'Medium'],
   tags: ['标签', 'Tags'],
   subtitle: ['副标题', 'Subtitle'],
+  region: ['地区', '国家', 'Region', 'Country'],
+  language: ['语言', 'Language'],
   infohash: ['Info Hash', '信息哈希', '哈希'],
   uploader: ['发布者', 'Uploader', '上传者']
 };
@@ -89,6 +91,11 @@ function parse(html) {
 
   const subtitle = pick(rows, LABELS.subtitle);
   if (subtitle) out.subtitle = subtitle;
+
+  const region = pick(rows, LABELS.region);
+  if (region) out.region = region;
+  const language = pick(rows, LABELS.language);
+  if (language) out.language = language;
 
   const infohash = pick(rows, LABELS.infohash);
   if (infohash) out.infohash = infohash.toLowerCase();

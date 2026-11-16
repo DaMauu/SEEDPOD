@@ -39,6 +39,7 @@ run scheduler scheduler.js
 run detect detect.js
 run torrent-clean torrent-clean.js
 run target target.js
+run target-defaults target-defaults.js
 run meta meta.js
 run mediainfo mediainfo.js
 run imagehost imagehost.js
