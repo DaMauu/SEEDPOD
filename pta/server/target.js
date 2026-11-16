@@ -375,9 +375,11 @@ function makeTarget(ctx) {
     const isDetails = /details\.php\?id=\d+|\/torrents?\/\d+/i.test(url);
     let found = false;
     let matchedTitle = '';
+    let matchedUrl = '';
     let rows = 0;
     if (res.status === 200 && isDetails) {
       found = !!(title && norm(text).indexOf(title) >= 0) || !!(hash && text.toLowerCase().indexOf(hash) >= 0);
+      if (found) matchedUrl = url;
     } else if (res.status === 200) {
       const list = adapters.parseList(text, p.data.engine);
       rows = list.length;
@@ -388,6 +390,7 @@ function makeTarget(ctx) {
       })[0];
       found = !!hit;
       matchedTitle = hit ? String(hit.title || '').slice(0, 200) : '';
+      matchedUrl = hit && hit.detailsUrl ? String(hit.detailsUrl) : '';
     }
     return { ok: true, data: {
       found: found, url: url, status: res.status, title: found ? (matchedTitle || item.title) : '', detailsUrl: matchedUrl,
