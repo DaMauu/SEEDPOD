@@ -165,12 +165,17 @@ function makePublisher(ctx) {
         qb: { added: true, client: 'watch', path: w.path, message: w.message || 'Ok.', hash: meta.hash || '', verified: true, state: 'watch' },
         msg: it.pubMsg } };
     }
-    const add = await qb.addTorrent(dl, got.buf, {
+    let add = await qb.addTorrent(dl, got.buf, {
       savePath: b.savePath || it.savePath,
       category: b.category || it.category,
       autoTMM: flowConfig.on(flowConfig.read(ctx), 'qB 自动种子管理', false),
       filename: String(it.title || 'upload').slice(0, 60) + '.torrent'
     });
+    /* qB 里已经有同 hash 的种（比如上次注入过）：qB 会回 Fails.，确认存在就当成功 */
+    if (!add.ok && /fails|already|duplicate|exist/i.test(String(add.message || ''))) {
+      const ex = await qb.findTorrent(dl, meta.hash, meta.name);
+      if (ex.found) add = { ok: true, existing: true, message: '已在 qB 里，跳过重复添加' };
+    }
     if (!add.ok) {
       it.status = 'failed';
       it.pubMsg = 'qB 添加失败：' + (add.message || add.error);
@@ -187,7 +192,7 @@ function makePublisher(ctx) {
       hash: meta.hash || '', torrentName: meta.name || '', state: chk.state || '',
       progress: Number(chk.progress) || 0, verified: !!chk.found, client: 'qb' };
     it.pubMsg = chk.found
-      ? '已加入 qB 并校验到种子（' + (chk.state || '未知') + '）'
+      ? (add.existing ? 'qB 里已有这个种子，跳过重复添加' : '已加入 qB 并校验到种子（' + (chk.state || '未知') + '）')
       : '已加入 qB，但列表里还没找到（可能延迟）';
     stage.set(it, 'injected', { evidence: { client: 'qb', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' } });
     save(it);

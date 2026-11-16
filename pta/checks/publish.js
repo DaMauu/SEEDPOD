@@ -21,7 +21,7 @@ const TORRENT = Buffer.concat([Buffer.from('d8:announce15:http://mock/ann4:info'
 
 const results = [];
 let cookie = '';
-let addHits = 0, lastAddCookie = '', lastAddType = '', lastAddLen = 0;
+let addHits = 0, added = false, lastAddCookie = '', lastAddType = '', lastAddLen = 0;
 let trackerAdds = 0, lastTrackerBody = '';
 let resumeHits = 0, pauseHits = 0, deleteHits = 0, lastDeleteBody = '';
 let lastAddBody = '';
@@ -96,6 +96,7 @@ async function main() {
       req.on('data', c => chunks.push(c));
       req.on('end', function () {
         addHits++;
+        added = true;
         lastAddCookie = req.headers.cookie || '';
         lastAddType = req.headers['content-type'] || '';
         const body = Buffer.concat(chunks);
@@ -108,7 +109,7 @@ async function main() {
     if (url === '/api/v2/app/version') { res.writeHead(200); res.end('v5.0.0'); return; }
     if (url === '/api/v2/torrents/info') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify([{ hash: HASH, name: 'test', state: 'downloading', progress: 0, save_path: '/downloads', content_path: '/downloads/test', category: 'test' }]));
+      res.end(JSON.stringify(added ? [{ hash: HASH, name: 'test', state: 'downloading', progress: 0, save_path: '/downloads', content_path: '/downloads/test', category: 'test' }] : []));
       return;
     }
     res.writeHead(404); res.end('');

@@ -295,7 +295,8 @@ async function addTorrent(d, buf, opts) {
     if (!okAdd) return { ok: false, error: 'QB_ADD_FAILED', status: r.res.status, message: r.text.slice(0, 200) || ('HTTP ' + r.res.status) };
     return { ok: true, status: r.res.status, message: 'Ok.', authed: !!cookie };
   } catch (e) {
-    return { ok: false, error: e && e.name === 'TimeoutError' ? 'TIMEOUT' : 'QB_ADD_FAILED', message: e && e.name === 'TimeoutError' ? '连接 qB 超时' : String(e && e.message || e).slice(0, 160) };
+    const cause = e && e.cause && e.cause.message ? '（' + String(e.cause.message).slice(0, 80) + '）' : '';
+    return { ok: false, error: e && e.name === 'TimeoutError' ? 'TIMEOUT' : 'QB_ADD_FAILED', message: (e && e.name === 'TimeoutError' ? '连接 qB 超时' : String(e && e.message || e).slice(0, 160)) + cause };
   }
 }
 

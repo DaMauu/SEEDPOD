@@ -44,7 +44,11 @@ function makeCrossseed(ctx) {
     if (!meta.hash) return { ok: false, error: 'BAD_TARGET_TORRENT' };
     if (meta.hash === sourceHash) return { ok: false, error: 'SAME_INFOHASH' };
     const skip = flowConfig.on(flowConfig.read(ctx), '辅种跳过校验', true);
-    const add = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: skip, paused: false, category: found.category || '' });
+    let add = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: skip, paused: false, category: found.category || '' });
+    if (!add.ok && /fails|already|duplicate|exist/i.test(String(add.message || ''))) {
+      const ex = await qb.findTorrent(dl, meta.hash);
+      if (ex.found) add = { ok: true, existing: true, message: '辅种种已在 qB 里' };
+    }
     if (!add.ok) return { ok: false, error: add.error || 'QB_ADD_FAILED', message: add.message || '' };
     /* 加完校验：进度 1 + 至少一个 tracker working */
     let verified = false, state = '', trackerOk = false;
