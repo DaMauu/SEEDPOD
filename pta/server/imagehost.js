@@ -321,9 +321,7 @@ async function processShots(providerName, shots, opts) {
 }
 /* 源站 BBCode 里的远程图片：下载后转存图床，替换成图床链接。
    只处理 [img]http(s)://...[/img]；失败保留外链，不阻断发布。 */
-const MIRROR_MAX = 8;
 const MIRROR_MAX_BYTES = 8 * 1024 * 1024;
-const MIRROR_TOTAL_BYTES = 40 * 1024 * 1024;
 
 function isPrivateUrl(raw, allowPrivate) {
   if (allowPrivate) return false;
@@ -364,8 +362,8 @@ async function mirrorDescription(description, opts) {
   if (!cfg.verified) return { ok: false, code: 'IMAGE_HOST_UNVERIFIED', total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
   if (!/^https?:\/\//i.test(cfg.endpoint)) return { ok: false, code: 'IMAGE_HOST_NOT_CONFIGURED', total: urls.length, uploaded: 0, failed: 0, description: String(description || '') };
   const map = Object.assign({}, o.known || {});
-  const list = urls.filter(function (u) { return !map[u]; }).slice(0, MIRROR_MAX);
-  let uploaded = 0, failed = 0, bytes = 0, lastError = '';
+  const list = urls.filter(function (u) { return !map[u]; });
+  let uploaded = 0, failed = 0, lastError = '';
   for (let i = 0; i < list.length; i++) {
     const url = list[i];
     if (isPrivateUrl(url, o.allowPrivate === true)) { failed++; lastError = '内网地址不抓'; continue; }
@@ -383,8 +381,6 @@ async function mirrorDescription(description, opts) {
       const buf = Buffer.from(await res.arrayBuffer());
       if (!buf.length) throw new Error('图片是空文件');
       if (buf.length > MIRROR_MAX_BYTES) throw new Error('图片超过 8MB');
-      if (bytes + buf.length > MIRROR_TOTAL_BYTES) { failed++; lastError = '图片总量超过 40MB'; break; }
-      bytes += buf.length;
       const mime = type || 'image/jpeg';
       const ext = mime.indexOf('png') >= 0 ? 'png' : (mime.indexOf('webp') >= 0 ? 'webp' : (mime.indexOf('gif') >= 0 ? 'gif' : 'jpg'));
       const up = await uploadOne({ name: 'mirror-' + (i + 1) + '.' + ext, url: 'data:' + mime + ';base64,' + buf.toString('base64') }, cfg, { retries: o.retries == null ? 1 : o.retries, delayMs: 300 });

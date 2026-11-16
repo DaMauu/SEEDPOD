@@ -145,6 +145,15 @@ async function main() {
     need(/\/img\/\d+\.jpg/.test(r.description), '没换成图床链接：' + r.description);
   });
 
+  await check('超过 8 张也全部转存', async function () {
+    const desc = Array.from({ length: 10 }, function (_, i) {
+      return '[img]http://127.0.0.1:' + port + '/mirror/all-' + i + '.png[/img]';
+    }).join('\n');
+    const r = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
+    need(r.ok && r.uploaded === 10 && r.failed === 0, '10 张没全传：' + JSON.stringify({ uploaded: r.uploaded, failed: r.failed, code: r.code }));
+    need((r.description.match(/\/img\/\d+\.jpg/g) || []).length === 10, '10 张链接没全替换');
+  });
+
   await check('远程图片缓存后不再重复上传', async function () {
     const a = 'http://127.0.0.1:' + port + '/mirror/a.png';
     const desc = '简介\n[img]' + a + '[/img]';
