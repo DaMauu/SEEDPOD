@@ -8,6 +8,13 @@ function makeCrossseed(ctx) {
   const { one, all, jparse } = ctx;
   const qb = makeQb(ctx.DATA_DIR);
   const now = () => new Date().toISOString();
+  /* 自己落库，不依赖 ctx.targetService（调度里没挂这个对象） */
+  function saveQueue(data) {
+    try {
+      ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+        .run(JSON.stringify(data), now(), data.id);
+    } catch (e) { console.warn('[seedpod] crossseed save failed:', e && e.message ? e.message : e); }
+  }
 
   async function run(item, host, opts) {
     const o = opts || {};
@@ -26,7 +33,7 @@ function makeCrossseed(ctx) {
       });
       results[h] = tr;
       item.data.targetResults = results;
-      ctx.targetService.saveQueue(item.data);
+      saveQueue(item.data);
       return { ok: false, error: code };
     }
     const pub = tr.publishedTorrent || tr.targetTorrent;
@@ -50,6 +57,8 @@ function makeCrossseed(ctx) {
       if (ex.found) add = { ok: true, existing: true, message: '辅种种已在 qB 里' };
     }
     if (!add.ok) return { ok: false, error: add.error || 'QB_ADD_FAILED', message: add.message || '' };
+    /* qB 可能因为队列上限把新种停在 stopped 状态，这里显式续上再校验 */
+    try { await qb.resumeTorrent(dl, meta.hash); } catch (e) { /* 续不上交给后面的校验报错 */ }
     /* 加完校验：进度 1 + 至少一个 tracker working */
     let verified = false, state = '', trackerOk = false;
     for (let i = 0; i < 3; i++) {
@@ -67,12 +76,12 @@ function makeCrossseed(ctx) {
     if (!verified) {
       results[h] = tr;
       item.data.targetResults = results;
-      ctx.targetService.saveQueue(item.data);
+      saveQueue(item.data);
       return { ok: false, error: 'NOT_VERIFIED', state: state, trackerWorking: trackerOk, targetHash: meta.hash };
     }
     results[h] = tr;
     item.data.targetResults = results;
-    ctx.targetService.saveQueue(item.data);
+    saveQueue(item.data);
     return { ok: true, targetHash: meta.hash, savePath: found.savePath || '' };
   }
   return { run };
