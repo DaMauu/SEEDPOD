@@ -62,7 +62,7 @@ module.exports = function (app, ctx) {
     const dryRun = b.dryRun !== false;
     const allowReal = !dryRun && ctx.allowReal('realImages');
     if (!dryRun && !allowReal) {
-      return bad(reply, 'REAL_IMAGES_DISABLED', '图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
+      return bad(reply, 'REAL_IMAGES_DISABLED', '图床真上传没打开：把配置 realImages 设为 true（或设 ALLOW_REAL=1）再试', 409);
     }
     const retries = b.retries !== undefined ? b.retries : flowConfig.number(flowConfig.read(ctx), '图片上传重试', 2);
     let r;

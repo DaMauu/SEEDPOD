@@ -119,7 +119,7 @@ function makePublisher(ctx) {
       return { ok: true, data: { id: it.id, dryRun: true, published: false, inject: plan, qb: { wouldAdd: plan.wouldAdd, downloader: { id: dl.id, name: dl.name || '' } }, msg: plan.message } };
     }
     if (!ctx.allowReal('realPublish')) {
-      return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true（或设 PTA_ALLOW_REAL=1）再试', http: 409 };
+      return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true（或设 ALLOW_REAL=1）再试', http: 409 };
     }
     if (it.status !== 'pending' && it.status !== 'approved' && it.status !== 'failed') {
       return { ok: false, code: 'BAD_STATE', message: '当前状态 ' + it.status + ' 不能发布', http: 400 };

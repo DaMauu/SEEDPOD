@@ -37,6 +37,7 @@ run backup backup.js
 run publish publish.js
 run scheduler scheduler.js
 run request-queue request-queue.js
+run env-names env-names.js
 run detect detect.js
 run torrent-clean torrent-clean.js
 run target target.js

@@ -236,7 +236,7 @@ function makeTargetService(ctx, target) {
       const imgMode = String(flowConfig.value(flowCfg, '简介图片', '转存到图床'));
       if (imgMode === '转存到图床') {
         const known = (item.data.imageMirror && item.data.imageMirror.map) || {};
-        const provider = String(item.data.imageHost || (process.env.PTA_IMAGE_HOST_URL ? 'custom' : 'none'));
+        const provider = String(item.data.imageHost || (require('./env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') ? 'custom' : 'none'));
         const allowReal = typeof ctx.allowReal === 'function' ? ctx.allowReal('realImages') : false;
         let mr = null;
         try {

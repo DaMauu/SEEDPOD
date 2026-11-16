@@ -4,7 +4,7 @@
 const secretbox = require('./secretbox');
 function makeNotify(ctx) {
   const { one, DATA_DIR } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR || process.env.PTA_DATA || '.');
+  const KEYRING = secretbox.loadKey(DATA_DIR || require('./env').read('DATA_DIR','PTA_DATA') || '.');
   const now = () => new Date().toISOString();
 
   function rawCfg() {
@@ -17,7 +17,7 @@ function makeNotify(ctx) {
     const c = rawCfg();
     return {
       events: ['off', 'error', 'always'].indexOf(c.notifyEvents) >= 0 ? c.notifyEvents : 'error',
-      webhook: String(process.env.PTA_NOTIFY_WEBHOOK || c.notifyWebhook || '').trim()
+      webhook: String(require('./env').read('NOTIFY_WEBHOOK','PTA_NOTIFY_WEBHOOK') || c.notifyWebhook || '').trim()
     };
   }
   function configCreds() {
@@ -29,7 +29,7 @@ function makeNotify(ctx) {
     return { token: token, chat: chat, source: token && chat ? 'config' : '' };
   }
   function creds() {
-    const api = String(process.env.PTA_TELEGRAM_API || 'https://api.telegram.org').replace(/\/+$/, '');
+    const api = String(require('./env').read('TELEGRAM_API','PTA_TELEGRAM_API') || 'https://api.telegram.org').replace(/\/+$/, '');
     const envToken = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
     const envChat = String(process.env.TELEGRAM_ALLOWED_USER_ID || process.env.TELEGRAM_CHAT_ID || '').trim();
     if (envToken && envChat) return { token: envToken, chat: envChat, source: 'env', api: api };

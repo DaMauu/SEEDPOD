@@ -48,7 +48,7 @@
 
 ## 2026-11-10 站点凭据怎么存
 
-- 站点账号密码与 2FA 密钥只存密文：AES-256-GCM，密钥来自 `PTA_SECRET` 或 `data/.secret`（0600，自动生成）
+- 站点账号密码与 2FA 密钥只存密文：AES-256-GCM，密钥来自 `SECRET` 或 `data/.secret`（0600，自动生成）
 - 接口永不回显明文，只回 `hasUser / hasPass / hasTotp`
 - 登录自检必须由用户点击触发，同一站 60 秒一次；不做后台轮询、不做批量探测
 - TOTP 自己算（`server/totp.js`），不引第三方库，按 RFC 4226/6238 的官方向量写死断言
@@ -57,7 +57,7 @@
 
 - 站点侧只用 cookie：不存账号密码、不算 2FA，导入一次就能用；过期就重新导入
 - 账号密码 + 2FA 的代码与接口已删除（`server/totp.js`、`login-test`），避免留一条用不到又要维护的路径
-- 面板自己的登录不受影响：仍然是 `PTA_USER` / `PTA_PASS` + HttpOnly 会话 cookie
+- 面板自己的登录不受影响：仍然是 `PANEL_USER` / `PANEL_PASS` + HttpOnly 会话 cookie
 - cookie 由本机浏览器直接导入（`scripts/import-cookies.js` 读 CDP），不让人手抄；
   传输走 ssh 到服务器后由 `scripts/load-cookies.js` 用服务器自己的密钥加密落盘，明文临时文件立即删掉
 - 两条路径都只存密文，接口只回 `hasPass / hasTotp / hasCookie`
@@ -95,7 +95,7 @@
 
 ## D14 演示账号与线上密码分离（2026-11-14）
 
-定了：`AUTH_DEMO` 只用于 `file://` 演示模式，值与线上 `PTA_PASS` 无关；线上只走 `POST /api/login`。
+定了：`AUTH_DEMO` 只用于 `file://` 演示模式，值与线上 `PANEL_PASS` 无关；线上只走 `POST /api/login`。
 为什么：真实密码曾被写进前端与检查脚本，仓库和 git 历史都可能泄露。
 代价：demo 模式要用 `demo-pass` 登录；线上密码需要轮换一次（旧值已进历史）。
 
@@ -189,7 +189,7 @@
 
 ## D16 站点包随程序发，密钥放部署环境（2026-11-16）
 
-定了：站点包是数据文件，跟程序一起发布；用户安装/升级面板或 Docker 镜像即可，不单独下载、不导入。仓库里只放 AES-256-GCM 密文 `pta/pack/site-pack.enc`，密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，安装时配置一次；缺密钥时回退私有 `data/` 站点定义并提示，不崩溃。私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。
+定了：站点包是数据文件，跟程序一起发布；用户安装/升级面板或 Docker 镜像即可，不单独下载、不导入。仓库里只放 AES-256-GCM 密文 `pta/pack/site-pack.enc`，密钥只放部署环境变量 `SITE_PACK_KEY`，安装时配置一次；缺密钥时回退私有 `data/` 站点定义并提示，不崩溃。私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。
 为什么：站点 URL、站名、分类和上传字段是站点差异，必须预存才能自动化；但明文进仓库会泄露站点清单。
 代价：部署多一个环境变量；密钥轮换要重新加密；内置包更新跟程序版本走。站点包不含 cookie/密码/账号/IP，也不授予站点权限。详见 `pta/docs/SITE-PACK.md`。
 

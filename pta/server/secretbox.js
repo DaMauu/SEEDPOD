@@ -1,4 +1,4 @@
-/* 凭据加密：AES-256-GCM。密钥来源优先级：PTA_SECRET → PTA_SECRET_FILE → data/.secret（自动生成，0600）。
+/* 凭据加密：AES-256-GCM。密钥来源优先级：SECRET → SECRET_FILE → data/.secret（自动生成，0600）。
    密钥与密文都不入库；解密接口永不回显明文。 */
 const crypto = require('crypto');
 const fs = require('fs');
@@ -17,23 +17,23 @@ function parseKey(raw) {
 }
 
 function loadKey(dataDir) {
-  const explicit = String(process.env.PTA_SECRET || '').trim();
+  const explicit = String(require('./env').read('SECRET','PTA_SECRET') || '').trim();
   if (explicit) {
     const fromEnv = parseKey(explicit);
     if (fromEnv) return { key: fromEnv, source: 'env', ok: true };
     // 显式给了密钥但解不开：不要回退生成新 key，避免把旧密文“洗掉”
-    console.warn('[seedpod] PTA_SECRET 格式不对，拒绝生成新 key');
-    return { key: crypto.randomBytes(32), source: 'invalid-env-secret', ok: false, reason: 'PTA_SECRET 格式不对' };
+    console.warn('[seedpod] SECRET 格式不对，拒绝生成新 key');
+    return { key: crypto.randomBytes(32), source: 'invalid-env-secret', ok: false, reason: 'SECRET 格式不对' };
   }
-  const secretFile = String(process.env.PTA_SECRET_FILE || '').trim();
+  const secretFile = String(require('./env').read('SECRET_FILE','PTA_SECRET_FILE') || '').trim();
   if (secretFile) {
     try {
       const k = parseKey(fs.readFileSync(secretFile, 'utf8'));
       if (k) return { key: k, source: 'secret-file', ok: true };
     } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     // 显式指定了密钥文件但读不到/无效：不要偷偷写 data/.secret
-    console.warn('[seedpod] PTA_SECRET_FILE 读不到或格式不对，拒绝生成 data/.secret');
-    return { key: crypto.randomBytes(32), source: 'invalid-secret-file', ok: false, reason: 'PTA_SECRET_FILE 读不到或格式不对' };
+    console.warn('[seedpod] SECRET_FILE 读不到或格式不对，拒绝生成 data/.secret');
+    return { key: crypto.randomBytes(32), source: 'invalid-secret-file', ok: false, reason: 'SECRET_FILE 读不到或格式不对' };
   }
   const file = path.join(dataDir, '.secret');
   try {

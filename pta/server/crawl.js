@@ -1,5 +1,5 @@
 /* 真实抓取：从站点列表页取条目写进 SQLite。
-   默认关闭，由 config.realCrawl 或环境变量 PTA_ALLOW_REAL=1 打开；
+   默认关闭，由 config.realCrawl 或环境变量 ALLOW_REAL=1 打开；
    每次抓取受站点间隔与每日上限约束，失败也记时间戳，避免连续重试。 */
 const fs = require('fs');
 const path = require('path');

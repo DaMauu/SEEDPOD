@@ -1,12 +1,12 @@
 /* 媒体接口（Fastify v2）：探测、截图、生成种子。
-   文件路径限制在 PTA_MEDIA_ROOT（默认 data/media），拒绝越界；截图返回 data URL 供队列使用。 */
+   文件路径限制在 MEDIA_ROOT（默认 data/media），拒绝越界；截图返回 data URL 供队列使用。 */
 const fs = require('fs');
 const path = require('path');
 const media = require('./media');
 
 module.exports = function (app, ctx) {
   const { DATA_DIR, ok, bad } = ctx;
-  const ROOT = path.resolve(process.env.PTA_MEDIA_ROOT || path.join(DATA_DIR, 'media'));
+  const ROOT = path.resolve(require('./env').read('MEDIA_ROOT','PTA_MEDIA_ROOT') || path.join(DATA_DIR, 'media'));
   try { fs.mkdirSync(ROOT, { recursive: true, mode: 0o700 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
 
   function safeFile(rel) {

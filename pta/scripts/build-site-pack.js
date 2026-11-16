@@ -2,7 +2,7 @@
    自动匹配分类，写 pta/pack/site-pack.enc。不联网，不打印站名/网址。
    用法：
      node pta/scripts/build-site-pack.js --data /path/to/data --dry
-     PTA_SITE_PACK_KEY=... node pta/scripts/build-site-pack.js --data /path/to/data
+     SITE_PACK_KEY=... node pta/scripts/build-site-pack.js --data /path/to/data
 */
 const fs = require('fs');
 const path = require('path');
@@ -15,7 +15,7 @@ function arg(name, def) {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 }
-const DATA = arg('--data', process.env.PTA_DATA || path.join(ROOT, '..', 'data'));
+const DATA = arg('--data', require('../server/env').read('DATA_DIR','PTA_DATA') || path.join(ROOT, '..', 'data'));
 const OUT = arg('--out', path.join(ROOT, 'pack', 'site-pack.enc'));
 const REPORT = arg('--report', '');
 const DRY = argv.includes('--dry');
@@ -164,8 +164,8 @@ function main() {
   }
   if (DRY) return;
 
-  const key = secretbox.parseKey(process.env.PTA_SITE_PACK_KEY);
-  if (!key) { console.error('缺 PTA_SITE_PACK_KEY，未写包'); process.exit(1); }
+  const key = secretbox.parseKey(require('../server/env').read('SITE_PACK_KEY','PTA_SITE_PACK_KEY'));
+  if (!key) { console.error('缺 SITE_PACK_KEY，未写包'); process.exit(1); }
   const pack = { v: 1, version: 1, updatedAt: new Date().toISOString(), sites: sites };
   const bad = sensitiveKeys(pack, '');
   if (bad.length) { console.error('站点包里有疑似敏感字段：' + bad.slice(0, 5).join(', ')); process.exit(1); }

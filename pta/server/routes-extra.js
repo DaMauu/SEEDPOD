@@ -50,14 +50,14 @@ module.exports = function (app, ctx) {
     return ok(reply, { changed: changed, status: target });
   });
 
-  /* 抓取执行：演练默认；真抓需显式打开 realCrawl（或 PTA_ALLOW_REAL=1） */
+  /* 抓取执行：演练默认；真抓需显式打开 realCrawl（或 ALLOW_REAL=1） */
   app.post('/api/crawl/run', async (req, reply) => {
     const b = req.body || {};
     const dryRun = b.dryRun !== false;
     const host = String(b.siteHost || b.host || '').trim().toLowerCase();
     if (host && !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', 'siteHost 不合法');
     if (!dryRun) {
-      if (!ctx.allowReal('realCrawl')) return bad(reply, 'REAL_CRAWL_DISABLED', '真抓取还没打开：把配置 realCrawl 设为 true（或设 PTA_ALLOW_REAL=1）再试', 409);
+      if (!ctx.allowReal('realCrawl')) return bad(reply, 'REAL_CRAWL_DISABLED', '真抓取还没打开：把配置 realCrawl 设为 true（或设 ALLOW_REAL=1）再试', 409);
       if (!host) return bad(reply, 'BAD_REQUEST', '要指定 siteHost');
       const r = await ctx.crawl.crawlOnce(host, { catIdx: b.catIdx, page: b.page, limit: b.limit, detail: b.detail, detailLimit: b.detailLimit, rotate: b.rotate });
       if (r && r.err) {

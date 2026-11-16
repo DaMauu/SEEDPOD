@@ -12,7 +12,7 @@ function providerKey(name) {
   return 'custom';
 }
 function envHeaders() {
-  const raw = String(process.env.PTA_IMAGE_HOST_HEADERS || '').trim();
+  const raw = String(require('./env').read('IMAGE_HOST_HEADERS','PTA_IMAGE_HOST_HEADERS') || '').trim();
   if (!raw) return {};
   try {
     const j = JSON.parse(raw);
@@ -24,9 +24,9 @@ function envHeaders() {
 function configFor(provider) {
   if (provider === 'custom' || provider === 'local') {
     return {
-      endpoint: String(process.env.PTA_IMAGE_HOST_URL || '').trim(),
-      field: String(process.env.PTA_IMAGE_HOST_FIELD || 'file').trim() || 'file',
-      token: String(process.env.PTA_IMAGE_HOST_TOKEN || '').trim(),
+      endpoint: String(require('./env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') || '').trim(),
+      field: String(require('./env').read('IMAGE_HOST_FIELD','PTA_IMAGE_HOST_FIELD') || 'file').trim() || 'file',
+      token: String(require('./env').read('IMAGE_HOST_TOKEN','PTA_IMAGE_HOST_TOKEN') || '').trim(),
       headers: envHeaders(),
       verified: true
     };
@@ -113,13 +113,13 @@ async function processShots(providerName, shots, opts) {
     return { ok: true, code: 'IMAGE_DRY_RUN', message: '演练：没有上传图片', provider: provider, dryRun: true, total: total, uploaded: 0, failed: 0, endpoint: cfg.endpoint, field: cfg.field, verified: cfg.verified, items: list.map(function (s, i) { return { index: i, name: String((s && s.name) || ('shot' + (i + 1))), status: 'planned', bytes: dataUrlOf(s && s.url) ? dataUrlOf(s.url).buf.length : 0 }; }) };
   }
   if (!o.allowReal) {
-    return { ok: false, code: 'REAL_IMAGES_DISABLED', message: '图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试', provider: provider, dryRun: false, total: total, uploaded: 0, failed: 0, items: [] };
+    return { ok: false, code: 'REAL_IMAGES_DISABLED', message: '图床真上传没打开：把配置 realImages 设为 true（或设 ALLOW_REAL=1）再试', provider: provider, dryRun: false, total: total, uploaded: 0, failed: 0, items: [] };
   }
   if (!cfg.verified) {
     return { ok: false, code: 'IMAGE_HOST_UNVERIFIED', message: '这个图床还没验证真实上传接口；先用本地图床或自定义图床地址', provider: provider, dryRun: false, total: total, uploaded: 0, failed: 0, items: [] };
   }
   if (!/^https?:\/\//i.test(cfg.endpoint)) {
-    return { ok: false, code: 'IMAGE_HOST_NOT_CONFIGURED', message: '没有配置图床地址：设 PTA_IMAGE_HOST_URL（可选 PTA_IMAGE_HOST_FIELD / PTA_IMAGE_HOST_TOKEN）', provider: provider, dryRun: false, total: total, uploaded: 0, failed: 0, items: [] };
+    return { ok: false, code: 'IMAGE_HOST_NOT_CONFIGURED', message: '没有配置图床地址：设 IMAGE_HOST_URL（可选 IMAGE_HOST_FIELD / IMAGE_HOST_TOKEN）', provider: provider, dryRun: false, total: total, uploaded: 0, failed: 0, items: [] };
   }
   const items = [];
   for (let i = 0; i < list.length; i++) {

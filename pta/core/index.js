@@ -30,7 +30,7 @@ function unwrap(r) {
 
 function createCore(opts) {
   const o = opts || {};
-  const DATA_DIR = path.resolve(o.dataDir || process.env.PTA_DATA || path.join(__dirname, '..', '..', 'data'));
+  const DATA_DIR = path.resolve(o.dataDir || require('../server/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
   const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
   try { db.exec('PRAGMA busy_timeout = 3000'); } catch (e) { console.warn('[seedpod] busy_timeout:', e && e.message ? e.message : e) }
   const one = (sql, ...args) => { try { return db.prepare(sql).get(...args); } catch (e) { return null; } };
@@ -43,7 +43,7 @@ function createCore(opts) {
   const ctx = {
     db, DATA_DIR, one, all, jparse,
     allowReal: function (key) {
-      if (String(process.env.PTA_ALLOW_REAL || '') === '1') return true;
+      if (String(require('../server/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
       const r = one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;
@@ -285,7 +285,7 @@ function createCore(opts) {
     if (!shots.length) throw new Error('还没有截图');
     const provider = String(b.imageHost || it.imageHost || '站内');
     const dryRun = b.dryRun !== false;
-    if (!dryRun && !ctx.allowReal('realImages')) throw new Error('图床真上传没打开：把配置 realImages 设为 true（或设 PTA_ALLOW_REAL=1）再试');
+    if (!dryRun && !ctx.allowReal('realImages')) throw new Error('图床真上传没打开：把配置 realImages 设为 true（或设 ALLOW_REAL=1）再试');
     const retries = b.retries !== undefined ? b.retries : flowConfig.number(flowConfig.read(ctx), '图片上传重试', 2);
     const r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: !dryRun && ctx.allowReal('realImages'), retries: retries, delayMs: b.delayMs });
     it.imagePlan = { at: now(), provider: r.provider, dryRun: r.dryRun, total: r.total, uploaded: r.uploaded, failed: r.failed, code: r.code, message: r.message };

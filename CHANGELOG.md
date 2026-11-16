@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.341 · 2026-11-17
+
+### 环境变量全面去项目前缀
+- 面板：`PANEL_USER` / `PANEL_PASS` / `PANEL_PORT`；数据 `DATA_DIR` / `WEB_DIR`。
+- 密钥：`SECRET` / `SECRET_FILE` / `SITE_PACK_KEY` / `SITE_PACK_FILE`。
+- 图床：`IMAGE_HOST_URL` / `FIELD` / `TOKEN` / `HEADERS`；媒体 `MEDIA_ROOT`。
+- 外部触发 `HOOK_TOKEN`；开关 `ALLOW_REAL` / `COOKIE_SECURE`。
+- 元数据：`WIKI_API` / `TMDB_API` / `DOUBAN_API` / `DOUYING_API` / `META_CACHE` / `META_MIN_GAP`。
+- CLI：`PANEL_URL` / `PANEL_COOKIE` / `ENV_FILE`；Docker/文档同步。
+- 旧 `PTA_*` 全部保留兜底，现有部署不用改；新增 env-names 夹具。
+
 ## v0.7.340 · 2026-11-17
 
 ### 参数改直白名字

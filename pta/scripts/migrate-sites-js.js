@@ -13,7 +13,7 @@ function arg(name, def) {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 }
-const DATA = arg('--data', process.env.PTA_DATA || path.join(ROOT, '..', 'data'));
+const DATA = arg('--data', require('../server/env').read('DATA_DIR','PTA_DATA') || path.join(ROOT, '..', 'data'));
 const DRY = argv.includes('--dry');
 const FILE = path.join(DATA, 'sites-data.local.js');
 

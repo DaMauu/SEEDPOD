@@ -1,5 +1,5 @@
 /* 内置站点包加载：只解密、校验、缓存；不含 cookie/凭据。
-   包文件默认 pta/pack/site-pack.enc；密钥只从 PTA_SITE_PACK_KEY 读。
+   包文件默认 pta/pack/site-pack.enc；密钥只从 SITE_PACK_KEY 读。
    缺密钥/坏包时返回 ok:false，调用方回退私有 data/ 定义，不阻塞启动。 */
 const crypto = require('crypto');
 const fs = require('fs');
@@ -17,8 +17,8 @@ function keyHash(raw) {
 
 function load(opts) {
   const o = opts || {};
-  const file = o.file || process.env.PTA_SITE_PACK_FILE || DEFAULT_FILE;
-  const rawKey = o.key !== undefined ? o.key : process.env.PTA_SITE_PACK_KEY;
+  const file = o.file || require('./env').read('SITE_PACK_FILE','PTA_SITE_PACK_FILE') || DEFAULT_FILE;
+  const rawKey = o.key !== undefined ? o.key : require('./env').read('SITE_PACK_KEY','PTA_SITE_PACK_KEY');
   const key = secretbox.parseKey(rawKey);
   if (!key) return fail('NO_KEY');
   let st;

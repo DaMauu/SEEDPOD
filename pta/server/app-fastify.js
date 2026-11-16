@@ -10,10 +10,11 @@ const fastifyStatic = require('@fastify/static');
 const { openDB } = require('./db');
 const { makeCrawl } = require('./crawl');
 
-const PORT = Number(process.env.PTA_PORT || 8090);
-const DATA_DIR = path.resolve(process.env.PTA_DATA || path.join(__dirname, '..', '..', 'data'));
+const PORT = Number((require('./env').read('PANEL_PORT','PTA_PORT')) || 8090);
+const DATA_DIR = path.resolve(require('./env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
 const WEB_DIR = (function () {
-  if (process.env.PTA_WEB) return path.resolve(process.env.PTA_WEB);
+  const webDir = require('./env').read('WEB_DIR','PTA_WEB');
+  if (webDir) return path.resolve(webDir);
   const dist = path.join(__dirname, '..', 'web', 'dist');
   return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', 'web');
 })();
@@ -26,8 +27,8 @@ const KEYRING = secretbox.loadKey(DATA_DIR);
 const trimVer = (v) => String(v || '').replace(/^[~^]/, '');
 const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vite) + ' + SFC（构建）';
 const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
-const PTA_USER = process.env.PTA_USER || '';
-const PTA_PASS = process.env.PTA_PASS || '';
+const PTA_USER = require('./env').read('PANEL_USER','PTA_USER') || '';
+const PTA_PASS = require('./env').read('PANEL_PASS','PTA_PASS') || '';
 
 const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
 const LOGIN_FAILS = new Map();
@@ -66,7 +67,7 @@ function sessionOk(req) {
   return true;
 }
 function cookieSecure(req) {
-  return process.env.PTA_COOKIE_SECURE === '1' ||
+  return require('./env').read('COOKIE_SECURE','PTA_COOKIE_SECURE') === '1' ||
     String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
 }
 
@@ -125,8 +126,8 @@ async function build() {
 
   /* 外部触发：带 token 才能跑调度；没配 PTA_HOOK_TOKEN 就完全关闭 */
   app.post('/api/hooks/run', async (req, reply) => {
-    const token = String(process.env.PTA_HOOK_TOKEN || '').trim();
-    if (!token) return bad(reply, 'HOOK_DISABLED', '没有配置 PTA_HOOK_TOKEN，外部触发关闭', 404);
+    const token = String(require('./env').read('HOOK_TOKEN','PTA_HOOK_TOKEN') || '').trim();
+    if (!token) return bad(reply, 'HOOK_DISABLED', '没有配置 HOOK_TOKEN，外部触发关闭', 404);
     const got = String((req.headers && (req.headers['x-hook-token'] || req.headers['x-api-token'])) || (req.body && req.body.token) || '').trim();
     const a = Buffer.from(got), b = Buffer.from(token);
     if (!a.length || a.length !== b.length || !crypto.timingSafeEqual(a, b)) return bad(reply, 'UNAUTHORIZED', 'token 不对', 401);
@@ -321,7 +322,7 @@ async function build() {
   /* 写接口：词条库、队列、流程规则、配置 */
   const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR,
     allowReal: function (key) {
-      if (String(process.env.PTA_ALLOW_REAL || '') === '1') return true;
+      if (String(require('./env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
       const r = one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;

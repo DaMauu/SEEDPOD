@@ -154,7 +154,7 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     if (b.cookie !== undefined) {
       const cookie = String(b.cookie || '');
-      if (cookie && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 PTA_SECRET_FILE/PTA_SECRET，再保存 cookie', 409);
+      if (cookie && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 SECRET_FILE/SECRET，再保存 cookie', 409);
       if (cookie.length > 4096) return bad(reply, 'BAD_REQUEST', 'cookie 太长');
       const enc = cookie ? secretbox.encrypt(cookie, KEYRING.key) : null;
       db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET cookie=excluded.cookie, updated_at=excluded.updated_at')

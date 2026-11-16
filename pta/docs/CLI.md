@@ -1,6 +1,6 @@
 # CLI 与 CLI-first（CLI）
 
-状态：2026-11-17，v0.7.171。CLI 默认直接读本地 SQLite（不要求先起后端）；设置 `PTA_BASE` 或加 `--http` 才走 HTTP。核心命令已复用 `pta/core/` 与 server 模块。
+状态：2026-11-17，v0.7.171。CLI 默认直接读本地 SQLite（不要求先起后端）；设置 `PANEL_URL` 或加 `--http` 才走 HTTP。核心命令已复用 `pta/core/` 与 server 模块。
 
 ## 一、CLI 在哪
 
@@ -19,28 +19,28 @@ node pta/cli.js status
 默认直接读本地数据，不需要起后端：
 
 ```bash
-PTA_DATA=/opt/seedpod/data node pta/cli.js status
+DATA_DIR=/opt/seedpod/data node pta/cli.js status
 ```
 
-也可以设置 `PTA_DATA` 环境变量，或让 CLI 使用默认 `data/`。
+也可以设置 `DATA_DIR` 环境变量，或让 CLI 使用默认 `data/`。
 
 要走 HTTP（旧方式/远程调用）时：
 
 ```bash
-export PTA_BASE='http://127.0.0.1:8080'
-export PTA_USER='面板用户名'
-export PTA_PASS='面板密码'
+export PANEL_URL='http://127.0.0.1:8080'
+export PANEL_USER='面板用户名'
+export PANEL_PASS='面板密码'
 node pta/cli.js status
 ```
 
-或者加 `--http`，同样需要 `PTA_BASE` 和登录环境变量。
+或者加 `--http`，同样需要 `PANEL_URL` 和登录环境变量。
 
 ## 本地 CLI 读生产数据
 
 如果面板由 systemd/Docker 用独立密钥文件启动，CLI 必须带同一份环境，否则会按 `data/.secret` 规则找 key，可能生成错误的本地 key：
 
 ```bash
-sudo env PTA_DATA=<数据目录> node pta/cli.js clients --test --env-file <部署 env 文件>
+sudo env DATA_DIR=<数据目录> node pta/cli.js clients --test --env-file <部署 env 文件>
 ```
 
 `--env-file` 只补未设置的变量，不覆盖当前 shell 已导出的值；不会打印密钥、密码或 URL。
@@ -80,7 +80,7 @@ node pta/cli.js coverage --json --plan
 ## 三、现状
 
 - 默认本地模式：CLI 直接打开 SQLite 和 `data/`，不要求 HTTP。
-- HTTP 模式仍保留：`PTA_BASE` 或 `--http`；适合远程/面板联调。
+- HTTP 模式仍保留：`PANEL_URL` 或 `--http`；适合远程/面板联调。
 - `prepare` / `preview` / `advance` / `run` 已实现；`advance` 到 previewed 后提示用 `target-upload` / `publish` 提交/注入。
 - `target-upload` 的提交逻辑由 `pta/server/target-service.js` 提供，HTTP 路由和 CLI core 共用。
 - `realCrawl` / `realPublish` 仍默认关；本地 CLI 也受同一门禁。

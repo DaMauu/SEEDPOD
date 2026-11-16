@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* SEEDPOD CLI：走 v2 HTTP API，不直接碰数据库。
    默认干跑；--real 才真抓/真发。凭据只从环境读，不打印。 */
-const RAW_BASE = String(process.env.PTA_BASE || '').replace(/\/+$/, '');
+const RAW_BASE = String(require('./server/env').read('PANEL_URL','PTA_BASE') || '').replace(/\/+$/, '');
 const USE_HTTP = !!RAW_BASE || process.argv.includes('--http');
 const BASE = RAW_BASE || 'http://127.0.0.1:8080';
 const ENV = process.env;
@@ -10,7 +10,7 @@ function core() {
   if (!CORE) CORE = require('./core').createCore();
   return CORE;
 }
-let cookie = ENV.PTA_COOKIE || '';
+let cookie = require('./server/env').read('PANEL_COOKIE','PTA_COOKIE') || '';
 let logged = false;
 
 function usage() {
@@ -39,9 +39,9 @@ function usage() {
   pta verify <queueId> --host <target> [--url url] [--torrent file] [--json]
 
 环境：
-  默认直接读本地 SQLite（不启后端）；设置 PTA_BASE 或加 --http 才走 HTTP。
-  PTA_BASE   HTTP 模式地址，默认 http://127.0.0.1:8080
-  PTA_USER / PTA_PASS   面板账号（或 PTA_COOKIE 直接给会话）
+  默认直接读本地 SQLite（不启后端）；设置 PANEL_URL 或加 --http 才走 HTTP。
+  PANEL_URL  HTTP 模式地址，默认 http://127.0.0.1:8080
+  PANEL_USER / PANEL_PASS   面板账号（或 PANEL_COOKIE 直接给会话）
   --real 才真抓/真发；默认干跑。
   --env-file <file>  读取部署环境（如 /etc/seedpod.env），不覆盖已设置变量。`);
 }
@@ -52,10 +52,12 @@ function die(msg, code) {
 async function login() {
   if (!USE_HTTP) return;
   if (cookie || logged) return;
-  if (!ENV.PTA_USER || !ENV.PTA_PASS) die('需要 PTA_USER / PTA_PASS（或 PTA_COOKIE）', 2);
+  const u = require('./server/env').read('PANEL_USER', 'PTA_USER');
+  const p = require('./server/env').read('PANEL_PASS', 'PTA_PASS');
+  if (!u || !p) die('需要 PANEL_USER / PANEL_PASS（或 PANEL_COOKIE）', 2);
   const r = await fetch(BASE + '/api/login', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ user: ENV.PTA_USER, pass: ENV.PTA_PASS })
+    body: JSON.stringify({ user: u, pass: p })
   });
   const sc = r.headers.get('set-cookie') || '';
   cookie = sc.split(';')[0];
@@ -160,7 +162,7 @@ function loadEnvFile(file) {
     if (k && process.env[k] === undefined) process.env[k] = v;
   });
 }
-const ENV_FILE = opts['env-file'] || process.env.PTA_ENV_FILE;
+const ENV_FILE = opts['env-file'] || require('./server/env').read('ENV_FILE','PTA_ENV_FILE');
 if (ENV_FILE) loadEnvFile(String(ENV_FILE));
 
 async function main() {
@@ -524,7 +526,7 @@ async function main() {
       });
       return;
     }
-    die('crossseed 目前只支持本地模式（去掉 PTA_BASE/--http）', 2);
+    die('crossseed 目前只支持本地模式（去掉 PANEL_URL/--http）', 2);
   }
   if (cmd === 'target-announce') {
     if (!opts.host) die('target-announce 需要 --host <target>', 2);

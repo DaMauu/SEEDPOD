@@ -6,13 +6,13 @@ const DEFAULT_DOUBAN = 'https://movie.douban.com';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36';
 
 /* 外部接口缓存与礼貌间隔：同一 URL 6 小时内只打一次，同域名请求至少隔 800ms。
-   设置 PTA_META_CACHE=0 可关缓存，PTA_META_MIN_GAP 可改间隔（毫秒）。 */
+   设置 META_CACHE=0 可关缓存，META_MIN_GAP 可改间隔（毫秒）。 */
 const CACHE = new Map();
 const CACHE_TTL = 6 * 3600 * 1000;
 const CACHE_MAX = 300;
 const HOST_LAST = new Map();
-const MIN_GAP = Math.max(0, Number(process.env.PTA_META_MIN_GAP == null ? 800 : process.env.PTA_META_MIN_GAP) || 0);
-const CACHE_ON = String(process.env.PTA_META_CACHE || '1') !== '0';
+const MIN_GAP = Math.max(0, Number(require('./env').read('META_MIN_GAP','PTA_META_MIN_GAP') == null ? 800 : require('./env').read('META_MIN_GAP','PTA_META_MIN_GAP')) || 0);
+const CACHE_ON = String(require('./env').read('META_CACHE','PTA_META_CACHE') || '1') !== '0';
 
 function cacheGet(key) {
   if (!CACHE_ON) return null;
@@ -47,11 +47,11 @@ async function getJson(url, timeout, headers) {
   return j;
 }
 function tmdbKey(key) { return String(key || process.env.TMDB_API_KEY || '').trim(); }
-function tmdbBase() { return String(process.env.PTA_TMDB_API || DEFAULT_TMDB).replace(/\/+$/, ''); }
-function doubanBase() { return String(process.env.PTA_DOUBAN_API || DEFAULT_DOUBAN).replace(/\/+$/, ''); }
-function douyingBase() { return String(process.env.PTA_DOUYING_API || 'https://doubaninfo.com').replace(/\/+$/, ''); }
+function tmdbBase() { return String(require('./env').read('TMDB_API','PTA_TMDB_API') || DEFAULT_TMDB).replace(/\/+$/, ''); }
+function doubanBase() { return String(require('./env').read('DOUBAN_API','PTA_DOUBAN_API') || DEFAULT_DOUBAN).replace(/\/+$/, ''); }
+function douyingBase() { return String(require('./env').read('DOUYING_API','PTA_DOUYING_API') || 'https://doubaninfo.com').replace(/\/+$/, ''); }
 function wikiBase(lang) {
-  return process.env.PTA_WIKI_API || ('https://' + lang + '.wikipedia.org/w/api.php');
+  return require('./env').read('WIKI_API','PTA_WIKI_API') || ('https://' + lang + '.wikipedia.org/w/api.php');
 }
 
 async function wikiSearch(title, year, lang, type) {
