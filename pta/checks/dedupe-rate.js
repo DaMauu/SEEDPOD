@@ -17,32 +17,34 @@ const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-rate-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));
 const one = (s, ...a) => db.prepare(s).get(...a);
 const ctx = { db, one };
-process.env.PTA_DEDUPE_SITE_MAX = '2';
-process.env.PTA_DEDUPE_GLOBAL_MAX = '3';
-process.env.PTA_DEDUPE_MIN_GAP_MS = '0';
+process.env.PTA_DEDUPE_SITE_GAP_MS = '30';
+process.env.PTA_DEDUPE_GLOBAL_GAP_MS = '10';
+process.env.PTA_DEDUPE_SITE_HOUR_MAX = '2';
+process.env.PTA_DEDUPE_GLOBAL_HOUR_MAX = '3';
+process.env.PTA_DEDUPE_JITTER = '0';
 const rate = makeDedupeRate(ctx);
 
 async function main() {
-  await check('每站窗口用完就拒绝', async function () {
+  await check('每站每小时上限用完后拒绝', async function () {
     need((await rate.take('a.example')).ok, '第 1 次应通过');
     need((await rate.take('a.example')).ok, '第 2 次应通过');
     const no = await rate.take('a.example');
-    need(!no.ok && no.limit === 'SITE_WINDOW', '第 3 次没被站窗口拦住：' + JSON.stringify(no));
+    need(!no.ok && no.limit === 'SITE_HOUR', '第 3 次没被站窗口拦住：' + JSON.stringify(no));
     need(no.retryAfterMs > 0, '没给重试等待时间');
   });
 
-  await check('全局窗口用完所有站都停', async function () {
+  await check('全局每小时上限用完后所有站都停', async function () {
     const b = await rate.take('b.example');
     need(b.ok, '第 3 次全局应通过：' + JSON.stringify(b));
     const no = await rate.take('c.example');
-    need(!no.ok && no.limit === 'GLOBAL_WINDOW', '第 4 次没被全局窗口拦住：' + JSON.stringify(no));
+    need(!no.ok && no.limit === 'GLOBAL_HOUR', '第 4 次没被全局窗口拦住：' + JSON.stringify(no));
   });
 
-  await check('状态里能看到窗口用量', function () {
+  await check('状态里能看到每小时用量', function () {
     const st = rate.status();
-    need(st.site.max === 2 && st.global.max === 3, '限制值不对：' + JSON.stringify(st));
-    need(st.global.used === 3, '全局用量不对：' + JSON.stringify(st.global));
-    need(st.sites['a.example'].used === 2, 'a 站用量不对：' + JSON.stringify(st.sites));
+    need(st.site.hourMax === 2 && st.global.hourMax === 3, '限制值不对：' + JSON.stringify(st));
+    need(st.global.hourUsed === 3, '全局用量不对：' + JSON.stringify(st.global));
+    need(st.sites['a.example'].hourUsed === 2, 'a 站用量不对：' + JSON.stringify(st.sites));
   });
 
   const failed = results.filter(function (r) { return !r[0]; }).length;

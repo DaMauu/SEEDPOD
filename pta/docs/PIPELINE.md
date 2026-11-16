@@ -15,14 +15,15 @@
 
 - 同一目标站的所有请求（查重、详情、上传、回查、权威种、删除）共用 7 秒间隔。
 - 查重每轮最多 10 条；每条每站 1 次搜索，命中才多 1 次详情。
-- **时间窗限速**（代替日额度）：
-  - 每站：10 分钟内最多 10 次，最小间隔 6 秒
-  - 全局：10 分钟内最多 30 次，多目标共用，防止目标站翻倍
+- **平滑限速**（没有日额度，也不允许窗口内突发）：
+  - 每站：1 次/分钟（±20% 抖动），每小时最多 30 次
+  - 全局：1 次/20 秒，每小时最多 60 次，多目标共用
   - 一次搜索算 1 次，命中后读详情再算 1 次
-- 触发限速：查重阶段停，`dedupe.rateLimited=true` 并给 `retryAfterMs`；
-  终审把没查过的条目记为「查重未完成」，发布前复核也会拒绝，不会绕过查重。
-- 每站另有 200 次/天兜底；环境变量：`PTA_DEDUPE_SITE_MAX`、`PTA_DEDUPE_SITE_MIN`、
-  `PTA_DEDUPE_GLOBAL_MAX`、`PTA_DEDUPE_GLOBAL_MIN`、`PTA_DEDUPE_MIN_GAP_MS`、
+- 触发上限：查重阶段停，`dedupe.rateLimited=true` 并给 `retryAfterMs`；
+  终审把没查过的条目记为「查重未完成」，发布前复核也会拒绝。
+- 目标站上传、回查、权威种等所有请求：15 秒间隔（±20% 抖动），每站 200 次/天兜底。
+- 环境变量：`PTA_DEDUPE_SITE_GAP_MS`、`PTA_DEDUPE_GLOBAL_GAP_MS`、
+  `PTA_DEDUPE_SITE_HOUR_MAX`、`PTA_DEDUPE_GLOBAL_HOUR_MAX`、`PTA_DEDUPE_JITTER`、
   `PTA_TARGET_GAP_MS`、`PTA_TARGET_DAILY_MAX`。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 

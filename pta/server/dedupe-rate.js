@@ -1,20 +1,23 @@
-/* 查重请求限速：时间窗 + 最小间隔，不用日额度。
-   默认（偏保守）：
-   - 每站：10 分钟内最多 10 次，最小间隔 6 秒
-   - 全局：10 分钟内最多 30 次（多目标共用，防止翻倍打爆）
+/* 查重请求平滑限速：按“下一次允许时间”排队，不允许窗口内突发。
+   默认：
+   - 每站：1 次/分钟（±20% 抖动），每小时最多 30 次
+   - 全局：1 次/20 秒，每小时最多 60 次（多目标共用）
    一次搜索算 1 次，命中后读详情再算 1 次。
-   环境变量：PTA_DEDUPE_SITE_MAX / PTA_DEDUPE_SITE_MIN /
-             PTA_DEDUPE_GLOBAL_MAX / PTA_DEDUPE_GLOBAL_MIN / PTA_DEDUPE_MIN_GAP_MS */
-function nowMs() { return Date.now(); }
-function windowMs(minutes) { return Math.max(1, Number(minutes) || 10) * 60000; }
+   环境变量：PTA_DEDUPE_SITE_GAP_MS / PTA_DEDUPE_GLOBAL_GAP_MS /
+             PTA_DEDUPE_SITE_HOUR_MAX / PTA_DEDUPE_GLOBAL_HOUR_MAX / PTA_DEDUPE_JITTER */
+function hourKey() { return new Date().toISOString().slice(0, 13); }
+function jitter(base, ratio) {
+  const r = Math.max(0, Math.min(1, ratio == null ? 0.2 : Number(ratio)));
+  return Math.round(base * (1 - r + Math.random() * r * 2));
+}
 
 function makeDedupeRate(ctx) {
   const { one, db } = ctx;
-  const SITE_MAX = Math.max(1, Number(process.env.PTA_DEDUPE_SITE_MAX) || 10);
-  const SITE_MIN = windowMs(process.env.PTA_DEDUPE_SITE_MIN || 10);
-  const GLOBAL_MAX = Math.max(1, Number(process.env.PTA_DEDUPE_GLOBAL_MAX) || 30);
-  const GLOBAL_MIN = windowMs(process.env.PTA_DEDUPE_GLOBAL_MIN || 10);
-  const MIN_GAP = Math.max(0, Number(process.env.PTA_DEDUPE_MIN_GAP_MS == null ? 6000 : process.env.PTA_DEDUPE_MIN_GAP_MS) || 0);
+  const SITE_GAP = Math.max(1000, Number(process.env.PTA_DEDUPE_SITE_GAP_MS) || 60000);
+  const GLOBAL_GAP = Math.max(500, Number(process.env.PTA_DEDUPE_GLOBAL_GAP_MS) || 20000);
+  const SITE_HOUR_MAX = Math.max(1, Number(process.env.PTA_DEDUPE_SITE_HOUR_MAX) || 30);
+  const GLOBAL_HOUR_MAX = Math.max(1, Number(process.env.PTA_DEDUPE_GLOBAL_HOUR_MAX) || 60);
+  const JITTER = Math.max(0, Math.min(1, Number(process.env.PTA_DEDUPE_JITTER == null ? 0.2 : process.env.PTA_DEDUPE_JITTER) || 0));
 
   function read() {
     const row = one("SELECT v FROM meta WHERE k = 'dedupe-rate'");
@@ -22,56 +25,66 @@ function makeDedupeRate(ctx) {
     try { st = JSON.parse(row ? row.v : 'null'); } catch (e) { st = null; }
     if (!st || typeof st !== 'object') st = {};
     if (!st.sites || typeof st.sites !== 'object') st.sites = {};
-    if (!Array.isArray(st.global)) st.global = [];
+    if (!st.global || typeof st.global !== 'object') st.global = {};
     return st;
   }
   function save(st) {
     db.prepare("INSERT INTO meta(k, v) VALUES('dedupe-rate', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
       .run(JSON.stringify(st));
   }
-  function prune(list, span, t) {
-    return (Array.isArray(list) ? list : []).filter(function (x) { return Number(x) > t - span; });
+  function siteRec(st, host) {
+    const h = String(host || '').toLowerCase();
+    const rec = st.sites[h] || {};
+    const hour = hourKey();
+    if (rec.hour !== hour) { rec.hour = hour; rec.hourCount = 0; }
+    return rec;
+  }
+  function globalRec(st) {
+    const rec = st.global || {};
+    const hour = hourKey();
+    if (rec.hour !== hour) { rec.hour = hour; rec.hourCount = 0; }
+    return rec;
   }
   function status() {
-    const t = nowMs();
     const st = read();
+    const g = globalRec(st);
     const sites = {};
     Object.keys(st.sites).forEach(function (h) {
-      const n = prune(st.sites[h].times, SITE_MIN, t).length;
-      if (n) sites[h] = { used: n, max: SITE_MAX };
+      const r = siteRec(st, h);
+      if (r.nextAt || r.hourCount) sites[h] = { nextAt: r.nextAt || 0, hourUsed: r.hourCount || 0, hourMax: SITE_HOUR_MAX };
     });
     return {
-      site: { windowMinutes: Math.round(SITE_MIN / 60000), max: SITE_MAX, minGapMs: MIN_GAP },
-      global: { windowMinutes: Math.round(GLOBAL_MIN / 60000), max: GLOBAL_MAX, used: prune(st.global, GLOBAL_MIN, t).length },
+      site: { gapMs: SITE_GAP, hourMax: SITE_HOUR_MAX, jitter: JITTER },
+      global: { gapMs: GLOBAL_GAP, hourMax: GLOBAL_HOUR_MAX, hourUsed: g.hourCount || 0, nextAt: g.nextAt || 0 },
       sites: sites
     };
   }
   async function take(host) {
     const h = String(host || '').toLowerCase();
     if (!h) return { ok: false, limit: 'NO_HOST', message: '没有目标站' };
-    const t = nowMs();
     const st = read();
-    const site = st.sites[h] || { times: [] };
-    const siteTimes = prune(site.times, SITE_MIN, t);
-    const globalTimes = prune(st.global, GLOBAL_MIN, t);
-    if (siteTimes.length >= SITE_MAX) {
-      return { ok: false, limit: 'SITE_WINDOW', retryAfterMs: Math.max(0, siteTimes[0] + SITE_MIN - t), message: '这个站 ' + Math.round(SITE_MIN / 60000) + ' 分钟内已查 ' + siteTimes.length + ' 次' };
+    const site = siteRec(st, h);
+    const g = globalRec(st);
+    if (Number(site.hourCount) >= SITE_HOUR_MAX) {
+      return { ok: false, limit: 'SITE_HOUR', retryAfterMs: Math.max(0, Number(site.nextAt || 0) - Date.now()), message: '这个站本小时已查 ' + site.hourCount + ' 次' };
     }
-    if (globalTimes.length >= GLOBAL_MAX) {
-      return { ok: false, limit: 'GLOBAL_WINDOW', retryAfterMs: Math.max(0, globalTimes[0] + GLOBAL_MIN - t), message: '所有站 ' + Math.round(GLOBAL_MIN / 60000) + ' 分钟内已查 ' + globalTimes.length + ' 次' };
+    if (Number(g.hourCount) >= GLOBAL_HOUR_MAX) {
+      return { ok: false, limit: 'GLOBAL_HOUR', retryAfterMs: Math.max(0, Number(g.nextAt || 0) - Date.now()), message: '所有站本小时已查 ' + g.hourCount + ' 次' };
     }
-    const last = siteTimes.length ? siteTimes[siteTimes.length - 1] : 0;
-    const wait = Math.max(0, last + MIN_GAP - t);
+    const now = Date.now();
+    const wait = Math.max(0, Number(site.nextAt || 0) - now, Number(g.nextAt || 0) - now);
     if (wait > 0) await new Promise(function (r) { setTimeout(r, wait); });
-    const at = nowMs();
-    siteTimes.push(at);
-    globalTimes.push(at);
-    st.sites[h] = { times: siteTimes.slice(-SITE_MAX) };
-    st.global = globalTimes.slice(-GLOBAL_MAX);
+    const at = Date.now();
+    site.nextAt = at + jitter(SITE_GAP, JITTER);
+    site.hourCount = (Number(site.hourCount) || 0) + 1;
+    g.nextAt = at + jitter(GLOBAL_GAP, JITTER);
+    g.hourCount = (Number(g.hourCount) || 0) + 1;
+    st.sites[h] = site;
+    st.global = g;
     save(st);
-    return { ok: true, site: { used: siteTimes.length, max: SITE_MAX }, global: { used: globalTimes.length, max: GLOBAL_MAX } };
+    return { ok: true, waitedMs: wait, site: { hourUsed: site.hourCount, hourMax: SITE_HOUR_MAX }, global: { hourUsed: g.hourCount, hourMax: GLOBAL_HOUR_MAX } };
   }
-  return { take: take, status: status, limits: { siteMax: SITE_MAX, siteWindowMs: SITE_MIN, globalMax: GLOBAL_MAX, globalWindowMs: GLOBAL_MIN, minGapMs: MIN_GAP } };
+  return { take: take, status: status, limits: { siteGapMs: SITE_GAP, globalGapMs: GLOBAL_GAP, siteHourMax: SITE_HOUR_MAX, globalHourMax: GLOBAL_HOUR_MAX, jitter: JITTER } };
 }
 
 module.exports = { makeDedupeRate };

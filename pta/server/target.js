@@ -120,7 +120,7 @@ function makeTarget(ctx) {
 
   /* 目标站请求节流：所有目标站请求共用间隔（默认 7 秒），每站每天默认 200 次。
      查重、详情、上传、回查、权威种、删除都走这里，避免“查完立刻传”。 */
-  const REQ_GAP = Math.max(0, Number(process.env.PTA_TARGET_GAP_MS == null ? 7000 : process.env.PTA_TARGET_GAP_MS) || 0);
+  const REQ_GAP = Math.max(0, Number(process.env.PTA_TARGET_GAP_MS == null ? 15000 : process.env.PTA_TARGET_GAP_MS) || 0);
   const REQ_DAY_MAX = Math.max(1, Number(process.env.PTA_TARGET_DAILY_MAX) || 200);
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
   function readReqState() {
@@ -140,7 +140,8 @@ function makeTarget(ctx) {
     if (Number(rec.dayCount) >= REQ_DAY_MAX) {
       return { ok: false, code: 'TARGET_DAILY_LIMIT', message: '目标站 ' + h + ' 今天请求已达 ' + REQ_DAY_MAX + ' 次', http: 429 };
     }
-    const wait = Math.max(0, (Number(rec.lastAt) || 0) + REQ_GAP - Date.now());
+    const gap = REQ_GAP ? Math.round(REQ_GAP * (0.8 + Math.random() * 0.4)) : 0;
+    const wait = Math.max(0, (Number(rec.lastAt) || 0) + gap - Date.now());
     if (wait > 0) await sleep(wait);
     rec.lastAt = Date.now();
     rec.dayCount = (Number(rec.dayCount) || 0) + 1;
