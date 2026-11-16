@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const PHASES = ['crawl', 'screen', 'review', 'publish', 'crossseed'];
+const PHASES = ['crawl', 'screen', 'dedupe', 'review', 'publish', 'crossseed'];
 const hooks = Object.create(null);
 const loaded = new Set();
 

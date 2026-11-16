@@ -101,6 +101,36 @@ function makeTargetService(ctx, target) {
     return out;
   }
 
+  /* 独立查重：初筛后先跑一次，命中就跳过，避免补齐/详情请求。 */
+  async function checkDupe(host, itemData, buf) {
+    const flowCfg = flowConfig.read(ctx);
+    let pre = null;
+    try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); } catch (e) { pre = null; }
+    if (!pre || !pre.ok || !pre.data || !pre.data.found) return { found: false };
+    let foundTitle = String(pre.data.title || '');
+    if (pre.data.detailsUrl) {
+      try {
+        const di = await target.fetchDetailsInfo(host, pre.data.detailsUrl);
+        if (di.ok) foundTitle += ' ' + [di.data.subtitle, di.data.descr, di.data.tags, di.data.medium].filter(Boolean).join(' ');
+      } catch (e) { /* 详情读不到就只用标题判定 */ }
+    }
+    foundTitle = foundTitle.slice(0, 4000);
+    const isDiy = /diy|diy原盘|自译|自制字幕|修改菜单/i.test(foundTitle);
+    const isRemux = /remux/i.test(foundTitle);
+    const fullWords = String(flowConfig.value(flowCfg, '原盘判定关键词', '原盘|Full Disc|BDMV|ISO'))
+      .split('|').map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+    const fullRe = new RegExp(fullWords.map(function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'i');
+    const isFullDisc = fullRe.test(foundTitle) && !isRemux && !isDiy;
+    const restricted = /禁转|限转/.test(foundTitle);
+    const ruleRestrict = String(flowConfig.value(flowCfg, '禁转/限转处理', '跳过发布'));
+    const ruleDiy = String(flowConfig.value(flowCfg, '目标站只有 DIY', '可发（标复核）'));
+    const ruleFull = String(flowConfig.value(flowCfg, '目标站已有原盘', '跳过不收'));
+    let skip = isDiy ? ruleDiy === '跳过' : (isFullDisc ? ruleFull === '跳过不收' : true);
+    if (restricted && ruleRestrict === '跳过发布') skip = true;
+    if (restricted && ruleRestrict === '标复核后仍发') skip = false;
+    return { found: true, skip: skip, kind: isDiy ? 'diy' : (isFullDisc ? 'full_disc' : (isRemux ? 'remux' : 'other')), title: foundTitle.slice(0, 200), verify: pre.data, restricted: restricted };
+  }
+
   async function upload(host, body) {
     const b = body || {};
     const item = loadQueue(b.queueId);
@@ -176,41 +206,17 @@ function makeTargetService(ctx, target) {
     }
     const uploadItem = preparedItem(item.data, host);
     const plan = preparedPlan(item.data, host);
-    if (!dryRun && b.preCheckDupe !== false) {
-      let pre = null;
-      try { pre = await target.verify(host, uploadItem, t.buf, {}); } catch (e) { pre = null; }
-      if (pre && pre.ok && pre.data && pre.data.found) {
-        let foundTitle = String(pre.data.title || '');
-        if (pre.data.detailsUrl) {
-          try {
-            const di = await target.fetchDetailsInfo(host, pre.data.detailsUrl);
-            if (di.ok) foundTitle += ' ' + [di.data.subtitle, di.data.descr, di.data.tags, di.data.medium].filter(Boolean).join(' ');
-          } catch (e) { /* 详情读不到就只用标题判定 */ }
-        }
-        foundTitle = foundTitle.slice(0, 4000);
-        const isDiy = /diy|diy原盘|自译|自制字幕|修改菜单/i.test(foundTitle);
-        const isRemux = /remux/i.test(foundTitle);
-        const fullWords = String(flowConfig.value(flowCfg, '原盘判定关键词', '原盘|Full Disc|BDMV|ISO'))
-          .split('|').map(function (x) { return String(x || '').trim(); }).filter(Boolean);
-        const fullRe = new RegExp(fullWords.map(function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'i');
-        const isFullDisc = fullRe.test(foundTitle) && !isRemux && !isDiy;
-        const restricted = /禁转|限转/.test(foundTitle);
-        const ruleRestrict = String(flowConfig.value(flowCfg, '禁转/限转处理', '跳过发布'));
-        const ruleDiy = String(flowConfig.value(flowCfg, '目标站只有 DIY', '可发（标复核）'));
-        const ruleFull = String(flowConfig.value(flowCfg, '目标站已有原盘', '跳过不收'));
-        let skip = isDiy ? ruleDiy === '跳过' : (isFullDisc ? ruleFull === '跳过不收' : true);
-        if (restricted && ruleRestrict === '跳过发布') skip = true;
-        if (restricted && ruleRestrict === '标复核后仍发') skip = false;
-        if (skip) {
-          const msg = '目标站已有这条资源，跳过';
-          setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: pre.data });
-          if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
-          saveQueue(item.data);
-          return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: pre.data } };
-        }
-        /* 规则允许继续：标记复核，接着提交 */
-        item.data.dupeReview = { host: host, kind: isDiy ? 'diy' : 'full_disc', title: foundTitle.slice(0, 200), at: now() };
+    if (!dryRun && b.preCheckDupe !== false && !item.data.dupePassedAt) {
+      const chk = await checkDupe(host, item.data, t.buf);
+      if (chk.found && chk.skip) {
+        const msg = '目标站已有这条资源，跳过';
+        setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: chk.verify });
+        if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
+        saveQueue(item.data);
+        return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: chk.verify } };
       }
+      if (chk.found) item.data.dupeReview = { host: host, kind: chk.kind, title: chk.title, at: now() };
+      item.data.dupePassedAt = now();
     }
     const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });
     if (!r.ok) {

@@ -381,7 +381,7 @@ function makeTarget(ctx) {
     const text = await res.text().catch(function () { return ''; });
     const norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
     const title = norm(item.title);
-    const hash = String(meta.hash || '').toLowerCase();
+    const hash = String((opts && opts.hash) || meta.hash || '').toLowerCase();
     const isDetails = /details\.php\?id=\d+|\/torrents?\/\d+/i.test(url);
     let found = false;
     let matchedTitle = '';

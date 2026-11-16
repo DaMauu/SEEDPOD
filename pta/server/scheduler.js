@@ -2,12 +2,15 @@
 const flowConfig = require('./flow-config');
 const { makeCrossseed } = require('./crossseed');
 const pipeline = require('./pipeline');
+const { makeTarget } = require('./target');
+const { makeTargetService } = require('./target-service');
 
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
   const KEY = 'scheduler';
   const DEF = { on: false, everyMinutes: 60, lastRunAt: 0, lastResult: null, lastError: '' };
   const crossseed = makeCrossseed(ctx);
+  const targetService = makeTargetService(ctx, makeTarget(ctx));
   let timer = null;
   let running = false;
 
@@ -103,6 +106,33 @@ function makeScheduler(ctx, deps) {
 
       steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
       steps.hooksScreen = await pipeline.run('screen', ctx, steps);
+
+      /* 查重（初筛之后、补齐之前）：命中就跳过，省补齐和详情请求 */
+      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [] };
+      const pend = all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT 20");
+      for (const row of pend) {
+        const it = jparse(row.data) || {};
+        const host = String(it.targetSite || (Array.isArray(it.targets) && it.targets[0]) || '').toLowerCase();
+        if (!host) continue;
+        dedupe.checked++;
+        let chk = { found: false, skip: false };
+        try { chk = await targetService.checkDupe(host, it, null); }
+        catch (e) { dedupe.errors.push({ id: row.id, error: String(e && e.message || e).slice(0, 120) }); }
+        if (chk.found && chk.skip) {
+          it.dupeSkipped = { host: host, kind: chk.kind, at: new Date().toISOString() };
+          dedupe.skipped++;
+          ctx.db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
+            .run('skipped', JSON.stringify(Object.assign({}, it, { status: 'skipped' })), new Date().toISOString(), row.id);
+        } else {
+          it.dupePassedAt = new Date().toISOString();
+          if (chk.found) it.dupeReview = { host: host, kind: chk.kind, title: chk.title, at: it.dupePassedAt };
+          dedupe.kept++;
+          ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+            .run(JSON.stringify(it), new Date().toISOString(), row.id);
+        }
+      }
+      steps.dedupe = dedupe;
+      steps.hooksDedupe = await pipeline.run('dedupe', ctx, steps);
 
       /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
       const flow = flowConfig.read(ctx);
