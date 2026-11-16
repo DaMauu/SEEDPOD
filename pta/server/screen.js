@@ -122,7 +122,7 @@ function screenCatalog(ctx, opts) {
     const item = { id: 'q_' + String(++seq).padStart(4, '0'), status: 'pending', createdAt: now(), title: title,
       targetSite: defaultTarget,
       res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
-      downloadUrl: it.downloadUrl || '', siteId: it.siteId || '',
+      downloadUrl: it.downloadUrl || '', detailsUrl: String(it.detailsUrl || '').slice(0, 300), siteId: it.siteId || '',
       subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),
       year: it.year || '', category: it.category || '',
       region: String(it.region || '').slice(0, 60), language: String(it.language || '').slice(0, 60),
