@@ -32,7 +32,7 @@
 
     <div class="queue-detail" id="queue-detail">
       <div v-if="!sel" class="sites-empty">选一条看发布预览</div>
-      <div v-else>
+      <div v-else class="qd-body">
         <div class="qd-head">
           <div class="qd-id">
             <div class="qd-title-row">
@@ -49,6 +49,7 @@
           </div>
         </div>
 
+        <div class="qd-scroll">
         <div v-if="sel.stage" class="qd-stage">
           <span class="badge" :class="stageTone(sel.stage)">{{ stageLabel(sel.stage) }}</span>
           <span class="t-sub">尝试 {{ sel.stageAttempts || 0 }}</span>
@@ -136,16 +137,7 @@
               </template>
               <button class="shot add" type="button" @click="pickFiles">上传</button>
             </div>
-            <div class="qd-targets-foot">
-          <span class="qd-targets-lbl">多目标</span>
-          <div class="pick-row qd-target-chips">
-            <label v-for="s in sites" :key="s.name" class="cat-chip" :class="{ on: form.targets.includes(s.name) }" :title="s.name">
-              <input type="checkbox" :value="s.name" v-model="form.targets" class="qd-target-check">
-              {{ s.title || s.name }}
-            </label>
-          </div>
-        </div>
-        <div class="qd-actions">
+            <div class="qd-actions">
               <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(true)">图床演练</button>
               <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(false)">上传截图</button>
             </div>
@@ -193,6 +185,17 @@
           <span v-if="sel.injectPlan.idempotent"> · 已注入，跳过</span>
         </div>
 
+        </div>
+
+        <div class="qd-targets-foot">
+          <span class="qd-targets-lbl">多目标</span>
+          <div class="pick-row qd-target-chips">
+            <label v-for="s in sites" :key="s.name" class="cat-chip" :class="{ on: form.targets.includes(s.name) }" :title="s.name">
+              <input type="checkbox" :value="s.name" v-model="form.targets" class="qd-target-check">
+              {{ s.title || s.name }}
+            </label>
+          </div>
+        </div>
         <div class="qd-actions">
           <button class="btn primary slim" type="button" :disabled="busy.act" @click="act('publish')">{{ sel.status === 'failed' ? '重试发布' : '通过并发布' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite" title="把种子提交到目标站；真发布关闭时会提示" @click="submitTarget">{{ busy.target ? '提交中…' : '提交目标站' }}</button>
@@ -694,6 +697,8 @@ onUnmounted(() => {
 .q-title b { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .q-title i { display: block; margin-top: 2px; font-style: normal; font-size: 10.5px; color: var(--muted-2); }
 .queue-detail { flex: 1; min-width: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px 16px; display: flex; flex-direction: column; overflow: hidden; }
+.qd-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.qd-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 .qd-head { display: flex; align-items: center; gap: 12px; }
 .qd-id { min-width: 0; }
 .qd-id h2 { margin: 0; font-size: 15.5px; font-weight: 600; }
