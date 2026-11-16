@@ -180,11 +180,21 @@ function makeTargetService(ctx, target) {
       let pre = null;
       try { pre = await target.verify(host, uploadItem, t.buf, {}); } catch (e) { pre = null; }
       if (pre && pre.ok && pre.data && pre.data.found) {
-        const msg = '目标站已有这条资源，跳过';
-        setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: pre.data });
-        if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
-        saveQueue(item.data);
-        return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: pre.data } };
+        const foundTitle = String(pre.data.title || '');
+        const isDiy = /diy/i.test(foundTitle);
+        const isFullDisc = /原盘|full\s*disc|bdmv|\.iso|remux/i.test(foundTitle);
+        const ruleDiy = String(flowConfig.value(flowCfg, '目标站只有 DIY', '可发（标复核）'));
+        const ruleFull = String(flowConfig.value(flowCfg, '目标站已有原盘', '跳过不收'));
+        const skip = isDiy ? ruleDiy === '跳过' : (isFullDisc ? ruleFull === '跳过不收' : true);
+        if (skip) {
+          const msg = '目标站已有这条资源，跳过';
+          setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: pre.data });
+          if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
+          saveQueue(item.data);
+          return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: pre.data } };
+        }
+        /* 规则允许继续：标记复核，接着提交 */
+        item.data.dupeReview = { host: host, kind: isDiy ? 'diy' : 'full_disc', title: foundTitle.slice(0, 200), at: now() };
       }
     }
     const r = await target.submit(host, uploadItem, t.buf, { dryRun: dryRun, plan: plan || undefined });

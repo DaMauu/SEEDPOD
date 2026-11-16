@@ -33,6 +33,47 @@ function makeScheduler(ctx, deps) {
     save(next);
     return { ok: true, data: status() };
   }
+  function readFails() {
+    const row = one("SELECT v FROM meta WHERE k = 'site-fails'");
+    try { return JSON.parse(row ? row.v : 'null') || {}; } catch (e) { return {}; }
+  }
+  function saveFails(map) {
+    ctx.db.prepare("INSERT INTO meta(k, v) VALUES('site-fails', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(map));
+  }
+  function bumpSiteFail(host, reason) {
+    if (!host) return;
+    const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+    const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+    /* 规则：连续失败几次暂停该站 */
+    const limit = Math.max(1, Math.min(20, Number(cfg.breaker) || 3));
+    const map = readFails();
+    const cur = map[host] || { n: 0 };
+    cur.n = Number(cur.n) + 1;
+    cur.at = new Date().toISOString();
+    cur.reason = String(reason || '').slice(0, 200);
+    map[host] = cur;
+    saveFails(map);
+    if (cur.n >= limit) {
+      const row = one('SELECT data FROM sites WHERE host = ?', host);
+      if (row) {
+        const d = jparse(row.data) || {};
+        if (d.enabled !== false) {
+          d.enabled = false;
+          d.pausedAt = cur.at;
+          d.pauseReason = '连续失败 ' + cur.n + ' 次';
+          ctx.db.prepare('UPDATE sites SET data = ?, updated_at = ? WHERE host = ?').run(JSON.stringify(d), cur.at, host);
+        }
+      }
+    }
+  }
+  function resetSiteFail(host) {
+    if (!host) return;
+    const map = readFails();
+    if (!map[host]) return;
+    delete map[host];
+    saveFails(map);
+  }
+
   async function runNow() {
     if (running) return { ok: false, error: '上一轮还没跑完' };
     running = true;
@@ -106,8 +147,12 @@ function makeScheduler(ctx, deps) {
           const it = jparse(row.data) || {};
           if (!it.targetSite || !it.downloadUrl) continue;
           const r = await deps.publish.publishItem(row.id, { dryRun: false });
-          if (r.ok) ok++;
-          else { failed++; if (errors.length < 3) errors.push({ id: row.id, code: r.code, message: r.message }); }
+          if (r.ok) { ok++; resetSiteFail(it.targetSite || it.site); }
+          else {
+            failed++;
+            bumpSiteFail(it.targetSite || it.site, r.message || r.code);
+            if (errors.length < 3) errors.push({ id: row.id, code: r.code, message: r.message });
+          }
         }
         steps.publish = { checked: rows.length, ok: ok, failed: failed, errors: errors };
       } else {
@@ -127,8 +172,9 @@ function makeScheduler(ctx, deps) {
           if (retries >= retryMax) { skipped++; continue; }
           if (it.nextRetryAt && Date.parse(it.nextRetryAt) > Date.now()) { skipped++; continue; }
           const r = await deps.publish.publishItem(row.id, { dryRun: false });
-          if (r.ok) { ok++; continue; }
+          if (r.ok) { ok++; resetSiteFail(it.targetSite || it.site); continue; }
           failed++;
+          bumpSiteFail(it.targetSite || it.site, r.message || r.code);
           const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
           const d = cur ? (jparse(cur.data) || {}) : it;
           d.retries = retries + 1;
