@@ -206,7 +206,15 @@ function makeTargetService(ctx, target) {
     }
     const uploadItem = preparedItem(item.data, host);
     const plan = preparedPlan(item.data, host);
-    if (!dryRun && b.preCheckDupe !== false && !item.data.dupePassedAt) {
+    const dres = item.data.dupeResults && item.data.dupeResults[host];
+    if (dres && dres.skip) {
+      const msg = '目标站已有这条资源，跳过';
+      setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: null });
+      if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
+      saveQueue(item.data);
+      return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host } };
+    }
+    if (!dryRun && b.preCheckDupe !== false && !(item.data.dupePassedAt && dres)) {
       const chk = await checkDupe(host, item.data, t.buf);
       if (chk.found && chk.skip) {
         const msg = '目标站已有这条资源，跳过';
@@ -402,7 +410,7 @@ function makeTargetService(ctx, target) {
     return { ok: true, data: out };
   }
 
-  return { upload: upload, uploadMany: uploadMany, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
+  return { upload: upload, uploadMany: uploadMany, checkDupe: checkDupe, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
 module.exports = { makeTargetService };

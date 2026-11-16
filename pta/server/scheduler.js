@@ -88,7 +88,7 @@ function makeScheduler(ctx, deps) {
     const s = read();
     try {
       if (ctx.allowReal('realCrawl')) {
-        const sites = all('SELECT data FROM sites').map(function (r) { return jparse(r.data) || {}; })
+        const sites = all('SELECT host, data FROM sites').map(function (r) { return Object.assign({}, jparse(r.data) || {}, { host: r.host }); })
           .filter(function (x) { return x && x.enabled !== false && x.host; }).slice(0, 10);
         let ok = 0, failed = 0;
         for (const x of sites) {
@@ -107,25 +107,35 @@ function makeScheduler(ctx, deps) {
       steps.screen = deps.screen.screenCatalog(ctx, { limit: 200 });
       steps.hooksScreen = await pipeline.run('screen', ctx, steps);
 
-      /* 查重（初筛之后、补齐之前）：命中就跳过，省补齐和详情请求 */
+      /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
       const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [] };
       const pend = all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT 20");
       for (const row of pend) {
         const it = jparse(row.data) || {};
-        const host = String(it.targetSite || (Array.isArray(it.targets) && it.targets[0]) || '').toLowerCase();
-        if (!host) continue;
+        const hosts = [];
+        [it.targetSite].concat(Array.isArray(it.targets) ? it.targets : []).forEach(function (h) {
+          h = String(h || '').trim().toLowerCase();
+          if (h && hosts.indexOf(h) < 0) hosts.push(h);
+        });
+        if (!hosts.length) continue;
         dedupe.checked++;
-        let chk = { found: false, skip: false };
-        try { chk = await targetService.checkDupe(host, it, null); }
-        catch (e) { dedupe.errors.push({ id: row.id, error: String(e && e.message || e).slice(0, 120) }); }
-        if (chk.found && chk.skip) {
-          it.dupeSkipped = { host: host, kind: chk.kind, at: new Date().toISOString() };
+        it.dupeResults = it.dupeResults || {};
+        let anyOpen = false;
+        for (const host of hosts) {
+          let chk = { found: false, skip: false };
+          try { chk = await targetService.checkDupe(host, it, null); }
+          catch (e) { dedupe.errors.push({ id: row.id, host: host, error: String(e && e.message || e).slice(0, 120) }); anyOpen = true; continue; }
+          it.dupeResults[host] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: new Date().toISOString() };
+          if (chk.found && chk.skip) continue;
+          anyOpen = true;
+        }
+        if (!anyOpen) {
+          it.dupeSkipped = { at: new Date().toISOString(), hosts: hosts };
           dedupe.skipped++;
           ctx.db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
             .run('skipped', JSON.stringify(Object.assign({}, it, { status: 'skipped' })), new Date().toISOString(), row.id);
         } else {
           it.dupePassedAt = new Date().toISOString();
-          if (chk.found) it.dupeReview = { host: host, kind: chk.kind, title: chk.title, at: it.dupePassedAt };
           dedupe.kept++;
           ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
             .run(JSON.stringify(it), new Date().toISOString(), row.id);
@@ -224,7 +234,21 @@ function makeScheduler(ctx, deps) {
           if (retries >= retryMax) { skipped++; continue; }
           if (it.nextRetryAt && Date.parse(it.nextRetryAt) > Date.now()) { skipped++; continue; }
           const r = await deps.publish.publishItem(row.id, { dryRun: false });
-          if (r.ok) { ok++; resetSiteFail(it.targetSite || it.site); continue; }
+          if (r.ok) {
+            ok++;
+            resetSiteFail(it.targetSite || it.site);
+            const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
+            const done = cur ? (jparse(cur.data) || null) : null;
+            if (done) {
+              for (const host of Object.keys(done.targetResults || {})) {
+                const tr = done.targetResults[host] || {};
+                if (tr.publishedTorrent && !tr.crossseed) {
+                  try { await crossseed.run({ id: row.id, data: done }, host, {}); } catch (e) { /* 重试辅种失败不影响 */ }
+                }
+              }
+            }
+            continue;
+          }
           failed++;
           bumpSiteFail(it.targetSite || it.site, r.message || r.code);
           const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
