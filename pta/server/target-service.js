@@ -6,10 +6,12 @@ const stage = require('./stage');
 const torrentClean = require('./torrent-clean');
 const flowConfig = require('./flow-config');
 const imagehost = require('./imagehost');
+const { makeDedupeBudget } = require('./dedupe-budget');
 
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
+  const dedupeBudget = makeDedupeBudget(ctx);
 
   function loadQueue(id) {
     const row = one('SELECT id, data FROM queue WHERE id = ?', String(id || ''));
@@ -172,11 +174,15 @@ function makeTargetService(ctx, target) {
     const flowCfg = flowConfig.read(ctx);
     /* 流程页关掉“目标站搜索”就不查重，尊重用户设置，少打目标站 */
     if (!flowConfig.on(flowCfg, '目标站搜索', true)) return { found: false, disabled: true };
+    const b1 = dedupeBudget.take(1);
+    if (!b1.ok) return { found: false, budgetExhausted: true, budget: b1.status };
     let pre = null;
     try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); } catch (e) { pre = null; }
     if (!pre || !pre.ok || !pre.data || !pre.data.found) return { found: false };
     let foundTitle = String(pre.data.title || '');
     if (pre.data.detailsUrl) {
+      const b2 = dedupeBudget.take(1);
+      if (!b2.ok) return { found: false, budgetExhausted: true, budget: b2.status };
       try {
         const di = await target.fetchDetailsInfo(host, pre.data.detailsUrl);
         if (di.ok) foundTitle += ' ' + [di.data.subtitle, di.data.descr, di.data.tags, di.data.medium].filter(Boolean).join(' ');
@@ -309,6 +315,9 @@ function makeTargetService(ctx, target) {
     }
     if (!dryRun && b.preCheckDupe !== false && !(item.data.dupePassedAt && dres)) {
       const chk = await checkDupe(host, item.data, t.buf);
+      if (chk.budgetExhausted) {
+        return { ok: false, code: 'DEDUPE_BUDGET_EXHAUSTED', message: '今天查重额度用完，先不发布', http: 429, data: { host: host } };
+      }
       if (chk.found && chk.skip) {
         const msg = '目标站已有这条资源，跳过';
         setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: chk.verify });

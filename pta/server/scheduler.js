@@ -5,6 +5,7 @@ const pipeline = require('./pipeline');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { makeMetaFill } = require('./meta-fill');
+const { makeDedupeBudget } = require('./dedupe-budget');
 
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
@@ -14,6 +15,7 @@ function makeScheduler(ctx, deps) {
   const target = makeTarget(ctx);
   const targetService = makeTargetService(ctx, target);
   const metaFill = makeMetaFill(ctx);
+  const dedupeBudget = makeDedupeBudget(ctx);
   let timer = null;
   let running = false;
 
@@ -140,11 +142,15 @@ function makeScheduler(ctx, deps) {
       }
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
-      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false };
+      const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false, budgetExhausted: false, roundStopped: '', requests: 0 };
       const dedupeLimit = Math.min(10, batch);
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
+      const budgetStart = dedupeBudget.status();
+      const roundStart = budgetStart.used;
       if (!want('dedupe')) dedupe.skippedStep = true;
+      let stopDedupe = false;
       for (const row of pend) {
+        if (dedupeBudget.status().used - roundStart >= dedupeBudget.roundMax) { dedupe.roundStopped = 'ROUND_MAX'; break; }
         const it = jparse(row.data) || {};
         const hosts = [];
         [it.targetSite].concat(Array.isArray(it.targets) ? it.targets : []).forEach(function (h) {
@@ -166,11 +172,18 @@ function makeScheduler(ctx, deps) {
             bumpSiteFail(host, '查重失败：' + String(e && e.message || e).slice(0, 120));
             anyOpen = true; continue;
           }
+          if (chk.budgetExhausted) {
+            dedupe.budgetExhausted = true;
+            dedupe.budget = chk.budget || dedupeBudget.status();
+            stopDedupe = true;
+            break;
+          }
           if (chk.disabled) { dedupe.disabled = true; anyOpen = true; continue; }
           it.dupeResults[host] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: new Date().toISOString() };
           if (chk.found && chk.skip) continue;
           anyOpen = true;
         }
+        if (stopDedupe) break;
         if (!anyOpen) {
           it.dupeSkipped = { at: new Date().toISOString(), hosts: hosts };
           dedupe.skipped++;
@@ -183,11 +196,14 @@ function makeScheduler(ctx, deps) {
             .run(JSON.stringify(it), new Date().toISOString(), row.id);
         }
       }
+      dedupe.requests = dedupeBudget.status().used - roundStart;
+      dedupe.budget = dedupeBudget.status();
       steps.dedupe = dedupe;
       steps.hooksDedupe = await pipeline.run('dedupe', ctx, steps);
 
       /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
       const flow = flowConfig.read(ctx);
+      const targetSearchOn = flowConfig.on(flow, '目标站搜索', true);
       const needIntro = flowConfig.on(flow, '必须有简介', false);
       const needSub = flowConfig.on(flow, '必须有副标题', false);
       const bdMode = String(flowConfig.value(flow, 'BDInfo', '不要求'));
@@ -245,6 +261,7 @@ function makeScheduler(ctx, deps) {
         const d = jparse(cur ? cur.data : row.data) || {};
         const p = (d.prepared) || {};
         const missing = [];
+        if (targetSearchOn && !d.dupePassedAt) missing.push('查重未完成');
         if (needIntro && !String(d.intro || '').trim()) missing.push('简介');
         if (needSub && !String(d.subtitle || '').trim()) missing.push('副标题');
         if (shotMin > 0 && Number(p.shots || 0) < shotMin) missing.push('截图 ' + Number(p.shots || 0) + '/' + shotMin);
