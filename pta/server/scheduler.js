@@ -276,7 +276,7 @@ function makeScheduler(ctx, deps) {
         /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
         const conc = Math.max(1, Math.min(5, Number(cfg.concurrency) || 1));
         const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT " + publishLimit);
-        let ok = 0, failed = 0;
+        let ok = 0, failed = 0, held = 0;
         const errors = [];
         const queueRows = rows.slice();
         async function worker() {
@@ -284,6 +284,16 @@ function makeScheduler(ctx, deps) {
             const row = queueRows.shift();
             const it = jparse(row.data) || {};
             if (!it.targetSite || !it.downloadUrl) continue;
+            /* 辅种模式：源种先进 qB 并下到 100%，没完成就等下一轮，不传目标站 */
+            let src = null;
+            try { src = await deps.publish.ensureSource(row.id, {}); }
+            catch (e) { src = { ok: false, code: 'SOURCE_CHECK_FAILED', message: String(e && e.message || e).slice(0, 160) }; }
+            if (!src.ok) {
+              failed++;
+              if (errors.length < 3) errors.push({ id: row.id, code: src.code, message: src.message });
+              continue;
+            }
+            if (!src.complete) { held++; continue; }
             /* 先传到目标站（已传过的站跳过），成功后再注入下载器；两步都算发布 */
             const hosts = [];
             [it.targetSite].concat(Array.isArray(it.targets) ? it.targets : []).forEach(function (h) {
@@ -342,7 +352,7 @@ function makeScheduler(ctx, deps) {
         const workers = [];
         for (let i = 0; i < Math.min(conc, rows.length); i++) workers.push(worker());
         await Promise.all(workers);
-        steps.publish = { checked: rows.length, ok: ok, failed: failed, errors: errors, concurrency: conc };
+        steps.publish = { checked: rows.length, ok: ok, failed: failed, held: held, errors: errors, concurrency: conc };
       } else {
         steps.publish = { skipped: want('publish') ? 'realPublish off' : 'step not selected' };
       }

@@ -210,6 +210,55 @@ function makePublisher(ctx) {
     return { ok: true, data: { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' }, msg: it.pubMsg } };
   }
 
+  /* 辅种模式前置：源种先进 qB，进度到 1 才允许发布到目标站 */
+  async function ensureSource(id, body) {
+    const b = body || {};
+    const cur = load(id);
+    if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
+    const it = cur.data;
+    const dl = downloaderOf(b, it);
+    if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB', http: 400 };
+    if (String(dl.kind || 'qb') !== 'qb') return { ok: true, complete: true, skipped: 'non-qb' };
+    if (!ctx.allowReal('realPublish')) return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开', http: 409 };
+    if (!it.downloadUrl) return { ok: false, code: 'NO_SOURCE_URL', message: '条目没有源种下载地址', http: 400 };
+    const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
+    if (got.err) {
+      it.sourceState = { at: now(), ok: false, error: got.err };
+      save(it);
+      return { ok: false, code: 'SOURCE_FETCH_FAILED', message: got.err };
+    }
+    const meta = qb.parseTorrent(got.buf);
+    if (!meta.hash) {
+      it.sourceState = { at: now(), ok: false, error: '源种解析不出 infohash' };
+      save(it);
+      return { ok: false, code: 'BAD_SOURCE_TORRENT', message: '源种解析不出 infohash' };
+    }
+    let found = await qb.findTorrent(dl, meta.hash, meta.name);
+    if (!found.found) {
+      const add = await qb.addTorrent(dl, got.buf, {
+        savePath: b.savePath || it.savePath,
+        category: b.category || it.category,
+        paused: false,
+        filename: String(it.title || 'source').slice(0, 60) + '.torrent'
+      });
+      if (!add.ok && !/fails|already|duplicate|exist/i.test(String(add.message || ''))) {
+        it.sourceState = { at: now(), ok: false, hash: meta.hash, error: add.message || add.error };
+        save(it);
+        return { ok: false, code: 'SOURCE_ADD_FAILED', message: add.message || add.error || '源种加 qB 失败' };
+      }
+      await qb.resumeTorrent(dl, meta.hash).catch(function () {});
+      found = await qb.findTorrent(dl, meta.hash, meta.name);
+    } else if (/stop|pause/i.test(String(found.state || ''))) {
+      await qb.resumeTorrent(dl, meta.hash).catch(function () {});
+      found = await qb.findTorrent(dl, meta.hash, meta.name);
+    }
+    const progress = Number(found.progress) || 0;
+    const complete = found.found && progress >= 0.999;
+    it.sourceState = { at: now(), ok: true, hash: meta.hash, name: meta.name || '', progress: progress, state: found.state || '', savePath: found.savePath || '', complete: complete };
+    save(it);
+    return { ok: true, complete: complete, hash: meta.hash, progress: progress, state: found.state || '', savePath: found.savePath || '' };
+  }
+
   function injectPlan(id, body) {
     const cur = load(id);
     if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
@@ -218,7 +267,7 @@ function makePublisher(ctx) {
     return { ok: true, data: injectPlanFor(cur.data, dl, body) };
   }
 
-  return { publishItem, injectPlan };
+  return { publishItem, injectPlan, ensureSource };
 }
 
 module.exports = { makePublisher };

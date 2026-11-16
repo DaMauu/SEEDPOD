@@ -241,6 +241,23 @@ async function main() {
     need(/name="autoTMM"[\s\S]{0,120}false/.test(lastAddBody), 'autoTMM 默认应为 false');
   });
 
+  await check('辅种模式：源种没下完会拦住发布', async function () {
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    const jp = (x) => { try { return JSON.parse(x); } catch (e) { return null; } };
+    const ctx = {
+      db, DATA_DIR: DATA, allowReal: function () { return true; },
+      one: (s2, ...a) => db.prepare(s2).get(...a),
+      all: (s2, ...a) => db.prepare(s2).all(...a),
+      jparse: jp
+    };
+    const pub = require(path.join(ROOT, 'server', 'publish.js')).makePublisher(ctx);
+    const r = await pub.ensureSource(item.data.id, {});
+    need(r.ok, '检查源种失败：' + JSON.stringify(r));
+    need(r.complete === false, '进度 0 不该算源种完整：' + JSON.stringify(r));
+    db.close();
+  });
+
   await check('qB 启动/暂停/删除兼容不同版本', async function () {
     const dlObj = { url: qb.base, user: 'u', pass: 'p' };
     const r1 = await qbMod.resumeTorrent(dlObj, HASH);
