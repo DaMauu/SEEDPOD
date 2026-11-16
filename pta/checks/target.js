@@ -249,7 +249,7 @@ async function main() {
           path: '/takeupload.php',
           formPath: '/upload-form',
           fileField: 'file',
-          fields: { name: '{title}', small_desc: '{subtitle}', descr: '{description}', anon: '{anonymous}' }
+          fields: { name: '{title}', small_desc: '{subtitle}', descr: '{description}', bdinfo: '{bdinfo}', anon: '{anonymous}' }
         },
         verify: { path: '/torrents.php?search={title}' },
         catMap: { '电影': '401', '剧集': '404', '纪录片': '402' },
@@ -433,6 +433,26 @@ async function main() {
     need((await planOf('movie')).fields.type === '401', 'movie 没映射到 401');
     need((await planOf('电影')).fields.type === '401', '中文电影没映射到 401');
     need((await planOf('doc')).fields.type === '402', 'doc 没映射到纪录片 402');
+  });
+
+  await check('BDInfo 填专用字段并从简介去重', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: 'BDInfo Field Test 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved',
+        cat: 'movie', res: '1080p', size: '20 GB',
+        bdinfo: 'Disc Title: TEST\nDisc Size: 20 GB',
+        descrBb: '正文段落\n[hide=bdinfo]Disc Title: TEST\nDisc Size: 20 GB[/hide]\n结尾'
+      })
+    });
+    need(add.status === 200 && add.body.ok, '建 BDInfo 条目失败');
+    const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, 'BDInfo 计划失败：' + JSON.stringify(p.body && p.body.error));
+    const f = p.body.data.fields;
+    need(f.bdinfo === 'Disc Title: TEST\nDisc Size: 20 GB', 'BDInfo 没填专用字段：' + JSON.stringify(f.bdinfo));
+    need(f.descr.indexOf('[hide=bdinfo]') < 0 && f.descr.indexOf('正文段落') >= 0 && f.descr.indexOf('结尾') >= 0, '简介里的 BDInfo 没去重：' + f.descr);
   });
 
   await check('站点映射总表覆盖分类和制作组', async function () {

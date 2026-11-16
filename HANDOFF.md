@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 10:05（当前 v0.7.352 / hide=MediaInfo）
+最后更新：2026-11-17 10:40（当前 v0.7.353 / BDInfo 专用字段）
+
+## 2026-11-17 BDInfo 专用字段（v0.7.353）
+
+- 解析源 BDInfo/MediaInfo 字段，填目标专用字段并去重简介 hide 块；字段名多种写法。
 
 ## 2026-11-17 hide=MediaInfo（v0.7.352）
 

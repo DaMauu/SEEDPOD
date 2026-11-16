@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.353 · 2026-11-17
+
+### BDInfo/MediaInfo 专用字段
+- 源详情里的 BDInfo/MediaInfo 单独字段会解析进条目；Unit3D 的 div/pre 也支持。
+- 目标站有 bdinfo/bd_info/disc info/video info/media info 字段时自动填，并从简介里去掉重复的 `[hide=bdinfo]`/`[hide=mediainfo]`。
+- 字段名不只认 bdinfo：bd_info、bd-info、disc info、video info、media_info 都认。
+- `[hide=mediainfo]`/`[hide=bdinfo]` 改成小写还原，和源站一致。
+
 ## v0.7.352 · 2026-11-17
 
 ### 还原 hide=MediaInfo/BDInfo

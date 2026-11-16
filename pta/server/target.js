@@ -189,6 +189,8 @@ function makeTarget(ctx) {
       resolution: res,
       region: String(item.region || ''),
       language: String(item.language || ''),
+      bdinfo: String(item.bdinfo || '').slice(0, 60000),
+      mediainfo: String(item.mediainfo || '').slice(0, 60000),
       audio: String(item.audio || ''),
       team: String(item.team || item.group || ''),
       anonymous: (item.anonymous !== undefined ? !!item.anonymous : flowConfig.on(flowConfig.read(ctx), '默认匿名', false)) ? '1' : '0',
@@ -206,6 +208,26 @@ function makeTarget(ctx) {
     return String(s == null ? '' : s).replace(/\{([a-zA-Z0-9_]+)\}/g, function (_, k) {
       return v[k] != null ? String(v[k]) : '';
     }).slice(0, 60000);
+  }
+
+  function hideContent(text, kind) {
+    const m = new RegExp('\\[hide=' + kind + '\\]([\\s\\S]*?)\\[\\/hide\\]', 'i').exec(String(text || ''));
+    return m ? String(m[1]).trim() : '';
+  }
+  function stripHide(text, kind) {
+    return String(text || '').replace(new RegExp('\\[hide=' + kind + '\\][\\s\\S]*?\\[\\/hide\\]', 'gi'), '').replace(/\n{3,}/g, '\n\n').trim();
+  }
+  function infoFieldKey(fields, kind) {
+    const keys = Object.keys(fields || {});
+    const re = kind === 'bdinfo'
+      ? /(^|[^a-z])bd[-_ ]?info([^a-z]|$)|disc[-_ ]?info|video[-_ ]?info/i
+      : /media[-_ ]?info/i;
+    return keys.filter(function (k) { return re.test(k) && !/descr|description/i.test(k); })[0] || '';
+  }
+  function descrFieldKey(fields) {
+    return Object.keys(fields || {}).filter(function (k) {
+      return /\{description\}/i.test(String(fields[k])) || /^(descr|description)$/i.test(k);
+    })[0] || '';
   }
 
   function plan(host, item) {
@@ -243,6 +265,22 @@ function makeTarget(ctx) {
       tagFields.push(field);
     });
     const warnings = [];
+    /* 源站单独的 BDInfo/MediaInfo 框，或简介里的 [hide=bdinfo]/[hide=mediainfo]：
+       目标站有专用字段就填字段，并把简介里的重复块去掉。 */
+    const bdKey = infoFieldKey(t.upload.fields, 'bdinfo');
+    const miKey = infoFieldKey(t.upload.fields, 'mediainfo');
+    const descrKey = descrFieldKey(t.upload.fields);
+    const srcBd = String(item.bdinfo || '').trim() || hideContent(item.descrBb || item.intro, 'bdinfo');
+    const srcMi = String(item.mediainfo || '').trim() || hideContent(item.descrBb || item.intro, 'mediainfo');
+    let descrLive = descrKey ? String(fields[descrKey] || '') : '';
+    if (bdKey && srcBd) {
+      fields[bdKey] = srcBd;
+      if (descrLive) { descrLive = stripHide(descrLive, 'bdinfo'); fields[descrKey] = descrLive; }
+    }
+    if (miKey && srcMi) {
+      fields[miKey] = srcMi;
+      if (descrLive) { descrLive = stripHide(descrLive, 'mediainfo'); fields[descrKey] = descrLive; }
+    }
     /* 制作组：只认数字 id 或站点映射，组名直接塞下拉会填错 */
     const teamRaw = String(v.team || '').trim();
     const teamMap = (t.valueMaps && t.valueMaps.team) || {};

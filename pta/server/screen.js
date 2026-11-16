@@ -126,6 +126,7 @@ function screenCatalog(ctx, opts) {
       subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),
       year: it.year || '', category: it.category || '',
       region: String(it.region || '').slice(0, 60), language: String(it.language || '').slice(0, 60),
+      bdinfo: String(it.bdinfo || '').slice(0, 60000), mediainfo: String(it.mediainfo || '').slice(0, 60000),
       medium: String(it.medium || '').slice(0, 60), fullDisc: it.fullDisc === true,
       intro: String(it.descrBb || it.intro || it.descr || '').slice(0, 60000),
       descrBb: String(it.descrBb || '').slice(0, 60000),

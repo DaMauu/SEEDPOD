@@ -18,8 +18,8 @@ function toBbcode(html) {
   s = s.replace(/<div\b[^>]*class=["'][^"']*codetop[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<div\b[^>]*class=["'][^"']*hide[^"']*["'][^>]*>\s*<div\b[^>]*class=["'][^"']*codemain[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi, function (_, top, inner) {
     const label = text(top);
     let open = '[code]', close = '[/code]';
-    if (/^mediainfo\b/i.test(label)) { open = '[hide=MediaInfo]'; close = '[/hide]'; }
-    else if (/^bdinfo\b/i.test(label)) { open = '[hide=BDInfo]'; close = '[/hide]'; }
+    if (/^mediainfo\b/i.test(label)) { open = '[hide=mediainfo]'; close = '[/hide]'; }
+    else if (/^bdinfo\b/i.test(label)) { open = '[hide=bdinfo]'; close = '[/hide]'; }
     else if (/隐藏内容/i.test(label)) { open = '[hide]'; close = '[/hide]'; }
     return '\n' + open + '\n' + inner + '\n' + close + '\n';
   });
@@ -55,6 +55,8 @@ const LABELS = {
   tags: ['标签', 'Tags'],
   subtitle: ['副标题', 'Subtitle'],
   region: ['地区', '国家', 'Region', 'Country'],
+  bdinfo: ['BDInfo', 'BD Info', 'BDINFO', 'Disc Info', '影片参数', '视频参数'],
+  mediainfo: ['MediaInfo', 'Media Info', 'MEDIAINFO', '媒体信息'],
   language: ['语言', 'Language'],
   infohash: ['Info Hash', '信息哈希', '哈希'],
   uploader: ['发布者', 'Uploader', '上传者']
@@ -130,6 +132,10 @@ function parse(html) {
   if (region) out.region = region;
   const language = pick(rows, LABELS.language);
   if (language) out.language = language;
+  const bdinfo = pick(rows, LABELS.bdinfo);
+  if (bdinfo) out.bdinfo = bdinfo.slice(0, 60000);
+  const mediainfo = pick(rows, LABELS.mediainfo);
+  if (mediainfo) out.mediainfo = mediainfo.slice(0, 60000);
 
   const infohash = pick(rows, LABELS.infohash);
   if (infohash) out.infohash = infohash.toLowerCase();
@@ -158,6 +164,18 @@ function parse(html) {
 
   const title = /<title>([\s\S]{1,200}?)<\/title>/i.exec(s);
   if (title) out.pageTitle = text(title[1]);
+
+  /* Unit3D 等把 BDInfo/MediaInfo 放在单独 div/pre 里 */
+  if (!out.bdinfo) {
+    const bd = extractDivByAttr(s, 'class', 'bdinfo') || extractDivByAttr(s, 'id', 'bdinfo')
+      || extractDivByAttr(s, 'class', 'bd-info') || extractDivByAttr(s, 'id', 'bd-info');
+    if (bd) out.bdinfo = toBbcode(bd).slice(0, 60000);
+  }
+  if (!out.mediainfo) {
+    const mi = extractDivByAttr(s, 'class', 'mediainfo') || extractDivByAttr(s, 'id', 'mediainfo')
+      || extractDivByAttr(s, 'class', 'media-info') || extractDivByAttr(s, 'id', 'media-info');
+    if (mi) out.mediainfo = toBbcode(mi).slice(0, 60000);
+  }
 
   return out;
 }
