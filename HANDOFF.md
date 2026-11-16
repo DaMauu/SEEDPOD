@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 04:45（当前 v0.7.341 / 环境变量去前缀）
+最后更新：2026-11-17 05:30（当前 v0.7.342 / 图床 SSO）
+
+## 2026-11-17 图床 SSO（v0.7.342）
+
+- Chevereto 支持猫站 cookie 走 SSO，不需 API key；也支持账号密码登录。
+- 生产待配：`IMAGE_HOST_PROVIDER=chevereto`、`IMAGE_HOST_URL=https://s3.pterclub.net`、`realImages=true`。
+- 测试图 `seedpod-test.png`（红）留在图床账号，未找到删除入口。
 
 ## 2026-11-17 环境变量去前缀（v0.7.341）
 

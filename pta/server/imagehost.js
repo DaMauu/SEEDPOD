@@ -1,6 +1,9 @@
 /* 图床管道：把队列里的 data URL 截图上传到配置的图床，返回可写进简介的链接。
    默认只演练；真上传由调用方显式 allowReal，并且只接受已验证的 custom/local 接口。
    Pixhost / Imgbox 暂只做计划，不拿未验证的接口去真传。 */
+const path = require('path');
+const { openDB } = require('./db');
+const secretbox = require('./secretbox');
 const MAX_BYTES = 8 * 1024 * 1024;
 
 function providerKey(name) {
@@ -9,6 +12,7 @@ function providerKey(name) {
   if (s === 'pixhost') return 'pixhost';
   if (s === 'imgbox') return 'imgbox';
   if (s === '本地图床' || s === 'local') return 'local';
+  if (s === 'chevereto' || s === 'pterclub' || s === 's3') return 'chevereto';
   return 'custom';
 }
 function envHeaders() {
@@ -21,7 +25,30 @@ function envHeaders() {
     return {};
   }
 }
+function defaultProvider() {
+  const explicit = require('./env').read('IMAGE_HOST_PROVIDER', 'PTA_IMAGE_HOST_PROVIDER');
+  if (explicit) return providerKey(explicit);
+  const url = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '');
+  if (/\/api\/1\/upload/i.test(url)) return 'chevereto';
+  if (require('./env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER')) return 'chevereto';
+  return 'custom';
+}
 function configFor(provider) {
+  if (provider === 'chevereto') {
+    const raw = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || 'https://s3.pterclub.net').trim();
+    const url = /\/api\/1\/upload/i.test(raw) ? raw : raw.replace(/\/+$/, '') + '/api/1/upload';
+    return {
+      endpoint: url,
+      field: 'source',
+      token: String(require('./env').read('IMAGE_HOST_TOKEN', 'PTA_IMAGE_HOST_TOKEN') || require('./env').read('IMAGE_HOST_KEY', 'PTA_IMAGE_HOST_KEY') || '').trim(),
+      headers: envHeaders(),
+      verified: true,
+      auth: 'chevereto',
+      user: String(require('./env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER') || '').trim(),
+      pass: String(require('./env').read('IMAGE_HOST_PASS', 'PTA_IMAGE_HOST_PASS') || ''),
+      ssoHost: String(require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || 'pterclub.net').trim()
+    };
+  }
   if (provider === 'custom' || provider === 'local') {
     return {
       endpoint: String(require('./env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') || '').trim(),
@@ -63,6 +90,153 @@ function findUrl(value, depth) {
 function sleep(ms) {
   return new Promise(function (resolve) { setTimeout(resolve, Math.max(0, Number(ms) || 0)); });
 }
+/* Chevereto 网页会话：账号密码登录 → auth_token + cookie → /json 上传。
+   不依赖 API key；会话缓存在进程内，失效自动重登一次。 */
+let CHEV_SESSION = null;
+
+function cookieJarFrom(res, jar) {
+  const list = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const fallback = res.headers.get('set-cookie');
+  if (!list.length && fallback) list.push(fallback);
+  list.forEach(function (raw) {
+    const pair = String(raw || '').split(';')[0];
+    const i = pair.indexOf('=');
+    if (i > 0) jar[pair.slice(0, i).trim()] = pair.slice(i + 1).trim();
+  });
+}
+function cookieHeader(jar) {
+  return Object.keys(jar).map(function (k) { return k + '=' + jar[k]; }).join('; ');
+}
+function tokenFromHtml(html) {
+  const m = /auth_token\s*=\s*["']([a-f0-9]{16,})["']/i.exec(String(html || ''));
+  return m ? m[1] : '';
+}
+function chevBase(cfg) {
+  return String(cfg.endpoint || '').replace(/\/api\/1\/upload\/?$/i, '').replace(/\/+$/, '');
+}
+let SSO_COOKIE_CACHE = { host: '', value: '', at: 0 };
+function siteCookie(host) {
+  const h = String(host || '').toLowerCase();
+  if (SSO_COOKIE_CACHE.host === h && Date.now() - SSO_COOKIE_CACHE.at < 60000) return SSO_COOKIE_CACHE.value;
+  const dir = path.resolve(require('./env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+  let cookie = '';
+  try {
+    const db = openDB(path.join(dir, 'seedpod.db'));
+    const row = db.prepare('SELECT cookie FROM credentials WHERE host = ?').get(h);
+    db.close();
+    if (row && row.cookie) cookie = secretbox.decrypt(row.cookie, secretbox.loadKey(dir).key);
+  } catch (e) { cookie = ''; }
+  SSO_COOKIE_CACHE = { host: h, value: cookie, at: Date.now() };
+  return cookie;
+}
+async function cheveretoSsoLogin(cfg) {
+  const base = chevBase(cfg);
+  if (!base) throw new Error('没有配置图床地址');
+  const host = String(cfg.ssoHost || require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || 'pterclub.net').toLowerCase();
+  const ptcookie = String(cfg.ssoCookie || siteCookie(host) || '');
+  if (!ptcookie) throw new Error('猫站 cookie 不可用，先做一次会话自检');
+  const jar = {};
+  const ua = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+  let r = await fetch(base + '/connect/goauth', { headers: ua, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+  cookieJarFrom(r, jar);
+  let url = String(r.headers.get('location') || '');
+  if (!url) throw new Error('图床 SSO 没有跳转地址');
+  r = await fetch(url, { headers: Object.assign({}, ua, { cookie: ptcookie }), redirect: 'manual', signal: AbortSignal.timeout(25000) });
+  url = String(r.headers.get('location') || '');
+  if (!url) throw new Error('猫站 OAuth 没有回调地址，cookie 可能失效');
+  for (let i = 0; i < 4 && url; i++) {
+    const next = new URL(url, base + '/').toString();
+    if (next.indexOf(base) !== 0) throw new Error('图床 SSO 跳转到外部域名：' + next.slice(0, 80));
+    r = await fetch(next, { headers: Object.assign({}, ua, { cookie: cookieHeader(jar) }), redirect: 'manual', signal: AbortSignal.timeout(20000) });
+    cookieJarFrom(r, jar);
+    url = String(r.headers.get('location') || '');
+    if (r.status === 200) break;
+  }
+  const home = await fetch(base + '/', { headers: Object.assign({}, ua, { cookie: cookieHeader(jar) }), redirect: 'manual', signal: AbortSignal.timeout(20000) });
+  cookieJarFrom(home, jar);
+  if (home.status >= 300 && home.status < 400 && /\/login/i.test(String(home.headers.get('location') || ''))) {
+    throw new Error('图床 SSO 登录没成功，猫站 cookie 可能失效');
+  }
+  const html = await home.text().catch(function () { return ''; });
+  const token = tokenFromHtml(html);
+  if (!token) throw new Error('图床登录后没有 auth_token');
+  CHEV_SESSION = { base: base, cookie: cookieHeader(jar), token: token, at: Date.now() };
+  return CHEV_SESSION;
+}
+async function cheveretoLogin(cfg) {
+  const base = chevBase(cfg);
+  if (!base) throw new Error('没有配置图床地址');
+  const user = String(cfg.user || '').trim();
+  const pass = String(cfg.pass || '');
+  if (!user || !pass) return cheveretoSsoLogin(cfg);
+  const jar = {};
+  const ua = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+  const page = await fetch(base + '/login', { headers: ua, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+  cookieJarFrom(page, jar);
+  const html = await page.text().catch(function () { return ''; });
+  const token = tokenFromHtml(html);
+  if (!token) throw new Error('图床登录页没有 auth_token');
+  const body = new URLSearchParams();
+  body.set('login-subject', user);
+  body.set('password', pass);
+  body.set('auth_token', token);
+  const login = await fetch(base + '/login', {
+    method: 'POST',
+    headers: Object.assign({}, ua, {
+      'content-type': 'application/x-www-form-urlencoded',
+      referer: base + '/login', origin: base,
+      cookie: cookieHeader(jar)
+    }),
+    body: body.toString(), redirect: 'manual', signal: AbortSignal.timeout(20000)
+  });
+  cookieJarFrom(login, jar);
+  const location = String(login.headers.get('location') || '');
+  if (login.status >= 400) throw new Error('图床登录失败：HTTP ' + login.status);
+  /* 登录后回首页确认会话，并取新的 auth_token */
+  const home = await fetch(base + '/', { headers: Object.assign({}, ua, { cookie: cookieHeader(jar) }), redirect: 'manual', signal: AbortSignal.timeout(20000) });
+  cookieJarFrom(home, jar);
+  if (home.status >= 300 && home.status < 400 && /\/login/i.test(String(home.headers.get('location') || ''))) {
+    throw new Error('图床登录没成功，账号或密码不对');
+  }
+  const homeHtml = await home.text().catch(function () { return ''; });
+  const fresh = tokenFromHtml(homeHtml) || token;
+  CHEV_SESSION = { base: base, cookie: cookieHeader(jar), token: fresh, at: Date.now() };
+  return CHEV_SESSION;
+}
+async function cheveretoWebUpload(buf, mime, name, cfg) {
+  const base = chevBase(cfg);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const sess = (CHEV_SESSION && CHEV_SESSION.base === base && attempt === 0) ? CHEV_SESSION : await cheveretoLogin(cfg);
+    const form = new FormData();
+    form.append('action', 'upload');
+    form.append('type', 'file');
+    form.append('auth_token', sess.token);
+    form.append('source', new Blob([buf], { type: mime }), String(name || 'image.jpg'));
+    const res = await fetch(base + '/json', {
+      method: 'POST',
+      headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', cookie: sess.cookie, referer: base + '/', origin: base },
+      body: form, signal: AbortSignal.timeout(30000)
+    });
+    const text = await res.text().catch(function () { return ''; });
+    let j = null;
+    try { j = JSON.parse(text); } catch (e) { j = null; }
+    if (res.status === 401 || res.status === 403 || (j && /denied|login/i.test(JSON.stringify(j.error || '')))) {
+      CHEV_SESSION = null;
+      continue;
+    }
+    if (!res.ok || !j) throw new Error('图床上传返回 HTTP ' + res.status + (text ? '：' + text.slice(0, 80) : ''));
+    const img = (j.image && (j.image.url || j.image.display_url)) || (j.success && j.success.image && j.success.image.url) || '';
+    if (!img) throw new Error('图床没有返回图片地址');
+    return {
+      url: img, attempts: attempt + 1,
+      urlViewer: (j.image && (j.image.url_viewer || j.image.display_url)) || '',
+      idEncoded: (j.image && j.image.id_encoded) || '',
+      deleteUrl: (j.image && (j.image.delete_url || j.image.delete_url_encoded)) || ''
+    };
+  }
+  throw new Error('图床会话失效，重新登录后仍被拒绝');
+}
+
 async function uploadOne(shot, cfg, opts) {
   const raw = String((shot && shot.url) || shot || '');
   if (/^https?:\/\//i.test(raw)) return { ok: true, url: raw, skipped: true, attempts: 0 };
@@ -72,10 +246,18 @@ async function uploadOne(shot, cfg, opts) {
   let last = '';
   for (let attempt = 1; attempt <= total; attempt++) {
     try {
+      if (cfg.auth === 'chevereto' && !cfg.token && (cfg.user && cfg.pass || cfg.ssoHost)) {
+        const w = await cheveretoWebUpload(data.buf, data.mime, String((shot && shot.name) || ('shot' + attempt + '.jpg')).slice(0, 80), cfg);
+        return { ok: true, url: w.url, attempts: attempt + 1, urlViewer: w.urlViewer || '', idEncoded: w.idEncoded || '', deleteUrl: w.deleteUrl || '' };
+      }
       const form = new FormData();
       form.append(cfg.field, new Blob([data.buf], { type: data.mime }), String((shot && shot.name) || ('shot' + attempt + '.jpg')).slice(0, 80));
       const headers = Object.assign({}, cfg.headers || {});
-      if (cfg.token) headers.authorization = 'Bearer ' + cfg.token;
+      if (cfg.auth === 'chevereto') {
+        if (!cfg.token) throw new Error('缺 Chevereto API key（IMAGE_HOST_TOKEN）');
+        form.append('key', cfg.token);
+        form.append('format', 'json');
+      } else if (cfg.token) headers.authorization = 'Bearer ' + cfg.token;
       const res = await fetch(cfg.endpoint, {
         method: 'POST', headers: headers, body: form,
         signal: AbortSignal.timeout(30000)
@@ -236,4 +418,4 @@ function replaceDescription(description, links) {
   return out.slice(0, 20000);
 }
 
-module.exports = { process: processShots, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, providerKey: providerKey, configFor: configFor, dataUrlOf: dataUrlOf };
+module.exports = { process: processShots, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };

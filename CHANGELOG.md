@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.342 · 2026-11-17
+
+### 图床支持 Chevereto 网页登录
+- `IMAGE_HOST_PROVIDER=chevereto` + `IMAGE_HOST_URL=https://s3.pterclub.net`。
+- 优先用猫站 cookie 走 `/connect/goauth` SSO，不需要 API key；会话缓存，失效自动重登。
+- 没有猫站 cookie 时可用 `IMAGE_HOST_USER` / `IMAGE_HOST_PASS` 走网页登录。
+- 上传走 `/json` 的 `action=upload` + `source`，兼容原 API key 模式。
+- 实测：SSO 登录成功、320x240 测试图上传成功；imagehost 夹具 13/13。
+
 ## v0.7.341 · 2026-11-17
 
 ### 环境变量全面去项目前缀

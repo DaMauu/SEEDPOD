@@ -58,7 +58,8 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     const shots = Array.isArray(cur.data.shots) ? cur.data.shots : [];
     if (!shots.length) return bad(reply, 'NO_SHOTS', '还没有截图', 400);
-    const provider = String(b.imageHost || cur.data.imageHost || '站内');
+    const picked = String(b.imageHost || cur.data.imageHost || '').trim();
+    const provider = picked && picked !== '站内' ? picked : imagehost.defaultProvider();
     const dryRun = b.dryRun !== false;
     const allowReal = !dryRun && ctx.allowReal('realImages');
     if (!dryRun && !allowReal) {

@@ -22,7 +22,42 @@ const server = http.createServer(function (req, res) {
   req.on('end', function () {
     hits++;
     const body = Buffer.concat(chunks).toString('latin1');
-    bodies.push({ url: req.url, body: body, type: req.headers['content-type'] || '' });
+    bodies.push({ url: req.url, body: body, type: req.headers['content-type'] || '', cookie: req.headers.cookie || '' });
+    if (req.method === 'GET' && req.url.indexOf('/login') === 0) {
+      res.writeHead(200, { 'content-type': 'text/html', 'set-cookie': 'PHPSESSID=test-sess; Path=/' });
+      res.end('<html><script>auth_token = "0123456789abcdef0123456789abcdef";</script>login</html>');
+      return;
+    }
+    if (req.method === 'POST' && req.url.indexOf('/login') === 0) {
+      if (/login-subject=user/.test(body) && /password=pass/.test(body) && /auth_token=0123456789abcdef/.test(body)) {
+        res.writeHead(302, { location: '/', 'set-cookie': 'PHPSESSID=test-sess; Path=/' });
+        res.end();
+      } else {
+        res.writeHead(200, { 'content-type': 'text/html' });
+        res.end('<html><script>auth_token = "0123456789abcdef0123456789abcdef";</script>bad login</html>');
+      }
+      return;
+    }
+    if (req.method === 'GET' && req.url === '/') {
+      res.writeHead(200, { 'content-type': 'text/html', 'set-cookie': 'PHPSESSID=test-sess; Path=/' });
+      res.end('<html><script>auth_token = "fedcba9876543210fedcba9876543210";</script>home</html>');
+      return;
+    }
+    if (req.method === 'POST' && req.url.indexOf('/json') === 0) {
+      if (!/name="action"/.test(body) || !/name="auth_token"/.test(body) || !/name="source"/.test(body)) {
+        res.writeHead(400, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ status_code: 400, error: { message: 'bad form' } }));
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ status_code: 200, image: { url: 'http://127.0.0.1:' + server.address().port + '/web/' + hits + '.jpg' } }));
+      return;
+    }
+    if (req.method === 'POST' && req.url.indexOf('/api/1/upload') === 0) {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ status_code: 200, image: { url: 'http://127.0.0.1:' + server.address().port + '/chevereto/' + hits + '.jpg' } }));
+      return;
+    }
     if (req.method === 'GET' && req.url.indexOf('/mirror/') === 0) {
       res.writeHead(200, { 'content-type': req.url.indexOf('.png') >= 0 ? 'image/png' : 'image/jpeg' });
       res.end(Buffer.from(PNG.split(',')[1], 'base64'));
@@ -124,6 +159,51 @@ async function main() {
   await check('内网图片地址不抓', async function () {
     const r = await imagehost.mirrorDescription('[img]http://127.0.0.1:' + port + '/mirror/x.png[/img]', { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0 });
     need(!r.ok && r.failed === 1 && r.uploaded === 0, '内网地址没拦住：' + JSON.stringify({ ok: r.ok, failed: r.failed }));
+  });
+
+  await check('Chevereto 网页登录上传（无 API key）', async function () {
+    process.env.IMAGE_HOST_PROVIDER = 'chevereto';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/';
+    process.env.IMAGE_HOST_USER = 'user';
+    process.env.IMAGE_HOST_PASS = 'pass';
+    process.env.IMAGE_HOST_TOKEN = '';
+    const r = await imagehost.process('chevereto', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true, retries: 0 });
+    need(r.ok && r.uploaded === 1, '网页登录上传失败：' + JSON.stringify(r));
+    const last = bodies[bodies.length - 1];
+    need(/name="action"/.test(last.body) && /name="source"/.test(last.body), '上传表单字段不对');
+    need(/PHPSESSID=test-sess/.test(last.cookie), '上传没带登录 cookie');
+    process.env.IMAGE_HOST_USER = '';
+    process.env.IMAGE_HOST_PASS = '';
+    process.env.IMAGE_HOST_PROVIDER = '';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+  });
+
+  await check('Chevereto API：key + source 字段', async function () {
+    process.env.IMAGE_HOST_PROVIDER = 'chevereto';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/api/1/upload';
+    process.env.IMAGE_HOST_TOKEN = 'test-key';
+    const before = hits;
+    const r = await imagehost.process('chevereto', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true, retries: 0 });
+    need(r.ok && r.uploaded === 1, 'Chevereto 上传失败：' + JSON.stringify(r));
+    const body = bodies[bodies.length - 1].body;
+    need(/name="key"/.test(body) && /test-key/.test(body), '没带 API key');
+    need(/name="source"/.test(body), '没发 source 文件字段');
+    need(hits === before + 1, '请求数不对');
+    process.env.IMAGE_HOST_PROVIDER = '';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+    process.env.IMAGE_HOST_TOKEN = '';
+  });
+
+  await check('Chevereto 缺 key 明确报错', async function () {
+    process.env.IMAGE_HOST_PROVIDER = 'chevereto';
+    process.env.IMAGE_HOST_URL = 'http://localhost:' + port + '/api/1/upload';
+    process.env.IMAGE_HOST_TOKEN = '';
+    process.env.IMAGE_HOST_SSO_HOST = 'none';
+    const r = await imagehost.process('chevereto', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true, retries: 0 });
+    need(!r.ok && /API key|cookie/.test(r.items[0].error || ''), '缺 key 错误不对：' + JSON.stringify(r));
+    process.env.IMAGE_HOST_PROVIDER = '';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+    delete process.env.IMAGE_HOST_SSO_HOST;
   });
 
   await check('replaceDescription 去掉 data URL 并只保留新链接', function () {
