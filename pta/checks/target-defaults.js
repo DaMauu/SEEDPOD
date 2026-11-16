@@ -82,6 +82,15 @@ check('站点自己的写法也能对上', function () {
   need(td.betterDefault(MEDIA_PTC, { title: 'Movie 2020 2160p UHD Blu-ray' }) === '1', 'UHD Discs 不对');
 });
 
+check('简介里的制片/产地/语言优先', function () {
+  const korean = { descrBb: '* 片 名 狂唱下半场\n* 制 片 韩国\n* 语 言 韩语' };
+  need(td.regionCodeOf(korean) === 'KOR', '韩国制片没识别出来');
+  const sweden = { descrBb: '◎产　　地　瑞典\n◎语　　言　瑞典语' };
+  need(td.regionCodeOf(sweden) === 'ENG', '瑞典应归欧美');
+  const chinese = { descrBb: '◎产　　地　中国大陆\n◎语　　言　国语' };
+  need(td.regionCodeOf(chinese) === 'CHN', '大陆没识别出来');
+});
+
 check('认不出就返回空，交给站点默认值', function () {
   need(td.betterDefault(REGION, {}) === '', '空条目不该硬猜地区');
   need(td.betterDefault(MEDIA, {}) === '', '空条目不该硬猜媒介');

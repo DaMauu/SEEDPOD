@@ -5,11 +5,11 @@
 const REGION_HINTS = [
   ['HKG', /香港|港产|港版|粤语|粵語|cantonese|hkg/i],
   ['TWN', /台湾|台灣|台版|台配|taiwan|twn/i],
-  ['CHN', /大陆|内地|中国|国产|國產|国配|国语|mandarin|china|chn/i],
+  ['CHN', /大陆|内地|中国|国产|國產|国配|国语|普通话|mandarin|china|chn/i],
   ['JPN', /日本|日版|日语|日語|japanese|jpn/i],
-  ['KOR', /韩国|韓國|韩版|韩语|korean|kor/i],
+  ['KOR', /韩国|韓國|韩版|韩语|韓語|korean|kor/i],
   ['IND', /印度|印度语|hindi|ind/i],
-  ['ENG', /美国|美國|英国|英國|欧美|歐美|英美|英语|英語|english|usa|uk|eng/i]
+  ['ENG', /美国|美國|英国|英國|欧美|歐美|英美|英语|英語|english|usa|uk|eng|加拿大|澳大利亚|澳洲|新西兰|瑞典|挪威|丹麦|芬兰|冰岛|法国|德国|意大利|西班牙|荷兰|比利时|奥地利|瑞士|波兰|俄罗斯/i]
 ];
 const REGION_SET = ['CHN', 'HKG', 'TWN', 'ENG', 'KOR', 'JPN', 'IND'];
 const MEDIA_SET = ['UHD', 'BLURAY', 'REMUX', 'HDTV', 'WEBDL', 'WEBRIP', 'ENCODE', 'DVD', 'HDDVD'];
@@ -24,7 +24,23 @@ function languageHints(item) {
   }
   return out;
 }
+/* 源站简介里的“制 片 / 产 地 / 语 言”字段最准，优先按它判地区 */
+function regionFromDetail(item) {
+  const raw = String(item.descrBb || item.descr || '');
+  if (!raw) return '';
+  const field = /(?:制\s*片|产\s*地|國\s*家|国\s*家|地\s*区)[\s:：*·]*([^\n\r|]{1,40})/.exec(raw);
+  if (field && field[1]) {
+    for (const pair of REGION_HINTS) if (pair[1].test(field[1])) return pair[0];
+  }
+  const lang = /语\s*言[\s:：*·]*([^\n\r|]{1,30})/.exec(raw);
+  if (lang && lang[1]) {
+    for (const pair of REGION_HINTS) if (pair[1].test(lang[1])) return pair[0];
+  }
+  return '';
+}
 function regionCodeOf(item) {
+  const detail = regionFromDetail(item);
+  if (detail) return detail;
   const text = [item.region, item.language, item.audio, item.title]
     .concat(languageHints(item)).filter(Boolean).join(' ');
   for (const pair of REGION_HINTS) if (pair[1].test(text)) return pair[0];
@@ -90,4 +106,4 @@ function betterDefault(opts, item) {
   return idx >= 0 ? String(opts[idx].value) : '';
 }
 
-module.exports = { regionCodeOf: regionCodeOf, mediaCodeOf: mediaCodeOf, optionCode: optionCode, betterDefault: betterDefault };
+module.exports = { regionCodeOf: regionCodeOf, regionFromDetail: regionFromDetail, mediaCodeOf: mediaCodeOf, optionCode: optionCode, betterDefault: betterDefault };
