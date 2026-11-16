@@ -161,6 +161,8 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 ## 设计约束（UI）
 
+**WebUI 已冻结（2026-11-16 用户确认）**：除非用户明确要求改界面，不改 `pta/web-src` 的样式、布局、文案。确需改动时，改完必须跑 `node pta/scripts/ui-freeze.js --update` 更新基线；否则 `run.sh` 的 UI 冻结检查会失败。
+
 - 先线框后代码：静态 HTML 或截图确认后再改对应 SFC
 - 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式放 `pta/web-src/src/styles/index.css`（按级联顺序 import `src/styles/*.css` 模块），页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
 - 桌面和手机共用一套 Vue 代码；允许组件级换布局，不做独立移动站/两套前端；规范见 `pta/docs/RESPONSIVE.md`

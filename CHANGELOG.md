@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.287 · 2026-11-16
+
+### WebUI 冻结
+- 新增 ui-freeze 检查：styles/components/views/App.vue 共 30 个文件做哈希基线。
+- 只要界面文件变了、基线没更新，run.sh 直接失败。
+- 改 UI 的唯一入口：node pta/scripts/ui-freeze.js --update。
+- AGENTS 写明：除非用户明确要求，不改界面。
+
 ## v0.7.286 · 2026-11-16
 
 ### 媒介/分辨率/优惠去掉未接
