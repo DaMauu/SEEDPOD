@@ -219,6 +219,8 @@ function makeScheduler(ctx, deps) {
               if (dd.tags && !pre.tags) pre.tags = dd.tags;
               if (dd.region && !pre.region) pre.region = dd.region;
               if (dd.language && !pre.language) pre.language = dd.language;
+              if (dd.bdinfo) pre.bdinfo = dd.bdinfo;
+              if (dd.mediainfo) pre.mediainfo = dd.mediainfo;
               if (dd.sizeBytes && !pre.sizeBytes) { pre.sizeBytes = dd.sizeBytes; pre.size = dd.sizeText || pre.size; }
               pre.detailAt = new Date().toISOString();
               review.detailFetched++;

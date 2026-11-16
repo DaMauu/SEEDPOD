@@ -229,6 +229,15 @@ check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', (
   need(empty.sizeBytes === undefined && empty.medium === undefined, '空页面不该编出字段：' + JSON.stringify(empty));
 });
 
+check('Unit3D 原始 BBCode 与独立 BDInfo/MediaInfo', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'unit3d-details.html'), 'utf8');
+  const d = adapters.parseDetail(html);
+  need(/\[center\]/.test(d.descrBb) && /\[img\]https:\/\/i\.slow\.pics\/a\.png\[\/img\]/.test(d.descrBb), '没拿到 Unit3D 原始 BBCode：' + String(d.descrBb).slice(0, 160));
+  need(/General/.test(d.mediainfo) && /Complete name/.test(d.mediainfo), '独立 MediaInfo 没解析：' + String(d.mediainfo).slice(0, 120));
+  need(/Disc Title/.test(d.bdinfo) && /Disc Size/.test(d.bdinfo), '独立 BDInfo 没解析：' + String(d.bdinfo).slice(0, 120));
+});
+
 check('MediaInfo 隐藏块还原成 hide=MediaInfo', () => {
   const adapters = require(path.join(ROOT, 'server', 'adapters'));
   const html = '<html><body><div id="kdescr"><div class="codetop"><a>MediaInfo - Movie.mkv</a></div><div class="hide"><div class="codemain">General<br /> Complete name: Movie.mkv<br /> Format: MPEG-4</div></div></div></body></html>';

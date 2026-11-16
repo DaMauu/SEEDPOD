@@ -11,6 +11,25 @@ function decode(s) {
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(Number(d)); });
 }
 function text(s) { return decode(String(s || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim(); }
+function preText(s) {
+  return decode(String(s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''))
+    .replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+/* Unit3D 把原始 BBCode 塞进“复制”按钮的 atob('...')，直接解出来最准 */
+function unit3dBbcode(html) {
+  const re = /atob\(\s*['"]([A-Za-z0-9+/=]{40,})['"]\s*\)/g;
+  let best = '';
+  let m;
+  while ((m = re.exec(String(html || '')))) {
+    try {
+      const raw = Buffer.from(m[1], 'base64').toString('utf8');
+      if (raw.length < 20) continue;
+      if (!/\[/.test(raw)) continue;
+      if (raw.length > best.length) best = raw;
+    } catch (e) { /* ignore */ }
+  }
+  return best;
+}
 /* 简介 HTML → BBCode：保留图片与换行，其余标签丢掉；目标站 descr 直接可用 */
 function toBbcode(html) {
   let s = String(html || '');
@@ -144,13 +163,22 @@ function parse(html) {
   if (uploader) out.uploader = uploader;
 
   /* 简介：kdescr 是 NexusPHP 的固定容器；没有就退到第一个描述块 */
-  let descHtml = extractDivByAttr(s, 'id', 'kdescr');
-  if (!descHtml) descHtml = extractDivByAttr(s, 'class', '(?:description|kdescr)');
-  if (descHtml) {
-    const plain = text(descHtml);
+  const rawUnit3d = unit3dBbcode(s);
+  if (rawUnit3d) out.descrBb = rawUnit3d.slice(0, 60000);
+  const rendered = extractDivByAttr(s, 'class', 'bbcode-rendered');
+  if (rendered) {
+    const plain = text(rendered);
     if (plain) out.descr = plain.slice(0, 1200);
-    const bb = toBbcode(descHtml);
-    if (bb) out.descrBb = bb.slice(0, 60000);
+  }
+  if (!out.descrBb) {
+    let descHtml = extractDivByAttr(s, 'id', 'kdescr');
+    if (!descHtml) descHtml = extractDivByAttr(s, 'class', '(?:description|kdescr)');
+    if (descHtml) {
+      const plain = text(descHtml);
+      if (plain) out.descr = plain.slice(0, 1200);
+      const bb = toBbcode(descHtml);
+      if (bb) out.descrBb = bb.slice(0, 60000);
+    }
   }
 
   /* 海报 */
@@ -165,7 +193,17 @@ function parse(html) {
   const title = /<title>([\s\S]{1,200}?)<\/title>/i.exec(s);
   if (title) out.pageTitle = text(title[1]);
 
-  /* Unit3D 等把 BDInfo/MediaInfo 放在单独 div/pre 里 */
+  /* Unit3D 独立面板：torrent-mediainfo-dump / torrent-bdinfo-dump / x-ref */
+  if (!out.mediainfo) {
+    const mi = /<div\b[^>]*class=["'][^"']*torrent-mediainfo-dump[^"']*["'][^>]*>([\s\S]*?)<\/div>/i.exec(s)
+      || /<pre>\s*<code[^>]*(?:x-ref=["']mediainfo["']|id=["']mediainfo["'])[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/i.exec(s);
+    if (mi) out.mediainfo = preText(mi[1]).slice(0, 60000);
+  }
+  if (!out.bdinfo) {
+    const bd = /<div\b[^>]*class=["'][^"']*torrent-bdinfo-dump[^"']*["'][^>]*>([\s\S]*?)<\/div>/i.exec(s)
+      || /<pre>\s*<code[^>]*(?:x-ref=["']bdinfo["']|id=["']bdinfo["'])[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/i.exec(s);
+    if (bd) out.bdinfo = preText(bd[1]).slice(0, 60000);
+  }
   if (!out.bdinfo) {
     const bd = extractDivByAttr(s, 'class', 'bdinfo') || extractDivByAttr(s, 'id', 'bdinfo')
       || extractDivByAttr(s, 'class', 'bd-info') || extractDivByAttr(s, 'id', 'bd-info');
@@ -180,4 +218,4 @@ function parse(html) {
   return out;
 }
 
-module.exports = { parse: parse, tableRows: tableRows };
+module.exports = { parse: parse, tableRows: tableRows, unit3dBbcode: unit3dBbcode };

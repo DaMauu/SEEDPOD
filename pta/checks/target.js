@@ -257,6 +257,9 @@ async function main() {
         tagValue: 'yes',
         valueMaps: { team: { 'CMCT': '8' } }
       },
+      'noinfo.example': { engine: 'nexusphp', base: 'http://127.0.0.1:' + mockPort,
+        upload: { path: '/takeupload.php', formPath: '/upload-form', fileField: 'file', fields: { name: '{title}', descr: '{description}' } },
+        verify: { path: '/torrents.php?search={title}' }, catMap: { '电影': '401' } },
       'unit3d.example': { engine: 'unit3d', base: 'http://127.0.0.1:' + mockPort },
       'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort },
       'nexus-default.example': { engine: 'nexusphp', base: 'http://127.0.0.1:' + mockPort,
@@ -433,6 +436,26 @@ async function main() {
     need((await planOf('movie')).fields.type === '401', 'movie 没映射到 401');
     need((await planOf('电影')).fields.type === '401', '中文电影没映射到 401');
     need((await planOf('doc')).fields.type === '402', 'doc 没映射到纪录片 402');
+  });
+
+  await check('目标站没有专用字段时补 hide 块', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: 'No Info Field Test 2024 1080p Blu-ray', targetSite: 'noinfo.example', status: 'approved',
+        cat: 'movie', res: '1080p', size: '20 GB',
+        bdinfo: 'Disc Title: TEST', mediainfo: 'General\nComplete name: TEST.mkv',
+        descrBb: '正文'
+      })
+    });
+    need(add.status === 200 && add.body.ok, '建条目失败');
+    const p = await json(BASE + '/api/targets/noinfo.example/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, '计划失败：' + JSON.stringify(p.body && p.body.error));
+    const descr = p.body.data.fields.descr || '';
+    need(/\[hide=bdinfo\]/.test(descr) && /Disc Title: TEST/.test(descr), 'BDInfo 没补进简介：' + descr);
+    need(/\[hide=mediainfo\]/.test(descr) && /Complete name: TEST/.test(descr), 'MediaInfo 没补进简介：' + descr);
   });
 
   await check('BDInfo 填专用字段并从简介去重', async function () {

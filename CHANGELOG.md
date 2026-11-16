@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.354 · 2026-11-17
+
+### Unit3D 原始 BBCode 与独立 BDInfo/MediaInfo
+- 直接解 Unit3D 复制按钮里的 `atob` 原始 BBCode，不再拿渲染 HTML 反推。
+- 解析 `torrent-mediainfo-dump` / `torrent-bdinfo-dump` / `x-ref` 独立面板。
+- 目标站有专用字段就填并去掉简介重复块；没有就补 `[hide=mediainfo]` / `[hide=bdinfo]`。
+- `[comparison]` 里的裸图片 URL 也纳入转存，不只 `[img]`。
+- 实测 u3d_detail_en.html：BBCode 7247 字、86 张图、MediaInfo 17057 字、BDInfo 0。
+
 ## v0.7.353 · 2026-11-17
 
 ### BDInfo/MediaInfo 专用字段

@@ -403,13 +403,20 @@ async function resolveImageSource(raw, opts) {
 function extractImages(description) {
   const out = [];
   const seen = new Set();
+  function add(url) {
+    const u = String(url || '').trim();
+    if (!u || seen.has(u)) return;
+    seen.add(u);
+    out.push({ url: u });
+  }
+  const text = String(description || '');
   const re = /\[img[^\]]*\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi;
   let m;
-  while ((m = re.exec(String(description || '')))) {
-    const url = m[1].trim();
-    if (seen.has(url)) continue;
-    seen.add(url);
-    out.push({ url: url });
+  while ((m = re.exec(text))) add(m[1]);
+  /* Unit3D 的 [comparison] 里是裸图片 URL，不是 [img] */
+  const comp = /\[comparison[^\]]*\]([\s\S]*?)\[\/comparison\]/gi;
+  while ((m = comp.exec(text))) {
+    (m[1].match(/https?:\/\/[^\s\[\]]+/g) || []).forEach(add);
   }
   return out;
 }
@@ -543,6 +550,7 @@ async function mirrorDescription(description, opts) {
   });
   remove.forEach(function (old) {
     out = out.replace(new RegExp('\\[img[^\\]]*\\]\\s*' + escapeRe(old) + '\\s*\\[\\/img\\]', 'gi'), '');
+    out = out.split(old).join('');
   });
   /* 兜底：最终简介里不允许再出现黑名单图床 */
   out = out.replace(/\[img[^\]]*\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi, function (tag, u) {

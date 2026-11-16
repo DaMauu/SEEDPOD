@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 10:40（当前 v0.7.353 / BDInfo 专用字段）
+最后更新：2026-11-17 11:20（当前 v0.7.354 / Unit3D 原始 BBCode）
+
+## 2026-11-17 Unit3D 原始 BBCode（v0.7.354）
+
+- atob 解原始简介；独立 MediaInfo/BDInfo 面板；comparison 裸图也转存。
 
 ## 2026-11-17 BDInfo 专用字段（v0.7.353）
 

@@ -281,6 +281,17 @@ function makeTarget(ctx) {
       fields[miKey] = srcMi;
       if (descrLive) { descrLive = stripHide(descrLive, 'mediainfo'); fields[descrKey] = descrLive; }
     }
+    /* 目标站没有专用字段：把源站单独的 BDInfo/MediaInfo 补成 hide 块，别丢信息 */
+    if (descrKey && descrLive) {
+      if (!bdKey && srcBd && !/\[hide=bdinfo\]/i.test(descrLive)) {
+        descrLive = (descrLive.trim() + '\n\n[hide=bdinfo]\n' + srcBd + '\n[/hide]').slice(0, 60000);
+        fields[descrKey] = descrLive;
+      }
+      if (!miKey && srcMi && !/\[hide=mediainfo\]/i.test(descrLive)) {
+        descrLive = (descrLive.trim() + '\n\n[hide=mediainfo]\n' + srcMi + '\n[/hide]').slice(0, 60000);
+        fields[descrKey] = descrLive;
+      }
+    }
     /* 制作组：只认数字 id 或站点映射，组名直接塞下拉会填错 */
     const teamRaw = String(v.team || '').trim();
     const teamMap = (t.valueMaps && t.valueMaps.team) || {};

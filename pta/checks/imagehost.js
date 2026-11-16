@@ -202,6 +202,11 @@ async function main() {
     need(imagehost.originalFromThumb('https://i.imgur.com/abcdt.jpg') === 'https://i.imgur.com/abcd.jpg', 'imgur 还原不对：' + imagehost.originalFromThumb('https://i.imgur.com/abcdt.jpg'));
   });
 
+  await check('Unit3D comparison 裸图也识别', function () {
+    const list = imagehost.extractImages('[comparison=A, B]\nhttps://a.example/1.png\nhttps://a.example/2.png\n[/comparison]');
+    need(list.length === 2 && list[0].url === 'https://a.example/1.png', 'comparison 图片没提取：' + JSON.stringify(list));
+  });
+
   await check('图床黑名单识别', async function () {
     need(imagehost.isBlacklisted('https://i.ibb.co/x/a.png'), 'ibb 没进黑名单');
     need(imagehost.isBlacklisted('https://imgur.com/a'), 'imgur 没进黑名单');
