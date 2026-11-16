@@ -59,6 +59,11 @@ const server = http.createServer(function (req, res) {
       return;
     }
     if (req.method === 'GET' && req.url.indexOf('/mirror/') === 0) {
+      if (req.url.indexOf('/big.png') >= 0) {
+        res.writeHead(200, { 'content-type': 'image/png' });
+        res.end(Buffer.alloc(9 * 1024 * 1024, 1));
+        return;
+      }
       res.writeHead(200, { 'content-type': req.url.indexOf('.png') >= 0 ? 'image/png' : 'image/jpeg' });
       res.end(Buffer.from(PNG.split(',')[1], 'base64'));
       return;
@@ -152,6 +157,12 @@ async function main() {
     const r = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
     need(r.ok && r.uploaded === 10 && r.failed === 0, '10 张没全传：' + JSON.stringify({ uploaded: r.uploaded, failed: r.failed, code: r.code }));
     need((r.description.match(/\/img\/\d+\.jpg/g) || []).length === 10, '10 张链接没全替换');
+  });
+
+  await check('单张超过 8MB 也转存', async function () {
+    const url = 'http://127.0.0.1:' + port + '/mirror/big.png';
+    const r = await imagehost.mirrorDescription('[img]' + url + '[/img]', { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
+    need(r.ok && r.uploaded === 1 && r.failed === 0, '9MB 图片没转：' + JSON.stringify({ uploaded: r.uploaded, failed: r.failed, code: r.code, error: r.message }));
   });
 
   await check('远程图片缓存后不再重复上传', async function () {

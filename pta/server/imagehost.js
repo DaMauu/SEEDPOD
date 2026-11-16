@@ -4,7 +4,6 @@
 const path = require('path');
 const { openDB } = require('./db');
 const secretbox = require('./secretbox');
-const MAX_BYTES = 8 * 1024 * 1024;
 
 function providerKey(name) {
   const s = String(name == null ? '' : name).trim().toLowerCase();
@@ -70,7 +69,7 @@ function dataUrlOf(s) {
   const m = /^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=\s]+)$/i.exec(String(s || '').trim());
   if (!m) return null;
   const buf = Buffer.from(m[2].replace(/\s+/g, ''), 'base64');
-  if (!buf.length || buf.length > MAX_BYTES) return null;
+  if (!buf.length) return null;
   return { mime: m[1].toLowerCase(), buf: buf };
 }
 function findUrl(value, depth) {
@@ -321,7 +320,6 @@ async function processShots(providerName, shots, opts) {
 }
 /* 源站 BBCode 里的远程图片：下载后转存图床，替换成图床链接。
    只处理 [img]http(s)://...[/img]；失败保留外链，不阻断发布。 */
-const MIRROR_MAX_BYTES = 8 * 1024 * 1024;
 
 function isPrivateUrl(raw, allowPrivate) {
   if (allowPrivate) return false;
@@ -380,7 +378,6 @@ async function mirrorDescription(description, opts) {
       if (type && type.indexOf('image/') !== 0) throw new Error('不是图片：' + type.slice(0, 40));
       const buf = Buffer.from(await res.arrayBuffer());
       if (!buf.length) throw new Error('图片是空文件');
-      if (buf.length > MIRROR_MAX_BYTES) throw new Error('图片超过 8MB');
       const mime = type || 'image/jpeg';
       const ext = mime.indexOf('png') >= 0 ? 'png' : (mime.indexOf('webp') >= 0 ? 'webp' : (mime.indexOf('gif') >= 0 ? 'gif' : 'jpg'));
       const up = await uploadOne({ name: 'mirror-' + (i + 1) + '.' + ext, url: 'data:' + mime + ';base64,' + buf.toString('base64') }, cfg, { retries: o.retries == null ? 1 : o.retries, delayMs: 300 });
