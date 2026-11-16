@@ -390,7 +390,7 @@ function makeTarget(ctx) {
       matchedTitle = hit ? String(hit.title || '').slice(0, 200) : '';
     }
     return { ok: true, data: {
-      found: found, url: url, status: res.status, title: found ? (matchedTitle || item.title) : '',
+      found: found, url: url, status: res.status, title: found ? (matchedTitle || item.title) : '', detailsUrl: matchedUrl,
       infohash: meta.hash, rows: rows, mode: isDetails ? 'details' : 'search',
       message: found ? '目标站列表里找到这个种子' : '目标站列表里没找到这个种子'
     } };
