@@ -11,7 +11,8 @@ function makeScheduler(ctx, deps) {
   const KEY = 'scheduler';
   const DEF = { on: false, everyMinutes: 60, lastRunAt: 0, lastResult: null, lastError: '' };
   const crossseed = makeCrossseed(ctx);
-  const targetService = makeTargetService(ctx, makeTarget(ctx));
+  const target = makeTarget(ctx);
+  const targetService = makeTargetService(ctx, target);
   const metaFill = makeMetaFill(ctx);
   let timer = null;
   let running = false;
@@ -191,12 +192,37 @@ function makeScheduler(ctx, deps) {
       const shotMin = Math.max(0, Number(flowConfig.value(flow, '截图至少几张', 0)) || 0);
       const missMode = String(flowConfig.value(flow, '不满足时', '转待确认'));
       const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT " + batch) : [];
-      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review'), filled: 0 };
-      let fillTries = 0;
+      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review'), filled: 0, detailFetched: 0 };
+      let fillTries = 0, detailTries = 0;
       for (const row of reviewRows) {
         const pre = jparse(row.data) || {};
-        /* 终审前还缺简介：按规则联网补，每轮最多补 5 条，避免外部接口被刷 */
-        if (needIntro && !String(pre.intro || '').trim() && !pre.metaAt && fillTries < 5) {
+        /* 缺源站 BBCode 简介：回源站详情页取一次，每轮最多 2 条、间隔 6 秒 */
+        if (!String(pre.descrBb || '').trim() && pre.detailsUrl && pre.site && detailTries < 2) {
+          const srow = one('SELECT data FROM sites WHERE host = ?', String(pre.site).toLowerCase());
+          const sd = srow ? (jparse(srow.data) || null) : null;
+          if (!sd || sd.enabled !== false) {
+            if (detailTries > 0) await new Promise(function (r) { setTimeout(r, 6000); });
+            detailTries++;
+            let di = null;
+            try { di = await target.fetchDetailsInfo(pre.site, pre.detailsUrl); } catch (e) { di = null; }
+            if (di && di.ok && di.data) {
+              const dd = di.data;
+              if (dd.descrBb) pre.descrBb = dd.descrBb;
+              if (dd.descr) pre.descr = dd.descr;
+              if (dd.subtitle && !pre.subtitle) pre.subtitle = dd.subtitle;
+              if (dd.tags && !pre.tags) pre.tags = dd.tags;
+              if (dd.region && !pre.region) pre.region = dd.region;
+              if (dd.language && !pre.language) pre.language = dd.language;
+              if (dd.sizeBytes && !pre.sizeBytes) { pre.sizeBytes = dd.sizeBytes; pre.size = dd.sizeText || pre.size; }
+              pre.detailAt = new Date().toISOString();
+              review.detailFetched++;
+              ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+                .run(JSON.stringify(pre), new Date().toISOString(), row.id);
+            }
+          }
+        }
+        /* 源站也没有简介时，才按规则联网补电影简介，每轮最多补 5 条 */
+        if (needIntro && !String(pre.intro || '').trim() && !String(pre.descrBb || '').trim() && !pre.metaAt && fillTries < 5) {
           fillTries++;
           const fr = await metaFill.fillIntro(pre);
           if (fr.ok) {

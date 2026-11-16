@@ -171,7 +171,7 @@ function makeTarget(ctx) {
       tags: tagList(item).join(','),
       title: String(item.title || '').replace(/\s+/g, ' ').trim(),
       subtitle: composeSubtitle(item),
-      description: String(item.intro || [item.title, res ? res + ' 原盘' : '', item.site ? '来源 ' + item.site : ''].filter(Boolean).join('，') + '。'),
+      description: String(item.descrBb || item.intro || [item.title, res ? res + ' 原盘' : '', item.site ? '来源 ' + item.site : ''].filter(Boolean).join('，') + '。'),
       catId: String(item.catId || ''),
       category: String(item.cat || item.catId || ''),
       source: String(item.source || ''),
@@ -744,7 +744,12 @@ function makeTarget(ctx) {
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status };
     const html = await page.text().catch(function () { return ''; });
     const d = adapters.parseDetail(html);
-    return { ok: true, data: { url: pageUrl, subtitle: d.subtitle || '', descr: d.descr || '', tags: d.tags || '', medium: d.medium || '', category: d.category || '' } };
+    return { ok: true, data: {
+      url: pageUrl, subtitle: d.subtitle || '', descr: d.descr || '', descrBb: d.descrBb || '',
+      tags: d.tags || '', medium: d.medium || '', category: d.category || '',
+      region: d.region || '', language: d.language || '', poster: d.poster || '',
+      sizeText: d.sizeText || '', sizeBytes: d.sizeBytes || 0, pageTitle: d.pageTitle || ''
+    } };
   }
 
   async function fetchDetailsTorrent(host, detailsUrl) {

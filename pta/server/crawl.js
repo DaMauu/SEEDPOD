@@ -203,9 +203,11 @@ function makeCrawl(ctx) {
         const dailyLeft = Math.max(0, lim.dailyMax - rec.dayCount - 1);
         const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget, dailyLeft));
         if (!picks.length) detail.stopped = dailyLeft <= 0 ? 'DAILY_LIMIT' : 'WINDOW_LIMIT';
+        /* 详情页用独立的 6–10 秒间隔，不跟列表页的 60 秒/10 分钟间隔绑死 */
+        const detailGap = Math.max(6000, Math.min(10000, lim.minGapMs));
         for (const it of picks) {
           const elapsed = Date.now() - (rec.lastAt || 0);
-          if (rec.lastAt && elapsed < lim.minGapMs) await sleep(lim.minGapMs - elapsed);
+          if (rec.lastAt && elapsed < detailGap) await sleep(detailGap - elapsed);
           if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
           if (rec.dayCount + 1 >= lim.dailyMax) { detail.stopped = 'DAILY_LIMIT'; break; }
           detail.tried++;

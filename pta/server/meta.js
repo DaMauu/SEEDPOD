@@ -155,7 +155,8 @@ function buildNames(item) {
   const releaseTitle = [p.title, p.year, se, p.resolution, p.source, p.codec, p.audio,
     p.hdr.join('+'), p.group].filter(Boolean).join('.').replace(/\s+/g, '.');
   const subtitle = composeSubtitle(it);
-  const desc = it.intro || [
+  /* 简介优先用源站详情页的 BBCode 原文，其次才是已存的 intro 和本地拼的兜底 */
+  const desc = String(it.descrBb || it.intro || '').trim() || [
     p.title + (p.year ? '（' + p.year + '）' : '') + (se ? ' ' + se : ''),
     [p.resolution, p.source, p.codec, p.audio].filter(Boolean).join(' '),
     p.group ? '制作组 ' + p.group : '',

@@ -119,6 +119,9 @@ check('buildNames 生成规范名/副标题/简介', () => {
   need(d.subtitle === 'Sample / 样品 [国配中字] MiniBD', '源副标题没原样用：' + d.subtitle);
   const e = buildNames({ title: 'Sample 2026 1080p', res: '1080p', size: '7.90 GB' });
   need(e.subtitle === '', '没有副标题/中文名时应留空：' + JSON.stringify(e.subtitle));
+  const f = buildNames({ title: 'Sample 2026 1080p', descrBb: '[quote]源站 BBCode[/quote]', intro: '电影站简介' });
+  need(f.description.indexOf('源站 BBCode') >= 0, '没优先用源站 BBCode：' + f.description);
+  need(f.description.indexOf('电影站简介') < 0, '源站 BBCode 被电影简介覆盖');
 });
 
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));

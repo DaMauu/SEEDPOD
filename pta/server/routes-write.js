@@ -180,7 +180,7 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: false, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1 };
+  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: true, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1 };
   const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10], concurrency: [1, 5] };
   function readCfg() {
     const row = one("SELECT v FROM meta WHERE k = 'config'");

@@ -12,6 +12,8 @@ function makeMetaFill(ctx) {
   }
   async function fillIntro(item) {
     if (!cfg().realCrawl) return { ok: false, code: 'REAL_CRAWL_OFF' };
+    /* 源站详情页已经有 BBCode 简介的，不要用电影站简介覆盖 */
+    if (String(item.descrBb || '').trim()) return { ok: true, cached: true, source: 'source_detail' };
     const flow = flowConfig.read(ctx);
     if (!flowConfig.on(flow, '允许联网补简介', true)) return { ok: false, code: 'RULE_OFF' };
     const order = String(flowConfig.value(flow, '匹配来源顺序', 'TMDB → 豆瓣 → 站点标题'));
