@@ -112,6 +112,7 @@ function makeTarget(ctx) {
       catMap: Object.assign({}, catMapOf(p, def, built), maps.cat),
       tagMap: Object.assign({}, built.tagMap || {}, (p.tagMap || def.tagMap || {})),
       tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes'),
+      form: maps.form || null,
       valueMaps: valueMaps };
   }
 
@@ -233,6 +234,15 @@ function makeTarget(ctx) {
       else { delete fields.team_sel; warnings.push('制作组 ' + teamRaw + ' 没映射到站点 id，已留空'); }
     }
     if (!v.catId) warnings.push('分类没映射，type 留空');
+    /* 必填下拉没映射时用站点表单里的默认值（第一个非零选项），避免“你必须选择地区” */
+    const REQUIRED = ['type', 'source_sel', 'team_sel', 'standard_sel', 'codec_sel', 'audiocodec_sel', 'medium_sel'];
+    const defaults = (t.form && t.form.defaults) || {};
+    REQUIRED.forEach(function (k) {
+      if (fields[k] === undefined && defaults[k] != null && defaults[k] !== '') {
+        fields[k] = String(defaults[k]);
+        warnings.push('必填字段 ' + k + ' 用默认值 ' + defaults[k]);
+      }
+    });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
     const hasCookie = !!(c && c.cookie);

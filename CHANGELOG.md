@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.294 · 2026-11-16
+
+### 必填字段默认值
+- 导入器保存每个站上传页的下拉选项与默认值（第一个非零项）。
+- 发布计划里，已声明但没映射的必填字段（type/source_sel/team_sel/standard_sel/codec_sel/audiocodec_sel）自动填默认值，并在 warnings 标注。
+- 测试站默认：type=401、source_sel=1、team_sel=1。
+
 ## v0.7.293 · 2026-11-16
 
 ### 双目标端到端验证完成

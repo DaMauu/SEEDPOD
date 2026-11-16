@@ -75,6 +75,22 @@ function catsOf(html) {
   });
   return out;
 }
+function selectsOf(html) {
+  const out = {};
+  const sre = /<select\b[^>]*name=["']([^"']+)["'][^>]*>([\s\S]*?)<\/select>/gi;
+  let m;
+  while ((m = sre.exec(html))) {
+    const name = String(m[1] || '').trim();
+    if (!name) continue;
+    const opts = [];
+    const ore = /<option\b[^>]*value=["']([^"']*)["'][^>]*>([\s\S]{0,60}?)<\/option>/gi;
+    let o;
+    while ((o = ore.exec(m[2]))) opts.push({ value: String(o[1]), label: strip(o[2]) });
+    if (opts.length) out[name] = opts;
+  }
+  return out;
+}
+
 function teamsOf(html) {
   const out = {};
   const sre = /<select\b[^>]*name=["']([^"']*(?:team|group)[^"']*)["'][^>]*>([\s\S]*?)<\/select>/gi;
@@ -136,6 +152,7 @@ function main() {
   const perHost = {};
   const rawHost = {};
   const teamHost = {};
+  const selectHost = {};
   let empty = 0, noHost = 0, fromName = 0;
   for (const f of files) {
     const buf = fs.readFileSync(path.join(DIR, f));
@@ -151,6 +168,8 @@ function main() {
     rawHost[host] = rawHost[host] || {};
     const teams = teamsOf(html);
     if (Object.keys(teams).length) teamHost[host] = Object.assign(teamHost[host] || {}, teams);
+    const sels = selectsOf(html);
+    if (Object.keys(sels).length) selectHost[host] = Object.assign(selectHost[host] || {}, sels);
     Object.keys(cats).forEach(function (id) {
       const label = cats[id].label;
       rawHost[host][id] = label;
@@ -171,6 +190,14 @@ function main() {
     cur.cat = Object.assign({}, perHost[h], cur.cat || {});
     cur.raw = Object.assign({}, rawHost[h] || {}, cur.raw || {});
     if (teamHost[h]) cur.team = Object.assign({}, teamHost[h], cur.team || {});
+    if (selectHost[h]) {
+      const defaults = {};
+      Object.keys(selectHost[h]).forEach(function (name) {
+        const first = (selectHost[h][name] || []).filter(function (o) { return o.value && o.value !== '0'; })[0];
+        if (first) defaults[name] = first.value;
+      });
+      cur.form = Object.assign({}, cur.form || {}, { at: new Date().toISOString(), selects: selectHost[h], defaults: defaults });
+    }
     if (routes[h]) cur.route = Object.assign({}, routes[h], { at: new Date().toISOString() });
     cur.at = new Date().toISOString();
     all.sites[h] = cur;
