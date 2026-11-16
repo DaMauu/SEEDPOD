@@ -133,7 +133,7 @@ function startMock(hash, torrentBuf) {
         hits.push({ fields: fields, file: file, cookie: req.headers.cookie || '' });
         published = true;
         res.writeHead(200, { 'content-type': 'text/html' });
-        res.end('<html><body>上传成功 <a href="details.php?id=42">详情</a></body></html>');
+        res.end('<html><body><a href="details.php?id=999">推荐</a> 上传成功 <a href="details.php?id=42&uploaded=1">详情</a></body></html>');
       });
       return;
     }
@@ -665,6 +665,7 @@ async function main() {
     need(up.status === 200 && up.body.ok, '提交失败：' + up.status + ' ' + JSON.stringify(up.body && up.body.error));
     const d = up.body.data;
     need(d.sent === true && d.detailsUrl.indexOf('details.php?id=42') >= 0, '没拿到详情地址：' + d.detailsUrl);
+    need(d.detailsUrl.indexOf('999') < 0 && /uploaded=1/.test(d.detailsUrl), '详情地址没优先取 uploaded=1：' + d.detailsUrl);
     need(d.cleaned === true, '目标站上传前没清洗种子');
     need(d.verify && d.verify.found === true, '提交后回查没找到');
     need(hits.length === 1, '应发 1 次上传，实际 ' + hits.length);

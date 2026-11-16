@@ -356,10 +356,13 @@ function makeTarget(ctx) {
   }
 
   function detailsFrom(text, base) {
-    const m = /(?:href|location)["']?\s*[:=]\s*["']([^"']*(?:details\.php\?id=\d+|\/torrents?\/\d+)[^"']*)["']/i.exec(text) ||
+    /* 上传响应里优先取带 uploaded=1 的详情链接，避免抓到侧栏的其它种子 */
+    const up = /(?:href|location)["']?\s*[:=]\s*["']([^"']*details\.php\?id=\d+[^"']*uploaded=1[^"']*)["']/i.exec(text) ||
+      /(details\.php\?id=\d+[^"'\s<>]*uploaded=1[^"'\s<>]*)/i.exec(text);
+    const m = up || /(?:href|location)["']?\s*[:=]\s*["']([^"']*(?:details\.php\?id=\d+|\/torrents?\/\d+)[^"']*)["']/i.exec(text) ||
       /(details\.php\?id=\d+|\/torrents?\/\d+)/i.exec(text);
     if (!m) return '';
-    const u = m[1];
+    const u = String(m[1]).replace(/&amp;/g, '&');
     if (/^https?:\/\//i.test(u)) return u;
     try { return new URL(u, base + '/').toString(); } catch (e) { return ''; }
   }
@@ -450,8 +453,20 @@ function makeTarget(ctx) {
     let matchedUrl = '';
     let rows = 0;
     if (res.status === 200 && isDetails) {
-      found = !!(title && norm(text).indexOf(title) >= 0) || !!(hash && text.toLowerCase().indexOf(hash) >= 0);
-      if (found) matchedUrl = url;
+      /* 详情页用解析后的标题/副标题比对，别拿整页 HTML 硬找 */
+      const page = adapters.parseDetail(text);
+      const pageText = norm([page.pageTitle, page.subtitle, page.descr].filter(Boolean).join(' '));
+      found = !!(title && pageText.indexOf(title) >= 0) || !!(hash && String(page.infohash || '').toLowerCase().indexOf(hash) >= 0);
+      if (!found && page.subtitle) {
+        const cn = norm(item.cn || '');
+        const sub = norm(page.subtitle);
+        if (cn && sub && (sub.indexOf(cn) >= 0 || cn.indexOf(sub) >= 0)) found = true;
+        if (!found) {
+          try { const cmp = match.compare(item, { title: page.subtitle, infohash: page.infohash || '' }); found = cmp.same && cmp.score >= 50; } catch (e) { /* ignore */ }
+        }
+      }
+      if (!found) found = !!(title && norm(text).indexOf(title) >= 0) || !!(hash && text.toLowerCase().indexOf(hash) >= 0);
+      if (found) { matchedUrl = url; matchedTitle = String(page.subtitle || page.pageTitle || item.title || '').slice(0, 200); }
     } else if (res.status === 200) {
       const list = adapters.parseList(text, p.data.engine);
       rows = list.length;

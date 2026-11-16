@@ -99,7 +99,8 @@ function makeTargetService(ctx, target) {
     const out = Object.assign({}, item);
     if (p.title) out.title = p.title;
     if (p.subtitle) out.cn = p.subtitle;
-    if (p.description) out.intro = p.description;
+    if (item.descrBb) out.descrBb = item.descrBb;
+    if (p.description) out.intro = item.descrBb || p.description;
     return out;
   }
 
@@ -232,6 +233,7 @@ function makeTargetService(ctx, target) {
       }
     }
     /* 源站 BBCode 里的远程图片：按规则转存图床，失败保留外链不阻断发布 */
+    let mirrorChanged = false;
     if (!dryRun && String(item.data.descrBb || '').trim()) {
       const flowCfg = flowConfig.read(ctx);
       const imgMode = String(flowConfig.value(flowCfg, '简介图片', '转存到图床'));
@@ -250,7 +252,7 @@ function makeTargetService(ctx, target) {
         if (mr) {
           item.data.imageMirror = Object.assign({}, mr, { at: now(), map: Object.assign({}, known, mr.map || {}) });
           delete item.data.imageMirror.description;
-          if (mr.description) item.data.descrBb = mr.description;
+          if (mr.description && mr.description !== item.data.descrBb) { item.data.descrBb = mr.description; mirrorChanged = true; }
           if (mr.uploaded > 0) item.data.descrMirroredAt = now();
           saveQueue(item.data);
         }
@@ -312,7 +314,16 @@ function makeTargetService(ctx, target) {
       catch (e) { return { ok: false, code: 'CLEAN_FAILED', message: '种子清洗失败：' + String(e && e.message || e).slice(0, 120), http: 400 }; }
     }
     const uploadItem = preparedItem(item.data, host);
-    const plan = preparedPlan(item.data, host);
+    let plan = preparedPlan(item.data, host);
+    const liveDesc = String(item.data.descrBb || '');
+    const staleDesc = !!(liveDesc && plan && plan.fields && String(plan.fields.descr || '') !== liveDesc.slice(0, 60000));
+    if (mirrorChanged || staleDesc) {
+      const fresh = target.plan(host, item.data);
+      if (!fresh.ok) {
+        return { ok: false, code: fresh.code || 'PLAN_FAILED', message: fresh.message || '图片转存后重建上传计划失败', http: fresh.http || 400 };
+      }
+      plan = fresh.data;
+    }
     const dres = item.data.dupeResults && item.data.dupeResults[host];
     if (dres && dres.skip) {
       const msg = '目标站已有这条资源，跳过';
@@ -351,7 +362,7 @@ function makeTargetService(ctx, target) {
           prev.stage = 'submitted';
           prev.error = '';
           delete prev.nextRetryAt;
-          if (v.data.detailsUrl) prev.detailsUrl = v.data.detailsUrl;
+          if (v.data.detailsUrl && !prev.detailsUrl) prev.detailsUrl = v.data.detailsUrl;
           setTargetResult(item.data, host, prev);
         }
       }

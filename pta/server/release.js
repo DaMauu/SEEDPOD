@@ -74,6 +74,7 @@ function makeRelease(ctx) {
     const attachMedia = b.attachMedia !== undefined ? b.attachMedia !== false : flowConfig.on(flow, '自动附加 MediaInfo', true);
     if (mediaBlock && attachMedia) {
       const already = description.indexOf(media.raw) >= 0 ||
+        /mediainfo|general\s+information|disc\s+title|complete\s+name|disc\s+size/i.test(description) ||
         /\[(?:quote|code|hide)(?:=[^\]]*)?\][\s\S]*?(?:Disc Title|Complete name)\s*:/i.test(description);
       if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 60000);
     }
