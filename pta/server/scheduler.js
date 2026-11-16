@@ -4,6 +4,7 @@ const { makeCrossseed } = require('./crossseed');
 const pipeline = require('./pipeline');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
+const { makeMetaFill } = require('./meta-fill');
 
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
@@ -11,6 +12,7 @@ function makeScheduler(ctx, deps) {
   const DEF = { on: false, everyMinutes: 60, lastRunAt: 0, lastResult: null, lastError: '' };
   const crossseed = makeCrossseed(ctx);
   const targetService = makeTargetService(ctx, makeTarget(ctx));
+  const metaFill = makeMetaFill(ctx);
   let timer = null;
   let running = false;
 
@@ -186,9 +188,20 @@ function makeScheduler(ctx, deps) {
       const shotMin = Math.max(0, Number(flowConfig.value(flow, '截图至少几张', 0)) || 0);
       const missMode = String(flowConfig.value(flow, '不满足时', '转待确认'));
       const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT 20") : [];
-      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review') };
+      const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review'), filled: 0 };
+      let fillTries = 0;
       for (const row of reviewRows) {
         const pre = jparse(row.data) || {};
+        /* 终审前还缺简介：按规则联网补，每轮最多补 5 条，避免外部接口被刷 */
+        if (needIntro && !String(pre.intro || '').trim() && !pre.metaAt && fillTries < 5) {
+          fillTries++;
+          const fr = await metaFill.fillIntro(pre);
+          if (fr.ok) {
+            review.filled++;
+            ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+              .run(JSON.stringify(pre), new Date().toISOString(), row.id);
+          }
+        }
         if (pre.downloadUrl && !pre.sourceTitleAt) {
           const ft = await targetService.fillSourceTitle(pre);
           if (ft.ok) {

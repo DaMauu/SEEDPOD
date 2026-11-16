@@ -11,7 +11,7 @@ const limits = require('./limits');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const flowConfig = require('./flow-config');
-const metaExt = require('./meta-ext');
+const { makeMetaFill } = require('./meta-fill');
 
 const BUSY = new Set();
 
@@ -41,30 +41,7 @@ function makeCrawl(ctx) {
     try { return secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { return ''; }
   };
 
-  /* 源站详情页没有简介时，用公开影片库补一条；只在真抓取时联网 */
-  async function fillIntroFromMeta(it) {
-    if (!cfg().realCrawl) return;
-    const flow = flowConfig.read(ctx);
-    if (!flowConfig.on(flow, '允许联网补简介', true)) return;
-    const order = String(flowConfig.value(flow, '匹配来源顺序', 'TMDB → 豆瓣 → 站点标题'));
-    if (order === '只用站点标题') return;
-    try {
-      const r = await metaExt.fetchMeta({ title: it.title, year: it.year, type: it.category || 'movie' });
-      if (!r.ok || !r.data) { it.metaNote = r.code || 'NOT_FOUND'; return; }
-      const d = r.data;
-      const ov = String(d.overview || '').trim();
-      const head = [d.title + (d.year ? '（' + d.year + '）' : ''), ov].filter(Boolean).join('\n\n');
-      const block = String(d.bbcode || '').trim() || [head ? '[quote]' + head + '[/quote]' : '', d.poster ? '[img]' + d.poster + '[/img]' : ''].filter(Boolean).join('\n\n');
-      if (!block) return;
-      it.descrBb = block.slice(0, 20000);
-      if (ov) it.descr = ov.slice(0, 1000);
-      const subMode = String(flowConfig.value(flow, '中文副标题来源', '种子自带 → 豆影网页 → TMDB'));
-      if (d.subtitle && /^豆影网页/.test(subMode)) it.subtitle = String(d.subtitle).slice(0, 300);
-      else if (!it.subtitle && !/^只用种子自带/.test(subMode)) it.subtitle = String(d.subtitle).slice(0, 300);
-      it.meta = { provider: r.provider, via: d.via || '', title: d.title || '', year: d.year || null, url: d.url || '' };
-      it.metaAt = nowISO();
-    } catch (e) { it.metaNote = '外部元数据失败'; }
-  }
+  const metaFill = makeMetaFill(ctx);
 
   function limitsOf(host) {
     const siteCfg = one('SELECT data FROM sites WHERE host = ?', host);
@@ -247,7 +224,7 @@ function makeCrawl(ctx) {
             if (d.infohash && !it.infohash) it.infohash = d.infohash;
             if (d.descr) it.descr = d.descr;
             if (d.descrBb) it.descrBb = d.descrBb;
-            if (!it.descr && !it.descrBb) await fillIntroFromMeta(it);
+            if (!it.descr && !it.descrBb) await metaFill.fillIntro(it);
             if (d.poster) it.poster = d.poster;
             if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
             it.detailAt = nowISO();
