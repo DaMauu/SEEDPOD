@@ -258,6 +258,30 @@ function makeScheduler(ctx, deps) {
             const row = queueRows.shift();
             const it = jparse(row.data) || {};
             if (!it.targetSite || !it.downloadUrl) continue;
+            /* 先传到目标站（已传过的站跳过），成功后再注入下载器；两步都算发布 */
+            const hosts = [];
+            [it.targetSite].concat(Array.isArray(it.targets) ? it.targets : []).forEach(function (h) {
+              h = String(h || '').trim().toLowerCase();
+              if (h && hosts.indexOf(h) < 0) hosts.push(h);
+            });
+            let uploadOk = true;
+            for (const host of hosts) {
+              const tr = (it.targetResults && it.targetResults[host]) || {};
+              if (tr.publishedTorrent) continue;
+              let up;
+              try { up = await targetService.uploadMany({ queueId: row.id, targets: [host], dryRun: false }); }
+              catch (e) { up = { ok: false, code: 'UPLOAD_EXCEPTION', message: String(e && e.message || e).slice(0, 160) }; }
+              const first = up && up.data && (up.data.targets || [])[0];
+              if (!up || !up.ok || !first || (!first.ok && !first.skipped)) {
+                uploadOk = false;
+                const msg = (first && (first.message || first.code)) || (up && (up.message || up.code)) || '目标站上传失败';
+                bumpSiteFail(host, msg);
+                if (errors.length < 3) errors.push({ id: row.id, code: (first && first.code) || (up && up.code) || 'UPLOAD_FAILED', message: host + ' · ' + msg });
+                break;
+              }
+              resetSiteFail(host);
+            }
+            if (!uploadOk) { failed++; continue; }
             const r = await deps.publish.publishItem(row.id, { dryRun: false });
             if (r.ok) {
               ok++;
