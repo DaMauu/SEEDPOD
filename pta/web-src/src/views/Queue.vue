@@ -291,8 +291,13 @@ function sub(it) {
 // 页面独立：队列只需要站点列表给下拉，不加载状态/配置。
 async function loadSites() {
   try {
-    const j = await (await fetch('/api/sites', { credentials: 'same-origin' })).json()
-    if (j && j.ok && j.data) sites.value = j.data.sites || []
+    const j = await (await fetch('/api/targets', { credentials: 'same-origin' })).json()
+    const list = (j && j.ok && Array.isArray(j.data)) ? j.data.filter(t => t.hasCookie) : []
+    if (list.length) sites.value = list.map(t => ({ name: t.host, title: t.host }))
+    else {
+      const s = await (await fetch('/api/sites', { credentials: 'same-origin' })).json()
+      if (s && s.ok && s.data) sites.value = s.data.sites || []
+    }
   } catch (e) { reportError('Queue', e) }
 }
 async function load(p) {
