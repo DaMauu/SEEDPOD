@@ -267,7 +267,8 @@ function makeScheduler(ctx, deps) {
             let uploadOk = true;
             for (const host of hosts) {
               const tr = (it.targetResults && it.targetResults[host]) || {};
-              if (tr.publishedTorrent) continue;
+              /* 已经传过并回查到的，不重复上传 */
+              if (tr.publishedTorrent || (tr.verified && tr.detailsUrl)) continue;
               let up;
               try { up = await targetService.uploadMany({ queueId: row.id, targets: [host], dryRun: false }); }
               catch (e) { up = { ok: false, code: 'UPLOAD_EXCEPTION', message: String(e && e.message || e).slice(0, 160) }; }
@@ -282,6 +283,15 @@ function makeScheduler(ctx, deps) {
               resetSiteFail(host);
             }
             if (!uploadOk) { failed++; continue; }
+            /* 上传过但权威种子没保存成功的，发布前补抓一次 */
+            const afterRow = one('SELECT data FROM queue WHERE id = ?', row.id);
+            const after = afterRow ? (jparse(afterRow.data) || it) : it;
+            for (const host of hosts) {
+              const tr = (after.targetResults && after.targetResults[host]) || {};
+              if (tr.verified && tr.detailsUrl && !tr.publishedTorrent) {
+                try { await targetService.fetchPublished(host, after); } catch (e) { /* 补抓失败不挡发布 */ }
+              }
+            }
             const r = await deps.publish.publishItem(row.id, { dryRun: false });
             if (r.ok) {
               ok++;

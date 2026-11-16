@@ -135,6 +135,37 @@ function makeTargetService(ctx, target) {
     return { ok: true, title: itemData.title };
   }
 
+  /* 目标站已发布但权威种子没抓下来（保存失败/超时）时，单独补抓一次 */
+  async function fetchPublished(host, itemData) {
+    const tr = ((itemData.targetResults || {})[host]) || {};
+    if (tr.publishedTorrent) return { ok: true, data: tr.publishedTorrent, cached: true };
+    const detailsUrl = tr.detailsUrl || (itemData.targetUpload && itemData.targetUpload.detailsUrl) || '';
+    if (!detailsUrl) return { ok: false, code: 'NO_DETAILS_URL', message: '没有目标站详情地址' };
+    const tt = await target.fetchDetailsTorrent(host, detailsUrl);
+    if (!tt.ok) return tt;
+    try {
+      const dir = path.join(DATA_DIR, 'torrents');
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+      const safeHost = String(host).replace(/[^a-z0-9.-]/gi, '_');
+      const file = path.join(dir, safeHost + '-' + tt.data.meta.hash + '.published.torrent');
+      fs.writeFileSync(file, tt.data.buf, { mode: 0o600 });
+      const rec = {
+        host: host, infohash: tt.data.meta.hash, size: tt.data.buf.length, path: file,
+        sameInfohash: tt.data.meta.hash === String(tr.infohash || ''), source: 'published'
+      };
+      tr.publishedTorrent = rec;
+      tr.targetTorrent = rec;
+      tr.publishedTorrentError = '';
+      tr.targetTorrentError = '';
+      itemData.targetResults = itemData.targetResults || {};
+      itemData.targetResults[host] = tr;
+      saveQueue(itemData);
+      return { ok: true, data: rec };
+    } catch (e) {
+      return { ok: false, code: 'SAVE_FAILED', message: '目标站发布种子保存失败' };
+    }
+  }
+
   /* 独立查重：初筛后先跑一次，命中就跳过，避免补齐/详情请求。 */
   async function checkDupe(host, itemData, buf) {
     const flowCfg = flowConfig.read(ctx);
@@ -446,7 +477,7 @@ function makeTargetService(ctx, target) {
     return { ok: true, data: out };
   }
 
-  return { upload: upload, uploadMany: uploadMany, checkDupe: checkDupe, fillSourceTitle: fillSourceTitle, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
+  return { upload: upload, uploadMany: uploadMany, checkDupe: checkDupe, fillSourceTitle: fillSourceTitle, fetchPublished: fetchPublished, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
 module.exports = { makeTargetService };
