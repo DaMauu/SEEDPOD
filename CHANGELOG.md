@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.352 · 2026-11-17
+
+### 还原 hide=MediaInfo/BDInfo
+- NexusPHP 的 codetop + hide/codemain 还原成 `[hide=MediaInfo]` / `[hide=BDInfo]`，不再降级成 `[code]`。
+- 源简介里的 MediaInfo/BDInfo 隐藏块原样进目标站简介，不再被拍平或重复追加。
+- adapter 夹具 25/25；实测猫站详情：hideMedia=true、code=0、quote=1、5 张图。
+
 ## v0.7.351 · 2026-11-17
 
 ### 修 MediaInfo 重复与上传详情取错

@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-17 09:40（当前 v0.7.351 / 简介重复修复）
+最后更新：2026-11-17 10:05（当前 v0.7.352 / hide=MediaInfo）
+
+## 2026-11-17 hide=MediaInfo（v0.7.352）
+
+- codetop/hide 还原成 [hide=MediaInfo]/[hide=BDInfo]，不再变 [code]。
 
 ## 2026-11-17 简介重复修复（v0.7.351）
 

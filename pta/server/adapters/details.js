@@ -14,7 +14,16 @@ function text(s) { return decode(String(s || '').replace(/<[^>]+>/g, ' ')).repla
 /* 简介 HTML → BBCode：保留图片与换行，其余标签丢掉；目标站 descr 直接可用 */
 function toBbcode(html) {
   let s = String(html || '');
-  /* 源码块保留成 [code]，引用保留成 [quote]，避免 BBCode 结构被拍平 */
+  /* NexusPHP：codetop + hide/codemain 还原成 [hide=MediaInfo] / [code] */
+  s = s.replace(/<div\b[^>]*class=["'][^"']*codetop[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<div\b[^>]*class=["'][^"']*hide[^"']*["'][^>]*>\s*<div\b[^>]*class=["'][^"']*codemain[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi, function (_, top, inner) {
+    const label = text(top);
+    let open = '[code]', close = '[/code]';
+    if (/^mediainfo\b/i.test(label)) { open = '[hide=MediaInfo]'; close = '[/hide]'; }
+    else if (/^bdinfo\b/i.test(label)) { open = '[hide=BDInfo]'; close = '[/hide]'; }
+    else if (/隐藏内容/i.test(label)) { open = '[hide]'; close = '[/hide]'; }
+    return '\n' + open + '\n' + inner + '\n' + close + '\n';
+  });
+  /* 其它 code 块 */
   s = s.replace(/<div\b[^>]*class=["'][^"']*codemain[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, function (_, inner) { return '\n[code]\n' + inner + '\n[/code]\n'; })
     .replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, function (_, inner) { return '\n[code]' + text(inner) + '[/code]\n'; })
     .replace(/<fieldset\b[^>]*>/gi, '\n[quote]\n')

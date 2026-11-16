@@ -229,6 +229,15 @@ check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', (
   need(empty.sizeBytes === undefined && empty.medium === undefined, '空页面不该编出字段：' + JSON.stringify(empty));
 });
 
+check('MediaInfo 隐藏块还原成 hide=MediaInfo', () => {
+  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const html = '<html><body><div id="kdescr"><div class="codetop"><a>MediaInfo - Movie.mkv</a></div><div class="hide"><div class="codemain">General<br /> Complete name: Movie.mkv<br /> Format: MPEG-4</div></div></div></body></html>';
+  const d = adapters.parseDetail(html);
+  need(/\[hide=MediaInfo\]/.test(d.descrBb), '没还原 hide=MediaInfo：' + String(d.descrBb).slice(0, 200));
+  need(/\[\/hide\]/.test(d.descrBb), '没闭合 hide');
+  need(/Complete name: Movie\.mkv/.test(d.descrBb), '内容丢了：' + String(d.descrBb).slice(0, 200));
+});
+
 check('简介嵌套 div 不截断，pre 变 code', () => {
   const adapters = require(path.join(ROOT, 'server', 'adapters'));
   const html = '<html><body><div id="kdescr"><div class="quote">引用文字</div><p>正文段落</p>'
