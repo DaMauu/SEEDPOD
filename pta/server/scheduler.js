@@ -1,10 +1,12 @@
 /* 调度器：按固定间隔跑抓取 → 送审 → 终审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
 const flowConfig = require('./flow-config');
+const { makeCrossseed } = require('./crossseed');
 
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
   const KEY = 'scheduler';
   const DEF = { on: false, everyMinutes: 60, lastRunAt: 0, lastResult: null, lastError: '' };
+  const crossseed = makeCrossseed(ctx);
   let timer = null;
   let running = false;
 
@@ -147,7 +149,20 @@ function makeScheduler(ctx, deps) {
           const it = jparse(row.data) || {};
           if (!it.targetSite || !it.downloadUrl) continue;
           const r = await deps.publish.publishItem(row.id, { dryRun: false });
-          if (r.ok) { ok++; resetSiteFail(it.targetSite || it.site); }
+          if (r.ok) {
+            ok++;
+            resetSiteFail(it.targetSite || it.site);
+            const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
+            const done = cur ? (jparse(cur.data) || null) : null;
+            if (done) {
+              for (const host of Object.keys(done.targetResults || {})) {
+                const tr = done.targetResults[host] || {};
+                if (tr.publishedTorrent && !tr.crossseed) {
+                  try { await crossseed.run({ id: row.id, data: done }, host, {}); } catch (e) { /* 辅种失败不影响发布 */ }
+                }
+              }
+            }
+          }
           else {
             failed++;
             bumpSiteFail(it.targetSite || it.site, r.message || r.code);

@@ -1,0 +1,45 @@
+/* 辅种：把目标站权威种子加进 qB，skip_checking + 复用源种 save path。
+   调度和 CLI 共用；不硬链接、不改文件结构。 */
+const fs = require('fs');
+const { makeQb } = require('./qb');
+const flowConfig = require('./flow-config');
+
+function makeCrossseed(ctx) {
+  const { one, all, jparse } = ctx;
+  const qb = makeQb(ctx.DATA_DIR);
+  const now = () => new Date().toISOString();
+
+  async function run(item, host, opts) {
+    const o = opts || {};
+    const h = String(host || '').toLowerCase();
+    if (!item || !item.data) return { ok: false, error: 'NO_ITEM' };
+    if (!h) return { ok: false, error: 'NO_HOST' };
+    const results = item.data.targetResults || {};
+    const tr = results[h] || {};
+    const pub = tr.publishedTorrent || tr.targetTorrent;
+    if (!pub || !pub.path || !fs.existsSync(pub.path)) return { ok: false, error: 'NO_PUBLISHED_TORRENT' };
+    const sourceHash = (tr.sourceTorrent && tr.sourceTorrent.infohash) || item.data.infohash || '';
+    if (!sourceHash) return { ok: false, error: 'NO_SOURCE_HASH' };
+    const rows = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data); }).filter(function (x) { return x && (x.kind || 'qb') === 'qb'; });
+    const dl = rows.filter(function (x) { return !o.downloader || String(x.id) === String(o.downloader); })[0];
+    if (!dl) return { ok: false, error: 'NO_QB' };
+    const found = await qb.findTorrent(dl, sourceHash);
+    if (!found.found) return { ok: false, error: 'SOURCE_NOT_IN_QB' };
+    if (Number(found.progress) < 0.999) return { ok: false, error: 'SOURCE_INCOMPLETE', progress: Number(found.progress) || 0 };
+    const buf = fs.readFileSync(pub.path);
+    const meta = qb.parseTorrent(buf);
+    if (!meta.hash) return { ok: false, error: 'BAD_TARGET_TORRENT' };
+    if (meta.hash === sourceHash) return { ok: false, error: 'SAME_INFOHASH' };
+    const skip = flowConfig.on(flowConfig.read(ctx), '辅种跳过校验', true);
+    const add = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: skip, paused: false, category: found.category || '' });
+    if (!add.ok) return { ok: false, error: add.error || 'QB_ADD_FAILED', message: add.message || '' };
+    tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: true };
+    results[h] = tr;
+    item.data.targetResults = results;
+    ctx.targetService.saveQueue(item.data);
+    return { ok: true, targetHash: meta.hash, savePath: found.savePath || '' };
+  }
+  return { run };
+}
+
+module.exports = { makeCrossseed };
