@@ -284,6 +284,16 @@ async function main() {
     const j2 = await json(BASE + '/api/targets');
     const t2 = (j2.body.data || []).filter(function (x) { return x.host === '127.0.0.1'; })[0];
     need(t2 && t2.hasCookie === true && t2.ready === true, '导入 cookie 后没就绪');
+    /* 有站点记录时也要能列出（防止 jparse 之类的运行时错误） */
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db.prepare('INSERT OR REPLACE INTO sites(host, data, updated_at) VALUES(?, ?, ?)')
+      .run('127.0.0.1', JSON.stringify({ url: 'http://127.0.0.1:' + mockPort, enabled: true }), new Date().toISOString());
+    db.close();
+    const j3 = await json(BASE + '/api/targets');
+    need(j3.status === 200 && j3.body.ok, '有站点记录后列表失败：' + j3.status);
+    const t3 = (j3.body.data || []).filter(function (x) { return x.host === '127.0.0.1'; })[0];
+    need(t3 && t3.enabled === true, '有站点记录时没列出或 enabled 不对');
   });
 
   await check('手动识别上传表单与冷却', async function () {
