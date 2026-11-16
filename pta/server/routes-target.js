@@ -58,7 +58,16 @@ module.exports = function (app, ctx) {
     return target.fetchSourceTorrent(item);
   }
 
-  app.get('/api/targets', async () => ok(target.list()));
+  app.get('/api/targets', async () => {
+    /* 目标站只列启用中的站；停用站不再出现在多目标里。默认目标站例外，它是用户明确选的 */
+    const row = one("SELECT v FROM meta WHERE k = 'config'");
+    const cfg = JSON.parse(row ? row.v : 'null') || {};
+    const targetHost = String(cfg.targetHost || '').toLowerCase();
+    const list = target.list().filter(function (t) {
+      return t.enabled !== false || t.host === targetHost;
+    });
+    return ok(list);
+  });
 
   app.post('/api/probe', async (req, reply) => {
     const r = await targetService.probe(req.body || {});

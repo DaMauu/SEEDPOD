@@ -134,7 +134,10 @@ function makeTarget(ctx) {
       if (!t) return;
       const c = one('SELECT cookie FROM credentials WHERE host = ?', host);
       const hasCookie = !!(c && c.cookie);
+      const srow = one('SELECT data FROM sites WHERE host = ?', host);
+      const sd = srow ? (jparse(srow.data) || {}) : null;
       out.push({ host: host, engine: t.engine, base: t.base, hasCookie: hasCookie,
+        enabled: !sd || sd.enabled !== false,
         ready: !!(hasCookie && t.upload.path && t.upload.fields && Object.keys(t.upload.fields).length),
         uploadPath: t.upload.path, verifyPath: t.verify.path });
     });
