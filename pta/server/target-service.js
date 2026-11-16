@@ -138,6 +138,8 @@ function makeTargetService(ctx, target) {
   /* 独立查重：初筛后先跑一次，命中就跳过，避免补齐/详情请求。 */
   async function checkDupe(host, itemData, buf) {
     const flowCfg = flowConfig.read(ctx);
+    /* 流程页关掉“目标站搜索”就不查重，尊重用户设置，少打目标站 */
+    if (!flowConfig.on(flowCfg, '目标站搜索', true)) return { found: false, disabled: true };
     let pre = null;
     try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); } catch (e) { pre = null; }
     if (!pre || !pre.ok || !pre.data || !pre.data.found) return { found: false };

@@ -19,6 +19,26 @@ const REGION = [
   { value: '6', label: '日本 (JPN)' },
   { value: '7', label: '印度 (IND)' }
 ];
+const REGION_PTC = [
+  { value: '1', label: '大陆 (Mainland,CHN)' },
+  { value: '2', label: '香港 (HKG,CHN)' },
+  { value: '3', label: '台湾 (TWN,CHN)' },
+  { value: '4', label: '欧美 (Western)' },
+  { value: '5', label: '韩国 (KOR)' },
+  { value: '6', label: '日本 (JPN)' },
+  { value: '7', label: '印度 (IND)' },
+  { value: '8', label: '其它 (Other)' }
+];
+const MEDIA_PTC = [
+  { value: '0', label: '请选择' },
+  { value: '1', label: 'UHD Discs' },
+  { value: '2', label: 'BD Discs' },
+  { value: '3', label: 'Remux' },
+  { value: '4', label: 'HDTV' },
+  { value: '5', label: 'WEB-DL' },
+  { value: '6', label: 'Encode' },
+  { value: '7', label: 'DVD Discs' }
+];
 const MEDIA = [
   { value: '1', label: 'UltraHD(4K)' },
   { value: '2', label: 'Blu-ray' },
@@ -53,6 +73,13 @@ check('媒介按标题映射', function () {
   need(td.betterDefault(MEDIA, { title: 'Movie 2019 2160p UHD Blu-ray HEVC' }) === '1', 'UHD 应为 UltraHD');
   need(td.betterDefault(MEDIA, { title: 'Movie 2019 1080p Remux AVC' }) === '3', 'Remux 应为 Remux');
   need(td.betterDefault(MEDIA, { title: 'Show 2020 1080p WEB-DL' }) === '5', 'WEB-DL 不对');
+});
+
+check('站点自己的写法也能对上', function () {
+  need(td.betterDefault(REGION_PTC, { region: '大陆' }) === '1', 'Mainland 应识别为 CHN');
+  need(td.betterDefault(REGION_PTC, { region: '美国' }) === '4', 'Western 应识别为 ENG');
+  need(td.betterDefault(MEDIA_PTC, { title: 'Movie 2020 1080p Blu-ray' }) === '2', 'BD Discs 应识别为 Blu-ray');
+  need(td.betterDefault(MEDIA_PTC, { title: 'Movie 2020 2160p UHD Blu-ray' }) === '1', 'UHD Discs 不对');
 });
 
 check('认不出就返回空，交给站点默认值', function () {

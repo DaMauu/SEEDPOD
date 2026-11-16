@@ -54,9 +54,17 @@ const OPTION_HINTS = [
   ['WEBRIP', /web-?rip/i],
   ['HDTV', /hdtv/i],
   ['DVD', /\bdvd/i],
-  ['BLURAY', /blu-?ray/i],
+  ['BLURAY', /blu-?ray|\bbd\s*discs?\b/i],
   ['ENCODE', /encode/i]
 ];
+/* 站点写法不同：Mainland→CHN、Western→ENG、BD Discs→BLURAY */
+const CODE_ALIAS = {
+  MAINLAND: 'CHN', CHINA: 'CHN', CN: 'CHN',
+  HK: 'HKG', TW: 'TWN',
+  WESTERN: 'ENG', WEST: 'ENG', USA: 'ENG', UK: 'ENG',
+  KOREA: 'KOR', KR: 'KOR', JP: 'JPN', JA: 'JPN', IN: 'IND',
+  '4K': 'UHD', '2160P': 'UHD'
+};
 function optionCode(label) {
   const str = String(label || '');
   const paren = /\(([^)]*)\)/.exec(str);
@@ -64,7 +72,7 @@ function optionCode(label) {
     const codes = String(paren[1]).split(/[,，\s]+/).map(function (x) { return x.toUpperCase(); }).filter(Boolean);
     if (codes.length) {
       const c = codes[0];
-      return (c === '4K' || c === '2160P') ? 'UHD' : c;
+      return CODE_ALIAS[c] || c;
     }
   }
   for (const pair of OPTION_HINTS) if (pair[1].test(str)) return pair[0];
