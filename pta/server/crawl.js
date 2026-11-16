@@ -168,11 +168,16 @@ function makeCrawl(ctx) {
     let rows = [];
     try { rows = adapters.parseList(html, def.engine) || []; } catch (e) { rows = []; }
     const limit = Math.max(1, Math.min(200, Number(opts.limit) || 100));
+    const absUrl = function (u) {
+      const str = String(u || '');
+      if (!str || /^https?:\/\//i.test(str)) return str;
+      try { return new URL(str, def.base + '/').toString(); } catch (e) { return str; }
+    };
     const items = rows.slice(0, limit).map(function (r) {
       return {
         site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
         sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
-        detailsUrl: r.detailsUrl || '', downloadUrl: r.downloadUrl || '', infohash: r.infohash || '',
+        detailsUrl: absUrl(r.detailsUrl), downloadUrl: absUrl(r.downloadUrl), infohash: r.infohash || '',
         seeders: Number(r.seeders) || 0, marks: marksMod.marksOf(r.title), addedAt: r.addedAt || ''
       };
     }).filter(function (x) { return x.title && x.siteId; });

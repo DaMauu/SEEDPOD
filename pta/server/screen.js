@@ -59,6 +59,12 @@ function screenCatalog(ctx, opts) {
   rules.requireIntro = flowConfig.on(flowConfig.read(ctx), '必须有简介', false);
 
   const norm = (s2) => String(s2 || '').toLowerCase().replace(/[\s\-_.]+/g, '');
+  /* 来源站已停用的词条不再送审，避免发布时去抓停用站的种子 */
+  const siteOn = {};
+  all('SELECT host, data FROM sites').forEach(function (r) {
+    const d = jparse(r.data) || {};
+    siteOn[String(r.host).toLowerCase()] = d.enabled !== false;
+  });
   const seenTitles = new Set();
   const seenHashes = new Set();
   all('SELECT title, data FROM queue').forEach(function (r) {
@@ -89,7 +95,8 @@ function screenCatalog(ctx, opts) {
     const res = String(it.res || '').toLowerCase() || match.resOf(title);
     const bytes = Number(it.sizeBytes) || match.sizeBytesOf(it) || 0;
     let reason = marksMod.complianceReason(it, Date.now());
-    if (!reason && hit(rx.deny, title)) reason = '命中排除规则';
+    if (!reason && it.site && siteOn[String(it.site).toLowerCase()] === false) reason = '来源站已停用';
+    else if (!reason && hit(rx.deny, title)) reason = '命中排除规则';
     else if (rx.allow && !hit(rx.allow, title)) reason = '白名单未命中';
     else if (rules.res.length && res && rules.res.indexOf(res) < 0) reason = '分辨率不符 ' + res;
     else if (rules.minSizeGB && bytes && bytes < rules.minSizeGB * 1073741824) reason = '体积偏小';

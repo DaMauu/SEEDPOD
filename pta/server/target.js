@@ -304,12 +304,26 @@ function makeTarget(ctx) {
   function torrentMeta(buf) { return qb.parseTorrent(buf); }
 
   async function fetchSourceTorrent(item) {
-    if (!/^https?:\/\//i.test(String(item.downloadUrl || ''))) return { err: '条目没有下载地址' };
+    /* 列表页给的下载地址常是 download.php?id=…，按来源站 base 补成绝对地址 */
+    let dlUrl = String(item.downloadUrl || '');
+    if (dlUrl && !/^https?:\/\//i.test(dlUrl)) {
+      const def = resolve(item.site);
+      if (def && def.base) {
+        try { dlUrl = new URL(dlUrl, def.base + '/').toString(); } catch (e) { /* 留原样 */ }
+      }
+    }
+    if (!/^https?:\/\//i.test(dlUrl)) return { err: '条目没有下载地址' };
+    /* 来源站停用就不抓，避免对停用站发真实请求 */
+    if (item.site) {
+      const row = one('SELECT data FROM sites WHERE host = ?', String(item.site).toLowerCase());
+      const sd = row ? (jparse(row.data) || {}) : null;
+      if (sd && sd.enabled === false) return { err: '来源站已停用：' + item.site };
+    }
     const c = cookieOf(item.site);
     if (c.err) return { err: '来源站没有 cookie，取不到种子' };
     let res;
     try {
-      res = await fetch(item.downloadUrl, {
+      res = await fetch(dlUrl, {
         headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
         redirect: 'follow', signal: AbortSignal.timeout(20000)
       });
