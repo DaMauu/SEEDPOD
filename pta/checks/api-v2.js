@@ -198,7 +198,7 @@ async function main() {
   await check('词条写入与筛选条件生效', async () => {
     const items = [
       { site: 'demo-a.example', title: 'Fixture A 2020 1080p 中字', res: '1080p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
-      { site: 'demo-a.example', title: 'Fixture B 2020 2160p', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
+      { site: 'demo-a.example', title: 'Fixture B 2020 2160p', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3, tags: '英字' },
       { site: 'demo-a.example', title: 'Fixture C 2020 2160p 中字', res: '2160p', size: '5.00 GB', sizeBytes: 5 * 1024 ** 3 },
       { site: 'demo-a.example', title: 'Fixture D 2020 2160p 中字', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
       { site: 'demo-a.example', title: 'Fixture D 2020 2160p 中字', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },

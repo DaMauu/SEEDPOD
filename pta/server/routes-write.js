@@ -180,7 +180,7 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: false, retryMax: 2, retryBackoffMin: 15 };
+  const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: false, retryMax: 2, retryBackoffMin: 15, targetHost: '' };
   const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] };
   function readCfg() {
     const row = one("SELECT v FROM meta WHERE k = 'config'");
@@ -202,6 +202,7 @@ module.exports = function (app, ctx) {
     if (b.realPublish !== undefined) next.realPublish = !!b.realPublish;
     if (b.realImages !== undefined) next.realImages = !!b.realImages;
     if (b.detail !== undefined) next.detail = !!b.detail;
+    if (b.targetHost !== undefined) next.targetHost = String(b.targetHost || '').trim().toLowerCase().slice(0, 200);
     if (b.retryMax !== undefined) {
       const n = Number(b.retryMax);
       if (!Number.isInteger(n) || n < 0 || n > 10) return bad(reply, 'OUT_OF_RANGE', 'retryMax 必须是 0–10 的整数');

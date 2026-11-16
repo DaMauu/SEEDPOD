@@ -435,6 +435,7 @@ async function saveFilters() {
 }
 function pickTarget(host) {
   targetHost.value = host
+  patchUser({ targetHost: host })
   try { localStorage.setItem('pta.target', host) } catch (e) { reportError('Crawl', e) }
   targetOpen.value = false
   toast('发布目标改为：' + ((targetSite.value && targetSite.value.title) || host))
@@ -650,6 +651,7 @@ RuleOrSpecial.props = { r: { type: Object, required: true } }
 async function loadGates() {
   const j = await getJson('/api/config')
   if (j && j.ok && j.data && j.data.user) {
+    if (!targetHost.value && j.data.user.targetHost) targetHost.value = j.data.user.targetHost
     gates.realCrawl = !!j.data.user.realCrawl
     gates.realPublish = !!j.data.user.realPublish
     gates.realImages = !!j.data.user.realImages

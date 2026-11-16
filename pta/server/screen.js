@@ -106,7 +106,14 @@ function screenCatalog(ctx, opts) {
       skipped++;
       continue;
     }
+    let defaultTarget = '';
+    try {
+      const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+      const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+      defaultTarget = String(cfg.targetHost || '').toLowerCase();
+    } catch (e) { defaultTarget = ''; }
     const item = { id: 'q_' + String(++seq).padStart(4, '0'), status: 'pending', createdAt: now(), title: title,
+      targetSite: defaultTarget,
       res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
       downloadUrl: it.downloadUrl || '', siteId: it.siteId || '',
       subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),
