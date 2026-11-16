@@ -154,6 +154,14 @@ function makeScheduler(ctx, deps) {
       const reviewRows = all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT 20");
       const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [] };
       for (const row of reviewRows) {
+        const pre = jparse(row.data) || {};
+        if (pre.downloadUrl && !pre.sourceTitleAt) {
+          const ft = await targetService.fillSourceTitle(pre);
+          if (ft.ok) {
+            ctx.db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
+              .run(ft.title, JSON.stringify(pre), new Date().toISOString(), row.id);
+          }
+        }
         const prep = deps.release ? deps.release.prepare(row.id, {}) : { ok: false };
         const cur = one('SELECT status, data FROM queue WHERE id = ?', row.id);
         const d = jparse(cur ? cur.data : row.data) || {};

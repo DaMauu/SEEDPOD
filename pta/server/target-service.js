@@ -101,6 +101,40 @@ function makeTargetService(ctx, target) {
     return out;
   }
 
+  /* 源资源标题：优先用已缓存源种，没有再取一次；成功才覆盖 title */
+  async function fillSourceTitle(itemData) {
+    if (!itemData) return { ok: false, error: 'NO_ITEM' };
+    if (itemData.sourceTitleAt) return { ok: true, title: itemData.title, cached: true };
+    if (itemData.sourceTitleErrorAt && Date.now() - Date.parse(itemData.sourceTitleErrorAt) < 3600000) {
+      return { ok: false, error: 'RETRY_LATER' };
+    }
+    let name = '';
+    try {
+      const trs = itemData.targetResults || {};
+      for (const h of Object.keys(trs)) {
+        const src = trs[h] && trs[h].sourceTorrent && trs[h].sourceTorrent.path;
+        if (src && fs.existsSync(src)) {
+          const meta = target.torrentMeta(fs.readFileSync(src));
+          name = (meta && meta.name) || '';
+          if (name) break;
+        }
+      }
+      if (!name && itemData.downloadUrl) {
+        const f = await target.fetchSourceTorrent(itemData);
+        if (f.buf) { const meta = target.torrentMeta(f.buf); name = (meta && meta.name) || ''; }
+      }
+    } catch (e) { name = ''; }
+    if (!name) {
+      itemData.sourceTitleErrorAt = now();
+      return { ok: false, error: 'NO_SOURCE_TITLE' };
+    }
+    itemData.title = String(name).slice(0, 300);
+    itemData.sourceTitle = itemData.title;
+    itemData.sourceTitleAt = now();
+    delete itemData.sourceTitleErrorAt;
+    return { ok: true, title: itemData.title };
+  }
+
   /* 独立查重：初筛后先跑一次，命中就跳过，避免补齐/详情请求。 */
   async function checkDupe(host, itemData, buf) {
     const flowCfg = flowConfig.read(ctx);
@@ -410,7 +444,7 @@ function makeTargetService(ctx, target) {
     return { ok: true, data: out };
   }
 
-  return { upload: upload, uploadMany: uploadMany, checkDupe: checkDupe, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
+  return { upload: upload, uploadMany: uploadMany, checkDupe: checkDupe, fillSourceTitle: fillSourceTitle, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
 module.exports = { makeTargetService };

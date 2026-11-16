@@ -11,6 +11,7 @@ const siteMaps = require('./site-maps');
 const meta = require('./meta');
 const { makeQb } = require('./qb');
 const torrentClean = require('./torrent-clean');
+const match = require('./match');
 const flowConfig = require('./flow-config');
 
 const ENGINES = {
@@ -243,6 +244,18 @@ function makeTarget(ctx) {
         warnings.push('必填字段 ' + k + ' 用默认值 ' + defaults[k]);
       }
     });
+    /* 下拉值必须在站点选项里；不在就按标签纠正，纠不了留空 */
+    const selects = (t.form && t.form.selects) || {};
+    Object.keys(fields).forEach(function (k) {
+      const opts = selects[k];
+      if (!Array.isArray(opts) || !opts.length) return;
+      const vals = opts.map(function (o) { return String(o.value); });
+      if (vals.indexOf(String(fields[k])) >= 0) return;
+      const byLabel = opts.filter(function (o) { return String(o.label || '') === String(fields[k]); })[0];
+      if (byLabel) { fields[k] = String(byLabel.value); return; }
+      warnings.push('字段 ' + k + ' 的值不在站点选项里，已留空');
+      delete fields[k];
+    });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
     const hasCookie = !!(c && c.cookie);
@@ -394,9 +407,13 @@ function makeTarget(ctx) {
       const list = adapters.parseList(text, p.data.engine);
       rows = list.length;
       const hit = list.filter(function (r) {
-        const t = norm(r.title);
         const d = norm(r.detailsUrl + ' ' + r.downloadUrl);
-        return (title && t.indexOf(title) >= 0) || (hash && d.indexOf(hash) >= 0);
+        if (hash && d.indexOf(hash) >= 0) return true;
+        if (title && norm(r.title).indexOf(title) >= 0) return true;
+        try {
+          const cmp = match.compare(item, { title: r.title, size: r.size || '', res: r.res || '', year: r.year || 0, infohash: r.infohash || '' });
+          return cmp.same && cmp.score >= 50;
+        } catch (e) { return false; }
       })[0];
       found = !!hit;
       matchedTitle = hit ? String(hit.title || '').slice(0, 200) : '';

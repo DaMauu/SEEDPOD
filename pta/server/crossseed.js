@@ -33,7 +33,23 @@ function makeCrossseed(ctx) {
     const skip = flowConfig.on(flowConfig.read(ctx), '辅种跳过校验', true);
     const add = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: skip, paused: false, category: found.category || '' });
     if (!add.ok) return { ok: false, error: add.error || 'QB_ADD_FAILED', message: add.message || '' };
-    tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: true };
+    /* 加完校验：进度 1 + 至少一个 tracker working */
+    let verified = false, state = '', trackerOk = false;
+    for (let i = 0; i < 3; i++) {
+      await new Promise(function (r) { setTimeout(r, 5000); });
+      const t = await qb.findTorrent(dl, meta.hash);
+      const st = await qb.trackerStatus(dl, meta.hash);
+      state = t.state || '';
+      trackerOk = (st.trackers || []).some(function (x) { return x.working; });
+      if (t.found && Number(t.progress) >= 0.999 && trackerOk) { verified = true; break; }
+    }
+    tr.crossseed = { at: now(), targetHash: meta.hash, savePath: found.savePath || '', ok: verified, state: state, trackerWorking: trackerOk };
+    if (!verified) {
+      results[h] = tr;
+      item.data.targetResults = results;
+      ctx.targetService.saveQueue(item.data);
+      return { ok: false, error: 'NOT_VERIFIED', state: state, trackerWorking: trackerOk, targetHash: meta.hash };
+    }
     results[h] = tr;
     item.data.targetResults = results;
     ctx.targetService.saveQueue(item.data);
