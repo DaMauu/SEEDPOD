@@ -285,7 +285,7 @@ function makeScheduler(ctx, deps) {
             const row = queueRows.shift();
             const it = jparse(row.data) || {};
             if (!it.targetSite || !it.downloadUrl) continue;
-            /* 辅种模式：源种先进 qB 并下到 100%，没完成就等下一轮，不传目标站 */
+            /* 转载流程：源种先进 qB 并下到 100%，没完成就等下一轮，不传目标站 */
             let src = null;
             try { src = await deps.publish.ensureSource(row.id, {}); }
             catch (e) { src = { ok: false, code: 'SOURCE_CHECK_FAILED', message: String(e && e.message || e).slice(0, 160) }; }

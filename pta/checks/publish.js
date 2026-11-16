@@ -241,7 +241,7 @@ async function main() {
     need(/name="autoTMM"[\s\S]{0,120}false/.test(lastAddBody), 'autoTMM 默认应为 false');
   });
 
-  await check('辅种模式：源种没下完会拦住发布', async function () {
+  await check('转载流程：源种没下完会拦住发布', async function () {
     const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
     const jp = (x) => { try { return JSON.parse(x); } catch (e) { return null; } };

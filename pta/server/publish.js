@@ -210,7 +210,7 @@ function makePublisher(ctx) {
     return { ok: true, data: { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' }, msg: it.pubMsg } };
   }
 
-  /* 辅种模式前置：源种先进 qB，进度到 1 才允许发布到目标站 */
+  /* 转载流程前置：源种先进 qB，进度到 1 才允许发布到目标站 */
   async function ensureSource(id, body) {
     const b = body || {};
     const cur = load(id);
