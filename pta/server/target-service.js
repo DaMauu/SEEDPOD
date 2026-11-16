@@ -180,8 +180,15 @@ function makeTargetService(ctx, target) {
       let pre = null;
       try { pre = await target.verify(host, uploadItem, t.buf, {}); } catch (e) { pre = null; }
       if (pre && pre.ok && pre.data && pre.data.found) {
-        const foundTitle = String(pre.data.title || '');
-        const isDiy = /diy/i.test(foundTitle);
+        let foundTitle = String(pre.data.title || '');
+        if (pre.data.detailsUrl) {
+          try {
+            const di = await target.fetchDetailsInfo(host, pre.data.detailsUrl);
+            if (di.ok) foundTitle += ' ' + [di.data.subtitle, di.data.descr, di.data.tags, di.data.medium].filter(Boolean).join(' ');
+          } catch (e) { /* 详情读不到就只用标题判定 */ }
+        }
+        foundTitle = foundTitle.slice(0, 4000);
+        const isDiy = /diy|diy原盘|自译|自制字幕|修改菜单/i.test(foundTitle);
         const isRemux = /remux/i.test(foundTitle);
         const fullWords = String(flowConfig.value(flowCfg, '原盘判定关键词', '原盘|Full Disc|BDMV|ISO'))
           .split('|').map(function (x) { return String(x || '').trim(); }).filter(Boolean);

@@ -679,6 +679,26 @@ function makeTarget(ctx) {
     return { ok: true, data: { host: host, baseHost: baseHost, candidates: all } };
   }
 
+  /* 读目标站详情页的媒介/副标题/简介/标签，用于查重时判断原盘/DIY/限转 */
+  async function fetchDetailsInfo(host, detailsUrl) {
+    const t = resolve(host);
+    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有站点定义' };
+    const c = cookieOf(host);
+    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err };
+    let pageUrl;
+    try { pageUrl = new URL(detailsUrl, t.base + '/').toString(); } catch (e) { return { ok: false, code: 'BAD_DETAILS_URL', message: '详情地址不合法' }; }
+    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    const pageHost = (function () { try { return new URL(pageUrl).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    if (!baseHost || (pageHost !== baseHost && !pageHost.endsWith('.' + baseHost))) return { ok: false, code: 'BAD_DETAILS_HOST', message: '详情页域名不一致' };
+    let page;
+    try { page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) }); }
+    catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上' }; }
+    if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status };
+    const html = await page.text().catch(function () { return ''; });
+    const d = adapters.parseDetail(html);
+    return { ok: true, data: { url: pageUrl, subtitle: d.subtitle || '', descr: d.descr || '', tags: d.tags || '', medium: d.medium || '', category: d.category || '' } };
+  }
+
   async function fetchDetailsTorrent(host, detailsUrl) {
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
@@ -759,7 +779,7 @@ function makeTarget(ctx) {
   }
 
   return { list: list, resolve: resolve, plan: plan, submit: submit, verify: verify, detectUploadForm: detectUploadForm,
-    deleteTorrent: deleteTorrent, discoverAnnounce: discoverAnnounce, announceCandidates: announceCandidates, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
+    deleteTorrent: deleteTorrent, fetchDetailsInfo: fetchDetailsInfo, discoverAnnounce: discoverAnnounce, announceCandidates: announceCandidates, fetchDetailsTorrent: fetchDetailsTorrent, fetchSourceTorrent: fetchSourceTorrent, torrentMeta: torrentMeta, cookieOf: cookieOf };
 }
 
 module.exports = { makeTarget, ENGINES };

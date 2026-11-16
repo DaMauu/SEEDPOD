@@ -217,7 +217,7 @@
         "type": "text",
         "v": "原盘|Full Disc|BDMV|ISO",
         "label": "原盘判定关键词",
-        "hint": "命中算原盘；Remux/DIY 不算"
+        "hint": "标题/副标题/简介/标签都看；Remux/DIY 不算"
       },
       {
         "t": "禁转/限转处理",
