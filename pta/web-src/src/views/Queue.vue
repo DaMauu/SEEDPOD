@@ -77,15 +77,6 @@
                 <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
               </select>
             </div>
-            <div class="qd-field qd-targets-row">
-              <span>多目标</span>
-              <div class="pick-row qd-target-chips">
-                <label v-for="s in sites" :key="s.name" class="cat-chip" :class="{ on: form.targets.includes(s.name) }" :title="s.name">
-                  <input type="checkbox" :value="s.name" v-model="form.targets" class="qd-target-check">
-                  {{ s.title || s.name }}
-                </label>
-              </div>
-            </div>
             <div class="qd-field"><span>标题</span><input v-model="form.title" class="input"></div>
             <div class="qd-field"><span>副标题</span><input v-model="form.cn" class="input"></div>
             <div class="qd-field">
@@ -145,7 +136,16 @@
               </template>
               <button class="shot add" type="button" @click="pickFiles">上传</button>
             </div>
-            <div class="qd-actions">
+            <div class="qd-targets-foot">
+          <span class="qd-targets-lbl">多目标</span>
+          <div class="pick-row qd-target-chips">
+            <label v-for="s in sites" :key="s.name" class="cat-chip" :class="{ on: form.targets.includes(s.name) }" :title="s.name">
+              <input type="checkbox" :value="s.name" v-model="form.targets" class="qd-target-check">
+              {{ s.title || s.name }}
+            </label>
+          </div>
+        </div>
+        <div class="qd-actions">
               <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(true)">图床演练</button>
               <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(false)">上传截图</button>
             </div>
@@ -718,7 +718,10 @@ onUnmounted(() => {
 .qd-grid .shots { gap: 6px; }
 .qd-grid .shot { width: 62px; height: 42px; font-size: 10px; }
 .qd-status { margin-top: 10px; }
-.qd-actions { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
+.qd-targets-foot { margin-top: auto; display: flex; align-items: flex-start; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.qd-targets-lbl { font-size: 11px; color: var(--muted); white-space: nowrap; padding-top: 4px; }
+.qd-targets-foot .pick-row { flex: 1 1 auto; min-width: 0; }
+.qd-actions { margin-top: 0; padding-top: 8px; border-top: 0; }
 .qd-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 26px; align-items: center; }
 .qd-warn { flex-basis: 100%; font-size: 11.5px; color: #b45309; line-height: 1.6; }
 @media (max-width: 900px) {
