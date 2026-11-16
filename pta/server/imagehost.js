@@ -403,13 +403,13 @@ async function resolveImageSource(raw, opts) {
 function extractImages(description) {
   const out = [];
   const seen = new Set();
-  const re = /\[img([^\]]*)\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi;
+  const re = /\[img[^\]]*\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi;
   let m;
   while ((m = re.exec(String(description || '')))) {
-    const url = m[2].trim();
+    const url = m[1].trim();
     if (seen.has(url)) continue;
     seen.add(url);
-    out.push({ url: url, attr: m[1] || '' });
+    out.push({ url: url });
   }
   return out;
 }
@@ -505,6 +505,7 @@ async function mirrorDescription(description, opts) {
     if (isOurImageHost(direct)) {
       map[url] = direct;
       if (resolved.page) map[resolved.page] = direct;
+      if (page) map[page] = direct;
       skipped++;
       continue;
     }
@@ -526,6 +527,7 @@ async function mirrorDescription(description, opts) {
       if (!up.ok) throw new Error(up.error || '图床上传失败');
       map[url] = up.url;
       if (resolved.page) map[resolved.page] = up.url;
+      if (page) map[page] = up.url;
       uploaded++;
     } catch (e) {
       failed++;
@@ -535,24 +537,15 @@ async function mirrorDescription(description, opts) {
   }
 
   let out = String(description || '');
-  out = out.replace(/\[img([^\]]*)\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi, function (tag, attr, u) {
-    if (map[u]) return '[img' + attr + ']' + map[u] + '[/img]';
-    return remove.has(u) ? '' : tag;
-  });
-  /* [url=图床页面][img]缩略图[/img][/url]：链接也指向新图 */
-  out = out.replace(/\[url=([^\]]+)\](\s*)\[img([^\]]*)\](\s*)(https?:\/\/[^\s\[\]]+)(\s*)\[\/img\](\s*)\[\/url\]/gi, function (tag, page, s1, attr, s2, img, s3, s4) {
-    const next = map[img] || map[page];
-    if (!next) return tag;
-    return '[url=' + next + '][img' + attr + ']' + next + '[/img][/url]';
-  });
+  /* 只替换图片地址；[img=300x300]、[url]、[center] 等标签原样保留 */
   Object.keys(map).forEach(function (old) {
-    out = out.split('[url=' + old + ']').join('[url=' + map[old] + ']');
+    out = out.split(old).join(map[old]);
   });
   remove.forEach(function (old) {
-    out = out.replace(new RegExp('\\[url=' + escapeRe(old) + '\\]\\s*\\[\\/url\\]', 'gi'), '');
+    out = out.replace(new RegExp('\\[img[^\\]]*\\]\\s*' + escapeRe(old) + '\\s*\\[\\/img\\]', 'gi'), '');
   });
   /* 兜底：最终简介里不允许再出现黑名单图床 */
-  out = out.replace(/\[img([^\]]*)\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi, function (tag, attr, u) {
+  out = out.replace(/\[img[^\]]*\]\s*(https?:\/\/[^\s\[\]]+)\s*\[\/img\]/gi, function (tag, u) {
     return isBlacklisted(u) ? '' : tag;
   });
   out = out.replace(/\[url=[^\]]+\]\s*\[\/url\]/gi, '');
