@@ -43,6 +43,7 @@ docker compose up -d --build
     PTA_SECRET_FILE: /run/secrets/seedpod
   ```
 - HTTPS 访问时设 `PTA_COOKIE_SECURE=1`。
+- 简介图片转存（可选）：设 `PTA_IMAGE_HOST_URL`（multipart 上传接口），可选 `PTA_IMAGE_HOST_FIELD`（默认 `file`）、`PTA_IMAGE_HOST_TOKEN`（Bearer）。再在面板里打开 `realImages`；不配就保留源站外链。
 - 外部触发（可选）：设 `PTA_HOOK_TOKEN`，然后
   ```bash
   curl -s -X POST http://127.0.0.1:8080/api/hooks/run \
