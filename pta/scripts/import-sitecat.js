@@ -75,6 +75,23 @@ function catsOf(html) {
   });
   return out;
 }
+function teamsOf(html) {
+  const out = {};
+  const sre = /<select\b[^>]*name=["']([^"']*(?:team|group)[^"']*)["'][^>]*>([\s\S]*?)<\/select>/gi;
+  let m;
+  while ((m = sre.exec(html))) {
+    const ore = /<option\b[^>]*value=["']([^"']+)["'][^>]*>([\s\S]{0,60}?)<\/option>/gi;
+    let o;
+    while ((o = ore.exec(m[2]))) {
+      const label = strip(o[2]);
+      const val = String(o[1] || '').trim();
+      if (!label || !val || val === '0' || /请选择|选择|none|choose|select/i.test(label)) continue;
+      if (!out[label]) out[label] = val;
+    }
+  }
+  return out;
+}
+
 function canonOf(label) {
   const squeezed = String(label || '').replace(/\s+/g, '');
   for (const pair of CAT) if (pair[1].test(label) || pair[1].test(squeezed)) return pair[0];
@@ -118,6 +135,7 @@ function main() {
   const routes = readRoutes(DIR);
   const perHost = {};
   const rawHost = {};
+  const teamHost = {};
   let empty = 0, noHost = 0, fromName = 0;
   for (const f of files) {
     const buf = fs.readFileSync(path.join(DIR, f));
@@ -131,6 +149,8 @@ function main() {
     if (!Object.keys(cats).length) continue;
     perHost[host] = perHost[host] || {};
     rawHost[host] = rawHost[host] || {};
+    const teams = teamsOf(html);
+    if (Object.keys(teams).length) teamHost[host] = Object.assign(teamHost[host] || {}, teams);
     Object.keys(cats).forEach(function (id) {
       const label = cats[id].label;
       rawHost[host][id] = label;
@@ -142,13 +162,15 @@ function main() {
   let catCount = 0;
   hosts.forEach(function (h) { catCount += Object.keys(perHost[h]).length; });
   console.log('文件 ' + files.length + ' · 空文件 ' + empty + ' · 认不出站点 ' + noHost);
-  console.log('识别站点 ' + hosts.length + ' · 分类映射 ' + catCount + ' 条');
+  const teamTotal = Object.keys(teamHost).reduce(function (n, h) { return n + Object.keys(teamHost[h]).length; }, 0);
+  console.log('识别站点 ' + hosts.length + ' · 分类映射 ' + catCount + ' 条 · 制作组 ' + teamTotal + ' 条');
   if (!WRITE) { console.log('干跑，未写文件。加 --write 写入 ' + path.join(DATA, 'site-maps.json')); return; }
   const all = siteMaps.readAll(DATA);
   hosts.forEach(function (h) {
     const cur = all.sites[h] || {};
     cur.cat = Object.assign({}, perHost[h], cur.cat || {});
     cur.raw = Object.assign({}, rawHost[h] || {}, cur.raw || {});
+    if (teamHost[h]) cur.team = Object.assign({}, teamHost[h], cur.team || {});
     if (routes[h]) cur.route = Object.assign({}, routes[h], { at: new Date().toISOString() });
     cur.at = new Date().toISOString();
     all.sites[h] = cur;
