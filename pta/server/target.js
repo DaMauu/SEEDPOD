@@ -122,9 +122,9 @@ function makeTarget(ctx) {
   /* 目标站请求队列：所有站共用一个队列，一次只发一个请求，默认间隔 8 秒（±20% 抖动）。
      查重、详情、上传、回查、权威种、删除都走这里，不设次数上限。 */
   const requestQueue = makeRequestQueue(ctx);
-  async function throttle(host) {
+  async function throttle(host, kind) {
     if (!host) return { ok: false, code: 'NO_HOST', message: '没有目标站', http: 400 };
-    await requestQueue.wait();
+    await requestQueue.wait(kind === 'search' ? 'search' : 'write');
     return { ok: true };
   }
 
@@ -318,7 +318,7 @@ function makeTarget(ctx) {
   function torrentMeta(buf) { return qb.parseTorrent(buf); }
 
   async function fetchSourceTorrent(item) {
-    const gate = await throttle(item && item.site);
+    const gate = await throttle(item && item.site, 'write');
     if (!gate.ok) return { err: gate.message || gate.code || '来源站请求受限' };
     /* 列表页给的下载地址常是 download.php?id=…，按来源站 base 补成绝对地址 */
     let dlUrl = String(item.downloadUrl || '');
@@ -366,7 +366,7 @@ function makeTarget(ctx) {
 
   async function submit(host, item, buf, opts) {
 
-    const gate = await throttle(host);
+    const gate = await throttle(host, 'write');
     if (!gate.ok) return gate;
     const p = opts && opts.plan ? { ok: true, data: opts.plan } : plan(host, item);
     if (!p.ok) return p;
@@ -423,7 +423,7 @@ function makeTarget(ctx) {
 
   async function verify(host, item, buf, opts) {
 
-    const gate = await throttle(host);
+    const gate = await throttle(host, 'search');
     if (!gate.ok) return gate;
     const p = plan(host, item);
     if (!p.ok) return p;
@@ -541,7 +541,7 @@ function makeTarget(ctx) {
   }
   async function deleteTorrent(host, spec, opts) {
 
-    const gate = await throttle(host);
+    const gate = await throttle(host, 'write');
     if (!gate.ok) return gate;
     const o = opts || {};
     const t = resolve(host);
@@ -751,7 +751,7 @@ function makeTarget(ctx) {
   /* 读目标站详情页的媒介/副标题/简介/标签，用于查重时判断原盘/DIY/限转 */
   async function fetchDetailsInfo(host, detailsUrl) {
 
-    const gate = await throttle(host);
+    const gate = await throttle(host, 'search');
     if (!gate.ok) return gate;
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有站点定义' };
@@ -778,7 +778,7 @@ function makeTarget(ctx) {
 
   async function fetchDetailsTorrent(host, detailsUrl) {
 
-    const gate = await throttle(host);
+    const gate = await throttle(host, 'write');
     if (!gate.ok) return gate;
     const t = resolve(host);
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
@@ -799,7 +799,7 @@ function makeTarget(ctx) {
     const links = downloadLinksFromDetails(html, t.base);
     if (!links.length) return { ok: false, code: 'NO_DOWNLOAD_LINK', message: '详情页没找到下载种子链接', http: 422 };
     /* 详情页一个间隔，下载种子再一个间隔 */
-    const gate2 = await throttle(host);
+    const gate2 = await throttle(host, 'write');
     if (!gate2.ok) return gate2;
     let last = '';
     for (const link of links.slice(0, 8)) {

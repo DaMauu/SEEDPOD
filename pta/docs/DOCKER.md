@@ -44,7 +44,7 @@ docker compose up -d --build
   ```
 - HTTPS 访问时设 `PTA_COOKIE_SECURE=1`。
 - 简介图片转存（可选）：设 `PTA_IMAGE_HOST_URL`（multipart 上传接口），可选 `PTA_IMAGE_HOST_FIELD`（默认 `file`）、`PTA_IMAGE_HOST_TOKEN`（Bearer）。再在面板里打开 `realImages`；不配就保留源站外链。
-- 目标站请求队列（可选）：`PTA_REQ_GAP_MS`（默认 8000，所有目标站共用）、`PTA_REQ_JITTER`（默认 0.2）。
+- 目标站请求队列（可选）：`PTA_REQ_SEARCH_GAP_MS`（默认 30000）、`PTA_REQ_WRITE_GAP_MS`（默认 10000）、`PTA_REQ_JITTER`（默认 0.2）。
 - 外部触发（可选）：设 `PTA_HOOK_TOKEN`，然后
   ```bash
   curl -s -X POST http://127.0.0.1:8080/api/hooks/run \

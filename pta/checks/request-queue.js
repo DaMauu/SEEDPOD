@@ -1,4 +1,4 @@
-/* 目标站请求队列夹具：全局串行，一次一个，间隔固定。 */
+/* 目标站请求队列夹具：全局串行，搜索 30 秒级、写操作 10 秒级（测试用短间隔）。 */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -12,36 +12,50 @@ function check(name, fn) {
     .catch(function (e) { results.push([false, name, e && e.message ? e.message : String(e)]); });
 }
 function need(cond, msg) { if (!cond) throw new Error(msg); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-queue-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));
 const one = (s, ...a) => db.prepare(s).get(...a);
 const ctx = { db, one };
-process.env.PTA_REQ_GAP_MS = '80';
+process.env.PTA_REQ_SEARCH_GAP_MS = '80';
+process.env.PTA_REQ_WRITE_GAP_MS = '30';
 process.env.PTA_REQ_JITTER = '0';
 const queue = makeRequestQueue(ctx);
+function clear() { db.prepare("DELETE FROM meta WHERE k = 'target-req-queue'").run(); }
 
 async function main() {
-  await check('第一次不等待，后续按间隔排队', async function () {
+  await check('搜索请求按搜索间隔排队', async function () {
+    clear();
     const t0 = Date.now();
-    await queue.wait();
+    await queue.wait('search');
     const t1 = Date.now();
-    await queue.wait();
+    await queue.wait('search');
     const t2 = Date.now();
-    need(t1 - t0 < 50, '第一次不该等：' + (t1 - t0));
-    need(t2 - t1 >= 70, '第二次没等间隔：' + (t2 - t1));
+    need(t1 - t0 < 30, '第一次不该等：' + (t1 - t0));
+    need(t2 - t1 >= 70, '第二次没等搜索间隔：' + (t2 - t1));
   });
 
-  await check('并发请求也串行，不会一起发', async function () {
+  await check('写请求按写间隔排队，比搜索快', async function () {
+    clear();
     const t0 = Date.now();
-    await Promise.all([queue.wait(), queue.wait(), queue.wait()]);
+    await queue.wait('write');
+    await queue.wait('write');
     const ms = Date.now() - t0;
-    need(ms >= 140, '三个并发没串行：' + ms);
+    need(ms >= 25 && ms < 70, '写间隔不对：' + ms);
   });
 
-  await check('状态里能看到间隔和下一次时间', function () {
+  await check('并发请求也串行', async function () {
+    clear();
+    const t0 = Date.now();
+    await Promise.all([queue.wait('write'), queue.wait('write'), queue.wait('write')]);
+    const ms = Date.now() - t0;
+    need(ms >= 55, '三个并发没串行：' + ms);
+  });
+
+  await check('状态里能看到两种间隔', function () {
     const st = queue.status();
-    need(st.gapMs === 80, 'gap 不对：' + st.gapMs);
+    need(st.searchGapMs === 80 && st.writeGapMs === 30, '间隔不对：' + JSON.stringify(st));
     need(st.nextAt > Date.now(), 'nextAt 没设置：' + JSON.stringify(st));
   });
 
