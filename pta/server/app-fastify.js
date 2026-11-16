@@ -123,11 +123,25 @@ async function build() {
 
   app.get('/api/health', async () => ({ ok: true, data: { version: VERSION, uptime: Math.round(process.uptime()), db: 'sqlite', counts: counts() } }));
 
+  /* 外部触发：带 token 才能跑调度；没配 PTA_HOOK_TOKEN 就完全关闭 */
+  app.post('/api/hooks/run', async (req, reply) => {
+    const token = String(process.env.PTA_HOOK_TOKEN || '').trim();
+    if (!token) return bad(reply, 'HOOK_DISABLED', '没有配置 PTA_HOOK_TOKEN，外部触发关闭', 404);
+    const got = String((req.headers && (req.headers['x-hook-token'] || req.headers['x-api-token'])) || (req.body && req.body.token) || '').trim();
+    const a = Buffer.from(got), b = Buffer.from(token);
+    if (!a.length || a.length !== b.length || !crypto.timingSafeEqual(a, b)) return bad(reply, 'UNAUTHORIZED', 'token 不对', 401);
+    const body = req.body || {};
+    const r = await ctx.scheduler.runNow({ steps: Array.isArray(body.steps) ? body.steps : null });
+    if (!r.ok) return bad(reply, 'SCHEDULER_BUSY', r.error, 409);
+    return ok(reply, { steps: r.steps, stepsFilter: Array.isArray(body.steps) ? body.steps : null });
+  });
+
+
   /* 之后的接口都要求登录 */
   app.addHook('preHandler', async (req, reply) => {
     const p = req.raw.url.split('?')[0];
     if (!p.startsWith('/api/')) return;
-    if (p === '/api/health' || p === '/api/login') return;
+    if (p === '/api/health' || p === '/api/login' || p === '/api/hooks/run') return;
     if (!sessionOk(req)) return bad(reply, 'UNAUTHORIZED', '需要登录', 401);
   });
 
@@ -199,7 +213,7 @@ async function build() {
     });
   }
 
-  /* ---- 统计总览 ---- */
+  /* ---- 统计总览：队列/词条/发布/失败原因/站点/抓取 ---- */
   app.get('/api/stats/overview', async () => {
     const q = {}, c = {};
     all('SELECT status, COUNT(*) AS n FROM queue GROUP BY status').forEach(function (r) { q[r.status] = r.n; });
@@ -207,11 +221,88 @@ async function build() {
     const dls = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data) || {}; });
     const free = dls.reduce(function (a, d) { return a + Number((d.lastProbe && d.lastProbe.freeSpace) || 0); }, 0);
     const online = dls.filter(function (d) { return d.lastProbe && d.lastProbe.pass; }).length;
+
+    const sites = all('SELECT data FROM sites').map(function (r) { return jparse(r.data) || {}; });
+    let loginOk = 0, loginFail = 0;
+    try {
+      const st = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-status.json'), 'utf8')) || {};
+      Object.keys(st).forEach(function (h) { if (st[h] && st[h].pass === true) loginOk++; else if (st[h] && st[h].pass === false) loginFail++; });
+    } catch (e) { /* 没自检过就都算未知 */ }
+    const enabled = sites.filter(function (x) { return x.enabled !== false; }).length;
+    const paused = sites.filter(function (x) { return x.enabled === false && (x.pausedAt || x.pauseReason); }).length;
+
+    const today = new Date().toISOString().slice(0, 10);
+    let runsToday = 0, hostsToday = 0;
+    try {
+      const st = JSON.parse((one("SELECT v FROM meta WHERE k = 'crawl-state'") || {}).v || 'null') || {};
+      Object.keys(st).forEach(function (h) {
+        const rec = st[h] || {};
+        if (String(rec.day || '') === today) { runsToday += Number(rec.dayCount) || 0; hostsToday++; }
+      });
+    } catch (e) { /* 没抓过 */ }
+
+    const nowMs = Date.now();
+    const pubRows = all('SELECT data, created_at FROM published');
+    const bySite = {}, byDay = {};
+    let last7 = 0, last30 = 0;
+    for (let i = 13; i >= 0; i--) byDay[new Date(nowMs - i * 86400000).toISOString().slice(0, 10)] = 0;
+    pubRows.forEach(function (r) {
+      const p = jparse(r.data) || {};
+      const t = Date.parse(p.publishedAt || r.created_at || '') || 0;
+      if (t) {
+        if (nowMs - t <= 7 * 86400000) last7++;
+        if (nowMs - t <= 30 * 86400000) last30++;
+        const day = new Date(t).toISOString().slice(0, 10);
+        if (byDay[day] !== undefined) byDay[day]++;
+      }
+      let hosts = Object.keys(p.targetResults || {}).filter(function (h) { return (p.targetResults[h] || {}).publishedTorrent; });
+      if (!hosts.length) hosts = [String(p.targetSite || p.site || '')].filter(Boolean);
+      hosts.forEach(function (h) {
+        if (!bySite[h]) bySite[h] = { host: h, count: 0, lastAt: '' };
+        bySite[h].count++;
+        const at = p.publishedAt || r.created_at || '';
+        if (at > bySite[h].lastAt) bySite[h].lastAt = at;
+      });
+    });
+
+    /* 失败原因聚合：终审失败、目标站提交失败都算，同一句只留前 80 字 */
+    const reasons = {};
+    function addReason(msg) {
+      const m = String(msg || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (m) reasons[m] = (reasons[m] || 0) + 1;
+    }
+    let failedItems = 0;
+    all('SELECT status, data FROM queue').forEach(function (r) {
+      const d = jparse(r.data) || {};
+      if (r.status === 'failed' || d.stage === 'failed') {
+        failedItems++;
+        addReason(d.pubMsg || d.stageLastError);
+      }
+      const trs = d.targetResults || {};
+      Object.keys(trs).forEach(function (h) {
+        const tr = trs[h] || {};
+        if (tr.stage === 'failed' || (tr.error && tr.stage !== 'skipped')) addReason(tr.error);
+      });
+    });
+
     return ok({
-      queue: { counts: q }, catalog: { total: Object.keys(c).reduce(function (a, k) { return a + c[k]; }, 0), byStatus: c },
-      library: { total: 0 }, downloaders: { total: dls.length, online: online, freeSpace: free },
-      sites: { loginOk: 0, loginFail: 0, loginUnknown: counts().sites, enabled: counts().sites },
-      crawl: { runsToday: 0, hostsToday: 0 }
+      generatedAt: new Date().toISOString(),
+      queue: { total: Object.keys(q).reduce(function (a, k) { return a + q[k]; }, 0), counts: q },
+      catalog: { total: Object.keys(c).reduce(function (a, k) { return a + c[k]; }, 0), byStatus: c },
+      library: { total: 0 },
+      published: {
+        total: pubRows.length, last7d: last7, last30d: last30,
+        bySite: Object.keys(bySite).map(function (h) { return bySite[h]; }).sort(function (a, b) { return b.count - a.count; }),
+        byDay: Object.keys(byDay).sort().map(function (d) { return { day: d, count: byDay[d] }; })
+      },
+      failures: {
+        items: failedItems,
+        reasons: Object.keys(reasons).map(function (k) { return { reason: k, count: reasons[k] }; })
+          .sort(function (a, b) { return b.count - a.count; }).slice(0, 8)
+      },
+      downloaders: { total: dls.length, online: online, freeSpace: free },
+      sites: { total: sites.length, enabled: enabled, paused: paused, loginOk: loginOk, loginFail: loginFail, loginUnknown: Math.max(0, sites.length - loginOk - loginFail) },
+      crawl: { runsToday: runsToday, hostsToday: hostsToday }
     });
   });
 

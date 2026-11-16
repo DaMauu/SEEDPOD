@@ -72,7 +72,8 @@ async function main() {
       PTA_USER: USER, PTA_PASS: PASS,
       PTA_SITE_PACK_KEY: '',
       PTA_IMAGE_HOST_URL: 'http://127.0.0.1:' + imagePort + '/upload',
-      PTA_IMAGE_HOST_FIELD: 'file'
+      PTA_IMAGE_HOST_FIELD: 'file',
+      PTA_HOOK_TOKEN: 'check-token'
     }),
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -528,6 +529,29 @@ async function main() {
     need(r.status === 404, '状态码是 ' + r.status);
     const j = await r.json();
     need(j.ok === false && j.error && j.error.code === 'NOT_FOUND', '不是标准错误体');
+  });
+
+  await check('统计总览有发布/失败/站点字段', async () => {
+    const r = await fetchA(BASE + '/api/stats/overview');
+    const j = await r.json();
+    need(j.ok && j.data, '统计失败');
+    const d = j.data;
+    need(d.published && Array.isArray(d.published.bySite), '没有 bySite');
+    need(d.published.byDay.length === 14, 'byDay 应为 14 天：' + d.published.byDay.length);
+    need(d.failures && Array.isArray(d.failures.reasons), '没有失败原因');
+    need(typeof d.sites.enabled === 'number' && typeof d.crawl.runsToday === 'number', '站点/抓取字段缺失');
+    need(typeof d.published.last7d === 'number', '没有近 7 天发布数');
+  });
+
+  await check('外部触发无 token 被拒', async () => {
+    const no = await fetch(BASE + '/api/hooks/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    need(no.status === 401, '没 token 应 401：' + no.status);
+    const bad = await fetch(BASE + '/api/hooks/run', { method: 'POST', headers: { 'content-type': 'application/json', 'x-hook-token': 'wrong' }, body: '{}' });
+    need(bad.status === 401, '错 token 应 401：' + bad.status);
+    const good = await fetch(BASE + '/api/hooks/run', { method: 'POST', headers: { 'content-type': 'application/json', 'x-hook-token': 'check-token' }, body: JSON.stringify({ steps: ['crawl'] }) });
+    const gj = await good.json();
+    need(good.status === 200 && gj.ok, '带 token 没跑起来：' + good.status + ' ' + JSON.stringify(gj));
+    need(gj.data.steps.crawl && gj.data.steps.crawl.skipped === 'realCrawl off', '步骤过滤没生效：' + JSON.stringify(gj.data.steps.crawl));
   });
 
   await check('退出登录后会话失效', async () => {

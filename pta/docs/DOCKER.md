@@ -43,6 +43,13 @@ docker compose up -d --build
     PTA_SECRET_FILE: /run/secrets/seedpod
   ```
 - HTTPS 访问时设 `PTA_COOKIE_SECURE=1`。
+- 外部触发（可选）：设 `PTA_HOOK_TOKEN`，然后
+  ```bash
+  curl -s -X POST http://127.0.0.1:8080/api/hooks/run \
+    -H "x-hook-token: $PTA_HOOK_TOKEN" -H 'content-type: application/json' \
+    -d '{"steps":["crawl","screen","dedupe","review"]}'
+  ```
+  不设这个变量时接口返回 404，等于关闭。
 
 ## 验证
 
