@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.320 · 2026-11-16
+
+### 修发布取种 guard 的同类作用域错误
+- fetchSourceTorrent 里判断来源站停用也用了不存在的 jparse，真发布直接 UPLOAD_EXCEPTION。
+- 统一改成局部 JSON.parse；target.js 已无 jparse 引用。
+
 ## v0.7.319 · 2026-11-16
 
 ### 修目标站列表 500

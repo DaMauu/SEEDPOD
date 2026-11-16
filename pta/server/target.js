@@ -320,7 +320,8 @@ function makeTarget(ctx) {
     /* 来源站停用就不抓，避免对停用站发真实请求 */
     if (item.site) {
       const row = one('SELECT data FROM sites WHERE host = ?', String(item.site).toLowerCase());
-      const sd = row ? (jparse(row.data) || {}) : null;
+      let sd = null;
+      if (row) { try { sd = JSON.parse(row.data) || {}; } catch (e) { sd = {}; } }
       if (sd && sd.enabled === false) return { err: '来源站已停用：' + item.site };
     }
     const c = cookieOf(item.site);
