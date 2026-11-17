@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.434 · 2026-11-18
+
+### G15 第 36 轮：类型/筛选与准备 composable
+- 类型/筛选保存、`prepareNext` 抽到 `composables/useCrawlFetchFilters.js`。
+- Crawl.vue 257→204 行；1280/390 快照一致，UI 基线已更新；准备按钮实测通过。
+
 ## v0.7.433 · 2026-11-18
 
 ### G15 报告更新
