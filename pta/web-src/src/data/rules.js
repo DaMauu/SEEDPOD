@@ -1,3 +1,5 @@
+import registry from '../../shared/rule-registry.json'
+
 /* 面板的规则表数据：纯数据、无逻辑。改这里不影响渲染代码。
    todo:true 表示服务端未接，界面禁用并标「未接」。 */
 (function () {
@@ -397,3 +399,20 @@
 ]
 };
 })();
+
+/* 规则 key/类型/默认值以共享 JSON 为准；UI 只保留标签、选项和渲染类型。 */
+;(function applyRuleRegistry() {
+  const byKey = {}
+  ;(registry.rules || []).forEach(function (r) { if (r && r.key) byKey[r.key] = r })
+  Object.keys(window.PTA_RULES || {}).forEach(function (k) {
+    (window.PTA_RULES[k] || []).forEach(function (g) {
+      (g.rows || []).forEach(function (r) {
+        const meta = byKey[r.t]
+        if (!meta) return
+        if (meta.type === 'switch' && r.type === 'switch') r.on = meta.default !== false
+        if (meta.type !== 'switch' && r.v === undefined) r.v = meta.default
+      })
+    })
+  })
+  window.PTA_RULE_REGISTRY = registry
+})()

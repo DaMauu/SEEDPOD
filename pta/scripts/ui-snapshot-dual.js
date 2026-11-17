@@ -180,7 +180,7 @@ function compareDirs(a, b) {
   try {
     await Promise.all([waitUp(b.base), waitUp(a.base)]);
     const { chromium } = loadPlaywright();
-    const args = ['--no-sandbox', '--force-color-profile=srgb', '--disable-gpu'];
+    const args = ['--no-sandbox', '--force-color-profile=srgb', '--disable-gpu', '--hide-scrollbars'];
     try { browser = await chromium.launch({ headless: true, channel: 'chromium', args: args }); }
     catch (e) { browser = await chromium.launch({ headless: true, args: args }); }
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });

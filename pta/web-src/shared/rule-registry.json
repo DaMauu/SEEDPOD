@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "key": "副标题拼贴",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "meta-fill.js",
+        "release.js",
+        "scheduler.js"
+      ]
+    },
+    {
+      "key": "简介回填",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "meta-fill.js",
+        "scheduler.js"
+      ]
+    },
+    {
+      "key": "标题原样回填",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "release.js",
+        "scheduler.js"
+      ]
+    },
+    {
+      "key": "必须有简介",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "screen.js",
+        "scheduler.js"
+      ]
+    },
+    {
+      "key": "必须有副标题",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "scheduler.js"
+      ]
+    },
+    {
+      "key": "BDInfo",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "scheduler.js",
+        "target-upload.js"
+      ]
+    },
+    {
+      "key": "截图至少几张",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "scheduler.js",
+        "target-upload.js"
+      ]
+    },
+    {
+      "key": "年份必须一致",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "scheduler.js"
+      ]
+    },
+    {
+      "key": "自动勾选标签",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "target-plan.js"
+      ]
+    },
+    {
+      "key": "默认匿名",
+      "type": "switch",
+      "default": false,
+      "readers": [
+        "target-plan.js"
+      ]
+    },
+    {
+      "key": "上传前清洗 tracker",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "target-upload.js",
+        "target-plan.js"
+      ]
+    },
+    {
+      "key": "发布后抓权威种子",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "target-upload.js",
+        "target-plan.js"
+      ]
+    },
+    {
+      "key": "辅种跳过校验",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "crossseed.js",
+        "target-plan.js"
+      ]
+    },
+    {
+      "key": "qB 自动种子管理",
+      "type": "switch",
+      "default": false,
+      "readers": [
+        "publish.js"
+      ]
+    },
+    {
+      "key": "图片上传重试",
+      "type": "number",
+      "default": 2,
+      "readers": [
+        "routes-publish.js"
+      ]
+    },
+    {
+      "key": "简介图片",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "release.js",
+        "target-upload.js"
+      ]
+    },
+    {
+      "key": "自动附加 MediaInfo",
+      "type": "switch",
+      "default": true,
+      "readers": [
+        "release.js"
+      ]
+    },
+    {
+      "key": "原盘判定关键词",
+      "type": "text",
+      "default": "原盘|Full Disc|BDMV|ISO",
+      "readers": [
+        "target-service.js"
+      ]
+    }
+  ],
+  "aliases": {
+    "qB自动种子管理": "qB 自动种子管理",
+    "默认匿名发布": "默认匿名"
+  }
+}

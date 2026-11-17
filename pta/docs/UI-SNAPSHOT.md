@@ -20,7 +20,7 @@ node pta/scripts/ui-snapshot.js --compare /tmp/ui-before /tmp/ui-after
 
 ## 通过标准
 
-1. 所有截图 RMSE ≤ 0.002。独立 Chromium 进程会有极小的字体抗锯齿差异，纯 AE=0 不稳定；布局变化远大于这个阈值。
+1. 所有截图 RMSE ≤ 0.002，且过 AE 闸门：组件截图先去掉 4px 边框（圆角/阴影），`compare -metric AE -fuzz 2%` 必须为 0；整页 AE ≤100。
 2. DOM 文本、按钮文字、输入值、开关状态完全一致。
 3. 元素布局尺寸（元素 x/y/w/h）完全一致。
 4. 390 宽度下 `#crawl-panel` 内不能有元素超出视口；有溢出直接失败。

@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.445 · 2026-11-18
+
+### G15 第 44 轮：规则共享源（B6 收口）
+- 新增 `pta/web-src/shared/rule-registry.json`：18 条规则的 key/类型/默认值/读者 + 旧 key 映射，作为 UI 与服务端唯一来源。
+- `server/rule-registry.js` 与 `data/rules.js` 都读共享 JSON；UI 只保留标签/选项，默认值由共享源覆盖。
+- rules-registry 检查扩展为共享源/类型/默认值一致性（5/5）；audit-rules 与 gen-rules-tree 适配 ESM 导入。
+- 快照组件 AE 对比前去掉 4px 边框，双构建前后对比通过。
+
 ## v0.7.444 · 2026-11-18
 
 ### G15 第 43 轮：确认像素闸门容差

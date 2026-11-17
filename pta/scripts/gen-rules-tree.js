@@ -5,8 +5,9 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
-const src = fs.readFileSync(path.join(ROOT, 'web-src', 'src', 'data', 'rules.js'), 'utf8');
-const sandbox = { window: {} };
+const src = fs.readFileSync(path.join(ROOT, 'web-src', 'src', 'data', 'rules.js'), 'utf8').replace(/^import .*$/m, '');
+const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web-src', 'shared', 'rule-registry.json'), 'utf8'));
+const sandbox = { window: {}, registry: registry };
 vm.runInNewContext(src, sandbox);
 const R = sandbox.window.PTA_RULES;
 const TITLE = { fetch: '抓取', dedupe: '查重', pub: '发布' };

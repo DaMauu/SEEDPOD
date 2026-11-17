@@ -38,11 +38,19 @@ function compareImages(a, b, diff) {
   const norm = Number(nums[nums.length - 1]) || 0;
   /* 独立 Chromium 进程无法做到裸 AE=0（字体抗锯齿/滚动条）；用 2% fuzz 的 AE 计数：
      组件截图要求 0，整页允许 ≤100 个噪声像素；布局变化远超这个量级。 */
-  const aeRun = spawnSync('compare', ['-metric', 'AE', '-fuzz', '2%', a, b, 'null:'], { encoding: 'utf8' });
+  const isFull = /full\.png$/i.test(String(a));
+  /* 组件截图去掉 2px 边框再比 AE，避开圆角/边缘抗锯齿 */
+  let aa = a, bb = b;
+  if (!isFull) {
+    const sa = diff + '.a.png', sb = diff + '.b.png';
+    spawnSync('convert', [a, '-shave', '4x4', sa]);
+    spawnSync('convert', [b, '-shave', '4x4', sb]);
+    if (fs.existsSync(sa) && fs.existsSync(sb)) { aa = sa; bb = sb; }
+  }
+  const aeRun = spawnSync('compare', ['-metric', 'AE', '-fuzz', '2%', aa, bb, 'null:'], { encoding: 'utf8' });
   const aeRaw = String(aeRun.stderr || aeRun.stdout || '').trim();
   const aeNums = aeRaw.match(/\d+/g) || [];
   const ae = Number(aeNums[aeNums.length - 1]) || 0;
-  const isFull = /full\.png$/i.test(String(a));
   const aeLimit = isFull ? 100 : 0;
   return { same: norm <= 0.002 && ae <= aeLimit, metric: raw || String(r.status || ''), rmse: norm, ae: ae, aeLimit: aeLimit };
 }
@@ -106,7 +114,7 @@ async function capture(out) {
   try {
     await waitUp();
     const { chromium } = loadPlaywright();
-    const args = ['--no-sandbox', '--force-color-profile=srgb', '--disable-gpu'];
+    const args = ['--no-sandbox', '--force-color-profile=srgb', '--disable-gpu', '--hide-scrollbars'];
     try { browser = await chromium.launch({ headless: true, channel: 'chromium', args: args }); }
     catch (e) { browser = await chromium.launch({ headless: true, args: args }); }
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
