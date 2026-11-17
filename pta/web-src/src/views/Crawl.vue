@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { computed, h, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, h, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 import RuleControl from '../components/RuleControl.vue'
@@ -29,13 +29,14 @@ import CrawlCard from '../components/CrawlCard.vue'
 import ScreenDedupeCard from '../components/ScreenDedupeCard.vue'
 import PublishCard from '../components/PublishCard.vue'
 import SiteMapModal from '../components/SiteMapModal.vue'
-import { getJson } from '../utils/api'
+import { getJson, patchUser, putFlow } from '../utils/api'
 import { useCrawlPlan } from '../composables/useCrawlPlan'
 import { useCrawlScheduler } from '../composables/useCrawlScheduler'
 import { useCrawlFlow } from '../composables/useCrawlFlow'
 import { useCrawlSites } from '../composables/useCrawlSites'
 import { useCrawlFetchFilters } from '../composables/useCrawlFetchFilters'
 import { useRuleOrSpecial } from '../composables/useRuleOrSpecial'
+import { useCrawlBoot } from '../composables/useCrawlBoot'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -85,6 +86,7 @@ const { limits, sched, schedText, gates, loadSched, saveSched, toggleSched, setE
 const { loadFlow, saveFetch, saveScreen, savePub, toggleDetail } = useCrawlFlow({ rules: rules, rx: rx, limits: limits, detail: detail, autoDupe: autoDupe, busy: busy, toast: toast, getJson: getJson, putFlow: putFlow, patchUser: patchUser, saveTypes: saveTypes, saveFilters: saveFilters })
 const { plan, showPlan } = useCrawlPlan({ sourceHost: sourceHost, busy: busy, toast: toast })
 const { sites, siteStatus, siteCfg, targetOpen, targetQ, siteOptions, targetSite, targetOptions, loadSites, saveSource, pickTarget } = useCrawlSites({ getJson: getJson, patchUser: patchUser, toast: toast, reportError: reportError, loadTypes: loadTypes, loadSched: function () { return loadSched() }, sourceHost: sourceHost, targetHost: targetHost })
+useCrawlBoot({ sites: sites, gates: gates, loadSites: loadSites, loadGates: loadGates, loadFlow: loadFlow })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
   const cells = []
@@ -134,18 +136,6 @@ function testRx() {
   rx.outClass = deny ? 'rx-warn' : 'rx-ok'
 }
 
-async function patchUser(body) {
-  return getJson('/api/config/user', {
-    method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
-  })
-}
-async function putFlow(sets, rxBody) {
-  const body = { sets }
-  if (rxBody) body.rx = rxBody
-  return getJson('/api/flow', {
-    method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
-  })
-}
 
 // 页面独立：需要 siteStatus/siteCfg 驱动目标站列表，不能和 Queue 的简化版共用。
 
@@ -153,19 +143,6 @@ async function putFlow(sets, rxBody) {
 const RuleOrSpecial = useRuleOrSpecial({ specialOf: specialOf, targetSite: targetSite, targetQ: targetQ, targetOpen: targetOpen, tpl: tpl, tplPreview: tplPreview, rx: rx, testRx: testRx })
 
 
-async function ensure() {
-  if (!viewVisible('crawl') || !loggedIn()) return
-  if (!sites.value.length) await loadSites()
-  if (!gates.loaded) await loadGates()
-  loadFlow()
-}
-onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  ensure()
-})
-onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
-})
 </script>
 
 <style scoped src="./Crawl.css"></style>

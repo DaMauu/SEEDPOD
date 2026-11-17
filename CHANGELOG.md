@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.441 · 2026-11-18
+
+### G15 第 41 轮：Crawl 启动/API composable
+- `patchUser`/`putFlow` 移到 `utils/api.js`；页面启动与 hashchange 补齐逻辑移到 `composables/useCrawlBoot.js`。
+- Crawl.vue 173→150 行；1280/390 快照一致，切页回来仍能加载目标站与发布分组。
+
 ## v0.7.440 · 2026-11-18
 
 ### G15 第 40 轮：日志页失败队列面板
