@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.433 · 2026-11-18
+
+### G15 报告更新
+- `G15-REPORT.md` 更新到第 35 轮：Crawl.vue 257 行，四个 composable 已接。
+- 未完成项收敛为：类型/筛选/prepareNext/RuleOrSpecial 仍在页面内。
+
 ## v0.7.432 · 2026-11-18
 
 ### G15 第 35 轮：站点选择 composable
