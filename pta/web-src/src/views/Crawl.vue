@@ -1001,6 +1001,7 @@ onUnmounted(() => {
 }
 .pub-card .flow-group .set-fields .set-field.pair { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 2px 0; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item { width: auto; flex: 0 0 auto; }
+.pub-card .flow-group .set-fields .set-field.pair .pair-item .pair-lbl { white-space: nowrap; flex: 0 0 auto; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow { flex: 0 1 300px; min-width: 190px; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow .ctl { width: 100%; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow .ctl > .input { width: 100%; max-width: none; }
