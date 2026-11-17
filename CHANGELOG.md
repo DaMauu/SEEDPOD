@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.414 · 2026-11-18
+
+### G15 第 16 轮：拆 target-plan
+- 标签、模板变量和上传计划移到 `server/target-plan.js`，通过工厂注入 resolve/ctx/one。
+- 原导出不变；target.js 742→569 行，target 检查 29/29。
+
 ## v0.7.413 · 2026-11-18
 
 ### G15 第 15 轮：拆 target-discovery
