@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.407 · 2026-11-18
+
+### G15 第 9 轮：拆 CrawlCard
+- 抓取卡从 Crawl.vue 拆到 `components/CrawlCard.vue`，props/emits 保持原有行为。
+- 抓取计划相关样式随组件迁移；Crawl.vue 1036→976 行。
+- 1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.406 · 2026-11-18
 
 ### G15 第 8 轮：拆 TargetPickerModal

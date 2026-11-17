@@ -2,7 +2,7 @@
 
 最后更新：2026-11-18 08:50
 当前 goal：**G15 架构减重与失败路径**
-当前 goal 进度：**9/50 轮（Crawl 拆分中）**
+当前 goal 进度：**10/50 轮（Crawl 拆分中）**
 运行状态：**全部站点停用 · 调度关 · 真发布关 · 队列 0**
 总进度：**12/16 完成；含进行中折算约 83%**
 
@@ -31,7 +31,7 @@
 | G12 | 全自动流水线 | 60% | 抓取→送审→终审→发布→辅种已串；失败恢复待压测 |
 | G13 | 站点覆盖与验证 | 70% | 覆盖面板 + 批量探测 + 3 站真实证据；2 站 NO_FORM 待查 |
 | G14 | Python sidecar | 0% | 可选，不阻塞 |
-| G15 | 架构减重与失败路径 | 18% | 第 0–8 轮完成；Crawl.vue 1036 行；下一轮 CrawlCard |
+| G15 | 架构减重与失败路径 | 20% | 第 0–9 轮完成；Crawl.vue 976 行；下一轮 ScreenDedupeCard |
 
 ## 当前阻塞
 
@@ -213,7 +213,7 @@
 🛠 正在开发：G10 多目标发布 · 99% · 总进度约 86%
 ```
 
-## G15 轮次（9/50）
+## G15 轮次（10/50）
 
 - 第 0 轮：B0 UI 快照工具、备份/恢复演练、390 调度条溢出修复。
 - 第 1 轮：scheduler 阶段级 catch、steps.errors/partial、通知带 phase/code；failpoint 检查 1/1。
@@ -224,4 +224,5 @@
 - 第 6 轮：A1 拆出 FlowGates.vue；Crawl.vue 1130→1106 行。
 - 第 7 轮：A1 拆出 SchedulerBar.vue；Crawl.vue 1106→1079 行；快照工具补目标站加载等待。
 - 第 8 轮：A1 拆出 TargetPickerModal.vue；Crawl.vue 1079→1036 行；补回 `#crawl-panel{display:contents}`；快照一致。
-- 下一步：CrawlCard。
+- 第 9 轮：A1 拆出 CrawlCard.vue；Crawl.vue 1036→976 行；快照一致。
+- 下一步：ScreenDedupeCard。

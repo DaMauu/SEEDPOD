@@ -1,7 +1,8 @@
 {
-  "at": "2026-11-17T16:00:08.715Z",
+  "at": "2026-11-17T16:04:01.101Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
+    "components/CrawlCard.vue": "3ee4bb66d7b6489a",
     "components/FlowGates.vue": "bd44bbdbb5e08c8b",
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "85945aa6aac1a331",
@@ -26,7 +27,7 @@
     "styles/11-dock.css": "46525a594c44e2e1",
     "styles/index.css": "8f90d9215d33427a",
     "views/Changelog.vue": "78ae677dd2bd919a",
-    "views/Crawl.vue": "3eb42b3bddbee8e1",
+    "views/Crawl.vue": "ef52b74370496cd1",
     "views/Dashboard.vue": "7a0a65f465bd04cf",
     "views/Logs.vue": "511a6ba8f10696e2",
     "views/Nodes.vue": "97af3bf0807332be",
