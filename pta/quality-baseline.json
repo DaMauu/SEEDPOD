@@ -6,31 +6,31 @@
   "dimensions": {
     "code": {
       "score": 78,
-      "rating": "平衡"
+      "rating": "B"
     },
     "function": {
       "score": 86,
-      "rating": "优质"
+      "rating": "A"
     },
     "development": {
       "score": 100,
-      "rating": "优质"
+      "rating": "SSS"
     },
     "logic": {
       "score": 76,
-      "rating": "平衡"
+      "rating": "B"
     },
     "simplicity": {
       "score": 80,
-      "rating": "平衡"
+      "rating": "A"
     },
     "reuse": {
       "score": 70,
-      "rating": "平衡"
+      "rating": "B"
     },
     "quality": {
       "score": 99,
-      "rating": "优质"
+      "rating": "SSS"
     }
   }
 }

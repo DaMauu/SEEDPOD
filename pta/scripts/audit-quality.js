@@ -71,10 +71,14 @@ function read(p) { try { return fs.readFileSync(p, 'utf8'); } catch (e) { return
 function exists(p) { try { return fs.statSync(p).isFile(); } catch (e) { return false; } }
 function clamp(n) { return Math.max(0, Math.min(100, Math.round(n))); }
 function rate(score) {
-  if (score >= 85) return '优质';
-  if (score >= 70) return '平衡';
-  if (score >= 55) return '勉强';
-  return '差';
+  /* D 最差，SSS 最好；阈值集中在这里，基线评级也按它重算。 */
+  if (score >= 97) return 'SSS';
+  if (score >= 93) return 'SS';
+  if (score >= 88) return 'S';
+  if (score >= 80) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 60) return 'C';
+  return 'D';
 }
 function walk(dir, out, filter) {
   let list = [];
@@ -270,8 +274,8 @@ function main() {
     }
     if (base.overall && s.overall < base.overall - 2) { regressed = true; console.error('回退：总体 ' + base.overall + ' → ' + s.overall); }
   }
-  const bad = rows.some(r => r.rating === '差') || rate(s.overall) === '差';
-  const strictBad = STRICT && rows.some(r => r.rating === '勉强' || r.rating === '差');
+  const bad = rows.some(r => r.rating === 'D') || rate(s.overall) === 'D';
+  const strictBad = STRICT && rows.some(r => r.rating === 'C' || r.rating === 'D');
   if (FAIL && (regressed || (!base && bad) || strictBad)) process.exit(1);
 }
 main();
