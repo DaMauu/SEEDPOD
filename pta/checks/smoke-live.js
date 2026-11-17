@@ -312,7 +312,7 @@ async function main() {
     const pubUi = await page.evaluate(() => {
       const card = document.querySelector('.pub-card');
       const group = card && card.querySelector('.flow-group');
-      const field = card && card.querySelector('.flow-group .set-field');
+      const field = card && card.querySelector('.flow-group .set-field.pair');
       if (!card || !group || !field) return null;
       const gs = getComputedStyle(group);
       const fs = getComputedStyle(field);
@@ -322,14 +322,14 @@ async function main() {
         border: gs.borderTopWidth,
         borderBottom: fs.borderBottomWidth,
         display: fs.display,
-        cols: fs.gridTemplateColumns,
+        items: field.children.length,
         target: (card.querySelector('#tp-name') || {}).textContent || ''
       };
     });
     need(pubUi && pubUi.groups >= 4, '发布分组数量不对：' + JSON.stringify(pubUi));
     need(pubUi.bg === 'rgba(0, 0, 0, 0)' && pubUi.border === '0px', '发布分组不该有卡片：' + JSON.stringify(pubUi));
     need(pubUi.borderBottom === '0px', '发布字段底下不该有横线：' + JSON.stringify(pubUi));
-    need(pubUi.display === 'grid' && pubUi.cols.split(' ').length === 2, '发布字段不是左右两列：' + JSON.stringify(pubUi));
+    need(pubUi.display === 'flex' && pubUi.items >= 5, '发布字段没有做成一行：' + JSON.stringify(pubUi));
     need(/未选择目标站/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
   });
 

@@ -302,15 +302,15 @@
     "rows": [
       {
         "t": "发布到",
+        "same": "publish-all",
         "type": "custom",
-        "same": "tgt",
         "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
         "hint": "所有库内资源都归到这个站",
         "label": "发布到哪个站"
       },
       {
         "t": "自动勾选标签",
-        "same": "publish-flags",
+        "same": "publish-all",
         "type": "switch",
         "on": true,
         "hint": "按来源标签勾国语/中字等；禁转/官方不勾",
@@ -318,7 +318,7 @@
       },
       {
         "t": "默认匿名",
-        "same": "publish-flags",
+        "same": "publish-all",
         "type": "switch",
         "on": false,
         "hint": "新条目没单独设置时按这个发",
@@ -378,6 +378,7 @@
     "rows": [
       {
         "t": "图片上传重试",
+        "same": "fail-notify",
         "type": "text",
         "v": "2 次",
         "inline": true,
@@ -385,6 +386,7 @@
       },
       {
         "t": "连续失败几次暂停该站",
+        "same": "fail-notify",
         "type": "text",
         "v": "5",
         "inline": true,
