@@ -36,8 +36,15 @@ function compareImages(a, b, diff) {
   const raw = String(r.stderr || '').trim().split('\n')[0];
   const nums = raw.match(/[\d.eE+-]+/g) || [];
   const norm = Number(nums[nums.length - 1]) || 0;
-  /* 独立 Chromium 进程会有极小的字体抗锯齿差异；布局变化远大于 0.002。 */
-  return { same: norm <= 0.002, metric: raw || String(r.status || ''), rmse: norm };
+  /* 独立 Chromium 进程无法做到裸 AE=0（字体抗锯齿/滚动条）；用 2% fuzz 的 AE 计数：
+     组件截图要求 0，整页允许 ≤100 个噪声像素；布局变化远超这个量级。 */
+  const aeRun = spawnSync('compare', ['-metric', 'AE', '-fuzz', '2%', a, b, 'null:'], { encoding: 'utf8' });
+  const aeRaw = String(aeRun.stderr || aeRun.stdout || '').trim();
+  const aeNums = aeRaw.match(/\d+/g) || [];
+  const ae = Number(aeNums[aeNums.length - 1]) || 0;
+  const isFull = /full\.png$/i.test(String(a));
+  const aeLimit = isFull ? 100 : 0;
+  return { same: norm <= 0.002 && ae <= aeLimit, metric: raw || String(r.status || ''), rmse: norm, ae: ae, aeLimit: aeLimit };
 }
 function readJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return null; } }
 function seedData(dir) {
@@ -111,7 +118,7 @@ async function capture(out) {
       return e && e.textContent.trim() && e.textContent.trim() !== '未选择站点';
     }, null, { timeout: 8000 }).catch(function () {});
     await page.evaluate(function () { return document.fonts && document.fonts.ready; });
-    await page.addStyleTag({ content: '.dock{display:none!important}.dev-foot{visibility:hidden!important}*{animation:none!important;transition:none!important}body{overflow:visible!important}.view[data-view="crawl"],#crawl-panel,.drawers{height:auto!important;min-height:0!important;overflow:visible!important}' });
+    await page.addStyleTag({ content: '.dock{display:none!important}.dev-foot{visibility:hidden!important}*{animation:none!important;transition:none!important}body{overflow:visible!important}.view[data-view="crawl"],#crawl-panel,.drawers{height:auto!important;min-height:0!important;overflow:visible!important}*{text-rendering:geometricPrecision!important;-webkit-font-smoothing:antialiased!important}html,body{scrollbar-width:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}' });
     await page.waitForTimeout(800);
     const shots = [
       ['crawl-card', '.crawl-card'],
@@ -187,7 +194,7 @@ function compare(a, b) {
     const bp = path.join(b, r);
     if (!fs.existsSync(bp)) { console.log('MISSING ' + r); bad++; return; }
     const d = compareImages(path.join(a, r), bp, path.join(out, r.replace(/[\\/]/g, '_')));
-    if (!d.same) { console.log('DIFF ' + r + ' rmse=' + d.rmse + ' (' + d.metric + ')'); bad++; }
+    if (!d.same) { console.log('DIFF ' + r + ' rmse=' + d.rmse + ' ae=' + d.ae + ' (limit ' + d.aeLimit + ')'); bad++; }
   });
   const da = readJson(path.join(a, '1280', 'dom.json'));
   const db = readJson(path.join(b, '1280', 'dom.json'));
@@ -198,7 +205,7 @@ function compare(a, b) {
   const ma = readJson(path.join(a, '390', 'dom.json'));
   const mb = readJson(path.join(b, '390', 'dom.json'));
   if (ma && mb && JSON.stringify(ma) !== JSON.stringify(mb)) { console.log('DOM 差异（390）'); bad++; fs.writeFileSync(path.join(out, 'dom-390.diff'), JSON.stringify(ma) + '\n---\n' + JSON.stringify(mb)); }
-  console.log(bad ? ('对比失败：' + bad + ' 项，diff 在 ' + out) : '对比通过：RMSE ≤0.002，DOM 文本/布局尺寸一致');
+  console.log(bad ? ('对比失败：' + bad + ' 项，diff 在 ' + out) : '对比通过：RMSE ≤0.002 + AE 闸门，DOM 文本/布局尺寸一致');
   process.exit(bad ? 1 : 0);
 }
 (async function () {
