@@ -131,12 +131,66 @@ function splitList(v) {
   return String(v == null ? '' : v).split(/\s*\/\s*/).map(function (x) { return x.trim(); }).filter(Boolean);
 }
 
+/* /api.php 对精确 ID 常直接回 BBCode 文本；这里把常用字段拆出来，原文保留在 bbcode */
+function parseDouyingBbcode(text) {
+  const raw = String(text || '').trim();
+  const lines = raw.split(/\r?\n/);
+  const reOf = function (label) { return new RegExp('^◎\\s*' + label + '\\s*[\\s　]*(.*)$'); };
+  const get = function (label) {
+    const re = reOf(label);
+    let start = -1, first = '';
+    for (let i = 0; i < lines.length; i++) {
+      const m = re.exec(lines[i].trim());
+      if (m) { start = i; first = m[1].trim(); break; }
+    }
+    if (start < 0) return '';
+    const vals = first ? [first] : [];
+    for (let j = start + 1; j < lines.length; j++) {
+      const l = lines[j].trim();
+      if (!l) continue;
+      if (/^◎/.test(l)) break;
+      vals.push(l);
+    }
+    return vals.join(' / ');
+  };
+  const block = function (startLabel, endLabel) {
+    const m = new RegExp('◎\\s*' + startLabel).exec(raw);
+    if (!m) return '';
+    let rest = raw.slice(m.index + m[0].length).replace(/^[\s　]+/, '');
+    if (endLabel) {
+      const e = new RegExp('◎\\s*' + endLabel).exec(rest);
+      if (e) rest = rest.slice(0, e.index);
+    }
+    return rest.trim();
+  };
+  const cnTitle = get('片\\s*名');
+  const aka = splitList(get('译\\s*名'));
+  const names = [cnTitle].concat(aka).filter(Boolean);
+  const title = names.filter(function (x) { return /[\u4e00-\u9fa5]/.test(x); })[0] || cnTitle || aka[0] || '';
+  const cast = splitList(get('主\\s*演'));
+  const directors = splitList(get('导\\s*演'));
+  const imdb = /(tt\d{5,})/i.exec(raw);
+  return {
+    source: 'douying', id: '', title: title, originalTitle: cnTitle && aka.length ? aka[0] : get('片\\s*名'),
+    year: Number(get('年\\s*代')) || null, overview: block('简\\s*介', '获\\s*奖\\s*情\\s*况'),
+    poster: (/\[img\]([^\[]+)\[\/img\]/i.exec(raw) || [])[1] || '',
+    aliases: aka.filter(function (x) { return x !== title; }), subtitle: [title].concat(aka.slice(0, 2)).filter(Boolean).join(' / ').slice(0, 200),
+    directors: directors, writers: splitList(get('编\\s*剧')), cast: cast,
+    genre: splitList(get('类\\s*别')), region: get('产\\s*地'), language: get('语\\s*言'),
+    releaseDate: get('上映日期'), runtime: get('片\\s*长'),
+    imdbId: imdb ? imdb[1] : '', imdbRating: get('IMDb评分'), doubanRating: get('豆瓣评分'),
+    awards: splitList(block('获\\s*奖\\s*情\\s*况', '')),
+    bbcode: raw
+  };
+}
+
 async function douying(title, year) {
   const raw = [title, year].filter(Boolean).join(' ');
   const text = await postForm(douyingBase() + '/api.php', { url: raw }, 20000);
   if (/^(错误|获取.*失败)/.test(text)) throw new Error(text.slice(0, 80));
   let j = null;
-  try { j = JSON.parse(text); } catch (e) { throw new Error('豆影返回不是 JSON'); }
+  try { j = JSON.parse(text); } catch (e) { j = null; }
+  if (!j) return parseDouyingBbcode(text);
   const rows = (j && Array.isArray(j.results) ? j.results : []).filter(function (x) {
     return x && x.success !== false && (x.chinese_title || x.title);
   });
@@ -177,7 +231,7 @@ function douyingBbcode(d) {
   const lines = [];
   if (d.poster) lines.push('[img]' + d.poster + '[/img]', '');
   const push = function (k, v) { if (v) lines.push('◎' + k + '　' + v); };
-  push('译　名', (d.aliases || []).slice(0, 8).join(' / '));
+  push('译　名', (d.aliases || []).join(' / '));
   push('片　名', d.originalTitle || '');
   push('年　代', d.year || '');
   push('产　地', d.region);
@@ -189,7 +243,7 @@ function douyingBbcode(d) {
   push('片　长', d.runtime);
   push('导　演', (d.directors || []).join(' / '));
   push('编　剧', (d.writers || []).join(' / '));
-  push('主　演', (d.cast || []).slice(0, 8).join(' / '));
+  push('主　演', (d.cast || []).join(' / '));
   if (d.overview) lines.push('', '◎简　介', '', d.overview);
   if ((d.awards || []).length) {
     lines.push('', '◎获奖情况', '');
@@ -271,7 +325,7 @@ async function fetchMeta(opts) {
     if (provider === 'douban') r = await doubanSearch(title, b.year);
     else if (provider === 'douying') {
       const dy = await douying(title, b.year);
-      r = dy ? Object.assign({}, dy, { bbcode: douyingBbcode(dy), subtitle: douyingSubtitle(dy) }) : null;
+      r = dy ? Object.assign({}, dy, { bbcode: dy.bbcode || douyingBbcode(dy), subtitle: douyingSubtitle(dy) }) : null;
     }
     else if (provider === 'web') r = await web(title, b.year, b.type);
     else r = await wikipedia(title, b.year, b.type);
@@ -289,4 +343,4 @@ function providers() {
   return { wikipedia: true, tmdb: !!tmdbKey(), douban: true, douying: true, web: true };
 }
 
-module.exports = { fetchMeta, providers, wikipedia, tmdb, doubanSearch, douying, douyingBbcode, douyingSubtitle, web };
+module.exports = { fetchMeta, providers, wikipedia, tmdb, doubanSearch, douying, douyingBbcode, douyingSubtitle, web, _parseDouyingBbcode: parseDouyingBbcode };

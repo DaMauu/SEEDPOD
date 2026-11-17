@@ -235,38 +235,37 @@ function makeTargetService(ctx, target) {
       return { ok: false, code: 'ALREADY_SUBMITTED', message: '这个目标站已经提交过，不能重复提交', http: 409 };
     }
     const flow = flowMap();
-    const shotRule = flow['截图至少几张'];
-    const minShots = shotRule ? Math.max(0, Number(shotRule.v) || 0) : 0;
-    const shotCount = Array.isArray(item.data.shots) ? item.data.shots.length : 0;
-    if (!dryRun && minShots > 0 && shotCount < minShots) {
-      stage.fail(item.data, item.data.stage || 'previewed', '截图不足：至少 ' + minShots + ' 张');
-      saveQueue(item.data);
-      return { ok: false, code: 'SHOTS_REQUIRED', message: '截图不足：至少 ' + minShots + ' 张，当前 ' + shotCount + ' 张', http: 400 };
-    }
-    const bdRule = flow['BDInfo'];
-    const bdMode = bdRule && bdRule.v ? String(bdRule.v) : '不要求';
-    if (!dryRun && bdMode !== '不要求') {
-      const pm = item.data.prepared && item.data.prepared.media;
-      const bdOk = !!(pm && pm.kind && (bdMode !== '必须存在且校验通过' || pm.summary));
-      if (!bdOk) {
-        stage.fail(item.data, item.data.stage || 'previewed', 'BDInfo 门槛未过：' + bdMode);
+    const shotOn = flowConfig.onLegacy(flow, '截图至少几张', true, function (v) { return Number(v) > 0; });
+    if (!dryRun && shotOn) {
+      const srcImgs = Array.isArray(item.data.sourceImages) ? item.data.sourceImages : [];
+      const text = String(item.data.descrBb || item.data.intro || '');
+      const lost = srcImgs.filter(function (u) { return text.indexOf(u) < 0; });
+      if (lost.length) {
+        const msg = '源简介截图没全部保留：缺 ' + lost.length + ' 张';
+        stage.fail(item.data, item.data.stage || 'previewed', msg);
         saveQueue(item.data);
-        return { ok: false, code: 'BDINFO_REQUIRED', message: 'BDInfo 门槛未过：' + bdMode, http: 400 };
+        return { ok: false, code: 'SHOTS_REQUIRED', message: msg, http: 400 };
+      }
+    }
+    if (!dryRun && flowConfig.onLegacy(flow, 'BDInfo', true, function (v) { return String(v) === '不要求' ? false : true; })) {
+      const pm = item.data.prepared && item.data.prepared.media;
+      if (!(pm && pm.kind)) {
+        stage.fail(item.data, item.data.stage || 'previewed', 'BDInfo 不齐：没有识别到 BDInfo/MediaInfo');
+        saveQueue(item.data);
+        return { ok: false, code: 'BDINFO_REQUIRED', message: 'BDInfo 不齐：没有识别到 BDInfo/MediaInfo', http: 400 };
       }
     }
     /* 源站 BBCode 里的远程图片：按规则转存图床，失败保留外链不阻断发布 */
     let mirrorChanged = false;
-    if (!dryRun && String(item.data.descrBb || '').trim()) {
-      const flowCfg = flowConfig.read(ctx);
-      const imgMode = String(flowConfig.value(flowCfg, '简介图片', '转存到图床'));
-      if (imgMode === '转存到图床') {
+    if (!dryRun && String(item.data.descrBb || '').trim() && flowConfig.on(flowConfig.read(ctx), '简介图片', true)) {
+      {
         const known = (item.data.imageMirror && item.data.imageMirror.map) || {};
         const provider = String(item.data.imageHost && item.data.imageHost !== '站内' ? item.data.imageHost : require('./imagehost').defaultProvider());
         const allowReal = typeof ctx.allowReal === 'function' ? ctx.allowReal('realImages') : false;
         let mr = null;
         try {
           mr = await imagehost.mirrorDescription(item.data.descrBb, {
-            provider: provider, mode: imgMode, dryRun: false, allowReal: allowReal,
+            provider: provider, mode: '转存到图床', dryRun: false, allowReal: allowReal,
             retries: 1, known: known,
             referer: item.data.site ? 'https://' + item.data.site + '/' : ''
           });

@@ -123,7 +123,7 @@ function screenCatalog(ctx, opts) {
       res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
       downloadUrl: it.downloadUrl || '', detailsUrl: String(it.detailsUrl || '').slice(0, 300), siteId: it.siteId || '',
       subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),
-      year: it.year || '', category: it.category || '',
+      year: it.year || match.yearOf(title) || '', category: it.category || '',
       region: String(it.region || '').slice(0, 60), language: String(it.language || '').slice(0, 60),
       bdinfo: String(it.bdinfo || '').slice(0, 60000), mediainfo: String(it.mediainfo || '').slice(0, 60000),
       medium: String(it.medium || '').slice(0, 60), fullDisc: it.fullDisc === true,

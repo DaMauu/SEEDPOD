@@ -209,44 +209,38 @@
     "sum": "源站缺什么就从这补",
     "rows": [
       {
+        "t": "标题原样回填",
+        "type": "switch",
+        "on": true,
+        "hint": "开：种子词条标题原样回填；关：标题不齐转待审",
+        "label": "标题"
+      },
+      {
         "t": "源资源标题",
         "type": "button",
         "v": "去待审核回填",
         "label": "源资源标题"
       },
       {
-        "t": "中文副标题来源",
-        "label": "副标题从哪来",
-        "type": "select",
-        "v": "种子自带 → 豆影网页 → TMDB",
-        "opts": [
-          "种子自带 → 豆影网页 → TMDB",
-          "豆影网页 → 豆瓣 → TMDB",
-          "只用种子自带，没有就用英文"
-        ]
+        "t": "副标题拼贴",
+        "type": "switch",
+        "on": true,
+        "hint": "开：豆影数据拼贴；关：副标题不齐转待审",
+        "label": "副标题"
       },
       {
-        "t": "匹配来源顺序",
-        "label": "简介从哪补",
-        "type": "select",
-        "v": "TMDB → 豆瓣 → 站点标题",
-        "opts": [
-          "TMDB → 豆瓣 → 站点标题",
-          "豆瓣 → TMDB → 站点标题",
-          "只用站点标题"
-        ]
+        "t": "简介回填",
+        "type": "switch",
+        "on": true,
+        "hint": "开：豆影简介覆盖电影简介段；关：不联网",
+        "label": "简介"
       },
       {
         "t": "简介图片",
-        "label": "简介图片怎么处理",
-        "type": "select",
-        "v": "转存到图床",
-        "opts": [
-          "转存到图床",
-          "保留外链",
-          "不保留图片"
-        ],
-        "hint": "转存图床最稳；外链会失效"
+        "type": "switch",
+        "on": true,
+        "hint": "开：全部转存图床；关：保留源图不转存",
+        "label": "简介图片存图床"
       },
       {
         "t": "自动附加 MediaInfo",
@@ -254,64 +248,47 @@
         "on": true,
         "hint": "开：自动追加；关：不追加",
         "label": "简介末尾附加 MediaInfo"
-      },
-      {
-        "t": "允许联网补简介",
-        "type": "switch",
-        "on": true,
-        "hint": "源站没简介时查豆影/豆瓣/维基",
-        "label": "缺简介时联网补"
-      },
-      {
-        "t": "主演最多几个",
-        "label": "简介主演数量",
-        "type": "text",
-        "v": "3"
       }
     ]
   },
   {
     "name": "⑤ 终审与决策",
-    "sum": "齐了才发 · 缺了转人工",
+    "sum": "不齐转待审 · 不跳过",
     "rows": [
       {
         "t": "必须有简介",
         "type": "switch",
         "on": true,
-        "hint": "抓不到中文简介就不自动发",
-        "label": "没简介就不发"
+        "hint": "简介不齐转待审",
+        "label": "简介不齐转待审"
       },
       {
         "t": "必须有副标题",
         "type": "switch",
-        "on": false,
-        "hint": "没副标题就转人工",
-        "label": "没副标题就转人工"
+        "on": true,
+        "hint": "副标题不齐转待审",
+        "label": "副标题不齐转待审"
       },
       {
         "t": "BDInfo",
-        "type": "pick",
-        "v": "必须存在且校验通过",
-        "opts": [
-          "必须存在且校验通过",
-          "有就行，不校验",
-          "不要求"
-        ],
-        "label": "BDInfo 校验"
+        "type": "switch",
+        "on": true,
+        "hint": "没有 BDInfo/MediaInfo 就转待审",
+        "label": "BDInfo不齐转待审"
       },
       {
         "t": "截图至少几张",
-        "type": "text",
-        "v": "0",
-        "hint": "0 = 不检查；简介里的截图全部转载",
-        "inline": true,
-        "label": "截图至少几张"
+        "type": "switch",
+        "on": true,
+        "hint": "源简介里的截图必须全部保留",
+        "label": "截图保留"
       },
       {
         "t": "年份必须一致",
         "type": "switch",
         "on": true,
-        "label": "年份必须一致"
+        "hint": "豆影年份最多比种子年份晚 2 年，超过转待审",
+        "label": "年份不一致转待审"
       }
     ]
   },
@@ -326,17 +303,6 @@
         "html": "<div class=\"target-pick\"><em class=\"tp-ava\" id=\"tp-ava\"></em><div class=\"tp-info\"><b id=\"tp-name\">—</b><span id=\"tp-host\"></span></div><button class=\"btn ghost slim\" id=\"tp-change\">更换</button></div>",
         "hint": "所有库内资源都归到这个站",
         "label": "发布到哪个站"
-      },
-      {
-        "t": "不满足时",
-        "type": "pick",
-        "v": "转待确认",
-        "opts": [
-          "转待确认",
-          "直接跳过"
-        ],
-        "hint": "上面的条件没达标时怎么处理",
-        "label": "条件不满足时"
       },
       {
         "t": "自动勾选标签",

@@ -30,6 +30,7 @@ run adapter adapter.js
 run marks marks.js
 run dupe-classify dupe-classify.js
 run dupe-policy dupe-policy.js
+run collage collage.js
 run flow-config flow-config.js
 run security security.js
 run api api-v2.js

@@ -191,11 +191,13 @@ function makeScheduler(ctx, deps) {
 
       /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
       const flow = flowConfig.read(ctx);
-      const needIntro = flowConfig.on(flow, '必须有简介', false);
-      const needSub = flowConfig.on(flow, '必须有副标题', false);
-      const bdMode = String(flowConfig.value(flow, 'BDInfo', '不要求'));
-      const shotMin = Math.max(0, Number(flowConfig.value(flow, '截图至少几张', 0)) || 0);
-      const missMode = String(flowConfig.value(flow, '不满足时', '转待确认'));
+      const titleOn = flowConfig.on(flow, '标题原样回填', true);
+      const subOn = flowConfig.on(flow, '副标题拼贴', true);
+      const needIntro = flowConfig.on(flow, '必须有简介', true);
+      const needSub = flowConfig.on(flow, '必须有副标题', true);
+      const bdOn = flowConfig.onLegacy(flow, 'BDInfo', true, function (v) { return String(v) === '不要求' ? false : true; });
+      const shotOn = flowConfig.onLegacy(flow, '截图至少几张', true, function (v) { return Number(v) > 0; });
+      const yearOn = flowConfig.on(flow, '年份必须一致', true);
       const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT " + batch) : [];
       const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review'), filled: 0, detailFetched: 0 };
       let fillTries = 0, detailTries = 0;
@@ -228,10 +230,10 @@ function makeScheduler(ctx, deps) {
             }
           }
         }
-        /* 源站也没有简介时，才按规则联网补电影简介，每轮最多补 5 条 */
-        if (needIntro && !String(pre.intro || '').trim() && !String(pre.descrBb || '').trim() && !pre.metaAt && fillTries < 5) {
+        /* 副标题/简介开关打开时，统一从豆影拉一次；每轮最多 5 条 */
+        if ((subOn || needIntro) && !pre.metaAt && fillTries < 5) {
           fillTries++;
-          const fr = await metaFill.fillIntro(pre);
+          const fr = await metaFill.fillMeta(pre);
           if (fr.ok) {
             review.filled++;
             ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
@@ -251,10 +253,17 @@ function makeScheduler(ctx, deps) {
         const p = (d.prepared) || {};
         const missing = [];
         if (!d.dupePassedAt) missing.push('查重未完成');
-        if (needIntro && !String(d.intro || '').trim()) missing.push('简介');
-        if (needSub && !String(d.subtitle || '').trim()) missing.push('副标题');
-        if (shotMin > 0 && Number(p.shots || 0) < shotMin) missing.push('截图 ' + Number(p.shots || 0) + '/' + shotMin);
-        if (bdMode !== '不要求' && !(p.media && p.media.kind)) missing.push('BDInfo');
+        if (!titleOn || !String(d.title || '').trim()) missing.push('标题');
+        if (!subOn || !String(d.cn || d.subtitle || '').trim()) missing.push('副标题');
+        if (needIntro && !String(d.intro || d.descrBb || '').trim()) missing.push('简介');
+        if (needSub && !String(d.cn || d.subtitle || '').trim() && missing.indexOf('副标题') < 0) missing.push('副标题');
+        if (bdOn && !(p.media && p.media.kind)) missing.push('BDInfo');
+        if (shotOn) {
+          const srcImgs = Array.isArray(d.sourceImages) ? d.sourceImages : [];
+          const text = String(d.descrBb || d.intro || '');
+          if (srcImgs.some(function (u) { return text.indexOf(u) < 0; })) missing.push('截图未保留');
+        }
+        if (yearOn && d.year && d.meta && d.meta.year && Number(d.meta.year) > Number(d.year) + 2) missing.push('年份不一致');
         const t0 = (p.targets || [])[0] || null;
         if (!t0 || !t0.target) missing.push('目标站未就绪');
         else {
@@ -268,7 +277,6 @@ function makeScheduler(ctx, deps) {
           if (ctx.allowReal('realPublish')) status = 'approved';
         } else {
           review.hold++;
-          if (missMode === '直接跳过') { status = 'skipped'; review.skipped++; }
           if (review.reasons.length < 5) review.reasons.push({ id: row.id, missing: missing });
         }
         d.status = status;

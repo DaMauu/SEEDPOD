@@ -28,6 +28,8 @@ check('摊平同名规则并读开关', function () {
 check('数字规则能去掉“次”等单位', function () {
   need(fc.number(map, '图片上传重试', 2) === 2, '重试数字不对');
   need(fc.number(map, '主演最多几个', 8) === 3, '主演数字不对');
+  need(fc.onLegacy({ BDInfo: { v: '不要求' } }, 'BDInfo', true, function (v) { return v !== '不要求'; }) === false, '旧 BDInfo 下拉没迁成关');
+  need(fc.onLegacy({ BDInfo: { v: '必须存在且校验通过' } }, 'BDInfo', true, function (v) { return v !== '不要求'; }) === true, '旧 BDInfo 下拉没迁成开');
   need(fc.number(map, '体积容差', 0) === 2, '容差数字不对');
   need(fc.number(map, '不存在', 7) === 7, '默认数字不对');
 });

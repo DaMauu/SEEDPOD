@@ -388,17 +388,17 @@ async function main() {
     need(got2.data.prepared.description.indexOf('data:image') < 0, '简介里还留着 data URL');
     const flowOff = await (await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '简介图片', v: '不保留图片' }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '简介图片', on: false }]] } })
     })).json();
     need(flowOff.ok, '写简介图片规则失败');
     await fetchA(BASE + '/api/queue/' + add.data.id + '/prepare', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
     });
     const noImg = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
-    need(noImg.data.prepared.description.indexOf('[img]') < 0, '不保留图片仍在简介里：' + noImg.data.prepared.description.slice(-160));
+    need(noImg.data.prepared.description.indexOf('[img]http://127.0.0.1:') < 0, '关闭图床后仍替换了图床链接：' + noImg.data.prepared.description.slice(-160));
     const flowOn = await (await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '简介图片', v: '转存到图床' }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '简介图片', on: true }]] } })
     })).json();
     need(flowOn.ok, '恢复简介图片规则失败');
     await fetchA(BASE + '/api/queue/' + add.data.id + '/prepare', {

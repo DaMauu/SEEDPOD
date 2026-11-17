@@ -52,6 +52,9 @@ function makeRelease(ctx) {
   function build(item, body) {
     const b = body || {};
     const names = meta.buildNames(item);
+    const flow = flowConfig.read(ctx);
+    const titleOn = flowConfig.on(flow, '标题原样回填', true);
+    const subOn = flowConfig.on(flow, '副标题拼贴', true);
     let raw = b.targets;
     if (typeof raw === 'string') raw = raw.split(',');
     raw = Array.isArray(raw) ? raw : [];
@@ -70,7 +73,6 @@ function makeRelease(ctx) {
     const media = mediaText ? mediainfo.parse(mediaText) : null;
     const mediaBlock = media && media.kind ? mediainfo.toBBCode(media) : '';
     let description = names.description;
-    const flow = flowConfig.read(ctx);
     const attachMedia = b.attachMedia !== undefined ? b.attachMedia !== false : flowConfig.on(flow, '自动附加 MediaInfo', true);
     if (mediaBlock && attachMedia) {
       const already = description.indexOf(media.raw) >= 0 ||
@@ -79,10 +81,7 @@ function makeRelease(ctx) {
       if (!already) description = (description.trim() + '\n\n' + mediaBlock).slice(0, 60000);
     }
     const imageLinks = (Array.isArray(item.imageLinks) ? item.imageLinks : []).filter(function (x) { return x && x.url; });
-    const imageMode = String(flowConfig.value(flow, '简介图片', '转存到图床'));
-    if (imageMode === '不保留图片') {
-      description = description.replace(/\[img\][\s\S]*?\[\/img\]/gi, '').trim();
-    } else if (imageMode !== '保留外链' && imageLinks.length) {
+    if (flowConfig.on(flow, '简介图片', true) && imageLinks.length) {
       const shots = Array.isArray(item.shots) ? item.shots : [];
       imageLinks.forEach(function (l, i) {
         const shot = shots.filter(function (s) { return s && s.name === l.name; })[0] || shots[i];
@@ -93,9 +92,9 @@ function makeRelease(ctx) {
     }
     return {
       at: now(),
-      title: names.title,
+      title: titleOn ? String(item.title || names.title) : '',
       releaseTitle: names.releaseTitle,
-      subtitle: names.subtitle,
+      subtitle: subOn ? String(item.cn || item.subtitle || names.subtitle) : '',
       description: description,
       parsed: names.parsed,
       media: media && media.kind ? {

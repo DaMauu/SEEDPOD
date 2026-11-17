@@ -24,6 +24,15 @@ function on(map, name, def) {
   if (!r) return !!def;
   return r.on !== false;
 }
+/* 下拉/数字旧值迁成开关：没有 on 时用 legacy(v) 给出布尔值 */
+function onLegacy(map, name, def, legacy) {
+  const r = map && map[name];
+  if (r && r.on === undefined && r.v !== undefined && typeof legacy === 'function') {
+    const v = legacy(r.v);
+    if (v !== undefined) return !!v;
+  }
+  return on(map, name, def);
+}
 function value(map, name, def) {
   const r = map && map[name];
   return r && r.v !== undefined && r.v !== null ? r.v : def;
@@ -34,4 +43,4 @@ function number(map, name, def) {
   return Number.isFinite(n) ? n : Number(def) || 0;
 }
 
-module.exports = { read: read, fromSets: fromSets, on: on, value: value, number: number };
+module.exports = { read: read, fromSets: fromSets, on: on, onLegacy: onLegacy, value: value, number: number };

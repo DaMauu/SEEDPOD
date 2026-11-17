@@ -527,14 +527,14 @@ async function main() {
     need(/换成目标站通用 announce/.test(unknown.autoActions[0]), '默认应清洗 tracker：' + unknown.autoActions[0]);
     const offFlow = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: false }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: false }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(offFlow.status === 200 && offFlow.body.ok, '关清洗失败');
     const offPlan = await planOf('CMCT');
     need(/不清洗 tracker/.test(offPlan.autoActions[0]), '关掉后动作没变：' + offPlan.autoActions[0]);
     const onFlow = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(onFlow.status === 200 && onFlow.body.ok, '恢复清洗失败');
   });
@@ -640,6 +640,10 @@ async function main() {
   });
 
   await check('真发布门禁', async function () {
+    await json(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
+    });
     const r = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: false })
@@ -652,15 +656,16 @@ async function main() {
     need(cfg.status === 200 && cfg.body.ok, '打开 realPublish 失败');
   });
 
-  await check('截图不足拦真发布', async function () {
+  await check('截图保留拦真发布', async function () {
     const put = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '截图至少几张', v: '3' }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '截图至少几张', on: true }, { t: 'BDInfo', on: false }]] } })
     });
     need(put.status === 200 && put.body.ok, '写截图门槛失败');
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'No Shots Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB' })
+      body: JSON.stringify({ title: 'No Shots Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+        sourceImages: ['https://example.org/keep.jpg'], descrBb: '正文 [img]https://example.org/other.jpg[/img]' })
     });
     need(add.status === 200 && add.body.ok, '建无图队列失败');
     const id = add.body.data.id;
@@ -668,21 +673,20 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ queueId: id, torrentBase64: torrent.toString('base64'), dryRun: false })
     });
-    need(r.status === 400 && r.body && r.body.error && r.body.error.code === 'SHOTS_REQUIRED', '截图门槛没拦住：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
+    need(r.status === 400 && r.body && r.body.error && r.body.error.code === 'SHOTS_REQUIRED', '截图没拦住：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
     need(hits.length === 0, '截图不足不该发请求，实际发了 ' + hits.length);
     const off = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '截图至少几张', v: '0' }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '截图至少几张', on: false }, { t: 'BDInfo', on: false }]] } })
     });
     need(off.status === 200 && off.body.ok, '恢复截图门槛失败');
-    const del = await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
-    need(del.status === 200 && del.body.ok, '清理无图队列失败');
+    await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
   });
 
   await check('BDInfo 门槛拦真发布', async function () {
     const put = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', v: '必须存在且校验通过' }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', on: true }, { t: '截图至少几张', on: false }]] } })
     });
     need(put.status === 200 && put.body.ok, '写 BDInfo 门槛失败');
     const add = await json(BASE + '/api/queue', {
@@ -700,7 +704,7 @@ async function main() {
     need(hits.length === before, 'BDInfo 不足不该发请求');
     const off = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', v: '不要求' }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(off.status === 200 && off.body.ok, '恢复 BDInfo 不要求失败');
     await json(BASE + '/api/queue/' + encodeURIComponent(add.body.data.id), { method: 'DELETE' });
@@ -766,7 +770,7 @@ async function main() {
     need(j.body.data.torrent && j.body.data.torrent.hash === hash, '自动清洗后 infohash 变了');
     const off = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: false }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: false }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(off.status === 200 && off.body.ok, '关清洗失败');
     const raw = await json(BASE + '/api/targets/127.0.0.1/upload', {
@@ -777,7 +781,7 @@ async function main() {
     need(raw.body.data.cleaned === false, '关掉开关后仍清洗了');
     const on = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(on.status === 200 && on.body.ok, '恢复清洗失败');
   });
@@ -889,7 +893,7 @@ async function main() {
   await check('关闭发布后校验时跳过回查', async function () {
     const put = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: false }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: false }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(put.status === 200 && put.body.ok, '关发布后校验失败');
     const add = await json(BASE + '/api/queue', {
@@ -909,7 +913,7 @@ async function main() {
     need(hits.length === before + 1, '关闭回查后上传次数不对');
     const on = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: true }]] } })
+      body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: true }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(on.status === 200 && on.body.ok, '恢复发布后校验失败');
     const del = await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });

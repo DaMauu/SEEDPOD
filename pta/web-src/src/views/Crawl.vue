@@ -496,6 +496,19 @@ function migrateDedupeSwitches(saved) {
     else if (r.t === '目标站已有原盘') r.on = true
   }))
 }
+/* 旧下拉/数字值迁成发布卡开关 */
+function migratePubSwitches(saved) {
+  if (!Array.isArray(saved)) return
+  const rows = []
+  ;(rules.pub || []).forEach(g => (g.rows || []).forEach(r => rows.push(r)))
+  const byT = {}
+  saved.forEach(group => (group || []).forEach(v => { if (v && v.t) byT[v.t] = v }))
+  const set = (t, on) => { const r = rows.find(x => x.t === t); if (r && r.type === 'switch') r.on = !!on }
+  if (byT['BDInfo'] && byT['BDInfo'].v !== undefined) set('BDInfo', String(byT['BDInfo'].v) !== '不要求')
+  if (byT['截图至少几张'] && byT['截图至少几张'].v !== undefined) set('截图至少几张', Number(byT['截图至少几张'].v) > 0)
+  if (byT['简介图片'] && byT['简介图片'].v !== undefined) set('简介图片', !/保留外链|不保留图片/.test(String(byT['简介图片'].v)))
+  if (byT['允许联网补简介'] && byT['允许联网补简介'].on === false) set('简介回填', false)
+}
 function applySaved(groups, saved) {
   if (!Array.isArray(saved)) return
   const byT = {}
@@ -518,6 +531,7 @@ async function loadFlow() {
       applySaved(rules.dedupe, sets.dedupe)
       migrateDedupeSwitches(sets.dedupe)
       applySaved(rules.pub, sets.pub)
+      migratePubSwitches(sets.pub)
     }
     if (j.data && j.data.rx) {
       rx.deny = j.data.rx.deny || ''
