@@ -1,9 +1,8 @@
 /* 目标站提交夹具：本地 mock 上传页 + 临时 v2 后端。不碰真实站点。
    覆盖：私有包列表、表单映射干跑、真发布门禁、真提交、发布后回查。 */
 const { spawn } = require('child_process');
-const crypto = require('crypto');
+const { makeTorrent, makeTorrent2, infoHash, startMock } = require('./target-mock');
 const fs = require('fs');
-const http = require('http');
 const os = require('os');
 const path = require('path');
 
@@ -17,14 +16,7 @@ const results = [];
 const hits = [];
 let cookie = '';
 let mockPort = 0;
-let mockDeleted = false;
-let deletedId = '';
-let deleteHits = 0;
-let deleteBody = null;
-let deleteBodyReasons = [];
-let mockDeleted2 = false;
-let downloadHits = 0;
-let published = false;
+const state = { published: false, mockDeleted: false, deletedId: '', deleteHits: 0, deleteBody: null, deleteBodyReasons: [], downloadHits: 0 };
 let child = null;
 let mock = null;
 
@@ -62,162 +54,7 @@ async function waitUp() {
   throw new Error('v2 服务没起来');
 }
 
-function makeTorrent() {
-  const announce = 'http://127.0.0.1:1/announce';
-  const name = 'target-test';
-  const info = Buffer.concat([
-    Buffer.from('d6:lengthi1048576e4:name' + Buffer.byteLength(name) + ':'),
-    Buffer.from(name),
-    Buffer.from('6:pieces20:'),
-    Buffer.from('a'.repeat(20)),
-    Buffer.from('e')
-  ]);
-  return Buffer.concat([
-    Buffer.from('d8:announce' + Buffer.byteLength(announce) + ':'),
-    Buffer.from(announce),
-    Buffer.from('4:info'),
-    info,
-    Buffer.from('e')
-  ]);
-}
-function makeTorrent2() {
-  const announce = 'http://127.0.0.1:1/announce';
-  const name = 'target-test-2';
-  const info = Buffer.concat([
-    Buffer.from('d6:lengthi1048576e4:name' + Buffer.byteLength(name) + ':'),
-    Buffer.from(name),
-    Buffer.from('6:pieces20:'),
-    Buffer.from('b'.repeat(20)),
-    Buffer.from('e')
-  ]);
-  return Buffer.concat([
-    Buffer.from('d8:announce' + Buffer.byteLength(announce) + ':'),
-    Buffer.from(announce),
-    Buffer.from('4:info'),
-    info,
-    Buffer.from('e')
-  ]);
-}
-function infoHash(buf) {
-  const i = buf.indexOf(Buffer.from('4:info'));
-  return crypto.createHash('sha1').update(buf.slice(i + 6, buf.length - 1)).digest('hex');
-}
 
-function startMock(hash, torrentBuf) {
-  const server = http.createServer(function (req, res) {
-    const u = new URL(req.url, 'http://127.0.0.1');
-    if (req.method === 'POST' && u.pathname === '/takeupload.php') {
-      const chunks = [];
-      req.on('data', function (c) { chunks.push(c); });
-      req.on('end', function () {
-        const body = Buffer.concat(chunks);
-        const ct = String(req.headers['content-type'] || '');
-        const bm = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(ct);
-        const boundary = '--' + (bm ? (bm[1] || bm[2]) : '');
-        const parts = body.toString('binary').split(boundary);
-        const fields = {};
-        let file = null;
-        parts.forEach(function (part) {
-          const nm = /name="([^"]+)"/.exec(part);
-          if (!nm) return;
-          const fn = /filename="([^"]*)"/.exec(part);
-          const k = part.indexOf('\r\n\r\n');
-          if (k < 0) return;
-          let val = part.slice(k + 4);
-          const e = val.lastIndexOf('\r\n');
-          if (e >= 0) val = val.slice(0, e);
-          const valBuf = Buffer.from(val, 'binary');
-          if (fn) file = { field: nm[1], filename: fn[1], bytes: valBuf.length };
-          else fields[nm[1]] = valBuf.toString('utf8');
-        });
-        hits.push({ fields: fields, file: file, cookie: req.headers.cookie || '' });
-        published = true;
-        res.writeHead(200, { 'content-type': 'text/html' });
-        res.end('<html><body><a href="details.php?id=999">推荐</a> 上传成功 <a href="details.php?id=42&uploaded=1">详情</a></body></html>');
-      });
-      return;
-    }
-    if (req.method === 'GET' && u.pathname === '/edit.php') {
-      const id = u.searchParams.get('id') || '42';
-      res.writeHead(200, { 'content-type': 'text/html' });
-      if (id === '43') {
-        res.end('<html><body><form action="delete.php" method="post">'
-          + '<input type="hidden" name="id" value="43">'
-          + '<input type="radio" name="reasontype" value="1">断种 '
-          + '<input type="radio" name="reasontype" value="2">重复 <input type="text" name="reason[]">'
-          + '<input type="radio" name="reasontype" value="3">劣质 <input type="text" name="reason[]">'
-          + '<input type="radio" name="reasontype" value="4">违规 <input type="text" name="reason[]">'
-          + '<input type="radio" name="reasontype" value="5" checked>其他 <input type="text" name="reason[]">'
-          + '<input type="submit" value="删除"></form></body></html>');
-      } else {
-        res.end('<html><body><form action="delete.php" method="post">'
-          + '<input type="hidden" name="id" value="42"><input type="hidden" name="force" value="0"><input type="hidden" name="type" value="torrent">'
-          + '<input type="radio" name="reason_type" value="1">断种 '
-          + '<input type="radio" name="reason_type" value="0">其他 具体原因 '
-          + '<textarea name="reason_input"></textarea>'
-          + '<input type="submit" id="delete-torrent" value="删除"></form></body></html>');
-      }
-      return;
-    }
-    if (req.method === 'POST' && u.pathname === '/delete.php') {
-      const chunks = [];
-      req.on('data', function (c) { chunks.push(c); });
-      req.on('end', function () {
-        const p = new URLSearchParams(Buffer.concat(chunks).toString('utf8'));
-        deleteBody = Object.fromEntries(p);
-        deleteBodyReasons = p.getAll('reason[]');
-        deleteHits++;
-        deletedId = String(deleteBody.id || '42');
-        mockDeleted = true;
-        res.writeHead(302, { location: '/details.php?id=' + deletedId });
-        res.end();
-      });
-      return;
-    }
-    if (req.method === 'GET' && u.pathname === '/usercp.php') {
-      res.writeHead(200, { 'content-type': 'text/html' });
-      res.end('<html><body><a href="announce.php?passkey=testpass123">announce</a></body></html>');
-      return;
-    }
-    if (req.method === 'GET' && u.pathname === '/upload-form') {
-      const html = fs.readFileSync(path.join(ROOT, 'fixtures', 'upload-form.html'), 'utf8');
-      res.writeHead(200, { 'content-type': 'text/html' });
-      res.end(html);
-      return;
-    }
-    if (req.method === 'GET' && u.pathname === '/download.php') {
-      downloadHits++;
-      res.writeHead(200, { 'content-type': 'application/x-bittorrent' });
-      res.end(torrentBuf);
-      return;
-    }
-    if (req.method === 'GET' && (u.pathname === '/torrents.php' || u.pathname === '/details.php')) {
-      res.writeHead(200, { 'content-type': 'text/html' });
-      if (u.pathname === '/torrents.php' && !published) {
-        res.end('<html><body><div>没有找到结果</div></body></html>');
-        return;
-      }
-      if (mockDeleted && deletedId === '43') {
-        res.end('<html><body>错误 没有该ID的种子</body></html>');
-        return;
-      }
-      if (mockDeleted) {
-        res.end('<html><body>该种子曾被 MOCK 删除 原因：Other: 测试 [回收站]</body></html>');
-        return;
-      }
-      if (/echo[ +]only/i.test(decodeURIComponent(u.search || ''))) {
-        res.end('<html><body><input name="search" value="Echo Only 2024 1080p"><div>没有找到结果</div></body></html>');
-        return;
-      }
-      res.end('<html><body><a href="details.php?id=42">Target Upload Test 2024 1080p Blu-ray</a><div>' + hash + '</div><a href="download.php?id=42">下载</a></body></html>');
-      return;
-    }
-    res.writeHead(404); res.end('no');
-  });
-  return new Promise(function (resolve) {
-    server.listen(0, '127.0.0.1', function () { resolve(server); });
-  });
-}
 
 async function main() {
   await check('分类标签带空格也能匹配', async function () {
@@ -236,8 +73,8 @@ async function main() {
 
   const torrent = makeTorrent();
   const hash = infoHash(torrent);
-  mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = []; downloadHits = 0; published = false;
-  mock = await startMock(hash, torrent);
+  state.mockDeleted = false; state.deletedId = ''; state.deleteHits = 0; state.deleteBody = null; state.deleteBodyReasons = []; state.downloadHits = 0; state.published = false;
+  mock = await startMock(hash, torrent, state, hits, ROOT);
   mockPort = mock.address().port;
   const pack = {
     version: 1,
@@ -748,7 +585,7 @@ async function main() {
     need(tt && tt.infohash === hash && tt.sameInfohash === true, '没抓目标站生成的种子：' + JSON.stringify(tt));
     need(tt.path && fs.existsSync(tt.path), '目标站种子文件没落盘：' + (tt.path || ''));
     need(tt.source === 'published', '目标种不是发布后的权威种子：' + JSON.stringify({ source: tt.source }));
-    need(downloadHits === 1, '默认应抓一次目标站发布种子，实际 ' + downloadHits + ' 次');
+    need(state.downloadHits === 1, '默认应抓一次目标站发布种子，实际 ' + state.downloadHits + ' 次');
     need(g.body.data.targetUpload && g.body.data.targetUpload.targetTorrent && g.body.data.targetUpload.targetTorrent.sameInfohash === true, 'targetUpload 没记目标站种子');
     need(g.body.data.stage === 'submitted', '状态机不是 submitted：' + g.body.data.stage);
     need(g.body.data.stageEvidence && g.body.data.stageEvidence.infohash, '没有提交证据 infohash');
@@ -810,20 +647,20 @@ async function main() {
     });
     need(dry.status === 200 && dry.body.ok, '删除 dry-run 失败：' + dry.status);
     need(dry.body.data.reasonType === '0' && dry.body.data.reasonField === 'reason_input', '删除表单没解析对：' + JSON.stringify(dry.body.data));
-    need(dry.body.data.sent === false && deleteHits === 0, 'dry-run 不该发删除请求');
+    need(dry.body.data.sent === false && state.deleteHits === 0, 'dry-run 不该发删除请求');
     const real = await json(BASE + '/api/targets/127.0.0.1/delete', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id: '42', dryRun: false, reason: '测试', reasonType: '其他' })
     });
     need(real.status === 200 && real.body.ok && real.body.data.deleted === true, '真删没确认：' + real.status + ' ' + JSON.stringify(real.body));
-    need(deleteHits === 1 && deleteBody, '删除请求没发出');
-    need(deleteBody.id === '42' && deleteBody.reason_type === '0' && deleteBody.reason_input === '测试' && deleteBody.type === 'torrent', '删除表单字段不对：' + JSON.stringify(deleteBody));
+    need(state.deleteHits === 1 && state.deleteBody, '删除请求没发出');
+    need(state.deleteBody.id === '42' && state.deleteBody.reason_type === '0' && state.deleteBody.reason_input === '测试' && state.deleteBody.type === 'torrent', '删除表单字段不对：' + JSON.stringify(state.deleteBody));
     const chk = await json(BASE + '/api/targets/127.0.0.1/delete', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id: '42', check: true })
     });
     need(chk.status === 200 && chk.body.ok && chk.body.data.deleted === true, '删除状态回查不对：' + JSON.stringify(chk.body));
-    mockDeleted = false; deleteHits = 0; deleteBody = null;
+    state.mockDeleted = false; state.deleteHits = 0; state.deleteBody = null;
   });
 
   await check('删除表单兼容 reasontype + reason[]', async function () {
@@ -838,17 +675,17 @@ async function main() {
       body: JSON.stringify({ id: '43', dryRun: false, reason: '测试', reasonType: '其他' })
     });
     need(real.status === 200 && real.body.ok && real.body.data.deleted === true, '第二种真删没确认：' + real.status + ' ' + JSON.stringify(real.body));
-    need(JSON.stringify(deleteBodyReasons) === JSON.stringify(['', '', '', '测试']), 'reason[] 索引不对：' + JSON.stringify(deleteBodyReasons));
+    need(JSON.stringify(state.deleteBodyReasons) === JSON.stringify(['', '', '', '测试']), 'reason[] 索引不对：' + JSON.stringify(state.deleteBodyReasons));
     const chk = await json(BASE + '/api/targets/127.0.0.1/delete', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id: '43', check: true })
     });
     need(chk.status === 200 && chk.body.ok && chk.body.data.deleted === true, '没有该ID的种子应判为已删：' + JSON.stringify(chk.body));
-    mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = [];
+    state.mockDeleted = false; state.deletedId = ''; state.deleteHits = 0; state.deleteBody = null; state.deleteBodyReasons = [];
   });
 
   await check('回收站同 infohash 不重复发布', async function () {
-    mockDeleted = true; deletedId = '42';
+    state.mockDeleted = true; state.deletedId = '42';
     try {
       const add = await json(BASE + '/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -871,7 +708,7 @@ async function main() {
       need(hits.length === before + 1, '回收站检查应只发 1 次上传，实际 ' + (hits.length - before) + ' 次');
       await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
     } finally {
-      mockDeleted = false; deletedId = '';
+      state.mockDeleted = false; state.deletedId = '';
     }
   });
 

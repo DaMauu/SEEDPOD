@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.456 · 2026-11-18
+
+### 维护：拆 target 检查夹具（第 1 步）
+- 种子构造器、infoHash、本地 mock 目标站移到 `checks/target-mock.js`。
+- `checks/target.js` 947→784 行；target 29/29，检查项与行为不变。
+
 ## v0.7.455 · 2026-11-18
 
 ### G13 收尾：NO_FORM 归因
