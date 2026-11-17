@@ -625,12 +625,13 @@ const RuleOrSpecial = (props) => {
   const kind = specialOf(r)
   if (kind === 'target') {
     const cur = targetSite.value
+    const open = () => { targetQ.value = ''; targetOpen.value = true }
     const kids = []
-    if (cur) kids.push(h('em', { class: 'tp-ava', id: 'tp-ava' }, initialsOf(cur.title || cur.host)))
-    kids.push(h('div', { class: 'tp-info' }, cur
-      ? [h('b', { id: 'tp-name' }, cur.title || cur.host), h('span', { id: 'tp-host' }, cur.host)]
-      : [h('b', { id: 'tp-name' }, '未选择目标站')]))
-    kids.push(h('button', { class: 'btn ghost slim', id: 'tp-change', type: 'button', onClick: () => { targetQ.value = ''; targetOpen.value = true } }, cur ? '更换' : '选择站点'))
+    kids.push(h('b', {
+      id: 'tp-name', class: 'tp-link' + (cur ? '' : ' empty'), title: cur ? cur.host : '',
+      onClick: open
+    }, cur ? (cur.title || cur.host) : '未选择站点'))
+    kids.push(h('button', { class: 'tp-change-text', id: 'tp-change', type: 'button', onClick: open }, cur ? '更改' : '选择'))
     return h('div', { class: 'target-pick' + (cur ? '' : ' empty') }, kids)
   }
   if (kind === 'tpl') {
@@ -816,6 +817,8 @@ onUnmounted(() => {
 .screen-card .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
 .screen-card .screen-list { display: flex; flex-direction: column; gap: 0; }
 .screen-card .screen-field { display: grid !important; grid-template-columns: 150px minmax(0, 1fr) !important; align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
+.screen-card .screen-field .cat-row { padding: 0; gap: 6px; }
+.screen-card .screen-field .cat-chip { height: 26px; padding: 0 9px; line-height: 26px; border-radius: 6px; }
 .screen-card .screen-field:last-child { border-bottom: 0; }
 .screen-card .screen-field > .switch { grid-column: 2; justify-self: start; }
 .screen-card .screen-field .lbl { margin: 0; min-width: 0; }
@@ -1062,18 +1065,15 @@ onUnmounted(() => {
 .pub-card .flow-group .sec-ttl { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted-2); letter-spacing: .06em; }
 .pub-card .flow-group .sec-ttl::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted-2); flex: 0 0 auto; }
 .pub-card .target-pick {
-  display: inline-flex; align-items: center; gap: 8px;
-  min-height: 30px; max-width: 100%; padding: 0;
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 28px; max-width: 100%; padding: 0;
   border: 0; border-radius: 0; background: transparent;
 }
 .pub-card .target-pick.empty { border: 0; background: transparent; }
-.pub-card .target-pick .tp-ava { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 6px; font-size: 9.5px; }
-.pub-card .target-pick .tp-info { display: flex; align-items: baseline; gap: 7px; min-width: 0; margin: 0 2px 0 0; text-align: left; }
-.pub-card .target-pick .tp-info b { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
-.pub-card .target-pick.empty .tp-info b { font-weight: 500; color: var(--muted); }
-.pub-card .target-pick .tp-info span { font-size: 11px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pub-card .target-pick .btn, .pub-card :deep(.target-pick .btn) { flex: 0 0 48px; min-width: 48px; white-space: nowrap !important; padding-left: 4px; padding-right: 4px; }
-.pub-card :deep(.target-pick .tp-info) { flex: 1 1 auto; min-width: 0; }
+.pub-card .target-pick .tp-link { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #cbd0d8; }
+.pub-card .target-pick .tp-link.empty { font-weight: 400; color: var(--muted); text-decoration: none; }
+.pub-card .target-pick .tp-change-text { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; flex: 0 0 auto; }
+.pub-card .target-pick .tp-change-text:hover { text-decoration: underline; }
 @media (max-width: 760px) {
 
   .pub-card .flow-group .set-fields .set-field,

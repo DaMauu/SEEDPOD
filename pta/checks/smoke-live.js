@@ -337,7 +337,7 @@ async function main() {
     need(pubUi.borderBottom === '0px', '发布字段底下不该有横线：' + JSON.stringify(pubUi));
     need(pubUi.display === 'flex' && pubUi.items >= 5, '发布字段没有做成一行：' + JSON.stringify(pubUi));
     need(pubUi.targetBorder === '0px', '目标站控件不该有外框：' + JSON.stringify(pubUi));
-    need(/未选择目标站/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
+    need(/未选择站点/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
     const screenUi = await page.evaluate(() => {
       const card = document.querySelector('.screen-card');
       if (!card) return null;
