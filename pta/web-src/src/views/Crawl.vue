@@ -112,8 +112,6 @@
               <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
               <button class="switch" :class="{ on: !!r.on }" type="button" role="switch" :aria-checked="String(!!r.on)" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
             </div>
-          </div>
-          <div class="dedupe-input-row">
             <div v-for="r in dedupeInputs" :key="r.t" class="set-field dedupe-input" :class="{ todo: r.todo }">
               <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
               <div class="ctl"><RuleControl :r="r" /></div>
@@ -820,8 +818,7 @@ onUnmounted(() => {
 .dedupe-switch-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:2px 0 8px}
 .dedupe-switch{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 0 auto;min-width:0}
 .dedupe-switch .lbl{margin:0 !important;white-space:nowrap}
-.dedupe-input-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;border-top:1px solid #eef0f3;padding-top:8px}
-.dedupe-input{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 1 440px;min-width:260px}
+.dedupe-input{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 1 380px;min-width:240px}
 .dedupe-input .lbl{margin:0 !important;white-space:nowrap}
 .dedupe-input .ctl{flex:1 1 auto;min-width:0;width:auto !important}
 .dedupe-input .ctl > .input{width:100% !important;height:28px;font-size:12px}
