@@ -252,6 +252,7 @@
 </template>
 
 <script setup>
+import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt, modeTxt } from '../utils/siteFormat'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, initialsOf } from '../utils/ui'
@@ -259,10 +260,6 @@ import { toast, confirmBox, initialsOf } from '../utils/ui'
 const props = defineProps({ site: { type: Object, required: true } })
 const emit = defineEmits(['close', 'changed', 'removed'])
 
-const ARCH = {
-  NP: ['np', 'NexusPHP'], UNIT3D: ['u3d', 'UNIT3D'], GZ: ['gz', 'Gazelle'],
-  OTHER: ['oth', '其它'], '?': ['unk', '未确认'], U3D: ['u3d', 'UNIT3D']
-}
 const ENG_CODE = { nexusphp: 'NP', unit3d: 'U3D', gazelle: 'GZ' }
 const archOptions = [
   { v: 'NP', label: 'NexusPHP' }, { v: 'UNIT3D', label: 'UNIT3D' }, { v: 'GZ', label: 'Gazelle' },
@@ -292,26 +289,6 @@ const detectBusy = ref(false)
 const detectMsg = ref('')
 const busy = reactive({ selfcheck: false, crawl: false, save: false })
 
-function fmtWhen(raw) {
-  if (!raw) return '—'
-  const t = typeof raw === 'number' ? new Date(raw) : new Date(String(raw))
-  if (isNaN(t.getTime())) return '—'
-  const p2 = n => String(n).padStart(2, '0')
-  const now = new Date()
-  const sameDay = t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth() && t.getDate() === now.getDate()
-  return (sameDay ? '今日 ' : p2(t.getMonth() + 1) + '-' + p2(t.getDate()) + ' ') + p2(t.getHours()) + ':' + p2(t.getMinutes())
-}
-function archOf(site) { return ARCH[site.arch] || ARCH['?'] }
-function archCls(site) { return archOf(site)[0] }
-function archLabel(site) { return archOf(site)[1] }
-function dotCls(site) { return site.login === 'ok' ? 'ok' : site.login === 'fail' ? 'bad' : 'idle' }
-function loginTxt(site) { return site.login === 'ok' ? '可用' : site.login === 'fail' ? '失效' : '未自检' }
-function modeTxt(site) {
-  if (!site.enabled) return '停用'
-  if (site.mode === 'full') return '全量'
-  if (site.mode === 'mixed') return '增量+定期全量'
-  return '增量'
-}
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
 
 const catGroups = computed(function () {

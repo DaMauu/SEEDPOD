@@ -33,10 +33,7 @@
 
 
 <script setup>
-const ARCH = {
-  NP: ['np', 'NexusPHP'], UNIT3D: ['u3d', 'UNIT3D'], GZ: ['gz', 'Gazelle'],
-  OTHER: ['oth', '其它'], '?': ['unk', '未确认'], U3D: ['u3d', 'UNIT3D']
-}
+import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt, modeTxt } from '../utils/siteFormat'
 const ENG_CODE = { nexusphp: 'NP', unit3d: 'U3D', gazelle: 'GZ' }
 
 const props = defineProps({
@@ -51,26 +48,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['open', 'pick', 'toggle-all', 'page'])
 
-function fmtWhen(raw) {
-  if (!raw) return '—'
-  const t = typeof raw === 'number' ? new Date(raw) : new Date(String(raw))
-  if (isNaN(t.getTime())) return '—'
-  const p2 = n => String(n).padStart(2, '0')
-  const now = new Date()
-  const sameDay = t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth() && t.getDate() === now.getDate()
-  return (sameDay ? '今日 ' : p2(t.getMonth() + 1) + '-' + p2(t.getDate()) + ' ') + p2(t.getHours()) + ':' + p2(t.getMinutes())
-}
-function archOf(s) { return ARCH[s.arch] || ARCH['?'] }
-function archCls(s) { return archOf(s)[0] }
-function archLabel(s) { return archOf(s)[1] }
-function dotCls(s) { return s.login === 'ok' ? 'ok' : s.login === 'fail' ? 'bad' : 'idle' }
-function loginTxt(s) { return s.login === 'ok' ? '可用' : s.login === 'fail' ? '失效' : '未自检' }
-function modeTxt(s) {
-  if (!s.enabled) return '停用'
-  if (s.mode === 'full') return '全量'
-  if (s.mode === 'mixed') return '增量+定期全量'
-  return '增量'
-}
 function presetTxt(s) {
   if (!s.preset) return '—'
   const code = ENG_CODE[s.preset.engine] || (s.preset.engine || '').toUpperCase() || '?'
