@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.410 · 2026-11-18
+
+### G15 第 12 轮：页面样式外置
+- Crawl 页 scoped 样式移到 `views/Crawl.css`，通过 `<style scoped src>` 引入。
+- Crawl.vue 735→579 行；1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.409 · 2026-11-18
 
 ### G15 第 11 轮：拆 PublishCard
