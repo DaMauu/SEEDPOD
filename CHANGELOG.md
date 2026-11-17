@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.419 · 2026-11-18
+
+### G15 第 21–23 轮：拆 scheduler（A5 达标）
+- 发布阶段移到 `server/scheduler-publish.js`；辅种/失败重试移到 `server/scheduler-retry.js`；状态与站点失败计数移到 `server/scheduler-state.js`。
+- runNow 保留阶段级 try/catch、failpoint 和结果汇总；scheduler.js 559→350 行（目标 ≤350 达成）。
+- 5 个大文件行数目标全部达成；scheduler 6/6、failpoint 1/1。
+
 ## v0.7.418 · 2026-11-18
 
 ### G15 第 20 轮：拆 imagehost-config（A4 达标）

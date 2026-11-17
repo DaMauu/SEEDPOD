@@ -6,84 +6,22 @@ const pipeline = require('./pipeline');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { makeMetaFill } = require('./meta-fill');
-
+const { makePublishPhase } = require('./scheduler-publish');
+const { makeRetryPhases } = require('./scheduler-retry');
+const { makeSchedulerState } = require('./scheduler-state');
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
-  const KEY = 'scheduler';
-  const DEF = { on: false, everyMinutes: 60, lastRunAt: 0, lastResult: null, lastError: '' };
   const crossseed = makeCrossseed(ctx);
   const target = makeTarget(ctx);
   const targetService = makeTargetService(ctx, target);
   const metaFill = makeMetaFill(ctx);
   let timer = null;
   let running = false;
+  const schedulerState = makeSchedulerState({ one: one, jparse: jparse, db: ctx.db, isRunning: function () { return running; } });
+  const { read, save, status, set, readFails, saveFails, bumpSiteFail, resetSiteFail } = schedulerState;
 
-  function read() {
-    const row = one("SELECT v FROM meta WHERE k = ?", KEY);
-    return Object.assign({}, DEF, JSON.parse(row ? row.v : 'null') || {});
-  }
-  function save(s) {
-    ctx.db.prepare("INSERT INTO meta(k, v) VALUES(?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
-      .run(KEY, JSON.stringify(s));
-  }
-  function status() {
-    const s = read();
-    return { on: !!s.on, everyMinutes: Number(s.everyMinutes) || 60, running: running,
-      lastRunAt: Number(s.lastRunAt) || 0, lastResult: s.lastResult || null, lastError: s.lastError || '' };
-  }
-  function set(body) {
-    const b = body || {};
-    const next = read();
-    if (b.on !== undefined) next.on = !!b.on;
-    if (b.everyMinutes !== undefined) {
-      const n = Number(b.everyMinutes);
-      if (!Number.isInteger(n) || n < 30 || n > 1440) return { err: 'everyMinutes 必须是 30–1440 的整数' };
-      next.everyMinutes = n;
-    }
-    save(next);
-    return { ok: true, data: status() };
-  }
-  function readFails() {
-    const row = one("SELECT v FROM meta WHERE k = 'site-fails'");
-    try { return JSON.parse(row ? row.v : 'null') || {}; } catch (e) { return {}; }
-  }
-  function saveFails(map) {
-    ctx.db.prepare("INSERT INTO meta(k, v) VALUES('site-fails', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(map));
-  }
-  function bumpSiteFail(host, reason) {
-    if (!host) return;
-    const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
-    const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
-    /* 规则：连续失败几次暂停该站 */
-    const limit = Math.max(1, Math.min(20, Number(cfg.breaker) || 3));
-    const map = readFails();
-    const cur = map[host] || { n: 0 };
-    cur.n = Number(cur.n) + 1;
-    cur.at = new Date().toISOString();
-    cur.reason = String(reason || '').slice(0, 200);
-    map[host] = cur;
-    saveFails(map);
-    if (cur.n >= limit) {
-      const row = one('SELECT data FROM sites WHERE host = ?', host);
-      if (row) {
-        const d = jparse(row.data) || {};
-        if (d.enabled !== false) {
-          d.enabled = false;
-          d.pausedAt = cur.at;
-          d.pauseReason = '连续失败 ' + cur.n + ' 次';
-          ctx.db.prepare('UPDATE sites SET data = ?, updated_at = ? WHERE host = ?').run(JSON.stringify(d), cur.at, host);
-        }
-      }
-    }
-  }
-  function resetSiteFail(host) {
-    if (!host) return;
-    const map = readFails();
-    if (!map[host]) return;
-    delete map[host];
-    saveFails(map);
-  }
-
+  const runPublishPhase = makePublishPhase({});
+  const { runCrossseedPhase, runRetryPhase } = makeRetryPhases();
   async function runNow(opts) {
     if (running) return { ok: false, error: '上一轮还没跑完' };
     running = true;
@@ -339,88 +277,7 @@ function makeScheduler(ctx, deps) {
       try {
       failpoint('publish');
       if (want('publish') && ctx.allowReal('realPublish')) {
-        const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
-        const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
-        /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
-        const conc = Math.max(1, Math.min(5, Number(cfg.concurrency) || 1));
-        const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT " + publishLimit);
-        let ok = 0, failed = 0, held = 0;
-        const errors = [];
-        const queueRows = rows.slice();
-        async function worker() {
-          while (queueRows.length) {
-            const row = queueRows.shift();
-            const it = jparse(row.data) || {};
-            if (!it.targetSite || !it.downloadUrl) continue;
-            /* 转载流程：源种先进 qB 并下到 100%，没完成就等下一轮，不传目标站 */
-            let src = null;
-            try { src = await deps.publish.ensureSource(row.id, {}); }
-            catch (e) { src = { ok: false, code: 'SOURCE_CHECK_FAILED', message: String(e && e.message || e).slice(0, 160) }; }
-            if (!src.ok) {
-              failed++;
-              if (errors.length < 3) errors.push({ id: row.id, code: src.code, message: src.message });
-              continue;
-            }
-            if (!src.complete) { held++; continue; }
-            /* 先传到目标站（已传过的站跳过），成功后再注入下载器；两步都算发布 */
-            const hosts = [];
-            [it.targetSite].concat(Array.isArray(it.targets) ? it.targets : []).forEach(function (h) {
-              h = String(h || '').trim().toLowerCase();
-              if (h && hosts.indexOf(h) < 0) hosts.push(h);
-            });
-            let uploadOk = true;
-            for (const host of hosts) {
-              const tr = (it.targetResults && it.targetResults[host]) || {};
-              /* 已经传过并回查到的，不重复上传 */
-              if (tr.publishedTorrent || (tr.verified && tr.detailsUrl)) continue;
-              let up;
-              try { up = await targetService.uploadMany({ queueId: row.id, targets: [host], dryRun: false }); }
-              catch (e) { up = { ok: false, code: 'UPLOAD_EXCEPTION', message: String(e && e.message || e).slice(0, 160) }; }
-              const first = up && up.data && (up.data.targets || [])[0];
-              if (!up || !up.ok || !first || (!first.ok && !first.skipped)) {
-                uploadOk = false;
-                const msg = (first && (first.message || first.code)) || (up && (up.message || up.code)) || '目标站上传失败';
-                bumpSiteFail(host, msg);
-                if (errors.length < 3) errors.push({ id: row.id, code: (first && first.code) || (up && up.code) || 'UPLOAD_FAILED', message: host + ' · ' + msg });
-                break;
-              }
-              resetSiteFail(host);
-            }
-            if (!uploadOk) { failed++; continue; }
-            /* 上传过但权威种子没保存成功的，发布前补抓一次 */
-            const afterRow = one('SELECT data FROM queue WHERE id = ?', row.id);
-            const after = afterRow ? (jparse(afterRow.data) || it) : it;
-            for (const host of hosts) {
-              const tr = (after.targetResults && after.targetResults[host]) || {};
-              if (tr.verified && tr.detailsUrl && !tr.publishedTorrent) {
-                try { await targetService.fetchPublished(host, after); } catch (e) { /* 补抓失败不挡发布 */ }
-              }
-            }
-            const r = await deps.publish.publishItem(row.id, { dryRun: false });
-            if (r.ok) {
-              ok++;
-              resetSiteFail(it.targetSite || it.site);
-              const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
-              const done = cur ? (jparse(cur.data) || null) : null;
-              if (done) {
-                for (const host of Object.keys(done.targetResults || {})) {
-                  const tr = done.targetResults[host] || {};
-                  if (tr.publishedTorrent && !tr.crossseed) {
-                    try { await crossseed.run({ id: row.id, data: done }, host, {}); } catch (e) { /* 辅种失败不影响发布 */ }
-                  }
-                }
-              }
-            } else {
-              failed++;
-              bumpSiteFail(it.targetSite || it.site, r.message || r.code);
-              if (errors.length < 3) errors.push({ id: row.id, code: r.code, message: r.message });
-            }
-          }
-        }
-        const workers = [];
-        for (let i = 0; i < Math.min(conc, rows.length); i++) workers.push(worker());
-        await Promise.all(workers);
-        steps.publish = { checked: rows.length, ok: ok, failed: failed, held: held, errors: errors, concurrency: conc };
+        steps.publish = await runPublishPhase({ one: one, all: all, jparse: jparse, deps: deps, targetService: targetService, crossseed: crossseed, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, publishLimit: publishLimit });
       } else {
         steps.publish = { skipped: want('publish') ? 'realPublish off' : 'step not selected' };
       }
@@ -431,78 +288,12 @@ function makeScheduler(ctx, deps) {
       /* 辅种重试：已发布但辅种没成功（源数据没下完、tracker 没起来）的，按 retryAt 再试 */
       try {
       failpoint('crossseed');
-      if (want('crossseed') && ctx.allowReal('realPublish')) {
-        const csRows = all("SELECT id, data FROM queue WHERE status = 'published' ORDER BY updated_at DESC LIMIT 50");
-        const cs = { checked: 0, ok: 0, failed: 0, errors: [] };
-        for (const row of csRows) {
-          if (cs.checked >= 10) break;
-          const it = jparse(row.data) || {};
-          for (const host of Object.keys(it.targetResults || {})) {
-            if (cs.checked >= 10) break;
-            const tr = it.targetResults[host] || {};
-            if (tr.crossseed && tr.crossseed.ok) continue;
-            if (!tr.publishedTorrent) continue;
-            const retryAt = Date.parse((tr.crossseed && tr.crossseed.retryAt) || '') || 0;
-            if (retryAt > Date.now()) continue;
-            cs.checked++;
-            let r;
-            try { r = await crossseed.run({ id: row.id, data: it }, host, {}); }
-            catch (e) { r = { ok: false, error: String(e && e.message || e).slice(0, 120) }; }
-            if (r.ok) cs.ok++;
-            else { cs.failed++; if (cs.errors.length < 3) cs.errors.push({ id: row.id, host: host, error: r.error }); }
-          }
-        }
-        steps.crossseedRetry = cs;
-      } else {
-        steps.crossseedRetry = { skipped: want('crossseed') ? 'realPublish off' : 'step not selected' };
-      }
+      steps.crossseedRetry = await runCrossseedPhase({ all: all, jparse: jparse, crossseed: crossseed, want: want, ctx: ctx });
       } catch (e) { phaseError('crossseed', e); }
 
       try {
       failpoint('retry');
-      if (ctx.allowReal('realPublish')) {
-        const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
-        const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
-        const retryMax = Math.max(0, Math.min(10, cfg.retryMax === undefined ? 2 : Number(cfg.retryMax) || 0));
-        const backoff = Math.max(1, Math.min(1440, cfg.retryBackoffMin === undefined ? 15 : Number(cfg.retryBackoffMin) || 15));
-        let ok = 0, failed = 0, skipped = 0;
-        const rows2 = all("SELECT id, data FROM queue WHERE status = 'failed' LIMIT 10");
-        for (const row of rows2) {
-          const it = jparse(row.data) || {};
-          const retries = Number(it.retries) || 0;
-          if (retries >= retryMax) { skipped++; continue; }
-          if (it.nextRetryAt && Date.parse(it.nextRetryAt) > Date.now()) { skipped++; continue; }
-          const r = await deps.publish.publishItem(row.id, { dryRun: false });
-          if (r.ok) {
-            ok++;
-            resetSiteFail(it.targetSite || it.site);
-            const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
-            const done = cur ? (jparse(cur.data) || null) : null;
-            if (done) {
-              for (const host of Object.keys(done.targetResults || {})) {
-                const tr = done.targetResults[host] || {};
-                if (tr.publishedTorrent && !tr.crossseed) {
-                  try { await crossseed.run({ id: row.id, data: done }, host, {}); } catch (e) { /* 重试辅种失败不影响 */ }
-                }
-              }
-            }
-            continue;
-          }
-          failed++;
-          bumpSiteFail(it.targetSite || it.site, r.message || r.code);
-          const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
-          const d = cur ? (jparse(cur.data) || {}) : it;
-          d.retries = retries + 1;
-          d.lastRetryAt = new Date().toISOString();
-          d.nextRetryAt = new Date(Date.now() + backoff * 60000).toISOString();
-          d.retryMsg = String(r.message || r.code || 'failed').slice(0, 300);
-          ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
-            .run(JSON.stringify(d), new Date().toISOString(), row.id);
-        }
-        steps.retry = { checked: rows2.length, ok: ok, failed: failed, skipped: skipped };
-      } else {
-        steps.retry = { skipped: 'realPublish off' };
-      }
+      steps.retry = await runRetryPhase({ one: one, all: all, jparse: jparse, ctx: ctx, deps: deps, crossseed: crossseed, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail });
       } catch (e) { phaseError('retry', e); }
 
       try { failpoint('crossseed'); steps.hooksCrossseed = await pipeline.run('crossseed', ctx, steps); } catch (e) { phaseError('crossseed', e); }

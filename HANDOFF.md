@@ -1,6 +1,11 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-18 18:15（当前 v0.7.418 / G15 第 20 轮）
+最后更新：2026-11-18 19:05（当前 v0.7.419 / G15 第 23 轮）
+
+## 2026-11-18 G15 第 21–23 轮（v0.7.419）
+
+- scheduler 拆成 publish/retry/state 三个模块；scheduler.js 350 行，A5 达标。
+- 5 个大文件（Crawl.vue/target.js/target-service.js/imagehost.js/scheduler.js）行数目标全部达成。
 
 ## 2026-11-18 G15 第 20 轮（v0.7.418）
 

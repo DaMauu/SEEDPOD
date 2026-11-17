@@ -2,7 +2,7 @@
 
 最后更新：2026-11-18 08:50
 当前 goal：**G15 架构减重与失败路径**
-当前 goal 进度：**21/50 轮（A4 完成，转 A5 scheduler）**
+当前 goal 进度：**23/50 轮（5 个大文件行数达标，转 B6/B7）**
 运行状态：**全部站点停用 · 调度关 · 真发布关 · 队列 0**
 总进度：**12/16 完成；含进行中折算约 83%**
 
@@ -31,7 +31,7 @@
 | G12 | 全自动流水线 | 60% | 抓取→送审→终审→发布→辅种已串；失败恢复待压测 |
 | G13 | 站点覆盖与验证 | 70% | 覆盖面板 + 批量探测 + 3 站真实证据；2 站 NO_FORM 待查 |
 | G14 | Python sidecar | 0% | 可选，不阻塞 |
-| G15 | 架构减重与失败路径 | 42% | 第 0–20 轮完成；imagehost.js 382 行（A4 达标）；下一轮 scheduler.js |
+| G15 | 架构减重与失败路径 | 46% | 第 0–22 轮完成；scheduler.js 350 行（A5 达标）；下一轮 B6 规则注册表 |
 
 ## 当前阻塞
 
@@ -213,7 +213,7 @@
 🛠 正在开发：G10 多目标发布 · 99% · 总进度约 86%
 ```
 
-## G15 轮次（21/50）
+## G15 轮次（23/50）
 
 - 第 0 轮：B0 UI 快照工具、备份/恢复演练、390 调度条溢出修复。
 - 第 1 轮：scheduler 阶段级 catch、steps.errors/partial、通知带 phase/code；failpoint 检查 1/1。
@@ -236,4 +236,7 @@
 - 第 18 轮：A3 拆出 target-upload.js / target-rules.js；target-service.js 590→302 行（A3 达标）；target 29/29。
 - 第 19 轮：A4 拆出 imagehost-source.js；imagehost.js 612→448 行；imagehost 20/20。
 - 第 20 轮：A4 拆出 imagehost-config.js；imagehost.js 448→382 行（A4 达标）；imagehost 20/20。
-- 下一步：A5 scheduler.js。
+- 第 21 轮：A5 拆出 scheduler-publish.js；scheduler.js 559→481 行。
+- 第 22 轮：A5 拆出 scheduler-retry.js；scheduler.js 481→418 行。
+- 第 23 轮：A5 拆出 scheduler-state.js；scheduler.js 418→350 行（A5 达标）；5 个大文件全部达标。
+- 下一步：B6 规则注册表。
