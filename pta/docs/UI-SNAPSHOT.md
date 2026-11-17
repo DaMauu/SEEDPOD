@@ -26,3 +26,15 @@ node pta/scripts/ui-snapshot.js --compare /tmp/ui-before /tmp/ui-after
 4. 390 宽度下 `#crawl-panel` 内不能有元素超出视口；有溢出直接失败。
 
 改完确认通过后才允许 `node pta/scripts/ui-freeze.js --update`。
+
+## 同进程双构建实验（2026-11-19）
+
+新增 `ui-snapshot-dual.js`：两个后端 + 两个 dist + 同一个 Chromium，排除跨进程字体缓存差异。
+
+相同 dist 实测（两套后端数据完全一致）：
+
+- 1280/full AE=34979、1280/pub-card AE=403、1280/screen-card AE=138
+- 390/full AE=5459、390/pub-card AE=41、390/screen-card AE=51
+- 2% 阈值下大部分区域为空，差异是亚像素抗锯齿噪声
+
+结论：即使同一浏览器进程、相同构建，原始 `compare -metric AE` 仍不为 0，属于 Chromium 字体/合成噪声，不是布局或颜色变化。当前闸门保留 2% fuzz（组件 0、整页 ≤100）；如需原始 AE=0，需要用户明确接受更宽的容差或改用忽略区域/SSIM。

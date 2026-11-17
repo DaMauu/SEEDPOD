@@ -118,7 +118,7 @@ async function capture(out) {
       return e && e.textContent.trim() && e.textContent.trim() !== '未选择站点';
     }, null, { timeout: 8000 }).catch(function () {});
     await page.evaluate(function () { return document.fonts && document.fonts.ready; });
-    await page.addStyleTag({ content: '.dock{display:none!important}.dev-foot{visibility:hidden!important}*{animation:none!important;transition:none!important}body{overflow:visible!important}.view[data-view="crawl"],#crawl-panel,.drawers{height:auto!important;min-height:0!important;overflow:visible!important}*{text-rendering:geometricPrecision!important;-webkit-font-smoothing:antialiased!important}html,body{scrollbar-width:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}' });
+    await page.addStyleTag({ content: '.dock{display:none!important}.dev-foot{visibility:hidden!important}*{animation:none!important;transition:none!important}*::before,*::after{animation:none!important;transition:none!important}body:after{animation:none!important;display:none!important}body{overflow:visible!important}.view[data-view="crawl"],#crawl-panel,.drawers{height:auto!important;min-height:0!important;overflow:visible!important}*{text-rendering:geometricPrecision!important;-webkit-font-smoothing:antialiased!important}html,body{scrollbar-width:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}' });
     await page.waitForTimeout(800);
     const shots = [
       ['crawl-card', '.crawl-card'],
