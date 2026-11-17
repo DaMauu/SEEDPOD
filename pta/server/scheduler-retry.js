@@ -27,7 +27,7 @@ function makeRetryPhases() {
         }
         return cs;
       } else {
-        steps.crossseedRetry = { skipped: want('crossseed') ? 'realPublish off' : 'step not selected' };
+        return { skipped: want('crossseed') ? 'realPublish off' : 'step not selected' };
       }
   }
 

@@ -7,6 +7,7 @@ const { makeCrawl } = require('../server/crawl');
 const { makeTarget } = require('../server/target');
 const { makePublisher } = require('../server/publish');
 const { makeRelease } = require('../server/release');
+const { makeScheduler } = require('../server/scheduler');
 const { makeQb } = require('../server/qb');
 const watchClient = require('../server/clients/watch');
 const { makeTargetService } = require('../server/target-service');
@@ -53,6 +54,7 @@ function createCore(opts) {
   ctx.target = makeTarget(ctx);
   ctx.publisher = makePublisher(ctx);
   ctx.release = makeRelease(ctx);
+  ctx.scheduler = makeScheduler(ctx, { crawl: ctx.crawl, screen: screen, publish: ctx.publisher, release: ctx.release });
   ctx.targetService = makeTargetService(ctx, ctx.target);
 
   function counts() {
@@ -332,6 +334,7 @@ function createCore(opts) {
     preview: id => unwrap(ctx.release.preview(id)),
     advance: (id, body) => unwrap(ctx.release.advance(id, body || {})),
     run: body => unwrap(ctx.release.run(body || {})),
+    schedulerRun: body => ctx.scheduler.runNow(body || {}),
     publish: async (id, body) => unwrap(await ctx.publisher.publishItem(id, body || {})),
     targets: () => ctx.target.list(),
     targetUpload: targetUpload,

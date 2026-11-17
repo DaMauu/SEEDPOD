@@ -45,8 +45,9 @@ function cli(args) {
     });
   });
 }
-function cliLocal(args) {
-  const env = Object.assign({}, process.env, { DATA_DIR: DATA, PTA_DATA: DATA });
+function cliLocal(args, dataDir, extraEnv) {
+  const dir = dataDir || DATA;
+  const env = Object.assign({}, process.env, { DATA_DIR: dir, PTA_DATA: dir }, extraEnv || {});
   delete env.PANEL_URL; delete env.PANEL_USER; delete env.PANEL_PASS; delete env.ALLOW_REAL;
   delete env.PTA_BASE; delete env.PTA_USER; delete env.PTA_PASS; delete env.PTA_ALLOW_REAL;
   return new Promise(function (resolve) {
@@ -270,6 +271,29 @@ async function main() {
     const r = await cli(['verify', queueId]);
     need(r.code === 2, '退出码不是 2：' + r.code);
     need(/--host/.test(r.stderr), '错误提示没有 --host：' + r.stderr.slice(0, 100));
+  });
+
+
+  await check('run --all 全链路（空库干跑 + 阶段失败退出码）', async function () {
+    const d1 = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-cli-all-'));
+    const r = await cliLocal(['run', '--all', '--json'], d1);
+    let x = null;
+    try { x = JSON.parse(r.stdout); } catch (e) { x = null; }
+    need(r.code === 0, '退出码不对：' + r.code + ' ' + r.stderr);
+    need(x && x.ok === true && x.partial === false, '空库应成功：' + JSON.stringify(x).slice(0, 300));
+    need(x.steps && x.steps.crawl && x.steps.screen && x.steps.publish && Array.isArray(x.steps.errors), '全链路结构不对');
+    need(x.steps.errors.length === 0, '空库不该有阶段错误：' + JSON.stringify(x.steps.errors));
+
+    const d2 = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-cli-all-'));
+    const r2 = await cliLocal(['run', '--all', '--json'], d2, { NODE_ENV: 'test', SEEDPOD_FAIL_STEP: 'screen' });
+    let y = null;
+    try { y = JSON.parse(r2.stdout); } catch (e) { y = null; }
+    need(r2.code === 1, '阶段失败应退出 1，实际 ' + r2.code);
+    need(y && y.partial === true, '阶段失败应标 partial：' + JSON.stringify(y).slice(0, 300));
+    need((y.steps.errors || []).some(function (e) { return e.phase === 'screen' && e.code === 'FAILPOINT'; }), '没记录 screen failpoint');
+    need(y.steps.review, 'screen 失败后 review 没继续');
+    fs.rmSync(d1, { recursive: true, force: true });
+    fs.rmSync(d2, { recursive: true, force: true });
   });
 
   child.kill();

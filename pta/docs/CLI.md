@@ -64,6 +64,7 @@ sudo env DATA_DIR=<数据目录> node pta/cli.js clients --test --env-file <部�
 | `preview <queueId>` | 返回完整准备结果，阶段推进到 previewed | 本地，不发外部请求 |
 | `advance <queueId>` | draft → prepared → previewed 自动推进；后续提示用 target-upload/publish | 本地 |
 | `run --stage prepared\|previewed` | 批量准备/预览可处理队列 | 本地 |
+| `run --all` | 一条命令跑全链路（抓取→初筛→查重→终审→发布→辅种→重试）；默认干跑，部分失败退出 1 | 本地 + HTTP |
 | `clients [--test]` | 列下载器；`--test` 只读探测 qB/watch 连通性 | 只读 |
 | `coverage [--list] [--plan]` | 离线统计目标站定义/cookie/上传/回查就绪数；`--plan` 逐站生成上传 payload | 只读，不联网 |
 | `probe [--all] [--limit 20] [--hosts h1,h2] [--write]` | 对有 cookie 的目标站各 GET 一次上传页，解析字段/分类/缺失项；`--write` 写 `data/site-probe.json` | 只读，不提交 |
@@ -81,7 +82,7 @@ node pta/cli.js coverage --json --plan
 
 - 默认本地模式：CLI 直接打开 SQLite 和 `data/`，不要求 HTTP。
 - HTTP 模式仍保留：`PANEL_URL` 或 `--http`；适合远程/面板联调。
-- `prepare` / `preview` / `advance` / `run` 已实现；`advance` 到 previewed 后提示用 `target-upload` / `publish` 提交/注入。
+- `prepare` / `preview` / `advance` / `run --stage` / `run --all` 已实现；`advance` 到 previewed 后提示用 `target-upload` / `publish` 提交/注入。
 - `target-upload` 的提交逻辑由 `pta/server/target-service.js` 提供，HTTP 路由和 CLI core 共用。
 - `realCrawl` / `realPublish` 仍默认关；本地 CLI 也受同一门禁。
 - 还没有独立 `inject` 命令；也没有完全把 crawl/dupe 路由收成 core thin adapter。
@@ -114,6 +115,7 @@ pta target-upload <id> --targets h1,h2 --torrents h1=a.torrent,h2=b.torrent --re
 pta verify <id> --host <h>
 pta advance <id>                   # G7：推进一个阶段
 pta run --stage <stage>            # 批量推进可执行阶段
+pta run --all                     # 全链路（默认干跑；--real 才真抓/真发）
 ```
 
 规则：

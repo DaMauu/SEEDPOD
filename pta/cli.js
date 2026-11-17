@@ -29,6 +29,7 @@ function usage() {
   pta preview <queueId> [--json]
   pta advance <queueId> [--json]
   pta run --stage prepared|previewed [--limit 20] [--json]
+  pta run --all [--limit 20] [--real] [--json]
   pta publish <queueId> [--real] [--json]
   pta inject <queueId> [--downloader id] [--savepath path] [--category cat] [--real] [--json]
   pta targets [--json]
@@ -378,7 +379,32 @@ async function main() {
     return;
   }
   if (cmd === 'run') {
-    if (!opts.stage) die('run 需要 --stage prepared|previewed', 2);
+    if (opts.all) {
+      const limit = Math.max(1, Math.min(20, Number(opts.limit) || 20));
+      const screenLimit = Math.max(1, Math.min(200, Number(opts.screenLimit) || 200));
+      const publishLimit = Math.max(1, Math.min(5, Number(opts.publishLimit) || 5));
+      function summary(x) {
+        const st = (x && x.steps) || {};
+        const c = st.crawl || {}, s = st.screen || {}, p = st.publish || {}, r = st.retry || {};
+        const errs = (st.errors || []).length;
+        return '全链路' + (x && x.partial ? '（部分失败）' : '') + ' · 抓取 ' + (c.ok || 0) + '/' + (c.sites || 0) +
+          ' · 送审 ' + (s.selected || 0) + ' · 发布 ' + (p.ok || 0) + '/' + (p.checked || 0) +
+          ' · 重试 ' + (r.ok || 0) + '/' + (r.checked || 0) + (errs ? ' · 阶段失败 ' + errs : '');
+      }
+      if (!USE_HTTP) {
+        if (opts.real) process.env.ALLOW_REAL = '1';
+        const x = await core().schedulerRun({ batchLimit: limit, screenLimit: screenLimit, publishLimit: publishLimit });
+        print(x, opts, summary);
+        if (!x || x.ok === false || x.partial) process.exitCode = 1;
+        return;
+      }
+      const d = await api('/api/scheduler/run', { method: 'POST', body: { batchLimit: limit, screenLimit: screenLimit, publishLimit: publishLimit } });
+      const wrapped = { partial: !!(d && d.partial), steps: d || {} };
+      print(wrapped, opts, summary);
+      if (wrapped.partial) process.exitCode = 1;
+      return;
+    }
+    if (!opts.stage) die('run 需要 --stage prepared|previewed 或 --all', 2);
     if (!USE_HTTP) {
       const x = core().run({ stage: String(opts.stage), limit: Math.max(1, Math.min(100, Number(opts.limit) || 20)) });
       print(x, opts, function () { return '阶段 ' + x.stage + ' · 检查 ' + x.checked + ' · 准备 ' + x.prepared + ' · 预览 ' + x.previewed + ' · 跳过 ' + x.skipped + ' · 失败 ' + x.failed; });
