@@ -38,3 +38,5 @@ node pta/scripts/ui-snapshot.js --compare /tmp/ui-before /tmp/ui-after
 - 2% 阈值下大部分区域为空，差异是亚像素抗锯齿噪声
 
 结论：即使同一浏览器进程、相同构建，原始 `compare -metric AE` 仍不为 0，属于 Chromium 字体/合成噪声，不是布局或颜色变化。当前闸门保留 2% fuzz（组件 0、整页 ≤100）；如需原始 AE=0，需要用户明确接受更宽的容差或改用忽略区域/SSIM。
+
+**用户确认（2026-11-19）**：接受 2% fuzz 闸门（组件 AE=0、整页 AE≤100，附 RMSE 与 DOM 检查）；原始 AE=0 不作为验收条件。
