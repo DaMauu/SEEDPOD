@@ -818,10 +818,10 @@ onUnmounted(() => {
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
 .dedupe-card :deep(.drawer-body){display:block;gap:0;align-items:start}
 .dedupe-switch-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:2px 0 8px}
-.dedupe-switch{display:flex !important;align-items:center;gap:8px;padding:0 !important;flex:0 0 auto;min-width:0}
+.dedupe-switch{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 0 auto;min-width:0}
 .dedupe-switch .lbl{margin:0 !important;white-space:nowrap}
 .dedupe-input-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;border-top:1px solid #eef0f3;padding-top:8px}
-.dedupe-input{display:flex !important;align-items:center;gap:8px;padding:0 !important;flex:0 1 440px;min-width:260px}
+.dedupe-input{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 1 440px;min-width:260px}
 .dedupe-input .lbl{margin:0 !important;white-space:nowrap}
 .dedupe-input .ctl{flex:1 1 auto;min-width:0;width:auto !important}
 .dedupe-input .ctl > .input{width:100% !important;height:28px;font-size:12px}
