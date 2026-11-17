@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.398 · 2026-11-18
+
+### G15 第 0 轮：UI 快照与数据护栏
+- 新增 `pta/scripts/ui-snapshot.js`：固定临时数据，1280/390 截整页、卡片、目标站弹窗，RMSE + DOM 文本/尺寸对比。
+- 新增 `pta/docs/UI-SNAPSHOT.md`；快照只写 /tmp。
+- 修复 390 宽度下调度条横向溢出。
+- 备份恢复演练：`integrity ok`，catalog 579 / sites 306 / downloaders 2。
+
 ## v0.7.397 · 2026-11-17
 
 ### 流程页最终效果冻结

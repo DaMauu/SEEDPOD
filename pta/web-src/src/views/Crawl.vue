@@ -778,7 +778,9 @@ onUnmounted(() => {
 @media (max-width:900px){
   .sched-bar { flex-wrap:wrap; padding:7px 11px; }
   .sb-main { flex:1 1 100%; }
-  .sb-actions { width:100%; justify-content:space-between; }
+  .sb-actions { width:100%; justify-content:flex-start; flex-wrap:wrap; gap:6px 12px; }
+  .sb-every { flex:0 1 96px; }
+  .sb-f { flex:1 1 auto; }
 }
 .crawl-card :deep(.drawer-body){padding:4px 20px 18px}
 .crawl-card :deep(.preset-block){display:flex;flex-direction:column;gap:2px}
