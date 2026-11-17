@@ -28,6 +28,13 @@
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
+## 多步写库事务
+
+- `pta/server/db.js` 的 `tx(db, fn)` 是同步事务封装：`BEGIN IMMEDIATE` → 回调 → `COMMIT`；抛错 `ROLLBACK`。
+- 事务只包数据库写，不在事务里 await HTTP、文件下载、图床上传；网络操作先完成再开事务。
+- 已接：`screen`（queue 插入 + catalog 标 selected）、`publish`（queue + published + catalog 标 published）。
+- 事务失败整体回滚，不留下“队列有、词条没改”的半状态。
+
 ## 失败队列
 
 - `GET /api/failures?limit=50&offset=0&dead=1`：列出阶段失败、目标站失败、待重试；`dead=1` 只看死信。

@@ -2,6 +2,7 @@
 const match = require('./match');
 const marksMod = require('./marks');
 const flowConfig = require('./flow-config');
+const { tx } = require('./db');
 
 function flowRules(sets, rx) {
   const allRows = [];
@@ -131,12 +132,14 @@ function screenCatalog(ctx, opts) {
       descrBb: String(it.descrBb || '').slice(0, 60000),
       descr: String(it.descr || '').slice(0, 4000),
       tags: tagListOf(it.tags) };
-    db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
-      .run(item.id, 'pending', title, JSON.stringify(item), item.createdAt, now());
+    tx(db, function () {
+      db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
+        .run(item.id, 'pending', title, JSON.stringify(item), item.createdAt, now());
+      const next = Object.assign({}, it, { status: 'selected' });
+      db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(next), 'selected', now(), r.id);
+    });
     seenTitles.add(norm(title));
     if (it.infohash) seenHashes.add(String(it.infohash).toLowerCase());
-    const next = Object.assign({}, it, { status: 'selected' });
-    db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(next), 'selected', now(), r.id);
     selected++;
   }
   return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, rules: rules };

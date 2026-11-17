@@ -42,6 +42,7 @@ run scheduler scheduler.js
 run failpoint failpoint.js
 run errors errors.js
 run failures failures.js
+run transactions transactions.js
 run request-queue request-queue.js
 run env-names env-names.js
 run detect detect.js

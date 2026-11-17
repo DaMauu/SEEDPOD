@@ -5,6 +5,7 @@ const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
 const stage = require('./stage');
 const flowConfig = require('./flow-config');
+const { tx } = require('./db');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
@@ -19,6 +20,22 @@ function makePublisher(ctx) {
   function save(it) {
     db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(it.status, JSON.stringify(it), now(), it.id);
+  }
+  function recordPublished(it) {
+    tx(db, function () {
+      save(it);
+      db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
+        .run(it.id, JSON.stringify(it), it.publishedAt);
+      if (it.catalogId) {
+        const c = one('SELECT data FROM catalog WHERE id = ?', String(it.catalogId));
+        if (c) {
+          const cd = jparse(c.data) || {};
+          cd.status = 'published';
+          cd.updatedAt = now();
+          db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
+        }
+      }
+    });
   }
   function cookieOf(host) {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', String(host || ''));
@@ -149,18 +166,7 @@ function makePublisher(ctx) {
         verified: true, client: 'watch', path: w.path };
       it.pubMsg = '已写入 watch 目录：' + w.path;
       stage.set(it, 'injected', { evidence: { client: 'watch', hash: meta.hash || '', path: w.path, verified: true } });
-      save(it);
-      db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
-        .run(it.id, JSON.stringify(it), it.publishedAt);
-      if (it.catalogId) {
-        const c = one('SELECT data FROM catalog WHERE id = ?', String(it.catalogId));
-        if (c) {
-          const cd = jparse(c.data) || {};
-          cd.status = 'published';
-          cd.updatedAt = now();
-          db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
-        }
-      }
+      recordPublished(it);
       return { ok: true, data: { id: it.id, dryRun: false, published: true,
         qb: { added: true, client: 'watch', path: w.path, message: w.message || 'Ok.', hash: meta.hash || '', verified: true, state: 'watch' },
         msg: it.pubMsg } };
@@ -195,18 +201,7 @@ function makePublisher(ctx) {
       ? (add.existing ? 'qB 里已有这个种子，跳过重复添加' : '已加入 qB 并校验到种子（' + (chk.state || '未知') + '）')
       : '已加入 qB，但列表里还没找到（可能延迟）';
     stage.set(it, 'injected', { evidence: { client: 'qb', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' } });
-    save(it);
-    db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
-      .run(it.id, JSON.stringify(it), it.publishedAt);
-    if (it.catalogId) {
-      const c = one('SELECT data FROM catalog WHERE id = ?', String(it.catalogId));
-      if (c) {
-        const cd = jparse(c.data) || {};
-        cd.status = 'published';
-        cd.updatedAt = now();
-        db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(cd), 'published', now(), String(it.catalogId));
-      }
-    }
+    recordPublished(it);
     return { ok: true, data: { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' }, msg: it.pubMsg } };
   }
 

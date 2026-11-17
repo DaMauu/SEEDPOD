@@ -44,4 +44,17 @@ function kvSet(db, k, v) {
 }
 function jget(row) { return row && row.data ? JSON.parse(row.data) : null; }
 
-module.exports = { openDB, kvGet, kvSet, jget };
+/* 同步事务：只在 DB 写操作里用，不允许在事务里 await 网络/文件。 */
+function tx(db, fn) {
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const out = fn();
+    db.exec('COMMIT');
+    return out;
+  } catch (e) {
+    try { db.exec('ROLLBACK'); } catch (e2) { /* 已回滚/连接坏 */ }
+    throw e;
+  }
+}
+
+module.exports = { openDB, kvGet, kvSet, jget, tx };
