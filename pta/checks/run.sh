@@ -60,6 +60,7 @@ run media media.js
 run media-api media-api.js
 run clients clients.js
 run cli cli.js
+run resume resume.js
 run stage stage.js
 run notify notify.js
 run web build.js
