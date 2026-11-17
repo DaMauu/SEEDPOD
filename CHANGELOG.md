@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.466 · 2026-11-18
+
+### 引入 OpenCode 项目 skills
+- `.opencode/skills/` 新增 10 个：review、build、debug、refactor、test、ui、site、db、security、ship。
+- 默认按 description 自动匹配，也可用 `@review` 等显式加载；AGENTS.md 加速查一行。
+- 不改运行时代码；版本号同步，质量审计通过。
+
 ## v0.7.465 · 2026-11-18
 
 ### 维护：CSS 重复规则试点合并

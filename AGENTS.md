@@ -86,6 +86,8 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 ## 干活方式
 
+- Agent skills（自动/显式均可）：@review 审查 · @build 实现 · @debug 修复 · @refactor 拆分 · @test 测试 · @ui 界面 · @site 站点 · @db 数据层 · @security 安全 · @ship 发版
+
 - 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 23 → form 5 → site-pack 5 → publish 4 → scheduler 5 → detect 5 → target 10 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 质量审计 → 规则体检）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 改完先跑 `node pta/scripts/audit-quality.js --feature <name>`（单文件用 `--file`）；看「D」项和发现清单，再跑全量 `run.sh`
