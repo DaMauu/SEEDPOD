@@ -324,6 +324,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 第 31 轮：A1 新增 `composables/useCrawlPlan.js`（抓取计划状态与请求）；Crawl.vue 497→474 行；快照一致。
 - 第 32 轮：B7 扩到 `meta.flow` / `meta.scheduler`（schemaVersion + 启动升级 + flow 写回带版本）；config-migration 7/7、备份恢复 4/4。
 - 第 33 轮：A1 新增 `composables/useCrawlScheduler.js`（调度/限制/闸门状态与请求）；Crawl.vue 474→398 行；快照一致、调度开关实测通过。
+- 第 34 轮：A1 新增 `composables/useCrawlFlow.js`（流程规则加载/保存、旧值迁移、详情开关）；Crawl.vue 398→299 行；快照一致、保存实测通过。
 
 **验收**：
 - `Crawl.vue` ≤500 行；`target.js` ≤450；`target-service.js` ≤400；`imagehost.js` ≤400；`scheduler.js` ≤350
