@@ -28,6 +28,12 @@
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
+## 故障注入
+
+- `pta/checks/fault-injection.js`：本地 mock 覆盖图床上传 429/500/断连/半成功/超时；失败队列死信、nextRetry、重放。
+- `SEEDPOD_FAIL_STEP` 只在 `NODE_ENV=test` 生效，用来验证单阶段失败后后续阶段继续。
+- 不碰真实站；故障用例全部本地。
+
 ## 多步写库事务
 
 - `pta/server/db.js` 的 `tx(db, fn)` 是同步事务封装：`BEGIN IMMEDIATE` → 回调 → `COMMIT`；抛错 `ROLLBACK`。
