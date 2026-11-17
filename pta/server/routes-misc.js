@@ -19,7 +19,8 @@ module.exports = function (app, ctx) {
   app.get('/api/errors', async (req) => ok(errorStats.snapshot(req.query.limit)));
 
   app.get('/api/failures', async (req) => ok(failureQueue.list({
-    limit: req.query.limit, offset: req.query.offset, dead: req.query.dead
+    limit: req.query.limit, offset: req.query.offset, dead: req.query.dead,
+    days: req.query.days, maxItems: req.query.maxItems || req.query.max
   })));
 
   app.post('/api/failures/:id/replay', async (req, reply) => {

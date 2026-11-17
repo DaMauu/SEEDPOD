@@ -3,6 +3,8 @@
 const errors = require('./errors');
 
 const DEAD_AFTER_MS = 24 * 3600 * 1000;
+const RETENTION_DAYS = 30;
+const RETENTION_MAX = 1000;
 
 function makeFailureQueue(ctx) {
   const { db, one, all, jparse } = ctx;
@@ -63,22 +65,41 @@ function makeFailureQueue(ctx) {
     });
   }
 
+  /* 保留策略：只做视图过滤，不删队列数据。
+     默认最近 30 天或最多 1000 条；有下次重试时间的条目即使更旧也保留。 */
   function list(opts) {
     const o = opts || {};
     const limit = Math.max(1, Math.min(200, Number(o.limit) || 50));
     const offset = Math.max(0, Number(o.offset) || 0);
     const deadOnly = o.dead === true || o.dead === '1' || o.dead === 'true';
+    const days = o.days === undefined ? RETENTION_DAYS : Math.max(0, Math.min(3650, Number(o.days) || 0));
+    const maxItems = Math.max(1, Math.min(5000, Number(o.maxItems || o.max) || RETENTION_MAX));
+    const cutoff = days > 0 ? Date.now() - days * 86400000 : 0;
     const max = retryMax();
     const items = [];
-    all("SELECT id, status, title, data FROM queue ORDER BY updated_at DESC LIMIT 1000").forEach(function (row) {
+    all("SELECT id, status, title, data FROM queue ORDER BY updated_at DESC LIMIT 5000").forEach(function (row) {
       const d = jparse(row.data) || {};
       const failures = failuresOf(d);
       if (!failures.length) return;
+      if (cutoff > 0) {
+        const times = [];
+        failures.forEach(function (f) {
+          const at = Date.parse(f.lastAttemptAt || '') || 0;
+          const next = Date.parse(f.nextRetryAt || '') || 0;
+          if (at) times.push(at);
+          if (next) times.push(next);
+        });
+        const latest = times.length ? Math.max.apply(null, times) : 0;
+        const scheduled = failures.some(function (f) { return Date.parse(f.nextRetryAt || '') > Date.now(); });
+        /* 没有时间戳的旧数据不隐藏；有未来重试的照常保留 */
+        if (latest && latest < cutoff && !scheduled) return;
+      }
       const dead = isDead(failures, max);
       if (deadOnly && !dead) return;
       items.push({ id: row.id, title: row.title || d.title || '', status: row.status || d.status || '', stage: d.stage || '',
         dead: dead, failures: failures, nextRetryAt: failures.map(function (x) { return x.nextRetryAt; }).filter(Boolean).sort()[0] || '' });
     });
+    items.splice(maxItems);
     const total = items.length;
     const page = items.slice(offset, offset + limit);
     const byCode = {};
@@ -90,7 +111,8 @@ function makeFailureQueue(ctx) {
       });
     });
     return { total: total, dead: items.filter(function (x) { return x.dead; }).length, limit: limit, offset: offset,
-      counts: byCode, byStage: byStage, items: page, retryMax: max };
+      counts: byCode, byStage: byStage, items: page, retryMax: max,
+      retention: { days: days, maxItems: maxItems, cutoff: cutoff } };
   }
 
   function replay(id) {

@@ -41,6 +41,13 @@
 - 已接：`screen`（queue 插入 + catalog 标 selected）、`publish`（queue + published + catalog 标 published）。
 - 事务失败整体回滚，不留下“队列有、词条没改”的半状态。
 
+## 失败队列保留策略
+
+- 视图级保留，不删队列数据：默认最近 30 天、最多 1000 条。
+- API：`GET /api/failures?days=30&maxItems=1000`；`days=0` 看全部，命令行 `--days` / `--max`。
+- 有未来重试时间（`nextRetryAt`）的条目即使更旧也保留；没有时间戳的旧数据不隐藏。
+- 重放成功后按条件重新计算，自动移出死信；队列原始行保留。
+
 ## 失败队列
 
 - `GET /api/failures?limit=50&offset=0&dead=1`：列出阶段失败、目标站失败、待重试；`dead=1` 只看死信。

@@ -158,6 +158,9 @@ async function main() {
   await check('失败队列 API', async () => {
     const j = await (await fetchA(BASE + '/api/failures?limit=1')).json();
     need(j.ok && j.data && typeof j.data.total === 'number' && Array.isArray(j.data.items), '失败队列结构不对：' + JSON.stringify(j));
+    need(j.data.retention && j.data.retention.days === 30, '保留策略默认不对：' + JSON.stringify(j.data.retention));
+    const j2 = await (await fetchA(BASE + '/api/failures?days=0&maxItems=5')).json();
+    need(j2.ok && j2.data.retention.days === 0 && j2.data.retention.maxItems === 5, '保留参数没生效：' + JSON.stringify(j2.data.retention));
   });
 
   await check('错误统计 API', async () => {

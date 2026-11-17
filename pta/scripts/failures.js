@@ -19,6 +19,9 @@ if (argv.includes('--replay')) {
   const r = q.replay(arg('--replay', ''));
   console.log(JSON.stringify(r, null, 2));
 } else {
-  console.log(JSON.stringify(q.list({ limit: arg('--limit', '50'), dead: argv.includes('--dead') }), null, 2));
+  console.log(JSON.stringify(q.list({
+    limit: arg('--limit', '50'), dead: argv.includes('--dead'),
+    days: arg('--days', undefined), maxItems: arg('--max', undefined)
+  }), null, 2));
 }
 db.close();
