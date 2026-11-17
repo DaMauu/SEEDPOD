@@ -1024,10 +1024,10 @@ onUnmounted(() => {
 .pub-card .flow-group .sec-ttl::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--muted-2); flex: 0 0 auto; }
 .pub-card .target-pick {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: 34px; max-width: 100%; padding: 4px 5px 4px 9px;
-  border: 1px solid var(--line-2); border-radius: 9px; background: #fff;
+  min-height: 30px; max-width: 100%; padding: 0;
+  border: 0; border-radius: 0; background: transparent;
 }
-.pub-card .target-pick.empty { border-style: dashed; background: var(--panel-2); }
+.pub-card .target-pick.empty { border: 0; background: transparent; }
 .pub-card .target-pick .tp-ava { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 6px; font-size: 9.5px; }
 .pub-card .target-pick .tp-info { display: flex; align-items: baseline; gap: 7px; min-width: 0; margin: 0 2px 0 0; text-align: left; }
 .pub-card .target-pick .tp-info b { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
