@@ -1045,6 +1045,9 @@ onUnmounted(() => {
   .pub-card .flow-group .set-fields .set-field .pick-row { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
   .pub-card .target-pick { width: 100%; }
   .pub-card .target-pick .tp-info { flex-wrap: wrap; }
+  .pub-card .flow-group .set-fields .set-field.pair { flex-direction: row !important; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+  .pub-card .flow-group .set-fields .set-field.pair .pair-item { width: auto !important; flex: 0 0 auto !important; }
+  .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow { flex: 1 1 100% !important; min-width: 0; }
 }
 
 /* 抓取计划：并入抓取卡，不再单开“本地演练” */
