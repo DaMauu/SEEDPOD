@@ -191,7 +191,6 @@ function makeScheduler(ctx, deps) {
 
       /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
       const flow = flowConfig.read(ctx);
-      const targetSearchOn = flowConfig.on(flow, '目标站搜索', true);
       const needIntro = flowConfig.on(flow, '必须有简介', false);
       const needSub = flowConfig.on(flow, '必须有副标题', false);
       const bdMode = String(flowConfig.value(flow, 'BDInfo', '不要求'));
@@ -251,7 +250,7 @@ function makeScheduler(ctx, deps) {
         const d = jparse(cur ? cur.data : row.data) || {};
         const p = (d.prepared) || {};
         const missing = [];
-        if (targetSearchOn && !d.dupePassedAt) missing.push('查重未完成');
+        if (!d.dupePassedAt) missing.push('查重未完成');
         if (needIntro && !String(d.intro || '').trim()) missing.push('简介');
         if (needSub && !String(d.subtitle || '').trim()) missing.push('副标题');
         if (shotMin > 0 && Number(p.shots || 0) < shotMin) missing.push('截图 ' + Number(p.shots || 0) + '/' + shotMin);

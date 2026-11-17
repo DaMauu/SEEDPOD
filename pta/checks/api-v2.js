@@ -172,28 +172,18 @@ async function main() {
     need(get.data.rx.deny === 'CAM', 'rx.deny 没保存');
   });
 
-  await check('目标站搜索开关读流程规则', async () => {
+  await check('查重始终搜索，旧目标站搜索开关不再生效', async () => {
     const off = await (await fetchA(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ sets: { dedupe: [[{ t: '目标站搜索', on: false }]] } })
     })).json();
-    need(off.ok, '关目标站搜索失败');
+    need(off.ok, '写旧开关失败');
     const r = await fetchA(BASE + '/api/dupe/check', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'target.example' })
     });
-    need(r.status === 409, '关闭时应 409，实际 ' + r.status);
     const j = await r.json();
-    need(j.error && j.error.code === 'DUPE_DISABLED', '错误码不对：' + JSON.stringify(j));
-    const on = await (await fetchA(BASE + '/api/flow', {
-      method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sets: { dedupe: [[{ t: '目标站搜索', on: true }]] } })
-    })).json();
-    need(on.ok, '开目标站搜索失败');
-    const r2 = await fetchA(BASE + '/api/dupe/check', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ host: 'target.example' })
-    });
-    const j2 = await r2.json();
-    need(!(j2.error && j2.error.code === 'DUPE_DISABLED'), '开启后仍被开关拦住');
+    need(!(j.error && j.error.code === 'DUPE_DISABLED'), '旧开关仍在拦查重：' + JSON.stringify(j));
+    need(j.error && /NO_COOKIE|NO_DEF/.test(j.error.code), '应继续走到 cookie/站点定义检查：' + JSON.stringify(j));
   });
 
   await check('词条写入与筛选条件生效', async () => {

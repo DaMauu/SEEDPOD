@@ -8,6 +8,30 @@ const flowConfig = require('./flow-config');
 const imagehost = require('./imagehost');
 const marks = require('./marks');
 
+/* 查重开关语义：其他重复一律跳过；DIY 开关开=仍可发；原盘/禁转开关开=跳过 */
+function dupeDecision(kind, restricted, switches) {
+  const sw = switches || {};
+  const ruleRestrict = sw.restrict !== false;
+  const ruleDiy = sw.diy !== false;
+  const ruleFull = sw.full !== false;
+  let skip = true;
+  if (kind === 'diy') skip = !ruleDiy;
+  else if (kind === 'full_disc') skip = ruleFull;
+  if (restricted && ruleRestrict) skip = true;
+  return skip;
+}
+
+/* 旧下拉值兼容：新开关没有 on 时，按旧 v 迁移一次 */
+function dedupeSwitchOn(flowCfg, name, defaultValue) {
+  const r = flowCfg && flowCfg[name];
+  if (r && r.on === undefined && r.v !== undefined) {
+    if (name === '目标站只有 DIY') return String(r.v) !== '跳过';
+    if (name === '禁转/限转处理') return String(r.v) !== '不检查';
+    if (name === '目标站已有原盘') return true;
+  }
+  return flowConfig.on(flowCfg, name, defaultValue);
+}
+
 function makeTargetService(ctx, target) {
   const { db, one, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
@@ -172,8 +196,6 @@ function makeTargetService(ctx, target) {
   /* 独立查重：初筛后先跑一次，命中就跳过，避免补齐/详情请求。 */
   async function checkDupe(host, itemData, buf) {
     const flowCfg = flowConfig.read(ctx);
-    /* 流程页关掉“目标站搜索”就不查重，尊重用户设置，少打目标站 */
-    if (!flowConfig.on(flowCfg, '目标站搜索', true)) return { found: false, disabled: true };
     let pre = null;
     try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); } catch (e) { pre = null; }
     if (!pre || !pre.ok || !pre.data || !pre.data.found) return { found: false };
@@ -192,13 +214,13 @@ function makeTargetService(ctx, target) {
     const fullRe = new RegExp(fullWords.map(function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'i');
     const isFullDisc = fullRe.test(foundTitle) && !isRemux && !isDiy;
     const restricted = /禁转|限转/.test(foundTitle);
-    const ruleRestrict = String(flowConfig.value(flowCfg, '禁转/限转处理', '跳过发布'));
-    const ruleDiy = String(flowConfig.value(flowCfg, '目标站只有 DIY', '可发（标复核）'));
-    const ruleFull = String(flowConfig.value(flowCfg, '目标站已有原盘', '跳过不收'));
-    let skip = isDiy ? ruleDiy === '跳过' : (isFullDisc ? ruleFull === '跳过不收' : true);
-    if (restricted && ruleRestrict === '跳过发布') skip = true;
-    if (restricted && ruleRestrict === '标复核后仍发') skip = false;
-    return { found: true, skip: skip, kind: isDiy ? 'diy' : (isFullDisc ? 'full_disc' : (isRemux ? 'remux' : 'other')), title: foundTitle.slice(0, 200), verify: pre.data, restricted: restricted };
+    /* 开关语义：原盘/禁转开关开=跳过，DIY 开关开=仍可发；其余重复一律跳过 */
+    const ruleRestrict = dedupeSwitchOn(flowCfg, '禁转/限转处理', true);
+    const ruleDiy = dedupeSwitchOn(flowCfg, '目标站只有 DIY', true);
+    const ruleFull = dedupeSwitchOn(flowCfg, '目标站已有原盘', true);
+    const kind = isDiy ? 'diy' : (isFullDisc ? 'full_disc' : (isRemux ? 'remux' : 'other'));
+    const skip = dupeDecision(kind, restricted, { restrict: ruleRestrict, diy: ruleDiy, full: ruleFull });
+    return { found: true, skip: skip, kind: kind, title: foundTitle.slice(0, 200), verify: pre.data, restricted: restricted };
   }
 
   async function upload(host, body) {
@@ -258,17 +280,13 @@ function makeTargetService(ctx, target) {
         }
       }
     }
-    /* 禁转/限转是硬规则：发布阶段再拦一次，防止手工条目绕过初筛/终审 */
-    if (!dryRun) {
-      const restrictRule = flow['禁转/限转处理'];
-      const mode = restrictRule && restrictRule.v ? String(restrictRule.v) : '跳过发布';
-      if (mode === '跳过发布') {
-        const reason = marks.complianceReason(item.data, Date.now());
-        if (reason) {
-          stage.fail(item.data, item.data.stage || 'previewed', '源种' + reason + '，按规则不发布');
-          saveQueue(item.data);
-          return { ok: false, code: 'RESTRICTED_SOURCE', message: '源种' + reason + '，按规则不发布', http: 409 };
-        }
+    /* 禁转/限转开关打开时，发布阶段再拦一次，防止手工条目绕过初筛/终审 */
+    if (!dryRun && dedupeSwitchOn(flow, '禁转/限转处理', true)) {
+      const reason = marks.complianceReason(item.data, Date.now());
+      if (reason) {
+        stage.fail(item.data, item.data.stage || 'previewed', '源种' + reason + '，按规则不发布');
+        saveQueue(item.data);
+        return { ok: false, code: 'RESTRICTED_SOURCE', message: '源种' + reason + '，按规则不发布', http: 409 };
       }
     }
     const t = await torrentFor(b, item.data);
@@ -570,4 +588,4 @@ function makeTargetService(ctx, target) {
   return { upload: upload, uploadMany: uploadMany, checkDupe: checkDupe, fillSourceTitle: fillSourceTitle, fetchPublished: fetchPublished, probe: probe, loadQueue: loadQueue, saveQueue: saveQueue, checkHost: checkHost, flowMap: flowMap };
 }
 
-module.exports = { makeTargetService };
+module.exports = { makeTargetService, _dupeDecision: dupeDecision, _dedupeSwitchOn: dedupeSwitchOn };

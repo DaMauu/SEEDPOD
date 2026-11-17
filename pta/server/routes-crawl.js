@@ -276,10 +276,8 @@ module.exports = function (app, ctx) {
     const host = String(b.host || '').trim().toLowerCase();
     if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '目标站域名不合法');
     const flow = flowConfig.read(ctx);
-    if (!flowConfig.on(flow, '目标站搜索', true)) {
-      return bad(reply, 'DUPE_DISABLED', '目标站搜索已在流程页关闭；打开后再试', 409);
-    }
-    const tolerance = flowConfig.number(flow, '体积容差', 0);
+    /* 查重范围已收敛：目标站始终搜索，体积容差固定默认 2% */
+    const tolerance = flowConfig.number(flow, '体积容差', 2);
     const ck = readCookie(host);
     if (ck.err) return bad(reply, ck.err.code, ck.err.message, 409);
     const def = readDef(host);

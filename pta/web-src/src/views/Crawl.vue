@@ -102,20 +102,21 @@
             <button class="btn primary slim" type="button" :disabled="busy.dedupe" @click="saveDedupe">{{ busy.dedupe ? '保存中…' : '保存' }}</button>
           </div>
         </div>
-        <div class="drawer-body">
-          <div v-for="(g, gi) in rules.dedupe" :key="g.name" class="flow-group" :class="g.cls">
-            <div class="flow-ttl">{{ g.name }}</div>
-            <div class="set-fields">
-              <div v-if="gi === 0" class="set-field">
-                <div class="lbl"><span>自动查重</span></div>
-                <div class="ctl">
-                  <button class="switch" :class="{ on: autoDupe }" type="button" @click="autoDupe = !autoDupe"><i></i></button>
-                </div>
-              </div>
-              <div v-for="r in (g.rows || [])" :key="r.t" class="set-field" :class="{ todo: r.todo }">
-                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-                <div class="ctl"><RuleControl :r="r" /></div>
-              </div>
+        <div class="drawer-body dedupe-body flow-group">
+          <div class="dedupe-switch-row">
+            <div class="set-field dedupe-switch">
+              <div class="lbl"><span>自动查重</span></div>
+              <button class="switch" :class="{ on: autoDupe }" type="button" role="switch" :aria-checked="String(autoDupe)" @click="autoDupe = !autoDupe"><i></i></button>
+            </div>
+            <div v-for="r in dedupeSwitches" :key="r.t" class="set-field dedupe-switch" :class="{ todo: r.todo }">
+              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <button class="switch" :class="{ on: !!r.on }" type="button" role="switch" :aria-checked="String(!!r.on)" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
+            </div>
+          </div>
+          <div class="dedupe-input-row">
+            <div v-for="r in dedupeInputs" :key="r.t" class="set-field dedupe-input" :class="{ todo: r.todo }">
+              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+              <div class="ctl"><RuleControl :r="r" /></div>
             </div>
           </div>
         </div>
@@ -245,6 +246,9 @@ const detail = ref(false)
 const autoDupe = ref(false)
 const fetchRows = computed(() => (rules.fetch[0] && rules.fetch[0].rows) || [])
 const rxRows = computed(() => (rules.fetch[1] && rules.fetch[1].rows) || [])
+const dedupeRows = computed(() => (rules.dedupe[0] && rules.dedupe[0].rows) || [])
+const dedupeSwitches = computed(() => dedupeRows.value.filter(r => r.type === 'switch'))
+const dedupeInputs = computed(() => dedupeRows.value.filter(r => r.type !== 'switch'))
 const fetchSum = computed(() => {
   let n = 0
   fetchRows.value.forEach(r => { n += (r.sel || []).length })
@@ -481,6 +485,19 @@ async function putFlow(sets, rxBody) {
 function serialize(groups) {
   return (groups || []).map(g => (g.rows || []).map(r => ({ t: r.t, v: r.v, on: r.on, sel: r.sel })))
 }
+/* 旧下拉值迁成开关：只有明确“不检查/跳过/仍收”的旧值才改开关，其余默认开 */
+function migrateDedupeSwitches(saved) {
+  if (!Array.isArray(saved)) return
+  const rows = (rules.dedupe[0] && rules.dedupe[0].rows) || []
+  saved.forEach(group => (group || []).forEach(v => {
+    if (!v || v.v === undefined) return
+    const r = rows.find(x => x.t === v.t)
+    if (!r || r.type !== 'switch') return
+    if (r.t === '目标站只有 DIY') r.on = v.v !== '跳过'
+    else if (r.t === '禁转/限转处理') r.on = v.v !== '不检查'
+    else if (r.t === '目标站已有原盘') r.on = true
+  }))
+}
 function applySaved(groups, saved) {
   if (!Array.isArray(saved)) return
   const byT = {}
@@ -501,6 +518,7 @@ async function loadFlow() {
     if (sets) {
       applySaved(rules.fetch, sets.fetch)
       applySaved(rules.dedupe, sets.dedupe)
+      migrateDedupeSwitches(sets.dedupe)
       applySaved(rules.pub, sets.pub)
     }
     if (j.data && j.data.rx) {
@@ -798,7 +816,15 @@ onUnmounted(() => {
 .crawl-card :deep(.crawl-foot){flex-direction:column;align-items:flex-start;gap:10px}
 }
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
-.dedupe-card :deep(.drawer-body){display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.dedupe-card :deep(.drawer-body){display:block;gap:0;align-items:start}
+.dedupe-switch-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:2px 0 8px}
+.dedupe-switch{display:flex !important;align-items:center;gap:8px;padding:0 !important;flex:0 0 auto;min-width:0}
+.dedupe-switch .lbl{margin:0 !important;white-space:nowrap}
+.dedupe-input-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;border-top:1px solid #eef0f3;padding-top:8px}
+.dedupe-input{display:flex !important;align-items:center;gap:8px;padding:0 !important;flex:0 1 440px;min-width:260px}
+.dedupe-input .lbl{margin:0 !important;white-space:nowrap}
+.dedupe-input .ctl{flex:1 1 auto;min-width:0;width:auto !important}
+.dedupe-input .ctl > .input{width:100% !important;height:28px;font-size:12px}
 .dedupe-card :deep(.flow-group){background:transparent;border:0;border-radius:0;padding:0;margin:0}
 .dedupe-card :deep(.flow-ttl){margin-bottom:6px}
 .flow-group :deep(.flow-ttl){font-size:12px;font-weight:600;color:var(--muted);margin:0 0 1px}
@@ -871,6 +897,8 @@ onUnmounted(() => {
 .flow-group :deep(.set-field.pair .pair-lbl){font-size:12px;color:#5b6573}
 .dedupe-card :deep(.drawer-body){padding:8px 16px 10px}
 @media (max-width:700px) {
+.dedupe-switch-row{gap:8px 14px}
+.dedupe-input{flex:1 1 100%;min-width:0}
 .flow-group :deep(.set-fields){grid-template-columns:1fr}
 .flow-group.cond :deep(.set-fields){grid-template-columns:1fr}
 .flow-group.cond :deep(.set-field){grid-template-columns:1fr;gap:2px}
