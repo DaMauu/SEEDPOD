@@ -3,6 +3,7 @@
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
+  const configSchema = require('./config-schema');
 
   function updCatalog(id, patch) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);
@@ -183,10 +184,7 @@ module.exports = function (app, ctx) {
   /* ---- 配置 ---- */
   const DEF = { runMode: 'test', interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: true, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1 };
   const LIM = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10], concurrency: [1, 5] };
-  function readCfg() {
-    const row = one("SELECT v FROM meta WHERE k = 'config'");
-    return Object.assign({}, DEF, JSON.parse(row ? row.v : 'null') || {});
-  }
+  function readCfg() { return Object.assign({}, DEF, configSchema.read(ctx)); }
   app.get('/api/config', async () => ok({ sys: { concurrency: 1, minInterval: 8, retry: 3, backoff: 30, breakerMinutes: 15, audit: true }, user: readCfg(), limits: LIM }));
   app.patch('/api/config/user', async (req, reply) => {
     const b = req.body || {};
@@ -215,7 +213,7 @@ module.exports = function (app, ctx) {
       next.retryBackoffMin = n;
     }
     ['interval', 'windowMinutes', 'maxPerWindow', 'breaker'].forEach(function (k) { if (b[k] !== undefined) next[k] = Number(b[k]); });
-    db.prepare("INSERT INTO meta(k, v) VALUES('config', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(next));
-    return ok(reply, next);
+    const saved = configSchema.write(ctx, next);
+    return ok(reply, saved);
   });
 };

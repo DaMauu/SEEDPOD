@@ -1,0 +1,59 @@
+/* meta.config 的 JSON schema 版本与迁移：只改结构，不删旧值。
+   未知字段原样保留；旧配置在启动时升级一次，写回前也会迁移。 */
+const SCHEMA_VERSION = 1;
+const BOOL_KEYS = ['realCrawl', 'realPublish', 'realImages', 'autoDupe', 'detail'];
+
+function truthy(v) {
+  if (typeof v === 'boolean') return v;
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes' || s === 'on';
+}
+
+function migrate(raw) {
+  const out = Object.assign({}, raw && typeof raw === 'object' ? raw : {});
+  const from = Number(out.schemaVersion) || 0;
+  if (from > SCHEMA_VERSION) return out;
+  if (from < 1) {
+    /* v0 → v1：布尔值归一、目标站 host 统一小写；其它字段不动 */
+    BOOL_KEYS.forEach(function (k) {
+      if (out[k] !== undefined) out[k] = truthy(out[k]);
+    });
+    if (out.targetHost !== undefined && out.targetHost !== null) {
+      out.targetHost = String(out.targetHost).trim().toLowerCase().slice(0, 200);
+    }
+    out.schemaVersion = 1;
+  }
+  out.schemaVersion = SCHEMA_VERSION;
+  return out;
+}
+
+function read(ctx) {
+  let raw = null;
+  try {
+    const row = ctx.one("SELECT v FROM meta WHERE k = 'config'");
+    raw = JSON.parse(row ? row.v : 'null');
+  } catch (e) { raw = null; }
+  return migrate(raw);
+}
+function write(ctx, cfg) {
+  const out = migrate(cfg);
+  ctx.db.prepare("INSERT INTO meta(k, v) VALUES('config', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
+    .run(JSON.stringify(out));
+  return out;
+}
+/* 启动时升级已有配置；没有配置行就不创建，避免改变默认行为 */
+function ensure(ctx) {
+  try {
+    const row = ctx.one("SELECT v FROM meta WHERE k = 'config'");
+    if (!row) return null;
+    const raw = JSON.parse(row.v || 'null');
+    const out = migrate(raw);
+    if (JSON.stringify(out) !== JSON.stringify(raw)) {
+      ctx.db.prepare("INSERT INTO meta(k, v) VALUES('config', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
+        .run(JSON.stringify(out));
+    }
+    return out;
+  } catch (e) { return null; }
+}
+
+module.exports = { SCHEMA_VERSION, migrate, read, write, ensure };
