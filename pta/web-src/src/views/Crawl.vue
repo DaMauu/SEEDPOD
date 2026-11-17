@@ -1074,6 +1074,11 @@ onUnmounted(() => {
 .pub-card .target-pick .tp-link.empty { font-weight: 400; color: var(--muted); text-decoration: none; }
 .pub-card .target-pick .tp-change-text { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; flex: 0 0 auto; }
 .pub-card .target-pick .tp-change-text:hover { text-decoration: underline; }
+.pub-card :deep(.target-pick .tp-link) { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #cbd0d8; }
+.pub-card :deep(.target-pick .tp-link.empty) { font-weight: 400; color: var(--muted); text-decoration: none; }
+.pub-card :deep(.target-pick .tp-change-text) { border: 0 !important; background: none !important; padding: 0 !important; color: var(--accent); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; flex: 0 0 auto; min-width: 0; }
+.pub-card :deep(.target-pick .tp-change-text:hover) { text-decoration: underline; }
+
 @media (max-width: 760px) {
 
   .pub-card .flow-group .set-fields .set-field,
