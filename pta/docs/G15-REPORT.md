@@ -10,7 +10,7 @@
 | --- | --- | --- | --- | --- |
 | `pta/web-src/src/views/Crawl.vue` | 1128 | **150** | ≤500 | 达标 |
 | `pta/server/target.js` | 977 | **174** | ≤450 | 达标（页面/删除/元数据再拆出） |
-| `pta/server/target-service.js` | 590 | **302** | ≤400 | 达标 |
+| `pta/server/target-service.js` | 590 | **212** | ≤400 | 达标（公共段再拆出） |
 | `pta/server/imagehost.js` | 612 | **382** | ≤400 | 达标 |
 | `pta/server/scheduler.js` | 496（B1 后 559） | **162** | ≤350 | 达标（阶段全部模块化） |
 
@@ -18,7 +18,7 @@
 
 - UI：`components/FlowGates.vue`、`SchedulerBar.vue`、`TargetPickerModal.vue`、`CrawlCard.vue`、`ScreenDedupeCard.vue`、`PublishCard.vue`、`SiteMapModal.vue`、`views/Crawl.css`、`utils/api.js`
 - target：`target-html.js`、`target-discovery.js`、`target-plan.js`、`target-submit.js`、`target-pages.js`（删除/详情/上传页探测/种子元数据）
-- target-service：`target-upload.js`、`target-rules.js`
+- target-service：`target-upload.js`、`target-service-common.js`、`target-rules.js`
 - imagehost：`imagehost-source.js`、`imagehost-config.js`
 - scheduler：`scheduler-crawl.js`、`scheduler-screen.js`、`scheduler-dedupe.js`、`scheduler-review.js`、`scheduler-publish.js`、`scheduler-retry.js`、`scheduler-state.js`
 - UI 状态：`composables/useCrawlPlan.js`、`useCrawlScheduler.js`（调度/限制/闸门）、`useCrawlFlow.js`（流程规则/保存）、`useCrawlSites.js`（站点选择）、`useCrawlFetchFilters.js`（类型/筛选/准备）、`useRuleOrSpecial.js`（规则渲染）

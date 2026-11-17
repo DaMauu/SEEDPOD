@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.448 · 2026-11-18
+
+### G15 第 46 轮：拆 target-service-common
+- 源标题回填、权威种抓取、查重策略移到 `server/target-service-common.js`。
+- target-service.js 302→212 行；target 29/29、publish 9/9、全量通过。
+
 ## v0.7.447 · 2026-11-18
 
 ### G15 第 45 轮：拆 target-pages
