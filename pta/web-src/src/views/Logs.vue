@@ -14,6 +14,28 @@
       <button class="btn ghost slim" @click="download">下载 log</button>
       <button class="btn ghost slim" @click="clear">清屏</button>
     </div>
+
+    <section class="fail-panel" id="fail-panel">
+      <div class="fail-bar">
+        <b>失败队列</b>
+        <span class="fail-meta">{{ failText }}</span>
+        <button class="btn ghost slim" type="button" @click="toggleDead">{{ deadOnly ? '看全部' : '只看死信' }}</button>
+        <button class="btn ghost slim" type="button" :disabled="failLoading" @click="loadFailures">{{ failLoading ? '读取中…' : '刷新' }}</button>
+      </div>
+      <div v-if="!failRows.length" class="fail-empty">没有待处理的失败</div>
+      <div v-else class="fail-list">
+        <div v-for="(f, i) in failRows" :key="f.id + '-' + i" class="fail-row">
+          <span class="fail-id" :title="f.id">{{ f.id }}</span>
+          <span class="fail-stage">{{ f.stage }}</span>
+          <span class="fail-code">{{ f.code }}</span>
+          <span class="fail-attempts">{{ f.attempts }} 次</span>
+          <span class="fail-next">{{ f.nextRetryAt || '—' }}</span>
+          <em v-if="f.dead" class="fail-dead">死信</em>
+          <button class="btn ghost slim" type="button" @click="replay(f.id)">重放</button>
+        </div>
+        <div v-if="failTotal > failRows.length" class="fail-more">共 {{ failTotal }} 条，显示前 {{ failRows.length }} 条</div>
+      </div>
+    </section>
     <div ref="panel" class="log-panel">
       <div v-if="!shown.length" class="sites-empty">还没有日志，连上后端后这里会实时刷新</div>
       <div v-else class="log-rows">
@@ -31,7 +53,8 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { reportError } from '../utils/errors'
-import { loggedIn, viewVisible } from '../utils/ui'
+import { loggedIn, viewVisible, toast } from '../utils/ui'
+import { getJson } from '../utils/api'
 
 const filters = [
   { v: 'all', label: '全部' },
@@ -46,6 +69,27 @@ const panel = ref(null)
 let es = null
 let timer = null
 let loaded = false
+const failures = ref([])
+const failTotal = ref(0)
+const failDead = ref(0)
+const deadOnly = ref(false)
+const failLoading = ref(false)
+let failLoaded = false
+const failRows = computed(() => {
+  const out = []
+  failures.value.forEach(it => {
+    (it.failures || []).forEach(f => out.push({
+      id: it.id, dead: !!it.dead, stage: f.stage || it.stage || '',
+      code: f.code || '', attempts: Number(f.attempts) || 0,
+      nextRetryAt: f.nextRetryAt || '', host: f.host || '', message: f.message || ''
+    }))
+  })
+  return out
+})
+const failText = computed(() => {
+  if (!failLoaded) return '读取中…'
+  return '共 ' + failTotal.value + ' 条' + (failDead.value ? ' · 死信 ' + failDead.value : '')
+})
 
 const shown = computed(() => level.value === 'all' ? rows.value : rows.value.filter(r => r.lvl === level.value))
 
@@ -92,10 +136,32 @@ function connect() {
   }
   es.onerror = () => { if (es) { es.close(); es = null } }
 }
+async function loadFailures() {
+  if (!loggedIn()) return
+  failLoading.value = true
+  const j = await getJson('/api/failures?limit=20&dead=' + (deadOnly.value ? '1' : '0'))
+  failLoading.value = false
+  if (!j || !j.ok) { toast((j && j.error && j.error.message) || '失败队列读取失败'); return }
+  failures.value = Array.isArray(j.data.items) ? j.data.items : []
+  failTotal.value = Number(j.data.total) || 0
+  failDead.value = Number(j.data.dead) || 0
+  failLoaded = true
+}
+function toggleDead() {
+  deadOnly.value = !deadOnly.value
+  loadFailures()
+}
+async function replay(id) {
+  const r = await fetch('/api/failures/' + encodeURIComponent(id) + '/replay', { method: 'POST', credentials: 'same-origin' })
+  const j = await r.json().catch(() => null)
+  toast(j && j.ok ? '已重放：' + id : ((j && j.error && j.error.message) || '重放失败'))
+  await loadFailures()
+}
 function ensure() {
   if (!viewVisible('logs') || !loggedIn()) return
   if (!loaded) load()
   else connect()
+  if (!failLoaded) loadFailures()
 }
 function download() {
   const txt = rows.value.map(r => r.t + ' [' + r.lvl + '] ' + r.tag + ' ' + r.msg).join('\n')
@@ -123,6 +189,22 @@ onUnmounted(() => {
 <style scoped>
 /* Logs 页面样式：迁入 scoped，shell/shared 保留全局 */
 .log-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.fail-panel { background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 10px 16px 8px; }
+.fail-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fail-bar b { font-size: 12.5px; color: var(--ink); }
+.fail-meta { font-size: 11.5px; color: var(--muted); }
+.fail-bar .btn { margin-left: 0; }
+.fail-empty { padding: 8px 0 10px; font-size: 12px; color: var(--muted-2); }
+.fail-list { display: flex; flex-direction: column; }
+.fail-row { display: grid; grid-template-columns: 96px 90px 150px 56px 160px auto 64px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 11.5px; }
+.fail-id { color: var(--muted-2); font-family: var(--mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fail-stage { color: var(--muted); }
+.fail-code { color: var(--ink); font-family: var(--mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fail-attempts { color: var(--muted); }
+.fail-next { color: var(--muted-2); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fail-dead { font-style: normal; font-size: 10px; color: var(--red); border: 1px solid #f1d4d4; border-radius: 999px; padding: 0 6px; }
+.fail-more { padding: 6px 0 2px; font-size: 11px; color: var(--muted-2); }
+
 .log-bar { display: flex; align-items: center; gap: 10px; }
 .log-bar .spacer { flex: 1; }
 .log-bar .btn { flex: 0 0 auto; white-space: nowrap; }
@@ -162,6 +244,8 @@ onUnmounted(() => {
 .log-panel { flex: 0 0 auto; height: 560px; }
 @media (max-width: 900px) {
 .log-bar { flex-wrap: wrap; gap: 8px; }
+.fail-row { grid-template-columns: 84px 76px minmax(0,1fr) 50px 120px auto; }
+.fail-next { display: none; }
 }
 @media (max-width: 600px) {
 .log-bar .seg-tabs { flex: 1 1 100%; }
