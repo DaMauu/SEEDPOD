@@ -9,6 +9,7 @@ const { makeMetaFill } = require('./meta-fill');
 const { makePublishPhase } = require('./scheduler-publish');
 const { makeRetryPhases } = require('./scheduler-retry');
 const { makeSchedulerState } = require('./scheduler-state');
+const { makeCrawlPhase } = require('./scheduler-crawl');
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
   const crossseed = makeCrossseed(ctx);
@@ -20,6 +21,7 @@ function makeScheduler(ctx, deps) {
   const schedulerState = makeSchedulerState({ one: one, jparse: jparse, db: ctx.db, isRunning: function () { return running; } });
   const { read, save, status, set, readFails, saveFails, bumpSiteFail, resetSiteFail } = schedulerState;
 
+  const runCrawlPhase = makeCrawlPhase();
   const runPublishPhase = makePublishPhase({});
   const { runCrossseedPhase, runRetryPhase } = makeRetryPhases();
   async function runNow(opts) {
@@ -52,41 +54,7 @@ function makeScheduler(ctx, deps) {
     try {
       try {
       failpoint('crawl');
-      if (!want('crawl')) {
-        steps.crawl = { skipped: 'step not selected' };
-      } else if (ctx.allowReal('realCrawl')) {
-        /* 站点轮转：优先级高的先跑；同优先级按上次抓取时间从早到晚，间隔没到的跳过 */
-        const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
-        const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
-        const gapMs = Math.max(8, Math.min(Number(cfg.interval) || 60, 600)) * 1000;
-        const stateRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
-        const crawlState = JSON.parse(stateRow ? stateRow.v : 'null') || {};
-        const nowMs = Date.now();
-        const allSites = all('SELECT host, data FROM sites').map(function (r) { return Object.assign({}, jparse(r.data) || {}, { host: r.host }); })
-          .filter(function (x) { return x && x.enabled !== false && x.host; })
-          .map(function (x) {
-            const rec = crawlState[x.host] || {};
-            return Object.assign(x, { lastAt: Number(rec.lastAt) || 0, priority: Number(x.priority) || 0 });
-          })
-          .sort(function (a, b) { return (b.priority - a.priority) || (a.lastAt - b.lastAt) || a.host.localeCompare(b.host); });
-        const due = allSites.filter(function (x) { return !x.lastAt || nowMs - x.lastAt >= gapMs; });
-        const sites = due.slice(0, 10);
-        let ok = 0, failed = 0, skipped = 0;
-        const BENIGN = /^(TOO_SOON|WINDOW_LIMIT|DAILY_LIMIT|BUSY)$/;
-        for (const x of sites) {
-          try {
-            const r = await deps.crawl.crawlOnce(x.host, { limit: 100 });
-            if (r && r.err) {
-              if (BENIGN.test(r.err.code)) skipped++;
-              else { failed++; bumpSiteFail(x.host, r.err.message || r.err.code); }
-            } else { ok++; resetSiteFail(x.host); }
-          } catch (e) { failed++; bumpSiteFail(x.host, e && e.message ? e.message : '抓取异常'); }
-        }
-        steps.crawl = { sites: sites.length, ok: ok, failed: failed, skipped: skipped, waiting: allSites.length - due.length };
-      } else {
-        steps.crawl = { skipped: 'realCrawl off' };
-      }
-
+      steps.crawl = await runCrawlPhase({ one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want });
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
       } catch (e) { phaseError('crawl', e); }
 

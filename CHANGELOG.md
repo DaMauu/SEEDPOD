@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.423 · 2026-11-18
+
+### G15 第 27 轮：拆 scheduler-crawl
+- 抓取阶段（站点轮转/间隔/失败计数）移到 `server/scheduler-crawl.js`。
+- runNow 继续负责 failpoint、阶段 catch、hooks 和汇总；scheduler.js 350→318 行，scheduler 6/6。
+
 ## v0.7.422 · 2026-11-18
 
 ### G15 收尾
