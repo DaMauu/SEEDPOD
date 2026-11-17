@@ -5,12 +5,16 @@ const screen = require('./screen');
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
+const { makeErrorStats } = require('./error-stats');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
   const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
   const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
+  const errorStats = makeErrorStats(ctx);
+
+  app.get('/api/errors', async (req) => ok(errorStats.snapshot(req.query.limit)));
 
   app.get('/api/meta/parse', async (req) => ok(meta.parseRelease(req.query.title || '')));
   app.post('/api/meta/mediainfo', async (req, reply) => {

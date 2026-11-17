@@ -28,6 +28,13 @@
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
+## 错误码与失败统计
+
+- `pta/server/errors.js` 是错误码注册表：code、stage、level、中文说明、retryable；旧码走 `LEGACY` 映射。
+- `GET /api/errors?limit=N` 返回失败总数、按 code/阶段统计和最近条目。
+- CLI：`node pta/scripts/error-stats.js --limit 200`，直接读 SQLite，不启 HTTP。
+- 统计来源：scheduler `lastResult.errors`、queue 的 `stageLastError`、`targetResults` 的失败/待重试项。
+
 ## 调度失败隔离
 
 - `scheduler.runNow` 的 crawl/screen/dedupe/review/publish/crossseed/retry 各自 try/catch。

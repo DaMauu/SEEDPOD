@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.400 · 2026-11-18
+
+### G15 第 2 轮：错误码与失败统计
+- 新增 `pta/server/errors.js`：统一 code/stage/level/retryable，旧字符串码映射。
+- 新增 `/api/errors` 与 `pta/scripts/error-stats.js`，按 code/stage 统计 scheduler、queue、targetResults 失败。
+- 调度 `phaseError` 统一走注册表；新增 `errors` 检查 2/2、API 检查 33/33。
+
 ## v0.7.399 · 2026-11-18
 
 ### G15 第 1 轮：调度阶段级失败隔离

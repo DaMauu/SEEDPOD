@@ -1,5 +1,6 @@
 /* 调度器：按固定间隔跑抓取 → 送审 → 终审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
 const flowConfig = require('./flow-config');
+const errors = require('./errors');
 const { makeCrossseed } = require('./crossseed');
 const pipeline = require('./pipeline');
 const { makeTarget } = require('./target');
@@ -97,7 +98,7 @@ function makeScheduler(ctx, deps) {
     const failStep = process.env.NODE_ENV === 'test' ? String(process.env.SEEDPOD_FAIL_STEP || '').toLowerCase() : '';
     const phaseError = function (name, e) {
       const msg = String(e && e.message || e).slice(0, 300);
-      const code = String(e && e.code || 'PHASE_EXCEPTION').slice(0, 80);
+      const code = errors.normalize(String(e && e.code || 'PHASE_EXCEPTION').slice(0, 80));
       steps.errors.push({ phase: name, code: code, message: msg, at: new Date().toISOString() });
       if (!steps[name] || typeof steps[name] !== 'object') steps[name] = {};
       steps[name].error = msg;
