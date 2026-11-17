@@ -279,6 +279,30 @@ function makeCrawl(ctx) {
         if (keep.length !== items.length) { detail.filtered = items.length - keep.length; items.length = 0; keep.forEach(function (x) { items.push(x); }); }
       }
     } catch (e) { /* 过滤失败按原结果 */ }
+
+    /* 限制行：选中即排除（禁转/限转/HR/独占/DIY），在入库前拦掉 */
+    try {
+      const flow = flowConfig.read(ctx);
+      const row = flow['限制'];
+      const sel = Array.isArray(row && row.sel) ? row.sel.map(String) : [];
+      if (sel.length && items.length) {
+        const keep = items.filter(function (it) {
+          const m = marksMod.effectiveMarks(it, Date.now());
+          const text = String(it.title || '') + ' ' + String(it.tags || '');
+          if (sel.indexOf('禁转') >= 0 && m.noRedistribute) return false;
+          if (sel.indexOf('限转') >= 0 && (m.limited || Number(m.limitedDays) > 0)) return false;
+          if (sel.indexOf('独占') >= 0 && m.exclusive) return false;
+          if (sel.indexOf('DIY') >= 0 && m.diy) return false;
+          if (sel.indexOf('HR') >= 0 && /\[HR\]|\bHR\b|hit\s*&\s*run|hit and run/i.test(text)) return false;
+          return true;
+        });
+        if (keep.length !== items.length) {
+          detail.restricted = items.length - keep.length;
+          items.length = 0;
+          keep.forEach(function (x) { items.push(x); });
+        }
+      }
+    } catch (e) { /* 规则读不到就不筛 */ }
     const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0 };
     rec.lastAt = lastReqAt;
     rec.times = (rec.times || []).filter(function (t) { return t > nowMs - lim.windowMs; });

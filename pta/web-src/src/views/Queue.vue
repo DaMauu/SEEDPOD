@@ -795,6 +795,15 @@ onUnmounted(() => {
 }
 
 :global(.view[data-view="queue"]) { height: calc(100vh - 150px); display: flex; flex-direction: column; justify-content: center; }
+/* 手机端让整页自然滚动，避免详情内部滚动把顶部查重卡住 */
+@media (max-width: 900px) {
+  :global(.view[data-view="queue"]) { height: auto; min-height: calc(100vh - 150px); justify-content: flex-start; }
+  .queue-split { height: auto !important; }
+  .queue-detail { height: auto; overflow: visible; }
+  .qd-body { display: block; }
+  .qd-scroll { height: auto; overflow: visible; }
+}
+
 /* Queue 媒体截图：页面专属 */
 .shots { display: flex; gap: 8px; }
 .shot { width: 96px; height: 60px; border-radius: 8px; background: var(--panel-2); display: grid; place-items: center; font-size: 11px; color: var(--muted-2); border: 1px dashed var(--line-2); }
