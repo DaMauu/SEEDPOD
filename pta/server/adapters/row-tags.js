@@ -1,7 +1,8 @@
 /* 从列表行/详情页 HTML 提取限制标签：禁转 / 限转 / HR / 独占 / DIY。
    站点通常用 tag/badge 元素或图标 title/alt 表达，URL 里的 tag_exclusive 只是站内字段名，
    并不等于“独占”（猫站就把 tag_exclusive 显示成“禁转”），所以只认可见文字和图标标签。
-   HR 要避开 HR-HDTV 这类小组名，只认独立 HR / H&R / hit and run / hitandrun。 */
+   HR 要避开 HR-HDTV 这类小组名，只认独立 HR / H&R / hit and run / hitandrun。
+   整页都有 HR 图标不代表全站 HR（可能只是当前页全是官方种），仍按行判断。 */
 const HR_RE = /(^|[\s\[\(（])HR($|[\s\]\)）])|H&R|hit[\s&-]*and[\s&-]*run|hitandrun/i;
 const RULES = [
   ['禁转', /禁转|禁止转载|禁止转发|(^|[^a-z0-9_=-])no[\s-]*re[\s-]*distribut/i],
