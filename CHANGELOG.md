@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.426 · 2026-11-18
+
+### G15 第 30 轮：拆 scheduler-review
+- 终审阶段（补齐/查缺/ready-hold 判定）移到 `server/scheduler-review.js`。
+- crawl/screen/dedupe/review/publish/crossseed/retry 全部成模块；scheduler.js 265→162 行；scheduler 6/6。
+
 ## v0.7.425 · 2026-11-18
 
 ### G15 第 29 轮：拆 scheduler-dedupe

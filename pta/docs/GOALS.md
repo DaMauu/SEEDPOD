@@ -320,6 +320,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 第 27 轮：A5 继续拆出 `server/scheduler-crawl.js`（抓取阶段）；scheduler.js 350→318 行；scheduler 6/6。
 - 第 28 轮：A5 拆出 `server/scheduler-screen.js`（初筛阶段）；scheduler.js 318→317 行；scheduler 6/6。
 - 第 29 轮：A5 拆出 `server/scheduler-dedupe.js`（查重阶段）；scheduler.js 317→265 行；scheduler 6/6、failpoint 1/1。
+- 第 30 轮：A5 拆出 `server/scheduler-review.js`（终审阶段）；scheduler.js 265→162 行；crawl/screen/dedupe/review/publish/crossseed/retry 全部成模块，runNow 只编排。
 
 **验收**：
 - `Crawl.vue` ≤500 行；`target.js` ≤450；`target-service.js` ≤400；`imagehost.js` ≤400；`scheduler.js` ≤350

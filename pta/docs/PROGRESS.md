@@ -245,4 +245,5 @@
 - 第 27 轮：A5 继续拆出 scheduler-crawl.js；scheduler.js 318 行；scheduler 6/6。
 - 第 28 轮：A5 拆出 scheduler-screen.js；scheduler.js 317 行；scheduler 6/6。
 - 第 29 轮：A5 拆出 scheduler-dedupe.js；scheduler.js 265 行；scheduler 6/6。
+- 第 30 轮：A5 拆出 scheduler-review.js；scheduler.js 162 行；全部阶段成模块。
 - 下一步：screen/dedupe/review 阶段拆分。
