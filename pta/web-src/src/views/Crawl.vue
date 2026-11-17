@@ -817,10 +817,10 @@ onUnmounted(() => {
 .screen-card .screen-list { display: flex; flex-direction: column; gap: 0; }
 .screen-card .screen-field { display: grid !important; grid-template-columns: 150px minmax(0, 1fr) !important; align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
 .screen-card .screen-field:last-child { border-bottom: 0; }
-.screen-card .screen-field > .switch { grid-column: 2; justify-self: end; }
+.screen-card .screen-field > .switch { grid-column: 2; justify-self: start; }
 .screen-card .screen-field .lbl { margin: 0; min-width: 0; }
 .screen-card .screen-field .lbl span { font-size: 12.5px; font-weight: 400; color: #5b6573; line-height: 1.4; }
-.screen-card .screen-field .ctl { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; width: 100%; }
+.screen-card .screen-field .ctl { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 0; width: 100%; }
 .screen-card .screen-field .ctl > .input, .screen-card .screen-field .ctl > .select { width: 100%; max-width: 320px; height: 28px; font-size: 12px; }
 .screen-card .screen-field.wide { grid-template-columns: 1fr; gap: 4px; }
 .screen-card .screen-field.wide .ctl { justify-content: flex-start; flex-wrap: wrap; }
