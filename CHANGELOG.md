@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.416 · 2026-11-18
+
+### G15 第 18 轮：拆 target-upload（A3 达标）
+- 单站上传编排移到 `server/target-upload.js`，查重开关语义抽到 `server/target-rules.js`。
+- 原导出不变；target-service.js 590→302 行（目标 ≤400 达成），target 29/29、publish 9/9。
+
 ## v0.7.415 · 2026-11-18
 
 ### G15 第 17 轮：拆 target-submit（A2 达标）
