@@ -45,6 +45,21 @@ node pta/scripts/audit-sitecat.js --dir /path/to/sitecat/done
 
 默认只输出汇总（文件数、可解析页、带限制标签的行数、各类型计数），不打印站名/网址。
 
+## 豆影取数据
+
+- 自动流程在 `pta/server/meta-fill.js`：从条目标题/简介/详情链接里找 `tt123` 或豆瓣 `subject/123`，没有 ID 才用片名+年份。
+- 请求的是豆影网页自己用的无 Key 接口：`POST https://doubaninfo.com/api.php`，表单 `url=<ID或片名>`；精确 ID 常直接回 BBCode，片名搜索可能回候选 JSON。
+- 简介用返回的 BBCode 原文覆盖“电影简介段”，保留源简介里的 hide/技术 quote 和截图；副标题用拆出的导演/主演拼贴。
+- 手动核对不进 UI：
+
+```bash
+node pta/scripts/fetch-douying.js tt7736104
+node pta/scripts/fetch-douying.js --title "鬼网" --year 2017
+node pta/scripts/fetch-douying.js tt7736104 --raw
+```
+
+- 保存下来的 DoubanInfo 网页只是空壳，搜索结果由页面脚本请求 `api.php` 后动态渲染，HTML 里看不到结果；要自动化只能请求这个接口。
+
 ## 简介图片转存
 
 - 解析 `[img]` 和 `[img=300x300]`，保留尺寸属性。
