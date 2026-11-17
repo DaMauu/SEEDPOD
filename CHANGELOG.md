@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.409 · 2026-11-18
+
+### G15 第 11 轮：拆 PublishCard
+- 发布卡从 Crawl.vue 拆到 `components/PublishCard.vue`，props/emits 保持原有行为。
+- 发布卡与 flow-group 样式随组件迁移，保持原有级联顺序。
+- Crawl.vue 942→735 行；1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.408 · 2026-11-18
 
 ### G15 第 10 轮：拆 ScreenDedupeCard
