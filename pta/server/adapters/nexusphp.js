@@ -1,5 +1,6 @@
 const sizeLib = require('./size');
-const rowTags = require('./row-tags').rowTags;
+const rowTagLib = require('./row-tags');
+const rowTags = rowTagLib.rowTags;
 
 /* NexusPHP 站点适配：只做解析与 URL 拼装，不发任何请求。
    所有函数都是纯函数，输入 HTML/配置，输出结构化数据，方便用夹具回归。 */
@@ -187,7 +188,8 @@ function parseList(html) {
 
   return order.map(function (id) {
     const r = rows[id];
-    r.tags = rowTags(src.slice(
+    const rowHtml = rowTagLib.enclosingRow(src, dIdx[id] ? dIdx[id].idx : 0);
+    r.tags = rowTags(rowHtml || src.slice(
       startOf[id] != null ? startOf[id] : Math.max(0, (dIdx[id] ? dIdx[id].idx : 0) - 500),
       endOf[id] != null ? endOf[id] : Math.min(src.length, (dIdx[id] ? dIdx[id].idx : 0) + 5000)
     ));

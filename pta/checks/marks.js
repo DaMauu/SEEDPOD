@@ -1,6 +1,7 @@
 /* 限制芯片逐项回归：禁转 / 限转 / HR / 独占 / DIY 都要能独立命中，互不误伤。 */
 const marks = require('../server/marks');
-const rowTags = require('../server/adapters/row-tags').rowTags;
+const rowTagLib = require('../server/adapters/row-tags');
+const rowTags = rowTagLib.rowTags;
 
 const results = [];
 function check(name, fn) {
@@ -28,6 +29,29 @@ check('行内标签识别：H&R / Exclusive / 中文', () => {
   need(ex.indexOf('独占') >= 0, 'Exclusive 没归一成独占：' + JSON.stringify(ex));
   const diy = rowTags('<span class="tag">DIY</span>');
   need(diy.indexOf('DIY') >= 0, 'DIY 没识别');
+});
+
+check('站内字段名不当标签：tag_exclusive 只算禁转', () => {
+  const tags = rowTags('<a class="torrents-tag" href="torrents.php?tag_exclusive=yes">禁转</a>');
+  need(tags.indexOf('禁转') >= 0, '禁转文字没识别：' + JSON.stringify(tags));
+  need(tags.indexOf('独占') < 0, 'href 里的 tag_exclusive 被误判成独占：' + JSON.stringify(tags));
+  const detail = rowTagLib.detailTags('<a class="sb-tag" href="torrents.php?tag_exclusive=yes">禁转</a><h1>Foo 2024</h1>');
+  need(detail.length === 0, '全站筛选标签被算进详情：' + JSON.stringify(detail));
+});
+
+check('详情页只认详情标签和标题括号', () => {
+  const html = '<a class="sb-tag" href="torrents.php?tag_exclusive=yes">禁转</a>'
+    + '<h1>Foo 2024 <b>[<font color="red">禁转</font>]</b></h1>'
+    + '<a class="chs_tag details-tag" href="torrents.php?tag_exclusive=yes">禁转</a>'
+    + '<a class="details-tag" href="torrents.php?tag_doityourself=yes">DIY原盘</a>';
+  const tags = rowTagLib.detailTags(html);
+  need(tags.indexOf('禁转') >= 0 && tags.indexOf('DIY') >= 0, '详情标签没识别：' + JSON.stringify(tags));
+  need(tags.indexOf('独占') < 0, '详情 href 被误判成独占：' + JSON.stringify(tags));
+});
+
+check('纯文本不把 URL 当标签', () => {
+  const tags = rowTagLib.textTags('https://example.org/torrents.php?tag_exclusive=yes&tag_doityourself=yes');
+  need(tags.length === 0, 'URL 被当成标签：' + JSON.stringify(tags));
 });
 
 check('HR 边界：HR-HDTV 不算 H&R', () => {

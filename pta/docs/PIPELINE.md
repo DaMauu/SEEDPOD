@@ -31,7 +31,9 @@
 ## 抓取限制芯片
 
 - 抓取卡「限制」行的禁转 / 限转 / HR / 独占 / DIY 都是**选中即排除**，在入库前过滤。
-- 标记来源：标题文字、列表行徽章（`title`/`alt`/`class` 如 `hitandrun`）、以及本次已抓详情页的 Tags。
+- 标记来源：标题文字、列表/详情页 tag 徽章的可见文字、图标 `title`/`alt`/`class`（如 `hitandrun`）。
+- **URL 参数名不当标记**：有的 NexusPHP 站把 `tag_exclusive=yes` 显示成“禁转”，字段名里的 exclusive 不能算“独占”；只认页面上看到的字。
+- 详情页只看种子自己的 `details-tag` / `torrents-tag` 和 h1 里的 `[禁转]` 这类括号标记，全站筛选表单的标签不算。
 - `HR` 只认独立标记（`[HR]`、`H&R`、`hit and run`、`hitandrun`），不把 `HR-HDTV` 这种小组名当成 H&R。
 - 站点只在详情页深处标注、而本轮又没抓到详情时，列表阶段看不到这个标记；要提高覆盖就打开详情抓取。
 

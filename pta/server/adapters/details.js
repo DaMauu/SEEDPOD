@@ -3,6 +3,7 @@
    站点版式差异大，所以先按「rowhead → 下一个 td」的表格结构找，
    找不到再退回全文正则；认不出就留空，绝不猜。 */
 const sizeLib = require('./size');
+const rowTags = require('./row-tags');
 
 function decode(s) {
   return String(s == null ? '' : s)
@@ -143,6 +144,13 @@ function parse(html) {
 
   const tags = pick(rows, LABELS.tags);
   if (tags) out.tags = tags;
+  /* 详情页自己的 tag 链接/图标和 h1 里的 [禁转] 也算；全站筛选表单不算 */
+  const htmlTags = rowTags.detailTags(s);
+  if (htmlTags.length) {
+    const merged = String(out.tags || '').split(/[,，;；、\s]+/).concat(htmlTags)
+      .map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+    out.tags = merged.filter(function (x, i, a) { return a.indexOf(x) === i; }).join(',');
+  }
 
   const subtitle = pick(rows, LABELS.subtitle);
   if (subtitle) out.subtitle = subtitle;

@@ -39,6 +39,7 @@ check('解析列表', () => {
   need(/download\.php\?id=1001/.test(r.downloadUrl), '下载链接没取到：' + r.downloadUrl);
   need(/details\.php\?id=1001/.test(r.detailsUrl), '详情链接没取到：' + r.detailsUrl);
   need(r.tags.indexOf('HR') >= 0 && r.tags.indexOf('禁转') >= 0, '行内 HR/禁转 标签没取到：' + JSON.stringify(r.tags));
+  need(r.tags.indexOf('独占') < 0, 'tag_exclusive 链接被误判成独占：' + JSON.stringify(r.tags));
   const r2 = rows[1];
   need(['限转', '独占', 'DIY'].every(function (x) { return r2.tags.indexOf(x) >= 0; }), '行内限转/独占/DIY 标签没取到：' + JSON.stringify(r2.tags));
   need(rows[2].tags.indexOf('HR') < 0, 'HR-HDTV 被误判成 H&R：' + JSON.stringify(rows[2].tags));
@@ -233,6 +234,15 @@ check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', (
   need(/Fixture Movie/.test(d.pageTitle), '页面标题不对：' + d.pageTitle);
   const empty = adapters.parseDetail('<html><body><p>nothing</p></body></html>');
   need(empty.sizeBytes === undefined && empty.medium === undefined, '空页面不该编出字段：' + JSON.stringify(empty));
+  const tagged = adapters.parseDetail('<html><body>'
+    + '<a class="sb-tag" href="torrents.php?tag_exclusive=yes">禁转</a>'
+    + '<h1>Foo 2024 <b>[<font color="red">限转</font>]</b></h1>'
+    + '<a class="chs_tag details-tag" href="torrents.php?tag_exclusive=yes">禁转</a>'
+    + '<a class="details-tag" href="torrents.php?tag_doityourself=yes">DIY原盘</a>'
+    + '</body></html>');
+  need(/禁转/.test(tagged.tags || '') && /限转/.test(tagged.tags || ''), '详情限制标签没取到：' + tagged.tags);
+  need(/DIY/.test(tagged.tags || ''), '详情 DIY 没取到：' + tagged.tags);
+  need(!/独占/.test(tagged.tags || ''), 'tag_exclusive 又被当成独占了：' + tagged.tags);
 });
 
 check('Unit3D 原始 BBCode 与独立 BDInfo/MediaInfo', () => {
