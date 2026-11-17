@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-17T15:54:10.123Z",
+  "at": "2026-11-17T16:00:08.715Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/FlowGates.vue": "bd44bbdbb5e08c8b",
@@ -12,6 +12,7 @@
     "components/SitesModals.vue": "963c885ef8c0c3b3",
     "components/SitesStats.vue": "de6b60ac622f3fdd",
     "components/SitesToolbar.vue": "abb6a24517b70d29",
+    "components/TargetPickerModal.vue": "7553c808796e7707",
     "styles/00-base.css": "27e89665e8794d25",
     "styles/01-shell.css": "d4952dee62af09a1",
     "styles/02-shell-layout.css": "2cd4e0c246257aef",
@@ -25,7 +26,7 @@
     "styles/11-dock.css": "46525a594c44e2e1",
     "styles/index.css": "8f90d9215d33427a",
     "views/Changelog.vue": "78ae677dd2bd919a",
-    "views/Crawl.vue": "edc97312bc9897a0",
+    "views/Crawl.vue": "3eb42b3bddbee8e1",
     "views/Dashboard.vue": "7a0a65f465bd04cf",
     "views/Logs.vue": "511a6ba8f10696e2",
     "views/Nodes.vue": "97af3bf0807332be",

@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.406 · 2026-11-18
+
+### G15 第 8 轮：拆 TargetPickerModal
+- 目标站选择弹窗从 Crawl.vue 拆到 `components/TargetPickerModal.vue`，props/emits 保持原有行为。
+- 补回被误删的 `#crawl-panel { display: contents }`，修复调度条/卡片 12–24px 垂直偏移。
+- Crawl.vue 1079→1036 行；1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.405 · 2026-11-18
 
 ### G15 第 7 轮：拆 SchedulerBar

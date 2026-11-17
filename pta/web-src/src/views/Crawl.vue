@@ -162,25 +162,7 @@
     <Nodes />
   </div>
 
-  <Teleport to="body">
-    <div v-if="targetOpen" class="modal-mask" id="crawl-target-modal">
-      <div class="modal wide">
-        <div class="modal-head">
-          <h2>选择主站</h2>
-          <button class="btn ghost slim" type="button" @click="targetOpen = false">关闭</button>
-        </div>
-        <p class="modal-sub">显示已添加的站点；cookie 和上传配置在发布时再校验。</p>
-        <input v-model="targetQ" class="input" placeholder="搜索站点名 / 域名" autocomplete="off">
-        <div class="target-list" id="target-list">
-          <button v-for="t in targetOptions" :key="t.host" class="target-item" :class="{ on: targetHost === t.host }" type="button" @click="pickTarget(t.host)">
-            <span class="ti-name">{{ t.title }}</span>
-            <span class="ti-host">{{ t.host }}</span>
-          </button>
-          <div v-if="!targetOptions.length" class="sites-empty">没有可用的目标站（先在站点页存 cookie 并自检通过）</div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
+  <TargetPickerModal :open="targetOpen" :query="targetQ" :options="targetOptions" :current="targetHost" @close="targetOpen = false" @update:query="targetQ = $event" @pick="pickTarget" />
 </template>
 
 <script setup>
@@ -191,6 +173,7 @@ import RuleControl from '../components/RuleControl.vue'
 import Nodes from './Nodes.vue'
 import FlowGates from '../components/FlowGates.vue'
 import SchedulerBar from '../components/SchedulerBar.vue'
+import TargetPickerModal from '../components/TargetPickerModal.vue'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -709,7 +692,6 @@ onUnmounted(() => {
 <style scoped>
 /* Crawl 页面样式：迁入 scoped，shell/dock/shared 保留全局 */
 .target-pick { display: flex; align-items: center; gap: 12px; }
-.target-list { max-height: 46vh; overflow-y: auto; margin-top: 12px; }
 .target-pick { display: flex; align-items: center; gap: 10px; }
 .drawers { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .drawers { display: flex; flex-direction: column; gap: 12px; background: none; box-shadow: none; border-radius: 0; overflow: visible; }
@@ -909,33 +891,9 @@ onUnmounted(() => {
 
 @media (max-width:900px){.flow-group.cond :deep(.set-field),.flow-group :deep(.set-field.pick){grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:center}}
 
-/* Crawl 目标站弹窗：页面专属规则，迁入 scoped */
-.target-item { display: grid; grid-template-columns: 1fr 150px 76px; gap: 12px; align-items: center; width: 100%; text-align: left; border: 0; background: none; padding: 11px 12px; border-radius: 10px; cursor: pointer; font: inherit; }
-.target-item:hover { background: #f7f8fa; }
-.target-item.on { background: var(--accent-soft); }
-.target-item .chip { justify-self: start; }
+/* 页面容器本身不参与布局，卡片直接吃 .drawers 的间距 */
 #crawl-panel { display: flex; flex-direction: column; gap: 14px; }
 #crawl-panel { display: contents; }
-
-/* Crawl 目标站弹窗：页面专属规则，迁入 scoped */
-.tp-info { text-align: right; }
-.tp-info b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
-.ti-name { font-size: 13px; font-weight: 600; color: var(--ink); }
-.ti-host { font-size: 11.5px; color: var(--muted-2); font-family: var(--mono, monospace); }
-.tp-ava { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
-.tp-ava.u3d { background: #f3e8ff; color: #7e22ce; }
-.tp-ava.gz { background: #ecfeff; color: #0e7490; }
-.tp-ava.oth { background: #f1f5f9; color: #64748b; }
-.tp-info { text-align: left; margin-right: 6px; }
-.tp-info b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
-.tp-info span { display: block; font-size: 11px; color: var(--muted-2); margin-top: 2px; }
-
-@media (max-width: 600px) {
-.target-item { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
-.ti-name { grid-column: 1; }
-.ti-host { grid-column: 1; grid-row: 2; }
-.target-item .chip { grid-column: 2; grid-row: 1 / 3; align-self: center; }
-}
 
 :global(.view[data-view="crawl"]) { height: auto; min-height: calc(100vh - 150px); display: flex; flex-direction: column; }
 .drawers { gap: 12px; flex: 1; min-height: 0; height: auto; }
