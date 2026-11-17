@@ -106,6 +106,10 @@ async function capture(out) {
     await login(page);
     await page.waitForSelector('.pub-card .flow-group', { timeout: 8000 });
     await page.waitForSelector('section[data-name="下载器"] .node-row', { timeout: 8000 });
+    await page.waitForFunction(function () {
+      var e = document.querySelector('#tp-name');
+      return e && e.textContent.trim() && e.textContent.trim() !== '未选择站点';
+    }, null, { timeout: 8000 }).catch(function () {});
     await page.evaluate(function () { return document.fonts && document.fonts.ready; });
     await page.addStyleTag({ content: '.dock{display:none!important}.dev-foot{visibility:hidden!important}*{animation:none!important;transition:none!important}body{overflow:visible!important}.view[data-view="crawl"],#crawl-panel,.drawers{height:auto!important;min-height:0!important;overflow:visible!important}' });
     await page.waitForTimeout(800);

@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.405 · 2026-11-18
+
+### G15 第 7 轮：拆 SchedulerBar
+- 调度条拆到 `components/SchedulerBar.vue`，props/emits 保持行为不变。
+- Crawl.vue 1106→1079 行；快照工具补目标站加载等待；1280/390 快照一致。
+
 ## v0.7.404 · 2026-11-18
 
 ### G15 第 6 轮：拆 FlowGates

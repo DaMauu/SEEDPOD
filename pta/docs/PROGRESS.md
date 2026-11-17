@@ -2,7 +2,7 @@
 
 最后更新：2026-11-18 08:50
 当前 goal：**G15 架构减重与失败路径**
-当前 goal 进度：**7/50 轮（Crawl 拆分开始）**
+当前 goal 进度：**8/50 轮（Crawl 拆分中）**
 运行状态：**全部站点停用 · 调度关 · 真发布关 · 队列 0**
 总进度：**12/16 完成；含进行中折算约 83%**
 
@@ -31,7 +31,7 @@
 | G12 | 全自动流水线 | 60% | 抓取→送审→终审→发布→辅种已串；失败恢复待压测 |
 | G13 | 站点覆盖与验证 | 70% | 覆盖面板 + 批量探测 + 3 站真实证据；2 站 NO_FORM 待查 |
 | G14 | Python sidecar | 0% | 可选，不阻塞 |
-| G15 | 架构减重与失败路径 | 14% | 第 0–6 轮完成；Crawl.vue 1106 行；下一轮 SchedulerBar |
+| G15 | 架构减重与失败路径 | 16% | 第 0–7 轮完成；Crawl.vue 1079 行；下一轮 CrawlCard |
 
 ## 当前阻塞
 
@@ -213,7 +213,7 @@
 🛠 正在开发：G10 多目标发布 · 99% · 总进度约 86%
 ```
 
-## G15 轮次（7/50）
+## G15 轮次（8/50）
 
 - 第 0 轮：B0 UI 快照工具、备份/恢复演练、390 调度条溢出修复。
 - 第 1 轮：scheduler 阶段级 catch、steps.errors/partial、通知带 phase/code；failpoint 检查 1/1。
@@ -221,5 +221,6 @@
 - 第 3 轮：失败队列 API/死信/单条重放，dedupe/meta 失败字段；failures 3/3。
 - 第 4 轮：SQLite 事务封装，screen/publish 多步写收口；transactions 2/2。
 - 第 5 轮：故障注入 429/500/断连/半成功/超时 + 死信/nextRetry/重放；fault-injection 6/6。
-- 第 6 轮：A1 拆出 FlowGates.vue；Crawl.vue 1130→1106 行；UI 快照 RMSE/DOM/尺寸通过。
-- 下一步：SchedulerBar。
+- 第 6 轮：A1 拆出 FlowGates.vue；Crawl.vue 1130→1106 行。
+- 第 7 轮：A1 拆出 SchedulerBar.vue；Crawl.vue 1106→1079 行；快照工具补目标站加载等待。
+- 下一步：CrawlCard。

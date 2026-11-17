@@ -2,20 +2,7 @@
   <div class="drawers">
     <div id="crawl-panel">
       <FlowGates :gates="gates" :busy="busy" @toggle="toggleGate" @prepare="prepareNext" />
-      <section class="sched-bar" id="sched-bar">
-        <div class="sb-main"><span class="sb-title">调度</span><span class="sb-note">{{ schedText }}</span></div>
-        <div class="sb-actions">
-          <label class="sb-sw">自动跑 <button class="switch" :class="{ on: sched.on }" type="button" role="switch" :aria-checked="String(sched.on)" @click="toggleSched"><i></i></button></label>
-          <select class="select slim sb-every" :value="String(sched.everyMinutes)" @change="setEvery">
-            <option v-for="n in [30, 60, 120, 240]" :key="n" :value="String(n)">{{ n }} 分钟</option>
-          </select>
-          <label class="sb-f">请求间隔 <input v-model.number="limits.interval" class="input num sb-num" type="number" :min="8" :max="600" @change="saveLimits"> 秒</label>
-          <label class="sb-f">窗口 <input v-model.number="limits.windowMinutes" class="input num sb-num" type="number" :min="1" :max="1440" @change="saveLimits"> 分钟</label>
-          <label class="sb-f">窗口最多 <input v-model.number="limits.maxPerWindow" class="input num sb-num" type="number" :min="1" :max="1000" @change="saveLimits"> 次</label>
-          <label class="sb-f">失败暂停 <input v-model.number="limits.breaker" class="input num sb-num" type="number" :min="1" :max="10" @change="saveLimits"> 次</label>
-          <button class="btn ghost slim" type="button" :disabled="sched.running" @click="runSched">{{ sched.running ? '跑着呢…' : '立即跑一次' }}</button>
-        </div>
-      </section>
+      <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @toggle="toggleSched" @every="setEveryValue" @save="saveLimits" @run="runSched" />
       <section class="drawer open vue-card crawl-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">① 抓取</div></div>
@@ -203,6 +190,7 @@ import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/u
 import RuleControl from '../components/RuleControl.vue'
 import Nodes from './Nodes.vue'
 import FlowGates from '../components/FlowGates.vue'
+import SchedulerBar from '../components/SchedulerBar.vue'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -322,7 +310,7 @@ async function saveSched() {
   else toast((j && j.error && j.error.message) || '调度设置保存失败')
 }
 function toggleSched() { sched.on = !sched.on; saveSched() }
-function setEvery(e) { sched.everyMinutes = Number(e.target.value) || 60; saveSched() }
+function setEveryValue(n) { sched.everyMinutes = Number(n) || 60; saveSched() }
 async function saveLimits() {
   limits.interval = Math.min(600, Math.max(8, Number(limits.interval) || 60))
   limits.windowMinutes = Math.min(1440, Math.max(1, Number(limits.windowMinutes) || 60))
@@ -754,22 +742,7 @@ onUnmounted(() => {
 .crawl-note{margin:4px 0 10px;padding:2px 16px 0;font-size:12px;color:var(--muted-2);line-height:1.6}
 .crawl-card :deep(.drawer-head){padding:12px 20px;gap:10px}
 .crawl-card :deep(.drawer-title){font-size:15px}
-.sched-bar { display:flex; align-items:center; justify-content:space-between; gap:8px 14px; flex-wrap:nowrap; background:#fff; border-radius:12px; box-shadow:var(--shadow); padding:7px 14px; }
-.sb-main { display:flex; align-items:baseline; gap:10px; min-width:0; }
-.sb-title { font-size:12px; font-weight:600; color:var(--ink); }
-.sb-note { font-size:11px; color:var(--muted-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sb-actions { display:flex; align-items:center; gap:10px; flex:0 0 auto; }
-.sb-sw { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); }
-.sb-every { height:26px; font-size:11.5px; width:96px; }
-.sb-f { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); white-space:nowrap; }
-.sb-num { width:56px; height:26px; font-size:11px; text-align:center; }
-@media (max-width:900px){
-  .sched-bar { flex-wrap:wrap; padding:7px 11px; }
-  .sb-main { flex:1 1 100%; }
-  .sb-actions { width:100%; justify-content:flex-start; flex-wrap:wrap; gap:6px 12px; }
-  .sb-every { flex:0 1 96px; }
-  .sb-f { flex:1 1 auto; }
-}
+
 .crawl-card :deep(.drawer-body){padding:4px 20px 18px}
 .crawl-card :deep(.preset-block){display:flex;flex-direction:column;gap:2px}
 .crawl-card :deep(.preset-row){display:grid;grid-template-columns:116px minmax(0,1fr);align-items:start;gap:12px;padding:7px 0}
