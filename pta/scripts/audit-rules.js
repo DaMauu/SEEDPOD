@@ -28,7 +28,7 @@ Object.keys(R).forEach(function (cat) {
   });
 });
 
-const ALIAS = { '发布到': ['targetSite'], '排除匹配': ['rx.deny'], '白名单匹配': ['rx.allow'] };
+const ALIAS = { '发布到': ['targetSite'], '排除匹配': ['rx.deny'] };
 const UI_ONLY = new Set(['测试匹配']);
 const count = name => text.split(name).length - 1;
 

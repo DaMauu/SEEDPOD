@@ -231,7 +231,7 @@ const rules = reactive({
   pub: clone(RULES.pub)
 })
 const TPL_DEMO = { 电影名: '金瓶双艳', 地区: '港版', 导演: '李翰祥', 主演1: '胡锦', 主演2: '恬妮', 主演3: '陈萍', 音轨: '国语 2.0', 字幕: '中文字幕' }
-const SPECIAL = { 发布到: 'target', 中文副标题模板: 'tpl', 排除匹配: 'deny', 白名单匹配: 'allow', 测试匹配: 'rx' }
+const SPECIAL = { 发布到: 'target', 中文副标题模板: 'tpl', 排除匹配: 'deny', 测试匹配: 'rx' }
 
 const limits = reactive({ interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3 })
 const limitRanges = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] }
@@ -252,7 +252,7 @@ const fetchSum = computed(() => {
 })
 const fetchNote = computed(() => '每 ' + limits.interval + ' 秒最多一次 · ' + limits.windowMinutes + ' 分钟内最多 ' + limits.maxPerWindow + ' 次请求')
 
-const rx = reactive({ deny: '', allow: '', sample: '', out: '未测试', outClass: '' })
+const rx = reactive({ deny: '', sample: '', out: '未测试', outClass: '' })
 const mapOpen = ref(false)
 const mapHost = ref('')
 const mapTargets = ref([])
@@ -453,12 +453,11 @@ function testRx() {
     const p = String(src || '').trim()
     return p ? sample.toLowerCase().includes(p.toLowerCase()) : false
   }
-  const d = compile(rx.deny), a = compile(rx.allow)
-  const deny = hit(rx.deny), allow = hit(rx.allow)
-  const msg = deny ? '排除命中，不转载' : (String(rx.allow || '').trim() && !allow ? '白名单未命中，不转载' : '通过，可以转载')
-  const warn = d.err || a.err
-  rx.out = msg + (warn ? '（' + warn + '）' : '')
-  rx.outClass = deny || (String(rx.allow || '').trim() && !allow) ? 'rx-warn' : 'rx-ok'
+  const d = compile(rx.deny)
+  const deny = hit(rx.deny)
+  const msg = deny ? '命中排除规则，不转载' : '通过，可以转载'
+  rx.out = msg + (d.err ? '（' + d.err + '）' : '')
+  rx.outClass = deny ? 'rx-warn' : 'rx-ok'
 }
 
 async function getJson(url, opts) {
@@ -506,7 +505,6 @@ async function loadFlow() {
     }
     if (j.data && j.data.rx) {
       rx.deny = j.data.rx.deny || ''
-      rx.allow = j.data.rx.allow || ''
     }
   }
   const c = await getJson('/api/config')
@@ -522,7 +520,7 @@ async function saveFetch() {
   busy.fetch = true
   const [a, b] = await Promise.all([
     patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value }),
-    putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny, allow: rx.allow }),
+    putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny }),
     saveTypes(),
     saveFilters()
   ])
@@ -544,7 +542,7 @@ async function saveDedupe() {
 async function savePub() {
   if (busy.pub) return
   busy.pub = true
-  const j = await putFlow({ pub: serialize(rules.pub) }, { deny: rx.deny, allow: rx.allow })
+  const j = await putFlow({ pub: serialize(rules.pub) }, { deny: rx.deny })
   busy.pub = false
   toast(j && j.ok ? '发布设置已保存' : ((j && j.error && j.error.message) || '服务端拒绝了这次保存'))
 }
@@ -632,9 +630,6 @@ const RuleOrSpecial = (props) => {
   }
   if (kind === 'deny') {
     return h('input', { class: 'input', id: 'rx-deny', value: rx.deny, placeholder: '命中就不转载，例：DVDRip|枪版|CAM', onInput: e => { rx.deny = e.target.value } })
-  }
-  if (kind === 'allow') {
-    return h('input', { class: 'input', id: 'rx-allow', value: rx.allow, placeholder: '留空不限，命中才转载', onInput: e => { rx.allow = e.target.value } })
   }
   if (kind === 'rx') {
     return h('div', { class: 'rx-test' }, [

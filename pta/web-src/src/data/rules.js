@@ -154,15 +154,8 @@
         "t": "排除匹配",
         "type": "custom",
         "html": "<input class=\"input\" id=\"rx-deny\" placeholder=\"命中就不转载，例：DVDRip|枪版|CAM\">",
-        "hint": "支持正则，限 200 字；只决定转不转，不影响请求",
+        "hint": "支持正则，限 200 字；命中就拒绝，不进待审",
         "label": "命中这些词就不转"
-      },
-      {
-        "t": "白名单匹配",
-        "type": "custom",
-        "html": "<input class=\"input\" id=\"rx-allow\" placeholder=\"留空不限，命中才转载\">",
-        "hint": "和排除同时命中时，排除优先",
-        "label": "只转命中这些词的"
       },
       {
         "t": "测试匹配",

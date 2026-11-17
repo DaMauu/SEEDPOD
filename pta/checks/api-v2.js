@@ -250,6 +250,26 @@ async function main() {
     need(j.ok && j.data.skipped === 1 && /缺简介/.test(JSON.stringify(j.data.byReason)), '缺简介没被拦：' + JSON.stringify(j.data));
   });
 
+  await check('排除正则命中即拒绝，旧白名单不再生效', async () => {
+    const put = await (await fetchA(BASE + '/api/flow', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sets: { pub: [[]] }, rx: { deny: 'CAM', allow: 'NEVERMATCH' } })
+    })).json();
+    need(put.ok, '写排除正则失败');
+    const got = await (await fetchA(BASE + '/api/flow')).json();
+    need(got.ok && got.data.rx.deny === 'CAM', 'rx.deny 没保存');
+    need(got.data.rx.allow === undefined, 'rx.allow 没清掉：' + JSON.stringify(got.data.rx));
+    await (await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ site: 'demo-a.example', title: 'Deny CAM Test 2024 2160p 中字', res: '2160p', size: '20 GB', sizeBytes: 20 * 1024 ** 3 }] })
+    })).json();
+    const j = await (await fetchA(BASE + '/api/catalog/screen', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ limit: 10 })
+    })).json();
+    need(j.ok, '筛选失败');
+    need(j.data.skipped >= 1 && /命中排除规则/.test(JSON.stringify(j.data.byReason)), '排除正则没拦住：' + JSON.stringify(j.data));
+  });
+
   await check('队列里有 1 条待审核', async () => {
     const j = await (await fetchA(BASE + '/api/queue')).json();
     need(j.ok, '读取失败');

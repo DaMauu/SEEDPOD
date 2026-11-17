@@ -171,7 +171,8 @@ module.exports = function (app, ctx) {
     const rx = Object.assign({}, prev.rx || {});
     if (b.rx) {
       if (b.rx.deny !== undefined) rx.deny = String(b.rx.deny || '').slice(0, 200);
-      if (b.rx.allow !== undefined) rx.allow = String(b.rx.allow || '').slice(0, 200);
+      /* 白名单已合并成单条排除正则；旧配置里的 allow 不再生效，顺便清掉 */
+      delete rx.allow;
       if (b.rx.scope !== undefined) rx.scope = String(b.rx.scope || '').slice(0, 40);
     }
     const flow = { sets: sets, rx: rx, updatedAt: now() };
