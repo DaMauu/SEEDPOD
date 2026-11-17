@@ -4,7 +4,6 @@ const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const limits = require('./limits');
-const flowConfig = require('./flow-config');
 const dupeClassify = require('./dupe-classify');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
@@ -275,9 +274,8 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     const host = String(b.host || '').trim().toLowerCase();
     if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '目标站域名不合法');
-    const flow = flowConfig.read(ctx);
-    /* 查重范围已收敛：目标站始终搜索，体积容差固定默认 2% */
-    const tolerance = flowConfig.number(flow, '体积容差', 2);
+    /* 查重范围已收敛：目标站始终搜索，体积容差固定 2% */
+    const tolerance = 2;
     const ck = readCookie(host);
     if (ck.err) return bad(reply, ck.err.code, ck.err.message, 409);
     const def = readDef(host);
