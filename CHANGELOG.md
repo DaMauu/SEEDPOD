@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.424 · 2026-11-18
+
+### G15 第 28 轮：拆 scheduler-screen
+- 初筛阶段与 screen hooks 移到 `server/scheduler-screen.js`。
+- scheduler.js 318→317 行；scheduler 6/6。
+
 ## v0.7.423 · 2026-11-18
 
 ### G15 第 27 轮：拆 scheduler-crawl

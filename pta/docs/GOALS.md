@@ -318,6 +318,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 第 25 轮：B7 新增 `server/config-schema.js`（schemaVersion + 迁移/启动升级/写回迁移）；config-migration 5/5、备份恢复 4/4。
 - 第 26 轮：G15 收尾报告 + rules-registry 与 UI rules.js 对齐检查。
 - 第 27 轮：A5 继续拆出 `server/scheduler-crawl.js`（抓取阶段）；scheduler.js 350→318 行；scheduler 6/6。
+- 第 28 轮：A5 拆出 `server/scheduler-screen.js`（初筛阶段）；scheduler.js 318→317 行；scheduler 6/6。
 
 **验收**：
 - `Crawl.vue` ≤500 行；`target.js` ≤450；`target-service.js` ≤400；`imagehost.js` ≤400；`scheduler.js` ≤350

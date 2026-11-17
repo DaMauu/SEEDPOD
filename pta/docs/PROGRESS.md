@@ -243,4 +243,5 @@
 - 第 25 轮：B7 config schema/迁移 + 启动升级；config-migration 5/5、备份恢复 4/4。
 - 第 26 轮：G15 收尾报告 + rules-registry 与 UI 对齐检查。
 - 第 27 轮：A5 继续拆出 scheduler-crawl.js；scheduler.js 318 行；scheduler 6/6。
+- 第 28 轮：A5 拆出 scheduler-screen.js；scheduler.js 317 行；scheduler 6/6。
 - 下一步：screen/dedupe/review 阶段拆分。

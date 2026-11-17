@@ -10,6 +10,7 @@ const { makePublishPhase } = require('./scheduler-publish');
 const { makeRetryPhases } = require('./scheduler-retry');
 const { makeSchedulerState } = require('./scheduler-state');
 const { makeCrawlPhase } = require('./scheduler-crawl');
+const { makeScreenPhase } = require('./scheduler-screen');
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
   const crossseed = makeCrossseed(ctx);
@@ -22,6 +23,7 @@ function makeScheduler(ctx, deps) {
   const { read, save, status, set, readFails, saveFails, bumpSiteFail, resetSiteFail } = schedulerState;
 
   const runCrawlPhase = makeCrawlPhase();
+  const runScreenPhase = makeScreenPhase();
   const runPublishPhase = makePublishPhase({});
   const { runCrossseedPhase, runRetryPhase } = makeRetryPhases();
   async function runNow(opts) {
@@ -60,12 +62,9 @@ function makeScheduler(ctx, deps) {
 
       try {
       failpoint('screen');
-      if (want('screen')) {
-        steps.screen = deps.screen.screenCatalog(ctx, { limit: screenLimit });
-        steps.hooksScreen = await pipeline.run('screen', ctx, steps);
-      } else {
-        steps.screen = { skipped: 'step not selected' };
-      }
+      const screenPhase = await runScreenPhase({ want: want, screen: deps.screen, ctx: ctx, screenLimit: screenLimit, pipeline: pipeline, steps: steps });
+      steps.screen = screenPhase.screen;
+      steps.hooksScreen = screenPhase.hooks;
       } catch (e) { phaseError('screen', e); }
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
