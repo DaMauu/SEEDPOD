@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.458 · 2026-11-18
+
+### 维护：拆 target 检查（完成）
+- 分类/私有包/探针检查组 → `checks/target-checks-catalog.js`；上传/计划/门禁/提交组 → `checks/target-checks-upload.js`。
+- `checks/target.js` 947→141 行；target 29/29，检查项不变。
+
 ## v0.7.457 · 2026-11-18
 
 ### 维护：拆 target 检查（第 2 步）
