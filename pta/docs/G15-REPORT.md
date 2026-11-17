@@ -1,7 +1,7 @@
 # G15 最终报告 · 架构减重与失败路径
 
-- 版本：0.7.436
-- 轮次：38 轮（0–37），50 轮上限内完成
+- 版本：0.7.439
+- 轮次：40 轮（0–39），50 轮上限内完成
 - 范围：A1–A5 五个大文件拆分 + B0–B7 失败路径/规则/配置
 
 ## 1. 五个大文件行数
@@ -32,7 +32,7 @@
 
 - 固定临时 DB/时间/数据，1280x900 与 390x844
 - 整页 + `.crawl-card` / `.screen-card` / `.pub-card` / 下载器卡 / 目标站弹窗
-- 通过标准：RMSE ≤0.002 + DOM 文本/按钮/输入/开关/尺寸完全一致
+- 通过标准：RMSE ≤0.002 + `compare -metric AE -fuzz 2%`（组件 0、整页 ≤100）+ DOM 文本/按钮/输入/开关/尺寸完全一致
 - 通过后才 `ui-freeze.js --update`
 
 依次通过的切片：FlowGates、SchedulerBar、TargetPickerModal、CrawlCard、ScreenDedupeCard、PublishCard、页面样式外置、SiteMapModal。最终 UI 冻结基线对应 0.7.411。
@@ -68,9 +68,14 @@
 - A1：新增 `composables/useCrawlPlan.js`，抓取计划状态与请求离开页面；Crawl.vue 497→474 行，快照一致。
 - B7：`meta.flow` / `meta.scheduler` 加 schemaVersion 与启动升级；`PUT /api/flow` 写回带版本；config-migration 7/7。
 
-## 7. 未完成 / 后续
+## 7. 失败队列保留与 AE 闸门
+
+- 保留策略：默认最近 30 天、最多 1000 条；`/api/failures?days=&maxItems=`、CLI `--days/--max`；有未来重试的条目保留；只过滤视图，不删队列数据。
+- AE 闸门：组件截图 `AE=0`（fuzz 2%），整页 `AE≤100`；裸 AE 在独立 Chromium 进程间无法稳定为 0（字体抗锯齿/滚动条），原因写在 `UI-SNAPSHOT.md`。
+
+## 8. 未完成 / 后续
 
 1. `Crawl.vue` 只剩 `ensure`、`patchUser/putFlow`、`specialOf/toggleFetchChip/clampLimit/testRx` 等小工具和装配代码（173 行）；计划、调度/限制/闸门、流程规则、站点、类型/筛选/准备、规则渲染均已抽 composable。
-2. 失败队列只有 API/CLI，没有日志页/队列页面板；容量是「按 updated_at 取最近 1000 条」的视图级限制，不做破坏性清理。
+2. 失败队列有 API/CLI 和保留策略，但没有日志页/队列页面板。
 3. B6 的 UI `rules.js` 仍是 UI 侧定义源，靠检查对齐，尚未由注册表生成。
 4. 历史提交 0.7.419 合并了第 21–23 轮；从第 27 轮起已恢复一轮一提交。
