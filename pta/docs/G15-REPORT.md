@@ -1,14 +1,14 @@
 # G15 最终报告 · 架构减重与失败路径
 
-- 版本：0.7.450
-- 轮次：48 轮（0–47），50 轮上限内完成
+- 版本：0.7.451
+- 轮次：49 轮（0–48），50 轮上限内完成
 - 范围：A1–A5 五个大文件拆分 + B0–B7 失败路径/规则/配置
 
 ## 1. 五个大文件行数
 
 | 文件 | 拆前 | 拆后 | 目标 | 结果 |
 | --- | --- | --- | --- | --- |
-| `pta/web-src/src/views/Crawl.vue` | 1128 | **150** | ≤500 | 达标 |
+| `pta/web-src/src/views/Crawl.vue` | 1128 | **135** | ≤500 | 达标 |
 | `pta/server/target.js` | 977 | **174** | ≤450 | 达标（页面/删除/元数据再拆出） |
 | `pta/server/target-service.js` | 590 | **212** | ≤400 | 达标（公共段再拆出） |
 | `pta/server/imagehost.js` | 612 | **135** | ≤400 | 达标（上传引擎再拆出） |
@@ -76,7 +76,7 @@
 
 ## 8. 后续可选
 
-1. `Crawl.vue` 只剩 `specialOf/toggleFetchChip/clampLimit/testRx` 等纯 UI 工具和装配代码（150 行）；请求/启动逻辑已全部抽到 composable 或 utils。
+1. `Crawl.vue` 只剩 `specialOf/toggleFetchChip/testRx` 等纯 UI 工具和装配代码（135 行）；调度条数字输入已在输入时即时夹取（`SchedulerBar.vue`）。
 
 ## 9. 已接受的例外（2026-11-19 用户确认）
 

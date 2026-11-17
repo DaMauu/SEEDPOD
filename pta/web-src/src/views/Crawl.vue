@@ -48,13 +48,6 @@ const rules = reactive({
 const TPL_DEMO = { 电影名: '金瓶双艳', 地区: '港版', 导演: '李翰祥', 主演1: '胡锦', 主演2: '恬妮', 主演3: '陈萍', 音轨: '国语 2.0', 字幕: '中文字幕' }
 const SPECIAL = { 发布到: 'target', 中文副标题模板: 'tpl', 排除匹配: 'deny', 测试匹配: 'rx' }
 
-const limitRanges = { interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10] }
-const limitItems = [
-  { k: 'interval', label: '请求间隔（秒）' },
-  { k: 'windowMinutes', label: '窗口（分钟）' },
-  { k: 'maxPerWindow', label: '窗口内最多' },
-  { k: 'breaker', label: '连续失败暂停' }
-]
 const detail = ref(false)
 const autoDupe = ref(false)
 const fetchRows = computed(() => (rules.fetch[0] && rules.fetch[0].rows) || [])
@@ -105,14 +98,6 @@ function toggleFetchChip(r, c) {
   if (i >= 0) sel.splice(i, 1)
   else sel.push(c)
   r.sel = sel
-}
-function clampLimit(k, e) {
-  const L = limitRanges[k]
-  let v = Number(e.target.value) || L[0]
-  if (v < L[0]) v = L[0]
-  if (v > L[1]) v = L[1]
-  limits[k] = v
-  e.target.value = String(v)
 }
 function testRx() {
   const sample = String(rx.sample || '').trim()
