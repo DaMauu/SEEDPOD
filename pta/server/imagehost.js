@@ -506,7 +506,8 @@ async function mirrorDescription(description, opts) {
   let uploaded = 0, failed = 0, skipped = 0, lastError = '';
   for (let i = 0; i < items.length; i++) {
     const url = items[i].url;
-    if (map[url]) continue;
+    /* 缓存命中也是“没重传”，计入 skipped，保证 total = uploaded + failed + skipped */
+    if (map[url]) { skipped++; continue; }
     if (isPrivateUrl(url, o.allowPrivate === true)) {
       failed++; lastError = '内网地址不抓';
       if (isBlacklisted(url)) remove.add(url);

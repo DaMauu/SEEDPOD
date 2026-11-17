@@ -221,6 +221,7 @@ async function main() {
     const before = hits;
     const again = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true, known: first.map });
     need(again.ok && again.uploaded === 0, '缓存后还上传了：' + JSON.stringify({ uploaded: again.uploaded, code: again.code }));
+    need(again.skipped === 1, '缓存命中没计入 skipped：' + JSON.stringify({ skipped: again.skipped }));
     need(hits === before, '缓存后还发了请求：' + (hits - before));
     need(again.description.indexOf(a) < 0, '缓存后没替换：' + again.description);
   });
