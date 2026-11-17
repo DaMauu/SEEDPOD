@@ -323,6 +323,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 第 30 轮：A5 拆出 `server/scheduler-review.js`（终审阶段）；scheduler.js 265→162 行；crawl/screen/dedupe/review/publish/crossseed/retry 全部成模块，runNow 只编排。
 - 第 31 轮：A1 新增 `composables/useCrawlPlan.js`（抓取计划状态与请求）；Crawl.vue 497→474 行；快照一致。
 - 第 32 轮：B7 扩到 `meta.flow` / `meta.scheduler`（schemaVersion + 启动升级 + flow 写回带版本）；config-migration 7/7、备份恢复 4/4。
+- 第 33 轮：A1 新增 `composables/useCrawlScheduler.js`（调度/限制/闸门状态与请求）；Crawl.vue 474→398 行；快照一致、调度开关实测通过。
 
 **验收**：
 - `Crawl.vue` ≤500 行；`target.js` ≤450；`target-service.js` ≤400；`imagehost.js` ≤400；`scheduler.js` ≤350

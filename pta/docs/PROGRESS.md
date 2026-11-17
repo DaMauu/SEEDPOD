@@ -248,5 +248,6 @@
 - 第 30 轮：A5 拆出 scheduler-review.js；scheduler.js 162 行；全部阶段成模块。
 - 第 31 轮：A1 新增 useCrawlPlan composable；Crawl.vue 474 行；快照一致。
 - 第 32 轮：B7 扩到 flow/scheduler；config-migration 7/7。
+- 第 33 轮：useCrawlScheduler composable；Crawl.vue 398 行；快照一致。
 - G15 全部验收项完成。
 - 下一步：screen/dedupe/review 阶段拆分。
