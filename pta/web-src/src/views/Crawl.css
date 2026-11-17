@@ -1,9 +1,6 @@
 /* Crawl 页面样式：迁入 scoped，shell/dock/shared 保留全局 */
 .target-pick { display: flex; align-items: center; gap: 12px; }
 .target-pick { display: flex; align-items: center; gap: 10px; }
-.drawers { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
-.drawers { display: flex; flex-direction: column; gap: 12px; background: none; box-shadow: none; border-radius: 0; overflow: visible; }
-.drawers { gap: 14px; }
 .drawers :deep(.drawer) { flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; }
 .drawers :deep(.drawer.open) { flex: 1 1 auto; }
 .drawers :deep(.drawer-body) { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
@@ -14,19 +11,15 @@
 .drawers :deep(.drawer) { flex: 0 0 auto; }
 .drawers :deep(.drawer-body) { display: block; overflow: visible; }
 .tpl-fixed { font-size: 12.5px; color: var(--muted); line-height:1.4; }
-.drawers { gap: 10px; }
-.drawers { gap: 8px; }
-.rx-test .input { width: 260px; }
 .rx-test em { font-style: normal; font-size: 11.5px; color: #9aa0b0; }
 .rx-test em.rx-ok { color: #1f8a5a; }
 .rx-test em.rx-warn { color: #c0453c; }
 .set-field .ctl:has(.rx-test) { flex: 0 1 auto; min-width: 0; justify-content: flex-end; }
 .rx-test { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
-.rx-test .input { flex: 0 1 240px; width: 240px; min-width: 0; }
 .rx-test .btn { flex: 0 0 auto; white-space: nowrap; }
 .rx-test em { flex: 0 0 auto; white-space: nowrap; }
 .set-field .ctl:has(.rx-test) { flex: 0 0 auto; }
-.rx-test .input { flex: 0 0 240px; width: 240px; }
+.rx-test .input { flex: 0 0 240px; width: 240px; min-width: 0; }
 .crawl-dry :deep(.drawer-body) {padding-top:0}
 .crawl-dry :deep(.dl-dry) {margin:0 0 4px}
 .crawl-note {margin:4px 0 10px;padding:2px 16px 0;font-size:12px;color:var(--muted-2);line-height:1.6}
@@ -35,12 +28,10 @@
 .crawl-card :deep(.drawer-body) {padding:4px 20px 18px}
 .crawl-card :deep(.preset-block) {display:flex;flex-direction:column;gap:2px}
 .crawl-card :deep(.preset-row) {display:grid;grid-template-columns:116px minmax(0,1fr);align-items:start;gap:12px;padding:7px 0}
-.crawl-card :deep(.preset-row .lbl) {font-size:12.5px;color:var(--muted,#6b7280);min-width:0}
 .crawl-card :deep(.preset-row .cat-row) {display:flex;flex-wrap:wrap;gap:6px;padding:0}
 .crawl-card :deep(.preset-row .cat-chip) {height:24px;padding:0 8px;border-radius:5px;font-size:11px;line-height:24px}
 .crawl-card :deep(.preset-row .lbl > span) {white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
 .crawl-card :deep(.preset-row .cat-row) {gap:4px;margin-left:50px}
-.crawl-card :deep(.preset-row .lbl) {align-items:flex-start;padding-top:3px}
 .crawl-card :deep(.limits-panel) {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px;margin-top:16px;padding:14px 16px;background:var(--panel-2,#f9fafb);border:1px solid var(--line,#eef0f4);border-radius:10px}
 .crawl-card :deep(.limit-item) {display:flex;flex-direction:column;gap:6px;min-width:0}
 .crawl-card :deep(.limit-item .lbl) {font-size:12px;color:var(--muted,#6b7280)}
@@ -107,7 +98,7 @@
 .filter-card :deep(.preset-row .cat-chip) {height:24px;padding:0 8px;border-radius:5px;font-size:11px;line-height:24px}
 .flow-sum { font-size: 11px; color: var(--muted); opacity: .85; margin: 0 0 6px; }
 /* 未接徽标固定在右侧同一行；右侧芯片行统一左对齐 */
-.crawl-card :deep(.preset-row .lbl) { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+.crawl-card :deep(.preset-row .lbl) { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; padding-top: 3px; font-size: 12.5px; color: var(--muted,#6b7280); }
 .crawl-card :deep(.preset-row .lbl > span) { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.35; }
 .todo-badge { flex: 0 0 auto; margin-left: 0; }
 .crawl-card :deep(.preset-row .cat-row), .crawl-card :deep(.preset-row .pick-row) { justify-content: flex-start; }
@@ -134,7 +125,7 @@
 #crawl-panel { display: flex; flex-direction: column; gap: 14px; }
 #crawl-panel { display: contents; }
 :global(.view[data-view="crawl"]) { height: auto; min-height: calc(100vh - 150px); display: flex; flex-direction: column; }
-.drawers { gap: 12px; flex: 1; min-height: 0; height: auto; }
+.drawers { display: flex; flex-direction: column; gap: 12px; background: none; box-shadow: none; border-radius: 0; overflow: visible; flex: 1; min-height: 0; height: auto; }
 .drawers .drawer, .drawers :deep(.drawer) {
   border: 1px solid var(--line);
   border-radius: 14px;

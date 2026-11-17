@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-17T22:51:52.142Z",
+  "at": "2026-11-17T23:29:33.495Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/CrawlCard.vue": "3ee4bb66d7b6489a",
@@ -8,10 +8,10 @@
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "d441f3bd8bc019fe",
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
-    "components/SiteCoveragePanel.vue": "2e9540f0b8c33650",
-    "components/SiteDetail.vue": "81d7c90e13b9efdd",
-    "components/SiteMapModal.vue": "bab45a99d5b42eb1",
-    "components/SitePackPanel.vue": "fb18431b4bce81ed",
+    "components/SiteCoveragePanel.vue": "9e77d836cbc0d97b",
+    "components/SiteDetail.vue": "f7df2b36c84873dc",
+    "components/SiteMapModal.vue": "1d6e60a889f55c98",
+    "components/SitePackPanel.vue": "58073360c286a086",
     "components/SitesList.vue": "e9877741718ad13f",
     "components/SitesModals.vue": "963c885ef8c0c3b3",
     "components/SitesStats.vue": "de6b60ac622f3fdd",
@@ -29,15 +29,15 @@
     "styles/09-responsive-pages.css": "416dc12711394311",
     "styles/11-dock.css": "46525a594c44e2e1",
     "styles/index.css": "8f90d9215d33427a",
-    "views/Changelog.vue": "78ae677dd2bd919a",
-    "views/Crawl.css": "7d9c2f612bb94969",
+    "views/Changelog.vue": "7d21f25b5f7cce75",
+    "views/Crawl.css": "499176b1b81d4257",
     "views/Crawl.vue": "d67f83da977a4259",
-    "views/Dashboard.vue": "7a0a65f465bd04cf",
-    "views/Logs.vue": "24da4d7e54d12dc8",
-    "views/Nodes.vue": "97af3bf0807332be",
-    "views/Queue.vue": "62b95c18ad1a6a6a",
-    "views/Settings.vue": "29d59c7c7be72a23",
-    "views/Sites.vue": "3fe5d3410a9c48dc",
-    "views/Sources.vue": "46b8c79554bbab41"
+    "views/Dashboard.vue": "d564aa263d86b482",
+    "views/Logs.vue": "ac4167201a733323",
+    "views/Nodes.vue": "493811e7ecd3283b",
+    "views/Queue.vue": "05ea08da3629b20c",
+    "views/Settings.vue": "5d4c5756e639d3cf",
+    "views/Sites.vue": "22ea85c1d8abe1e0",
+    "views/Sources.vue": "180fab41d23d44bb"
   }
 }
