@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.425 · 2026-11-18
+
+### G15 第 29 轮：拆 scheduler-dedupe
+- 查重阶段（逐目标站检查、dupeResults、失败重试字段）移到 `server/scheduler-dedupe.js`。
+- scheduler.js 317→265 行；scheduler 6/6、failpoint 1/1。
+
 ## v0.7.424 · 2026-11-18
 
 ### G15 第 28 轮：拆 scheduler-screen
