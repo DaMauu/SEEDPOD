@@ -1,7 +1,7 @@
 # G15 最终报告 · 架构减重与失败路径
 
-- 版本：0.7.421
-- 轮次：26 轮（0–25），50 轮上限内完成
+- 版本：0.7.429
+- 轮次：33 轮（0–32），50 轮上限内完成
 - 范围：A1–A5 五个大文件拆分 + B0–B7 失败路径/规则/配置
 
 ## 1. 五个大文件行数
@@ -12,7 +12,7 @@
 | `pta/server/target.js` | 977 | **371** | ≤450 | 达标 |
 | `pta/server/target-service.js` | 590 | **302** | ≤400 | 达标 |
 | `pta/server/imagehost.js` | 612 | **382** | ≤400 | 达标 |
-| `pta/server/scheduler.js` | 496（B1 后 559） | **350** | ≤350 | 达标 |
+| `pta/server/scheduler.js` | 496（B1 后 559） | **162** | ≤350 | 达标（阶段全部模块化） |
 
 新增模块（共约 1350 行）：
 
@@ -20,7 +20,8 @@
 - target：`target-html.js`、`target-discovery.js`、`target-plan.js`、`target-submit.js`
 - target-service：`target-upload.js`、`target-rules.js`
 - imagehost：`imagehost-source.js`、`imagehost-config.js`
-- scheduler：`scheduler-publish.js`、`scheduler-retry.js`、`scheduler-state.js`
+- scheduler：`scheduler-crawl.js`、`scheduler-screen.js`、`scheduler-dedupe.js`、`scheduler-review.js`、`scheduler-publish.js`、`scheduler-retry.js`、`scheduler-state.js`
+- UI 状态：`composables/useCrawlPlan.js`（抓取计划状态与请求）
 - 规则/配置：`rule-registry.js`、`config-schema.js`
 
 旧导出和 require 路径保持不变；每轮全量检查通过后才提交。
@@ -61,10 +62,15 @@
 - 质量审计：总体 **94 / 优质**（要求 ≥87）
 - 规则体检：35 条全部有读者
 
-## 6. 未完成 / 后续
+## 6. 补完（第 27–32 轮）
 
-1. `scheduler.runNow` 仍内联 crawl/screen/dedupe/review 四段；publish/crossseed/retry/state 已抽出，行数目标已达标，但阶段模块化只完成一半。
-2. `Crawl.vue` 没有单独的 composable 文件；页面状态仍在 SFC 内，靠组件/样式/弹窗拆分达标。
-3. 失败队列只有 API/CLI，没有日志页/队列页面板；容量是「按 updated_at 取最近 1000 条」的视图级限制，不做破坏性清理。
-4. B6 的 UI `rules.js` 仍是 UI 侧定义源，靠检查对齐，尚未由注册表生成。
-5. B7 只覆盖 `meta.config`；`meta.flow` / `meta.scheduler` 的 JSON 还没有 schemaVersion。
+- A5：crawl/screen/dedupe/review 全部抽成阶段模块；`runNow` 只保留编排、failpoint、阶段 catch 和结果汇总；scheduler.js 350→162 行。
+- A1：新增 `composables/useCrawlPlan.js`，抓取计划状态与请求离开页面；Crawl.vue 497→474 行，快照一致。
+- B7：`meta.flow` / `meta.scheduler` 加 schemaVersion 与启动升级；`PUT /api/flow` 写回带版本；config-migration 7/7。
+
+## 7. 未完成 / 后续
+
+1. `Crawl.vue` 的其余页面状态（调度条、发布卡等）仍在 SFC 内；composable 目前只覆盖抓取计划。
+2. 失败队列只有 API/CLI，没有日志页/队列页面板；容量是「按 updated_at 取最近 1000 条」的视图级限制，不做破坏性清理。
+3. B6 的 UI `rules.js` 仍是 UI 侧定义源，靠检查对齐，尚未由注册表生成。
+4. 历史提交 0.7.419 合并了第 21–23 轮；从第 27 轮起已恢复一轮一提交。

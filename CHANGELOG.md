@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.429 · 2026-11-18
+
+### G15 报告更新
+- `G15-REPORT.md` 更新到第 32 轮：scheduler.js 162 行、阶段全部模块化、useCrawlPlan、flow/scheduler 迁移。
+- 未完成项收敛为：其余页面状态未抽 composable、失败队列无页面板、UI rules 未由注册表生成。
+
 ## v0.7.428 · 2026-11-18
 
 ### G15 第 32 轮：flow/scheduler 配置迁移
