@@ -370,9 +370,17 @@ onUnmounted(() => {
 .drawer .drawer-body-flush { padding-bottom: 8px; }
 .nodes-inner { padding-left: 0; padding-right: 0; }
 .node-row {
-  grid-template-columns: 200px 118px 1fr 60px 44px; padding: 5.5px 27px; margin: 0 -23px; }
+  grid-template-columns: minmax(160px, 240px) minmax(110px, 150px) minmax(220px, 1fr) 52px 40px;
+  gap: 10px; padding: 5px 12px; margin: 0 -12px;
+}
+.nr-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.nr-name b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.nr-tag { flex: 0 0 auto; margin-left: 0; white-space: nowrap; }
+.nr-host { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nr-disk { gap: 8px; }
+.nr-bar { max-width: 420px; }
 .nr-set { justify-self: end; }
-.nr-cap { flex: 0 0 148px; }
+.nr-cap { flex: 0 0 140px; }
 .nr-pct { flex: 0 0 34px; }
 
 @media (max-width: 600px) {
