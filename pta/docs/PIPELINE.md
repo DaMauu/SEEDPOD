@@ -36,6 +36,13 @@
 - 详情页只看种子自己的 `details-tag` / `torrents-tag` 和 h1 里的 `[禁转]` 这类括号标记，全站筛选表单的标签不算。
 - `HR` 只认独立标记（`[HR]`、`H&R`、`hit and run`、`hitandrun`），不把 `HR-HDTV` 这种小组名当成 H&R。
 - 站点只在详情页深处标注、而本轮又没抓到详情时，列表阶段看不到这个标记；要提高覆盖就打开详情抓取。
+- 批量核对保存下来的种子页：
+
+```bash
+node pta/scripts/audit-sitecat.js --dir /path/to/sitecat/done
+```
+
+默认只输出汇总（文件数、可解析页、带限制标签的行数、各类型计数），不打印站名/网址。
 
 ## 简介图片转存
 

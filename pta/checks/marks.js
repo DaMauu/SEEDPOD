@@ -54,6 +54,22 @@ check('纯文本不把 URL 当标签', () => {
   need(tags.length === 0, 'URL 被当成标签：' + JSON.stringify(tags));
 });
 
+check('彩色 span / class 徽章也算标签', () => {
+  const a = rowTags('<span style="background-color:#ff0000;color:#ffffff">禁转</span>');
+  need(a.indexOf('禁转') >= 0, '彩色 span 没识别：' + JSON.stringify(a));
+  const b = rowTags('<div class="tag tag-dz">独占</div>');
+  need(b.indexOf('独占') >= 0, 'class 徽章没识别：' + JSON.stringify(b));
+  const c = rowTags('<img class="hitandrun" src="pic/trans.gif" alt="H&amp;R" title="H&amp;R">');
+  need(c.indexOf('HR') >= 0, 'HR 图标没识别：' + JSON.stringify(c));
+});
+
+check('审计徽章和宣传语不误伤', () => {
+  const a = rowTags('<span class="pt-audit-badge pt-badge-fail">跳过: DIY修改版</span>');
+  need(a.length === 0, '审计徽章被当成站点标签：' + JSON.stringify(a));
+  const b = rowTags('<span class="tt-sub">全网独占/全网首发</span><span style="background-color:#990000;color:#fff">禁转</span>');
+  need(b.indexOf('独占') < 0 && b.indexOf('禁转') >= 0, '宣传语“全网独占”误判：' + JSON.stringify(b));
+});
+
 check('HR 边界：HR-HDTV 不算 H&R', () => {
   const t1 = rowTags('<span class="tag">HR-HDTV</span>');
   need(t1.indexOf('HR') < 0, 'HR-HDTV 被误判：' + JSON.stringify(t1));

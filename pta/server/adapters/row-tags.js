@@ -22,7 +22,9 @@ function unescapeHtml(s) {
 function stripNoise(html) {
   return unescapeHtml(String(html || '')
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' '));
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    /* 面板/审计脚本注入的“跳过: 禁转/独占”徽章不是站点标记 */
+    .replace(/<span\b[^>]*class=["'][^"']*pt-audit-badge[^"']*["'][^>]*>[\s\S]{0,400}?<\/span>/gi, ' '));
 }
 function textOf(html) {
   return unescapeHtml(String(html || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
@@ -44,11 +46,22 @@ function isTagToken(t) {
     x === 'badge' || x === 'label' ||
     /^torrent-search--list__tag$/.test(x);
 }
+/* 只收图标/标签元素的 title/alt，别把种子标题链接的 title 当标记 */
 function attrLabels(html) {
   const out = [];
-  const re = /\b(?:title|alt|data-label|data-tag)\s*=\s*["']([^"']{1,160})["']/gi;
+  const src = String(html || '');
+  const openRe = /<([a-z][a-z0-9]*)\b([^>]*)>/gi;
   let m;
-  while ((m = re.exec(String(html || '')))) out.push(unescapeHtml(m[1]));
+  while ((m = openRe.exec(src))) {
+    const tag = String(m[1] || '').toLowerCase();
+    const attrs = m[2] || '';
+    const cm = /\bclass\s*=\s*["']([^"']+)["']/i.exec(attrs);
+    const cls = cm ? String(cm[1] || '').toLowerCase() : '';
+    if (tag !== 'img' && !/tag|badge|label|mark|flag|icon/.test(cls)) continue;
+    const re = /\b(?:title|alt|data-label|data-tag)\s*=\s*["']([^"']{1,160})["']/gi;
+    let a;
+    while ((a = re.exec(attrs))) out.push(unescapeHtml(a[1]));
+  }
   return out;
 }
 function classMarks(html) {
@@ -68,42 +81,60 @@ function classMarks(html) {
   }
   return out;
 }
-function tagElements(html) {
+/* 标签元素或彩色小徽章：class 是 tag/badge，或者行内 style 带颜色/背景 */
+function labelElements(html) {
   const out = [];
+  const src = String(html || '');
   const openRe = /<([a-z][a-z0-9]*)\b([^>]*)>/gi;
   let m;
-  while ((m = openRe.exec(String(html || '')))) {
+  while ((m = openRe.exec(src))) {
     const attrs = m[2] || '';
     const cm = /\bclass\s*=\s*["']([^"']+)["']/i.exec(attrs);
-    if (!cm) continue;
-    const toks = String(cm[1] || '').split(/\s+/).filter(Boolean);
-    if (!toks.some(isTagToken)) continue;
+    const toks = cm ? String(cm[1] || '').split(/\s+/).filter(Boolean) : [];
+    const byClass = toks.some(isTagToken);
+    const byStyle = /\bstyle\s*=\s*["'][^"']*(?:background|color)\s*:[^"']*["']/i.test(attrs);
+    if (!byClass && !byStyle) continue;
     const tag = String(m[1] || '').toLowerCase();
-    const close = String(html || '').toLowerCase().indexOf('</' + tag + '>', openRe.lastIndex);
-    const inner = close >= 0 ? String(html || '').slice(openRe.lastIndex, Math.min(close, openRe.lastIndex + 400)) : '';
-    out.push({ attrs: attrs, text: textOf(inner) });
+    const close = src.toLowerCase().indexOf('</' + tag + '>', openRe.lastIndex);
+    const inner = close >= 0 ? src.slice(openRe.lastIndex, Math.min(close, openRe.lastIndex + 400)) : '';
+    const t = textOf(inner);
+    if (!t || t.length > 48) continue;
+    out.push({ attrs: attrs, text: t });
   }
   return out;
 }
 
-/* 列表行：tag 元素的文字 + 行内 title/alt（图标） */
+/* 行内正文去掉标题链接文字，剩下用中文关键词兜底；不扫“独占”（可能是“全网独占”这类宣传语） */
+const TEXT_RULES = RULES.filter(function (x) { return x[0] !== '独占'; });
+function visibleWithoutTitles(html) {
+  const s = textOf(String(html || '')
+    .replace(/<a\b[^>]*(?:details\.php\?[^"']*id=\d+|\/torrents\/\d+)[^>]*>[\s\S]{0,400}?<\/a>/gi, ' '));
+  const out = [];
+  TEXT_RULES.forEach(function (x) { if (x[1].test(s) && out.indexOf(x[0]) < 0) out.push(x[0]); });
+  return out.join(' ');
+}
+
+/* 列表行：标签/彩色徽章 + 行内 title/alt（图标）+ 去掉标题后的正文兜底 */
 function rowTags(html) {
   const s = stripNoise(html);
   const labels = [];
-  tagElements(s).forEach(function (el) {
+  labelElements(s).forEach(function (el) {
     if (el.text) labels.push(el.text);
     labels.push.apply(labels, attrLabels(el.attrs));
   });
   labels.push.apply(labels, attrLabels(s));
+  labels.push(visibleWithoutTitles(s));
   return merge(matchLabels(labels.join(' ')), classMarks(s));
 }
 
-/* 详情页：只看 torrent 自己的 details-tag / torrents-tag 和 h1 里的 [禁转] 这类括号标记；
+/* 详情页：只看 torrent 自己的 details-tag / torrents-tag、标题区徽章和 h1 里的 [禁转]；
    全站搜索表单的 sb-tag 不看，避免每个详情都带同一个标签。 */
 function detailTags(html) {
   const s = stripNoise(html);
   const labels = [];
-  tagElements(s).forEach(function (el) {
+  labelElements(s).forEach(function (el) {
+    /* 详情页只收 details-tag/torrents-tag/tag 这类，不扫全站彩色广告条 */
+    if (!/details?[-_]?tag|torrents?[-_]?tag|(^|\s)tag(\s|$)/i.test(el.attrs)) return;
     if (el.text) labels.push(el.text);
     labels.push.apply(labels, attrLabels(el.attrs));
   });
@@ -113,6 +144,10 @@ function detailTags(html) {
     const brackets = [];
     inner.replace(/\[([^\]]{1,24})\]/g, function (_, x) { brackets.push(x); return ''; });
     labels.push(brackets.join(' '));
+    const after = s.slice(h1.index + h1[0].length, h1.index + h1[0].length + 1600);
+    labelElements(after).forEach(function (el) {
+      if (el.text) labels.push(el.text);
+    });
   }
   return merge(matchLabels(labels.join(' ')), classMarks(s));
 }
