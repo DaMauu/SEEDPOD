@@ -316,6 +316,9 @@ async function main() {
       if (!card || !group || !field) return null;
       const gs = getComputedStyle(group);
       const fs = getComputedStyle(field);
+      const body = card && card.querySelector('.drawer-body');
+      const bs = body ? getComputedStyle(body) : null;
+      const target = card && card.querySelector('.target-pick');
       return {
         groups: card.querySelectorAll('.flow-group').length,
         bg: gs.backgroundColor,
@@ -323,14 +326,27 @@ async function main() {
         borderBottom: fs.borderBottomWidth,
         display: fs.display,
         items: field.children.length,
+        cols: bs ? bs.gridTemplateColumns.split(' ').filter(Boolean).length : 0,
+        targetBorder: target ? getComputedStyle(target).borderTopWidth : '',
         target: (card.querySelector('#tp-name') || {}).textContent || ''
       };
     });
-    need(pubUi && pubUi.groups >= 4, '发布分组数量不对：' + JSON.stringify(pubUi));
+    need(pubUi && pubUi.groups === 5, '发布分组数量应为 5：' + JSON.stringify(pubUi));
+    need(pubUi.cols === 5, '发布卡应为 5 列：' + JSON.stringify(pubUi));
     need(pubUi.bg === 'rgba(0, 0, 0, 0)' && pubUi.border === '0px', '发布分组不该有卡片：' + JSON.stringify(pubUi));
     need(pubUi.borderBottom === '0px', '发布字段底下不该有横线：' + JSON.stringify(pubUi));
     need(pubUi.display === 'flex' && pubUi.items >= 5, '发布字段没有做成一行：' + JSON.stringify(pubUi));
+    need(pubUi.targetBorder === '0px', '目标站控件不该有外框：' + JSON.stringify(pubUi));
     need(/未选择目标站/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
+    const dedupeUi = await page.evaluate(() => {
+      const row = document.querySelector('.dedupe-card .dedupe-switch-row');
+      const body = document.querySelector('.dedupe-card .drawer-body');
+      if (!row || !body) return null;
+      const rs = getComputedStyle(row), bs = getComputedStyle(body);
+      return { display: rs.display, gap: rs.gap, align: bs.alignItems, switches: document.querySelectorAll('.dedupe-card .dedupe-switch').length };
+    });
+    need(dedupeUi && dedupeUi.display === 'flex' && dedupeUi.gap === '8px 20px', '查重卡间距不对：' + JSON.stringify(dedupeUi));
+    need(dedupeUi.align === 'center' && dedupeUi.switches === 4, '查重卡居中/开关数不对：' + JSON.stringify(dedupeUi));
   });
 
   await check('调度在流程页，不在设置页', async () => {

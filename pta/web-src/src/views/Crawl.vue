@@ -1102,3 +1102,4 @@ onUnmounted(() => {
   .fg-actions { margin-left: 0; width: 100%; }
 }
 </style>
+/* 流程页布局冻结：查重卡单行 8/20、发布卡五列；改前先确认，改后 ui-freeze --update */
