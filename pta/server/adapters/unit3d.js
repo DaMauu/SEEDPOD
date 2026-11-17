@@ -78,7 +78,7 @@ function parseList(html) {
     const win = src.slice(start, end);
     const size = SIZE_RE.exec(flat(win));
     const cat = CATQ.exec(win);
-    const dl = (/href=["']([^"']*\/torrents\/\d+\/download[^"']*)["']/i.exec(win) || [])[1];
+    const dl = (/href=["']([^"']*\/torrents\/(?:download\/\d+|\d+\/download)[^"']*)["']/i.exec(win) || [])[1];
     /* 行里常带 <time datetime="...">，有就用来判「未满 7 天」，没有就留空 */
     const dt = /<time\b[^>]*datetime=["']([^"']+)["']/i.exec(win);
     return {
@@ -88,7 +88,7 @@ function parseList(html) {
       size: size ? size[1].replace(/\s+/g, ' ') : '',
       sizeBytes: size ? sizeLib.parseSize(size[1]) : 0,
       detailsUrl: mk.href,
-      downloadUrl: dl || '/torrents/' + mk.id + '/download',
+      downloadUrl: dl || '/torrents/download/' + mk.id,
       addedAt: dt && !isNaN(Date.parse(dt[1])) ? new Date(Date.parse(dt[1])).toISOString() : ''
     };
   });

@@ -396,7 +396,29 @@ function makeTarget(ctx) {
     } catch (e) {
       return { err: '下载种子失败：' + String(e && e.message || e).slice(0, 120) };
     }
-    if (res.status !== 200) return { err: '下载种子返回 ' + res.status };
+    if (res.status !== 200) {
+      /* Unit3D 下载路由有 /torrents/download/ID 和 /torrents/ID/download 两种；
+         404 时回详情页找真实下载链接再试一次 */
+      const t = resolve(item.site);
+      if (item.detailsUrl && t && t.base) {
+        try {
+          const pageUrl = new URL(item.detailsUrl, t.base + '/').toString();
+          const gate2 = await throttle(item.site, 'write');
+          if (gate2.ok) {
+            const page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+            const html = await page.text().catch(function () { return ''; });
+            const links = downloadLinksFromDetails(html, t.base);
+            for (const link of links.slice(0, 4)) {
+              const r2 = await fetch(link, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+              if (r2.status !== 200) continue;
+              const b2 = Buffer.from(await r2.arrayBuffer());
+              if (b2.length && b2.length <= 10 * 1024 * 1024 && b2[0] === 0x64) return { buf: b2 };
+            }
+          }
+        } catch (e) { /* 回退失败，按原错误返回 */ }
+      }
+      return { err: '下载种子返回 ' + res.status };
+    }
     const buf = Buffer.from(await res.arrayBuffer());
     if (!buf.length) return { err: '种子是空文件' };
     if (buf.length > 10 * 1024 * 1024) return { err: '种子超过 10MB' };
@@ -836,6 +858,7 @@ function makeTarget(ctx) {
       url: pageUrl, subtitle: d.subtitle || '', descr: d.descr || '', descrBb: d.descrBb || '',
       tags: d.tags || '', medium: d.medium || '', category: d.category || '',
       region: d.region || '', language: d.language || '', poster: d.poster || '',
+      bdinfo: d.bdinfo || '', mediainfo: d.mediainfo || '',
       sizeText: d.sizeText || '', sizeBytes: d.sizeBytes || 0, pageTitle: d.pageTitle || ''
     } };
   }

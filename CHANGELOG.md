@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.356 · 2026-11-17
+
+### 详情接口补齐 BDInfo/MediaInfo
+- fetchDetailsInfo 返回 bdinfo/mediainfo，终审才能把 Unit3D 独立面板带到目标站。
+- Unit3D 下载路由兼容 /torrents/download/ID 与 /torrents/ID/download，404 时回详情页找真实链接。
+- 实测 DarkLand 详情：BBCode 243 字、3 图、BDInfo 725 字；源种 0 做种者，无法下载发布。
+
 ## v0.7.355 · 2026-11-17
 
 ### 图片转存缓存
