@@ -210,19 +210,15 @@
     "rows": [
       {
         "t": "标题原样回填",
+        "same": "pub-main",
         "type": "switch",
         "on": true,
         "hint": "开：种子词条标题原样回填；关：标题不齐转待审",
         "label": "标题"
       },
       {
-        "t": "源资源标题",
-        "type": "button",
-        "v": "去待审核回填",
-        "label": "源资源标题"
-      },
-      {
         "t": "副标题拼贴",
+        "same": "pub-main",
         "type": "switch",
         "on": true,
         "hint": "开：豆影数据拼贴；关：副标题不齐转待审",
@@ -230,6 +226,7 @@
       },
       {
         "t": "简介回填",
+        "same": "pub-main",
         "type": "switch",
         "on": true,
         "hint": "开：豆影简介覆盖电影简介段；关：不联网",
@@ -237,6 +234,7 @@
       },
       {
         "t": "简介图片",
+        "same": "pub-main",
         "type": "switch",
         "on": true,
         "hint": "开：全部转存图床；关：保留源图不转存",
@@ -244,11 +242,18 @@
       },
       {
         "t": "自动附加 MediaInfo",
+        "same": "pub-main",
         "type": "switch",
         "on": true,
         "hint": "开：自动追加；关：不追加",
         "label": "简介末尾附加 MediaInfo"
-      }
+      },
+      {
+        "t": "源资源标题",
+        "type": "button",
+        "v": "去待审核回填",
+        "label": "源资源标题"
+      },
     ]
   },
   {
@@ -257,6 +262,7 @@
     "rows": [
       {
         "t": "必须有简介",
+        "same": "review",
         "type": "switch",
         "on": true,
         "hint": "简介不齐转待审",
@@ -264,6 +270,7 @@
       },
       {
         "t": "必须有副标题",
+        "same": "review",
         "type": "switch",
         "on": true,
         "hint": "副标题不齐转待审",
@@ -271,6 +278,7 @@
       },
       {
         "t": "BDInfo",
+        "same": "review",
         "type": "switch",
         "on": true,
         "hint": "没有 BDInfo/MediaInfo 就转待审",
@@ -278,6 +286,7 @@
       },
       {
         "t": "截图至少几张",
+        "same": "review",
         "type": "switch",
         "on": true,
         "hint": "源简介里的截图必须全部保留",
@@ -285,6 +294,7 @@
       },
       {
         "t": "年份必须一致",
+        "same": "review",
         "type": "switch",
         "on": true,
         "hint": "豆影年份最多比种子年份晚 2 年，超过转待审",
@@ -306,6 +316,7 @@
       },
       {
         "t": "自动勾选标签",
+        "same": "publish-flags",
         "type": "switch",
         "on": true,
         "hint": "按来源标签勾国语/中字等；禁转/官方不勾",
@@ -313,6 +324,7 @@
       },
       {
         "t": "默认匿名",
+        "same": "publish-flags",
         "type": "switch",
         "on": false,
         "hint": "新条目没单独设置时按这个发",
@@ -326,6 +338,7 @@
     "rows": [
       {
         "t": "发布后校验",
+        "same": "after",
         "type": "switch",
         "on": true,
         "hint": "发布后自动去目标站核对；关掉就只提交不回查",
@@ -333,6 +346,7 @@
       },
       {
         "t": "发布后抓权威种子",
+        "same": "after",
         "type": "switch",
         "on": true,
         "hint": "发布成功抓目标站种子存 data/torrents",
@@ -340,6 +354,7 @@
       },
       {
         "t": "上传前清洗 tracker",
+        "same": "after",
         "type": "switch",
         "on": true,
         "hint": "关掉会按源种直传，源站 tracker 会带到目标站",
@@ -347,6 +362,7 @@
       },
       {
         "t": "辅种跳过校验",
+        "same": "after",
         "type": "switch",
         "on": true,
         "hint": "qB skip_checking 复用源种保存路径",
@@ -354,6 +370,7 @@
       },
       {
         "t": "qB 自动种子管理",
+        "same": "after",
         "type": "switch",
         "on": false,
         "hint": "关掉=autoTMM false，不自动移动文件",
