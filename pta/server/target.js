@@ -14,6 +14,7 @@ const torrentClean = require('./torrent-clean');
 const match = require('./match');
 const targetDefaults = require('./target-defaults');
 const flowConfig = require('./flow-config');
+const { makeDiscovery } = require('./target-discovery');
 const { makeRequestQueue } = require('./request-queue');
 const { catMapOf, composeSubtitle, expand, hideContent, stripHide, infoFieldKey, descrFieldKey,
   attrsOf, textOf, isDeletedPageText, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
@@ -106,6 +107,8 @@ function makeTarget(ctx) {
       form: maps.form || null,
       valueMaps: valueMaps };
   }
+
+  const { discoverAnnounce, announceCandidates } = makeDiscovery({ resolve: resolve, cookieOf: cookieOf, dataDir: DATA_DIR });
 
   /* 目标站请求队列：所有站共用一个队列，一次只发一个请求，默认间隔 8 秒（±20% 抖动）。
      查重、详情、上传、回查、权威种、删除都走这里，不设次数上限。 */
@@ -615,123 +618,8 @@ function makeTarget(ctx) {
     return { ok: true, data: data };
   }
 
-  async function discoverAnnounce(host) {
-    const t = resolve(host);
-    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
-    const c = cookieOf(host);
-    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
-    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
-    if (!baseHost) return { ok: false, code: 'BAD_BASE', message: '站点 base 不合法', http: 400 };
-    const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
-    const pages = ['/usercp.php', '/usercp.php?action=personal'];
-    let uid = '';
-    try {
-      const idx = await fetch(t.base + '/index.php', { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(15000) });
-      const html = await idx.text().catch(function () { return ''; });
-      const m = /userdetails\.php\?id=(\d+)/i.exec(html);
-      if (m) uid = m[1];
-    } catch (e) {}
-    if (uid) pages.push('/userdetails.php?id=' + uid);
-    for (const path of pages) {
-      let res;
-      try { res = await fetch(t.base + path, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(15000) }); }
-      catch (e) { continue; }
-      if (res.status !== 200) continue;
-      const html = await res.text().catch(function () { return ''; });
-      if (/takelogin\.php|login\.php|请先登录/i.test(html)) continue;
-      const safe = html.replace(/&amp;/g, '&');
-      const m = /(https?:\/\/[^\s"'<>]+\/announce\.php\?[^\s"'<>]*passkey=[A-Za-z0-9]+|announce\.php\?[^\s"'<>]*passkey=[A-Za-z0-9]+)/i.exec(safe);
-      if (m) {
-        const raw = m[1];
-        try {
-          const u = new URL(raw, t.base + '/');
-          if (u.hostname.toLowerCase() !== baseHost && !u.hostname.toLowerCase().endsWith('.' + baseHost)) continue;
-          return { ok: true, data: { announce: u.toString(), source: path } };
-        } catch (e) {}
-      }
-      const pk = /passkey=([A-Za-z0-9]{16,64})/i.exec(safe);
-      if (pk) return { ok: true, data: { announce: t.base + '/announce.php?passkey=' + pk[1], source: path } };
-    }
-    return { ok: false, code: 'NO_ANNOUNCE', message: '没找到目标站 announce/passkey；可用 --announce 显式指定', http: 409 };
-  }
 
-  function candidateKind(url) {
-    return /[?&]passkey=/i.test(String(url || '')) ? 'passkey' : 'generic';
-  }
-  function cachedTargetCandidates(host) {
-    const dir = path.join(DATA_DIR, 'torrents');
-    let files;
-    try { files = fs.readdirSync(dir); } catch (e) { return []; }
-    const prefix = String(host).replace(/[^a-z0-9.-]/gi, '_') + '-';
-    const out = [];
-    files.filter(function (f) { return f.indexOf(prefix) === 0 && /\.torrent$/i.test(f); })
-      .map(function (f) { try { return { f: f, m: fs.statSync(path.join(dir, f)).mtimeMs }; } catch (e) { return null; } })
-      .filter(Boolean).sort(function (a, b) { return b.m - a.m; })
-      .forEach(function (x) {
-        try {
-          const a = torrentClean.announceOf(fs.readFileSync(path.join(dir, x.f)));
-          if (a) out.push({ source: 'cached-target-torrent', kind: candidateKind(a), hasPasskey: candidateKind(a) === 'passkey', announce: a });
-        } catch (e) {}
-      });
-    return out;
-  }
-  function uploadPageCandidates(html, base) {
-    const safe = String(html || '').replace(/&amp;/g, '&');
-    const raw = [];
-    const patterns = [
-      /(?:href|src)=["']([^"']*announce[^"']*)["']/gi,
-      /(https?:\/\/[^\s"'<>]+\/announce[^\s"'<>]*)/gi,
-      /(announce\.php\?[^\s"'<>]*)/gi
-    ];
-    patterns.forEach(function (re) {
-      let m;
-      while ((m = re.exec(safe))) if (m[1]) raw.push(m[1]);
-    });
-    const seen = {};
-    const out = [];
-    raw.forEach(function (x) {
-      try {
-        const u = new URL(x, base + '/');
-        if (!/^https?:$/i.test(u.protocol)) return;
-        const key = u.toString();
-        if (seen[key]) return;
-        seen[key] = true;
-        out.push({ source: 'upload-page', kind: candidateKind(key), hasPasskey: candidateKind(key) === 'passkey', announce: key });
-      } catch (e) {}
-    });
-    return out;
-  }
 
-  async function announceCandidates(host) {
-    const t = resolve(host);
-    if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包', http: 400 };
-    const c = cookieOf(host);
-    if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
-    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
-    const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
-    const all = cachedTargetCandidates(host);
-    const formPath = t.upload.formPath || t.upload.path;
-    try {
-      const res = await fetch(t.base + formPath, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(20000) });
-      if (res.status === 200) {
-        const html = await res.text().catch(function () { return ''; });
-        if (!/takelogin\.php|login\.php|请先登录/i.test(html)) {
-          uploadPageCandidates(html, t.base).forEach(function (x) {
-            if (!all.some(function (y) { return y.announce === x.announce; })) all.push(x);
-          });
-        }
-      }
-    } catch (e) {}
-    const u = await discoverAnnounce(host);
-    if (u.ok) {
-      const kind = candidateKind(u.data.announce);
-      if (!all.some(function (y) { return y.announce === u.data.announce; })) {
-        all.push({ source: 'usercp', kind: kind, hasPasskey: kind === 'passkey', announce: u.data.announce });
-      }
-    }
-    if (!all.length) return { ok: false, code: 'NO_ANNOUNCE', message: '没找到目标站 announce/passkey；可用 --announce 显式指定', http: 409 };
-    return { ok: true, data: { host: host, baseHost: baseHost, candidates: all } };
-  }
 
   /* 读目标站详情页的媒介/副标题/简介/标签，用于查重时判断原盘/DIY/限转 */
   async function fetchDetailsInfo(host, detailsUrl) {

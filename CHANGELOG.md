@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.413 · 2026-11-18
+
+### G15 第 15 轮：拆 target-discovery
+- announce/passkey 发现、缓存种子候选和上传页扫描移到 `server/target-discovery.js`。
+- 原导出不变；target.js 854→742 行，target 检查 29/29。
+
 ## v0.7.412 · 2026-11-18
 
 ### G15 第 14 轮：拆 target-html
