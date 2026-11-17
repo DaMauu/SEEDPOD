@@ -17,7 +17,7 @@
         <span>上传/回查 <b>{{ data.upload }}/{{ data.verify }}</b></span>
         <span>上传计划 <b>{{ data.planOk }}/{{ data.total }}</b><i v-if="data.planFail" class="warn"> · 失败 {{ data.planFail }}</i></span>
       </div>
-      <div class="cov-bar"><i :style="{ width: pct(data.ready, data.total) + '%' }"></i></div>
+      <div class="cov-bar"><i :style="{ width: percentOf(data.ready, data.total) + '%' }"></i></div>
       <div class="cov-note">可发布 = 有 cookie 且上传字段就绪；计划成功只是 dry-run，不等于真实提交。</div>
     </template>
   </section>
@@ -31,7 +31,7 @@ const data = ref(null)
 const loading = ref(false)
 const error = ref('')
 
-function pct(n, total) {
+function percentOf(n, total) {
   const t = Number(total) || 0
   return t ? Math.max(0, Math.min(100, Math.round((Number(n) || 0) / t * 100))) : 0
 }

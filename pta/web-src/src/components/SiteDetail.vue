@@ -17,7 +17,7 @@
                 </select>
                 <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
               </div>
-              <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeSheet">✕</button>
+              <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeDetail">✕</button>
             </div>
 
 
@@ -694,7 +694,7 @@ function detectRemote() {
     detectBusy.value = false
   })
 }
-function closeSheet() { emit('close') }
+function closeDetail() { emit('close') }
 
 onMounted(function () {
   fillForm(s.value)

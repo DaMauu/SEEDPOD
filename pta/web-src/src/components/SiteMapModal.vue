@@ -11,7 +11,7 @@
             <option v-for="t in targets" :key="t.host" :value="t.host">{{ t.host }}</option>
           </select>
           <button class="btn ghost slim" type="button" :disabled="loading" @click="detect">{{ loading ? '识别中…' : '自动识别' }}</button>
-          <button class="btn primary slim" type="button" @click="save">保存</button>
+          <button class="btn primary slim" type="button" @click="saveMap">保存</button>
         </div>
         <div v-if="msg" class="rule-hint">{{ msg }}</div>
         <h3>分类（我们这边 → 这个站的值）</h3>
@@ -80,7 +80,7 @@ async function detect() {
   const tc = (j.data.teamOptions || []).length
   msg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
 }
-async function save() {
+async function saveMap() {
   if (!host.value) return
   const cat = {}, team = {}
   catRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) cat[String(r.k).trim()] = String(r.v).trim() })

@@ -20,7 +20,7 @@
             <b>{{ it.title }}</b>
             <i>{{ sub(it) }}</i>
           </span>
-          <span class="badge" :class="tone(it.status)">{{ label(it.status) }}</span>
+          <span class="badge" :class="statusTone(it.status)">{{ label(it.status) }}</span>
         </button>
       </div>
       <div class="queue-page">
@@ -37,7 +37,7 @@
           <div class="qd-id">
             <div class="qd-title-row">
               <h2>{{ sel.cn || sel.title }}</h2>
-              <span class="badge" :class="tone(sel.status)">{{ label(sel.status) }}</span>
+              <span class="badge" :class="statusTone(sel.status)">{{ label(sel.status) }}</span>
             </div>
             <span class="sd-url">{{ sel.title }}</span>
           </div>
@@ -250,7 +250,7 @@ const LABELS = {
   failed: ['失败', 'red'], rejected: ['已驳回', 'gray'], skipped: ['已跳过', 'gray'], dupe: ['重复', 'amber']
 }
 function label(s) { return (LABELS[s] || ['未知', 'gray'])[0] }
-function tone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
+function statusTone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
 const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预览', submitted: '已提交', injected: '已注入', failed: '失败' }
 const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red' }
 function hostLabel(s) { return ({ none: '站内', local: '本地图床', pixhost: 'Pixhost', imgbox: 'Imgbox', custom: '自定义' })[s] || s || '—' }

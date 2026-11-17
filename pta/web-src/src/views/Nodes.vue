@@ -7,7 +7,7 @@
       </div>
       <div class="drawer-head-right">
         <span class="drawer-meta" id="nodes-drawer-meta">{{ meta }}</span>
-        <button type="button" class="btn primary slim" id="node-add" @click="openAdd">新增下载器</button>
+        <button type="button" class="btn primary slim" id="node-add" @click="openAddDownloader">新增下载器</button>
       </div>
     </div>
     <div class="drawer-body drawer-body-flush">
@@ -19,7 +19,7 @@
         </div>
         <div class="nodes-grid" id="nodes-grid">
           <div v-if="!nodes.length" class="empty">还没有下载器，点右上角「新增下载器」，选 qBittorrent 或 watch 目录。</div>
-          <div v-for="nd in nodes" :key="nd.id" class="node-row" :class="tone(nd)">
+          <div v-for="nd in nodes" :key="nd.id" class="node-row" :class="loadTone(nd)">
             <div class="nr-name">
               <b>{{ nd.name || hostOf(nd.url) }}</b>
               <span class="nr-tag">{{ kindLabel(nd.kind) }}{{ nd.user ? ' · ' + nd.user : '' }}</span>
@@ -27,8 +27,8 @@
             <div class="nr-host mono">{{ nd.kind === 'watch' ? nd.watchPath : hostOf(nd.url) }}</div>
             <div class="nr-disk">
               <span class="nr-cap">{{ diskTxt(nd) }}</span>
-              <div v-if="totalOf(nd)" class="nr-bar"><i :style="{ width: pct(nd).toFixed(0) + '%' }"></i></div>
-              <span v-if="totalOf(nd)" class="nr-pct">已用 {{ pct(nd).toFixed(0) }}%</span>
+              <div v-if="totalOf(nd)" class="nr-bar"><i :style="{ width: progressPct(nd).toFixed(0) + '%' }"></i></div>
+              <span v-if="totalOf(nd)" class="nr-progressPct">已用 {{ progressPct(nd).toFixed(0) }}%</span>
             </div>
             <span v-if="nd.hasPass && nd.passReadable === false" class="badge red" title="存储的密码用当前密钥解不开">密码失效</span>
             <span v-else-if="online(nd)" class="badge green">在线</span>
@@ -90,7 +90,7 @@
           <button v-if="editing" class="btn ghost slim danger" type="button" :disabled="busy.save" @click="removeNode">删除</button>
           <div class="spacer"></div>
           <button class="btn ghost slim" type="button" @click="modalOpen = false">取消</button>
-          <button class="btn primary slim" type="button" :disabled="busy.save" @click="save">{{ busy.save ? '保存中…' : '保存' }}</button>
+          <button class="btn primary slim" type="button" :disabled="busy.save" @click="saveDownloader">{{ busy.save ? '保存中…' : '保存' }}</button>
         </div>
       </div>
     </div>
@@ -107,7 +107,7 @@ const nodes = ref([])
 const modalOpen = ref(false)
 const editing = ref('')
 const form = reactive({ kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
-const busy = reactive({ save: false, test: false, cats: false })
+const busy = reactive({ saveDownloader: false, test: false, cats: false })
 const testResult = ref('')
 const passBroken = ref(false)
 const passPlaceholder = computed(function () { return passBroken.value ? '旧密码解不开，重新输入' : (editing.value ? '留空表示不改已存的密码' : '不设置就留空'); })
@@ -126,12 +126,12 @@ function hostOf(url) {
 function freeOf(nd) { return Number(nd.lastProbe && nd.lastProbe.freeSpace) || 0 }
 function totalOf(nd) { return Number(nd.lastProbe && nd.lastProbe.totalSpace) || 0 }
 function online(nd) { return !!(nd.lastProbe && nd.lastProbe.pass) }
-function pct(nd) {
+function progressPct(nd) {
   const t = totalOf(nd)
   if (!t) return 0
   return Math.max(0, Math.min(100, (t - freeOf(nd)) / t * 100))
 }
-function tone(nd) { return !online(nd) ? 'off' : pct(nd) > 85 ? 'warn' : 'ok' }
+function loadTone(nd) { return !online(nd) ? 'off' : progressPct(nd) > 85 ? 'warn' : 'ok' }
 function diskTxt(nd) {
   const f = freeOf(nd), t = totalOf(nd)
   if (!f && !t) return nd.lastProbe ? '—' : '还没探测'
@@ -154,7 +154,7 @@ async function load() {
   } catch (e) { reportError('Nodes', e) }
 }
 function ensure() { load() }
-function openAdd() {
+function openAddDownloader() {
   editing.value = ''
   Object.assign(form, { kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
   testResult.value = ''
@@ -188,7 +188,7 @@ function normUrl(raw) {
   if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) s = 'http://' + s
   return s.replace(/\/+$/, '')
 }
-async function save() {
+async function saveDownloader() {
   if (busy.save) return
   const kind = form.kind === 'watch' ? 'watch' : 'qb'
   const body = { kind }
@@ -358,7 +358,7 @@ onUnmounted(() => {
 .nr-cap { font-size: 11.5px; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .nr-bar { flex: 1; height: 4px; border-radius: 99px; background: #f1f3f7; overflow: hidden; min-width: 60px; }
 .nr-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
-.nr-pct { font-size: 10.5px; color: var(--muted); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+.nr-progressPct { font-size: 10.5px; color: var(--muted); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
 .nr-set { justify-self: end; font-size: 11px; color: var(--muted); }
 .nr-set:hover { color: var(--accent); }
 
@@ -381,7 +381,7 @@ onUnmounted(() => {
 .nr-bar { max-width: 420px; }
 .nr-set { justify-self: end; }
 .nr-cap { flex: 0 0 140px; }
-.nr-pct { flex: 0 0 34px; }
+.nr-progressPct { flex: 0 0 34px; }
 
 @media (max-width: 600px) {
 .node-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name badge" "disk set"; gap: 4px 8px; padding: 8px 10px; }

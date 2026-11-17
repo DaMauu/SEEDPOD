@@ -21,7 +21,7 @@
       @update:crawl-filter="crawlFilter = $event"
       @bulk="openBulk"
       @selfcheck="selfcheckAll"
-      @add="openAdd"
+      @add="openAddSite"
       @pack="packOpen = true"
     />
 
@@ -40,7 +40,7 @@
       @page="page = $event"
     >
       <template #detail>
-        <SiteDetail v-if="selSite" :key="selSite.name + ':' + detailNonce" :site="selSite" @close="closeSheet" @changed="loadAll" @removed="onSiteRemoved" />
+        <SiteDetail v-if="selSite" :key="selSite.name + ':' + detailNonce" :site="selSite" @close="clearSelected" @changed="loadAll" @removed="onSiteRemoved" />
       </template>
     </SitesList>
 
@@ -275,7 +275,7 @@ function openSite(host) {
     })
   }
 }
-function openAdd() { addForm.url = ''; addForm.arch = '?'; addForm.title = ''; addOpen.value = true }
+function openAddSite() { addForm.url = ''; addForm.arch = '?'; addForm.title = ''; addOpen.value = true }
 async function addSite() {
   if (!addForm.url.trim()) { toast('先填站点地址'); return }
   try {
@@ -290,7 +290,7 @@ async function addSite() {
     toast('已添加：' + j.data.host)
   } catch (e) { toast('添加请求发不出去') }
 }
-function closeSheet() { sel.value = null }
+function clearSelected() { sel.value = null }
 function onSiteRemoved() { sel.value = null; loadAll() }
 
 async function selfcheckAll() {
@@ -357,7 +357,7 @@ onUnmounted(() => {
   if (qTimer) clearTimeout(qTimer)
 })
 function onKey(e) {
-  if (e.key === 'Escape' && sel.value) closeSheet()
+  if (e.key === 'Escape' && sel.value) clearSelected()
 }
 </script>
 

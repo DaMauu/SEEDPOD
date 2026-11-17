@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.463 · 2026-11-18
+
+### 维护：消除重复函数名（第一批）
+- `pct`→`percentOf`/`progressPct`、`tone`→`statusTone`/`loadTone`、`save`/`closeSheet`/`openAdd` 按领域改名。
+- 重复函数名 7→2（只剩 load/ensure）；复用率 75→100 SSS，总体 97→99 SSS；Sites/Nodes 构建检查通过。
+
 ## v0.7.462 · 2026-11-18
 
 ### 质量评级改为 D → SSS
