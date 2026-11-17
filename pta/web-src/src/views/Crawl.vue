@@ -134,7 +134,7 @@
             <div class="set-fields">
               <template v-for="(cell, ci) in g.cells" :key="cell.same || ci">
                 <div v-if="cell.rows.length > 1" class="set-field pair">
-                  <div v-for="r in cell.rows" :key="r.t" class="pair-item" :class="{ grow: r.type !== 'switch', todo: r.todo }">
+                  <div v-for="r in cell.rows" :key="r.t" class="pair-item" :class="{ grow: r.type !== 'switch', target: r.t === '发布到', todo: r.todo }">
                     <template v-if="r.type === 'switch'">
                       <span class="pair-lbl">{{ r.label || r.t }}<em v-if="r.todo" class="todo-badge">未接</em></span>
                       <button class="switch" :class="{ on: r.on }" type="button" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
@@ -999,12 +999,14 @@ onUnmounted(() => {
   align-items: center; gap: 16px;
   padding: 4px 0; margin: 0; border: 0; min-width: 0;
 }
-.pub-card .flow-group .set-fields .set-field.pair { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 2px 0; }
-.pub-card .flow-group .set-fields .set-field.pair .pair-item { width: auto; flex: 0 0 auto; }
+.pub-card .flow-group .set-fields .set-field.pair { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px 20px; padding: 2px 0; }
+.pub-card .flow-group .set-fields .set-field.pair .pair-item { width: auto; flex: 0 0 auto; gap: 8px; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item .pair-lbl { white-space: nowrap; flex: 0 0 auto; }
-.pub-card .flow-group .set-fields .set-field.pair .pair-item.grow { flex: 0 1 300px; min-width: 190px; }
+.pub-card .flow-group .set-fields .set-field.pair .pair-item.grow { flex: 0 1 430px; min-width: 280px; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow .ctl { width: 100%; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow .ctl > .input { width: 100%; max-width: none; }
+.pub-card .flow-group .set-fields .set-field.pair .pair-item.target { flex: 0 0 auto; }
+.pub-card .flow-group .set-fields .set-field.pair .pair-item.target .ctl { width: auto; }
 .pub-card .flow-group .set-fields .set-field.sec { display: block; padding: 11px 0 2px; border: 0; }
 .pub-card .flow-group .set-fields .set-field.sec:first-child { padding-top: 2px; }
 .pub-card .flow-group .set-fields .set-field .lbl { margin: 0; min-width: 0; }
