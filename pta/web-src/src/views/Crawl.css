@@ -112,12 +112,6 @@
 .todo-badge { flex: 0 0 auto; margin-left: 0; }
 .crawl-card :deep(.preset-row .cat-row), .crawl-card :deep(.preset-row .pick-row) { justify-content: flex-start; }
 .rule-hint { font-size: 11px; color: var(--muted); opacity: .85; line-height: 1.45; margin-top: 2px; }
-.map-modal { width: 640px; max-width: calc(100vw - 32px); }
-.map-body { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow: auto; }
-.map-top { display: flex; gap: 8px; align-items: center; }
-.map-top .select { flex: 1; }
-.map-row { display: flex; gap: 8px; align-items: center; }
-.map-row .input { flex: 1; }
 @media (max-width:700px) {
 .dedupe-switch-row {gap:8px 14px}
 .dedupe-switch {flex:1 1 calc(50% - 7px)}

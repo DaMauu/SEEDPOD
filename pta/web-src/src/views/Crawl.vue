@@ -5,41 +5,10 @@
       <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @toggle="toggleSched" @every="setEveryValue" @save="saveLimits" @run="runSched" />
       <CrawlCard v-model:source-host="sourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" />
       <ScreenDedupeCard :busy="busy" :rx-rows="rxRows" :auto-dupe="autoDupe" :dedupe-switches="dedupeSwitches" :dedupe-inputs="dedupeInputs" :rule-component="RuleOrSpecial" :rule-control="RuleControl" @save="saveScreen" @toggle-auto-dupe="autoDupe = !autoDupe" />
-      <PublishCard :groups="pubGroups" :busy="busy" :rule-component="RuleOrSpecial" @maps="openMaps" @save="savePub" />
+      <PublishCard :groups="pubGroups" :busy="busy" :rule-component="RuleOrSpecial" @maps="mapOpen = true" @save="savePub" />
     </div>
 
-    <div v-if="mapOpen" class="modal-mask">
-      <div class="modal map-modal">
-        <div class="modal-head">
-          <h2>站点映射（分类 / 制作组）</h2>
-          <button class="btn ghost slim" type="button" @click="mapOpen = false">关闭</button>
-        </div>
-        <div class="map-body">
-          <div class="map-top">
-            <select v-model="mapHost" class="select" @change="loadMap">
-              <option v-for="t in mapTargets" :key="t.host" :value="t.host">{{ t.host }}</option>
-            </select>
-            <button class="btn ghost slim" type="button" :disabled="mapLoading" @click="detectMap">{{ mapLoading ? '识别中…' : '自动识别' }}</button>
-            <button class="btn primary slim" type="button" @click="saveMap">保存</button>
-          </div>
-          <div v-if="mapMsg" class="rule-hint">{{ mapMsg }}</div>
-          <h3>分类（我们这边 → 这个站的值）</h3>
-          <div v-for="(row, i) in mapCatRows" :key="'c' + i" class="map-row">
-            <input v-model="row.k" class="input" placeholder="电影">
-            <input v-model="row.v" class="input" placeholder="401">
-            <button class="btn ghost slim" type="button" @click="mapCatRows.splice(i, 1)">删</button>
-          </div>
-          <button class="btn ghost slim" type="button" @click="mapCatRows.push({ k: '', v: '' })">加一行</button>
-          <h3>制作组（组名 → 这个站的值）</h3>
-          <div v-for="(row, i) in mapTeamRows" :key="'t' + i" class="map-row">
-            <input v-model="row.k" class="input" placeholder="CMCT">
-            <input v-model="row.v" class="input" placeholder="8">
-            <button class="btn ghost slim" type="button" @click="mapTeamRows.splice(i, 1)">删</button>
-          </div>
-          <button class="btn ghost slim" type="button" @click="mapTeamRows.push({ k: '', v: '' })">加一行</button>
-        </div>
-      </div>
-    </div>
+    <SiteMapModal v-model:open="mapOpen" />
 
     <Nodes />
   </div>
@@ -59,6 +28,8 @@ import TargetPickerModal from '../components/TargetPickerModal.vue'
 import CrawlCard from '../components/CrawlCard.vue'
 import ScreenDedupeCard from '../components/ScreenDedupeCard.vue'
 import PublishCard from '../components/PublishCard.vue'
+import SiteMapModal from '../components/SiteMapModal.vue'
+import { getJson } from '../utils/api'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -94,53 +65,6 @@ const fetchNote = computed(() => '每 ' + limits.interval + ' 秒最多一次 ·
 
 const rx = reactive({ deny: '', sample: '', out: '未测试', outClass: '' })
 const mapOpen = ref(false)
-const mapHost = ref('')
-const mapTargets = ref([])
-const mapCatRows = ref([])
-const mapTeamRows = ref([])
-const mapMsg = ref('')
-const mapForm = ref(null)
-const mapLoading = ref(false)
-function mapRowsOf(obj) { return Object.keys(obj || {}).map(k => ({ k, v: String(obj[k] || '') })) }
-async function openMaps() {
-  mapOpen.value = true
-  mapMsg.value = ''
-  if (!mapTargets.value.length) {
-    const j = await getJson('/api/targets')
-    mapTargets.value = (j && j.ok && j.data) || []
-  }
-  if (!mapHost.value && mapTargets.value.length) mapHost.value = mapTargets.value[0].host
-  await loadMap()
-}
-async function loadMap() {
-  if (!mapHost.value) return
-  const j = await getJson('/api/maps')
-  const s = (j && j.ok && j.data && j.data.sites && j.data.sites[mapHost.value]) || {}
-  mapCatRows.value = mapRowsOf(s.cat)
-  mapTeamRows.value = mapRowsOf(s.team)
-}
-async function detectMap() {
-  if (!mapHost.value || mapLoading.value) return
-  mapLoading.value = true
-  mapMsg.value = '识别中…'
-  const r = await fetch('/api/maps/' + encodeURIComponent(mapHost.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
-  const j = await r.json().catch(() => null)
-  mapLoading.value = false
-  if (!j || !j.ok) { mapMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
-  mapCatRows.value = mapRowsOf(j.data.cat)
-  mapForm.value = j.data.form || null
-  const tc = (j.data.teamOptions || []).length
-  mapMsg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
-}
-async function saveMap() {
-  if (!mapHost.value) return
-  const cat = {}, team = {}
-  mapCatRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) cat[String(r.k).trim()] = String(r.v).trim() })
-  mapTeamRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) team[String(r.k).trim()] = String(r.v).trim() })
-  const r = await fetch('/api/maps/' + encodeURIComponent(mapHost.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team, form: mapForm.value }) })
-  const j = await r.json().catch(() => null)
-  mapMsg.value = j && j.ok ? '已保存到 data/site-maps.json' : ((j && j.error && j.error.message) || '保存失败')
-}
 const tpl = ref('')
 const tplPreview = computed(() => {
   let t = tpl.value || ''
@@ -300,12 +224,6 @@ function testRx() {
   rx.outClass = deny ? 'rx-warn' : 'rx-ok'
 }
 
-async function getJson(url, opts) {
-  try {
-    const r = await fetch(url, Object.assign({ credentials: 'same-origin' }, opts || {}))
-    return await r.json()
-  } catch (e) { return null }
-}
 async function patchUser(body) {
   return getJson('/api/config/user', {
     method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)

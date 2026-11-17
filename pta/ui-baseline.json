@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-17T16:29:44.828Z",
+  "at": "2026-11-17T16:34:07.573Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/CrawlCard.vue": "3ee4bb66d7b6489a",
@@ -10,6 +10,7 @@
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
     "components/SiteCoveragePanel.vue": "2e9540f0b8c33650",
     "components/SiteDetail.vue": "3d326dab4b3222e6",
+    "components/SiteMapModal.vue": "bab45a99d5b42eb1",
     "components/SitePackPanel.vue": "fb18431b4bce81ed",
     "components/SitesList.vue": "91340de1b6874dfd",
     "components/SitesModals.vue": "963c885ef8c0c3b3",
@@ -29,8 +30,8 @@
     "styles/11-dock.css": "46525a594c44e2e1",
     "styles/index.css": "8f90d9215d33427a",
     "views/Changelog.vue": "78ae677dd2bd919a",
-    "views/Crawl.css": "989883e53f42f1a5",
-    "views/Crawl.vue": "1c2673e28f4d1a1e",
+    "views/Crawl.css": "7d9c2f612bb94969",
+    "views/Crawl.vue": "c1739b75bdd6c494",
     "views/Dashboard.vue": "7a0a65f465bd04cf",
     "views/Logs.vue": "511a6ba8f10696e2",
     "views/Nodes.vue": "97af3bf0807332be",

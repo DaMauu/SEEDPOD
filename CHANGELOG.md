@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.411 · 2026-11-18
+
+### G15 第 13 轮：拆 SiteMapModal（A1 达标）
+- 站点映射弹窗拆成 `components/SiteMapModal.vue`，状态与接口调用随组件迁移。
+- `getJson` 抽到 `utils/api.js`，Crawl 与服务端请求共用。
+- Crawl.vue 579→497 行（目标 ≤500 达成）；1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.410 · 2026-11-18
 
 ### G15 第 12 轮：页面样式外置
