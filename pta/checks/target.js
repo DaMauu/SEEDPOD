@@ -261,6 +261,9 @@ async function main() {
         upload: { path: '/takeupload.php', formPath: '/upload-form', fileField: 'file', fields: { name: '{title}', descr: '{description}' } },
         verify: { path: '/torrents.php?search={title}' }, catMap: { '电影': '401' } },
       'unit3d.example': { engine: 'unit3d', base: 'http://127.0.0.1:' + mockPort },
+      'unit3d-fields.example': { engine: 'unit3d', base: 'http://127.0.0.1:' + mockPort,
+        upload: { path: '/torrents/create', fields: { name: '{title}', description: '{description}', disc_info: '', media_info: '' } },
+        verify: { path: '/torrents?search={title}' }, catMap: { 'movie': '1' } },
       'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort },
       'nexus-default.example': { engine: 'nexusphp', base: 'http://127.0.0.1:' + mockPort,
         catMap: [{ id: '401', label: 'Movies', purpose: 'movie' }, { id: '402', label: 'TV', purpose: 'tv' }] }
@@ -591,6 +594,24 @@ async function main() {
     need((gp.body.data.warnings || []).includes('没有 cookie'), 'Gazelle 无 cookie 没提示');
   });
 
+  await check('UNIT3D 多种字段名识别 BDInfo/MediaInfo', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'UNIT3D Fields Test 2024 1080p', targetSite: 'unit3d-fields.example', status: 'approved',
+        cat: 'movie', res: '1080p', size: '20 GB', bdinfo: 'BDINFO-CONTENT', mediainfo: 'MEDIAINFO-CONTENT' })
+    });
+    need(add.status === 200 && add.body.ok, '建字段测试队列失败');
+    const p = await json(BASE + '/api/targets/unit3d-fields.example/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, '字段测试计划失败：' + JSON.stringify(p.body && p.body.error));
+    const f = p.body.data.fields;
+    need(f.disc_info === 'BDINFO-CONTENT', 'disc_info 没识别成 BDInfo：' + JSON.stringify(f));
+    need(f.media_info === 'MEDIAINFO-CONTENT', 'media_info 没识别成 MediaInfo：' + JSON.stringify(f));
+    need(!/BDINFO-CONTENT/.test(String(f.description || '')), '有专用字段时简介里不该重复 BDInfo');
+    await json(BASE + '/api/queue/' + encodeURIComponent(add.body.data.id), { method: 'DELETE' });
+  });
+
   await check('NexusPHP 默认字段与分类数组', async function () {
     async function mk(title, anonymous) {
       const r = await json(BASE + '/api/queue', {
@@ -820,6 +841,34 @@ async function main() {
     });
     need(chk.status === 200 && chk.body.ok && chk.body.data.deleted === true, '没有该ID的种子应判为已删：' + JSON.stringify(chk.body));
     mockDeleted = false; deletedId = ''; deleteHits = 0; deleteBody = null; deleteBodyReasons = [];
+  });
+
+  await check('回收站同 infohash 不重复发布', async function () {
+    mockDeleted = true; deletedId = '42';
+    try {
+      const add = await json(BASE + '/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'Target Upload Test 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+          shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
+      });
+      need(add.status === 200 && add.body.ok, '建回收站测试队列失败');
+      const id = add.body.data.id;
+      const v = await json(BASE + '/api/targets/127.0.0.1/verify', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ queueId: id, torrentBase64: torrent.toString('base64'), url: 'http://127.0.0.1:' + mockPort + '/details.php?id=42' })
+      });
+      need(v.status === 200 && v.body.ok && v.body.data.deleted === true && v.body.data.found === false, '回收站详情没标记成已删除：' + JSON.stringify(v.body));
+      const before = hits.length;
+      const up = await json(BASE + '/api/targets/127.0.0.1/upload', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ queueId: id, torrentBase64: torrent.toString('base64'), dryRun: false, verify: true })
+      });
+      need(up.status === 200 && up.body && up.body.error && up.body.error.code === 'TARGET_EXISTS', '回收站同 hash 没跳过：' + up.status + ' ' + JSON.stringify(up.body));
+      need(hits.length === before + 1, '回收站检查应只发 1 次上传，实际 ' + (hits.length - before) + ' 次');
+      await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
+    } finally {
+      mockDeleted = false; deletedId = '';
+    }
   });
 
   await check('回查不把搜索框回显当命中', async function () {

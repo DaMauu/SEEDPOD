@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.358 · 2026-11-17
+
+### 回收站重复识别与页脚计数
+- 目标站同 infohash 被删进回收站时，回查识别 `deleted`，标 `TARGET_EXISTS` 跳过，不再拿旧种子辅种。
+- UNIT3D 目标站 BDInfo/MediaInfo 字段名扩展：bdinfo / bd_info / disc_info / video_info / media_info / mi_info，站点包模板里带 `{bdinfo}`/`{mediainfo}` 也认。
+- 开发页脚恢复页面数与接口数：页面固定 7，接口按实际注册的 `/api/` 路由统计。
+
 ## v0.7.357 · 2026-11-17
 
 ### 抓取卡新增“限制”芯片

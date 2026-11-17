@@ -349,11 +349,13 @@ function makeTargetService(ctx, target) {
     const shouldVerify = b.verify !== undefined ? !!b.verify : (verifyRule ? verifyRule.on !== false : true);
     let verified = null;
     let reused = false;
+    let deletedSee = null;
     const prev = targetResults(item.data)[String(host).toLowerCase()];
     if (!dryRun && shouldVerify && prev && prev.detailsUrl && !prev.verified) {
       for (let i = 0; i < 2 && !reused; i++) {
         if (i) await new Promise(function (r2) { setTimeout(r2, 3000); });
         const v = await target.verify(host, uploadItem, t.buf, {});
+        if (v.ok && v.data && v.data.deleted) deletedSee = v.data;
         if (v.ok && v.data && v.data.found) {
           verified = v.data;
           reused = true;
@@ -400,11 +402,19 @@ function makeTargetService(ctx, target) {
       for (let i = 0; i < 3 && !verified; i++) {
         if (i) await new Promise(function (r2) { setTimeout(r2, 3000); });
         const v = await target.verify(host, uploadItem, t.buf, { url: i === 0 ? (r.data.detailsUrl || undefined) : undefined });
+        if (v.ok && v.data && v.data.deleted) deletedSee = v.data;
         if (v.ok && v.data && v.data.found) {
           verified = v.data;
           item.data.targetVerify = Object.assign({}, v.data, { at: now() });
         }
       }
+    }
+    if (shouldVerify && !verified && deletedSee) {
+      const msg = '目标站已有同 infohash 的种子（在回收站），跳过重复上传';
+      setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: deletedSee });
+      if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'recycle_bin' } });
+      saveQueue(item.data);
+      return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: deletedSee } };
     }
     if (shouldVerify && (!verified || !verified.found)) {
       const msg = '提交返回 200，但回查未找到（可能待审核/索引延迟）';

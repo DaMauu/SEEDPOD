@@ -217,11 +217,19 @@ function makeTarget(ctx) {
   function stripHide(text, kind) {
     return String(text || '').replace(new RegExp('\\[hide=' + kind + '\\][\\s\\S]*?\\[\\/hide\\]', 'gi'), '').replace(/\n{3,}/g, '\n\n').trim();
   }
+  /* Unit3D 各站字段名不统一：bdinfo / bd_info / disc_info / video_info / media_info / mi_info
+     都认；站点包直接把 {bdinfo}/{mediainfo} 塞进别的字段时，也按模板内容认。 */
   function infoFieldKey(fields, kind) {
     const keys = Object.keys(fields || {});
+    const token = '{' + kind + '}';
+    const byTemplate = keys.filter(function (k) {
+      const tpl = String(fields[k] || '');
+      return tpl.indexOf(token) >= 0 && tpl.indexOf('{description}') < 0;
+    })[0];
+    if (byTemplate) return byTemplate;
     const re = kind === 'bdinfo'
-      ? /(^|[^a-z])bd[-_ ]?info([^a-z]|$)|disc[-_ ]?info|video[-_ ]?info/i
-      : /media[-_ ]?info/i;
+      ? /(^|[^a-z])(bd|bdmv|disc|disk|video)[-_ ]?info([^a-z]|$)/i
+      : /(^|[^a-z])(media|mi)[-_ ]?info([^a-z]|$)/i;
     return keys.filter(function (k) { return re.test(k) && !/descr|description/i.test(k); })[0] || '';
   }
   function descrFieldKey(fields) {
@@ -519,6 +527,15 @@ function makeTarget(ctx) {
     const title = norm(item.title);
     const hash = String((opts && opts.hash) || meta.hash || '').toLowerCase();
     const isDetails = /details\.php\?id=\d+|\/torrents?\/\d+/i.test(url);
+    /* 同 infohash 被删进回收站时，上传会 302 回旧 ID；详情页仍能打开但带回收站标记，
+       不能当成“刚发布成功”，否则会拿旧种子去辅种。 */
+    if (res.status === 200 && isDetails && isDeletedPageText(text)) {
+      return { ok: true, data: {
+        found: false, deleted: true, url: url, status: res.status, title: '', detailsUrl: '',
+        infohash: meta.hash, rows: 0, mode: 'details',
+        message: '目标站同 infohash 的种子已在回收站'
+      } };
+    }
     let found = false;
     let matchedTitle = '';
     let matchedUrl = '';
@@ -572,6 +589,11 @@ function makeTarget(ctx) {
   function textOf(html) {
     return String(html || '').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
       .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  }
+  function isDeletedPageText(html) {
+    const t = textOf(html);
+    if (!t) return false;
+    return /(种子|资源|torrent).{0,20}(已被|曾被|已被管理员|被).{0,20}(删除|移除)|回收站|recycle\s*bin|torrent.{0,30}(has been|was)\s+(deleted|removed)/i.test(t);
   }
   function parseDeleteForm(html) {
     const forms = [];

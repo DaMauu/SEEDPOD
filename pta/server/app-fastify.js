@@ -29,6 +29,9 @@ const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vit
 const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
 const PTA_USER = require('./env').read('PANEL_USER','PTA_USER') || '';
 const PTA_PASS = require('./env').read('PANEL_PASS','PTA_PASS') || '';
+/* 七个页面固定（dashboard/sites/crawl/queue/sources/logs/settings）；接口数按实际注册的路由算 */
+const PAGE_COUNT = 7;
+let ENDPOINT_COUNT = 0;
 
 const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
 const LOGIN_FAILS = new Map();
@@ -75,6 +78,10 @@ let logEvent = null;
 
 async function build() {
   const app = Fastify({ logger: false, bodyLimit: 8 * 1024 * 1024 });
+  ENDPOINT_COUNT = 0;
+  app.addHook('onRoute', function (route) {
+    if (String(route.url || '').indexOf('/api/') === 0) ENDPOINT_COUNT += 1;
+  });
 
   /* 与旧后端一致的静态安全头；CSP 放行 Cloudflare 分析脚本 */
   app.addHook('onSend', async (req, reply, payload) => {
@@ -156,7 +163,7 @@ async function build() {
     data: {
       version: VERSION, devDate: DEV_DATE, node: process.version,
       stack: { front: FRONT_STACK, back: BACK_STACK },
-      counts: counts(),
+      counts: Object.assign(counts(), { pages: PAGE_COUNT, endpoints: ENDPOINT_COUNT }),
       pack: sitePack.status(),
       crypto: secretbox.status(DATA_DIR)
     }
