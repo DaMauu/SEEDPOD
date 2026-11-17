@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.427 · 2026-11-18
+
+### G15 第 31 轮：Crawl 计划 composable
+- 抓取计划状态与请求抽到 `composables/useCrawlPlan.js`，页面只负责组装。
+- Crawl.vue 497→474 行；1280/390 快照一致，UI 基线已更新；看地址交互实测通过。
+
 ## v0.7.426 · 2026-11-18
 
 ### G15 第 30 轮：拆 scheduler-review

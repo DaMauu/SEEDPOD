@@ -246,4 +246,5 @@
 - 第 28 轮：A5 拆出 scheduler-screen.js；scheduler.js 317 行；scheduler 6/6。
 - 第 29 轮：A5 拆出 scheduler-dedupe.js；scheduler.js 265 行；scheduler 6/6。
 - 第 30 轮：A5 拆出 scheduler-review.js；scheduler.js 162 行；全部阶段成模块。
+- 第 31 轮：A1 新增 useCrawlPlan composable；Crawl.vue 474 行；快照一致。
 - 下一步：screen/dedupe/review 阶段拆分。
