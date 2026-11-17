@@ -971,7 +971,7 @@ onUnmounted(() => {
 /* ===== 发布区：三级层级 + 单行左右排布，无内嵌卡片/横线 ===== */
 .pub-card > .drawer-head { border-bottom: 0; background: #fff; }
 .pub-card .drawer-body {
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   gap: 0 18px; max-width: none; margin: 0; padding: 8px 22px 14px;
 }
 .pub-card .flow-group {
@@ -1001,14 +1001,14 @@ onUnmounted(() => {
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow .ctl { width: 100%; }
 .pub-card .flow-group .set-fields .set-field.pair .pair-item.grow .ctl > .input { width: 100%; max-width: none; }
 @media (max-width: 1200px) {
-  .pub-card .drawer-body { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 18px; }
+  .pub-card .drawer-body { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px 18px; }
   .pub-card .flow-group { border-right: 0; border-bottom: 1px solid #f2f4f7; padding: 0 0 10px; }
 }
 @media (max-width: 800px) {
-  .pub-card .drawer-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pub-card .drawer-body { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 @media (max-width: 600px) {
-  .pub-card .drawer-body { grid-template-columns: 1fr; }
+  .pub-card .drawer-body { grid-template-columns: 1fr !important; }
 }
 .pub-card .flow-group .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
 .pub-card .flow-group .set-fields { display: flex; flex-direction: column; gap: 0; padding-left: 10px; }
