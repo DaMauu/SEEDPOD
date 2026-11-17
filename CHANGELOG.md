@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.404 · 2026-11-18
+
+### G15 第 6 轮：拆 FlowGates
+- 发布闸门从 Crawl.vue 拆到 `components/FlowGates.vue`，props/emits 保持原有行为。
+- Crawl.vue 1130→1106 行；1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.403 · 2026-11-18
 
 ### G15 第 5 轮：故障注入
