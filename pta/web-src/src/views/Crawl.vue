@@ -809,15 +809,15 @@ onUnmounted(() => {
 .crawl-card :deep(.crawl-foot){flex-direction:column;align-items:flex-start;gap:10px}
 }
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
-.screen-card .drawer-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; padding: 8px 22px 14px; }
+.screen-card .drawer-body { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0 24px; padding: 8px 22px 14px; }
 .screen-card .screen-col { background: transparent; border: 0; border-right: 1px solid #f2f4f7; border-radius: 0; padding: 0 18px 0 0; margin: 0; }
 .screen-card .screen-col:last-child { border-right: 0; padding-right: 0; }
 .screen-card .flow-ttl { display: flex; align-items: center; gap: 7px; margin: 0 0 6px; font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em; }
 .screen-card .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
 .screen-card .screen-list { display: flex; flex-direction: column; gap: 0; }
-.screen-card .screen-field { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
+.screen-card .screen-field { display: grid !important; grid-template-columns: 150px minmax(0, 1fr) !important; align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
 .screen-card .screen-field:last-child { border-bottom: 0; }
-.screen-card .screen-field > .switch { justify-self: end; }
+.screen-card .screen-field > .switch { grid-column: 2; justify-self: end; }
 .screen-card .screen-field .lbl { margin: 0; min-width: 0; }
 .screen-card .screen-field .lbl span { font-size: 12.5px; font-weight: 400; color: #5b6573; line-height: 1.4; }
 .screen-card .screen-field .ctl { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; width: 100%; }
@@ -827,7 +827,7 @@ onUnmounted(() => {
 .screen-card .screen-field.wide .rx-test { width: 100%; }
 .screen-card .screen-field.wide .rx-test .input { flex: 1 1 auto; min-width: 160px; width: auto; }
 @media (max-width: 800px) {
-  .screen-card .drawer-body { grid-template-columns: 1fr; gap: 12px; padding: 8px 16px 12px; }
+  .screen-card .drawer-body { grid-template-columns: 1fr !important; gap: 12px; padding: 8px 16px 12px; }
   .screen-card .screen-col { border-right: 0; border-bottom: 1px solid #f2f4f7; padding: 0 0 10px; }
   .screen-card .screen-col:last-child { border-bottom: 0; padding-bottom: 0; }
   .screen-card .screen-field { grid-template-columns: 132px minmax(0, 1fr); }
