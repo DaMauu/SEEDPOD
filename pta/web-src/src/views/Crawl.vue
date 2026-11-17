@@ -75,45 +75,39 @@
         </div>
       </section>
 
-      <section class="drawer open vue-card filter-card">
+      <section class="drawer open vue-card screen-card">
         <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">② 初筛</div></div>
+          <div class="drawer-t"><div class="drawer-title">② 初筛与查重</div></div>
           <div class="drawer-head-right">
-            <span class="drawer-meta">标题级条件 · 不通过不进队列</span>
-            <button class="btn primary slim" type="button" :disabled="busy.fetch" @click="saveFetch">{{ busy.fetch ? '保存中…' : '保存' }}</button>
+            <span class="drawer-meta">标题级条件 + 重复处理</span>
+            <button class="btn primary slim" type="button" :disabled="busy.dedupe" @click="saveScreen">{{ busy.dedupe ? '保存中…' : '保存' }}</button>
           </div>
         </div>
-        <div class="drawer-body">
-          <div class="preset-block">
-            <div v-for="r in rxRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-              <div class="ctl"><RuleOrSpecial :r="r" /></div>
+        <div class="drawer-body screen-body">
+          <div class="flow-group screen-col">
+            <div class="flow-ttl">初筛</div>
+            <div class="screen-list">
+              <div v-for="r in rxRows" :key="r.t" class="set-field screen-field" :class="{ todo: r.todo, wide: r.t === '测试匹配' }">
+                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+                <div class="ctl"><RuleOrSpecial :r="r" /></div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section class="drawer open vue-card dedupe-card">
-        <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">③ 查重</div></div>
-          <div class="drawer-head-right">
-            <span class="drawer-meta">{{ autoDupe ? '自动查重已开' : '自动查重已关' }}</span>
-            <button class="btn primary slim" type="button" :disabled="busy.dedupe" @click="saveDedupe">{{ busy.dedupe ? '保存中…' : '保存' }}</button>
-          </div>
-        </div>
-        <div class="drawer-body dedupe-body flow-group">
-          <div class="dedupe-switch-row">
-            <div class="set-field dedupe-switch">
-              <div class="lbl"><span>自动查重</span></div>
-              <button class="switch" :class="{ on: autoDupe }" type="button" role="switch" :aria-checked="String(autoDupe)" @click="autoDupe = !autoDupe"><i></i></button>
-            </div>
-            <div v-for="r in dedupeSwitches" :key="r.t" class="set-field dedupe-switch" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-              <button class="switch" :class="{ on: !!r.on }" type="button" role="switch" :aria-checked="String(!!r.on)" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
-            </div>
-            <div v-for="r in dedupeInputs" :key="r.t" class="set-field dedupe-input" :class="{ todo: r.todo }">
-              <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-              <div class="ctl"><RuleControl :r="r" /></div>
+          <div class="flow-group screen-col dedupe-body">
+            <div class="flow-ttl">查重</div>
+            <div class="screen-list">
+              <div class="set-field screen-field">
+                <div class="lbl"><span>自动查重</span></div>
+                <button class="switch" :class="{ on: autoDupe }" type="button" role="switch" :aria-checked="String(autoDupe)" @click="autoDupe = !autoDupe"><i></i></button>
+              </div>
+              <div v-for="r in dedupeSwitches" :key="r.t" class="set-field screen-field" :class="{ todo: r.todo }">
+                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+                <button class="switch" :class="{ on: !!r.on }" type="button" role="switch" :aria-checked="String(!!r.on)" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
+              </div>
+              <div v-for="r in dedupeInputs" :key="r.t" class="set-field screen-field" :class="{ todo: r.todo }">
+                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
+                <div class="ctl"><RuleControl :r="r" /></div>
+              </div>
             </div>
           </div>
         </div>
@@ -558,16 +552,16 @@ async function saveFetch() {
   const bad = [a, b].find(j => !j || !j.ok)
   toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '抓取设置已保存')
 }
-async function saveDedupe() {
+async function saveScreen() {
   if (busy.dedupe) return
   busy.dedupe = true
   const [a, b] = await Promise.all([
-    putFlow({ dedupe: serialize(rules.dedupe) }),
+    putFlow({ fetch: serialize(rules.fetch), dedupe: serialize(rules.dedupe) }, { deny: rx.deny }),
     patchUser({ autoDupe: !!autoDupe.value })
   ])
   busy.dedupe = false
   const bad = [a, b].find(j => !j || !j.ok)
-  toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '查重设置已保存')
+  toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '初筛与查重已保存')
 }
 async function savePub() {
   if (busy.pub) return
@@ -815,6 +809,30 @@ onUnmounted(() => {
 .crawl-card :deep(.crawl-foot){flex-direction:column;align-items:flex-start;gap:10px}
 }
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
+.screen-card .drawer-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; padding: 8px 22px 14px; }
+.screen-card .screen-col { background: transparent; border: 0; border-right: 1px solid #f2f4f7; border-radius: 0; padding: 0 18px 0 0; margin: 0; }
+.screen-card .screen-col:last-child { border-right: 0; padding-right: 0; }
+.screen-card .flow-ttl { display: flex; align-items: center; gap: 7px; margin: 0 0 6px; font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em; }
+.screen-card .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
+.screen-card .screen-list { display: flex; flex-direction: column; gap: 0; }
+.screen-card .screen-field { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
+.screen-card .screen-field:last-child { border-bottom: 0; }
+.screen-card .screen-field > .switch { justify-self: end; }
+.screen-card .screen-field .lbl { margin: 0; min-width: 0; }
+.screen-card .screen-field .lbl span { font-size: 12.5px; font-weight: 400; color: #5b6573; line-height: 1.4; }
+.screen-card .screen-field .ctl { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; width: 100%; }
+.screen-card .screen-field .ctl > .input, .screen-card .screen-field .ctl > .select { width: 100%; max-width: 320px; height: 28px; font-size: 12px; }
+.screen-card .screen-field.wide { grid-template-columns: 1fr; gap: 4px; }
+.screen-card .screen-field.wide .ctl { justify-content: flex-start; flex-wrap: wrap; }
+.screen-card .screen-field.wide .rx-test { width: 100%; }
+.screen-card .screen-field.wide .rx-test .input { flex: 1 1 auto; min-width: 160px; width: auto; }
+@media (max-width: 800px) {
+  .screen-card .drawer-body { grid-template-columns: 1fr; gap: 12px; padding: 8px 16px 12px; }
+  .screen-card .screen-col { border-right: 0; border-bottom: 1px solid #f2f4f7; padding: 0 0 10px; }
+  .screen-card .screen-col:last-child { border-bottom: 0; padding-bottom: 0; }
+  .screen-card .screen-field { grid-template-columns: 132px minmax(0, 1fr); }
+}
+
 .dedupe-card :deep(.drawer-body){display:flex;align-items:center;min-height:54px;gap:0;padding:8px 16px}
 .dedupe-switch-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:2px 0 8px}
 .dedupe-switch{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 0 auto;min-width:0}

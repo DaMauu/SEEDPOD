@@ -284,7 +284,7 @@ async function main() {
     const groupCount = await page.locator('.flow-group').count();
     const expectedGroups = await page.evaluate(() => {
       const R = window.PTA_RULES || {};
-      return (R.dedupe || []).length + (R.pub || []).length;
+      return 2 + (R.pub || []).length;
     });
     need(groupCount === expectedGroups, '规则组数量不对：' + groupCount + '/' + expectedGroups);
     need(await page.locator('#sched-bar .sb-num').count() === 4, '调度条请求限制输入数量不对');
@@ -338,15 +338,21 @@ async function main() {
     need(pubUi.display === 'flex' && pubUi.items >= 5, '发布字段没有做成一行：' + JSON.stringify(pubUi));
     need(pubUi.targetBorder === '0px', '目标站控件不该有外框：' + JSON.stringify(pubUi));
     need(/未选择目标站/.test(pubUi.target), '发布目标站占位不清楚：' + pubUi.target);
-    const dedupeUi = await page.evaluate(() => {
-      const row = document.querySelector('.dedupe-card .dedupe-switch-row');
-      const body = document.querySelector('.dedupe-card .drawer-body');
-      if (!row || !body) return null;
-      const rs = getComputedStyle(row), bs = getComputedStyle(body);
-      return { display: rs.display, gap: rs.gap, align: bs.alignItems, switches: document.querySelectorAll('.dedupe-card .dedupe-switch').length };
+    const screenUi = await page.evaluate(() => {
+      const card = document.querySelector('.screen-card');
+      if (!card) return null;
+      const body = card.querySelector('.drawer-body');
+      const bs = body ? getComputedStyle(body) : null;
+      return {
+        cols: bs ? bs.gridTemplateColumns.split(' ').filter(Boolean).length : 0,
+        groups: card.querySelectorAll('.screen-col').length,
+        fields: card.querySelectorAll('.screen-field').length,
+        switches: card.querySelectorAll('.dedupe-body .switch').length
+      };
     });
-    need(dedupeUi && dedupeUi.display === 'flex' && dedupeUi.gap === '8px 20px', '查重卡间距不对：' + JSON.stringify(dedupeUi));
-    need(dedupeUi.align === 'center' && dedupeUi.switches === 4, '查重卡居中/开关数不对：' + JSON.stringify(dedupeUi));
+    need(screenUi && screenUi.cols === 2, '初筛与查重不是两列：' + JSON.stringify(screenUi));
+    need(screenUi.groups === 2 && screenUi.fields >= 10, '初筛与查重字段不对：' + JSON.stringify(screenUi));
+    need(screenUi.switches === 4, '查重开关数量不对：' + JSON.stringify(screenUi));
   });
 
   await check('调度在流程页，不在设置页', async () => {
