@@ -4,44 +4,7 @@
       <FlowGates :gates="gates" :busy="busy" @toggle="toggleGate" @prepare="prepareNext" />
       <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @toggle="toggleSched" @every="setEveryValue" @save="saveLimits" @run="runSched" />
       <CrawlCard v-model:source-host="sourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" />
-      <section class="drawer open vue-card screen-card">
-        <div class="drawer-head">
-          <div class="drawer-t"><div class="drawer-title">② 初筛与查重</div></div>
-          <div class="drawer-head-right">
-            <span class="drawer-meta">标题级条件 + 重复处理</span>
-            <button class="btn primary slim" type="button" :disabled="busy.dedupe" @click="saveScreen">{{ busy.dedupe ? '保存中…' : '保存' }}</button>
-          </div>
-        </div>
-        <div class="drawer-body screen-body">
-          <div class="flow-group screen-col">
-            <div class="flow-ttl">初筛</div>
-            <div class="screen-list">
-              <div v-for="r in rxRows" :key="r.t" class="set-field screen-field" :class="{ todo: r.todo, wide: r.t === '测试匹配' }">
-                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-                <div class="ctl"><RuleOrSpecial :r="r" /></div>
-              </div>
-            </div>
-          </div>
-          <div class="flow-group screen-col dedupe-body">
-            <div class="flow-ttl">查重</div>
-            <div class="screen-list">
-              <div class="set-field screen-field">
-                <div class="lbl"><span>自动查重</span></div>
-                <button class="switch" :class="{ on: autoDupe }" type="button" role="switch" :aria-checked="String(autoDupe)" @click="autoDupe = !autoDupe"><i></i></button>
-              </div>
-              <div v-for="r in dedupeSwitches" :key="r.t" class="set-field screen-field" :class="{ todo: r.todo }">
-                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-                <button class="switch" :class="{ on: !!r.on }" type="button" role="switch" :aria-checked="String(!!r.on)" :disabled="r.todo" @click="r.on = !r.on"><i></i></button>
-              </div>
-              <div v-for="r in dedupeInputs" :key="r.t" class="set-field screen-field" :class="{ todo: r.todo }">
-                <div class="lbl"><span>{{ r.label || r.t }}</span><em v-if="r.todo" class="todo-badge">未接</em></div>
-                <div class="ctl"><RuleControl :r="r" /></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <ScreenDedupeCard :busy="busy" :rx-rows="rxRows" :auto-dupe="autoDupe" :dedupe-switches="dedupeSwitches" :dedupe-inputs="dedupeInputs" :rule-component="RuleOrSpecial" :rule-control="RuleControl" @save="saveScreen" @toggle-auto-dupe="autoDupe = !autoDupe" />
       <section class="drawer open vue-card pub-card">
         <div class="drawer-head">
           <div class="drawer-t"><div class="drawer-title">发布</div></div>
@@ -130,6 +93,7 @@ import FlowGates from '../components/FlowGates.vue'
 import SchedulerBar from '../components/SchedulerBar.vue'
 import TargetPickerModal from '../components/TargetPickerModal.vue'
 import CrawlCard from '../components/CrawlCard.vue'
+import ScreenDedupeCard from '../components/ScreenDedupeCard.vue'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -711,30 +675,32 @@ onUnmounted(() => {
 .crawl-card :deep(.crawl-foot){flex-direction:column;align-items:flex-start;gap:10px}
 }
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
-.screen-card .drawer-body { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0 24px; padding: 8px 22px 14px; }
-.screen-card .screen-col { background: transparent; border: 0; border-right: 1px solid #f2f4f7; border-radius: 0; padding: 0 18px 0 0; margin: 0; }
-.screen-card .screen-col:last-child { border-right: 0; padding-right: 0; }
-.screen-card .flow-ttl { display: flex; align-items: center; gap: 7px; margin: 0 0 6px; font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em; }
-.screen-card .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
-.screen-card .screen-list { display: flex; flex-direction: column; gap: 0; }
-.screen-card .screen-field { display: grid !important; grid-template-columns: 150px minmax(0, 1fr) !important; align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
-.screen-card .screen-field .cat-row { padding: 0; gap: 6px; }
-.screen-card .screen-field .cat-chip { height: 26px; padding: 0 9px; line-height: 26px; border-radius: 6px; }
-.screen-card .screen-field:last-child { border-bottom: 0; }
-.screen-card .screen-field > .switch { grid-column: 2; justify-self: start; }
-.screen-card .screen-field .lbl { margin: 0; min-width: 0; }
-.screen-card .screen-field .lbl span { font-size: 12.5px; font-weight: 400; color: #5b6573; line-height: 1.4; }
-.screen-card .screen-field .ctl { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 0; width: 100%; }
-.screen-card .screen-field .ctl > .input, .screen-card .screen-field .ctl > .select { width: 100%; max-width: 320px; height: 28px; font-size: 12px; }
-.screen-card .screen-field.wide { grid-template-columns: 1fr; gap: 4px; }
-.screen-card .screen-field.wide .ctl { justify-content: flex-start; flex-wrap: wrap; }
-.screen-card .screen-field.wide .rx-test { width: 100%; }
-.screen-card .screen-field.wide .rx-test .input { flex: 1 1 auto; min-width: 160px; width: auto; }
+
+/* 初筛卡样式：保持原有级联顺序（子组件内会被排到通用规则之后） */
+.screen-card :deep(.drawer-body) { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0 24px; padding: 8px 22px 14px; }
+.screen-card :deep(.screen-col) { background: transparent; border: 0; border-right: 1px solid #f2f4f7; border-radius: 0; padding: 0 18px 0 0; margin: 0; }
+.screen-card :deep(.screen-col:last-child) { border-right: 0; padding-right: 0; }
+.screen-card :deep(.flow-ttl) { display: flex; align-items: center; gap: 7px; margin: 0 0 6px; font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em; }
+.screen-card :deep(.flow-ttl::before) { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
+.screen-card :deep(.screen-list) { display: flex; flex-direction: column; gap: 0; }
+.screen-card :deep(.screen-field) { display: grid !important; grid-template-columns: 150px minmax(0, 1fr) !important; align-items: center; gap: 10px; padding: 5px 0; margin: 0; border: 0; border-bottom: 1px solid #f5f6f8; min-width: 0; }
+.screen-card :deep(.screen-field .cat-row) { padding: 0; gap: 6px; }
+.screen-card :deep(.screen-field .cat-chip) { height: 26px; padding: 0 9px; line-height: 26px; border-radius: 6px; }
+.screen-card :deep(.screen-field:last-child) { border-bottom: 0; }
+.screen-card :deep(.screen-field > .switch) { grid-column: 2; justify-self: start; }
+.screen-card :deep(.screen-field .lbl) { margin: 0; min-width: 0; }
+.screen-card :deep(.screen-field .lbl span) { font-size: 12.5px; font-weight: 400; color: #5b6573; line-height: 1.4; }
+.screen-card :deep(.screen-field .ctl) { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 0; width: 100%; }
+.screen-card :deep(.screen-field .ctl > .input), .screen-card :deep(.screen-field .ctl > .select) { width: 100%; max-width: 320px; height: 28px; font-size: 12px; }
+.screen-card :deep(.screen-field.wide) { grid-template-columns: 1fr; gap: 4px; }
+.screen-card :deep(.screen-field.wide .ctl) { justify-content: flex-start; flex-wrap: wrap; }
+.screen-card :deep(.screen-field.wide .rx-test) { width: 100%; }
+.screen-card :deep(.screen-field.wide .rx-test .input) { flex: 1 1 auto; min-width: 160px; width: auto; }
 @media (max-width: 800px) {
-  .screen-card .drawer-body { grid-template-columns: 1fr !important; gap: 12px; padding: 8px 16px 12px; }
-  .screen-card .screen-col { border-right: 0; border-bottom: 1px solid #f2f4f7; padding: 0 0 10px; }
-  .screen-card .screen-col:last-child { border-bottom: 0; padding-bottom: 0; }
-  .screen-card .screen-field { grid-template-columns: 132px minmax(0, 1fr); }
+  .screen-card :deep(.drawer-body) { grid-template-columns: 1fr !important; gap: 12px; padding: 8px 16px 12px; }
+  .screen-card :deep(.screen-col) { border-right: 0; border-bottom: 1px solid #f2f4f7; padding: 0 0 10px; }
+  .screen-card :deep(.screen-col:last-child) { border-bottom: 0; padding-bottom: 0; }
+  .screen-card :deep(.screen-field) { grid-template-columns: 132px minmax(0, 1fr); }
 }
 
 .dedupe-card :deep(.drawer-body){display:flex;align-items:center;min-height:54px;gap:0;padding:8px 16px}

@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.408 · 2026-11-18
+
+### G15 第 10 轮：拆 ScreenDedupeCard
+- 初筛与查重卡从 Crawl.vue 拆到 `components/ScreenDedupeCard.vue`，props/emits 保持原有行为。
+- 子组件内补齐原计算样式（字段/标签/开关/芯片/测试行），保持像素级一致。
+- Crawl.vue 976→942 行；1280/390 快照 RMSE/DOM/尺寸一致，UI 基线已更新。
+
 ## v0.7.407 · 2026-11-18
 
 ### G15 第 9 轮：拆 CrawlCard
