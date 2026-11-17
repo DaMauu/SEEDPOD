@@ -241,10 +241,10 @@ function makePublisher(ctx) {
         save(it);
         return { ok: false, code: 'SOURCE_ADD_FAILED', message: add.message || add.error || '源种加 qB 失败' };
       }
-      await qb.resumeTorrent(dl, meta.hash).catch(function () {});
+      await qb.resumeTorrent(dl, meta.hash).catch (function () { /* 忽略：失败不影响主流程 */ });
       found = await qb.findTorrent(dl, meta.hash, meta.name);
     } else if (/stop|pause/i.test(String(found.state || ''))) {
-      await qb.resumeTorrent(dl, meta.hash).catch(function () {});
+      await qb.resumeTorrent(dl, meta.hash).catch (function () { /* 忽略：失败不影响主流程 */ });
       found = await qb.findTorrent(dl, meta.hash, meta.name);
     }
     const progress = Number(found.progress) || 0;

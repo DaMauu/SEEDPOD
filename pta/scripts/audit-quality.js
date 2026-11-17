@@ -136,7 +136,7 @@ function collect(files) {
           const k = r.selector.replace(/\s+/g, ' ').trim();
           cssSelectors[k] = (cssSelectors[k] || 0) + 1;
         });
-      } catch (e) {}
+      } catch (e) { /* 忽略：失败不影响主流程 */ }
     }
   }
   const dupFunctions = Object.keys(fnMap).filter(k => fnMap[k] > 1);
@@ -170,7 +170,7 @@ function collect(files) {
       rules.total++;
       if (r.todo) rules.todo++; else rules.keep++;
     }
-  } catch (e) {}
+  } catch (e) { /* 忽略：失败不影响主流程 */ }
   const missingDocs = REQUIRED_DOCS.filter(p => !exists(path.resolve(REPO, p)));
   const pkg = (() => { try { return JSON.parse(read(path.resolve(REPO, 'package.json'))); } catch (e) { return {}; } })();
   const version = String(pkg.version || '');

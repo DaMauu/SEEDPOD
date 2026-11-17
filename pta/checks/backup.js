@@ -77,7 +77,7 @@ check('越界路径备份被拒绝', function () {
   need(/越界/.test(r.stderr || r.stdout), '没有提示越界');
 });
 
-try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) {}
+try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
 const pass = results.filter(function (r) { return r[0]; }).length;
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
 console.log('\n' + pass + '/' + results.length + ' 通过');

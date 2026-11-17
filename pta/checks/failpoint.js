@@ -28,7 +28,7 @@ function fetchA(url, opts) {
 async function waitUp() {
   const end = Date.now() + 8000;
   while (Date.now() < end) {
-    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) {}
+    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) { /* 忽略：失败不影响主流程 */ }
     await new Promise(r => setTimeout(r, 120));
   }
   throw new Error('临时后端没起来');
@@ -71,7 +71,7 @@ async function main() {
   const pass = results.filter(r => r[0]).length;
   results.forEach(r => console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')));
   console.log('\n' + pass + '/' + results.length + ' 通过');
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
   process.exit(pass === results.length ? 0 : 1);
 }
 main().catch(e => { console.error('检查脚本自身出错：' + e.message); process.exit(1); });

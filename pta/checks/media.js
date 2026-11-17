@@ -94,7 +94,7 @@ async function main() {
 }
 
 main().then(function () {
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
   results.forEach(function (r) {
     console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : ''));
   });

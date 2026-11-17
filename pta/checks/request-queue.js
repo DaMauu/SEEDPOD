@@ -74,7 +74,7 @@ async function main() {
   const failed = results.filter(function (r) { return !r[0]; }).length;
   results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
   console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');
-  try { db.close(); } catch (e) {}
+  try { db.close(); } catch (e) { /* 忽略：失败不影响主流程 */ }
   fs.rmSync(DATA, { recursive: true, force: true });
   process.exit(failed ? 1 : 0);
 }

@@ -150,7 +150,7 @@ function readMirrorCache() {
     h.db.close();
     const j = JSON.parse(row ? row.v : 'null');
     return j && typeof j === 'object' ? j : {};
-  } catch (e) { try { h.db.close(); } catch (e2) {} return {}; }
+  } catch (e) { try { h.db.close(); } catch (e2) { /* 忽略：失败不影响主流程 */ } return {}; }
 }
 
 function writeMirrorCache(map) {
@@ -162,7 +162,7 @@ function writeMirrorCache(map) {
     keys.slice(-800).forEach(function (k) { out[k] = map[k]; });
     h.db.prepare("INSERT INTO meta(k, v) VALUES('image-mirror-cache', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(out));
     h.db.close();
-  } catch (e) { try { h.db.close(); } catch (e2) {} }
+  } catch (e) { try { h.db.close(); } catch (e2) { /* 忽略：失败不影响主流程 */ } }
 }
 
 function isOurImageHost(raw) {

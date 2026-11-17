@@ -128,7 +128,7 @@ function downloadLinksFromDetails(text, base) {
       if (seen[key]) return;
       seen[key] = true;
       out.push(key);
-    } catch (e) {}
+    } catch (e) { /* 忽略：失败不影响主流程 */ }
   });
   return out;
 }

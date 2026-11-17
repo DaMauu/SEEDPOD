@@ -66,7 +66,7 @@ function startServer(side, webRoot) {
 async function waitUp(base) {
   const end = Date.now() + 10000;
   while (Date.now() < end) {
-    try { const r = await fetch(base + '/api/health'); if (r.ok) return; } catch (e) {}
+    try { const r = await fetch(base + '/api/health'); if (r.ok) return; } catch (e) { /* 忽略：失败不影响主流程 */ }
     await new Promise(function (r) { setTimeout(r, 120); });
   }
   throw new Error('临时后端没起来：' + base);
@@ -88,7 +88,7 @@ async function captureSide(page, base, out, label) {
   await page.waitForFunction(function () {
     const e = document.querySelector('#tp-name');
     return e && e.textContent.trim() && e.textContent.trim() !== '未选择站点';
-  }, null, { timeout: 8000 }).catch(function () {});
+  }, null, { timeout: 8000 }).catch (function () { /* 忽略：失败不影响主流程 */ });
   await page.evaluate(function () { return document.fonts && document.fonts.ready; });
   await page.addStyleTag({ content: INJECT });
   await page.waitForTimeout(800);
@@ -190,9 +190,9 @@ function compareDirs(a, b) {
     console.log('输出目录：' + out);
     process.exitCode = ok ? 0 : 1;
   } finally {
-    if (browser) await browser.close().catch(function () {});
+    if (browser) await browser.close().catch (function () { /* 忽略：失败不影响主流程 */ });
     b.child.kill('SIGKILL'); a.child.kill('SIGKILL');
-    try { fs.rmSync(b.data, { recursive: true, force: true }); } catch (e) {}
-    try { fs.rmSync(a.data, { recursive: true, force: true }); } catch (e) {}
+    try { fs.rmSync(b.data, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
+    try { fs.rmSync(a.data, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
   }
 })();

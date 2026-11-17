@@ -88,7 +88,7 @@ async function main() {
   need(done3.targetResults['demo.example'].publishedTorrent.infohash === 'abc123', '重启后重复改了已发布条目');
   need(qn3 === 2, '重启后队列条目数变了：' + qn3);
 
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
   results.push([true, '两次重启：续跑、重试、不重复提交', '']);
   const pass = results.filter(function (r) { return r[0]; }).length;
   results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
@@ -98,6 +98,6 @@ async function main() {
 
 main().catch(function (e) {
   console.error('检查脚本自身出错：' + (e && e.message ? e.message : String(e)));
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e2) {}
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e2) { /* 忽略：失败不影响主流程 */ }
   process.exit(1);
 });

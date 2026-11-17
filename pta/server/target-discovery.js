@@ -23,7 +23,7 @@ function makeDiscovery(deps) {
       const html = await idx.text().catch(function () { return ''; });
       const m = /userdetails\.php\?id=(\d+)/i.exec(html);
       if (m) uid = m[1];
-    } catch (e) {}
+    } catch (e) { /* 忽略：失败不影响主流程 */ }
     if (uid) pages.push('/userdetails.php?id=' + uid);
     for (const p of pages) {
       let res;
@@ -40,7 +40,7 @@ function makeDiscovery(deps) {
           const u = new URL(raw, t.base + '/');
           if (u.hostname.toLowerCase() !== baseHost && !u.hostname.toLowerCase().endsWith('.' + baseHost)) continue;
           return { ok: true, data: { announce: u.toString(), source: p } };
-        } catch (e) {}
+        } catch (e) { /* 忽略：失败不影响主流程 */ }
       }
       const pk = /passkey=([A-Za-z0-9]{16,64})/i.exec(safe);
       if (pk) return { ok: true, data: { announce: t.base + '/announce.php?passkey=' + pk[1], source: p } };
@@ -64,7 +64,7 @@ function makeDiscovery(deps) {
         try {
           const a = torrentClean.announceOf(fs.readFileSync(path.join(dir, x.f)));
           if (a) out.push({ source: 'cached-target-torrent', kind: candidateKind(a), hasPasskey: candidateKind(a) === 'passkey', announce: a });
-        } catch (e) {}
+        } catch (e) { /* 忽略：失败不影响主流程 */ }
       });
     return out;
   }
@@ -90,7 +90,7 @@ function makeDiscovery(deps) {
         if (seen[key]) return;
         seen[key] = true;
         out.push({ source: 'upload-page', kind: candidateKind(key), hasPasskey: candidateKind(key) === 'passkey', announce: key });
-      } catch (e) {}
+      } catch (e) { /* 忽略：失败不影响主流程 */ }
     });
     return out;
   }
@@ -114,7 +114,7 @@ function makeDiscovery(deps) {
           });
         }
       }
-    } catch (e) {}
+    } catch (e) { /* 忽略：失败不影响主流程 */ }
     const u = await discoverAnnounce(host);
     if (u.ok) {
       const kind = candidateKind(u.data.announce);

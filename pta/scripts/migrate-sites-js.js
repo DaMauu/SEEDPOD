@@ -63,7 +63,7 @@ try {
   });
   db.exec('COMMIT');
 } catch (e) {
-  try { db.exec('ROLLBACK'); } catch (e2) {}
+  try { db.exec('ROLLBACK'); } catch (e2) { /* 忽略：失败不影响主流程 */ }
   console.error('迁移失败：' + (e && e.message || e));
   process.exit(1);
 }

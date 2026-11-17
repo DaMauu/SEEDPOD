@@ -51,7 +51,7 @@ async function login() {
 async function waitUp() {
   const end = Date.now() + 8000;
   while (Date.now() < end) {
-    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) {}
+    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) { /* 忽略：失败不影响主流程 */ }
     await new Promise(function (r) { setTimeout(r, 120); });
   }
   throw new Error('v2 服务没起来');
@@ -124,9 +124,9 @@ async function main() {
 }
 
 function finish(err) {
-  if (child) { try { child.kill(); } catch (e) {} }
-  if (mock) { try { mock.close(); } catch (e) {} }
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}
+  if (child) { try { child.kill(); } catch (e) { /* 忽略：失败不影响主流程 */ } }
+  if (mock) { try { mock.close(); } catch (e) { /* 忽略：失败不影响主流程 */ } }
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
   const pass = results.filter(function (r) { return r[0]; }).length;
   results.forEach(function (r) {
     console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : ''));

@@ -117,7 +117,7 @@ check('非法站点/用途被拒', function () {
   need(!badPurpose.ok && badPurpose.code === 'BAD_PURPOSE', '坏用途没被拒');
 });
 
-try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) {}
+try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
 const pass = results.filter(function (r) { return r[0] }).length;
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
 console.log('\n' + pass + '/' + results.length + ' 通过');

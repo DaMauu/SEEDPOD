@@ -22,7 +22,7 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 async function waitUp() {
   const end = Date.now() + 8000;
   while (Date.now() < end) {
-    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) {}
+    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) { /* 忽略：失败不影响主流程 */ }
     await new Promise(r => setTimeout(r, 120));
   }
   throw new Error('临时后端没起来');

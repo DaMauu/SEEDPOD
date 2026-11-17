@@ -49,7 +49,7 @@ function listen(handler) {
 async function waitUp() {
   const end = Date.now() + 8000;
   while (Date.now() < end) {
-    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) {}
+    try { const r = await fetch(BASE + '/api/health'); if (r.ok) return; } catch (e) { /* 忽略：失败不影响主流程 */ }
     await new Promise(function (r) { setTimeout(r, 120); });
   }
   throw new Error('v2 服务没起来');
@@ -230,7 +230,7 @@ async function main() {
 
   child.kill();
   src.server.close();
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) {}
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
   results.forEach(function (r) {
     console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : ''));
   });
@@ -241,6 +241,6 @@ async function main() {
 
 main().catch(function (e) {
   console.error('检查脚本自身出错：' + (e && e.message ? e.message : String(e)));
-  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e2) {}
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e2) { /* 忽略：失败不影响主流程 */ }
   process.exit(1);
 });

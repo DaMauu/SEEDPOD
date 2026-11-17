@@ -11,7 +11,7 @@ function loadPlaywright() {
     'playwright-core'
   ].filter(Boolean);
   for (const t of tries) {
-    try { return require(t); } catch (e) {}
+    try { return require(t); } catch (e) { /* 忽略：失败不影响主流程 */ }
   }
   console.error('找不到 playwright-core：在仓库根跑 npm ci，或设置 PTA_PW 指向模块目录');
   process.exit(2);

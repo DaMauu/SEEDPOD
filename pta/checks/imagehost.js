@@ -301,6 +301,6 @@ async function main() {
 
 main().catch(function (e) {
   console.error('检查脚本自身出错：' + (e && e.message ? e.message : e));
-  try { server.close(); } catch (err) {}
+  try { server.close(); } catch (err) { /* 忽略：失败不影响主流程 */ }
   process.exit(1);
 });
