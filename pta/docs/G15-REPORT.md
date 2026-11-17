@@ -1,7 +1,7 @@
 # G15 最终报告 · 架构减重与失败路径
 
-- 版本：0.7.445
-- 轮次：45 轮（0–44），50 轮上限内完成
+- 版本：0.7.447
+- 轮次：46 轮（0–45），50 轮上限内完成
 - 范围：A1–A5 五个大文件拆分 + B0–B7 失败路径/规则/配置
 
 ## 1. 五个大文件行数
@@ -9,7 +9,7 @@
 | 文件 | 拆前 | 拆后 | 目标 | 结果 |
 | --- | --- | --- | --- | --- |
 | `pta/web-src/src/views/Crawl.vue` | 1128 | **150** | ≤500 | 达标 |
-| `pta/server/target.js` | 977 | **371** | ≤450 | 达标 |
+| `pta/server/target.js` | 977 | **174** | ≤450 | 达标（页面/删除/元数据再拆出） |
 | `pta/server/target-service.js` | 590 | **302** | ≤400 | 达标 |
 | `pta/server/imagehost.js` | 612 | **382** | ≤400 | 达标 |
 | `pta/server/scheduler.js` | 496（B1 后 559） | **162** | ≤350 | 达标（阶段全部模块化） |
@@ -17,7 +17,7 @@
 新增模块（共约 1350 行）：
 
 - UI：`components/FlowGates.vue`、`SchedulerBar.vue`、`TargetPickerModal.vue`、`CrawlCard.vue`、`ScreenDedupeCard.vue`、`PublishCard.vue`、`SiteMapModal.vue`、`views/Crawl.css`、`utils/api.js`
-- target：`target-html.js`、`target-discovery.js`、`target-plan.js`、`target-submit.js`
+- target：`target-html.js`、`target-discovery.js`、`target-plan.js`、`target-submit.js`、`target-pages.js`（删除/详情/上传页探测/种子元数据）
 - target-service：`target-upload.js`、`target-rules.js`
 - imagehost：`imagehost-source.js`、`imagehost-config.js`
 - scheduler：`scheduler-crawl.js`、`scheduler-screen.js`、`scheduler-dedupe.js`、`scheduler-review.js`、`scheduler-publish.js`、`scheduler-retry.js`、`scheduler-state.js`
