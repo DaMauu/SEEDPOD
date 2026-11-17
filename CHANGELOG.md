@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.412 · 2026-11-18
+
+### G15 第 14 轮：拆 target-html
+- `target.js` 的 HTML/文本解析、模板字段、删除表单和下载链接解析移到 `server/target-html.js`。
+- 原导出与 require 路径不变；target.js 977→854 行，target 检查 29/29。
+
 ## v0.7.411 · 2026-11-18
 
 ### G15 第 13 轮：拆 SiteMapModal（A1 达标）
