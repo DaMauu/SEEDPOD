@@ -104,7 +104,7 @@ function push(r) {
   if (rows.value.length > 200) rows.value.splice(0, rows.value.length - 200)
   scrollDown()
 }
-async function load() {
+async function loadLogs() {
   if (loaded || !loggedIn()) return
   try {
     const r = await fetch('/api/logs?limit=100')
@@ -157,9 +157,9 @@ async function replay(id) {
   toast(j && j.ok ? '已重放：' + id : ((j && j.error && j.error.message) || '重放失败'))
   await loadFailures()
 }
-function ensure() {
+function ensureLogs() {
   if (!viewVisible('logs') || !loggedIn()) return
-  if (!loaded) load()
+  if (!loaded) loadLogs()
   else connect()
   if (!failLoaded) loadFailures()
 }
@@ -175,12 +175,12 @@ function download() {
 function clear() { rows.value = [] }
 
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  timer = setInterval(ensure, 1500)
-  ensure()
+  window.addEventListener('hashchange', ensureLogs)
+  timer = setInterval(ensureLogs, 1500)
+  ensureLogs()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureLogs)
   if (timer) clearInterval(timer)
   if (es) es.close()
 })

@@ -143,7 +143,7 @@ const meta = computed(() => nodes.value.length
   ? (onlineCount.value + ' / ' + nodes.value.length + ' 在线' + (freeAll.value ? ' · 余量 ' + fmtBytes(freeAll.value) : ''))
   : '还没有下载器')
 
-async function load() {
+async function loadNodes() {
   try {
     const j = await (await fetch('/api/downloaders', { credentials: 'same-origin' })).json()
     if (j && j.ok && Array.isArray(j.data)) {
@@ -153,7 +153,7 @@ async function load() {
     }
   } catch (e) { reportError('Nodes', e) }
 }
-function ensure() { load() }
+function ensureNodes() { loadNodes() }
 function openAddDownloader() {
   editing.value = ''
   Object.assign(form, { kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
@@ -216,11 +216,11 @@ async function saveDownloader() {
   if (!res || !res.ok) { toast((res && res.error && res.error.message) || '服务端没写进去'); return }
   const id = res.data.id
   modalOpen.value = false
-  await load()
+  await loadNodes()
   toast('已保存到服务端：' + (res.data.name || res.data.watchPath || hostOf(res.data.url)))
   if (id) {
     await fetch('/api/downloaders/' + encodeURIComponent(id) + '/test', { method: 'POST', credentials: 'same-origin' }).catch(() => null)
-    await load()
+    await loadNodes()
     if (window.__ptaLoadOverview) window.__ptaLoadOverview()
   }
 }
@@ -269,7 +269,7 @@ async function testConn() {
   const steps = (d.steps || []).map(s => s.step + ':' + (s.status || '—') + (s.error ? '(' + s.error + ')' : '') + ' ' + (s.ms || 0) + 'ms').join(' · ')
   testResult.value = (d.pass ? '通过 · ' + (d.version || '') + (d.freeSpace ? ' · 剩余 ' + fmtBytes(d.freeSpace) : '') : '不通') + (steps ? ' · ' + steps : '')
   toast(d.pass ? ('连接通过 · ' + (d.version || '')) : '连接失败')
-  if (editing.value) { await load(); if (window.__ptaLoadOverview) window.__ptaLoadOverview() }
+  if (editing.value) { await loadNodes(); if (window.__ptaLoadOverview) window.__ptaLoadOverview() }
 }
 async function loadCats(nd) {
   if (form.kind !== 'qb') { cats.value = []; catsMsg.value = '只有 qB 有分类'; return }
@@ -292,19 +292,19 @@ function removeNode() {
       .then(r => r.json()).catch(() => null)
     if (!j || !j.ok) { toast((j && j.error && j.error.message) || '删除失败'); return }
     modalOpen.value = false
-    await load()
+    await loadNodes()
     if (window.__ptaLoadOverview) window.__ptaLoadOverview()
     toast('已删除：' + (node.name || hostOf(node.url)))
   })
 }
 
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  timer = setInterval(() => { if (viewVisible('crawl')) load() }, 30000)
-  load()
+  window.addEventListener('hashchange', ensureNodes)
+  timer = setInterval(() => { if (viewVisible('crawl')) loadNodes() }, 30000)
+  loadNodes()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureNodes)
   if (timer) clearInterval(timer)
 })
 </script>

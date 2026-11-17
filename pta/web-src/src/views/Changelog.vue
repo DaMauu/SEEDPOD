@@ -45,7 +45,7 @@ function parseChangelog(text) {
   return out
 }
 
-async function load() {
+async function loadChangelog() {
   if (busy || loaded || !loggedIn()) return
   busy = true
   loading.value = true
@@ -63,15 +63,15 @@ async function load() {
     loading.value = false
   }
 }
-function ensure() {
-  if (viewVisible('changelog') && loggedIn()) load()
+function ensureChangelog() {
+  if (viewVisible('changelog') && loggedIn()) loadChangelog()
 }
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  ensure()
+  window.addEventListener('hashchange', ensureChangelog)
+  ensureChangelog()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureChangelog)
 })
 </script>
 

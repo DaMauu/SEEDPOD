@@ -260,7 +260,7 @@ async function loadAll() {
   } catch (e) { reportError('Sites', e) }
   loadBusy = false
 }
-function ensure() {
+function ensureSites() {
   if (!viewVisible('sites')) { if (sel.value) sel.value = null; return }
   if (loggedIn()) loadAll()
 }
@@ -345,13 +345,13 @@ async function applyBulk() {
   await loadAll()
 }
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
+  window.addEventListener('hashchange', ensureSites)
   document.addEventListener('keydown', onKey)
-  bootTimer = setInterval(() => { if (!loaded) ensure() }, 1500)
-  ensure()
+  bootTimer = setInterval(() => { if (!loaded) ensureSites() }, 1500)
+  ensureSites()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureSites)
   document.removeEventListener('keydown', onKey)
   if (bootTimer) clearInterval(bootTimer)
   if (qTimer) clearTimeout(qTimer)

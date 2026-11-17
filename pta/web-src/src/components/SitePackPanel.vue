@@ -70,7 +70,7 @@ function purposeLabel(v) {
   const hit = purposes.value.filter(function (p) { return p.v === v; })[0]
   return hit ? hit.label : v
 }
-async function load() {
+async function loadPack() {
   if (loading.value) return
   loading.value = true
   msg.value = ''
@@ -104,7 +104,7 @@ async function confirmOne(e) {
     })).json()
     if (j && j.ok) {
       toast('已保存私有覆盖：' + (e.label || e.id))
-      await load()
+      await loadPack()
     } else msg.value = (j && j.error && j.error.message) || '保存失败'
   } catch (err) {
     reportError('SitePack.confirm', err)

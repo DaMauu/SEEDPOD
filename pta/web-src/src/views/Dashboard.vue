@@ -118,7 +118,7 @@ function dateOf(p) {
   const raw = String(p.publishedAt || p.at || '')
   return raw.slice(5, 16).replace('T', ' ')
 }
-async function load() {
+async function loadDashboard() {
   if (busy || !loggedIn()) return
   busy = true
   try {
@@ -136,17 +136,17 @@ async function load() {
   } catch (e) { reportError('Dashboard', e) }
   busy = false
 }
-function ensure() {
-  if (viewVisible('dashboard') && loggedIn()) load()
+function ensureDashboard() {
+  if (viewVisible('dashboard') && loggedIn()) loadDashboard()
 }
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  bootTimer = setInterval(() => { if (!loaded) ensure() }, 1500)
-  refreshTimer = setInterval(() => { if (viewVisible('dashboard')) load() }, 30000)
-  ensure()
+  window.addEventListener('hashchange', ensureDashboard)
+  bootTimer = setInterval(() => { if (!loaded) ensureDashboard() }, 1500)
+  refreshTimer = setInterval(() => { if (viewVisible('dashboard')) loadDashboard() }, 30000)
+  ensureDashboard()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureDashboard)
   if (bootTimer) clearInterval(bootTimer)
   if (refreshTimer) clearInterval(refreshTimer)
 })

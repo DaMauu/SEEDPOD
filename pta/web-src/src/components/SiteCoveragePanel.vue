@@ -35,7 +35,7 @@ function percentOf(n, total) {
   const t = Number(total) || 0
   return t ? Math.max(0, Math.min(100, Math.round((Number(n) || 0) / t * 100))) : 0
 }
-async function load() {
+async function loadCoverage() {
   if (loading.value) return
   loading.value = true
   error.value = ''

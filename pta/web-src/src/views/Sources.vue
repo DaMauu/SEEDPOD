@@ -198,7 +198,7 @@ async function loadTargets() {
     targetHosts.value = j.data.filter(c => c.hasCookie).map(c => c.host).sort()
   } catch (e) { reportError('Sources', e) }
 }
-async function load() {
+async function loadSources() {
   if (loadBusy || !loggedIn()) return
   loadBusy = true
   try {
@@ -211,12 +211,12 @@ async function load() {
     loaded = true
   } catch (e) { reportError('Sources', e) } finally { loadBusy = false }
 }
-function ensure() {
-  if (viewVisible('sources') && loggedIn()) load()
+function ensureSources() {
+  if (viewVisible('sources') && loggedIn()) loadSources()
 }
 function reload() {
   page.value = 0
-  load()
+  loadSources()
 }
 
 const siteOptions = computed(() => Array.from(new Set(rowsAll.value.map(r => r.site).filter(Boolean))).sort())
@@ -274,7 +274,7 @@ async function toggleMark(r, key) {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' }, body: JSON.stringify({ marks: cur })
     })).json()
-    if (j && j.ok) { toast('已改标记'); load(); return }
+    if (j && j.ok) { toast('已改标记'); loadSources(); return }
     toast((j && j.error && j.error.message) || '改标记失败')
   } catch (e) { toast('改标记请求发不出去') }
 }
@@ -284,7 +284,7 @@ async function setStatus(r, next) {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' }, body: JSON.stringify({ status: next })
     })).json()
-    if (j && j.ok) { toast(next === 'archived' ? '已归档' : '已恢复为待筛选'); load(); return }
+    if (j && j.ok) { toast(next === 'archived' ? '已归档' : '已恢复为待筛选'); loadSources(); return }
     toast((j && j.error && j.error.message) || '操作失败')
   } catch (e) { toast('请求发不出去') }
 }
@@ -298,7 +298,7 @@ async function sendOne(r) {
       const d = j.data || {}
       const why = Object.keys(d.byReason || {})[0]
       toast(d.selected ? '已送进待审核' : ('没送审：' + (why || '条件不符')))
-      load()
+      loadSources()
       if (window.__ptaLoadOverview) window.__ptaLoadOverview()
       return
     }
@@ -317,7 +317,7 @@ async function localCheck() {
     const d = j.data || {}
     const sample = (d.items || [])[0]
     toast('查重 ' + d.checked + ' 条 · 已有 ' + d.dup + ' 条' + (sample && sample.hit ? '（例：' + String(sample.hit.title).slice(0, 30) + '）' : ''))
-    load()
+    loadSources()
   } catch (e) { toast('查重请求发不出去') }
   busy.check = false
 }
@@ -334,7 +334,7 @@ async function dupeCheck() {
     const d = j.data || {}
     const s = Object.keys(d.byStatus || {}).map(k => k + ' ' + d.byStatus[k]).join(' · ')
     toast('查了 ' + d.checked + ' 条 · ' + (s || '无结果'))
-    load()
+    loadSources()
   } catch (e) { toast('查重请求发不出去') }
   busy.dupe = false
 }
@@ -353,7 +353,7 @@ function screenAll() {
       const rl = d.rules || {}
       const noRule = !(rl.res && rl.res.length) && !rl.minSizeGB && !rl.maxSizeGB && !rl.requireChinese
       toast((noRule ? '还没设筛选条件，按全部通过 · ' : '') + '检查 ' + d.checked + ' 条 · 送审 ' + d.selected + ' · 跳过 ' + d.skipped + (rs ? '（' + rs + '）' : ''))
-      load()
+      loadSources()
       if (window.__ptaLoadOverview) window.__ptaLoadOverview()
     } catch (e) { toast('筛选请求发不出去') }
     busy.screen = false
@@ -370,7 +370,7 @@ function archiveSkipped() {
         body: JSON.stringify({ fromStatus: 'skipped', status: 'archived', includeDup: true, host: site.value || '' })
       })).json()
       toast(j && j.ok ? ('已归档 ' + j.data.changed + ' 条（跳过 + 标已有的）') : ((j && j.error && j.error.message) || '批量归档失败'))
-      load()
+      loadSources()
     } catch (e) { toast('批量归档请求发不出去') }
     busy.archive = false
   })
@@ -388,14 +388,14 @@ function exportJson() {
 }
 
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  bootTimer = setInterval(() => { if (!loaded) ensure() }, 1500)
+  window.addEventListener('hashchange', ensureSources)
+  bootTimer = setInterval(() => { if (!loaded) ensureSources() }, 1500)
   loadDefs()
   loadTargets()
-  ensure()
+  ensureSources()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureSources)
   if (bootTimer) clearInterval(bootTimer)
 })
 </script>

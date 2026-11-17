@@ -9,18 +9,18 @@ export function useCrawlBoot(opts) {
   const loadGates = opts.loadGates
   const loadFlow = opts.loadFlow
 
-  async function ensure() {
+  async function ensureCrawlPage() {
     if (!viewVisible('crawl') || !loggedIn()) return
     if (!sites.value.length) await loadSites()
     if (!gates.loaded) await loadGates()
     loadFlow()
   }
   onMounted(() => {
-    window.addEventListener('hashchange', ensure)
-    ensure()
+    window.addEventListener('hashchange', ensureCrawlPage)
+    ensureCrawlPage()
   })
   onUnmounted(() => {
-    window.removeEventListener('hashchange', ensure)
+    window.removeEventListener('hashchange', ensureCrawlPage)
   })
-  return { ensure }
+  return { ensureCrawlPage }
 }

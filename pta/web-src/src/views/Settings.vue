@@ -129,7 +129,7 @@ const keyText = computed(() => {
   return keyState.source || '未读取'
 })
 
-async function load() {
+async function loadSettings() {
   if (loaded || !loggedIn()) return
   try {
     const [h, s, nt, dv] = await Promise.all([
@@ -195,8 +195,8 @@ async function testNotify() {
   } catch (err) { notify.testMsg = '请求发不出去'; toast(notify.testMsg) }
   notify.testing = false
 }
-function ensure() {
-  if (viewVisible('settings') && loggedIn()) load()
+function ensureSettings() {
+  if (viewVisible('settings') && loggedIn()) loadSettings()
 }
 function logout() {
   confirmBox('退出登录', '会清掉当前浏览器的会话 cookie，下次要重新登录。退出？', () => {
@@ -214,12 +214,12 @@ function clearCache() {
 }
 
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  timer = setInterval(ensure, 1500)
-  ensure()
+  window.addEventListener('hashchange', ensureSettings)
+  timer = setInterval(ensureSettings, 1500)
+  ensureSettings()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureSettings)
   if (timer) clearInterval(timer)
 })
 </script>

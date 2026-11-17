@@ -24,9 +24,9 @@
         </button>
       </div>
       <div class="queue-page">
-        <button class="btn ghost slim" type="button" :disabled="page <= 1" @click="load(page - 1)">上一页</button>
+        <button class="btn ghost slim" type="button" :disabled="page <= 1" @click="loadQueuePage(page - 1)">上一页</button>
         <span class="t-sub">第 {{ page }} / {{ pages }} 页</span>
-        <button class="btn ghost slim" type="button" :disabled="page >= pages" @click="load(page + 1)">下一页</button>
+        <button class="btn ghost slim" type="button" :disabled="page >= pages" @click="loadQueuePage(page + 1)">下一页</button>
       </div>
     </aside>
 
@@ -300,7 +300,7 @@ async function loadSites() {
     }
   } catch (e) { reportError('Queue', e) }
 }
-async function load(p) {
+async function loadQueuePage(p) {
   if (!loggedIn()) return
   if (p) page.value = p
   const status = tab.value === 'all' ? '' : tab.value === 'approved' ? 'approved,published' : tab.value
@@ -345,10 +345,10 @@ async function select(id) {
     reason.value = ''
   } catch (e) { reportError('Queue', e) }
 }
-function setTab(v) { tab.value = v; page.value = 1; load(1) }
+function setTab(v) { tab.value = v; page.value = 1; loadQueuePage(1) }
 function debounced() {
   if (qTimer) clearTimeout(qTimer)
-  qTimer = setTimeout(() => { page.value = 1; load(1) }, 300)
+  qTimer = setTimeout(() => { page.value = 1; loadQueuePage(1) }, 300)
 }
 async function fillSourceTitle() {
   if (!sel.value) return
@@ -359,7 +359,7 @@ async function fillSourceTitle() {
 }
 async function refresh() {
   if (sel.value) await select(sel.value.id)
-  await load()
+  await loadQueuePage()
 }
 async function apiAction(body) {
   const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
@@ -584,7 +584,7 @@ async function bulkApprove() {
       body: JSON.stringify({ action: 'approve', fromStatus: 'pending' })
     })).json()
     toast(j && j.ok ? '已批准 ' + j.data.changed + ' 条' : ((j && j.error && j.error.message) || '批量批准失败'))
-    await load()
+    await loadQueuePage()
   } catch (e) { toast('批量批准请求发不出去') }
   busy.approve = false
 }
@@ -667,14 +667,14 @@ async function removeShot(i) {
     await refresh()
   } catch (e) { toast('删除失败') }
 }
-function ensure() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadMediaConfig(); load() } }
+function ensureQueue() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadMediaConfig(); loadQueuePage() } }
 onMounted(() => {
-  window.addEventListener('hashchange', ensure)
-  timer = setInterval(() => { if (!loaded) ensure() }, 1500)
-  ensure()
+  window.addEventListener('hashchange', ensureQueue)
+  timer = setInterval(() => { if (!loaded) ensureQueue() }, 1500)
+  ensureQueue()
 })
 onUnmounted(() => {
-  window.removeEventListener('hashchange', ensure)
+  window.removeEventListener('hashchange', ensureQueue)
   if (timer) clearInterval(timer)
   if (qTimer) clearTimeout(qTimer)
 })
