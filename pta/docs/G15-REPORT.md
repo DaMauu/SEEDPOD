@@ -1,14 +1,14 @@
 # G15 最终报告 · 架构减重与失败路径
 
-- 版本：0.7.433
-- 轮次：36 轮（0–35），50 轮上限内完成
+- 版本：0.7.436
+- 轮次：38 轮（0–37），50 轮上限内完成
 - 范围：A1–A5 五个大文件拆分 + B0–B7 失败路径/规则/配置
 
 ## 1. 五个大文件行数
 
 | 文件 | 拆前 | 拆后 | 目标 | 结果 |
 | --- | --- | --- | --- | --- |
-| `pta/web-src/src/views/Crawl.vue` | 1128 | **257** | ≤500 | 达标 |
+| `pta/web-src/src/views/Crawl.vue` | 1128 | **173** | ≤500 | 达标 |
 | `pta/server/target.js` | 977 | **371** | ≤450 | 达标 |
 | `pta/server/target-service.js` | 590 | **302** | ≤400 | 达标 |
 | `pta/server/imagehost.js` | 612 | **382** | ≤400 | 达标 |
@@ -21,7 +21,7 @@
 - target-service：`target-upload.js`、`target-rules.js`
 - imagehost：`imagehost-source.js`、`imagehost-config.js`
 - scheduler：`scheduler-crawl.js`、`scheduler-screen.js`、`scheduler-dedupe.js`、`scheduler-review.js`、`scheduler-publish.js`、`scheduler-retry.js`、`scheduler-state.js`
-- UI 状态：`composables/useCrawlPlan.js`、`useCrawlScheduler.js`（调度/限制/闸门）、`useCrawlFlow.js`（流程规则/保存）、`useCrawlSites.js`（站点选择）
+- UI 状态：`composables/useCrawlPlan.js`、`useCrawlScheduler.js`（调度/限制/闸门）、`useCrawlFlow.js`（流程规则/保存）、`useCrawlSites.js`（站点选择）、`useCrawlFetchFilters.js`（类型/筛选/准备）、`useRuleOrSpecial.js`（规则渲染）
 - 规则/配置：`rule-registry.js`、`config-schema.js`
 
 旧导出和 require 路径保持不变；每轮全量检查通过后才提交。
@@ -70,7 +70,7 @@
 
 ## 7. 未完成 / 后续
 
-1. `Crawl.vue` 还剩类型/筛选保存、prepareNext、RuleOrSpecial 渲染和少量页面状态；抓取计划、调度/限制/闸门、流程规则、站点选择已抽 composable。
+1. `Crawl.vue` 只剩 `ensure`、`patchUser/putFlow`、`specialOf/toggleFetchChip/clampLimit/testRx` 等小工具和装配代码（173 行）；计划、调度/限制/闸门、流程规则、站点、类型/筛选/准备、规则渲染均已抽 composable。
 2. 失败队列只有 API/CLI，没有日志页/队列页面板；容量是「按 updated_at 取最近 1000 条」的视图级限制，不做破坏性清理。
 3. B6 的 UI `rules.js` 仍是 UI 侧定义源，靠检查对齐，尚未由注册表生成。
 4. 历史提交 0.7.419 合并了第 21–23 轮；从第 27 轮起已恢复一轮一提交。
