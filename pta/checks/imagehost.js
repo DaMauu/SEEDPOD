@@ -1,7 +1,12 @@
 /* 图床管道夹具：本地 mock HTTP，不碰真实图床。覆盖演练、真上传、重试、失败和链接替换。 */
 const http = require('http');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
+/* 独立 DATA：镜像缓存写临时库，不污染仓库 data/seedpod.db */
+const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-imagehost-'));
+process.env.PTA_DATA = DATA;
 const imagehost = require(path.join(ROOT, 'server', 'imagehost.js'));
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
