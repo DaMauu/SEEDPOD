@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.457 · 2026-11-18
+
+### 维护：拆 target 检查（第 2 步）
+- 删除/回收站/回查检查组移到 `checks/target-checks-verify.js`。
+- `checks/target.js` 784→662 行；target 29/29。
+
 ## v0.7.456 · 2026-11-18
 
 ### 维护：拆 target 检查夹具（第 1 步）
