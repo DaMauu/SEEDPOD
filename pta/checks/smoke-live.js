@@ -347,12 +347,32 @@ async function main() {
         cols: bs ? bs.gridTemplateColumns.split(' ').filter(Boolean).length : 0,
         groups: card.querySelectorAll('.screen-col').length,
         fields: card.querySelectorAll('.screen-field').length,
-        switches: card.querySelectorAll('.dedupe-body .switch').length
+        switches: card.querySelectorAll('.dedupe-body .switch').length,
+        fieldH: (() => { const f = card.querySelector('.screen-field'); return f ? Math.round(f.getBoundingClientRect().height) : 0; })(),
+        oldCards: document.querySelectorAll('.filter-card, .dedupe-card').length
       };
     });
     need(screenUi && screenUi.cols === 2, '初筛与查重不是两列：' + JSON.stringify(screenUi));
     need(screenUi.groups === 2 && screenUi.fields >= 10, '初筛与查重字段不对：' + JSON.stringify(screenUi));
     need(screenUi.switches === 4, '查重开关数量不对：' + JSON.stringify(screenUi));
+    need(screenUi.fieldH > 0 && screenUi.fieldH <= 40, '初筛行高不紧凑：' + JSON.stringify(screenUi));
+    need(screenUi.oldCards === 0, '旧的初筛/查重独立卡还在：' + JSON.stringify(screenUi));
+    const nodesUi = await page.evaluate(() => {
+      const card = document.querySelector('section[data-name="下载器"]');
+      if (!card) return null;
+      const inner = card.querySelector('.nodes-inner');
+      const row = card.querySelector('.node-row');
+      return {
+        innerBorder: inner ? getComputedStyle(inner).borderTopWidth : '',
+        rows: card.querySelectorAll('.node-row').length,
+        rowH: row ? Math.round(row.getBoundingClientRect().height) : 0,
+        targetText: (document.querySelector('.pub-card .target-pick .tp-link') || {}).textContent || '',
+        changeText: (document.querySelector('.pub-card .target-pick #tp-change') || {}).textContent || ''
+      };
+    });
+    need(nodesUi && nodesUi.innerBorder === '0px', '下载器卡标题下多余横线回来了：' + JSON.stringify(nodesUi));
+    need(nodesUi.rows === 0 || nodesUi.rowH <= 42, '下载器行不紧凑：' + JSON.stringify(nodesUi));
+    need(nodesUi.changeText === '更改' || nodesUi.changeText === '选择', '发布站控件不再是文字链接：' + JSON.stringify(nodesUi));
   });
 
   await check('调度在流程页，不在设置页', async () => {
