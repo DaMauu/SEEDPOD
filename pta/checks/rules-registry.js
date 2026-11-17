@@ -38,6 +38,17 @@ check('服务端调用的 key 都在注册表', () => {
   need(!missing.length, '未注册：' + missing.join(', '));
 });
 
+check('注册表 key 与 UI rules.js 对齐', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'web-src', 'src', 'data', 'rules.js'), 'utf8');
+  const ui = new Set();
+  const re = /["']t["']\s*:\s*["']([^"']+)["']/g;
+  let m;
+  while ((m = re.exec(src))) ui.add(m[1]);
+  need(ui.size > 20, 'UI 规则解析失败：' + ui.size);
+  const missing = registry.names().filter((n) => !ui.has(n));
+  need(!missing.length, 'UI 缺 key：' + missing.join(', '));
+});
+
 check('旧 key 映射到有效 key', () => {
   Object.keys(registry.ALIASES).forEach((old) => {
     need(registry.get(old), '旧 key 没映射：' + old);
