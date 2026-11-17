@@ -56,6 +56,38 @@ check('没有配置行时不凭空创建', () => {
   db.close();
 });
 
+check('flow/scheduler 迁移：加版本不丢值', () => {
+  const flow = schema.migrateFlow({ sets: { fetch: [[{ t: '副标题拼贴', on: true }]] }, rx: { deny: 'CAM' } });
+  need(flow.schemaVersion === 1 && flow.rx.deny === 'CAM', 'flow 值丢了');
+  need(schema.migrateFlow(flow).schemaVersion === 1, 'flow 迁移不幂等');
+  need(schema.migrateFlow({ schemaVersion: 9 }).schemaVersion === 9, 'flow 未来版本被降级');
+  const st = schema.migrateScheduler({ on: true, everyMinutes: 60 });
+  need(st.schemaVersion === 1 && st.on === true && st.everyMinutes === 60, 'scheduler 值丢了');
+});
+
+check('ensureAll 升级三份 JSON，空库不创建', () => {
+  const db = new DatabaseSync(':memory:');
+  db.exec('CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT)');
+  const put = db.prepare('INSERT INTO meta(k,v) VALUES(?,?)');
+  put.run('flow', JSON.stringify({ sets: { pub: [[{ t: 'BDInfo', on: false }]] }, rx: {} }));
+  put.run('scheduler', JSON.stringify({ on: true, everyMinutes: 60 }));
+  const one = (s, ...a) => db.prepare(s).get(...a);
+  const out = schema.ensureAll({ db, one });
+  need(out.flow && out.flow.schemaVersion === 1, 'flow 没升级');
+  need(out.scheduler && out.scheduler.schemaVersion === 1 && out.scheduler.on === true, 'scheduler 没升级');
+  const f = JSON.parse(one("SELECT v FROM meta WHERE k='flow'").v);
+  const sc = JSON.parse(one("SELECT v FROM meta WHERE k='scheduler'").v);
+  need(f.schemaVersion === 1 && sc.schemaVersion === 1, '没写回');
+  need(f.sets && f.sets.pub, 'flow sets 丢了');
+  db.close();
+  const db2 = new DatabaseSync(':memory:');
+  db2.exec('CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT)');
+  const one2 = (s, ...a) => db2.prepare(s).get(...a);
+  const out2 = schema.ensureAll({ db: db2, one: one2 });
+  need(out2.config === null && out2.flow === null && out2.scheduler === null, '空库不该创建');
+  db2.close();
+});
+
 const pass = results.filter(function (r) { return r[0]; }).length;
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
 console.log('\n' + pass + '/' + results.length + ' 通过');

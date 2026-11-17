@@ -1,6 +1,8 @@
 /* meta.config 的 JSON schema 版本与迁移：只改结构，不删旧值。
    未知字段原样保留；旧配置在启动时升级一次，写回前也会迁移。 */
 const SCHEMA_VERSION = 1;
+const FLOW_VERSION = 1;
+const SCHEDULER_VERSION = 1;
 const BOOL_KEYS = ['realCrawl', 'realPublish', 'realImages', 'autoDupe', 'detail'];
 
 function truthy(v) {
@@ -56,4 +58,38 @@ function ensure(ctx) {
   } catch (e) { return null; }
 }
 
-module.exports = { SCHEMA_VERSION, migrate, read, write, ensure };
+function migrateFlow(raw) {
+  const out = Object.assign({}, raw && typeof raw === 'object' ? raw : {});
+  const from = Number(out.schemaVersion) || 0;
+  if (from > FLOW_VERSION) return out;
+  out.schemaVersion = FLOW_VERSION;
+  return out;
+}
+function migrateScheduler(raw) {
+  const out = Object.assign({}, raw && typeof raw === 'object' ? raw : {});
+  const from = Number(out.schemaVersion) || 0;
+  if (from > SCHEDULER_VERSION) return out;
+  out.schemaVersion = SCHEDULER_VERSION;
+  return out;
+}
+function ensureKey(ctx, key, fn) {
+  try {
+    const row = ctx.one('SELECT v FROM meta WHERE k = ?', key);
+    if (!row) return null;
+    const raw = JSON.parse(row.v || 'null');
+    const out = fn(raw);
+    if (JSON.stringify(out) !== JSON.stringify(raw)) {
+      ctx.db.prepare("INSERT INTO meta(k, v) VALUES(?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(key, JSON.stringify(out));
+    }
+    return out;
+  } catch (e) { return null; }
+}
+function ensureAll(ctx) {
+  return {
+    config: ensure(ctx),
+    flow: ensureKey(ctx, 'flow', migrateFlow),
+    scheduler: ensureKey(ctx, 'scheduler', migrateScheduler)
+  };
+}
+
+module.exports = { SCHEMA_VERSION, FLOW_VERSION, SCHEDULER_VERSION, migrate, migrateFlow, migrateScheduler, read, write, ensure, ensureAll };

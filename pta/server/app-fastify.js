@@ -334,7 +334,7 @@ async function build() {
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;
     } };
-  require('./config-schema').ensure(ctx);
+  require('./config-schema').ensureAll(ctx);
   ctx.crawl = makeCrawl(ctx);
   ctx.notify = require('./notify').makeNotify(ctx);
   require('./routes-write')(app, ctx);

@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.428 · 2026-11-18
+
+### G15 第 32 轮：flow/scheduler 配置迁移
+- `config-schema.js` 增加 `migrateFlow` / `migrateScheduler` / `ensureAll`；启动时三份 JSON 一起升级。
+- `PUT /api/flow` 写回带 `schemaVersion`；旧配置值不丢、未来版本不降级。
+- config-migration 7/7；备份恢复 4/4。
+
 ## v0.7.427 · 2026-11-18
 
 ### G15 第 31 轮：Crawl 计划 composable

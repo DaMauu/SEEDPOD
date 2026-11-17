@@ -176,7 +176,7 @@ module.exports = function (app, ctx) {
       delete rx.allow;
       if (b.rx.scope !== undefined) rx.scope = String(b.rx.scope || '').slice(0, 40);
     }
-    const flow = { sets: sets, rx: rx, updatedAt: now() };
+    const flow = { sets: sets, rx: rx, updatedAt: now(), schemaVersion: configSchema.FLOW_VERSION };
     db.prepare("INSERT INTO meta(k, v) VALUES('flow', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(flow));
     return ok(reply, flow);
   });
