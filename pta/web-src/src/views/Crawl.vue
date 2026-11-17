@@ -1035,6 +1035,7 @@ onUnmounted(() => {
 .pub-card .target-pick .tp-info b { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
 .pub-card .target-pick.empty .tp-info b { font-weight: 500; color: var(--muted); }
 .pub-card .target-pick .tp-info span { font-size: 11px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pub-card .target-pick .btn { flex: 0 0 auto; white-space: nowrap; }
 @media (max-width: 760px) {
   .pub-card .flow-group .set-fields { padding-left: 0; }
   .pub-card .flow-group .set-fields .set-field,
