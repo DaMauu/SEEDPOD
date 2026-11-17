@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 00:00（当前 v0.7.431 / G15 composable 继续）
+最后更新：2026-11-19 00:30（当前 v0.7.432 / G15 composable 继续）
+
+## 2026-11-18 G15 第 35 轮（v0.7.432）
+
+- useCrawlSites composable；Crawl.vue 257 行；快照一致。
 
 ## 2026-11-18 G15 第 34 轮（v0.7.431）
 

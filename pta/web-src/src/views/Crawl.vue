@@ -33,6 +33,7 @@ import { getJson } from '../utils/api'
 import { useCrawlPlan } from '../composables/useCrawlPlan'
 import { useCrawlScheduler } from '../composables/useCrawlScheduler'
 import { useCrawlFlow } from '../composables/useCrawlFlow'
+import { useCrawlSites } from '../composables/useCrawlSites'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -74,17 +75,13 @@ const tplPreview = computed(() => {
   return t
 })
 
-const sites = ref([])
-const siteStatus = ref({})
-const siteCfg = ref({})
 const sourceHost = ref('')
 const targetHost = ref('')
-const targetOpen = ref(false)
-const targetQ = ref('')
 const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, prepare: false })
 const { limits, sched, schedText, gates, loadSched, saveSched, toggleSched, setEveryValue, saveLimits, runSched, loadGates, applyGate, toggleGate } = useCrawlScheduler({ getJson: getJson, toast: toast, confirmBox: confirmBox, patchUser: patchUser, targetHost: targetHost, detail: detail })
 const { loadFlow, saveFetch, saveScreen, savePub, toggleDetail } = useCrawlFlow({ rules: rules, rx: rx, limits: limits, detail: detail, autoDupe: autoDupe, busy: busy, toast: toast, getJson: getJson, putFlow: putFlow, patchUser: patchUser, saveTypes: saveTypes, saveFilters: saveFilters })
 const { plan, showPlan } = useCrawlPlan({ sourceHost: sourceHost, busy: busy, toast: toast })
+const { sites, siteStatus, siteCfg, targetOpen, targetQ, siteOptions, targetSite, targetOptions, loadSites, saveSource, pickTarget } = useCrawlSites({ getJson: getJson, patchUser: patchUser, toast: toast, reportError: reportError, loadTypes: loadTypes, loadSched: function () { return loadSched() }, sourceHost: sourceHost, targetHost: targetHost })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
   const cells = []
@@ -95,17 +92,6 @@ const pubGroups = computed(() => (rules.pub || []).map(g => {
   })
   return { name: g.name, cls: g.cls || '', cells }
 }))
-const siteOptions = computed(() => sites.value.map(s => ({ host: s.host, title: s.title || s.host })))
-const targetSite = computed(() => sites.value.find(s => s.host === targetHost.value) || null)
-const targetOptions = computed(() => {
-  const q = targetQ.value.trim().toLowerCase()
-  const score = s => (siteCfg.value[s.host] && siteCfg.value[s.host].enabled === false ? 0 : 2) + (siteStatus.value[s.host] && siteStatus.value[s.host].pass ? 1 : 0)
-  return sites.value.slice()
-    .sort((a, b) => score(b) - score(a) || String(a.title || a.host).localeCompare(String(b.title || b.host), 'zh-CN'))
-    .filter(s => !q || ((s.title || '') + ' ' + s.host).toLowerCase().includes(q))
-    .map(s => ({ host: s.host, title: s.title || s.host }))
-})
-
 function specialOf(r) { return SPECIAL[r.t] || '' }
 function toggleFetchChip(r, c) {
   if (r.todo) return
@@ -122,10 +108,6 @@ function clampLimit(k, e) {
   if (v > L[1]) v = L[1]
   limits[k] = v
   e.target.value = String(v)
-}
-function saveSource() {
-  try { localStorage.setItem('pta.crawlSite', sourceHost.value) } catch (e) { reportError('Crawl', e) }
-  loadTypes()
 }
 const typeRow = computed(() => ((rules.fetch[0] && rules.fetch[0].rows) || []).find(r => r.t === '类型'))
 async function loadTypes() {
@@ -158,13 +140,6 @@ async function saveFilters() {
   const vals = (j && j.ok && j.data && j.data.filters && j.data.filters.selectedValues) || {}
   const missing = Object.keys(body.selected).filter(k => body.selected[k].length && !(vals[k] || []).length)
   if (missing.length) toast('本站搜索页没有这些选项：' + missing.join('/'))
-}
-function pickTarget(host) {
-  targetHost.value = host
-  patchUser({ targetHost: host })
-  try { localStorage.setItem('pta.target', host) } catch (e) { reportError('Crawl', e) }
-  targetOpen.value = false
-  toast('发布目标改为：' + ((targetSite.value && targetSite.value.title) || host))
 }
 function testRx() {
   const sample = String(rx.sample || '').trim()
@@ -202,23 +177,6 @@ async function putFlow(sets, rxBody) {
 }
 
 // 页面独立：需要 siteStatus/siteCfg 驱动目标站列表，不能和 Queue 的简化版共用。
-async function loadSites() {
-  const [sj, cj] = await Promise.all([getJson('/api/sites'), getJson('/api/site-config')])
-  if (sj && sj.ok) {
-    sites.value = Array.isArray(sj.data.sites) ? sj.data.sites : []
-    siteStatus.value = sj.data.status || {}
-  }
-  if (cj && cj.ok) siteCfg.value = cj.data.sites || {}
-  try {
-    sourceHost.value = localStorage.getItem('pta.crawlSite') || ''
-    targetHost.value = localStorage.getItem('pta.target') || ''
-  } catch (e) { reportError('Crawl', e) }
-  if (!siteOptions.value.some(s => s.host === sourceHost.value)) sourceHost.value = ''
-  if (targetHost.value && !sites.value.some(s => s.host === targetHost.value)) targetHost.value = ''
-  loadTypes()
-  loadSched()
-  if (!siteOptions.value.some(s => s.host === targetHost.value)) targetHost.value = ''
-}
 
 
 const RuleOrSpecial = (props) => {

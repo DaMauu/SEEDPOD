@@ -250,5 +250,6 @@
 - 第 32 轮：B7 扩到 flow/scheduler；config-migration 7/7。
 - 第 33 轮：useCrawlScheduler composable；Crawl.vue 398 行；快照一致。
 - 第 34 轮：useCrawlFlow composable；Crawl.vue 299 行；保存实测通过。
+- 第 35 轮：useCrawlSites composable；Crawl.vue 257 行；站点选择实测通过。
 - G15 全部验收项完成。
 - 下一步：screen/dedupe/review 阶段拆分。
