@@ -2,7 +2,7 @@
 
 最后更新：2026-11-18 08:50
 当前 goal：**G15 架构减重与失败路径**
-当前 goal 进度：**17/50 轮（A2 target.js 拆分中）**
+当前 goal 进度：**18/50 轮（A2 完成，转 A3 target-service）**
 运行状态：**全部站点停用 · 调度关 · 真发布关 · 队列 0**
 总进度：**12/16 完成；含进行中折算约 83%**
 
@@ -31,7 +31,7 @@
 | G12 | 全自动流水线 | 60% | 抓取→送审→终审→发布→辅种已串；失败恢复待压测 |
 | G13 | 站点覆盖与验证 | 70% | 覆盖面板 + 批量探测 + 3 站真实证据；2 站 NO_FORM 待查 |
 | G14 | Python sidecar | 0% | 可选，不阻塞 |
-| G15 | 架构减重与失败路径 | 34% | 第 0–16 轮完成；target.js 569 行；下一轮 submit/verify |
+| G15 | 架构减重与失败路径 | 36% | 第 0–17 轮完成；target.js 371 行（A2 达标）；下一轮 target-service.js |
 
 ## 当前阻塞
 
@@ -213,7 +213,7 @@
 🛠 正在开发：G10 多目标发布 · 99% · 总进度约 86%
 ```
 
-## G15 轮次（17/50）
+## G15 轮次（18/50）
 
 - 第 0 轮：B0 UI 快照工具、备份/恢复演练、390 调度条溢出修复。
 - 第 1 轮：scheduler 阶段级 catch、steps.errors/partial、通知带 phase/code；failpoint 检查 1/1。
@@ -232,4 +232,5 @@
 - 第 14 轮：A2 拆出 target-html.js；target.js 977→854 行；target 29/29。
 - 第 15 轮：A2 拆出 target-discovery.js；target.js 854→742 行；target 29/29。
 - 第 16 轮：A2 拆出 target-plan.js；target.js 742→569 行；target 29/29。
-- 下一步：submit/verify 拆分。
+- 第 17 轮：A2 拆出 target-submit.js；target.js 569→371 行（A2 达标）；target 29/29。
+- 下一步：A3 target-service.js。
