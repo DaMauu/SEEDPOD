@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.401 · 2026-11-18
+
+### G15 第 3 轮：失败队列与重放
+- 新增 `/api/failures`（分页/死信）和 `/api/failures/:id/replay`，已提交条目拒绝重放。
+- 新增 `pta/scripts/failures.js`；失败队列覆盖阶段失败、目标站失败、查重/补齐重试。
+- 重放清 nextRetry/error、重置 retries，保留 targetResults；failures 检查 3/3、API 34/34。
+
 ## v0.7.400 · 2026-11-18
 
 ### G15 第 2 轮：错误码与失败统计

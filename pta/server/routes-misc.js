@@ -6,6 +6,7 @@ const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
 const { makeErrorStats } = require('./error-stats');
+const { makeFailureQueue } = require('./failure-queue');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -13,8 +14,19 @@ module.exports = function (app, ctx) {
   const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
   const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
   const errorStats = makeErrorStats(ctx);
+  const failureQueue = makeFailureQueue(ctx);
 
   app.get('/api/errors', async (req) => ok(errorStats.snapshot(req.query.limit)));
+
+  app.get('/api/failures', async (req) => ok(failureQueue.list({
+    limit: req.query.limit, offset: req.query.offset, dead: req.query.dead
+  })));
+
+  app.post('/api/failures/:id/replay', async (req, reply) => {
+    const r = failureQueue.replay(req.params.id);
+    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    return ok(reply, r);
+  });
 
   app.get('/api/meta/parse', async (req) => ok(meta.parseRelease(req.query.title || '')));
   app.post('/api/meta/mediainfo', async (req, reply) => {

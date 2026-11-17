@@ -155,6 +155,11 @@ async function main() {
     need(j.data.crypto && typeof j.data.crypto.ok === 'boolean', '缺少凭据密钥状态');
   });
 
+  await check('失败队列 API', async () => {
+    const j = await (await fetchA(BASE + '/api/failures?limit=1')).json();
+    need(j.ok && j.data && typeof j.data.total === 'number' && Array.isArray(j.data.items), '失败队列结构不对：' + JSON.stringify(j));
+  });
+
   await check('错误统计 API', async () => {
     const j = await (await fetchA(BASE + '/api/errors?limit=1')).json();
     need(j.ok && j.data && typeof j.data.total === 'number' && Array.isArray(j.data.counts) && Array.isArray(j.data.items), '错误统计结构不对：' + JSON.stringify(j));

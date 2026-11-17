@@ -28,6 +28,14 @@
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
+## 失败队列
+
+- `GET /api/failures?limit=50&offset=0&dead=1`：列出阶段失败、目标站失败、待重试；`dead=1` 只看死信。
+- `POST /api/failures/:id/replay`：把条目恢复 pending，清 nextRetry/error，保留 targetResults；已 submitted/injected 或已有权威种子的返回 `ALREADY_SUBMITTED`。
+- CLI：`node pta/scripts/failures.js [--dead] [--replay q_0001]`。
+- 死信判定：重试次数 >= `retryMax`，或最后失败超过 24 小时且没有下次重试。
+- 查重/补齐失败会写 `dedupeAttempts/NextRetryAt/LastError`、`metaAttempts/NextRetryAt/LastError`。
+
 ## 错误码与失败统计
 
 - `pta/server/errors.js` 是错误码注册表：code、stage、level、中文说明、retryable；旧码走 `LEGACY` 映射。

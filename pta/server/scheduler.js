@@ -189,11 +189,20 @@ function makeScheduler(ctx, deps) {
           dedupe.requests++;
           try { chk = await targetService.checkDupe(host, it, null); resetSiteFail(host); }
           catch (e) {
-            dedupe.errors.push({ id: row.id, host: host, error: String(e && e.message || e).slice(0, 120) });
-            bumpSiteFail(host, '查重失败：' + String(e && e.message || e).slice(0, 120));
+            const emsg = String(e && e.message || e).slice(0, 120);
+            dedupe.errors.push({ id: row.id, host: host, error: emsg });
+            bumpSiteFail(host, '查重失败：' + emsg);
+            it.dedupeAttempts = (Number(it.dedupeAttempts) || 0) + 1;
+            it.dedupeLastAttemptAt = new Date().toISOString();
+            it.dedupeLastErrorCode = e && e.code ? String(e.code) : 'TARGET_UNREACHABLE';
+            it.dedupeLastError = emsg;
+            it.dedupeNextRetryAt = new Date(Date.now() + 15 * 60000).toISOString();
             anyOpen = true; continue;
           }
           if (chk.disabled) { dedupe.disabled = true; anyOpen = true; continue; }
+          delete it.dedupeLastError;
+          delete it.dedupeLastErrorCode;
+          delete it.dedupeNextRetryAt;
           it.dupeResults[host] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: new Date().toISOString() };
           if (chk.found && chk.skip) continue;
           anyOpen = true;
@@ -221,6 +230,7 @@ function makeScheduler(ctx, deps) {
       const flow = flowConfig.read(ctx);
       const titleOn = flowConfig.on(flow, '标题原样回填', true);
       const subOn = flowConfig.on(flow, '副标题拼贴', true);
+      const introOn = flowConfig.on(flow, '简介回填', true);
       const needIntro = flowConfig.on(flow, '必须有简介', true);
       const needSub = flowConfig.on(flow, '必须有副标题', true);
       const bdOn = flowConfig.onLegacy(flow, 'BDInfo', true, function (v) { return String(v) === '不要求' ? false : true; });
@@ -259,11 +269,22 @@ function makeScheduler(ctx, deps) {
           }
         }
         /* 副标题/简介开关打开时，统一从豆影拉一次；每轮最多 5 条 */
-        if ((subOn || needIntro) && !pre.metaAt && fillTries < 5) {
+        if ((subOn || introOn) && !pre.metaAt && fillTries < 5) {
           fillTries++;
           const fr = await metaFill.fillMeta(pre);
           if (fr.ok) {
             review.filled++;
+            delete pre.metaLastError;
+            delete pre.metaLastErrorCode;
+            delete pre.metaNextRetryAt;
+            ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+              .run(JSON.stringify(pre), new Date().toISOString(), row.id);
+          } else if (fr.code !== 'RULE_OFF') {
+            pre.metaAttempts = (Number(pre.metaAttempts) || 0) + 1;
+            pre.metaLastAttemptAt = new Date().toISOString();
+            pre.metaLastErrorCode = String(fr.code || 'UNKNOWN');
+            pre.metaLastError = String(fr.code || 'META_FAILED');
+            pre.metaNextRetryAt = new Date(Date.now() + 15 * 60000).toISOString();
             ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
               .run(JSON.stringify(pre), new Date().toISOString(), row.id);
           }
