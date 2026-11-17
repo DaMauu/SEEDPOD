@@ -28,7 +28,7 @@
 | G12 | 全自动流水线：抓取→查重→准备→多站发布 | ⏸ 暂停（G15 active） | G10、G11、G13 | 一条命令推进，失败可恢复 |
 | G13 | 站点覆盖与验证：3→10→100 站 | 🟡 覆盖面板 + 批量探测 + 3 站真实证据 | G5、G10 | 177 定义 / 177 计划 ok；10 站探测，8 表单可用；3 站真实 |
 | G14 | 可选 Python sidecar：AI/OCR/pandas/Scrapy | ⚪ 可选 | 有具体需求再开 | 离线 JSON 任务，不换主后端 |
-| G15 | 架构减重与失败路径：拆大文件、阶段级 catch、错误码/失败队列、事务、故障注入 | 🟡 进行中（active，轮次 20/50） | 无 | 5 个大文件拆完 + 失败队列可重放 + 故障注入全过 |
+| G15 | 架构减重与失败路径：拆大文件、阶段级 catch、错误码/失败队列、事务、故障注入 | 🟡 进行中（active，轮次 21/50） | 无 | 5 个大文件拆完 + 失败队列可重放 + 故障注入全过 |
 
 > UI 收口（0.7.196/0.7.200/0.7.201/0.7.203）：桌面导航、站点页两栏与统计卡、发布区版式、删除本地演练、流程页发布闸门已重做；G10 预检补全（0.7.197）、每站种子（0.7.204）、目标站种子抓取（0.7.205）、自动清洗（0.7.206）、禁止源种直传（0.7.207）、announce 候选（0.7.208）、预生成目标种（0.7.209）；G5/G13 三站真实上传/回查/删除（0.7.199）；G13 批量只读探测（0.7.202）。
 
@@ -310,6 +310,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 第 17 轮：A2 拆出 `server/target-submit.js`（取种/提交/回查）；target.js 569→371 行（A2 达标 ≤450）；target 29/29。
 - 第 18 轮：A3 拆出 `server/target-upload.js`（上传编排）与 `server/target-rules.js`（查重开关）；target-service.js 590→302 行（A3 达标 ≤400）；target 29/29。
 - 第 19 轮：A4 拆出 `server/imagehost-source.js`（图源解析/缩略图/简介替换/镜像缓存）；imagehost.js 612→448 行；imagehost 20/20。
+- 第 20 轮：A4 拆出 `server/imagehost-config.js`（provider/环境变量/上传端点）；imagehost.js 448→382 行（A4 达标 ≤400）；imagehost 20/20。
 
 **验收**：
 - `Crawl.vue` ≤500 行；`target.js` ≤450；`target-service.js` ≤400；`imagehost.js` ≤400；`scheduler.js` ≤350

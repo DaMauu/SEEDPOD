@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.418 · 2026-11-18
+
+### G15 第 20 轮：拆 imagehost-config（A4 达标）
+- provider 归一化、环境变量读取和上传端点移到 `server/imagehost-config.js`。
+- imagehost.js 448→382 行（目标 ≤400 达成），imagehost 检查 20/20。
+
 ## v0.7.417 · 2026-11-18
 
 ### G15 第 19 轮：拆 imagehost-source
