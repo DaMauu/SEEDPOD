@@ -116,7 +116,7 @@ module.exports = function (app, ctx) {
       publishLimit: b.publishLimit
     });
     if (!r.ok) return bad(reply, 'SCHEDULER_BUSY', r.error, 409);
-    return ok(reply, r.steps);
+    return ok(reply, Object.assign({}, r.steps, { partial: r.partial === true }));
   });
 
   app.get('/api/crawl/status', async (req) => {

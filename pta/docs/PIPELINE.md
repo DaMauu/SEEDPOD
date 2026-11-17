@@ -28,6 +28,14 @@
   Prowlarr/autobrr qui（429 冷却）。
 - 已查过且可发的条目按 `dupeResults` 缓存，下一轮不重复请求。
 
+## 调度失败隔离
+
+- `scheduler.runNow` 的 crawl/screen/dedupe/review/publish/crossseed/retry 各自 try/catch。
+- 单阶段异常写 `steps.errors`（phase/code/message），`steps` 对应阶段带 `error/errorCode`。
+- 后续阶段继续跑；接口返回 `partial=true`，通知带首个 phase/code。
+- DB/SQLITE/约束类错误视为不可恢复，记录后中止本轮。
+- `SEEDPOD_FAIL_STEP` 只在 `NODE_ENV=test` 读取；生产不启用 failpoint。
+
 ## 抓取限制芯片
 
 - 抓取卡「限制」行的禁转 / 限转 / HR / 独占 / DIY 都是**选中即排除**，在入库前过滤。

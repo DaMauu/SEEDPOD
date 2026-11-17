@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.399 · 2026-11-18
+
+### G15 第 1 轮：调度阶段级失败隔离
+- crawl/screen/dedupe/review/publish/crossseed/retry 各自 try/catch；单阶段失败不再拖死整轮。
+- `steps.errors` 记录 phase/code/message；接口返回 `partial`；通知带首个 phase/code。
+- DB/SQLITE/约束类错误仍中止本轮，不拿坏状态继续。
+- 新增 `SEEDPOD_FAIL_STEP`（仅 `NODE_ENV=test`）+ `failpoint` 检查 1/1。
+
 ## v0.7.398 · 2026-11-18
 
 ### G15 第 0 轮：UI 快照与数据护栏

@@ -87,14 +87,32 @@ function makeScheduler(ctx, deps) {
     if (running) return { ok: false, error: '上一轮还没跑完' };
     running = true;
     const startedAt = new Date().toISOString();
-    const steps = { startedAt: startedAt, crawl: null, screen: null, publish: null, retry: null };
+    const steps = { startedAt: startedAt, crawl: null, screen: null, publish: null, retry: null, errors: [] };
     const only = opts && Array.isArray(opts.steps) && opts.steps.length ? opts.steps : null;
     const want = function (name) { return !only || only.indexOf(name) >= 0; };
     const batch = Math.max(1, Math.min(20, Number(opts && opts.batchLimit) || 20));
     const screenLimit = Math.max(1, Math.min(200, Number(opts && opts.screenLimit) || 200));
     const publishLimit = Math.max(1, Math.min(5, Number(opts && opts.publishLimit) || 5));
     const s = read();
+    const failStep = process.env.NODE_ENV === 'test' ? String(process.env.SEEDPOD_FAIL_STEP || '').toLowerCase() : '';
+    const phaseError = function (name, e) {
+      const msg = String(e && e.message || e).slice(0, 300);
+      const code = String(e && e.code || 'PHASE_EXCEPTION').slice(0, 80);
+      steps.errors.push({ phase: name, code: code, message: msg, at: new Date().toISOString() });
+      if (!steps[name] || typeof steps[name] !== 'object') steps[name] = {};
+      steps[name].error = msg;
+      steps[name].errorCode = code;
+      if (/SQLITE|constraint|database|disk I\/O/i.test(code + ' ' + msg)) throw e;
+    };
+    const failpoint = function (name) {
+      if (!failStep || failStep !== name) return;
+      const e = new Error('failpoint ' + name);
+      e.code = 'FAILPOINT';
+      throw e;
+    };
     try {
+      try {
+      failpoint('crawl');
       if (!want('crawl')) {
         steps.crawl = { skipped: 'step not selected' };
       } else if (ctx.allowReal('realCrawl')) {
@@ -131,15 +149,21 @@ function makeScheduler(ctx, deps) {
       }
 
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
+      } catch (e) { phaseError('crawl', e); }
 
+      try {
+      failpoint('screen');
       if (want('screen')) {
         steps.screen = deps.screen.screenCatalog(ctx, { limit: screenLimit });
         steps.hooksScreen = await pipeline.run('screen', ctx, steps);
       } else {
         steps.screen = { skipped: 'step not selected' };
       }
+      } catch (e) { phaseError('screen', e); }
 
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
+      try {
+      failpoint('dedupe');
       const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false, requests: 0 };
       const dedupeLimit = batch;
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
@@ -188,8 +212,11 @@ function makeScheduler(ctx, deps) {
       }
       steps.dedupe = dedupe;
       steps.hooksDedupe = await pipeline.run('dedupe', ctx, steps);
+      } catch (e) { phaseError('dedupe', e); }
 
       /* 终审：补齐之后看还缺什么，齐了才允许自动发；缺了转人工或按设置跳过 */
+      try {
+      failpoint('review');
       const flow = flowConfig.read(ctx);
       const titleOn = flowConfig.on(flow, '标题原样回填', true);
       const subOn = flowConfig.on(flow, '副标题拼贴', true);
@@ -285,7 +312,10 @@ function makeScheduler(ctx, deps) {
       }
       steps.review = review;
       steps.hooksReview = await pipeline.run('review', ctx, steps);
+      } catch (e) { phaseError('review', e); }
 
+      try {
+      failpoint('publish');
       if (want('publish') && ctx.allowReal('realPublish')) {
         const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
@@ -374,8 +404,11 @@ function makeScheduler(ctx, deps) {
       }
 
       steps.hooksPublish = await pipeline.run('publish', ctx, steps);
+      } catch (e) { phaseError('publish', e); }
 
       /* 辅种重试：已发布但辅种没成功（源数据没下完、tracker 没起来）的，按 retryAt 再试 */
+      try {
+      failpoint('crossseed');
       if (want('crossseed') && ctx.allowReal('realPublish')) {
         const csRows = all("SELECT id, data FROM queue WHERE status = 'published' ORDER BY updated_at DESC LIMIT 50");
         const cs = { checked: 0, ok: 0, failed: 0, errors: [] };
@@ -401,7 +434,10 @@ function makeScheduler(ctx, deps) {
       } else {
         steps.crossseedRetry = { skipped: want('crossseed') ? 'realPublish off' : 'step not selected' };
       }
+      } catch (e) { phaseError('crossseed', e); }
 
+      try {
+      failpoint('retry');
       if (ctx.allowReal('realPublish')) {
         const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
         const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
@@ -445,24 +481,29 @@ function makeScheduler(ctx, deps) {
       } else {
         steps.retry = { skipped: 'realPublish off' };
       }
+      } catch (e) { phaseError('retry', e); }
 
-      steps.hooksCrossseed = await pipeline.run('crossseed', ctx, steps);
+      try { failpoint('crossseed'); steps.hooksCrossseed = await pipeline.run('crossseed', ctx, steps); } catch (e) { phaseError('crossseed', e); }
 
       const crawlFail = (steps.crawl && steps.crawl.failed) || 0;
       const pubFail = (steps.publish && steps.publish.failed) || 0;
       const retryFail = (steps.retry && steps.retry.failed) || 0;
       const selected = (steps.screen && steps.screen.selected) || 0;
+      const phaseFail = steps.errors.length;
+      const firstErr = phaseFail ? steps.errors[0] : null;
       if (ctx.notify) {
         try {
-          if (crawlFail || pubFail || retryFail) {
-            await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail + ' · 重试失败 ' + retryFail, { steps: steps });
+          if (crawlFail || pubFail || retryFail || phaseFail) {
+            const extra = phaseFail ? ' · 阶段失败 ' + phaseFail + (firstErr ? '（' + firstErr.phase + '/' + firstErr.code + '）' : '') : '';
+            await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail + ' · 重试失败 ' + retryFail + extra, { steps: steps });
           } else if (ctx.notify.status().events === 'always') {
             await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });
           }
         } catch (e2) { console.warn('[seedpod] scheduler notify failed:', e2 && e2.message ? e2.message : e2) }
       }
-      save(Object.assign({}, s, { lastRunAt: Date.now(), lastResult: steps, lastError: '' }));
-      return { ok: true, steps: steps };
+      const phaseErrorText = phaseFail ? ('部分阶段失败：' + firstErr.phase + '/' + firstErr.code + ' ' + firstErr.message).slice(0, 400) : '';
+      save(Object.assign({}, s, { lastRunAt: Date.now(), lastResult: steps, lastError: phaseErrorText }));
+      return { ok: true, partial: phaseFail > 0, steps: steps };
     } catch (e) {
       const msg = String(e && e.message || e).slice(0, 300);
       if (ctx.notify) {
