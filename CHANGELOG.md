@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.461 · 2026-11-18
+
+### G14：Python sidecar（mediainfo）
+- 新增 `pta/server/sidecar.js`：任务白名单、stdin/stdout JSON、超时/大小限制，不监听端口、不共享数据库。
+- 新增 `pta/sidecar/mediainfo.py`：stdlib 解析 MediaInfo/BDInfo 文本；`pta/scripts/sidecar.js` 提供 CLI。
+- 新增 `sidecar` 检查 4/4 并进 run.sh；文档 `docs/SIDECAR.md`；G14 标记完成。
+- 站点格式化共享后更新 UI 冻结基线；全量通过。
+
 ## v0.7.460 · 2026-11-18
 
 ### 维护：站点格式化共享
