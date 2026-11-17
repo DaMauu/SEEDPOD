@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.417 · 2026-11-18
+
+### G15 第 19 轮：拆 imagehost-source
+- 图源解析、缩略图还原、简介替换和镜像缓存移到 `server/imagehost-source.js`。
+- 黑名单与持久缓存语义不变；imagehost.js 612→448 行，imagehost 检查 20/20。
+
 ## v0.7.416 · 2026-11-18
 
 ### G15 第 18 轮：拆 target-upload（A3 达标）
