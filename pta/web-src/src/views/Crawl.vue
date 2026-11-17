@@ -98,7 +98,6 @@
           <div class="drawer-t"><div class="drawer-title">③ 查重</div></div>
           <div class="drawer-head-right">
             <span class="drawer-meta">{{ autoDupe ? '自动查重已开' : '自动查重已关' }}</span>
-            <button class="btn primary slim" id="crawl-screen-run" type="button" :disabled="busy.screen" @click="screenRun">{{ busy.screen ? '筛选中…' : '按条件筛选' }}</button>
             <button class="btn primary slim" type="button" :disabled="busy.dedupe" @click="saveDedupe">{{ busy.dedupe ? '保存中…' : '保存' }}</button>
           </div>
         </div>
@@ -319,7 +318,7 @@ const targetHost = ref('')
 const targetOpen = ref(false)
 const targetQ = ref('')
 const plan = reactive({ on: false, host: '', urls: [], warnings: [], dailyMax: 0, interval: 0, engine: '', catGroups: 0, catIds: 0, estimatedQueries: 0, today: '' })
-const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, prepare: false, screen: false })
+const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, prepare: false })
 const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '' })
 const schedText = computed(() => {
   if (!sched.lastRunAt) return '还没跑过'
@@ -581,19 +580,6 @@ async function toggleDetail() {
   detail.value = !detail.value
   const j = await patchUser({ detail: !!detail.value })
   toast(j && j.ok ? (detail.value ? '已开启抓详情页：每条多一次请求' : '已关闭抓详情页') : '开关没存上')
-}
-async function screenRun() {
-  if (busy.screen) return
-  busy.screen = true
-  const j = await getJson('/api/catalog/screen', {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ limit: 50, rules: {} })
-  })
-  busy.screen = false
-  if (!j || !j.ok) { toast((j && j.error && j.error.message) || '送审失败'); return }
-  const d = j.data || {}
-  const rs = Object.keys(d.byReason || {}).map(k => k + ' ' + d.byReason[k]).join(' · ')
-  toast('检查 ' + d.checked + ' 条 · 入选 ' + d.selected + ' · 跳过 ' + d.skipped + (rs ? '（' + rs + '）' : ''))
-  if (window.__ptaLoadOverview) window.__ptaLoadOverview()
 }
 
 // 页面独立：需要 siteStatus/siteCfg 驱动目标站列表，不能和 Queue 的简化版共用。
@@ -984,11 +970,16 @@ onUnmounted(() => {
 .drawers .drawer-body, .drawers :deep(.drawer-body) { padding: 2px 22px 10px; }
 /* ===== 发布区：三级层级 + 单行左右排布，无内嵌卡片/横线 ===== */
 .pub-card > .drawer-head { border-bottom: 0; background: #fff; }
-.pub-card .flow-group { background: transparent; border: 0; border-radius: 0; padding: 0; margin: 0 0 16px; }
-.pub-card .flow-group:last-child { margin-bottom: 0; }
+.pub-card .drawer-body { max-width: 1000px; margin: 0 auto; padding: 6px 18px 12px; }
+.pub-card .flow-group {
+  display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: center; gap: 0 14px;
+  background: transparent; border: 0; border-bottom: 1px solid #f2f4f7; border-radius: 0;
+  padding: 7px 0; margin: 0;
+}
+.pub-card .flow-group:last-child { border-bottom: 0; }
 .pub-card .flow-group .flow-ttl {
   display: flex; align-items: center; gap: 7px;
-  margin: 0 0 3px; padding: 0;
+  margin: 0; padding: 0;
   font-size: 13px; font-weight: 650; color: var(--ink); letter-spacing: -.01em;
 }
 .pub-card .flow-group .flow-ttl::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); flex: 0 0 auto; }
@@ -1037,6 +1028,8 @@ onUnmounted(() => {
 .pub-card .target-pick .tp-info span { font-size: 11px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pub-card .target-pick .btn { flex: 0 0 auto; white-space: nowrap; }
 @media (max-width: 760px) {
+  .pub-card .flow-group { display: block; padding: 8px 0; }
+  .pub-card .flow-group .flow-ttl { margin-bottom: 4px; }
   .pub-card .flow-group .set-fields { padding-left: 0; }
   .pub-card .flow-group .set-fields .set-field,
   .pub-card .flow-group .set-fields .set-field.pick { grid-template-columns: 1fr; gap: 4px; }
