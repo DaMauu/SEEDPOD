@@ -364,7 +364,7 @@ onUnmounted(() => {
 
 /* Nodes：下载器抽屉与卡片规则，迁入 scoped */
 .drawer .drawer-body-flush { padding: 0 22px 10px; }
-.nodes-inner { border-top: 1px solid var(--line); }
+.nodes-inner { border-top: 0; }
 .nodes-inner .nodes-grid { background: transparent; border: 0; border-radius: 0; }
 .node-row { padding: 9px 2px; }
 .drawer .drawer-body-flush { padding-bottom: 8px; }
