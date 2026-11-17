@@ -814,7 +814,7 @@ onUnmounted(() => {
 .crawl-card :deep(.crawl-foot){flex-direction:column;align-items:flex-start;gap:10px}
 }
 .flow-group{background:#f9fafb;border:1px solid #edeff2;border-radius:9px;padding:9px 14px 8px;margin:0 0 8px}
-.dedupe-card :deep(.drawer-body){display:block;gap:0;align-items:start}
+.dedupe-card :deep(.drawer-body){display:flex;align-items:center;min-height:54px;gap:0;padding:8px 16px}
 .dedupe-switch-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:2px 0 8px}
 .dedupe-switch{display:flex !important;flex-direction:row !important;align-items:center;gap:8px;padding:0 !important;flex:0 0 auto;min-width:0}
 .dedupe-switch .lbl{margin:0 !important;white-space:nowrap}
@@ -892,7 +892,7 @@ onUnmounted(() => {
 .flow-group :deep(.set-field.pick .ctl>.input){height:26px;max-width:180px;font-size:12px}
 .flow-group :deep(.set-field.pair .pair-item){display:flex;align-items:center;gap:6px;flex:0 0 auto}
 .flow-group :deep(.set-field.pair .pair-lbl){font-size:12px;color:#5b6573}
-.dedupe-card :deep(.drawer-body){padding:8px 16px 10px}
+
 @media (max-width:700px) {
 .dedupe-switch-row{gap:8px 14px}
 .dedupe-switch{flex:1 1 calc(50% - 7px)}
