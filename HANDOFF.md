@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-19 06:50（当前 v0.7.448 / G15 target-service-common）
+最后更新：2026-11-19 07:20（当前 v0.7.449 / G15 imagehost 上传引擎）
+
+## 2026-11-18 G15 第 47 轮（v0.7.449）
+
+- imagehost-upload.js 拆出；imagehost.js 135 行；imagehost 20/20。
 
 ## 2026-11-18 G15 第 46 轮（v0.7.448）
 

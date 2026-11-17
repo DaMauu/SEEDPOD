@@ -1,7 +1,7 @@
 # G15 最终报告 · 架构减重与失败路径
 
-- 版本：0.7.447
-- 轮次：46 轮（0–45），50 轮上限内完成
+- 版本：0.7.449
+- 轮次：47 轮（0–46），50 轮上限内完成
 - 范围：A1–A5 五个大文件拆分 + B0–B7 失败路径/规则/配置
 
 ## 1. 五个大文件行数
@@ -11,7 +11,7 @@
 | `pta/web-src/src/views/Crawl.vue` | 1128 | **150** | ≤500 | 达标 |
 | `pta/server/target.js` | 977 | **174** | ≤450 | 达标（页面/删除/元数据再拆出） |
 | `pta/server/target-service.js` | 590 | **212** | ≤400 | 达标（公共段再拆出） |
-| `pta/server/imagehost.js` | 612 | **382** | ≤400 | 达标 |
+| `pta/server/imagehost.js` | 612 | **135** | ≤400 | 达标（上传引擎再拆出） |
 | `pta/server/scheduler.js` | 496（B1 后 559） | **162** | ≤350 | 达标（阶段全部模块化） |
 
 新增模块（共约 1350 行）：
@@ -19,7 +19,7 @@
 - UI：`components/FlowGates.vue`、`SchedulerBar.vue`、`TargetPickerModal.vue`、`CrawlCard.vue`、`ScreenDedupeCard.vue`、`PublishCard.vue`、`SiteMapModal.vue`、`views/Crawl.css`、`utils/api.js`
 - target：`target-html.js`、`target-discovery.js`、`target-plan.js`、`target-submit.js`、`target-pages.js`（删除/详情/上传页探测/种子元数据）
 - target-service：`target-upload.js`、`target-service-common.js`、`target-rules.js`
-- imagehost：`imagehost-source.js`、`imagehost-config.js`
+- imagehost：`imagehost-source.js`、`imagehost-config.js`、`imagehost-upload.js`（Chevereto 登录/网页上传/通用上传/process）
 - scheduler：`scheduler-crawl.js`、`scheduler-screen.js`、`scheduler-dedupe.js`、`scheduler-review.js`、`scheduler-publish.js`、`scheduler-retry.js`、`scheduler-state.js`
 - UI 状态：`composables/useCrawlPlan.js`、`useCrawlScheduler.js`（调度/限制/闸门）、`useCrawlFlow.js`（流程规则/保存）、`useCrawlSites.js`（站点选择）、`useCrawlFetchFilters.js`（类型/筛选/准备）、`useRuleOrSpecial.js`（规则渲染）
 - 规则/配置：`rule-registry.js`、`config-schema.js`
@@ -77,4 +77,4 @@
 ## 8. 未完成 / 后续
 
 1. `Crawl.vue` 只剩 `specialOf/toggleFetchChip/clampLimit/testRx` 等纯 UI 工具和装配代码（150 行）；请求/启动逻辑已全部抽到 composable 或 utils。
-2. 历史提交 0.7.419 合并了第 21–23 轮；从第 27 轮起已恢复一轮一提交，已推送历史不改写。
+2. 历史提交 0.7.419 合并了第 21–23 轮、0.7.445 合并了 B6 与工具修复；已推送历史不改写，保留在报告中。

@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.449 · 2026-11-18
+
+### G15 第 47 轮：拆 imagehost 上传引擎
+- Chevereto SSO/账号登录、网页上传、通用上传和批量 `process` 移到 `server/imagehost-upload.js`。
+- imagehost.js 382→135 行；`process`/`replaceDescription`/`mirrorDescription` 导出不变，黑名单/缩略图/持久缓存不动。
+- 补回 `siteCookie` 缺失的 `openDB` 引用（SSO 会话读取恢复正常）。
+- imagehost 20/20、media 7/7、全量通过。
+
 ## v0.7.448 · 2026-11-18
 
 ### G15 第 46 轮：拆 target-service-common
