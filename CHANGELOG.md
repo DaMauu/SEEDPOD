@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.435 · 2026-11-18
+
+### G15 第 37 轮：规则控件 composable
+- `RuleOrSpecial` 渲染函数抽到 `composables/useRuleOrSpecial.js`。
+- Crawl.vue 204→173 行；1280/390 快照一致，UI 基线已更新；规则测试按钮实测通过。
+
 ## v0.7.434 · 2026-11-18
 
 ### G15 第 36 轮：类型/筛选与准备 composable

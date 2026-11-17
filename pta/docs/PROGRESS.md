@@ -252,5 +252,6 @@
 - 第 34 轮：useCrawlFlow composable；Crawl.vue 299 行；保存实测通过。
 - 第 35 轮：useCrawlSites composable；Crawl.vue 257 行；站点选择实测通过。
 - 第 36 轮：useCrawlFetchFilters composable；Crawl.vue 204 行；准备按钮实测通过。
+- 第 37 轮：useRuleOrSpecial composable；Crawl.vue 173 行；规则测试实测通过。
 - G15 全部验收项完成。
 - 下一步：screen/dedupe/review 阶段拆分。

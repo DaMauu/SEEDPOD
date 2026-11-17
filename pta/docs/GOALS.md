@@ -327,6 +327,7 @@ Node + Fastify + SQLite + Vue 3/Vite、站点包、检查、CLI、Docker 已作�
 - 第 34 轮：A1 新增 `composables/useCrawlFlow.js`（流程规则加载/保存、旧值迁移、详情开关）；Crawl.vue 398→299 行；快照一致、保存实测通过。
 - 第 35 轮：A1 新增 `composables/useCrawlSites.js`（站点列表/来源站/目标站选择）；Crawl.vue 299→257 行；快照一致、站点选择实测通过。
 - 第 36 轮：A1 新增 `composables/useCrawlFetchFilters.js`（类型/筛选保存、prepareNext）；Crawl.vue 257→204 行；快照一致、准备按钮实测通过。
+- 第 37 轮：A1 新增 `composables/useRuleOrSpecial.js`（规则控件渲染）；Crawl.vue 204→173 行；快照一致、规则测试按钮实测通过。
 
 **验收**：
 - `Crawl.vue` ≤500 行；`target.js` ≤450；`target-service.js` ≤400；`imagehost.js` ≤400；`scheduler.js` ≤350
