@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const STATUSES = ['new', 'selected', 'archived', 'published', 'skipped'];
-const MARKS = ['noRedistribute', 'exclusive', 'diy', 'limited', 'limitedDays', 'existing'];
+const MARKS = ['noRedistribute', 'exclusive', 'diy', 'hr', 'limited', 'limitedDays', 'existing'];
 const FIELDS = ['site', 'siteId', 'title', 'subtitle', 'size', 'res', 'cat', 'catName', 'addedAt', 'dupNote', 'infohash', 'detailsUrl', 'downloadUrl', 'seeders', 'leechers',
   /* 向目标站查重的结果：clean=站里没有、可发；diy=只有 DIY 版、可发但需复核；dupe=已有原盘、不可发；error=没查成 */
   'dupe', 'dupeUrl', 'dupeAt', 'dupeTitle', 'dupeSizeGB', 'dupeTarget'];

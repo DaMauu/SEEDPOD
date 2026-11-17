@@ -1,4 +1,5 @@
 const sizeLib = require('./size');
+const rowTagLib = require('./row-tags');
 /* Gazelle 站点适配：只做解析与 URL 拼装，不发任何请求。
    Gazelle 的种子页是 /torrents.php，种子组是 /torrents.php?id=<gid>，单个种子是 ?torrentid=<tid>，
    下载是 ?action=download&id=<tid>，搜索参数是 searchstr + filter_cat[<槽位>]。
@@ -88,7 +89,8 @@ function parseList(html) {
       size: size ? size[1].replace(/\s+/g, ' ') : '',
       sizeBytes: size ? sizeLib.parseSize(size[1]) : 0,
       detailsUrl: last ? 'torrents.php?id=' + last[1] + '&torrentid=' + mk.id : 'torrents.php?torrentid=' + mk.id,
-      downloadUrl: mk.href
+      downloadUrl: mk.href,
+      tags: rowTagLib.rowTags(rowTagLib.enclosingRow(src, mk.idx) || win)
     });
   }
   return rows;

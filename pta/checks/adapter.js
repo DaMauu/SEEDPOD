@@ -38,6 +38,10 @@ check('解析列表', () => {
   need(r.catId === '401', '分类 id 不对：' + r.catId);
   need(/download\.php\?id=1001/.test(r.downloadUrl), '下载链接没取到：' + r.downloadUrl);
   need(/details\.php\?id=1001/.test(r.detailsUrl), '详情链接没取到：' + r.detailsUrl);
+  need(r.tags.indexOf('HR') >= 0 && r.tags.indexOf('禁转') >= 0, '行内 HR/禁转 标签没取到：' + JSON.stringify(r.tags));
+  const r2 = rows[1];
+  need(['限转', '独占', 'DIY'].every(function (x) { return r2.tags.indexOf(x) >= 0; }), '行内限转/独占/DIY 标签没取到：' + JSON.stringify(r2.tags));
+  need(rows[2].tags.indexOf('HR') < 0, 'HR-HDTV 被误判成 H&R：' + JSON.stringify(rows[2].tags));
 });
 
 check('拼搜索 URL', () => {
@@ -85,6 +89,8 @@ check('解析 UNIT3D 列表与分类', () => {
   need(rows[0].id === '1234', 'id 不对：' + rows[0].id);
   need(rows[0].size === '12.34 GiB', '大小不对：' + rows[0].size);
   need(/\/torrents\/1234\/download/.test(rows[0].downloadUrl), '下载地址不对：' + rows[0].downloadUrl);
+  need(rows[0].tags.indexOf('HR') >= 0 && rows[0].tags.indexOf('独占') >= 0, 'UNIT3D 行内 HR/独占 标签没取到：' + JSON.stringify(rows[0].tags));
+  need(rows[1].tags.indexOf('禁转') >= 0 && rows[1].tags.indexOf('DIY') >= 0, 'UNIT3D 行内禁转/DIY 标签没取到：' + JSON.stringify(rows[1].tags));
   const cats = unit3d.parseCategories(u3dHtml);
   need(cats.map(c => c.id).join(',') === '1,2,3', '分类 id 不对：' + cats.map(c => c.id).join(','));
   need(cats[0].label === 'Movies', '分类标签不对：' + cats[0].label);

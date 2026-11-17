@@ -54,7 +54,7 @@ module.exports = function (app, ctx) {
     if (!it) return bad(reply, 'NOT_FOUND', '词条不存在', 404);
     const marks = {};
     const src = (req.body && req.body.marks) || {};
-    ['noRedistribute', 'exclusive', 'diy', 'limited', 'limitedDays', 'existing'].forEach(function (k) {
+    ['noRedistribute', 'exclusive', 'diy', 'hr', 'limited', 'limitedDays', 'existing'].forEach(function (k) {
       if (src[k]) marks[k] = src[k] === true ? true : Number(src[k]) || 0;
     });
     const next = updCatalog(req.params.id, { marks: marks });

@@ -1,4 +1,5 @@
 const sizeLib = require('./size');
+const rowTagLib = require('./row-tags');
 /* UNIT3D 站点适配：只做解析与 URL 拼装，不发任何请求。
    UNIT3D 的种子页是 /torrents，每个种子是 /torrents/<id>，下载是 /torrents/<id>/download，
    搜索参数是 name + categories[0][]。
@@ -89,6 +90,7 @@ function parseList(html) {
       sizeBytes: size ? sizeLib.parseSize(size[1]) : 0,
       detailsUrl: mk.href,
       downloadUrl: dl || '/torrents/download/' + mk.id,
+      tags: rowTagLib.rowTags(rowTagLib.enclosingRow(src, mk.idx) || win),
       addedAt: dt && !isNaN(Date.parse(dt[1])) ? new Date(Date.parse(dt[1])).toISOString() : ''
     };
   });

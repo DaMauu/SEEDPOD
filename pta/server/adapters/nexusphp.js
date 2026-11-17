@@ -1,4 +1,5 @@
 const sizeLib = require('./size');
+const rowTags = require('./row-tags').rowTags;
 
 /* NexusPHP 站点适配：只做解析与 URL 拼装，不发任何请求。
    所有函数都是纯函数，输入 HTML/配置，输出结构化数据，方便用夹具回归。 */
@@ -112,6 +113,7 @@ function parseDataRows(src) {
       catId: catAttr || (catLink ? catLink[1] : ''),
       catName: catName,
       addedAt: addedAt,
+      tags: rowTags(inner),
       size: size,
       sizeBytes: sizeBytes,
       detailsUrl: det || 'details.php?id=' + id,
@@ -183,7 +185,14 @@ function parseList(html) {
     if (size) { r.size = size[1].replace(/\s+/g, ' '); r.sizeBytes = sizeLib.parseSize(size[1]); }
   });
 
-  return order.map(function (id) { return rows[id]; }).filter(function (r) { return r.title; });
+  return order.map(function (id) {
+    const r = rows[id];
+    r.tags = rowTags(src.slice(
+      startOf[id] != null ? startOf[id] : Math.max(0, (dIdx[id] ? dIdx[id].idx : 0) - 500),
+      endOf[id] != null ? endOf[id] : Math.min(src.length, (dIdx[id] ? dIdx[id].idx : 0) + 5000)
+    ));
+    return r;
+  }).filter(function (r) { return r.title; });
 }
 
 /* 搜索 URL：参数名以站点定义里的 params 为准，{q} / {cats} 是占位符 */

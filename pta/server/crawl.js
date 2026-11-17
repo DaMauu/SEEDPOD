@@ -174,12 +174,15 @@ function makeCrawl(ctx) {
       try { return new URL(str, def.base + '/').toString(); } catch (e) { return str; }
     };
     const items = rows.slice(0, limit).map(function (r) {
-      return {
+      const item = {
         site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
         sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
         detailsUrl: absUrl(r.detailsUrl), downloadUrl: absUrl(r.downloadUrl), infohash: r.infohash || '',
-        seeders: Number(r.seeders) || 0, marks: marksMod.marksOf(r.title), addedAt: r.addedAt || ''
+        seeders: Number(r.seeders) || 0, addedAt: r.addedAt || '',
+        tags: Array.isArray(r.tags) ? r.tags.join(',') : String(r.tags || '')
       };
+      item.marks = marksMod.marksOf(item);
+      return item;
     }).filter(function (x) { return x.title && x.siteId; });
     /* 站上发布时间不满 7 天的限转，按目标站规矩拦在送审前 */
     items.forEach(function (it) {
@@ -233,6 +236,13 @@ function makeCrawl(ctx) {
             if (d.infohash && !it.infohash) it.infohash = d.infohash;
             if (d.descr) it.descr = d.descr;
             if (d.descrBb) it.descrBb = d.descrBb;
+            /* 详情页的 Tags 也带限制标记：并进 it.tags，限制芯片按最新标记过滤 */
+            if (d.tags) {
+              const merged = String(it.tags || '').split(',').concat(String(d.tags).split(/[,，;；、\s]+/))
+                .map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+              it.tags = merged.filter(function (x, i, a) { return a.indexOf(x) === i; }).join(',');
+              it.marks = marksMod.marksOf(it);
+            }
             if (!it.descr && !it.descrBb) await metaFill.fillIntro(it);
             if (d.poster) it.poster = d.poster;
             if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
@@ -286,16 +296,7 @@ function makeCrawl(ctx) {
       const row = flow['限制'];
       const sel = Array.isArray(row && row.sel) ? row.sel.map(String) : [];
       if (sel.length && items.length) {
-        const keep = items.filter(function (it) {
-          const m = marksMod.effectiveMarks(it, Date.now());
-          const text = String(it.title || '') + ' ' + String(it.tags || '');
-          if (sel.indexOf('禁转') >= 0 && m.noRedistribute) return false;
-          if (sel.indexOf('限转') >= 0 && (m.limited || Number(m.limitedDays) > 0)) return false;
-          if (sel.indexOf('独占') >= 0 && m.exclusive) return false;
-          if (sel.indexOf('DIY') >= 0 && m.diy) return false;
-          if (sel.indexOf('HR') >= 0 && /\[HR\]|\bHR\b|hit\s*&\s*run|hit and run/i.test(text)) return false;
-          return true;
-        });
+        const keep = items.filter(function (it) { return !marksMod.matchesLimit(it, sel, Date.now()); });
         if (keep.length !== items.length) {
           detail.restricted = items.length - keep.length;
           items.length = 0;
