@@ -898,6 +898,8 @@ onUnmounted(() => {
 .dedupe-card :deep(.drawer-body){padding:8px 16px 10px}
 @media (max-width:700px) {
 .dedupe-switch-row{gap:8px 14px}
+.dedupe-switch{flex:1 1 calc(50% - 7px)}
+.dedupe-switch .lbl > span{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;line-height:1.25}
 .dedupe-input{flex:1 1 100%;min-width:0;flex-wrap:nowrap}
 .dedupe-input .lbl{flex:0 0 auto}
 .dedupe-input .ctl{flex:1 1 auto;min-width:0}
