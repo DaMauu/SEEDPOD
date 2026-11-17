@@ -898,7 +898,9 @@ onUnmounted(() => {
 .dedupe-card :deep(.drawer-body){padding:8px 16px 10px}
 @media (max-width:700px) {
 .dedupe-switch-row{gap:8px 14px}
-.dedupe-input{flex:1 1 100%;min-width:0}
+.dedupe-input{flex:1 1 100%;min-width:0;flex-wrap:nowrap}
+.dedupe-input .lbl{flex:0 0 auto}
+.dedupe-input .ctl{flex:1 1 auto;min-width:0}
 .flow-group :deep(.set-fields){grid-template-columns:1fr}
 .flow-group.cond :deep(.set-fields){grid-template-columns:1fr}
 .flow-group.cond :deep(.set-field){grid-template-columns:1fr;gap:2px}
