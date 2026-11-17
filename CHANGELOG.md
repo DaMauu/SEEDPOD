@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.420 · 2026-11-18
+
+### G15 第 24 轮：规则注册表（B6）
+- 新增 `server/rule-registry.js`：18 条规则的 key/类型/默认值/读者集中登记，带旧 key 映射。
+- `flow-config` 读取时统一 normalize；旧 flow 配置不清库也能读。
+- 新增 `rules-registry` 检查 4/4，并进 `pta/checks/run.sh`。
+
 ## v0.7.419 · 2026-11-18
 
 ### G15 第 21–23 轮：拆 scheduler（A5 达标）

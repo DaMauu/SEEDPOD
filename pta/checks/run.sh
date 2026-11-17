@@ -42,6 +42,7 @@ run scheduler scheduler.js
 run failpoint failpoint.js
 run errors errors.js
 run failures failures.js
+run rules-registry rules-registry.js
 run transactions transactions.js
 run fault-injection fault-injection.js
 run request-queue request-queue.js
