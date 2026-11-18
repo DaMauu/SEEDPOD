@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-18T13:44:51.170Z",
+  "at": "2026-11-18T13:56:42.210Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/CrawlCard.vue": "7a23304c538747c5",
@@ -26,7 +26,7 @@
     "styles/06-forms-flow-final.css": "47d749309f9c9cc1",
     "styles/07-global-effects.css": "30ae2716b274e4fc",
     "styles/08-components.css": "bd2f5415b64c1573",
-    "styles/09-responsive-pages.css": "e1fc9f7ffdf5be0a",
+    "styles/09-responsive-pages.css": "db06d27c863d18b1",
     "styles/11-dock.css": "acb8e6af878b9c62",
     "styles/index.css": "8f90d9215d33427a",
     "views/Changelog.vue": "7d21f25b5f7cce75",
@@ -35,7 +35,7 @@
     "views/Dashboard.vue": "d564aa263d86b482",
     "views/Logs.vue": "6323dca55bc8df20",
     "views/Nodes.vue": "493811e7ecd3283b",
-    "views/Queue.vue": "eb40b308b5060917",
+    "views/Queue.vue": "f2a516996e86a4ba",
     "views/Settings.vue": "5d4c5756e639d3cf",
     "views/Sites.vue": "e99cae4355e8a25c",
     "views/Sources.vue": "d95f1d8b3f02f764"

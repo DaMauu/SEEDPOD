@@ -24,9 +24,11 @@
         </button>
       </div>
       <div class="queue-page">
-        <button class="btn ghost slim" type="button" :disabled="page <= 1" @click="loadQueuePage(page - 1)">上一页</button>
-        <span class="t-sub">第 {{ page }} / {{ pages }} 页</span>
-        <button class="btn ghost slim" type="button" :disabled="page >= pages" @click="loadQueuePage(page + 1)">下一页</button>
+        <div class="queue-pager">
+          <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && loadQueuePage(page - 1)">上一页</span>
+          <span class="pager-meta">第 {{ page }} / {{ pages }} 页 · 共 {{ matched }} 条</span>
+          <span class="pager-link" :class="{ off: page >= pages }" @click="page < pages && loadQueuePage(page + 1)">下一页</span>
+        </div>
       </div>
     </aside>
 
@@ -695,6 +697,11 @@ onUnmounted(() => {
 .queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .queue-list { width: 320px; flex: 0 0 320px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; }
+.queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
+.queue-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.queue-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
+.queue-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
+.queue-pager .pager-meta { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .q-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none; padding: 9px 10px; border-radius: 10px; cursor: pointer; font: inherit; }
 .q-item:hover { background: #f7f8fa; }
 .q-item.on { background: var(--accent-soft); }

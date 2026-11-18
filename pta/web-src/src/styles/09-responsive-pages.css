@@ -93,3 +93,6 @@
 @media (min-width: 901px) and (max-width: 1099px) {
   .main { padding-bottom: 180px; }
 }
+
+/* 页脚信息每页左右居中（移动端换行后也居中） */
+.dev-foot { justify-content: center; text-align: center; }
