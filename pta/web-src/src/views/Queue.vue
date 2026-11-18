@@ -102,8 +102,8 @@
               <div v-for="t in sel.prepared.targets" :key="t.host" class="qd-target-plan">
                 <span class="badge" :class="t.target ? (t.target.ready === false ? 'amber' : 'green') : 'red'">{{ t.host }}</span>
                 <span v-if="t.target" class="t-sub">{{ t.target.engine }} · {{ Object.keys(t.target.fields || {}).length }} 字段</span>
-                <span v-if="t.target && (t.target.warnings || []).length" class="qd-stage-err">需处理：{{ t.target.warnings.join('；') }}</span>
-                <span v-if="t.target && (t.target.notes || []).length" class="t-sub">已自动填 {{ t.target.notes.length }} 个字段</span>
+                <span v-if="t.target && planWarnings(t.target).length" class="qd-stage-err">需处理：{{ planWarnings(t.target).join('；') }}</span>
+                <span v-if="t.target && planAutoCount(t.target)" class="t-sub">已自动填 {{ planAutoCount(t.target) }} 个字段</span>
                 <span v-if="!t.target" class="qd-stage-err">{{ t.error || '未就绪' }}</span>
                 <div v-if="t.target && t.target.fields" class="qd-plan-fields">
                   <span v-for="(v, k) in t.target.fields" :key="k" class="chip np">{{ k }}：{{ String(v).slice(0, 60) }}</span>
@@ -252,6 +252,27 @@ const filePick = ref(null)
 let timer = null
 let qTimer = null
 let loaded = false
+
+const OLD_AUTO_WARN = /^(必填字段 |字段 .* 的值不在站点选项里)/
+function planWarnings(t) {
+  const out = []
+  ;((t && t.warnings) || []).forEach(function (w) {
+    const s = String(w || '')
+    if (OLD_AUTO_WARN.test(s)) return
+    if (/^分类没映射/.test(s)) { out.push('目标站分类没映射，请到「站点映射」补上'); return }
+    if (/^制作组 .* 没映射到站点 id/.test(s)) { out.push(s.replace(/^制作组 (.*?) 没映射到站点 id，已留空$/, '制作组「$1」没映射到目标站，发布前需要手选')); return }
+    if (s === '没有 cookie') { out.push('目标站没有 cookie'); return }
+    if (s === '没有上传地址') { out.push('目标站没有上传地址'); return }
+    if (s === '上传字段为空') { out.push('目标站上传字段为空'); return }
+    if (s === '没有回查地址') { out.push('目标站没有回查地址'); return }
+    out.push(s)
+  })
+  return out
+}
+function planAutoCount(t) {
+  const old = ((t && t.warnings) || []).filter(function (w) { return OLD_AUTO_WARN.test(String(w || '')) }).length
+  return ((t && t.notes) || []).length + old
+}
 
 const LABELS = {
   pending: ['待确认', 'amber'], approved: ['已通过', 'green'], published: ['已发布', 'green'],
@@ -461,10 +482,12 @@ async function fillMediaPath() {
   if (!sel.value || media.pathLoading) return
   media.pathLoading = true
   try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/media-path', { credentials: 'same-origin' })).json()
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/media-path', { method: 'POST', credentials: 'same-origin' })).json()
     if (j && j.ok && j.data && j.data.path) {
       media.path = j.data.path
       toast('已从 qB 填入路径：' + j.data.path)
+    } else if (j && j.ok && j.data && j.data.added) {
+      toast(j.data.message || '已加入 qB，下载完成后再点一次')
     } else toast((j && j.error && j.error.message) || '没取到路径')
   } catch (e) { toast('读取路径请求发不出去') }
   media.pathLoading = false

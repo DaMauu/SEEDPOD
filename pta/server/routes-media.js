@@ -4,9 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const media = require('./media');
 const qb = require('./qb');
+const { makeTarget } = require('./target');
 
 module.exports = function (app, ctx) {
   const { DATA_DIR, one, all, jparse, ok, bad } = ctx;
+  const target = makeTarget(ctx);
   const ROOT = path.resolve(require('./env').read('MEDIA_ROOT','PTA_MEDIA_ROOT') || path.join(DATA_DIR, 'media'));
   try { fs.mkdirSync(ROOT, { recursive: true, mode: 0o700 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
 
@@ -30,18 +32,35 @@ module.exports = function (app, ctx) {
   app.get('/api/media/config', async () => ok({ root: ROOT, exists: fs.existsSync(ROOT) }));
 
   /* 从 qB 已完成的种子里取媒体路径；只返回 MEDIA_ROOT 内的相对路径 */
-  app.get('/api/queue/:id/media-path', async (req, reply) => {
+  app.post('/api/queue/:id/media-path', async (req, reply) => {
     const row = one('SELECT data FROM queue WHERE id = ?', req.params.id);
     if (!row) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
     const it = jparse(row.data) || {};
-    const hash = String((it.qb && it.qb.hash) || it.infohash || (it.sourceState && it.sourceState.hash) || '').toLowerCase();
-    if (!hash) return bad(reply, 'NO_HASH', '这个条目还没有 infohash，先让它进一次 qB', 409);
+    let hash = String((it.qb && it.qb.hash) || it.infohash || (it.sourceState && it.sourceState.hash) || '').toLowerCase();
     const dls = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data) || {}; })
       .filter(function (d) { return String(d.kind || 'qb') === 'qb' && d.url; });
     const dl = dls.filter(function (d) { return d.id === it.downloaderId; })[0] || dls[0];
     if (!dl) return bad(reply, 'NO_DOWNLOADER', '没有可用的 qB 下载器', 409);
-    const found = await qb.findTorrent(dl, hash, it.title);
-    if (!found || !found.found) return bad(reply, 'NOT_IN_QB', 'qB 里没找到这个种子，先让它下完', 404);
+    let found = hash ? await qb.findTorrent(dl, hash, it.title) : null;
+    if ((!found || !found.found) && !hash) found = await qb.findTorrent(dl, '', it.title);
+    if ((!found || !found.found) && it.downloadUrl) {
+      const t = await target.fetchSourceTorrent(it);
+      if (t && t.err) return bad(reply, 'SOURCE_FETCH_FAILED', t.err, 502);
+      const meta = qb.parseTorrent(t.buf);
+      hash = String((meta && meta.hash) || '');
+      if (!hash) return bad(reply, 'BAD_SOURCE', '源种解析不出 infohash', 422);
+      found = await qb.findTorrent(dl, hash, (meta && meta.name) || it.title);
+      if (!found || !found.found) {
+        const src = await ctx.publisher.ensureSource(req.params.id, {});
+        if (!src.ok) return bad(reply, src.code || 'QB_ADD_FAILED', src.message || '加入 qB 失败', src.http || 502);
+        if (!src.complete) {
+          const pct = Math.round((Number(src.progress) || 0) * 100);
+          return ok(reply, { added: true, progress: pct, message: '已加入 qB，当前 ' + pct + '%，下完再点一次' });
+        }
+        found = await qb.findTorrent(dl, hash, (meta && meta.name) || it.title);
+      }
+    }
+    if (!found || !found.found) return bad(reply, 'NOT_IN_QB', 'qB 里没找到这个种子，先让它进一次 qB', 404);
     let abs = String(found.contentPath || '');
     if (!abs && found.savePath) abs = path.join(found.savePath, found.name || '');
     if (!abs) return bad(reply, 'NO_CONTENT_PATH', 'qB 没返回文件路径（版本太旧或种子还没开始）', 409);
