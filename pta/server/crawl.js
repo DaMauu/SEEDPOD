@@ -159,10 +159,14 @@ function makeCrawl(ctx) {
       html = await res.text().catch(function () { return ''; });
     } catch (e) {
       rec.dayCount += 1; rec.lastAt = nowMs; rec.lastError = 'CRAWL_FAILED'; state[host] = rec; saveState(state);
+      if (ctx.logEvent) ctx.logEvent('warn', '抓取', host + ' · CRAWL_FAILED · ' + (e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 120)));
       return { err: { code: 'CRAWL_FAILED', message: e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 160) } };
     }
     const loggedOut = status === 302 || /takelogin\.php|请先登录/i.test(html);
-    function mark(code) { rec.dayCount = (Number(rec.dayCount) || 0) + 1; rec.lastAt = nowMs; rec.lastError = code; state[host] = rec; saveState(state); }
+    function mark(code) {
+      rec.dayCount = (Number(rec.dayCount) || 0) + 1; rec.lastAt = nowMs; rec.lastError = code; state[host] = rec; saveState(state);
+      if (ctx.logEvent) ctx.logEvent('warn', '抓取', host + ' · ' + code);
+    }
     if (loggedOut) { mark('LOGIN_REQUIRED'); return { err: { code: 'LOGIN_REQUIRED', message: 'cookie 已失效，先做一次会话自检' } }; }
     if (status !== 200) { mark('CRAWL_HTTP_' + status); return { err: { code: 'CRAWL_HTTP_' + status, message: '站点返回 ' + status } }; }
     let rows = [];
@@ -317,6 +321,11 @@ function makeCrawl(ctx) {
     rec.catId = ids[0] || '';
     state[host] = rec;
     saveState(state);
+    if (ctx.logEvent) {
+      const bits = [host, '第 ' + page + ' 页', rows.length + ' 条', '新增 ' + out.added];
+      if (detail.want) bits.push('详情 ' + detail.ok + '/' + detail.tried + (detail.stopped ? '（停了：' + detail.stopped + '）' : ''));
+      ctx.logEvent('info', '抓取', bits.join(' · '));
+    }
     return { host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
       categoryId: ids[0] || '', categories: catMap.length, added: out.added, updated: out.updated, skipped: out.skipped,
       nextPage: nc.page + 1, daily: { day: rec.day, count: rec.dayCount, max: lim.dailyMax }, nextCategoryId: catMap.length ? catMap[Math.min(catMap.length - 1, nc.catIdx)].id : '', rotated: nc.rotated, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };

@@ -134,21 +134,31 @@ function makeFailureQueue(ctx) {
     delete d.nextRetryAt;
     delete d.retryMsg;
     d.retries = 0;
+    d.stageAttempts = 0;
     Object.keys(trs).forEach(function (h) {
       const tr = trs[h] || {};
       if (tr.stage === 'failed' || tr.nextRetryAt || tr.error) {
         tr.stage = 'pending';
+        tr.attempts = 0;
         delete tr.nextRetryAt;
         delete tr.error;
+        delete tr.errorCode;
       }
     });
     delete d.dedupeLastError;
+    delete d.dedupeLastErrorCode;
+    delete d.dedupeLastAttemptAt;
     delete d.dedupeNextRetryAt;
+    d.dedupeAttempts = 0;
     delete d.metaLastError;
+    delete d.metaLastErrorCode;
+    delete d.metaLastAttemptAt;
     delete d.metaNextRetryAt;
+    d.metaAttempts = 0;
     d.replayedAt = new Date().toISOString();
     db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(d.status, JSON.stringify(d), d.replayedAt, id);
+    if (ctx.logEvent) ctx.logEvent('info', '失败队列', '重放 · ' + id + ' · ' + String(d.stage || ''));
     return { ok: true, id: id, status: d.status, stage: d.stage };
   }
 

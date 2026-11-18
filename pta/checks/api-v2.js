@@ -595,6 +595,9 @@ async function main() {
     const gj = await good.json();
     need(good.status === 200 && gj.ok, '带 token 没跑起来：' + good.status + ' ' + JSON.stringify(gj));
     need(gj.data.steps.crawl && gj.data.steps.crawl.skipped === 'realCrawl off', '步骤过滤没生效：' + JSON.stringify(gj.data.steps.crawl));
+    const logs = await (await fetchA(BASE + '/api/logs?limit=30')).json();
+    need(logs.ok && logs.data.some(function (x) { return x.tag === '调度' && /开始一轮/.test(x.msg); }), '调度开始日志没写');
+    need(logs.data.some(function (x) { return x.tag === '调度' && /(完成|部分失败)/.test(x.msg); }), '调度完成日志没写：' + JSON.stringify((logs.data || []).slice(-3)));
   });
 
   await check('退出登录后会话失效', async () => {

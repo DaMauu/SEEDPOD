@@ -45,6 +45,27 @@ check('单条重放恢复 pending 且保留目标结果', () => {
   need(q.list({ limit: 10 }).total === 0, '重放后仍被列为失败');
 });
 
+db.prepare('INSERT INTO queue(id,status,title,data,updated_at) VALUES(?,?,?,?,?)').run('q_meta', 'failed', 'Meta Item', JSON.stringify({
+  id: 'q_meta', status: 'failed', stage: 'prepared', stageAttempts: 4,
+  metaAttempts: 3, metaLastAttemptAt: recent, metaLastErrorCode: 'UPSTREAM_FAILED', metaLastError: 'UPSTREAM_FAILED',
+  metaNextRetryAt: new Date(Date.now() + 900000).toISOString(),
+  dedupeAttempts: 2, dedupeLastAttemptAt: recent, dedupeLastErrorCode: 'DEDUPE_TIMEOUT', dedupeLastError: 'timeout'
+}), recent);
+
+check('重放重置 meta/dedupe 计数与死信', () => {
+  const before = q.list({ limit: 10 });
+  const hit = before.items.filter(function (x) { return x.id === 'q_meta'; })[0];
+  need(hit && hit.dead === true, 'q_meta 应先判死信：' + JSON.stringify(before.items));
+  const r = q.replay('q_meta');
+  need(r.ok, '重放失败：' + JSON.stringify(r));
+  const d = jparse(one("SELECT data FROM queue WHERE id='q_meta'").data);
+  need(d.metaAttempts === 0 && !d.metaLastAttemptAt && !d.metaLastErrorCode, 'meta 计数没重置：' + JSON.stringify(d));
+  need(d.dedupeAttempts === 0 && !d.dedupeLastAttemptAt && !d.dedupeLastErrorCode, 'dedupe 计数没重置：' + JSON.stringify(d));
+  need(d.stageAttempts === 0, 'stage 计数没重置：' + JSON.stringify(d));
+  const after = q.list({ limit: 10 });
+  need(!after.items.some(function (x) { return x.id === 'q_meta'; }), '重放后仍列在失败队列');
+});
+
 check('已提交条目拒绝重放', () => {
   const r = q.replay('q_done');
   need(!r.ok && r.code === 'ALREADY_SUBMITTED', '已提交没拦住：' + JSON.stringify(r));

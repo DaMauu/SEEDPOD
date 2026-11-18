@@ -34,6 +34,7 @@ function makeScheduler(ctx, deps) {
     if (running) return { ok: false, error: '上一轮还没跑完' };
     running = true;
     const startedAt = new Date().toISOString();
+    if (ctx.logEvent) ctx.logEvent('info', '调度', '开始一轮' + (opts && Array.isArray(opts.steps) && opts.steps.length ? '（' + opts.steps.join('+') + '）' : ''));
     const steps = { startedAt: startedAt, crawl: null, screen: null, publish: null, retry: null, errors: [] };
     const only = opts && Array.isArray(opts.steps) && opts.steps.length ? opts.steps : null;
     const want = function (name) { return !only || only.indexOf(name) >= 0; };
@@ -126,11 +127,26 @@ function makeScheduler(ctx, deps) {
           }
         } catch (e2) { console.warn('[seedpod] scheduler notify failed:', e2 && e2.message ? e2.message : e2) }
       }
+      if (ctx.logEvent) {
+        steps.errors.forEach(function (x) { ctx.logEvent('error', '调度', '阶段失败 · ' + x.phase + '/' + x.code + ' ' + String(x.message || '').slice(0, 160)); });
+        const c = steps.crawl || {};
+        const sc = steps.screen || {};
+        const rv = steps.review || {};
+        const pb = steps.publish || {};
+        const bits = [];
+        if (c.skipped) bits.push('抓取跳过（' + c.skipped + '）');
+        else bits.push('抓取 ' + (Number(c.sites) || 0) + ' 站（新增 ' + (Number(c.added) || 0) + ' / 失败 ' + (Number(c.failed) || 0) + ' / 等待 ' + (Number(c.waiting) || 0) + '）');
+        if (!sc.skipped) bits.push('初筛 ' + (Number(sc.selected) || 0));
+        if (!rv.skippedStep) bits.push('终审 ready ' + (Number(rv.ready) || 0) + ' / hold ' + (Number(rv.hold) || 0));
+        if (pb && pb.published !== undefined) bits.push('发布 ' + (Number(pb.published) || 0));
+        ctx.logEvent(phaseFail ? 'warn' : 'info', '调度', (phaseFail ? '部分失败 · ' : '完成 · ') + bits.join(' · '));
+      }
       const phaseErrorText = phaseFail ? ('部分阶段失败：' + firstErr.phase + '/' + firstErr.code + ' ' + firstErr.message).slice(0, 400) : '';
       save(Object.assign({}, s, { lastRunAt: Date.now(), lastResult: steps, lastError: phaseErrorText }));
       return { ok: true, partial: phaseFail > 0, steps: steps };
     } catch (e) {
       const msg = String(e && e.message || e).slice(0, 300);
+      if (ctx.logEvent) ctx.logEvent('error', '调度', '失败 · ' + msg.slice(0, 160));
       if (ctx.notify) {
         try { await ctx.notify.send('scheduler.error', 'SEEDPOD 调度失败：' + msg); } catch (e2) { console.warn('[seedpod] scheduler error notify failed:', e2 && e2.message ? e2.message : e2) }
       }
