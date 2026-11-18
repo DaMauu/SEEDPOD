@@ -5,7 +5,6 @@ const screen = require('./screen');
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
-const limits = require('./limits');
 const { makeErrorStats } = require('./error-stats');
 const { makeFailureQueue } = require('./failure-queue');
 
@@ -146,15 +145,14 @@ module.exports = function (app, ctx) {
     const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
     const winMs = Math.max(1, Math.min(Number(cfg.windowMinutes) || 60, 1440)) * 60000;
     const maxWin = Math.max(1, Math.min(Number(cfg.maxPerWindow) || 20, 1000));
-    const gapMs = Math.max(8, Math.min(Number(cfg.interval) || 60, 600)) * 1000;
+    const gapMs = Math.max(6, Math.min(Number(cfg.listInterval) || 10, 60)) * 1000;
     const rec = state[host] || {};
     const nowMs = Date.now();
     const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - winMs; }) : [];
     const waitMs = Math.max(0, (Number(rec.lastAt) || 0) + gapMs - nowMs);
     const dayCount = Number(rec.dayCount) || 0;
-    const dayMax = limits.dailyMax();
-    return ok({ host: host, count: dayCount, dailyMax: dayMax, leftToday: Math.max(0, dayMax - dayCount),
+    return ok({ host: host, count: dayCount,
       windowCount: times.length, windowMax: maxWin, windowMinutes: Math.round(winMs / 60000),
-      waitMs: waitMs, lastAt: rec.lastAt || 0, lastError: rec.lastError || '', page: rec.page || 0, catIdx: rec.catIdx || 0 });
+      waitMs: waitMs, lastAt: rec.lastAt || 0, lastListAt: rec.lastListAt || 0, lastDetailAt: rec.lastDetailAt || 0, lastError: rec.lastError || '', page: rec.page || 0, catIdx: rec.catIdx || 0 });
   });
 };

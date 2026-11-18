@@ -19,7 +19,7 @@
           <span>{{ plan.catGroups }} 组 / {{ plan.catIds }} 个 id</span>
           <button class="btn ghost slim" type="button" @click="plan.on = false">收起</button>
         </div>
-        <div class="crawl-plan-note">引擎 {{ plan.engine || '未识别' }} · 间隔至少 {{ plan.interval }} 秒 · 单站每天最多 {{ plan.dailyMax }} 次 · 预估 {{ plan.estimatedQueries }} 次查询</div>
+        <div class="crawl-plan-note">引擎 {{ plan.engine || '未识别' }} · 列表 {{ plan.listInterval }} 秒 / 详情 {{ plan.interval }} 秒 · {{ plan.estimatedQueries }} 个合并搜索</div>
         <div class="crawl-plan-note" id="crawl-plan-today">{{ plan.today }}</div>
         <div v-for="u in plan.urls" :key="u.cat + '-' + u.catId" class="crawl-plan-note crawl-plan-url">GET {{ u.url }}</div>
         <ul v-if="plan.warnings.length" class="crawl-plan-warn">

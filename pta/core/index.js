@@ -16,7 +16,6 @@ const flowConfig = require('../server/flow-config');
 const screen = require('../server/screen');
 const adapters = require('../server/adapters');
 const secretbox = require('../server/secretbox');
-const limits = require('../server/limits');
 const PKG = require('../../package.json');
 
 function unwrap(r) {
@@ -80,21 +79,18 @@ function createCore(opts) {
     const preset = readPresets()[host] || null;
     const cats = (preset && preset.cats) || (def && def.cats) || {};
     const groups = Object.keys(cats);
-    let ids = 0;
-    groups.forEach(k => { ids += (cats[k] || []).length });
+    const allIds = [];
+    groups.forEach(k => { (cats[k] || []).forEach(id => allIds.push(id)) });
+    const ids = allIds.length;
     const warnings = [];
     if (!preset) warnings.push('还没有搜索预设，分类 id 未知');
     if (!def) warnings.push('没有站点定义，拼不出搜索 URL');
     const urls = [];
-    if (def && def.base) {
-      groups.forEach(k => (cats[k] || []).forEach(id => {
-        if (urls.length < 10) urls.push({ cat: k, catId: id, url: adapters.buildSearchUrl(def, '{q}', [id]) });
-      }));
-    }
+    if (def && def.base) urls.push({ cat: '合并', catId: allIds.join('/'), url: adapters.buildSearchUrl(def, '{q}', allIds) });
     return {
-      siteHost: host, dryRun: true, runMode: c.runMode || 'test', interval: c.interval || 60,
-      dailyMax: limits.dailyMax(), catGroups: groups.length, catIds: ids,
-      estimatedQueries: (ids || groups.length) * 1, searchUrls: urls, warnings,
+      siteHost: host, dryRun: true, runMode: c.runMode || 'test', listInterval: c.listInterval || 10, interval: c.interval || 600,
+      catGroups: groups.length, catIds: ids,
+      estimatedQueries: allIds.length ? 1 : 0, searchUrls: urls, warnings,
       engine: (preset && preset.engine) || (def && def.engine) || '',
       steps: ['读取站点定义', '读取搜索预设', '生成搜索 URL']
     };

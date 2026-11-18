@@ -5,7 +5,8 @@
       <select class="select slim sb-every" :value="String(sched.everyMinutes)" @change="$emit('every', Number($event.target.value) || 60)">
         <option v-for="n in [30, 60, 120, 240]" :key="n" :value="String(n)">{{ n }} 分钟</option>
       </select>
-      <label class="sb-f">请求间隔 <input v-model.number="limits.interval" class="input num sb-num" type="number" :min="LIMITS.interval[0]" :max="LIMITS.interval[1]" @change="saveLimit('interval')"> 秒</label>
+      <label class="sb-f">列表 <input v-model.number="limits.listInterval" class="input num sb-num" type="number" :min="LIMITS.listInterval[0]" :max="LIMITS.listInterval[1]" @change="saveLimit('listInterval')"> 秒</label>
+      <label class="sb-f">详情 <input v-model.number="limits.interval" class="input num sb-num" type="number" :min="LIMITS.interval[0]" :max="LIMITS.interval[1]" @change="saveLimit('interval')"> 秒</label>
       <label class="sb-f">窗口 <input v-model.number="limits.windowMinutes" class="input num sb-num" type="number" :min="LIMITS.windowMinutes[0]" :max="LIMITS.windowMinutes[1]" @change="saveLimit('windowMinutes')"> 分钟</label>
       <label class="sb-f">窗口最多 <input v-model.number="limits.maxPerWindow" class="input num sb-num" type="number" :min="LIMITS.maxPerWindow[0]" :max="LIMITS.maxPerWindow[1]" @change="saveLimit('maxPerWindow')"> 次</label>
       <label class="sb-f">失败暂停 <input v-model.number="limits.breaker" class="input num sb-num" type="number" :min="LIMITS.breaker[0]" :max="LIMITS.breaker[1]" @change="saveLimit('breaker')"> 次</label>
@@ -21,6 +22,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['every', 'save'])
 const LIMITS = {
+  listInterval: [6, 60],
   interval: [8, 600],
   windowMinutes: [1, 1440],
   maxPerWindow: [1, 1000],

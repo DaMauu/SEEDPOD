@@ -214,10 +214,6 @@
                       </div>
                     </div>
                     <div class="set-field">
-                      <div class="lbl"><span>每天抓几次</span></div>
-                      <div class="ctl"><input v-model="form.ovDaily" class="input num" inputmode="numeric" placeholder="留空＝跟随全局"></div>
-                    </div>
-                    <div class="set-field">
                       <div class="lbl"><span>抓详情页</span></div>
                       <div class="ctl">
                         <button class="switch" :class="{ on: form.ovDetail }" type="button" @click.stop="form.ovDetail = !form.ovDetail"><i></i></button>
@@ -277,7 +273,7 @@ const catPurposes = [
 const s = computed(function () { return props.site || {} })
 const host = computed(function () { return (props.site && props.site.name) || '' })
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
-const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDaily: '', ovDetail: false, priority: 'normal' })
+const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDetail: false, priority: 'normal' })
 const defText = ref('')
 const defSaving = ref(false)
 const defMsg = ref('')
@@ -383,7 +379,6 @@ function fillForm(site) {
   form.cookie = ''
   form.override = site.override
   form.ovInterval = site.ovInterval
-  form.ovDaily = site.ovDaily
   form.ovDetail = site.ovDetail
   form.priority = site.priority
 }
@@ -490,7 +485,7 @@ async function saveSite(site) {
   busy.save = true
   const ok = await patchConfig({
     url: form.url, override: !!form.override, ovInterval: form.ovInterval,
-    ovDaily: form.ovDaily, ovDetail: !!form.ovDetail, priority: form.priority
+    ovDetail: !!form.ovDetail, priority: form.priority
   })
   if (ok) {
     const cookie = String(form.cookie || '').trim()

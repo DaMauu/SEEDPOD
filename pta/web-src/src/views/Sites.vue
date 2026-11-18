@@ -110,7 +110,7 @@ const addOpen = ref(false)
 const addForm = reactive({ url: '', arch: '?', title: '' })
 const busy = reactive({ selfcheck: false, bulk: false })
 const bulkOpen = ref(false)
-const bulkForm = reactive({ ovr: 'keep', iv: 'keep', daily: '', det: 'keep', prio: 'keep' })
+const bulkForm = reactive({ ovr: 'keep', iv: 'keep', det: 'keep', prio: 'keep' })
 let loaded = false
 let loadBusy = false
 let bootTimer = null
@@ -132,7 +132,6 @@ const sites = computed(() => baseSites.value
       mode: c.mode || 'incremental',
       override: !!c.override,
       ovInterval: c.ovInterval == null ? '' : String(c.ovInterval),
-      ovDaily: c.ovDaily == null ? '' : String(c.ovDaily),
       ovDetail: !!c.ovDetail,
       priority: c.priority || 'normal',
       config: c,
@@ -314,7 +313,6 @@ function openBulk() {
   if (!picks.value.length) return
   bulkForm.ovr = 'keep'
   bulkForm.iv = 'keep'
-  bulkForm.daily = ''
   bulkForm.det = 'keep'
   bulkForm.prio = 'keep'
   bulkOpen.value = true
@@ -327,7 +325,6 @@ async function applyBulk() {
     const patch = {}
     if (bulkForm.ovr !== 'keep') patch.override = bulkForm.ovr === 'on'
     if (bulkForm.iv !== 'keep') patch.ovInterval = bulkForm.iv
-    if (String(bulkForm.daily || '').trim()) patch.ovDaily = String(bulkForm.daily).trim()
     if (bulkForm.det !== 'keep') patch.ovDetail = bulkForm.det === 'on'
     if (bulkForm.prio !== 'keep') patch.priority = bulkForm.prio
     try {

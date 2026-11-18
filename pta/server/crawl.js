@@ -6,8 +6,6 @@ const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const marksMod = require('./marks');
-const cursor = require('./cursor');
-const limits = require('./limits');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const flowConfig = require('./flow-config');
@@ -48,13 +46,13 @@ function makeCrawl(ctx) {
     const s = siteCfg ? (jparse(siteCfg.data) || {}) : {};
     const C = cfg();
     const OV = { '1 分钟': 60000, '5 分钟': 300000, '15 分钟': 900000, '1 小时': 3600000 };
-    const baseGap = Math.max(8, Math.min(Number(C.interval) || 60, 600)) * 1000;
+    const listGap = Math.max(6, Math.min(Number(C.listInterval) || 10, 60)) * 1000;
+    const detailGap = Math.max(8, Math.min(Number(C.interval) || 600, 600)) * 1000;
     const winMin = Math.max(1, Math.min(Number(C.windowMinutes) || 60, 1440));
     const maxWin = Math.max(1, Math.min(Number(C.maxPerWindow) || 20, 1000));
-    if (!s.override) return { minGapMs: baseGap, windowMs: winMin * 60000, maxPerWindow: maxWin, dailyMax: limits.dailyMax() };
-    const gap = Math.max(baseGap, OV[String(s.ovInterval || '')] || 0);
-    const maxW = Math.max(1, Math.min(maxWin, Number(s.ovDaily) || maxWin));
-    return { minGapMs: gap, windowMs: winMin * 60000, maxPerWindow: maxW, dailyMax: limits.dailyMax() };
+    if (!s.override) return { listGapMs: listGap, detailGapMs: detailGap, windowMs: winMin * 60000, maxPerWindow: maxWin };
+    const gap = Math.max(listGap, OV[String(s.ovInterval || '')] || 0);
+    return { listGapMs: gap, detailGapMs: Math.max(detailGap, gap), windowMs: winMin * 60000, maxPerWindow: maxWin };
   }
 
   function upsertCatalog(items) {
@@ -111,11 +109,9 @@ function makeCrawl(ctx) {
       Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { sel.push(String(id)); }); });
       if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
     } catch (e) { /* 没预设就全抓 */ }
-    const catIdxRaw = Number(opts.catIdx >= 0 ? opts.catIdx : 0);
-    const st0 = readState();
-    const rec0 = st0[host] || {};
-    const catIdx = opts.catIdx >= 0 && opts.catIdx !== '' ? catIdxRaw : Number(rec0.catIdx || 0);
-    const ids = catMap.length ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : [];
+    const hasCat = opts.catIdx !== undefined && opts.catIdx !== '' && Number(opts.catIdx) >= 0;
+    const catIdx = hasCat ? Math.max(0, Number(opts.catIdx) || 0) : 0;
+    const ids = catMap.length ? (hasCat ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : catMap.map(function (x) { return x.id; })) : [];
     let url0 = adapters.buildSearchUrl(def, '', ids);
     try {
       const flt = siteMaps.getHost(DATA_DIR, host).filters;
@@ -137,11 +133,9 @@ function makeCrawl(ctx) {
     const nowMs = Date.now();
     const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - lim.windowMs; }) : [];
     rec.times = times;
-    if (limits.dailyBlocked(rec.dayCount, lim.dailyMax)) {
-      return { err: { code: 'DAILY_LIMIT', message: '今天这个站已经抓了 ' + rec.dayCount + ' 次，服务端硬顶 ' + lim.dailyMax + ' 次/天', extra: { count: rec.dayCount, max: lim.dailyMax } } };
-    }
-    if (nowMs - (rec.lastAt || 0) < lim.minGapMs) {
-      return { err: { code: 'TOO_SOON', message: '距上次抓取不到 ' + Math.round(lim.minGapMs / 1000) + ' 秒，等一下再抓', extra: { waitMs: lim.minGapMs - (nowMs - (rec.lastAt || 0)) } } };
+    const lastList = Number(rec.lastListAt || rec.lastAt) || 0;
+    if (nowMs - lastList < lim.listGapMs) {
+      return { err: { code: 'TOO_SOON', message: '距上次列表页不到 ' + Math.round(lim.listGapMs / 1000) + ' 秒，等一下再抓', extra: { waitMs: lim.listGapMs - (nowMs - lastList) } } };
     }
     if (times.length >= lim.maxPerWindow) {
       return { err: { code: 'WINDOW_LIMIT', message: '最近 ' + Math.round(lim.windowMs / 60000) + ' 分钟已经发了 ' + times.length + ' 次，超过上限 ' + lim.maxPerWindow + ' 次', extra: { count: times.length, max: lim.maxPerWindow } } };
@@ -158,17 +152,18 @@ function makeCrawl(ctx) {
       status = res.status;
       html = await res.text().catch(function () { return ''; });
     } catch (e) {
-      rec.dayCount += 1; rec.lastAt = nowMs; rec.lastError = 'CRAWL_FAILED'; state[host] = rec; saveState(state);
+      rec.dayCount += 1; rec.lastAt = nowMs; rec.lastListAt = nowMs; rec.lastError = 'CRAWL_FAILED'; state[host] = rec; saveState(state);
       if (ctx.logEvent) ctx.logEvent('warn', '抓取', host + ' · CRAWL_FAILED · ' + (e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 120)));
       return { err: { code: 'CRAWL_FAILED', message: e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 160) } };
     }
     const loggedOut = status === 302 || /takelogin\.php|请先登录/i.test(html);
     function mark(code) {
-      rec.dayCount = (Number(rec.dayCount) || 0) + 1; rec.lastAt = nowMs; rec.lastError = code; state[host] = rec; saveState(state);
+      rec.dayCount = (Number(rec.dayCount) || 0) + 1; rec.lastAt = nowMs; rec.lastListAt = nowMs; rec.lastError = code; state[host] = rec; saveState(state);
       if (ctx.logEvent) ctx.logEvent('warn', '抓取', host + ' · ' + code);
     }
     if (loggedOut) { mark('LOGIN_REQUIRED'); return { err: { code: 'LOGIN_REQUIRED', message: 'cookie 已失效，先做一次会话自检' } }; }
     if (status !== 200) { mark('CRAWL_HTTP_' + status); return { err: { code: 'CRAWL_HTTP_' + status, message: '站点返回 ' + status } }; }
+    rec.lastListAt = Date.now();
     let rows = [];
     try { rows = adapters.parseList(html, def.engine) || []; } catch (e) { rows = []; }
     const limit = Math.max(1, Math.min(200, Number(opts.limit) || 100));
@@ -195,7 +190,7 @@ function makeCrawl(ctx) {
     });
     /* 抓详情页：受开关与窗口预算双重约束，最多 10 条，每条都算一次请求 */
     let detail = { want: false, tried: 0, ok: 0, failed: 0, stopped: '' };
-    let lastReqAt = nowMs;
+    let lastReqAt = rec.lastListAt || nowMs;
     if (items.length) {
       const siteRow = one('SELECT data FROM sites WHERE host = ?', host);
       const site = siteRow ? (jparse(siteRow.data) || {}) : {};
@@ -207,23 +202,24 @@ function makeCrawl(ctx) {
       if (want) {
         const cap = Math.max(1, Math.min(10, Number(opts.detailLimit) || 10));
         const budget = Math.max(0, lim.maxPerWindow - rec.times.length - 1);
-        const dailyLeft = Math.max(0, lim.dailyMax - rec.dayCount - 1);
-        const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget, dailyLeft));
-        if (!picks.length) detail.stopped = dailyLeft <= 0 ? 'DAILY_LIMIT' : 'WINDOW_LIMIT';
-        /* 详情页用独立的 6–10 秒间隔，不跟列表页的 60 秒/10 分钟间隔绑死 */
-        const detailGap = Math.max(6000, Math.min(10000, lim.minGapMs));
+        const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget));
+        if (!picks.length) detail.stopped = 'WINDOW_LIMIT';
+        /* 详情页用自己的间隔（默认 600 秒），跟列表页分开算 */
+        const detailGap = lim.detailGapMs;
         for (const it of picks) {
-          const elapsed = Date.now() - (rec.lastAt || 0);
-          if (rec.lastAt && elapsed < detailGap) await sleep(detailGap - elapsed);
+          const lastDetail = Number(rec.lastDetailAt) || 0;
+          if (lastDetail) {
+            const elapsed = Date.now() - lastDetail;
+            if (elapsed < detailGap) await sleep(detailGap - elapsed);
+          }
           if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
-          if (rec.dayCount + 1 >= lim.dailyMax) { detail.stopped = 'DAILY_LIMIT'; break; }
           detail.tried++;
           try {
             const res2 = await fetch(it.detailsUrl, {
               headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
               redirect: 'manual', signal: AbortSignal.timeout(15000)
             });
-            rec.lastAt = Date.now(); lastReqAt = rec.lastAt;
+            rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
             rec.times.push(rec.lastAt);
             rec.dayCount += 1;
             if (res2.status !== 200) { detail.failed++; it.detailNote = 'HTTP ' + res2.status; continue; }
@@ -255,7 +251,7 @@ function makeCrawl(ctx) {
           } catch (e) {
             detail.failed++;
             it.detailNote = '详情请求失败';
-            rec.lastAt = Date.now(); lastReqAt = rec.lastAt;
+            rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
             rec.dayCount += 1;
           }
         }
@@ -314,10 +310,10 @@ function makeCrawl(ctx) {
     rec.times.push(nowMs);
     rec.dayCount += 1;
     rec.count = rec.times.length;
-    const nc = cursor.nextCursor({ catCount: catMap.length, catIdx: catIdx, page: page, rows: rows.length, rotate: opts.rotate !== false });
-    rec.page = nc.page;
+    /* 合并搜索：不轮分类，翻到最后一页（0 条）或第 50 页就从第 1 页重开 */
+    rec.page = (rows.length > 0 && page < 50) ? page : 0;
     rec.lastRows = rows.length;
-    rec.catIdx = nc.catIdx;
+    rec.catIdx = 0;
     rec.catId = ids[0] || '';
     state[host] = rec;
     saveState(state);
@@ -328,7 +324,7 @@ function makeCrawl(ctx) {
     }
     return { host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
       categoryId: ids[0] || '', categories: catMap.length, added: out.added, updated: out.updated, skipped: out.skipped,
-      nextPage: nc.page + 1, daily: { day: rec.day, count: rec.dayCount, max: lim.dailyMax }, nextCategoryId: catMap.length ? catMap[Math.min(catMap.length - 1, nc.catIdx)].id : '', rotated: nc.rotated, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.minGapMs, detail: detail };
+      nextPage: rec.page + 1, daily: { day: rec.day, count: rec.dayCount }, rotated: false, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.listGapMs, detail: detail };
   }
 
   return { crawlOnce: crawlOnce };

@@ -61,7 +61,7 @@ module.exports = function (app, ctx) {
       if (!host) return bad(reply, 'BAD_REQUEST', '要指定 siteHost');
       const r = await ctx.crawl.crawlOnce(host, { catIdx: b.catIdx, page: b.page, limit: b.limit, detail: b.detail, detailLimit: b.detailLimit, rotate: b.rotate });
       if (r && r.err) {
-        const http = (r.err.code === 'TOO_SOON' || r.err.code === 'DAILY_LIMIT') ? 429 : 502;
+        const http = r.err.code === 'TOO_SOON' ? 429 : 502;
         return bad(reply, r.err.code, r.err.message, http);
       }
       return ok(reply, r);

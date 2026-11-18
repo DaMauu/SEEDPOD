@@ -8,7 +8,7 @@ export function useCrawlScheduler(opts) {
   const targetHost = opts.targetHost
   const detail = opts.detail
 
-  const limits = reactive({ interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3 })
+  const limits = reactive({ listInterval: 10, interval: 600, windowMinutes: 60, maxPerWindow: 20, breaker: 3 })
 
 const sched = reactive({ on: false, everyMinutes: 60, running: false, lastRunAt: 0, lastError: '' })
 const fmtTime = t => new Date(t).toLocaleString('zh-CN', { hour12: false })
@@ -81,6 +81,11 @@ async function loadGates() {
     gates.realCrawl = !!j.data.user.realCrawl
     gates.realPublish = !!j.data.user.realPublish
     gates.realImages = !!j.data.user.realImages
+    limits.listInterval = Number(j.data.user.listInterval) || 10
+    limits.interval = Number(j.data.user.interval) || 600
+    limits.windowMinutes = Number(j.data.user.windowMinutes) || 60
+    limits.maxPerWindow = Number(j.data.user.maxPerWindow) || 20
+    limits.breaker = Number(j.data.user.breaker) || 3
     gates.loaded = true
   }
 }
@@ -104,7 +109,7 @@ function toggleGate(key) {
     return
   }
   if (next && key === 'realCrawl') {
-    confirmBox('开启真抓取？', '开启后会真实访问来源站；请确认站点授权、频率和每天上限。', () => applyGate(key, true))
+    confirmBox('开启真抓取？', '开启后会真实访问来源站；请确认站点授权、频率和窗口上限。', () => applyGate(key, true))
     return
   }
   if (next && key === 'realImages') {

@@ -481,7 +481,6 @@ async function main() {
     db.close();
     const s = await (await fetchA(BASE + '/api/crawl/status?host=' + host)).json();
     need(s.ok && s.data.page === 7 && s.data.catIdx === 2 && s.data.count === 5, '状态字段不对：' + JSON.stringify(s));
-    need(typeof s.data.dailyMax === 'number' && typeof s.data.waitMs === 'number', '状态缺额度字段：' + JSON.stringify(s.data));
     await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
   });
 

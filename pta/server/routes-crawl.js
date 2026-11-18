@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
-const limits = require('./limits');
 const dupeClassify = require('./dupe-classify');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
@@ -237,8 +236,9 @@ module.exports = function (app, ctx) {
     const preset = readPresets()[host] || null;
     const cats = (preset && preset.cats) || {};
     const groups = Object.keys(cats);
-    let ids = 0;
-    groups.forEach(function (k) { ids += (cats[k] || []).length; });
+    const allIds = [];
+    groups.forEach(function (k) { (cats[k] || []).forEach(function (id) { allIds.push(id); }); });
+    const ids = allIds.length;
     const warnings = [];
     if (!preset) warnings.push('还没有搜索预设，分类 id 未知');
     if (!def) warnings.push('没有站点定义，拼不出搜索 URL');
@@ -246,25 +246,19 @@ module.exports = function (app, ctx) {
     if (def && def.base) {
       const flt = siteMaps.getHost(DATA_DIR, host).filters;
       const sv = (flt && flt.selectedValues) || {};
-      groups.forEach(function (k) {
-        (cats[k] || []).forEach(function (id) {
-          if (searchUrls.length >= 10) return;
-          let u = adapters.buildSearchUrl(def, '{q}', [id]);
-          try {
-            const uu = new URL(u);
-            ['medium', 'standard', 'spstate'].forEach(function (key) {
-              (sv[key] || []).forEach(function (v) { uu.searchParams.append(key, String(v)); });
-            });
-            u = uu.toString();
-          } catch (e) { /* 保留原地址 */ }
-          searchUrls.push({ cat: k, catId: id, url: u });
+      let u = adapters.buildSearchUrl(def, '{q}', allIds);
+      try {
+        const uu = new URL(u);
+        ['medium', 'standard', 'spstate'].forEach(function (key) {
+          (sv[key] || []).forEach(function (v) { uu.searchParams.append(key, String(v)); });
         });
-      });
+        u = uu.toString();
+      } catch (e) { /* 保留原地址 */ }
+      searchUrls.push({ cat: '合并', catId: allIds.join('/'), url: u });
     }
     return ok(reply, {
-      siteHost: host, runMode: cfg.runMode || 'test', interval: cfg.interval || 60,
-      dailyMax: limits.dailyMax(),
-      catGroups: groups.length, catIds: ids, estimatedQueries: (ids || groups.length) * 1,
+      siteHost: host, runMode: cfg.runMode || 'test', listInterval: cfg.listInterval || 10, interval: cfg.interval || 600,
+      catGroups: groups.length, catIds: ids, estimatedQueries: allIds.length ? 1 : 0,
       searchUrls: searchUrls, warnings: warnings, engine: preset && preset.engine || ''
     });
   });

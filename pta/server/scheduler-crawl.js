@@ -8,7 +8,7 @@ function makeCrawlPhase() {
           /* 站点轮转：优先级高的先跑；同优先级按上次抓取时间从早到晚，间隔没到的跳过 */
           const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
           const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
-          const gapMs = Math.max(8, Math.min(Number(cfg.interval) || 60, 600)) * 1000;
+          const gapMs = Math.max(6, Math.min(Number(cfg.listInterval) || 10, 60)) * 1000;
           const stateRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
           const crawlState = JSON.parse(stateRow ? stateRow.v : 'null') || {};
           const nowMs = Date.now();
@@ -22,7 +22,7 @@ function makeCrawlPhase() {
           const due = allSites.filter(function (x) { return !x.lastAt || nowMs - x.lastAt >= gapMs; });
           const sites = due.slice(0, 10);
           let ok = 0, failed = 0, skipped = 0, added = 0, rows = 0;
-          const BENIGN = /^(TOO_SOON|WINDOW_LIMIT|DAILY_LIMIT|BUSY)$/;
+          const BENIGN = /^(TOO_SOON|WINDOW_LIMIT|BUSY)$/;
           for (const x of sites) {
             try {
               const r = await crawl.crawlOnce(x.host, { limit: 100 });

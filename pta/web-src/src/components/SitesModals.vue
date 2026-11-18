@@ -12,7 +12,6 @@
             <select v-model="bulkForm.ovr" class="select"><option value="keep">不改</option><option value="on">开启</option><option value="off">关闭</option></select></div>
           <div class="sd-field"><span>抓取间隔</span>
             <select v-model="bulkForm.iv" class="select"><option value="keep">不改</option><option value="">抓完全部</option><option value="1">1 分钟</option><option value="5">5 分钟</option><option value="15">15 分钟</option><option value="60">1 小时</option></select></div>
-          <div class="sd-field"><span>单站每日上限</span><input v-model="bulkForm.daily" class="input" placeholder="留空＝不改"></div>
           <div class="sd-field"><span>抓详情页</span>
             <select v-model="bulkForm.det" class="select"><option value="keep">不改</option><option value="on">开启</option><option value="off">关闭</option></select></div>
           <div class="sd-field"><span>站点优先级</span>

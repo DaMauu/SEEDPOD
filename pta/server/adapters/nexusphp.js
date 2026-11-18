@@ -211,6 +211,10 @@ function buildSearchUrl(def, q, cats) {
       if (!ids.length) return;
       if (mode === 'multi') ids.forEach(function (id) { parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(id)); });
       else if (mode === 'bracket') ids.forEach(function (id) { parts.push(encodeURIComponent(k + '[]') + '=' + encodeURIComponent(id)); });
+      else if (mode === 'indexed') ids.forEach(function (id, i) {
+        const key = /\[\d+\]/.test(k) ? k.replace(/\[\d+\]/, '[' + i + ']') : k + '[' + i + ']';
+        parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(id));
+      });
       else parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(ids[0]));
       return;
     }

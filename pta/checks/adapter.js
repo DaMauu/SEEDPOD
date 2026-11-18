@@ -56,6 +56,10 @@ check('拼搜索 URL', () => {
   const multi = adapter.buildSearchUrl(Object.assign({}, def, { catMode: 'bracket' }), 'x', ['401', '402']);
   need(/cat%5B%5D=401/.test(multi) && /cat%5B%5D=402/.test(multi), '多分类 bracket 拼法不对：' + multi);
 
+  const indexed = adapter.buildSearchUrl({ base: 'https://example.org/', searchPath: '/torrents.php', params: { name: '{q}', 'categories[0]': '{cats}' }, catMode: 'indexed' }, '', ['401', '402']);
+  need(/categories%5B0%5D=401/.test(indexed) && /categories%5B1%5D=402/.test(indexed), '多分类 indexed 拼法不对：' + indexed);
+  need(/^https:\/\/example\.org\/torrents\.php\?name=&/.test(indexed), '空关键词不该丢参数：' + indexed);
+
   const none = adapter.buildSearchUrl(def, 'x', []);
   need(none.indexOf('cat=') < 0, '没有分类时不该带 cat：' + none);
 });
@@ -315,14 +319,6 @@ check('分类游标会轮转', () => {
   need(r.catIdx === 1 && r.page === 0 && !r.rotated, '抓这一类不该换分类：' + JSON.stringify(r));
   r = nextCursor({ catCount: 1, catIdx: 0, page: 5, rows: 0 });
   need(r.catIdx === 0 && r.page === 0, '只有一类时原地归零：' + JSON.stringify(r));
-});
-
-check('每日硬顶', () => {
-  const limits = require(path.join(ROOT, 'server', 'limits'));
-  const max = limits.dailyMax();
-  need(max >= 1 && max <= 100, '每日上限范围不对：' + max);
-  need(limits.dailyBlocked(max, max) === true, '到上限应拦');
-  need(limits.dailyBlocked(max - 1, max) === false, '没到上限不该拦');
 });
 
 for (const [ok, name, why] of results) console.log((ok ? 'PASS  ' : 'FAIL  ') + name + (ok ? '' : '  → ' + why));
