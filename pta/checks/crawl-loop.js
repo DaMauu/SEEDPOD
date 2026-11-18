@@ -68,6 +68,18 @@ function harness(pages) {
     need(h.state.box['a.example'].page === 0, '增量后游标没归零：' + JSON.stringify(h.state.box));
   });
 
+  await check('站点把页码夹在最后一页时，重复页会停', async function () {
+    const h = harness([
+      { rows: 5, page: 1, added: 1, updated: 0, pageKey: '1|5|5' },
+      { rows: 5, page: 2, added: 1, updated: 0, pageKey: '1|5|5' },
+      { rows: 5, page: 3, added: 1, updated: 0, pageKey: '9|9|5' }
+    ]);
+    const r = await h.run();
+    need(r.ok === 1 && r.pages === 2, '重复页应停在第 2 页：' + JSON.stringify(r));
+    need(h.calls() === 2, '重复页后还在请求：' + h.calls());
+    need(!h.state.box['a.example'].fullDoneAt, '重复页不该标全量完成');
+  });
+
   await check('连续失败停站计数仍生效', async function () {
     let fail = 0;
     const h = harness([{ err: { code: 'CRAWL_HTTP_403', message: '403' } }]);

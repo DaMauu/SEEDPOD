@@ -35,7 +35,8 @@ function makeCrawlPhase() {
           for (const x of sites) {
             const mode = (crawlState[x.host] && crawlState[x.host].fullDoneAt) ? 'incremental' : 'full';
             let siteOk = false, siteFailed = false, siteSkipped = false, endBy = '';
-            for (let pageNo = 0; pageNo < 50; pageNo++) {
+            let lastKey = '';
+            for (let pageNo = 0; pageNo < 1000; pageNo++) {
               let r = null;
               for (let attempt = 0; attempt < 3; attempt++) {
                 try {
@@ -65,16 +66,18 @@ function makeCrawlPhase() {
               added += Number(r.added) || 0;
               rows += Number(r.rows) || 0;
               resetSiteFail(x.host);
+              const key = String(r.pageKey || '');
+              if (pageNo > 0 && key && key === lastKey) { endBy = 'repeated-page'; break; }
+              lastKey = key;
               if (mode === 'incremental' && Number(r.added) === 0) { endBy = 'no-new'; break; }
               if (!Number(r.rows)) { endBy = 'end'; break; }
-              if (Number(r.page) >= 50) { endBy = 'page-cap'; break; }
               await sleepFor(gapMs + 250);
             }
             /* 第一次抓完整个预设后标 fullDoneAt；之后增量：遇到 0 新增就停，并从第 1 页重开 */
             try {
               const st = readState();
               const rec = st[x.host] || {};
-              if (mode === 'full' && (endBy === 'end' || endBy === 'page-cap')) rec.fullDoneAt = new Date().toISOString();
+              if (mode === 'full' && endBy === 'end') rec.fullDoneAt = new Date().toISOString();
               if (mode === 'incremental') { rec.page = 0; rec.catIdx = 0; }
               st[x.host] = rec;
               saveState(st);

@@ -146,7 +146,7 @@ function makeCrawl(ctx) {
     if (times.length >= lim.maxPerWindow) {
       return { err: { code: 'WINDOW_LIMIT', message: '最近 ' + Math.round(lim.windowMs / 60000) + ' 分钟已经发了 ' + times.length + ' 次，超过上限 ' + lim.maxPerWindow + ' 次', extra: { count: times.length, max: lim.maxPerWindow } } };
     }
-    const page = Math.max(1, Math.min(50, Number(opts.page) || 0 || ((rec.page || 0) + 1)));
+    const page = Math.max(1, Math.min(10000, Number(opts.page) || 0 || ((rec.page || 0) + 1)));
     const url = adapters.withPage(url0, page);
     const t0 = Date.now();
     let html = '', status = 0;
@@ -363,7 +363,7 @@ function makeCrawl(ctx) {
     rec.dayCount += 1;
     rec.count = rec.times.length;
     /* 合并搜索：不轮分类，翻到最后一页（0 条）或第 50 页就从第 1 页重开 */
-    rec.page = (rows.length > 0 && page < 50) ? page : 0;
+    rec.page = rows.length > 0 ? page : 0;
     rec.lastRows = rows.length;
     rec.catIdx = 0;
     rec.catId = ids[0] || '';
@@ -376,7 +376,7 @@ function makeCrawl(ctx) {
     }
     return { host: host, url: url, page: page, status: status, ms: Date.now() - t0, rows: rows.length, limit: limit,
       categoryId: ids[0] || '', categories: catMap.length, added: out.added, updated: out.updated, skipped: out.skipped,
-      nextPage: rec.page + 1, daily: { day: rec.day, count: rec.dayCount }, rotated: false, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.listGapMs, detail: detail };
+      pageKey: rows.length ? (String(rows[0].id || '') + '|' + String(rows[rows.length - 1].id || '') + '|' + rows.length) : '', nextPage: rec.page + 1, daily: { day: rec.day, count: rec.dayCount }, rotated: false, window: { minutes: Math.round(lim.windowMs / 60000), count: rec.count, max: lim.maxPerWindow }, nextAllowedMs: lim.listGapMs, detail: detail };
   }
 
   return { crawlOnce: crawlOnce };
