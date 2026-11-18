@@ -7,6 +7,8 @@ const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
 const { makeErrorStats } = require('./error-stats');
 const { makeFailureQueue } = require('./failure-queue');
+const { makeTarget } = require('./target');
+const { makeTargetService } = require('./target-service');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -15,6 +17,7 @@ module.exports = function (app, ctx) {
   const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
   const errorStats = makeErrorStats(ctx);
   const failureQueue = makeFailureQueue(ctx);
+  const targetService = makeTargetService(ctx, makeTarget(ctx));
 
   app.get('/api/errors', async (req) => ok(errorStats.snapshot(req.query.limit)));
 
@@ -92,8 +95,64 @@ module.exports = function (app, ctx) {
     return ok({ checked: checked, dup: dup });
   });
 
-  /* 按条件送审：与调度器共用 screen 模块 */
-  app.post('/api/catalog/screen', async (req) => ok(screen.screenCatalog(ctx, req.body || {})));
+  /* 按条件送审：本地初筛后，立刻对选中的条目查一次目标站，命中已有就跳过 */
+  app.post('/api/catalog/screen', async (req) => {
+    const b = req.body || {};
+    const out = screen.screenCatalog(ctx, b);
+    const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+    const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+    const targetHost = String(b.targetHost || cfg.targetHost || '').trim().toLowerCase();
+    const limit = Math.max(0, Math.min(20, b.dedupeLimit === undefined ? 20 : Number(b.dedupeLimit) || 0));
+    out.dupe = { target: targetHost, checked: 0, found: 0, skipped: 0, errors: 0, deferred: 0, skippedReason: '' };
+    if (!out.selected || !Array.isArray(out.selectedIds)) return ok(out);
+    if (!targetHost) { out.dupe.skippedReason = 'no-target'; return ok(out); }
+    if (!limit) { out.dupe.skippedReason = 'off'; return ok(out); }
+    const ids = out.selectedIds.slice(0, limit);
+    out.dupe.deferred = Math.max(0, out.selectedIds.length - ids.length);
+    for (const id of ids) {
+      const row = one('SELECT status, data FROM queue WHERE id = ?', id);
+      if (!row) continue;
+      const it = jparse(row.data) || {};
+      try {
+        const chk = await targetService.checkDupe(targetHost, it, null);
+        out.dupe.checked++;
+        it.dupeResults = it.dupeResults || {};
+        it.dupeResults[targetHost] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: now() };
+        if (chk.found && chk.skip) {
+          it.status = 'skipped';
+          it.dupeSkipped = { at: now(), hosts: [targetHost] };
+          db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?').run('skipped', JSON.stringify(it), now(), id);
+          if (it.catalogId) {
+            const crow = one('SELECT data FROM catalog WHERE id = ?', it.catalogId);
+            const cd = jparse(crow && crow.data) || {};
+            cd.status = 'skipped';
+            cd.dupe = 'dupe';
+            cd.dupeTarget = targetHost;
+            cd.dupeAt = now();
+            cd.dupeTitle = String(chk.title || '').slice(0, 160);
+            db.prepare('UPDATE catalog SET status = ?, data = ?, updated_at = ? WHERE id = ?').run('skipped', JSON.stringify(cd), now(), it.catalogId);
+          }
+          out.dupe.skipped++;
+          out.selected--;
+          out.skipped++;
+          out.byReason['目标站已有'] = (out.byReason['目标站已有'] || 0) + 1;
+        } else {
+          if (chk.found) out.dupe.found++;
+          it.dupePassedAt = it.dupePassedAt || now();
+          db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), id);
+        }
+      } catch (e) {
+        out.dupe.errors++;
+        it.dedupeAttempts = (Number(it.dedupeAttempts) || 0) + 1;
+        it.dedupeLastAttemptAt = now();
+        it.dedupeLastErrorCode = e && e.code ? String(e.code) : 'TARGET_UNREACHABLE';
+        it.dedupeLastError = String(e && e.message || e).slice(0, 160);
+        it.dedupeNextRetryAt = new Date(Date.now() + 15 * 60000).toISOString();
+        db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), id);
+      }
+    }
+    return ok(out);
+  });
 
   app.get('/api/published', async () => {
     const rows = all('SELECT data FROM published ORDER BY created_at DESC LIMIT 200');

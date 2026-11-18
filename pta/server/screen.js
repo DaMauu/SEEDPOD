@@ -1,17 +1,14 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
 const marksMod = require('./marks');
-const flowConfig = require('./flow-config');
 const { tx } = require('./db');
 
 function flowRules(sets, rx) {
-  const allRows = [];
-  ['fetch', 'dedupe', 'pub'].forEach(function (k) {
-    const arr = Array.isArray(sets[k]) ? sets[k] : [];
-    arr.forEach(function (g) { if (Array.isArray(g)) g.forEach(function (r) { if (r) allRows.push(r); }); });
-  });
+  /* 只读 ② 初筛卡（fetch[1]），不跨区域借发布/查重卡的规则 */
+  const groups = sets && Array.isArray(sets.fetch) ? sets.fetch : [];
+  const group = Array.isArray(groups[1]) ? groups[1] : [];
   const byTitle = {};
-  allRows.forEach(function (r) { if (r && r.t && byTitle[r.t] === undefined) byTitle[r.t] = r; });
+  group.forEach(function (r) { if (r && r.t && byTitle[r.t] === undefined) byTitle[r.t] = r; });
   const pick = function (t) {
     return byTitle[t] || {};
   };
@@ -57,7 +54,6 @@ function screenCatalog(ctx, opts) {
   const flow = JSON.parse(flowRow ? flowRow.v : 'null') || {};
   const rx = flow.rx || {};
   const rules = flowRules(flow.sets || {}, rx);
-  rules.requireIntro = flowConfig.on(flowConfig.read(ctx), '必须有简介', false);
 
   const norm = (s2) => String(s2 || '').toLowerCase().replace(/[\s\-_.]+/g, '');
   /* 来源站已停用的词条不再送审，避免发布时去抓停用站的种子 */
@@ -82,6 +78,7 @@ function screenCatalog(ctx, opts) {
   const rows = all("SELECT id, site, data FROM catalog WHERE status = 'new' LIMIT 500");
   let checked = 0, selected = 0, skipped = 0;
   const byReason = {};
+  const selectedIds = [];
   const n = (one('SELECT COUNT(*) AS n FROM queue') || { n: 0 }).n;
   let seq = n;
 
@@ -102,7 +99,6 @@ function screenCatalog(ctx, opts) {
     else if (rules.minSizeGB && bytes && bytes < rules.minSizeGB * 1073741824) reason = '体积偏小';
     else if (rules.maxSizeGB && bytes && bytes > rules.maxSizeGB * 1073741824) reason = '体积偏大';
     else if (rules.requireChinese && hasDetail && !/中字|简繁|双语|国语|chs|cht|chinese/i.test(detailText)) reason = '没有中字';
-    else if (rules.requireIntro && !String(it.intro || it.descr || '').trim()) reason = '缺简介';
     else if (seenTitles.has(norm(title))) reason = '已有同片';
     else if (it.infohash && seenHashes.has(String(it.infohash).toLowerCase())) reason = '已有同片';
 
@@ -140,9 +136,10 @@ function screenCatalog(ctx, opts) {
     });
     seenTitles.add(norm(title));
     if (it.infohash) seenHashes.add(String(it.infohash).toLowerCase());
+    selectedIds.push(item.id);
     selected++;
   }
-  return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, rules: rules };
+  return { checked: checked, selected: selected, skipped: skipped, byReason: byReason, rules: rules, selectedIds: selectedIds };
 }
 
 module.exports = { flowRules, hit, screenCatalog };

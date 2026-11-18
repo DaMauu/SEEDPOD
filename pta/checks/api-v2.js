@@ -215,7 +215,7 @@ async function main() {
     })).json();
     need(add.ok && add.data.added === 8, '写入 8 条失败：' + JSON.stringify(add));
 
-    const flow = { sets: { pub: [[
+    const flow = { sets: { fetch: [[], [
       { t: '分辨率要求', v: '2160p 及以上' },
       { t: '体积范围', v: '10 GB 起' },
       { t: '必须带中字', on: true }
@@ -237,7 +237,7 @@ async function main() {
     need(/限转/.test(JSON.stringify(j.data.byReason)), '没有限转原因');
   });
 
-  await check('必须有简介规则拦送审', async () => {
+  await check('必须有简介不拦送审（只在终审检查）', async () => {
     await (await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ items: [{ site: 'demo-a.example', title: 'No Intro 2024 2160p 中字', res: '2160p', size: '20 GB', sizeBytes: 20 * 1024 ** 3 }] })
@@ -250,7 +250,11 @@ async function main() {
     const j = await (await fetchA(BASE + '/api/catalog/screen', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ limit: 10 })
     })).json();
-    need(j.ok && j.data.skipped === 1 && /缺简介/.test(JSON.stringify(j.data.byReason)), '缺简介没被拦：' + JSON.stringify(j.data));
+    need(j.ok && j.data.selected === 1 && !/缺简介/.test(JSON.stringify(j.data.byReason)), '送审不该因缺简介被拦：' + JSON.stringify(j.data));
+    const q = await (await fetchA(BASE + '/api/queue?q=No%20Intro')).json();
+    for (const it of (q.data && q.data.items) || []) {
+      await fetchA(BASE + '/api/queue/' + encodeURIComponent(it.id), { method: 'DELETE' });
+    }
   });
 
   await check('排除正则命中即拒绝，旧白名单不再生效', async () => {

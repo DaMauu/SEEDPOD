@@ -68,6 +68,7 @@ const lastId = ref(0)
 const panel = ref(null)
 let es = null
 let timer = null
+let reconnectTimer = null
 let loaded = false
 const failures = ref([])
 const failTotal = ref(0)
@@ -127,14 +128,22 @@ function connect() {
       const d = JSON.parse(ev.data)
       push({
         id: d.id,
-        t: d.ts ? new Date(d.ts).toTimeString().slice(0, 8) : '',
-        lvl: d.level === 'warn' ? 'warn' : d.level === 'error' ? 'error' : 'info',
-        tag: d.src || '服务',
+        t: d.t || '',
+        lvl: d.lvl === 'warn' ? 'warn' : d.lvl === 'error' ? 'error' : 'info',
+        tag: d.tag || d.src || '服务',
         msg: d.msg || ''
       })
     } catch (e) { reportError('Logs', e) }
   }
-  es.onerror = () => { if (es) { es.close(); es = null } }
+  es.onerror = () => {
+    if (es) { es.close(); es = null }
+    if (!reconnectTimer) {
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null
+        if (!es && loggedIn() && viewVisible('logs')) connect()
+      }, 3000)
+    }
+  }
 }
 async function loadFailures() {
   if (!loggedIn()) return
@@ -182,6 +191,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('hashchange', ensureLogs)
   if (timer) clearInterval(timer)
+  if (reconnectTimer) clearTimeout(reconnectTimer)
   if (es) es.close()
 })
 </script>
@@ -195,7 +205,7 @@ onUnmounted(() => {
 .fail-meta { font-size: 11.5px; color: var(--muted); }
 .fail-bar .btn { margin-left: 0; }
 .fail-empty { padding: 8px 0 10px; font-size: 12px; color: var(--muted-2); }
-.fail-list { display: flex; flex-direction: column; }
+.fail-list { display: flex; flex-direction: column; max-height: 200px; overflow-y: auto; }
 .fail-row { display: grid; grid-template-columns: 96px 90px 150px 56px 160px auto 64px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 11.5px; }
 .fail-id { color: var(--muted-2); font-family: var(--mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fail-stage { color: var(--muted); }
@@ -240,8 +250,8 @@ onUnmounted(() => {
 .log-panel { display: flex; flex-direction: column; justify-content: flex-end; }
 .log-panel { justify-content: flex-start; }
 .log-row { font-size: 12px; }
-.log-wrap { height: auto; flex: 0 0 auto; width: 100%; }
-.log-panel { flex: 0 0 auto; height: 560px; }
+.log-wrap { flex: 1 1 auto; min-height: 0; height: auto; width: 100%; }
+.log-panel { flex: 1 1 0; height: auto; min-height: 0; }
 @media (max-width: 900px) {
 .log-bar { flex-wrap: wrap; gap: 8px; }
 .fail-row { grid-template-columns: 84px 76px minmax(0,1fr) 50px 120px auto; }
@@ -256,4 +266,8 @@ onUnmounted(() => {
 .log-row .log-src { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
-:global(.view[data-view="logs"]) { height: calc(100vh - 150px); display: flex; flex-direction: column; justify-content: center; }</style>
+:global(.view[data-view="logs"]) { height: calc(100vh - 150px); min-height: 420px; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+@media (max-width: 900px) {
+  :global(.view[data-view="logs"]) { height: auto; min-height: 0; overflow: visible; }
+  .log-panel { flex: 0 0 auto; height: 420px; }
+}</style>

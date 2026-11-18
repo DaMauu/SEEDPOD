@@ -339,7 +339,7 @@ async function dupeCheck() {
   busy.dupe = false
 }
 function screenAll() {
-  confirmBox('按条件送审', (site.value ? '只处理「' + site.value + '」的待筛选词条，' : '') + '会先查重，再按流程页「查重」里的条件送去待审核，不符合的标成跳过。继续？', async () => {
+  confirmBox('按条件送审', (site.value ? '只处理「' + site.value + '」的待筛选词条，' : '') + '会先按流程页 ②「初筛」的条件筛一遍，再做本地查重，然后逐条查目标站；命中已有的标成跳过。目标站本轮最多查 20 条，剩余留到下一轮。继续？', async () => {
     if (busy.screen) return
     busy.screen = true
     try {
@@ -352,7 +352,10 @@ function screenAll() {
       const rs = Object.keys(d.byReason || {}).map(k => k + ' ' + d.byReason[k]).join(' · ')
       const rl = d.rules || {}
       const noRule = !(rl.res && rl.res.length) && !rl.minSizeGB && !rl.maxSizeGB && !rl.requireChinese
-      toast((noRule ? '还没设筛选条件，按全部通过 · ' : '') + '检查 ' + d.checked + ' 条 · 送审 ' + d.selected + ' · 跳过 ' + d.skipped + (rs ? '（' + rs + '）' : ''))
+      const du = d.dupe || {}
+      const duTxt = du.skippedReason === 'no-target' ? ' · 未设目标站，没查目标站'
+        : (du.checked ? (' · 目标站查重 ' + du.checked + ' 条，已有 ' + ((du.found || 0) + (du.skipped || 0)) + (du.deferred ? '，剩余 ' + du.deferred + ' 条下轮' : '')) : '')
+      toast((noRule ? '初筛条件为空，按全部通过 · ' : '') + '检查 ' + d.checked + ' 条 · 送审 ' + d.selected + ' · 跳过 ' + d.skipped + (rs ? '（' + rs + '）' : '') + duTxt)
       loadSources()
       if (window.__ptaLoadOverview) window.__ptaLoadOverview()
     } catch (e) { toast('筛选请求发不出去') }
