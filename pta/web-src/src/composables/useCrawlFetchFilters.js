@@ -3,7 +3,6 @@ import { computed } from 'vue'
 export function useCrawlFetchFilters(opts) {
   const rules = opts.rules
   const sourceHost = opts.sourceHost
-  const busy = opts.busy
   const toast = opts.toast
   const getJson = opts.getJson
 
@@ -43,29 +42,5 @@ async function saveFilters() {
   if (missing.length) toast('本站搜索页没有这些选项：' + missing.join('/'))
 }
 
-async function prepareNext() {
-  if (busy.prepare) return
-  busy.prepare = true
-  const a = await getJson('/api/release/run', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ stage: 'prepared', limit: 20 })
-  })
-  if (!a || !a.ok) {
-    busy.prepare = false
-    toast((a && a.error && a.error.message) || '准备失败')
-    return
-  }
-  const b = await getJson('/api/release/run', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ stage: 'previewed', limit: 20 })
-  })
-  busy.prepare = false
-  if (!b || !b.ok) {
-    toast('已准备 ' + ((a.data && a.data.prepared) || 0) + ' 条，预览失败；不会自动发布')
-    return
-  }
-  toast('已准备 ' + ((a.data && a.data.prepared) || 0) + ' · 已预览 ' + ((b.data && b.data.previewed) || 0) + ' · 不会自动发布')
-}
-
-  return { typeRow, loadTypes, saveTypes, saveFilters, prepareNext };
+  return { typeRow, loadTypes, saveTypes, saveFilters };
 }

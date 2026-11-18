@@ -2,7 +2,6 @@
   <section class="sched-bar" id="sched-bar">
     <div class="sb-main"><span class="sb-title">调度</span><span class="sb-note">{{ schedText }}</span></div>
     <div class="sb-actions">
-      <label class="sb-sw">自动跑 <button class="switch" :class="{ on: sched.on }" type="button" role="switch" :aria-checked="String(sched.on)" @click="$emit('toggle')"><i></i></button></label>
       <select class="select slim sb-every" :value="String(sched.everyMinutes)" @change="$emit('every', Number($event.target.value) || 60)">
         <option v-for="n in [30, 60, 120, 240]" :key="n" :value="String(n)">{{ n }} 分钟</option>
       </select>
@@ -10,7 +9,6 @@
       <label class="sb-f">窗口 <input v-model.number="limits.windowMinutes" class="input num sb-num" type="number" :min="LIMITS.windowMinutes[0]" :max="LIMITS.windowMinutes[1]" @change="saveLimit('windowMinutes')"> 分钟</label>
       <label class="sb-f">窗口最多 <input v-model.number="limits.maxPerWindow" class="input num sb-num" type="number" :min="LIMITS.maxPerWindow[0]" :max="LIMITS.maxPerWindow[1]" @change="saveLimit('maxPerWindow')"> 次</label>
       <label class="sb-f">失败暂停 <input v-model.number="limits.breaker" class="input num sb-num" type="number" :min="LIMITS.breaker[0]" :max="LIMITS.breaker[1]" @change="saveLimit('breaker')"> 次</label>
-      <button class="btn ghost slim" type="button" :disabled="sched.running" @click="$emit('run')">{{ sched.running ? '跑着呢…' : '立即跑一次' }}</button>
     </div>
   </section>
 </template>
@@ -21,7 +19,7 @@ const props = defineProps({
   schedText: { type: String, default: '' },
   limits: { type: Object, required: true }
 })
-const emit = defineEmits(['toggle', 'every', 'save', 'run'])
+const emit = defineEmits(['every', 'save'])
 const LIMITS = {
   interval: [8, 600],
   windowMinutes: [1, 1440],

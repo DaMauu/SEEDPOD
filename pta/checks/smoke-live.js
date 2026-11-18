@@ -290,7 +290,9 @@ async function main() {
     need(await page.locator('#sched-bar .sb-num').count() === 4, '调度条请求限制输入数量不对');
     need(await page.locator('#flow-gates').count() === 1, '没有发布闸门');
     need(!/\bon\b/.test(await page.locator('#gate-publish').getAttribute('class') || ''), '自动发布默认应为关');
-    need(await page.locator('#flow-prepare').count() === 1, '没有准备下一批按钮');
+    need(await page.locator('#flow-run').count() === 1, '没有跑一轮按钮');
+    need(await page.locator('#gate-auto').count() === 1, '没有自动抓取总开关');
+    need(await page.locator('#flow-prepare').count() === 0, '准备下一批应该移除');
     need(await page.locator('#crawl-dry-run').count() === 0, '本地演练按钮还在');
     need(await page.locator('#crawl-live-run').count() === 0, '全局抓一页应该移除');
     need(await page.locator('#crawl-plan-btn').count() === 1, '抓取计划按钮缺失');
@@ -388,16 +390,28 @@ async function main() {
     need(await page.locator('#sched-bar').isVisible(), '流程页没有调度条');
   });
 
-  await check('流程页调度开关可用', async () => {
-    const sw = page.locator('#sched-bar button.switch');
-    await sw.click();
-    await page.waitForTimeout(500);
+  await check('流程页自动抓取开关', async () => {
+    need(await page.locator('#gate-auto').count() === 1, '没有自动抓取开关');
+    await page.locator('#gate-auto').click();
+    await page.waitForTimeout(300);
     let j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
-    need(j.ok && j.data.on === true, 'UI 没打开调度');
-    await sw.click();
+    need(j.ok && j.data.on === false, '真抓取关着也能开自动抓取');
+    await page.locator('#gate-crawl').click();
+    await page.waitForTimeout(200);
+    await page.locator('#confirm-yes').click();
+    await page.waitForTimeout(500);
+    await page.locator('#gate-auto').click();
+    await page.waitForTimeout(200);
+    await page.locator('#confirm-yes').click();
     await page.waitForTimeout(500);
     j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
-    need(j.ok && j.data.on === false, 'UI 没关闭调度');
+    need(j.ok && j.data.on === true, 'UI 没打开自动抓取');
+    await page.locator('#gate-auto').click();
+    await page.waitForTimeout(500);
+    j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
+    need(j.ok && j.data.on === false, 'UI 没关闭自动抓取');
+    await page.locator('#gate-crawl').click();
+    await page.waitForTimeout(400);
   });
 
   await check('站点页站点包入口', async () => {

@@ -11,7 +11,6 @@
               </div>
               <div class="sd-actions">
                 <button class="switch sm" :class="{ on: s.enabled }" type="button" title="启用或停用这个站的抓取" @click.stop="toggleEnabled(s)"><i></i></button>
-                <button class="btn slim" type="button" :disabled="busy.crawl || !s.enabled" title="按搜索预设抓这个站一页；真抓取受服务端开关约束" @click.stop="crawlOne(s)">抓一页</button>
                 <select class="select slim sd-arch-sel" id="sd-arch" :value="s.arch" title="站点架构" @click.stop @change="setArch(s, $event)">
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
@@ -40,6 +39,10 @@
                       <div class="sd-row"><span>分类参数</span><b>{{ catRangeTxt(s) }}</b></div>
                       <div class="sd-row"><span>抓取状态</span><b :class="s.enabled ? (s.lastAt ? 'ok-t' : 'idle-t') : 'idle-t'">{{ s.enabled ? (s.lastAt ? '正常' : '待抓取') : '已停用' }}</b></div>
                       <div class="sd-row"><span>词条</span><b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></div>
+                      <div class="sd-test">
+                        <button class="btn ghost slim" id="sd-try-crawl" type="button" :disabled="busy.crawl || !s.enabled" title="验证配置：按搜索预设只抓这一站一页；会真实请求，受真抓取开关约束" @click.stop="crawlOne(s)">试抓一页</button>
+                        <span class="sd-test-note">验证配置，只抓这一站一页</span>
+                      </div>
                     </div>
                     <div class="sd-block">
                       <h4>抓取</h4>
@@ -994,6 +997,8 @@ watch(host, function (h, old) {
   width: auto; max-width: none; justify-self: stretch; }
 .site-expand .sd-block .sd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .site-expand .sd-block .sd-row + .sd-row { border-top: 1px solid #f2f4f8; }
+.sd-test { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; margin-top: 4px; border-top: 1px solid #f2f4f8; }
+.sd-test-note { font-size: 10.5px; color: var(--muted-2); }
 .st-all { display: flex; align-items: center; }
 .st-all input { width: 14px; height: 14px; accent-color: var(--accent); }
 .site-expand .sd-compact { align-items: stretch; }

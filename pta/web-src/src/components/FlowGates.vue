@@ -1,15 +1,17 @@
 <template>
   <section class="flow-gates" id="flow-gates">
     <div class="fg-main">
-      <span class="fg-title">发布闸门</span>
+      <span class="fg-title">流程开关</span>
+      <span class="fg-note">自动抓取管什么时候跑，真抓取管允不允许真发</span>
     </div>
     <div class="fg-switches">
+      <label>自动抓取 <button class="switch" id="gate-auto" :class="{ on: sched.on }" type="button" role="switch" :aria-checked="String(sched.on)" @click="$emit('toggle-auto')"><i></i></button></label>
       <label>真抓取 <button class="switch" id="gate-crawl" :class="{ on: gates.realCrawl }" type="button" role="switch" :aria-checked="String(gates.realCrawl)" @click="$emit('toggle', 'realCrawl')"><i></i></button></label>
       <label>自动发布 <button class="switch" id="gate-publish" :class="{ on: gates.realPublish }" type="button" role="switch" :aria-checked="String(gates.realPublish)" @click="$emit('toggle', 'realPublish')"><i></i></button></label>
       <label>图床实传 <button class="switch" id="gate-images" :class="{ on: gates.realImages }" type="button" role="switch" :aria-checked="String(gates.realImages)" @click="$emit('toggle', 'realImages')"><i></i></button></label>
     </div>
     <div class="fg-actions">
-      <button class="btn primary slim" id="flow-prepare" type="button" :disabled="busy.prepare" @click="$emit('prepare')">{{ busy.prepare ? '准备中…' : '准备下一批（不发布）' }}</button>
+      <button class="btn primary slim" id="flow-run" type="button" :disabled="sched.running" @click="$emit('run-round')">{{ sched.running ? '跑着呢…' : '跑一轮' }}</button>
       <a class="btn ghost slim" href="#queue">去待审核</a>
     </div>
   </section>
@@ -18,13 +20,13 @@
 <script setup>
 defineProps({
   gates: { type: Object, required: true },
-  busy: { type: Object, required: true }
+  sched: { type: Object, required: true }
 })
-defineEmits(['toggle', 'prepare'])
+defineEmits(['toggle', 'toggle-auto', 'run-round'])
 </script>
 
 <style scoped>
-/* 发布闸门：默认关，准备/预览不提交 */
+/* 发布闸门：默认关，跑一轮不提交 */
 .flow-gates { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); }
 .fg-main { display: flex; flex-direction: column; gap: 2px; min-width: 200px; }
 .fg-title { font-size: 12.5px; font-weight: 600; color: var(--ink); }

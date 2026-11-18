@@ -1,8 +1,8 @@
 <template>
   <div class="drawers">
     <div id="crawl-panel">
-      <FlowGates :gates="gates" :busy="busy" @toggle="toggleGate" @prepare="prepareNext" />
-      <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @toggle="toggleSched" @every="setEveryValue" @save="saveLimits" @run="runSched" />
+      <FlowGates :gates="gates" :sched="sched" @toggle="toggleGate" @toggle-auto="toggleAuto" @run-round="runRound" />
+      <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @every="setEveryValue" @save="saveLimits" />
       <CrawlCard v-model:source-host="sourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" />
       <ScreenDedupeCard :busy="busy" :rx-rows="rxRows" :auto-dupe="autoDupe" :dedupe-switches="dedupeSwitches" :dedupe-inputs="dedupeInputs" :rule-component="RuleOrSpecial" :rule-control="RuleControl" @save="saveScreen" @toggle-auto-dupe="autoDupe = !autoDupe" />
       <PublishCard :groups="pubGroups" :busy="busy" :rule-component="RuleOrSpecial" @maps="mapOpen = true" @save="savePub" />
@@ -73,9 +73,9 @@ const tplPreview = computed(() => {
 
 const sourceHost = ref('')
 const targetHost = ref('')
-const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, prepare: false })
-const { typeRow, loadTypes, saveTypes, saveFilters, prepareNext } = useCrawlFetchFilters({ rules: rules, sourceHost: sourceHost, busy: busy, toast: toast, getJson: getJson })
-const { limits, sched, schedText, gates, loadSched, saveSched, toggleSched, setEveryValue, saveLimits, runSched, loadGates, applyGate, toggleGate } = useCrawlScheduler({ getJson: getJson, toast: toast, confirmBox: confirmBox, patchUser: patchUser, targetHost: targetHost, detail: detail })
+const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false })
+const { typeRow, loadTypes, saveTypes, saveFilters } = useCrawlFetchFilters({ rules: rules, sourceHost: sourceHost, toast: toast, getJson: getJson })
+const { limits, sched, schedText, gates, loadSched, setEveryValue, saveLimits, runRound, loadGates, toggleGate, toggleAuto } = useCrawlScheduler({ getJson: getJson, toast: toast, confirmBox: confirmBox, patchUser: patchUser, targetHost: targetHost, detail: detail })
 const { loadFlow, saveFetch, saveScreen, savePub, toggleDetail } = useCrawlFlow({ rules: rules, rx: rx, limits: limits, detail: detail, autoDupe: autoDupe, busy: busy, toast: toast, getJson: getJson, putFlow: putFlow, patchUser: patchUser, saveTypes: saveTypes, saveFilters: saveFilters })
 const { plan, showPlan } = useCrawlPlan({ sourceHost: sourceHost, busy: busy, toast: toast })
 const { sites, siteStatus, siteCfg, targetOpen, targetQ, siteOptions, targetSite, targetOptions, loadSites, saveSource, pickTarget } = useCrawlSites({ getJson: getJson, patchUser: patchUser, toast: toast, reportError: reportError, loadTypes: loadTypes, loadSched: function () { return loadSched() }, sourceHost: sourceHost, targetHost: targetHost })

@@ -21,7 +21,7 @@ function makeCrawlPhase() {
             .sort(function (a, b) { return (b.priority - a.priority) || (a.lastAt - b.lastAt) || a.host.localeCompare(b.host); });
           const due = allSites.filter(function (x) { return !x.lastAt || nowMs - x.lastAt >= gapMs; });
           const sites = due.slice(0, 10);
-          let ok = 0, failed = 0, skipped = 0;
+          let ok = 0, failed = 0, skipped = 0, added = 0, rows = 0;
           const BENIGN = /^(TOO_SOON|WINDOW_LIMIT|DAILY_LIMIT|BUSY)$/;
           for (const x of sites) {
             try {
@@ -29,10 +29,15 @@ function makeCrawlPhase() {
               if (r && r.err) {
                 if (BENIGN.test(r.err.code)) skipped++;
                 else { failed++; bumpSiteFail(x.host, r.err.message || r.err.code); }
-              } else { ok++; resetSiteFail(x.host); }
+              } else {
+                ok++;
+                added += Number(r && r.added) || 0;
+                rows += Number(r && r.rows) || 0;
+                resetSiteFail(x.host);
+              }
             } catch (e) { failed++; bumpSiteFail(x.host, e && e.message ? e.message : '抓取异常'); }
           }
-          return { sites: sites.length, ok: ok, failed: failed, skipped: skipped, waiting: allSites.length - due.length };
+          return { sites: sites.length, ok: ok, failed: failed, skipped: skipped, waiting: allSites.length - due.length, added: added, rows: rows };
         } else {
           return { skipped: 'realCrawl off' };
         }
