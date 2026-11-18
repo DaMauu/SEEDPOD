@@ -111,10 +111,14 @@ function makeCrawl(ctx) {
       Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { sel.push(String(id)); }); });
       if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
     } catch (e) { /* 没预设就全抓 */ }
-    const catIdxRaw = Number(opts.catIdx >= 0 ? opts.catIdx : 0);
     const st0 = readState();
     const rec0 = st0[host] || {};
-    const catIdx = opts.catIdx >= 0 && opts.catIdx !== '' ? catIdxRaw : Number(rec0.catIdx || 0);
+    /* 增量抓取：关 = 每轮从第 1 页开始；开 = 首次全新，非首次接着断点 */
+    const incOn = cfg().incrementalCrawl === true;
+    const firstRun = !(Number(rec0.lastAt) || Number(rec0.page) || Number(rec0.catIdx));
+    const keepCursor = incOn && !firstRun;
+    const hasCat = opts.catIdx !== undefined && opts.catIdx !== '' && Number(opts.catIdx) >= 0;
+    const catIdx = hasCat ? Number(opts.catIdx) : (keepCursor ? (Number(rec0.catIdx) || 0) : 0);
     const ids = catMap.length ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : [];
     let url0 = adapters.buildSearchUrl(def, '', ids);
     try {
@@ -146,7 +150,8 @@ function makeCrawl(ctx) {
     if (times.length >= lim.maxPerWindow) {
       return { err: { code: 'WINDOW_LIMIT', message: '最近 ' + Math.round(lim.windowMs / 60000) + ' 分钟已经发了 ' + times.length + ' 次，超过上限 ' + lim.maxPerWindow + ' 次', extra: { count: times.length, max: lim.maxPerWindow } } };
     }
-    const page = Math.max(1, Math.min(50, Number(opts.page) || 0 || ((rec.page || 0) + 1)));
+    const optPage = Number(opts.page) || 0;
+    const page = Math.max(1, Math.min(50, optPage > 0 ? optPage : (keepCursor ? ((rec.page || 0) + 1) : 1)));
     const url = adapters.withPage(url0, page);
     const t0 = Date.now();
     let html = '', status = 0;

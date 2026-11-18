@@ -296,6 +296,10 @@ async function main() {
     need(await page.locator('#crawl-dry-run').count() === 0, '本地演练按钮还在');
     need(await page.locator('#crawl-live-run').count() === 0, '全局抓一页应该移除');
     need(await page.locator('#crawl-plan-btn').count() === 1, '抓取计划按钮缺失');
+    need(await page.locator('#crawl-global').count() === 1, '抓取总设置缺失');
+    need(await page.locator('#crawl-next').count() === 1, '抓一页按钮缺失');
+    need(await page.locator('#crawl-incremental').count() === 1, '增量抓取开关缺失');
+    need(!/\bon\b/.test(await page.locator('#crawl-incremental').getAttribute('class') || ''), '增量抓取默认应为关');
     const crawlSel = page.locator('#crawl-site');
     if (await crawlSel.locator('option').count() > 1) {
       await crawlSel.selectOption({ index: 1 });

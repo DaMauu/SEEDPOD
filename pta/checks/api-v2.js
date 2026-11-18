@@ -465,6 +465,34 @@ async function main() {
     need(!(list2.data.sites || []).some(x => x.host === 'added.example'), '移除后列表还在');
   });
 
+  await check('抓取状态返回分类数，增量开关可保存', async () => {
+    const host = 'cursor.example';
+    const add = await fetchA(BASE + '/api/sites', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'https://cursor.example/index.php', arch: 'NP', title: 'Cursor Site' })
+    });
+    need(add.status === 200, '添加站点失败 ' + add.status);
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    const row = db.prepare("SELECT v FROM meta WHERE k = 'crawl-state'").get();
+    const st = row ? JSON.parse(row.v) : {};
+    st[host] = { page: 7, catIdx: 2, lastAt: Date.now() };
+    db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
+    db.close();
+    fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [host]: { cats: { movie: ['1', '2'], tv: ['3'] } } } }));
+    const s = await (await fetchA(BASE + '/api/crawl/status?host=' + host)).json();
+    need(s.ok && s.data.page === 7 && s.data.catIdx === 2 && s.data.catCount === 3, '状态字段不对：' + JSON.stringify(s.data));
+    const inc = await (await fetchA(BASE + '/api/config/user', {
+      method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ incrementalCrawl: true })
+    })).json();
+    need(inc.ok && inc.data.incrementalCrawl === true, '增量抓取开关没保存：' + JSON.stringify(inc));
+    const off = await (await fetchA(BASE + '/api/config/user', {
+      method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ incrementalCrawl: false })
+    })).json();
+    need(off.ok && off.data.incrementalCrawl === false, '增量抓取开关没关闭：' + JSON.stringify(off));
+    await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
+  });
+
   await check('站点分类映射数组/对象回读', async () => {
     const host = 'map.example';
     const arr = { engine: 'nexusphp', base: 'https://map.example', cats: { movie: ['401'], tv: ['402'] },

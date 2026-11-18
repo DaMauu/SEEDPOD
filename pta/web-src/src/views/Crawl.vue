@@ -3,7 +3,7 @@
     <div id="crawl-panel">
       <FlowGates :gates="gates" :sched="sched" @toggle="toggleGate" @toggle-auto="toggleAuto" @run-round="runRound" />
       <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @every="setEveryValue" @save="saveLimits" />
-      <CrawlCard v-model:source-host="sourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" />
+      <CrawlCard v-model:source-host="sourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" :progress="progress" :incremental="gates.incrementalCrawl" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" @crawl-next="crawlNext" @toggle-incremental="toggleGate('incrementalCrawl')" />
       <ScreenDedupeCard :busy="busy" :rx-rows="rxRows" :auto-dupe="autoDupe" :dedupe-switches="dedupeSwitches" :dedupe-inputs="dedupeInputs" :rule-component="RuleOrSpecial" :rule-control="RuleControl" @save="saveScreen" @toggle-auto-dupe="autoDupe = !autoDupe" />
       <PublishCard :groups="pubGroups" :busy="busy" :rule-component="RuleOrSpecial" @maps="mapOpen = true" @save="savePub" />
     </div>
@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { computed, h, reactive, ref } from 'vue'
+import { computed, h, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 import RuleControl from '../components/RuleControl.vue'
@@ -73,13 +73,15 @@ const tplPreview = computed(() => {
 
 const sourceHost = ref('')
 const targetHost = ref('')
-const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false })
+const busy = reactive({ fetch: false, dedupe: false, pub: false, plan: false, crawl: false })
 const { typeRow, loadTypes, saveTypes, saveFilters } = useCrawlFetchFilters({ rules: rules, sourceHost: sourceHost, toast: toast, getJson: getJson })
 const { limits, sched, schedText, gates, loadSched, setEveryValue, saveLimits, runRound, loadGates, toggleGate, toggleAuto } = useCrawlScheduler({ getJson: getJson, toast: toast, confirmBox: confirmBox, patchUser: patchUser, targetHost: targetHost, detail: detail })
 const { loadFlow, saveFetch, saveScreen, savePub, toggleDetail } = useCrawlFlow({ rules: rules, rx: rx, limits: limits, detail: detail, autoDupe: autoDupe, busy: busy, toast: toast, getJson: getJson, putFlow: putFlow, patchUser: patchUser, saveTypes: saveTypes, saveFilters: saveFilters })
-const { plan, showPlan } = useCrawlPlan({ sourceHost: sourceHost, busy: busy, toast: toast })
+const { plan, showPlan, progress, loadProgress, crawlNext } = useCrawlPlan({ sourceHost: sourceHost, busy: busy, toast: toast })
 const { sites, siteStatus, siteCfg, targetOpen, targetQ, siteOptions, targetSite, targetOptions, loadSites, saveSource, pickTarget } = useCrawlSites({ getJson: getJson, patchUser: patchUser, toast: toast, reportError: reportError, loadTypes: loadTypes, loadSched: function () { return loadSched() }, sourceHost: sourceHost, targetHost: targetHost })
-useCrawlBoot({ sites: sites, gates: gates, loadSites: loadSites, loadGates: loadGates, loadFlow: loadFlow })
+useCrawlBoot({ sites: sites, gates: gates, loadSites: loadSites, loadGates: loadGates, loadFlow: loadFlow, onEnter: loadProgress })
+watch(sourceHost, function () { loadProgress() })
+watch(function () { return sched.lastRunAt }, function () { loadProgress() })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
   const cells = []
