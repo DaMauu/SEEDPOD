@@ -87,6 +87,7 @@ function makePlan(deps) {
       tagFields.push(field);
     });
     const warnings = [];
+    const notes = [];
     /* 源站单独的 BDInfo/MediaInfo 框，或简介里的 [hide=bdinfo]/[hide=mediainfo]：
        目标站有专用字段就填字段，并把简介里的重复块去掉。 */
     const bdKey = infoFieldKey(t.upload.fields, 'bdinfo');
@@ -120,9 +121,9 @@ function makePlan(deps) {
     if (teamRaw) {
       if (/^\d+$/.test(teamRaw)) fields.team_sel = teamRaw;
       else if (teamMap[teamRaw] != null) fields.team_sel = String(teamMap[teamRaw]);
-      else { delete fields.team_sel; warnings.push('制作组 ' + teamRaw + ' 没映射到站点 id，已留空'); }
+      else { delete fields.team_sel; warnings.push('制作组「' + teamRaw + '」没映射到目标站，发布前需要手选'); }
     }
-    if (!v.catId) warnings.push('分类没映射，type 留空');
+    if (!v.catId) warnings.push('目标站分类没映射，请到「站点映射」补上');
     /* 必填下拉没映射时：先按源地区/媒介对选项，再退站点默认值，避免“你必须选择地区” */
     const REQUIRED = ['type', 'source_sel', 'team_sel', 'standard_sel', 'codec_sel', 'audiocodec_sel', 'medium_sel'];
     const defaults = (t.form && t.form.defaults) || {};
@@ -134,12 +135,12 @@ function makePlan(deps) {
       if (Array.isArray(opts) && opts.length) auto = targetDefaults.betterDefault(opts, item);
       if (auto) {
         fields[k] = auto;
-        warnings.push('必填字段 ' + k + ' 按源信息选 ' + auto);
+        notes.push(k);
         return;
       }
       if (defaults[k] != null && defaults[k] !== '') {
         fields[k] = String(defaults[k]);
-        warnings.push('必填字段 ' + k + ' 用默认值 ' + defaults[k]);
+        notes.push(k);
       }
     });
     /* 下拉值必须在站点选项里；不在就按标签纠正，纠不了留空 */
@@ -150,17 +151,17 @@ function makePlan(deps) {
       if (vals.indexOf(String(fields[k])) >= 0) return;
       const byLabel = opts.filter(function (o) { return String(o.label || '') === String(fields[k]); })[0];
       if (byLabel) { fields[k] = String(byLabel.value); return; }
-      warnings.push('字段 ' + k + ' 的值不在站点选项里，已留空');
+      notes.push(k);
       delete fields[k];
     });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
     const hasCookie = !!(c && c.cookie);
     const fieldCount = Object.keys(fields).length;
-    if (!hasCookie) warnings.push('没有 cookie');
-    if (!t.upload.path) warnings.push('没有上传地址');
-    if (!fieldCount) warnings.push('上传字段为空');
-    if (!t.verify.path) warnings.push('没有回查地址');
+    if (!hasCookie) warnings.push('目标站没有 cookie');
+    if (!t.upload.path) warnings.push('目标站没有上传地址');
+    if (!fieldCount) warnings.push('目标站上传字段为空');
+    if (!t.verify.path) warnings.push('目标站没有回查地址');
     return { ok: true, data: {
       host: t.host, engine: t.engine, url: t.base + t.upload.path, method: 'POST',
       fileField: t.upload.fileField, fields: fields,
@@ -182,7 +183,7 @@ function makePlan(deps) {
       anonymous: !!item.anonymous,
       verifyUrl: t.base + expand(t.verify.path || '', uv),
       hasCookie: hasCookie, ready: !!(hasCookie && t.upload.path && fieldCount),
-      warnings: warnings
+      warnings: warnings, notes: notes
     } };
   }
 

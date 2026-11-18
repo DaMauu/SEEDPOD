@@ -102,8 +102,9 @@
               <div v-for="t in sel.prepared.targets" :key="t.host" class="qd-target-plan">
                 <span class="badge" :class="t.target ? (t.target.ready === false ? 'amber' : 'green') : 'red'">{{ t.host }}</span>
                 <span v-if="t.target" class="t-sub">{{ t.target.engine }} · {{ Object.keys(t.target.fields || {}).length }} 字段</span>
-                <span v-if="t.target && (t.target.warnings || []).length" class="qd-stage-err">{{ t.target.warnings.join('；') }}</span>
-                <span v-else-if="!t.target" class="qd-stage-err">{{ t.error || '未就绪' }}</span>
+                <span v-if="t.target && (t.target.warnings || []).length" class="qd-stage-err">需处理：{{ t.target.warnings.join('；') }}</span>
+                <span v-if="t.target && (t.target.notes || []).length" class="t-sub">已自动填 {{ t.target.notes.length }} 个字段</span>
+                <span v-if="!t.target" class="qd-stage-err">{{ t.error || '未就绪' }}</span>
                 <div v-if="t.target && t.target.fields" class="qd-plan-fields">
                   <span v-for="(v, k) in t.target.fields" :key="k" class="chip np">{{ k }}：{{ String(v).slice(0, 60) }}</span>
                 </div>
@@ -150,8 +151,12 @@
             <h3>媒体</h3>
             <div class="qd-field">
               <span>文件</span>
-              <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
+              <div class="qd-path-row">
+                <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
+                <button class="btn ghost slim" type="button" :disabled="media.pathLoading" @click="fillMediaPath">{{ media.pathLoading ? '读取中…' : '从 qB 取路径' }}</button>
+              </div>
             </div>
+            <div class="soft">文件必须在 {{ media.root || 'PTA_MEDIA_ROOT' }} 下；只填 MediaInfo 文本不需要这里。</div>
             <div class="qd-field">
               <span>Tracker</span>
               <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
@@ -161,12 +166,13 @@
               <textarea v-model="media.infoText" class="input sd-note" rows="3" placeholder="粘贴 MediaInfo 或 BDInfo 文本"></textarea>
             </div>
             <div class="qd-actions">
-              <button class="btn ghost slim" type="button" :disabled="media.probing" @click="probeMedia">{{ media.probing ? '探测中…' : '探测' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.shooting" @click="shootMedia">{{ media.shooting ? '截图中…' : '生成截图' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.making" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成种子' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.probing || !media.path.trim()" title="先填媒体文件路径，或点从 qB 取路径" @click="probeMedia">{{ media.probing ? '探测中…' : '探测' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.shooting || !media.path.trim()" title="先填媒体文件路径，或点从 qB 取路径" @click="shootMedia">{{ media.shooting ? '截图中…' : '生成截图' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="先填文件路径和 tracker announce" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成种子' }}</button>
               <button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析媒体信息' }}</button>
               <button class="btn ghost slim" type="button" :disabled="media.preparing" @click="prepareRelease">{{ media.preparing ? '准备中…' : '准备上传' }}</button>
             </div>
+            <div v-if="!media.path.trim()" class="soft">先填文件路径，或点「从 qB 取路径」自动找。</div>
             <div v-if="media.info" class="t-sub">媒体：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
             <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
             <div v-if="media.torrent" class="t-sub">种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
@@ -240,7 +246,7 @@ const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
-const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, probe: null, torrent: null, root: '' })
+const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
 let mediaCfgLoaded = false
 const filePick = ref(null)
 let timer = null
@@ -450,6 +456,18 @@ async function loadMediaConfig() {
     const j = await (await fetch('/api/media/config', { credentials: 'same-origin' })).json()
     if (j && j.ok) { media.root = j.data.root || ''; mediaCfgLoaded = true }
   } catch (e) { reportError('Queue', e) }
+}
+async function fillMediaPath() {
+  if (!sel.value || media.pathLoading) return
+  media.pathLoading = true
+  try {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/media-path', { credentials: 'same-origin' })).json()
+    if (j && j.ok && j.data && j.data.path) {
+      media.path = j.data.path
+      toast('已从 qB 填入路径：' + j.data.path)
+    } else toast((j && j.error && j.error.message) || '没取到路径')
+  } catch (e) { toast('读取路径请求发不出去') }
+  media.pathLoading = false
 }
 async function probeMedia() {
   if (!sel.value || media.probing) return
@@ -697,6 +715,8 @@ onUnmounted(() => {
 .queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .queue-list { width: 320px; flex: 0 0 320px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; }
+.qd-path-row { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.qd-path-row .input { flex: 1 1 auto; min-width: 0; }
 .queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
 .queue-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
 .queue-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }

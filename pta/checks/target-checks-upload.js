@@ -26,7 +26,7 @@ async function runUpload(C) {
     need(d.fields.anon === '0', '匿名映射不对');
     need(d.verifyUrl.indexOf('/torrents.php?search=') >= 0, '回查地址不对');
     need(d.hasCookie === true && d.ready === true, '有 cookie 的站预检应就绪：' + JSON.stringify({ hasCookie: d.hasCookie, ready: d.ready }));
-    need(!(d.warnings || []).includes('没有 cookie'), '有 cookie 还报缺 cookie：' + JSON.stringify(d.warnings));
+    need(!(d.warnings || []).includes('目标站没有 cookie'), '有 cookie 还报缺 cookie：' + JSON.stringify(d.warnings));
     const dry = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: true })
@@ -234,7 +234,7 @@ async function runUpload(C) {
     need(up.body.data.url.indexOf('/torrents/create') >= 0, 'UNIT3D 上传路径不对');
     need(up.body.data.fields.name === 'UNIT3D Target Test 2024 1080p', 'UNIT3D 标题映射不对');
     need(up.body.data.hasCookie === false && up.body.data.ready === false, '无 cookie 的站预检不该就绪：' + JSON.stringify({ hasCookie: up.body.data.hasCookie, ready: up.body.data.ready }));
-    need((up.body.data.warnings || []).includes('没有 cookie'), '无 cookie 的站没提示：' + JSON.stringify(up.body.data.warnings));
+    need((up.body.data.warnings || []).includes('目标站没有 cookie'), '无 cookie 的站没提示：' + JSON.stringify(up.body.data.warnings));
     const gp = await json(BASE + '/api/targets/gazelle.example/plan', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: gid })
     });
@@ -242,7 +242,7 @@ async function runUpload(C) {
     need(gp.body.data.fileField === 'file_input', 'Gazelle 文件字段不对：' + gp.body.data.fileField);
     need(gp.body.data.url.indexOf('/upload.php') >= 0, 'Gazelle 上传路径不对');
     need(gp.body.data.fields.title === 'Gazelle Target Test 2024 1080p', 'Gazelle 标题映射不对');
-    need((gp.body.data.warnings || []).includes('没有 cookie'), 'Gazelle 无 cookie 没提示');
+    need((gp.body.data.warnings || []).includes('目标站没有 cookie'), 'Gazelle 无 cookie 没提示');
   });
 
   await check('UNIT3D 多种字段名识别 BDInfo/MediaInfo', async function () {
