@@ -225,7 +225,7 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
-import { toast, loggedIn, viewVisible } from '../utils/ui'
+import { toast, loggedIn, viewVisible, confirmBox } from '../utils/ui'
 
 const tabs = [
   { v: 'all', label: '全部' },
@@ -430,11 +430,15 @@ async function fetchMeta() {
     } else toast((j && j.error && j.error.message) || '没查到资料')
   } catch (e) { toast('资料请求发不出去') }
 }
-async function submitTarget() {
+function submitTarget() {
   if (!sel.value || busy.target) return
   const primary = form.targetSite || sel.value.targetSite
   const targets = (form.targets && form.targets.length ? form.targets.slice() : (primary ? [primary] : []))
   if (!targets.length) { toast('先选目标站'); return }
+  confirmBox('真实提交到目标站？', '会把「' + sel.value.title + '」提交到：' + targets.join('、') + '。\n\n服务端会先查 cookie、源种完成度和目标站查重；真发布关闭时会被拦下。', function () { doSubmitTarget(targets) })
+}
+async function doSubmitTarget(targets) {
+  if (!sel.value || busy.target) return
   busy.target = true
   try {
     const body = { queueId: sel.value.id, dryRun: false }

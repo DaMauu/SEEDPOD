@@ -33,6 +33,7 @@ async function upload(host, body) {
     const mism = checkHost(item.data, host);
     if (mism) return { ok: false, code: mism.code, message: mism.message, http: 400 };
     const dryRun = b.dryRun !== false;
+    if (!dryRun && ctx.logEvent) ctx.logEvent('warn', '目标站', '真实提交开始 · ' + host + ' · queue ' + item.id);
     const tr = targetResults(item.data)[String(host).toLowerCase()];
     if (!dryRun && tr && (tr.stage === 'submitted' || tr.stage === 'injected')) {
       return { ok: false, code: 'ALREADY_SUBMITTED', message: '这个目标站已经提交过，不能重复提交', http: 409 };
@@ -298,6 +299,7 @@ async function upload(host, body) {
       item.data.stageEvidence = Object.assign({}, item.data.stageEvidence || {}, evidence);
     }
     saveQueue(item.data);
+    if (!dryRun && ctx.logEvent) ctx.logEvent('info', '目标站', '真实提交完成 · ' + host + ' · queue ' + item.id + ' · ' + (verified && verified.found ? '回查已找到' : '回查未找到') + (r.data && r.data.detailsUrl ? ' · ' + r.data.detailsUrl : ''));
     return { ok: true, data: Object.assign({}, r.data, { verify: verified, targetResults: item.data.targetResults }) };
   }
 
