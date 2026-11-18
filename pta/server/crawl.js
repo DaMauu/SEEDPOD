@@ -57,6 +57,8 @@ function makeCrawl(ctx) {
 
   function upsertCatalog(items) {
     let added = 0, updated = 0, skipped = 0;
+    const ids = {};
+    const rows = {};
     let maxRow = one("SELECT MAX(CAST(SUBSTR(id, 5) AS INTEGER)) AS m FROM catalog WHERE id LIKE 'cat_%'") || { m: 0 };
     let seq = Number(maxRow.m) || 0;
     for (const it of items) {
@@ -67,16 +69,20 @@ function makeCrawl(ctx) {
         const next = Object.assign({}, prev, it, { id: ex.id, _key: prev._key || ('s:' + it.site + ':' + it.siteId), updatedAt: nowISO() });
         db.prepare('UPDATE catalog SET data = ?, title = ?, infohash = ?, updated_at = ? WHERE id = ?')
           .run(JSON.stringify(next), it.title, it.infohash || prev.infohash || '', nowISO(), ex.id);
+        ids[String(it.siteId)] = ex.id;
+        rows[String(it.siteId)] = next;
         updated++;
       } else {
         const id = 'cat_' + String(++seq).padStart(6, '0');
         const item = Object.assign({}, it, { id: id, _key: 's:' + it.site + ':' + it.siteId, status: 'new', createdAt: nowISO(), updatedAt: nowISO() });
         db.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
           .run(id, item.site, String(item.siteId), item.infohash || '', item.title, 'new', JSON.stringify(item), item.createdAt, item.updatedAt);
+        ids[String(it.siteId)] = id;
+        rows[String(it.siteId)] = item;
         added++;
       }
     }
-    return { added: added, updated: updated, skipped: skipped };
+    return { added: added, updated: updated, skipped: skipped, ids: ids, rows: rows };
   }
 
   async function crawlOnce(host, opts) {
@@ -188,75 +194,9 @@ function makeCrawl(ctx) {
       const d = marksMod.limitedDaysOf(it, nowMs);
       if (d) { it.marks = it.marks || {}; it.marks.limitedDays = d; }
     });
-    /* 抓详情页：受开关与窗口预算双重约束，最多 10 条，每条都算一次请求 */
-    let detail = { want: false, tried: 0, ok: 0, failed: 0, stopped: '' };
+    let detail = { want: false, tried: 0, ok: 0, failed: 0, stopped: '', filtered: 0, restricted: 0, backlog: 0 };
     let lastReqAt = rec.lastListAt || nowMs;
-    if (items.length) {
-      const siteRow = one('SELECT data FROM sites WHERE host = ?', host);
-      const site = siteRow ? (jparse(siteRow.data) || {}) : {};
-      let want = !!(cfg() && cfg().detail);
-      if (opts.detail === true) want = true;
-      else if (opts.detail === false) want = false;
-      if (site.override) want = !!site.ovDetail;
-      detail.want = want;
-      if (want) {
-        const cap = Math.max(1, Math.min(10, Number(opts.detailLimit) || 10));
-        const budget = Math.max(0, lim.maxPerWindow - rec.times.length - 1);
-        const picks = items.filter(function (x) { return x.detailsUrl; }).slice(0, Math.min(cap, budget));
-        if (!picks.length) detail.stopped = 'WINDOW_LIMIT';
-        /* 详情页用自己的间隔（默认 600 秒），跟列表页分开算 */
-        const detailGap = lim.detailGapMs;
-        for (const it of picks) {
-          const lastDetail = Number(rec.lastDetailAt) || 0;
-          if (lastDetail) {
-            const elapsed = Date.now() - lastDetail;
-            if (elapsed < detailGap) await sleep(detailGap - elapsed);
-          }
-          if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
-          detail.tried++;
-          try {
-            const res2 = await fetch(it.detailsUrl, {
-              headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-              redirect: 'manual', signal: AbortSignal.timeout(15000)
-            });
-            rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
-            rec.times.push(rec.lastAt);
-            rec.dayCount += 1;
-            if (res2.status !== 200) { detail.failed++; it.detailNote = 'HTTP ' + res2.status; continue; }
-            const dh = await res2.text().catch(function () { return ''; });
-            const d = adapters.parseDetail(dh);
-            if (d.sizeBytes) { it.sizeBytes = d.sizeBytes; it.size = d.sizeText || it.size; }
-            if (d.category && !it.catName) it.catName = d.category;
-            if (d.medium) it.medium = d.medium;
-            if (d.subtitle) it.subtitle = d.subtitle;
-            if (d.region) it.region = d.region;
-            if (d.language) it.language = d.language;
-            if (d.bdinfo) it.bdinfo = d.bdinfo;
-            if (d.mediainfo) it.mediainfo = d.mediainfo;
-            if (d.infohash && !it.infohash) it.infohash = d.infohash;
-            if (d.descr) it.descr = d.descr;
-            if (d.descrBb) it.descrBb = d.descrBb;
-            /* 详情页的 Tags 也带限制标记：并进 it.tags，限制芯片按最新标记过滤 */
-            if (d.tags) {
-              const merged = String(it.tags || '').split(',').concat(String(d.tags).split(/[,，;；、\s]+/))
-                .map(function (x) { return String(x || '').trim(); }).filter(Boolean);
-              it.tags = merged.filter(function (x, i, a) { return a.indexOf(x) === i; }).join(',');
-              it.marks = marksMod.marksOf(it);
-            }
-            if (!it.descr && !it.descrBb) await metaFill.fillIntro(it);
-            if (d.poster) it.poster = d.poster;
-            if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
-            it.detailAt = nowISO();
-            detail.ok++;
-          } catch (e) {
-            detail.failed++;
-            it.detailNote = '详情请求失败';
-            rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
-            rec.dayCount += 1;
-          }
-        }
-      }
-    }
+
     /* 媒介/分辨率：站点搜索页不支持参数时，抓完按标题本地过滤 */
     try {
       const flt = siteMaps.getHost(DATA_DIR, host).filters;
@@ -286,17 +226,22 @@ function makeCrawl(ctx) {
           const okMed = !medSel.length || medSel.some(function (re) { return re.test(t); });
           return okRes && okMed;
         });
-        if (keep.length !== items.length) { detail.filtered = items.length - keep.length; items.length = 0; keep.forEach(function (x) { items.push(x); }); }
+        if (keep.length !== items.length) {
+          detail.filtered = items.length - keep.length;
+          items.length = 0;
+          keep.forEach(function (x) { items.push(x); });
+        }
       }
     } catch (e) { /* 过滤失败按原结果 */ }
 
-    /* 限制行：选中即排除（禁转/限转/HR/独占/DIY），在入库前拦掉 */
+    /* 限制行：选中即排除（禁转/限转/HR/独占/DIY），列表标签先拦一遍 */
+    let limitSel = [];
     try {
       const flow = flowConfig.read(ctx);
       const row = flow['限制'];
-      const sel = Array.isArray(row && row.sel) ? row.sel.map(String) : [];
-      if (sel.length && items.length) {
-        const keep = items.filter(function (it) { return !marksMod.matchesLimit(it, sel, Date.now()); });
+      limitSel = Array.isArray(row && row.sel) ? row.sel.map(String) : [];
+      if (limitSel.length && items.length) {
+        const keep = items.filter(function (it) { return !marksMod.matchesLimit(it, limitSel, Date.now()); });
         if (keep.length !== items.length) {
           detail.restricted = items.length - keep.length;
           items.length = 0;
@@ -304,7 +249,114 @@ function makeCrawl(ctx) {
         }
       }
     } catch (e) { /* 规则读不到就不筛 */ }
-    const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0 };
+
+    /* 先入库：列表字段已经够进初筛；详情单独补，不阻塞翻页 */
+    const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0, ids: {} };
+
+    /* 详情：当前页优先，其余预算补 catalog 里最久缺详情的，保证每条最终都能轮到 */
+    const siteRow = one('SELECT data FROM sites WHERE host = ?', host);
+    const site = siteRow ? (jparse(siteRow.data) || {}) : {};
+    let wantDetail = !!(cfg() && cfg().detail);
+    if (opts.detail === true) wantDetail = true;
+    else if (opts.detail === false) wantDetail = false;
+    if (site.override) wantDetail = !!site.ovDetail;
+    detail.want = wantDetail;
+    if (wantDetail) {
+      const cap = Math.max(1, Math.min(10, Number(opts.detailLimit) || 10));
+      const budget = Math.max(0, lim.maxPerWindow - rec.times.length - 1);
+      const seen = {};
+      const fresh = [];
+      items.forEach(function (it) {
+        const key = String(it.siteId);
+        const id = out.ids && out.ids[key];
+        const d = (out.rows && out.rows[key]) || it;
+        if (!id || !d.detailsUrl || d.detailAt || seen[key]) return;
+        seen[key] = 1;
+        fresh.push({ id: id, data: d });
+      });
+      const back = all("SELECT id, data FROM catalog WHERE site = ? AND status = 'new' AND data LIKE '%\"detailsUrl\"%' AND data NOT LIKE '%\"detailAt\"%' ORDER BY created_at ASC LIMIT 200", host);
+      const older = [];
+      back.forEach(function (r) {
+        const d = jparse(r.data) || {};
+        if (!d.detailsUrl || d.detailAt || seen[String(d.siteId)]) return;
+        seen[String(d.siteId)] = 1;
+        older.push({ id: r.id, data: d });
+      });
+      const half = Math.max(1, Math.floor(cap / 2));
+      const picks = fresh.slice(0, Math.min(half, budget));
+      let freshUsed = picks.length;
+      const rest = Math.max(0, Math.min(cap, budget) - picks.length);
+      older.slice(0, rest).forEach(function (x) { picks.push(x); });
+      const fill = Math.max(0, Math.min(cap, budget) - picks.length);
+      fresh.slice(freshUsed, freshUsed + fill).forEach(function (x) { picks.push(x); });
+      detail.backlog = Math.max(0, fresh.length + older.length - picks.length);
+      if (budget <= 0) detail.stopped = 'WINDOW_LIMIT';
+      const detailGap = lim.detailGapMs;
+      for (const pick of picks) {
+        const it = pick.data;
+        const lastDetail = Number(rec.lastDetailAt) || 0;
+        if (lastDetail) {
+          const elapsed = Date.now() - lastDetail;
+          if (elapsed < detailGap) await sleep(detailGap - elapsed);
+        }
+        if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
+        detail.tried++;
+        try {
+          const res2 = await fetch(it.detailsUrl, {
+            headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+            redirect: 'manual', signal: AbortSignal.timeout(15000)
+          });
+          rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
+          rec.times.push(rec.lastAt);
+          rec.dayCount += 1;
+          if (res2.status !== 200) { detail.failed++; it.detailNote = 'HTTP ' + res2.status; }
+          else {
+            const dh = await res2.text().catch(function () { return ''; });
+            const d = adapters.parseDetail(dh);
+            if (d.sizeBytes) { it.sizeBytes = d.sizeBytes; it.size = d.sizeText || it.size; }
+            if (d.category && !it.catName) it.catName = d.category;
+            if (d.medium) it.medium = d.medium;
+            if (d.subtitle) it.subtitle = d.subtitle;
+            if (d.region) it.region = d.region;
+            if (d.language) it.language = d.language;
+            if (d.bdinfo) it.bdinfo = d.bdinfo;
+            if (d.mediainfo) it.mediainfo = d.mediainfo;
+            if (d.infohash && !it.infohash) it.infohash = d.infohash;
+            if (d.descr) it.descr = d.descr;
+            if (d.descrBb) it.descrBb = d.descrBb;
+            if (d.tags) {
+              const merged = String(it.tags || '').split(',').concat(String(d.tags).split(/[,，;；、\s]+/))
+                .map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+              it.tags = merged.filter(function (x, i, a) { return a.indexOf(x) === i; }).join(',');
+              it.marks = marksMod.marksOf(it);
+            }
+            if (!it.descr && !it.descrBb) await metaFill.fillIntro(it);
+            if (d.poster) it.poster = d.poster;
+            if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
+            it.detailAt = nowISO();
+            detail.ok++;
+          }
+        } catch (e) {
+          detail.failed++;
+          it.detailNote = '详情请求失败';
+          rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
+          rec.times.push(rec.lastAt);
+          rec.dayCount += 1;
+        }
+        /* 写回 catalog；详情里新发现的限制命中就归档，不再进初筛 */
+        const row = one('SELECT status FROM catalog WHERE id = ?', pick.id);
+        let status = (row && row.status) || 'new';
+        if (limitSel.length && marksMod.matchesLimit(it, limitSel, Date.now())) {
+          status = 'archived';
+          it.skipReason = '限制：' + (marksMod.complianceReason(it, Date.now()) || '命中限制');
+          detail.restricted = (Number(detail.restricted) || 0) + 1;
+        }
+        db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?')
+          .run(JSON.stringify(it), status, nowISO(), pick.id);
+      }
+      if (!picks.length && !detail.stopped) detail.stopped = 'NO_BACKLOG';
+    }
+
     rec.lastAt = lastReqAt;
     rec.times = (rec.times || []).filter(function (t) { return t > nowMs - lim.windowMs; });
     rec.times.push(nowMs);

@@ -27,6 +27,7 @@ fi
 run smoke smoke-live.js
 run responsive responsive-layout.js
 run adapter adapter.js
+run crawl-detail crawl-detail.js
 run marks marks.js
 run dupe-classify dupe-classify.js
 run dupe-policy dupe-policy.js
