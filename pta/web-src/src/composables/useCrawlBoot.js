@@ -8,14 +8,12 @@ export function useCrawlBoot(opts) {
   const loadSites = opts.loadSites
   const loadGates = opts.loadGates
   const loadFlow = opts.loadFlow
-  const onEnter = opts.onEnter
 
   async function ensureCrawlPage() {
     if (!viewVisible('crawl') || !loggedIn()) return
     if (!sites.value.length) await loadSites()
     if (!gates.loaded) await loadGates()
     loadFlow()
-    if (onEnter) onEnter()
   }
   onMounted(() => {
     window.addEventListener('hashchange', ensureCrawlPage)

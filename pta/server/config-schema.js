@@ -3,7 +3,7 @@
 const SCHEMA_VERSION = 1;
 const FLOW_VERSION = 1;
 const SCHEDULER_VERSION = 1;
-const BOOL_KEYS = ['realCrawl', 'realPublish', 'realImages', 'autoDupe', 'detail', 'incrementalCrawl'];
+const BOOL_KEYS = ['realCrawl', 'realPublish', 'realImages', 'autoDupe', 'detail'];
 
 function truthy(v) {
   if (typeof v === 'boolean') return v;

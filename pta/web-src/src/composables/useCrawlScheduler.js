@@ -72,7 +72,7 @@ async function runRound() {
   await loadSched()
 }
 
-const gates = reactive({ realCrawl: false, realPublish: false, realImages: false, incrementalCrawl: false, loaded: false })
+const gates = reactive({ realCrawl: false, realPublish: false, realImages: false, loaded: false })
 
 async function loadGates() {
   const j = await getJson('/api/config')
@@ -81,7 +81,6 @@ async function loadGates() {
     gates.realCrawl = !!j.data.user.realCrawl
     gates.realPublish = !!j.data.user.realPublish
     gates.realImages = !!j.data.user.realImages
-    gates.incrementalCrawl = !!j.data.user.incrementalCrawl
     gates.loaded = true
   }
 }
@@ -92,7 +91,7 @@ async function applyGate(key, next) {
   const j = await patchUser(body)
   if (j && j.ok) {
     gates[key] = next
-    toast((next ? '已开启 ' : '已关闭 ') + ({ realCrawl: '真抓取', realPublish: '自动发布', realImages: '图床实传', incrementalCrawl: '增量抓取' }[key] || key))
+    toast((next ? '已开启 ' : '已关闭 ') + ({ realCrawl: '真抓取', realPublish: '自动发布', realImages: '图床实传' }[key] || key))
   } else {
     toast((j && j.error && j.error.message) || '闸门保存失败')
   }

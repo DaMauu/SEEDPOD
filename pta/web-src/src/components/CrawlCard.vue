@@ -25,23 +25,7 @@
         <ul v-if="plan.warnings.length" class="crawl-plan-warn">
           <li v-for="(w, i) in plan.warnings" :key="i">{{ w }}</li>
         </ul>
-        <em>试抓只用于验证站点配置；日常抓取用下面的「抓下一页」或顶部「跑一轮」</em>
-      </div>
-      <div class="crawl-global" id="crawl-global">
-        <div class="cg-head">
-          <b>抓取总设置</b>
-          <span class="cg-prog" id="crawl-progress">{{ progressText }}</span>
-        </div>
-        <div class="cg-row">
-          <label class="cg-sw">增量抓取
-            <button class="switch" id="crawl-incremental" :class="{ on: incremental }" type="button" role="switch" :aria-checked="String(incremental)" @click="$emit('toggle-incremental')"><i></i></button>
-          </label>
-          <span class="cg-note">{{ incremental ? '已开：首次全新，之后接上次断点' : '已关：每轮从第 1 页开始' }}</span>
-        </div>
-        <div class="cg-actions">
-          <button class="btn ghost slim" id="crawl-next" type="button" :disabled="busy.crawl || !sourceHost" @click="$emit('crawl-next')">{{ busy.crawl ? '抓取中…' : '抓一页' }}</button>
-          <span class="cg-note">一页算 1 次请求，受间隔和每日额度限制</span>
-        </div>
+        <em>只读本地配置拼的地址，没有发请求；单站验证去站点页点「试抓一页」</em>
       </div>
       <div class="preset-block">
         <div v-for="r in fetchRows" :key="r.t" class="preset-row" :class="{ todo: r.todo }">
@@ -63,32 +47,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
+defineProps({
   sourceHost: { type: String, default: '' },
   siteOptions: { type: Array, default: () => [] },
   busy: { type: Object, required: true },
   fetchSum: { type: String, default: '' },
   plan: { type: Object, required: true },
   fetchRows: { type: Array, default: () => [] },
-  detail: { type: Boolean, default: false },
-  progress: { type: Object, default: () => ({}) },
-  incremental: { type: Boolean, default: false }
+  detail: { type: Boolean, default: false }
 })
-defineEmits(['update:sourceHost', 'show-plan', 'save-fetch', 'toggle-fetch-chip', 'toggle-detail', 'crawl-next', 'toggle-incremental'])
-
-const progressText = computed(() => {
-  const p = props.progress || {}
-  if (!p.loaded) return '先选来源站'
-  const parts = []
-  const idx = (Number(p.catIdx) || 0) + 1
-  parts.push(p.catCount ? ('分类 ' + Math.min(p.catCount, idx) + '/' + p.catCount) : ('分类 ' + idx))
-  parts.push('已抓第 ' + (Number(p.page) || 0) + ' 页')
-  if (p.lastAt) parts.push('上次 ' + new Date(p.lastAt).toLocaleString('zh-CN', { hour12: false }).slice(5, 16))
-  parts.push('今日 ' + (Number(p.count) || 0) + '/' + (Number(p.dailyMax) || 0))
-  return parts.join(' · ')
-})
+defineEmits(['update:sourceHost', 'show-plan', 'save-fetch', 'toggle-fetch-chip', 'toggle-detail'])
 </script>
 
 <style scoped>
@@ -104,14 +72,6 @@ const progressText = computed(() => {
 .crawl-plan-url { word-break: break-all; }
 .crawl-plan-warn { margin: 6px 0 0 16px; color: var(--amber); font-size: 11px; }
 .crawl-plan-box em { display: block; margin-top: 6px; font-style: normal; font-size: 10.5px; color: var(--muted-2); }
-.crawl-global { margin: 8px 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfd; }
-.cg-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.cg-head b { font-size: 12.5px; color: var(--ink); }
-.cg-prog { font-size: 11px; color: var(--muted); }
-.cg-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-.cg-sw { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-.cg-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.cg-note { font-size: 10.5px; color: var(--muted-2); }
 @media (max-width: 900px) {
   .crawl-head-tools { width: 100%; }
   .crawl-source { width: 100%; max-width: none; }

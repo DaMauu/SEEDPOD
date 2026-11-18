@@ -148,10 +148,6 @@ module.exports = function (app, ctx) {
     const maxWin = Math.max(1, Math.min(Number(cfg.maxPerWindow) || 20, 1000));
     const gapMs = Math.max(8, Math.min(Number(cfg.interval) || 60, 600)) * 1000;
     const rec = state[host] || {};
-    const preset = readPreset()[host] || {};
-    const pcats = (preset && preset.cats) || {};
-    let catCount = 0;
-    Object.keys(pcats).forEach(function (k) { catCount += (pcats[k] || []).length; });
     const nowMs = Date.now();
     const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - winMs; }) : [];
     const waitMs = Math.max(0, (Number(rec.lastAt) || 0) + gapMs - nowMs);
@@ -159,6 +155,6 @@ module.exports = function (app, ctx) {
     const dayMax = limits.dailyMax();
     return ok({ host: host, count: dayCount, dailyMax: dayMax, leftToday: Math.max(0, dayMax - dayCount),
       windowCount: times.length, windowMax: maxWin, windowMinutes: Math.round(winMs / 60000),
-      waitMs: waitMs, lastAt: rec.lastAt || 0, lastError: rec.lastError || '', page: rec.page || 0, catIdx: rec.catIdx || 0, catCount: catCount });
+      waitMs: waitMs, lastAt: rec.lastAt || 0, lastError: rec.lastError || '', page: rec.page || 0, catIdx: rec.catIdx || 0 });
   });
 };
