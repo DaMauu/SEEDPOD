@@ -3,6 +3,7 @@
    每次抓取受站点间隔与每日上限约束，失败也记时间戳，避免连续重试。 */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const marksMod = require('./marks');
@@ -131,10 +132,20 @@ function makeCrawl(ctx) {
       }
     } catch (e) { /* 过滤参数拼不上就按原地址抓 */ }
     const lim = limitsOf(host);
+    let searchKey = '';
+    try {
+      const sv = siteMaps.getHost(DATA_DIR, host).filters.selectedValues || {};
+      searchKey = crypto.createHash('sha256').update(JSON.stringify({ ids: ids.slice().sort(), sv: sv })).digest('hex').slice(0, 16);
+    } catch (e) { searchKey = ''; }
     const state = readState();
     const today = new Date().toISOString().slice(0, 10);
     const rec = state[host] || { lastAt: 0, day: today, count: 0, page: 0 };
     if (rec.day !== today) { rec.day = today; rec.count = 0; rec.page = 0; rec.dayCount = 0; }
+    if (searchKey && rec.searchKey && rec.searchKey !== searchKey) {
+      rec.page = 0; rec.catIdx = 0;
+      delete rec.fullDoneAt;
+    }
+    if (searchKey) rec.searchKey = searchKey;
     rec.dayCount = Number(rec.dayCount) || 0;
     const nowMs = Date.now();
     const times = Array.isArray(rec.times) ? rec.times.filter(function (t) { return t > nowMs - lim.windowMs; }) : [];
@@ -266,11 +277,12 @@ function makeCrawl(ctx) {
       const budget = Math.max(0, lim.maxPerWindow - rec.times.length - 1);
       const seen = {};
       const fresh = [];
+      const cooling = function (d) { return Date.parse((d && d.detailNextRetryAt) || '') > Date.now(); };
       items.forEach(function (it) {
         const key = String(it.siteId);
         const id = out.ids && out.ids[key];
         const d = (out.rows && out.rows[key]) || it;
-        if (!id || !d.detailsUrl || d.detailAt || seen[key]) return;
+        if (!id || !d.detailsUrl || d.detailAt || cooling(d) || seen[key]) return;
         seen[key] = 1;
         fresh.push({ id: id, data: d });
       });
@@ -278,7 +290,7 @@ function makeCrawl(ctx) {
       const older = [];
       back.forEach(function (r) {
         const d = jparse(r.data) || {};
-        if (!d.detailsUrl || d.detailAt || seen[String(d.siteId)]) return;
+        if (!d.detailsUrl || d.detailAt || cooling(d) || seen[String(d.siteId)]) return;
         seen[String(d.siteId)] = 1;
         older.push({ id: r.id, data: d });
       });
@@ -309,8 +321,13 @@ function makeCrawl(ctx) {
           rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
           rec.times.push(rec.lastAt);
           rec.dayCount += 1;
-          if (res2.status !== 200) { detail.failed++; it.detailNote = 'HTTP ' + res2.status; }
-          else {
+          if (res2.status !== 200) {
+            detail.failed++;
+            it.detailNote = 'HTTP ' + res2.status;
+            it.detailAttempts = (Number(it.detailAttempts) || 0) + 1;
+            it.detailFailedAt = nowISO();
+            it.detailNextRetryAt = new Date(Date.now() + Math.min(24 * 3600000, 15 * 60000 * it.detailAttempts)).toISOString();
+          } else {
             const dh = await res2.text().catch(function () { return ''; });
             const d = adapters.parseDetail(dh);
             if (d.sizeBytes) { it.sizeBytes = d.sizeBytes; it.size = d.sizeText || it.size; }
@@ -334,11 +351,17 @@ function makeCrawl(ctx) {
             if (d.poster) it.poster = d.poster;
             if (typeof d.fullDisc === 'boolean') it.fullDisc = d.fullDisc;
             it.detailAt = nowISO();
+            delete it.detailAttempts;
+            delete it.detailFailedAt;
+            delete it.detailNextRetryAt;
             detail.ok++;
           }
         } catch (e) {
           detail.failed++;
           it.detailNote = '详情请求失败';
+          it.detailAttempts = (Number(it.detailAttempts) || 0) + 1;
+          it.detailFailedAt = nowISO();
+          it.detailNextRetryAt = new Date(Date.now() + Math.min(24 * 3600000, 15 * 60000 * it.detailAttempts)).toISOString();
           rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
           rec.times.push(rec.lastAt);
           rec.dayCount += 1;

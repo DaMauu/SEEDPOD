@@ -135,9 +135,16 @@ function createCore(opts) {
     };
   }
 
+  async function sourceReady(id) {
+    if (!id) return;
+    const src = await ctx.publisher.ensureSource(id, {});
+    if (!src.ok) { const e = new Error(src.message || src.code || '源种检查失败'); e.code = src.code || 'SOURCE_CHECK_FAILED'; throw e; }
+    if (!src.complete) { const e = new Error('源种还没下完（' + Math.round((Number(src.progress) || 0) * 100) + '%），下完再提交'); e.code = 'SOURCE_NOT_READY'; throw e; }
+  }
   async function targetUpload(input) {
     const b = input || {};
     if (!b.host) throw new Error('target-upload 需要 --host <target>');
+    if (b.dryRun === false) await sourceReady(b.queueId);
     return unwrap(await ctx.targetService.upload(String(b.host), {
       queueId: b.queueId, torrentBase64: b.torrentBase64,
       dryRun: b.dryRun !== false, verify: b.verify,
@@ -338,7 +345,11 @@ function createCore(opts) {
     crossseed: crossseed,
     targetAnnounce: targetAnnounce,
     probe: probe,
-    targetUploadMany: async (body) => unwrap(await ctx.targetService.uploadMany(body || {})),
+    targetUploadMany: async (body) => {
+      const b = body || {};
+      if (b.dryRun === false) await sourceReady(b.queueId);
+      return unwrap(await ctx.targetService.uploadMany(b));
+    },
     inject: inject,
     clients: clients,
     coverage: coverage,

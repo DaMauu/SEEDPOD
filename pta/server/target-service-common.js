@@ -78,8 +78,10 @@ function makeServiceCommon(deps) {
   async function checkDupe(host, itemData, buf) {
     const flowCfg = flowConfig.read(ctx);
     let pre = null;
-    try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); } catch (e) { pre = null; }
-    if (!pre || !pre.ok || !pre.data || !pre.data.found) return { found: false };
+    try { pre = await target.verify(host, preparedItem(itemData, host), buf || null, buf ? {} : { hash: String(itemData.infohash || '') }); }
+    catch (e) { return { ok: false, code: 'TARGET_UNREACHABLE', message: String(e && e.message || e).slice(0, 160) }; }
+    if (pre && pre.ok === false) return { ok: false, code: pre.code || 'TARGET_UNREACHABLE', message: String(pre.message || '目标站验证失败').slice(0, 160) };
+    if (!pre || !pre.data || !pre.data.found) return { ok: true, found: false };
     let foundTitle = String(pre.data.title || '');
     if (pre.data.detailsUrl) {
       try {
@@ -101,7 +103,7 @@ function makeServiceCommon(deps) {
     const ruleFull = dedupeSwitchOn(flowCfg, '目标站已有原盘', true);
     const kind = isDiy ? 'diy' : (isFullDisc ? 'full_disc' : (isRemux ? 'remux' : 'other'));
     const skip = dupeDecision(kind, restricted, { restrict: ruleRestrict, diy: ruleDiy, full: ruleFull });
-    return { found: true, skip: skip, kind: kind, title: foundTitle.slice(0, 200), verify: pre.data, restricted: restricted };
+    return { ok: true, found: true, skip: skip, kind: kind, title: foundTitle.slice(0, 200), verify: pre.data, restricted: restricted };
   }
 
   return { fillSourceTitle, fetchPublished, checkDupe };

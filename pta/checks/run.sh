@@ -44,6 +44,7 @@ run scheduler scheduler.js
 run failpoint failpoint.js
 run errors errors.js
 run failures failures.js
+run dedupe-errors dedupe-errors.js
 run rules-registry rules-registry.js
 run config-migration config-migration.js
 run transactions transactions.js

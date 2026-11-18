@@ -208,12 +208,13 @@ async function main() {
       { site: 'demo-a.example', title: 'Fixture D 2020 2160p 中字', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
       { site: 'demo-a.example', title: 'Fixture E 2020 2160p 中字 禁转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 },
       { site: 'demo-a.example', title: 'Fixture F 2020 2160p 中字 限转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3, addedAt: new Date().toISOString() },
-      { site: 'demo-a.example', title: 'Fixture G 2020 2160p 中字 限转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3, addedAt: new Date(Date.now() - 8 * 86400000).toISOString() }
+      { site: 'demo-a.example', title: 'Fixture G 2020 2160p 中字 限转', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3, addedAt: new Date(Date.now() - 8 * 86400000).toISOString() },
+      { site: 'demo-a.example', title: 'Fixture H 2020 2160p', res: '2160p', size: '20.00 GB', sizeBytes: 20 * 1024 ** 3 }
     ];
     const add = await (await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items })
     })).json();
-    need(add.ok && add.data.added === 8, '写入 8 条失败：' + JSON.stringify(add));
+    need(add.ok && add.data.added === 9, '写入 9 条失败：' + JSON.stringify(add));
 
     const flow = { sets: { fetch: [[], [
       { t: '分辨率要求', v: '2160p 及以上' },
@@ -226,10 +227,11 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ limit: 10 })
     })).json();
     need(j.ok, '筛选失败');
-    need(j.data.checked === 8, 'checked 应为 8：' + j.data.checked);
+    need(j.data.checked === 9, 'checked 应为 9：' + j.data.checked);
     need(j.data.selected === 2, 'selected 应为 2：' + j.data.selected);
-    need(j.data.skipped === 6, 'skipped 应为 6：' + j.data.skipped);
+    need(j.data.skipped === 7, 'skipped 应为 7：' + j.data.skipped);
     need(/分辨率/.test(JSON.stringify(j.data.byReason)), '没有分辨率原因：' + JSON.stringify(j.data.byReason));
+    need(/没有中字/.test(JSON.stringify(j.data.byReason)), '无详情的中字规则没生效：' + JSON.stringify(j.data.byReason));
     need(/中字/.test(JSON.stringify(j.data.byReason)), '没有中字原因');
     need(/体积/.test(JSON.stringify(j.data.byReason)), '没有体积原因');
     need(/已有/.test(JSON.stringify(j.data.byReason)), '没有重复原因');

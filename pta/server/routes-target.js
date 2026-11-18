@@ -15,6 +15,17 @@ module.exports = function (app, ctx) {
     const row = one('SELECT id, data FROM queue WHERE id = ?', String(id || ''));
     return row ? { id: row.id, data: jparse(row.data) || {} } : null;
   }
+  /* 真提交前必须等源种在 qB 里下到 100%；自动发布已有同一道闸门 */
+  async function sourceReady(id) {
+    if (!ctx.publisher || !id) return { ok: true };
+    const src = await ctx.publisher.ensureSource(id, {});
+    if (!src.ok) return { ok: false, code: src.code, message: src.message, http: src.http || 400 };
+    if (!src.complete) {
+      const pct = Math.round((Number(src.progress) || 0) * 100);
+      return { ok: false, code: 'SOURCE_NOT_READY', message: '源种还没下完（' + pct + '%），下完再提交', http: 409 };
+    }
+    return { ok: true };
+  }
   function saveQueue(it) {
     db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
       .run(JSON.stringify(it), now(), it.id);
@@ -168,7 +179,12 @@ module.exports = function (app, ctx) {
   });
 
   app.post('/api/targets/:host/upload', async (req, reply) => {
-    const r = await targetService.upload(req.params.host, req.body || {});
+    const b = req.body || {};
+    if (b.dryRun === false) {
+      const gate = await sourceReady(b.queueId);
+      if (!gate.ok) return bad(reply, gate.code, gate.message, gate.http || 400);
+    }
+    const r = await targetService.upload(req.params.host, b);
     if (!r.ok) {
       if (ctx.notify) {
         ctx.notify.send('target.failed', 'SEEDPOD 目标站提交失败：' + req.params.host + ' · ' + (r.message || r.code),
@@ -180,7 +196,12 @@ module.exports = function (app, ctx) {
   });
 
   app.post('/api/queue/:id/targets/upload', async (req, reply) => {
-    const r = await targetService.uploadMany(Object.assign({}, req.body || {}, { queueId: req.params.id }));
+    const b = Object.assign({}, req.body || {}, { queueId: req.params.id });
+    if (b.dryRun === false) {
+      const gate = await sourceReady(req.params.id);
+      if (!gate.ok) return bad(reply, gate.code, gate.message, gate.http || 400);
+    }
+    const r = await targetService.uploadMany(b);
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r.data);
   });

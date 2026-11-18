@@ -115,6 +115,7 @@ module.exports = function (app, ctx) {
       const it = jparse(row.data) || {};
       try {
         const chk = await targetService.checkDupe(targetHost, it, null);
+        if (chk && chk.ok === false) throw Object.assign(new Error(chk.message || chk.code), { code: chk.code });
         out.dupe.checked++;
         it.dupeResults = it.dupeResults || {};
         it.dupeResults[targetHost] = { found: !!chk.found, skip: !!chk.skip, kind: chk.kind || '', at: now() };

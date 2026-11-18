@@ -6,7 +6,6 @@ function makeDedupePhase(deps) {
       const dedupeLimit = batch;
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;
-      let stopDedupe = false;
       for (const row of pend) {
         const it = jparse(row.data) || {};
         const hosts = [];
@@ -24,7 +23,11 @@ function makeDedupePhase(deps) {
           if (it.dupePassedAt && prev && !prev.skip) { anyOpen = true; continue; }
           let chk = { found: false, skip: false };
           dedupe.requests++;
-          try { chk = await targetService.checkDupe(host, it, null); resetSiteFail(host); }
+          try {
+            chk = await targetService.checkDupe(host, it, null);
+            if (chk && chk.ok === false) throw Object.assign(new Error(chk.message || chk.code), { code: chk.code });
+            resetSiteFail(host);
+          }
           catch (e) {
             const emsg = String(e && e.message || e).slice(0, 120);
             dedupe.errors.push({ id: row.id, host: host, error: emsg });
@@ -44,7 +47,6 @@ function makeDedupePhase(deps) {
           if (chk.found && chk.skip) continue;
           anyOpen = true;
         }
-        if (stopDedupe) break;
         if (!anyOpen) {
           it.dupeSkipped = { at: new Date().toISOString(), hosts: hosts };
           dedupe.skipped++;

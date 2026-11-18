@@ -16,7 +16,8 @@ db.exec('CREATE TABLE queue (id TEXT PRIMARY KEY, status TEXT, title TEXT, data 
 db.prepare('INSERT INTO meta(k,v) VALUES(?,?)').run('config', JSON.stringify({ retryMax: 2 }));
 db.prepare('INSERT INTO queue(id,status,title,data,updated_at) VALUES(?,?,?,?,?)').run('q_fail', 'failed', 'Fail Item', JSON.stringify({
   id: 'q_fail', status: 'failed', stage: 'failed', stageFailedFrom: 'publish', stageLastErrorCode: 'BDINFO_REQUIRED', stageLastError: '缺 BDInfo',
-  retries: 2, stageUpdatedAt: recent,
+  retries: 2, stageUpdatedAt: recent, dupePassedAt: recent,
+  dupeResults: { 'demo.example': { found: false, skip: false, at: recent } },
   targetResults: { 'demo.example': { stage: 'failed', errorCode: 'LOGIN_REQUIRED', error: 'cookie 失效', attempts: 1, at: recent } }
 }), recent);
 db.prepare('INSERT INTO queue(id,status,title,data,updated_at) VALUES(?,?,?,?,?)').run('q_done', 'published', 'Done Item', JSON.stringify({
@@ -42,6 +43,7 @@ check('单条重放恢复 pending 且保留目标结果', () => {
   const d = jparse(row.data);
   need(row.status === 'pending' && d.stage === 'publish' && !d.stageLastError && d.retries === 0, '队列没重置：' + JSON.stringify(d));
   need(d.targetResults['demo.example'].stage === 'pending', '目标站失败没重置：' + JSON.stringify(d.targetResults));
+  need(!d.dupePassedAt && (!d.dupeResults || !Object.keys(d.dupeResults).length), '重放后查重状态没清：' + JSON.stringify({ dupePassedAt: d.dupePassedAt, dupeResults: d.dupeResults }));
   need(q.list({ limit: 10 }).total === 0, '重放后仍被列为失败');
 });
 

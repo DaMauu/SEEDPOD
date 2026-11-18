@@ -145,6 +145,9 @@ function makeFailureQueue(ctx) {
         delete tr.errorCode;
       }
     });
+    delete d.dupePassedAt;
+    delete d.dupeSkipped;
+    d.dupeResults = {};
     delete d.dedupeLastError;
     delete d.dedupeLastErrorCode;
     delete d.dedupeLastAttemptAt;

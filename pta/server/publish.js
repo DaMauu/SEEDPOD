@@ -211,10 +211,10 @@ function makePublisher(ctx) {
     const cur = load(id);
     if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
     const it = cur.data;
+    if (!ctx.allowReal('realPublish')) return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开', http: 409 };
     const dl = downloaderOf(b, it);
     if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB', http: 400 };
     if (String(dl.kind || 'qb') !== 'qb') return { ok: true, complete: true, skipped: 'non-qb' };
-    if (!ctx.allowReal('realPublish')) return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开', http: 409 };
     if (!it.downloadUrl) return { ok: false, code: 'NO_SOURCE_URL', message: '条目没有源种下载地址', http: 400 };
     const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
     if (got.err) {

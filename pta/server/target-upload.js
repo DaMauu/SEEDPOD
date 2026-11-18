@@ -154,6 +154,12 @@ async function upload(host, body) {
     }
     if (!dryRun && b.preCheckDupe !== false && !(item.data.dupePassedAt && dres)) {
       const chk = await checkDupe(host, item.data, t.buf);
+      if (chk && chk.ok === false) {
+        const msg = '查重没查成：' + (chk.message || chk.code || '目标站不可用');
+        setTargetResult(item.data, host, { stage: 'failed', error: msg, errorCode: chk.code || 'DEDUPE_FAILED', nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString() });
+        saveQueue(item.data);
+        return { ok: false, code: chk.code || 'DEDUPE_FAILED', message: msg, http: 502 };
+      }
       if (chk.found && chk.skip) {
         const msg = '目标站已有这条资源，跳过';
         setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: chk.verify });

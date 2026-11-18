@@ -115,6 +115,11 @@ async function main() {
   }
   const lr = await login();
   need(lr.status === 200 && cookie.indexOf('pta_sid=') === 0, '登录没拿到会话');
+  const dl = await json(BASE + '/api/downloaders', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'watch-check', kind: 'watch', watchPath: path.join(DATA, 'watch') })
+  });
+  need(dl.status === 200 && dl.body.ok, 'watch 下载器创建失败：' + JSON.stringify(dl.body && dl.body.error));
 
   let qid = '';
 
