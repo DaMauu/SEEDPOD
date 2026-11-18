@@ -33,6 +33,19 @@ async function upload(host, body) {
     const mism = checkHost(item.data, host);
     if (mism) return { ok: false, code: mism.code, message: mism.message, http: 400 };
     const dryRun = b.dryRun !== false;
+    if (!dryRun) {
+      const title = String(item.data.title || '');
+      if (/(^|[\s._-])(sample|test|probe|fixture)([\s._-]|$)/i.test(title)) {
+        return { ok: false, code: 'TEST_ITEM_BLOCKED', message: '标题像测试种子，禁止真实提交', http: 403 };
+      }
+      const testHost = /^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(host);
+      const cfgRow = ctx.one("SELECT v FROM meta WHERE k = 'config'");
+      const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+      const confirmed = Array.isArray(b.confirmHosts) && b.confirmHosts.indexOf(host) >= 0;
+      if (!testHost && cfg.allowMainTarget !== true && !confirmed) {
+        return { ok: false, code: 'MAIN_TARGET_LOCKED', message: '这是主站，需要单独输入域名确认', http: 403 };
+      }
+    }
     if (!dryRun && ctx.logEvent) ctx.logEvent('warn', '目标站', '真实提交开始 · ' + host + ' · queue ' + item.id);
     const tr = targetResults(item.data)[String(host).toLowerCase()];
     if (!dryRun && tr && (tr.stage === 'submitted' || tr.stage === 'injected')) {

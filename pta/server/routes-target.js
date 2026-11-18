@@ -30,6 +30,20 @@ module.exports = function (app, ctx) {
     db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
       .run(JSON.stringify(it), now(), it.id);
   }
+  function realGate(item, hosts, body) {
+    if (!body || body.dryRun !== false) return null;
+    const title = String(item && item.title || '');
+    if (/(^|[\s._-])(sample|test|probe|fixture)([\s._-]|$)/i.test(title)) {
+      return { code: 'TEST_ITEM_BLOCKED', message: '标题像测试种子，禁止真实提交', http: 403 };
+    }
+    const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
+    const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+    if (cfg.allowMainTarget === true) return null;
+    const confirmed = Array.isArray(body.confirmHosts) ? body.confirmHosts.map(function (h) { return String(h).toLowerCase(); }) : [];
+    const bad = (hosts || []).map(function (h) { return String(h || '').toLowerCase(); }).filter(function (h) { return h && !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(h) && confirmed.indexOf(h) < 0; });
+    if (bad.length) return { code: 'MAIN_TARGET_LOCKED', message: '这是主站，需要单独输入域名确认：' + bad.join('、'), http: 403 };
+    return null;
+  }
   function checkHost(item, host) {
     if (item.targetSite && String(item.targetSite) !== String(host)) {
       return { code: 'TARGET_MISMATCH', message: '条目目标站是 ' + item.targetSite + '，跟请求的 ' + host + ' 不一致' };
@@ -180,6 +194,11 @@ module.exports = function (app, ctx) {
 
   app.post('/api/targets/:host/upload', async (req, reply) => {
     const b = req.body || {};
+    const item = loadQueue(b.queueId);
+    if (item) {
+      const gate = realGate(item.data, [req.params.host], b);
+      if (gate) return bad(reply, gate.code, gate.message, gate.http);
+    }
     if (b.dryRun === false) {
       const gate = await sourceReady(b.queueId);
       if (!gate.ok) return bad(reply, gate.code, gate.message, gate.http || 400);
@@ -197,6 +216,13 @@ module.exports = function (app, ctx) {
 
   app.post('/api/queue/:id/targets/upload', async (req, reply) => {
     const b = Object.assign({}, req.body || {}, { queueId: req.params.id });
+    const item = loadQueue(req.params.id);
+    if (item) {
+      let hosts = Array.isArray(b.targets) ? b.targets : [];
+      if (!hosts.length) hosts = [item.data.targetSite].concat(Array.isArray(item.data.targets) ? item.data.targets : []).filter(Boolean);
+      const gate = realGate(item.data, hosts, b);
+      if (gate) return bad(reply, gate.code, gate.message, gate.http);
+    }
     if (b.dryRun === false) {
       const gate = await sourceReady(req.params.id);
       if (!gate.ok) return bad(reply, gate.code, gate.message, gate.http || 400);

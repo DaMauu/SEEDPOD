@@ -213,6 +213,12 @@ module.exports = function (app, ctx) {
       next.retryBackoffMin = n;
     }
     ['listInterval', 'interval', 'windowMinutes', 'maxPerWindow', 'breaker'].forEach(function (k) { if (b[k] !== undefined) next[k] = Number(b[k]); });
+    if (ctx.logEvent) {
+      ['realPublish', 'realCrawl', 'realImages'].forEach(function (k) {
+        if (next[k] !== cfg[k]) ctx.logEvent(next[k] ? 'warn' : 'info', '配置', k + (next[k] ? ' 开启' : ' 关闭'));
+      });
+      if (String(next.targetHost || '') !== String(cfg.targetHost || '')) ctx.logEvent('warn', '配置', 'targetHost 变更');
+    }
     const saved = configSchema.write(ctx, next);
     return ok(reply, saved);
   });

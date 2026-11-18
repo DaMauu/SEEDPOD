@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.488 · 2026-11-19
+
+### 真实提交三道硬闸
+- 标题命中 sample/test/probe/fixture 的条目，真实提交直接 403 `TEST_ITEM_BLOCKED`。
+- 主站真实提交必须输入目标域名确认；测试站和 127.0.0.1 不受影响。调度自动发布到主站默认被拦（`allowMainTarget` 默认 false）。
+- 配置开关 `realPublish/realCrawl/realImages` 和 `targetHost` 变更写日志，能查到什么时候开过。
+- 新增 `target-lock` 检查 4/4；`target` 29/29。
+
 ## v0.7.487 · 2026-11-19
 
 ### 目标站真实提交二次确认与审计日志

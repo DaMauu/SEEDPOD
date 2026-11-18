@@ -220,6 +220,18 @@
   </div>
 
   <input ref="filePick" type="file" accept="image/*" multiple hidden @change="onFiles">
+
+  <div v-if="lock.open" class="modal-mask" id="main-target-lock">
+    <div class="modal">
+      <div class="modal-head"><h2>主站真实提交</h2></div>
+      <p class="modal-sub">主站不是测试站。请输入目标域名 <b>{{ lock.host }}</b> 确认：</p>
+      <input v-model="lock.typed" class="input" :placeholder="lock.host" autocomplete="off">
+      <div class="modal-foot">
+        <button class="btn ghost slim" type="button" @click="lock.open = false; lock.typed = ''">取消</button>
+        <button class="btn primary slim" type="button" :disabled="lock.typed.trim() !== lock.host" @click="confirmLock">确认提交</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -246,6 +258,7 @@ const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
 const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
+const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
 let mediaCfgLoaded = false
 const filePick = ref(null)
@@ -286,7 +299,15 @@ function hostLabel(s) { return ({ none: '站内', local: '本地图床', pixhost
 function stageLabel(s) { return STAGE_LABEL[s] || s || '草稿' }
 function stageTone(s) { return STAGE_TONE[s] || '' }
 function targetTone(s) { return STAGE_TONE[s] || '' }
-async function retryTarget(host) {
+function retryTarget(host) {
+  if (!/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(host)) {
+    lock.open = true; lock.host = host; lock.hosts = [host]; lock.targets = [host]; lock.typed = ''
+    lock.fn = function () { doRetryTarget(host) }
+    return
+  }
+  doRetryTarget(host)
+}
+async function doRetryTarget(host) {
   if (!sel.value || busy.target) return
   busy.target = true
   try {
@@ -435,13 +456,27 @@ function submitTarget() {
   const primary = form.targetSite || sel.value.targetSite
   const targets = (form.targets && form.targets.length ? form.targets.slice() : (primary ? [primary] : []))
   if (!targets.length) { toast('先选目标站'); return }
-  confirmBox('真实提交到目标站？', '会把「' + sel.value.title + '」提交到：' + targets.join('、') + '。\n\n服务端会先查 cookie、源种完成度和目标站查重；真发布关闭时会被拦下。', function () { doSubmitTarget(targets) })
+  const main = targets.filter(function (h) { return !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(h) })
+  if (main.length) {
+    lock.open = true; lock.host = main[0]; lock.hosts = main; lock.targets = targets; lock.typed = ''; lock.fn = null
+    return
+  }
+  confirmBox('真实提交到测试站？', '会把「' + sel.value.title + '」提交到：' + targets.join('、') + '。\n\n服务端还会查 cookie、源种完成度和目标站查重。', function () { doSubmitTarget(targets, []) })
 }
-async function doSubmitTarget(targets) {
+function confirmLock() {
+  if (lock.typed.trim() !== lock.host) return
+  const fn = lock.fn
+  const targets = lock.targets
+  const hosts = lock.hosts
+  lock.open = false; lock.typed = ''
+  if (fn) fn(hosts)
+  else doSubmitTarget(targets, hosts)
+}
+async function doSubmitTarget(targets, confirmHosts) {
   if (!sel.value || busy.target) return
   busy.target = true
   try {
-    const body = { queueId: sel.value.id, dryRun: false }
+    const body = { queueId: sel.value.id, dryRun: false, confirmHosts: Array.isArray(confirmHosts) ? confirmHosts : [] }
     if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
     const multi = targets.length > 1
     const url = multi ? '/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload'

@@ -153,7 +153,7 @@ function startMock(hash, torrentBuf, state, hits, root) {
         res.end('<html><body><input name="search" value="Echo Only 2024 1080p"><div>没有找到结果</div></body></html>');
         return;
       }
-      res.end('<html><body><a href="details.php?id=42">Target Upload Test 2024 1080p Blu-ray</a><div>' + hash + '</div><a href="download.php?id=42">下载</a></body></html>');
+      res.end('<html><body><a href="details.php?id=42">Target Upload 2024 1080p Blu-ray</a><div>' + hash + '</div><a href="download.php?id=42">下载</a></body></html>');
       return;
     }
     res.writeHead(404); res.end('no');

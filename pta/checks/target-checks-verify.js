@@ -50,7 +50,7 @@ async function runDeleteVerify(C) {
     try {
       const add = await json(BASE + '/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Target Upload Test 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+        body: JSON.stringify({ title: 'Target Upload 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
           shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
       });
       need(add.status === 200 && add.body.ok, '建回收站测试队列失败');
@@ -96,7 +96,7 @@ async function runDeleteVerify(C) {
     need(put.status === 200 && put.body.ok, '关发布后校验失败');
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Verify Off Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+      body: JSON.stringify({ title: 'Verify Off 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
         shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
     });
     need(add.status === 200 && add.body.ok, '建回查关闭队列失败');

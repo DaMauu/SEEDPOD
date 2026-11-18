@@ -7,7 +7,7 @@ async function runUpload(C) {
   await check('队列条目与干跑表单映射', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Target Upload Test 2024 1080p Blu-ray', cn: '目标站测试', intro: '测试简介',
+      body: JSON.stringify({ title: 'Target Upload 2024 1080p Blu-ray', cn: '目标站测试', intro: '测试简介',
         site: 'source.example', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', anonymous: false,
         shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
     });
@@ -20,7 +20,7 @@ async function runUpload(C) {
     const d = plan.body.data;
     need(d.url.indexOf('/takeupload.php') >= 0, '上传地址不对：' + d.url);
     need(d.fileField === 'file', '文件字段不对');
-    need(d.fields.name === 'Target Upload Test 2024 1080p Blu-ray', '标题映射不对：' + d.fields.name);
+    need(d.fields.name === 'Target Upload 2024 1080p Blu-ray', '标题映射不对：' + d.fields.name);
     need(d.fields.small_desc === '目标站测试', '副标题映射不对：' + d.fields.small_desc);
     need(d.fields.descr === '测试简介', '简介映射不对');
     need(d.fields.anon === '0', '匿名映射不对');
@@ -63,7 +63,7 @@ async function runUpload(C) {
   await check('目标站副标题优先用源副标题', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Source Sub Test 2024 1080p Blu-ray', subtitle: '源站副标题 / 别名 [国配中字]', cn: '源站副标题', intro: 'x',
+      body: JSON.stringify({ title: 'Source Sub 2024 1080p Blu-ray', subtitle: '源站副标题 / 别名 [国配中字]', cn: '源站副标题', intro: 'x',
         site: 'source.example', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '7.90 GB' })
     });
     need(add.status === 200 && add.body.ok, '建队列失败');
@@ -78,7 +78,7 @@ async function runUpload(C) {
     async function planOf(cat) {
       const add = await json(BASE + '/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Cat Map Test 2024 1080p', cn: '分类映射', intro: 'x', cat, targetSite: '127.0.0.1', status: 'approved', res: '1080p', size: '20 GB' })
+        body: JSON.stringify({ title: 'Cat Map 2024 1080p', cn: '分类映射', intro: 'x', cat, targetSite: '127.0.0.1', status: 'approved', res: '1080p', size: '20 GB' })
       });
       need(add.status === 200 && add.body.ok, '建队列失败');
       const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
@@ -96,7 +96,7 @@ async function runUpload(C) {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        title: 'No Info Field Test 2024 1080p Blu-ray', targetSite: 'noinfo.example', status: 'approved',
+        title: 'No Info Field 2024 1080p Blu-ray', targetSite: 'noinfo.example', status: 'approved',
         cat: 'movie', res: '1080p', size: '20 GB',
         bdinfo: 'Disc Title: TEST', mediainfo: 'General\nComplete name: TEST.mkv',
         descrBb: '正文'
@@ -116,7 +116,7 @@ async function runUpload(C) {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        title: 'BDInfo Field Test 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved',
+        title: 'BDInfo Field 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved',
         cat: 'movie', res: '1080p', size: '20 GB',
         bdinfo: 'Disc Title: TEST\nDisc Size: 20 GB',
         descrBb: '正文段落\n[hide=bdinfo]Disc Title: TEST\nDisc Size: 20 GB[/hide]\n结尾'
@@ -142,7 +142,7 @@ async function runUpload(C) {
     need(maps.status === 200 && maps.body.data.sites['127.0.0.1'].cat['电影'] === '999', '总表没存上');
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Site Map Test 2024 1080p', cn: '映射总表', intro: 'x', cat: 'movie', team: 'CMCT', targetSite: '127.0.0.1', status: 'approved', res: '1080p', size: '20 GB' })
+      body: JSON.stringify({ title: 'Site Map 2024 1080p', cn: '映射总表', intro: 'x', cat: 'movie', team: 'CMCT', targetSite: '127.0.0.1', status: 'approved', res: '1080p', size: '20 GB' })
     });
     const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
@@ -158,7 +158,7 @@ async function runUpload(C) {
     async function planOf(team) {
       const add = await json(BASE + '/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Team Map Test 2024 1080p', cn: '组映射', intro: 'x', team, targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB' })
+        body: JSON.stringify({ title: 'Team Map 2024 1080p', cn: '组映射', intro: 'x', team, targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB' })
       });
       need(add.status === 200 && add.body.ok, '建队列失败');
       const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
@@ -203,7 +203,7 @@ async function runUpload(C) {
       need(p.status === 200 && p.body.ok, '计划失败：' + JSON.stringify(p.body && p.body.error));
       return p.body.data;
     }
-    const a = await planOf({ title: 'Tag Map Test 2024 1080p Blu-ray', cn: '标签测试', intro: 'x', tags: ['国语', '中字', '禁转', '官方'] });
+    const a = await planOf({ title: 'Tag Map 2024 1080p Blu-ray', cn: '标签测试', intro: 'x', tags: ['国语', '中字', '禁转', '官方'] });
     need(a.fields.guoyu === 'yes', '国语没勾：' + JSON.stringify(a.fields));
     need(a.fields.zhongzi === 'yes', '中字没勾：' + JSON.stringify(a.fields));
     need(a.fields.jinzhuan === undefined, '不该勾禁转');
@@ -224,15 +224,15 @@ async function runUpload(C) {
       need(r.status === 200 && r.body.ok, '建队列失败：' + targetSite);
       return r.body.data.id;
     }
-    const uid = await mk('UNIT3D Target Test 2024 1080p', 'unit3d.example');
-    const gid = await mk('Gazelle Target Test 2024 1080p', 'gazelle.example');
+    const uid = await mk('UNIT3D Target 2024 1080p', 'unit3d.example');
+    const gid = await mk('Gazelle Target 2024 1080p', 'gazelle.example');
     const up = await json(BASE + '/api/targets/unit3d.example/plan', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: uid })
     });
     need(up.status === 200 && up.body.ok, 'UNIT3D 计划失败');
     need(up.body.data.fileField === 'torrent', 'UNIT3D 文件字段不对：' + up.body.data.fileField);
     need(up.body.data.url.indexOf('/torrents/create') >= 0, 'UNIT3D 上传路径不对');
-    need(up.body.data.fields.name === 'UNIT3D Target Test 2024 1080p', 'UNIT3D 标题映射不对');
+    need(up.body.data.fields.name === 'UNIT3D Target 2024 1080p', 'UNIT3D 标题映射不对');
     need(up.body.data.hasCookie === false && up.body.data.ready === false, '无 cookie 的站预检不该就绪：' + JSON.stringify({ hasCookie: up.body.data.hasCookie, ready: up.body.data.ready }));
     need((up.body.data.warnings || []).includes('目标站没有 cookie'), '无 cookie 的站没提示：' + JSON.stringify(up.body.data.warnings));
     const gp = await json(BASE + '/api/targets/gazelle.example/plan', {
@@ -241,14 +241,14 @@ async function runUpload(C) {
     need(gp.status === 200 && gp.body.ok, 'Gazelle 计划失败');
     need(gp.body.data.fileField === 'file_input', 'Gazelle 文件字段不对：' + gp.body.data.fileField);
     need(gp.body.data.url.indexOf('/upload.php') >= 0, 'Gazelle 上传路径不对');
-    need(gp.body.data.fields.title === 'Gazelle Target Test 2024 1080p', 'Gazelle 标题映射不对');
+    need(gp.body.data.fields.title === 'Gazelle Target 2024 1080p', 'Gazelle 标题映射不对');
     need((gp.body.data.warnings || []).includes('目标站没有 cookie'), 'Gazelle 无 cookie 没提示');
   });
 
   await check('UNIT3D 多种字段名识别 BDInfo/MediaInfo', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'UNIT3D Fields Test 2024 1080p', targetSite: 'unit3d-fields.example', status: 'approved',
+      body: JSON.stringify({ title: 'UNIT3D Fields 2024 1080p', targetSite: 'unit3d-fields.example', status: 'approved',
         cat: 'movie', res: '1080p', size: '20 GB', bdinfo: 'BDINFO-CONTENT', mediainfo: 'MEDIAINFO-CONTENT' })
     });
     need(add.status === 200 && add.body.ok, '建字段测试队列失败');
@@ -272,17 +272,17 @@ async function runUpload(C) {
       need(r.status === 200 && r.body.ok, '建队列失败');
       return r.body.data.id;
     }
-    const id1 = await mk('Nexus Default Test 2024 1080p', true);
+    const id1 = await mk('Nexus Default 2024 1080p', true);
     const p1 = await json(BASE + '/api/targets/nexus-default.example/plan', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id1 })
     });
     need(p1.status === 200 && p1.body.ok, '默认计划失败：' + JSON.stringify(p1.body && p1.body.error));
     const f1 = p1.body.data.fields;
-    need(f1.name === 'Nexus Default Test 2024 1080p', '标题默认映射不对');
+    need(f1.name === 'Nexus Default 2024 1080p', '标题默认映射不对');
     need(f1.small_descr === undefined, '没副标题/中文名时不该硬拼：' + f1.small_descr);
     need(f1.type === '401', '分类数组没转成目标分类：' + f1.type);
     need(f1.uplver === 'yes', '匿名默认值不对：' + f1.uplver);
-    const id2 = await mk('Nexus Default Test 2024 1080p', false);
+    const id2 = await mk('Nexus Default 2024 1080p', false);
     const p2 = await json(BASE + '/api/targets/nexus-default.example/plan', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id2 })
     });
@@ -315,7 +315,7 @@ async function runUpload(C) {
     need(put.status === 200 && put.body.ok, '写截图门槛失败');
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'No Shots Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+      body: JSON.stringify({ title: 'No Shots 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
         sourceImages: ['https://example.org/keep.jpg'], descrBb: '正文 [img]https://example.org/other.jpg[/img]' })
     });
     need(add.status === 200 && add.body.ok, '建无图队列失败');
@@ -342,7 +342,7 @@ async function runUpload(C) {
     need(put.status === 200 && put.body.ok, '写 BDInfo 门槛失败');
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'No BDInfo Test 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
+      body: JSON.stringify({ title: 'No BDInfo 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB',
         shots: ['shot-1.jpg', 'shot-2.jpg', 'shot-3.jpg'] })
     });
     need(add.status === 200 && add.body.ok, '建无 BDInfo 队列失败');
@@ -364,7 +364,7 @@ async function runUpload(C) {
   await check('禁转源在发布阶段被拦住', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Restricted Test 2024 1080p Blu-ray 禁转', targetSite: '127.0.0.1', status: 'approved', size: '20 GB' })
+      body: JSON.stringify({ title: 'Restricted 2024 1080p Blu-ray 禁转', targetSite: '127.0.0.1', status: 'approved', size: '20 GB' })
     });
     need(add.status === 200 && add.body.ok, '建禁转条目失败');
     const before = hits.length;
@@ -388,7 +388,7 @@ async function runUpload(C) {
     need(d.cleaned === true, '目标站上传前没清洗种子');
     need(d.verify && d.verify.found === true, '提交后回查没找到');
     need(hits.length === 1, '应发 1 次上传，实际 ' + hits.length);
-    need(hits[0].fields.name === 'Target Upload Test 2024 1080p Blu-ray', '目标站收到的标题不对');
+    need(hits[0].fields.name === 'Target Upload 2024 1080p Blu-ray', '目标站收到的标题不对');
     need(hits[0].fields.small_desc === '目标站测试', '目标站收到的副标题不对：' + hits[0].fields.small_desc);
     need(hits[0].file && hits[0].file.field === 'file' && hits[0].file.bytes > 0, '种子文件没到目标站');
     need(hits[0].cookie === 'mock-cookie', 'cookie 没带上');
@@ -440,7 +440,7 @@ async function runUpload(C) {
   await check('上传前查重：已有资源跳过且不发请求', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Target Upload Test 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', shots: ['a', 'b', 'c'] })
+      body: JSON.stringify({ title: 'Target Upload 2024 1080p Blu-ray', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p', size: '20 GB', shots: ['a', 'b', 'c'] })
     });
     need(add.status === 200 && add.body.ok, '建重复队列失败');
     const id = add.body.data.id;
