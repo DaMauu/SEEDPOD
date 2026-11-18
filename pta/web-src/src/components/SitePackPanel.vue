@@ -5,7 +5,7 @@
         <h2 class="set-h2">站点包</h2>
         <p class="set-desc">随程序发布的加密包；例外确认后只写私有 data/，不改密文包。</p>
       </div>
-      <button class="btn ghost slim" type="button" :disabled="loading" @click="load">{{ loading ? '读取中…' : '刷新' }}</button>
+      <button class="btn ghost slim" type="button" :disabled="loading" @click="loadPack">{{ loading ? '读取中…' : '刷新' }}</button>
     </div>
 
     <div v-if="!available" class="pack-empty">
@@ -20,7 +20,7 @@
       </div>
       <div class="pack-tools">
         <input v-model="q" class="input slim" placeholder="搜分类 / 站点 / ID" @keyup.enter="load">
-        <button class="btn ghost slim" type="button" @click="load">筛选</button>
+        <button class="btn ghost slim" type="button" @click="loadPack">筛选</button>
       </div>
       <div v-if="rows.length" class="pack-list">
         <div v-for="e in rows" :key="e.host + '|' + e.id" class="pack-row">
@@ -113,7 +113,7 @@ async function confirmOne(e) {
   saving.value = ''
 }
 
-onMounted(load)
+onMounted(loadPack)
 </script>
 
 <style scoped>

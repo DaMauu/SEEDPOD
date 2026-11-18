@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.468 · 2026-11-18
+
+### 修复站点包面板空白
+- `SitePackPanel.vue` / `SiteCoveragePanel.vue` 的按钮和 `onMounted` 调用了不存在的 `load`，组件 setup 直接报错，弹窗只剩标题。
+- 改为调用实际的 `loadPack` / `loadCoverage`；站点包和站点覆盖现在能正常渲染。
+- 只改前端函数名，不动接口和数据。
+
 ## v0.7.467 · 2026-11-18
 
 ### Skills 质量升级

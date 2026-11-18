@@ -5,7 +5,7 @@
         <h2 class="set-h2">站点覆盖</h2>
         <p class="set-desc">离线统计目标站定义、cookie、上传/回查路径和上传计划；不联网、不提交。</p>
       </div>
-      <button class="btn ghost slim" type="button" :disabled="loading" @click="load">{{ loading ? '读取中…' : '刷新' }}</button>
+      <button class="btn ghost slim" type="button" :disabled="loading" @click="loadCoverage">{{ loading ? '读取中…' : '刷新' }}</button>
     </div>
     <div v-if="error" class="cov-empty">{{ error }}</div>
     <div v-else-if="!data" class="cov-empty">读取中…</div>
@@ -50,7 +50,7 @@ async function loadCoverage() {
   loading.value = false
 }
 
-onMounted(load)
+onMounted(loadCoverage)
 </script>
 
 <style scoped>
