@@ -61,7 +61,7 @@ function makeScheduler(ctx, deps) {
     try {
       try {
       failpoint('crawl');
-      steps.crawl = await runCrawlPhase({ one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want });
+      steps.crawl = await runCrawlPhase({ db: ctx.db, one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want });
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
       } catch (e) { phaseError('crawl', e); }
 
@@ -135,7 +135,7 @@ function makeScheduler(ctx, deps) {
         const pb = steps.publish || {};
         const bits = [];
         if (c.skipped) bits.push('抓取跳过（' + c.skipped + '）');
-        else bits.push('抓取 ' + (Number(c.sites) || 0) + ' 站（新增 ' + (Number(c.added) || 0) + ' / 失败 ' + (Number(c.failed) || 0) + ' / 等待 ' + (Number(c.waiting) || 0) + '）');
+        else bits.push('抓取 ' + (Number(c.sites) || 0) + ' 站 / ' + (Number(c.pages) || 0) + ' 页（新增 ' + (Number(c.added) || 0) + ' / 失败 ' + (Number(c.failed) || 0) + ' / 等待 ' + (Number(c.waiting) || 0) + '）');
         if (!sc.skipped) bits.push('初筛 ' + (Number(sc.selected) || 0));
         if (!rv.skippedStep) bits.push('终审 ready ' + (Number(rv.ready) || 0) + ' / hold ' + (Number(rv.hold) || 0));
         if (pb && pb.published !== undefined) bits.push('发布 ' + (Number(pb.published) || 0));
