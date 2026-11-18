@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.467 · 2026-11-18
+
+### Skills 质量升级
+- `review`：审查前先复述意图；输出分阻塞/重要/建议/疑问/做得好/结论；有作者解释先认可。
+- `security`：报告按 ID/级别/位置/影响/触发条件/修法/CWE 组织；先确认授权范围。
+- `ui`：补 Vue 3 规则（script setup、computed 优先、props 不改、composable 清理），明确不要求 TS/Nuxt/Pinia。
+- 只改 `.opencode/skills`，不动业务代码。
+
 ## v0.7.466 · 2026-11-18
 
 ### 引入 OpenCode 项目 skills
