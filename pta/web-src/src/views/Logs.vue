@@ -17,21 +17,24 @@
 
     <section class="fail-panel" id="fail-panel">
       <div class="fail-bar">
-        <b>失败队列</b>
+        <div class="fail-title">
+          <b>失败与重试</b>
+          <span class="fail-sub">卡住的条目；自动重试用完的可以手动重新排队</span>
+        </div>
         <span class="fail-meta">{{ failText }}</span>
-        <button class="btn ghost slim" type="button" @click="toggleDead">{{ deadOnly ? '看全部' : '只看死信' }}</button>
+        <button class="btn ghost slim" type="button" @click="toggleDead">{{ deadOnly ? '看全部' : '只看重试用完' }}</button>
         <button class="btn ghost slim" type="button" :disabled="failLoading" @click="loadFailures">{{ failLoading ? '读取中…' : '刷新' }}</button>
       </div>
-      <div v-if="!failRows.length" class="fail-empty">没有待处理的失败</div>
+      <div v-if="!failRows.length" class="fail-empty">没有卡住的条目</div>
       <div v-else class="fail-list">
         <div v-for="(f, i) in failRows" :key="f.id + '-' + i" class="fail-row">
           <span class="fail-id" :title="f.id">{{ f.id }}</span>
-          <span class="fail-stage">{{ f.stage }}</span>
-          <span class="fail-code">{{ f.code }}</span>
-          <span class="fail-attempts">{{ f.attempts }} 次</span>
-          <span class="fail-next">{{ f.nextRetryAt || '—' }}</span>
-          <em v-if="f.dead" class="fail-dead">死信</em>
-          <button class="btn ghost slim" type="button" @click="replay(f.id)">重放</button>
+          <span class="fail-stage" :title="f.stage">{{ stageText(f.stage) }}</span>
+          <span class="fail-code" :title="f.code">{{ codeText(f.code, f.stage) }}</span>
+          <span class="fail-attempts">试了 {{ f.attempts }} 次</span>
+          <span class="fail-next" :title="f.nextRetryAt">{{ whenText(f.nextRetryAt) }}</span>
+          <em v-if="f.dead" class="fail-dead" title="尝试次数已用完，自动重试不再跑">自动重试用完</em>
+          <button class="btn ghost slim" type="button" title="清掉错误和次数，放回待处理，下一轮重新跑" @click="replay(f.id)">重新排队</button>
         </div>
         <div v-if="failTotal > failRows.length" class="fail-more">共 {{ failTotal }} 条，显示前 {{ failRows.length }} 条</div>
       </div>
@@ -75,7 +78,7 @@ const failTotal = ref(0)
 const failDead = ref(0)
 const deadOnly = ref(false)
 const failLoading = ref(false)
-let failLoaded = false
+const failLoaded = ref(false)
 const failRows = computed(() => {
   const out = []
   failures.value.forEach(it => {
@@ -88,11 +91,33 @@ const failRows = computed(() => {
   return out
 })
 const failText = computed(() => {
-  if (!failLoaded) return '读取中…'
-  return '共 ' + failTotal.value + ' 条' + (failDead.value ? ' · 死信 ' + failDead.value : '')
+  if (!failLoaded.value) return '读取中…'
+  return '共 ' + failTotal.value + ' 条' + (failDead.value ? ' · 自动重试用完 ' + failDead.value : '')
 })
 
 const shown = computed(() => level.value === 'all' ? rows.value : rows.value.filter(r => r.lvl === level.value))
+
+const STAGE_TEXT = { review: '补资料', prepared: '准备', previewed: '预览', submitted: '提交', injected: '注入', publish: '发布', target: '目标站', dedupe: '查重', crawl: '抓取' }
+function stageText(s) { return STAGE_TEXT[s] || s || '未知' }
+function codeText(code, stage) {
+  const c = String(code || '')
+  if (c === 'TARGET_UNREACHABLE' || c === 'UPSTREAM_FAILED') return stage === 'review' ? '资料服务连不上' : '目标站连不上'
+  return ({
+    LOGIN_REQUIRED: '登录失效',
+    SOURCE_NOT_READY: '源种没下完',
+    NO_COOKIE: '没配 cookie',
+    NO_DOWNLOADER: '没配下载器',
+    CRAWL_FAILED: '抓取失败',
+    CRAWL_HTTP_403: '站点拒绝（403）',
+    DEDUPE_TIMEOUT: '查重超时',
+    UNKNOWN: '未知错误'
+  })[c] || c || '未知'
+}
+function whenText(v) {
+  const t = Date.parse(v || '')
+  if (!t) return '—'
+  return new Date(t).toLocaleString('zh-CN', { hour12: false }).slice(5, 16)
+}
 
 function scrollDown() {
   nextTick(() => { if (panel.value) panel.value.scrollTop = panel.value.scrollHeight })
@@ -154,7 +179,7 @@ async function loadFailures() {
   failures.value = Array.isArray(j.data.items) ? j.data.items : []
   failTotal.value = Number(j.data.total) || 0
   failDead.value = Number(j.data.dead) || 0
-  failLoaded = true
+  failLoaded.value = true
 }
 function toggleDead() {
   deadOnly.value = !deadOnly.value
@@ -170,7 +195,7 @@ function ensureLogs() {
   if (!viewVisible('logs') || !loggedIn()) return
   if (!loaded) loadLogs()
   else connect()
-  if (!failLoaded) loadFailures()
+  if (!failLoaded.value) loadFailures()
 }
 function download() {
   const txt = rows.value.map(r => r.t + ' [' + r.lvl + '] ' + r.tag + ' ' + r.msg).join('\n')
@@ -201,18 +226,21 @@ onUnmounted(() => {
 .log-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
 .fail-panel { background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 10px 16px 8px; }
 .fail-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fail-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.fail-sub { font-size: 11px; color: var(--muted-2); }
 .fail-bar b { font-size: 12.5px; color: var(--ink); }
 .fail-meta { font-size: 11.5px; color: var(--muted); }
 .fail-bar .btn { margin-left: 0; }
 .fail-empty { padding: 8px 0 10px; font-size: 12px; color: var(--muted-2); }
 .fail-list { display: flex; flex-direction: column; max-height: 200px; overflow-y: auto; }
-.fail-row { display: grid; grid-template-columns: 96px 90px 150px 56px 160px auto 64px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 11.5px; }
+.fail-row .btn { padding: 0 8px; font-size: 11px; white-space: nowrap; }
+.fail-row { display: grid; grid-template-columns: 86px 72px minmax(0, 1fr) 74px 104px 92px 96px; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 11.5px; }
 .fail-id { color: var(--muted-2); font-family: var(--mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fail-stage { color: var(--muted); }
 .fail-code { color: var(--ink); font-family: var(--mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fail-attempts { color: var(--muted); }
 .fail-next { color: var(--muted-2); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fail-dead { font-style: normal; font-size: 10px; color: var(--red); border: 1px solid #f1d4d4; border-radius: 999px; padding: 0 6px; }
+.fail-dead { font-style: normal; font-size: 10px; color: var(--red); border: 1px solid #f1d4d4; border-radius: 999px; padding: 0 6px; white-space: nowrap; text-align: center; }
 .fail-more { padding: 6px 0 2px; font-size: 11px; color: var(--muted-2); }
 
 .log-bar { display: flex; align-items: center; gap: 10px; }
@@ -254,10 +282,16 @@ onUnmounted(() => {
 .log-panel { flex: 1 1 0; height: auto; min-height: 0; }
 @media (max-width: 900px) {
 .log-bar { flex-wrap: wrap; gap: 8px; }
-.fail-row { grid-template-columns: 84px 76px minmax(0,1fr) 50px 120px auto; }
+.fail-row { grid-template-columns: 74px 64px minmax(0,1fr) 62px 88px 74px; gap: 6px; }
 .fail-next { display: none; }
 }
 @media (max-width: 600px) {
+.fail-row { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding: 8px 0; }
+.fail-id, .fail-stage, .fail-attempts, .fail-dead, .fail-row .btn { flex: 0 0 auto; }
+.fail-code { flex: 1 1 100%; order: 3; white-space: normal; overflow: visible; text-overflow: clip; }
+.fail-attempts { order: 1; }
+.fail-dead { order: 2; }
+.fail-row .btn { order: 2; margin-left: auto; }
 .log-bar .seg-tabs { flex: 1 1 100%; }
 .log-bar .spacer { display: none; }
 .log-bar .btn:first-of-type { margin-left: auto; }
