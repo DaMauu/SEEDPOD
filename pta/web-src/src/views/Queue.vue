@@ -304,7 +304,7 @@ async function loadQueuePage(p) {
   if (!loggedIn()) return
   if (p) page.value = p
   const status = tab.value === 'all' ? '' : tab.value === 'approved' ? 'approved,published' : tab.value
-  const qs = new URLSearchParams({ limit: '100', offset: String((page.value - 1) * 100) })
+  const qs = new URLSearchParams({ limit: '50', offset: String((page.value - 1) * 50) })
   if (status) qs.set('status', status)
   if (q.value.trim()) qs.set('q', q.value.trim())
   try {
@@ -312,7 +312,7 @@ async function loadQueuePage(p) {
     if (!j || !j.ok) return
     items.value = j.data.items || []
     matched.value = Number(j.data.matched) || 0
-    pages.value = Math.max(1, Math.ceil(matched.value / 100))
+    pages.value = Math.max(1, Math.ceil(matched.value / 50))
     if (page.value > pages.value) page.value = pages.value
     loaded = true
     if (!sel.value || !items.value.some(x => x.id === sel.value.id)) {
@@ -794,7 +794,21 @@ onUnmounted(() => {
 .queue-list { max-height: none; }
 }
 
-:global(.view[data-view="queue"]) { height: calc(100vh - 150px); display: flex; flex-direction: column; justify-content: center; }
+/* 桌面：固定高度双栏，列表/详情各自滚动，页脚不会被长列表推走 */
+@media (min-width: 901px) {
+  :global(.view[data-view="queue"]) { height: calc(100vh - 150px); min-height: 520px; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+  .queue-split { flex: 1 1 auto; height: auto; min-height: 0; align-items: stretch; }
+  .queue-list { height: auto; max-height: none; min-height: 0; flex: 0 0 264px; overflow: hidden; }
+  .queue-items { min-height: 0; overflow-y: auto; }
+  .queue-detail { height: auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .qd-scroll { min-height: 0; overflow-y: auto; }
+}
+/* 手机：列表给固定视窗，详情在下面；页脚仍在内容末尾 */
+@media (max-width: 900px) {
+  .queue-list { max-height: 46vh; }
+  .queue-items { overflow-y: auto; }
+}
+:global(.view[data-view="queue"]) { justify-content: flex-start; overflow: hidden; }
 /* 手机端让整页自然滚动，避免详情内部滚动把顶部查重卡住 */
 @media (max-width: 900px) {
   :global(.view[data-view="queue"]) { height: auto; min-height: calc(100vh - 150px); justify-content: flex-start; }

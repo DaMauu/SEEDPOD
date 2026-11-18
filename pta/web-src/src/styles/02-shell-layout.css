@@ -80,3 +80,10 @@
 @media (max-width: 1319px) { .view { padding-bottom: 64px; } }
 @media (min-width: 1320px) { .main { padding-bottom: 36px; } }
 
+
+/* 页脚贴底：内容短时不被吊在中间；底部横条区间给它留高度 */
+.main { min-height: 100vh; display: flex; flex-direction: column; }
+.dev-foot { margin-top: auto; }
+@media (min-width: 901px) and (max-width: 1099px) {
+  .main { padding-bottom: 180px; }
+}

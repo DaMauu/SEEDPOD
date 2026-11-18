@@ -34,9 +34,17 @@
   .dock .dock-label { display: block; font-size: 9.5px; line-height: 1.2; text-align: center; white-space: nowrap; }
   .main { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
-/* 901–1319：底部横条浮在页脚上方，避免压住版本/统计信息 */
-@media (min-width: 901px) and (max-width: 1319px) {
+/* 901–1099：底部横条浮在页脚上方；1100 起改成右侧竖排，彻底避开页脚 */
+@media (min-width: 901px) and (max-width: 1099px) {
   .dock { bottom: 96px; }
+}
+@media (min-width: 1100px) and (max-width: 1319px) {
+  .dock { left: auto; right: 14px; top: 50%; bottom: auto; transform: translateY(-50%);
+    flex-direction: column; align-items: stretch; padding: 6px; gap: 2px; border-radius: 18px;
+    max-height: calc(100vh - 40px); overflow-y: auto; }
+  .dock-item { padding: 8px; }
+  .dock-item .dock-label { display: none; }
+  .main { padding-bottom: 36px; }
 }
 @media (max-width: 360px) {
   .dock .dock-label { font-size: 8.5px; }

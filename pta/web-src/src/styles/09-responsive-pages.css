@@ -86,3 +86,10 @@
   .drawer-head-right { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; gap: 8px; }
   .drawer-head-right .drawer-meta { margin-left: 0; }
 }
+
+/* 页脚贴底：放在文件末尾，覆盖前面的 .dev-foot margin 简写 */
+.main { min-height: 100vh; display: flex; flex-direction: column; }
+.dev-foot { margin-top: auto; }
+@media (min-width: 901px) and (max-width: 1099px) {
+  .main { padding-bottom: 180px; }
+}
