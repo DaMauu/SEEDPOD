@@ -37,7 +37,7 @@ async function saveSched() {
   if (j && j.ok) applySched(j.data)
   else toast((j && j.error && j.error.message) || '调度设置保存失败')
 }
-function setEveryValue(n) { sched.everyMinutes = Number(n) || 60; saveSched() }
+function setEveryValue(n) { sched.everyMinutes = Math.max(30, Math.min(1440, Number(n) || 60)); saveSched() }
 async function saveLimits() {
   limits.interval = Math.min(600, Math.max(8, Number(limits.interval) || 60))
   limits.windowMinutes = Math.min(1440, Math.max(1, Number(limits.windowMinutes) || 60))
