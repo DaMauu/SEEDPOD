@@ -26,7 +26,7 @@
       <div v-if="tab !== 'failed'" class="queue-page">
         <div class="queue-pager">
           <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && loadQueuePage(page - 1)">上一页</span>
-          <span class="pager-meta">第 {{ page }} / {{ pages }} 页 · 共 {{ matched }} 条</span>
+          <span class="pager-meta" :title="'第 ' + page + ' / ' + pages + ' 页 · 共 ' + matched + ' 条'">{{ page }} / {{ pages }} 页 · 共 {{ matched }} 条</span>
           <span class="pager-link" :class="{ off: page >= pages }" @click="page < pages && loadQueuePage(page + 1)">下一页</span>
         </div>
       </div>
@@ -669,7 +669,7 @@ onUnmounted(() => {
 
 /* 左侧列表 + 右侧详情 */
 .queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; align-items: stretch; }
-.queue-list { width: 264px; flex: 0 0 264px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.queue-list { width: clamp(280px, 30%, 400px); flex: 0 0 clamp(280px, 30%, 400px); background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; }
 .q-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: none; padding: 7px 9px; border-radius: 9px; cursor: pointer; font: inherit; }
 .q-item:hover { background: #f7f8fa; }
@@ -680,10 +680,10 @@ onUnmounted(() => {
 
 /* 分页 */
 .queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
-.queue-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
-.queue-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
+.queue-pager { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.queue-pager .pager-link { flex: 0 0 auto; font-size: 10.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .queue-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
-.queue-pager .pager-meta { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.queue-pager .pager-meta { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 详情外壳 */
 .queue-detail { flex: 1; min-width: 0; min-height: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px 14px; display: flex; flex-direction: column; overflow: hidden; }

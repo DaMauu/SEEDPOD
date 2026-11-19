@@ -2,7 +2,7 @@
   <div class="qf-wrap">
     <div class="qf-bar">
       <span class="qf-count">{{ countText }}</span>
-      <button class="btn ghost slim" type="button" @click="toggleDead">{{ deadOnly ? '看全部' : '只看重试用完' }}</button>
+      <button class="btn ghost slim" type="button" title="只看自动重试用完" @click="toggleDead">{{ deadOnly ? '看全部' : '只看用完' }}</button>
       <button class="btn ghost slim" type="button" :disabled="loading" @click="load">{{ loading ? '读取中…' : '刷新' }}</button>
     </div>
     <div v-if="!visible.length" class="sites-empty">{{ loading ? '读取中…' : '没有卡住的条目' }}</div>
@@ -89,7 +89,7 @@ const pages = computed(() => Math.max(1, Math.ceil(visible.value.length / pageSi
 const pageRows = computed(() => visible.value.slice((page.value - 1) * pageSize, page.value * pageSize))
 const countText = computed(() => {
   if (!loaded.value) return '读取中…'
-  const base = '共 ' + total.value + ' 条' + (dead.value ? ' · 重试用完 ' + dead.value : '')
+  const base = '共 ' + total.value + ' 条' + (dead.value ? ' · 用完 ' + dead.value : '')
   return term.value ? base + ' · 匹配 ' + visible.value.length : base
 })
 watch(() => props.q, () => { page.value = 1 })
@@ -134,9 +134,9 @@ onMounted(load)
 
 <style scoped>
 .qf-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.qf-bar { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; padding: 0 2px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.qf-count { flex: 1 1 auto; min-width: 0; font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.qf-bar .btn { flex: 0 0 auto; height: 22px; min-height: 22px; padding: 0 5px; font-size: 10px; line-height: 20px; }
+.qf-bar { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; padding: 0 2px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.qf-count { flex: 1 1 auto; min-width: 0; font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qf-bar .btn { flex: 0 0 auto; height: 20px; min-height: 20px; padding: 0 4px; font-size: 9.5px; line-height: 18px; }
 .qf-list { display: flex; flex-direction: column; gap: 2px; overflow: auto; padding-top: 6px; flex: 1; min-height: 0; }
 .qf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 9px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; }
 .qf-row:hover { background: #f7f8fa; }
@@ -147,12 +147,12 @@ onMounted(load)
 .qf-meta .badge { flex: 0 0 auto; }
 .qf-sum { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .qf-next { flex: 0 0 auto; font-size: 10px; color: var(--muted-2); }
-.qf-replay { align-self: center; white-space: nowrap; height: 22px; min-height: 22px; padding: 0 6px; font-size: 10px; line-height: 20px; border-radius: 6px; }
+.qf-replay { align-self: center; white-space: nowrap; height: 24px; min-height: 24px; padding: 0 7px; font-size: 10.5px; line-height: 22px; border-radius: 6px; }
 .qf-pager-wrap { flex: 0 0 auto; padding: 8px 2px 0; border-top: 1px solid var(--line); background: #fff; }
 .qf-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
 .qf-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .qf-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
-.qf-page-meta { flex: 1; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.qf-page-meta { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 600px) {
   .qf-next { display: none; }
   .qf-row { gap: 6px; padding: 6px; }
