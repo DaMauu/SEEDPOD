@@ -503,7 +503,9 @@ async function main() {
     need(saved.ok && saved.data.title === 'Smoke Queue Edited 2020 2160p', '整理资料没保存标题：' + (saved.data && saved.data.title));
     need(saved.data.prepared && /Smoke Queue Edited/.test(saved.data.prepared.title || ''), '整理资料没用到新标题：' + JSON.stringify(saved.data.prepared && saved.data.prepared.title));
     const prepared = await page.locator('.qd-media').innerText();
-    need(/2160p/.test(prepared) && /已整理/.test(prepared), '整理后媒体摘要/提示缺失：' + prepared.slice(0, 160));
+    need(/2160p/.test(prepared), '整理后媒体摘要丢失：' + prepared.slice(0, 160));
+    const descCard = await page.locator('.qd-desc-card').innerText();
+    need(/已整理/.test(descCard), '整理后没有提示：' + descCard.slice(0, 160));
     await page.locator('.qd-desc-card details.qd-final-desc').evaluate((el) => { el.open = true });
     const finalDesc = await page.locator('.qd-desc-card details.qd-final-desc').innerText();
     need(/BDInfo|Disc Title|2160p/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));

@@ -80,8 +80,8 @@
                 <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
               </select>
             </div>
-            <div class="qd-field"><span>标题</span><div class="qd-path-row"><input v-model="form.title" class="input"><button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">用源种名</button></div></div>
-            <div class="qd-field"><span>副标题</span><input v-model="form.cn" class="input"></div>
+            <div class="qd-field"><span>标题</span><div class="qd-path-row"><input v-model="form.title" class="input"><button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">回填源标题</button></div></div>
+            <div class="qd-field"><span>副标题</span><div class="qd-path-row"><input v-model="form.cn" class="input"><button class="btn ghost slim" type="button" :disabled="busy.act" title="用公开元数据填中文名和简介" @click="fetchMeta">查资料</button></div></div>
             <div class="qd-field">
               <span>图床</span>
               <select v-model="form.imageHost" class="input">
@@ -93,8 +93,9 @@
           </section>
 
           <section class="sd-card qd-desc-card">
-            <h3>简介</h3>
+            <div class="qd-desc-head"><h3>简介</h3><button class="btn ghost slim" type="button" :disabled="media.preparing" title="用当前标题/简介和 MediaInfo 生成最终发布内容" @click="prepareRelease">{{ media.preparing ? '整理中…' : '整理发布资料' }}</button></div>
             <textarea v-model="form.intro" class="input sd-note" rows="3"></textarea>
+            <div v-if="media.prepareMsg" class="t-sub">{{ media.prepareMsg }}</div>
             <details v-if="sel.prepared && sel.prepared.description" class="qd-final-desc">
               <summary>最终简介预览（发布时用这份）</summary>
               <pre>{{ sel.prepared.description }}</pre>
@@ -123,17 +124,12 @@
           <details class="qd-advanced">
           <summary>高级：MediaInfo / 截图（日常可忽略）</summary>
           <section class="sd-card qd-media">
-            <h3>MediaInfo / BDInfo</h3>
-            <div class="soft">目标站要求简介带媒体信息时才用；不填也能发布。</div>
+            <div class="qd-media-head"><h3>MediaInfo / BDInfo</h3><button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析 MediaInfo' }}</button></div>
+            <div class="soft">目标站要求简介带媒体信息时才用；不填也能发布。粘贴完整文本后点右上角「解析 MediaInfo」。</div>
             <div class="qd-field qd-media-info">
               <textarea v-model="media.infoText" class="input sd-note" rows="4" placeholder="粘贴完整 MediaInfo（从 General 开始）或 BDInfo（从 Disc Title 开始）"></textarea>
             </div>
-            <div class="qd-actions">
-              <button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析 MediaInfo' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.preparing" @click="prepareRelease">{{ media.preparing ? '整理中…' : '整理发布资料' }}</button>
-            </div>
             <div v-if="media.parseMsg" class="t-sub">{{ media.parseMsg }}</div>
-            <div v-if="media.prepareMsg" class="t-sub">{{ media.prepareMsg }}</div>
             <div v-if="media.info" class="t-sub">已识别：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
 
             <details class="qd-advanced-sub">
@@ -159,10 +155,12 @@
               <div class="soft">正常发布用源种，不用生成临时种子。下载器预检只检查会不会加进 qB，不会发布。</div>
               <div class="qd-field">
                 <span>Tracker（仅生成临时种子）</span>
-                <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
+                <div class="qd-path-row">
+                  <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
+                  <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="生成一个临时种子；正常发布用源种，不需要这个" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成临时种子' }}</button>
+                </div>
               </div>
               <div class="qd-actions">
-                <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="生成一个临时种子；正常发布用源种，不需要这个" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成临时种子' }}</button>
                 <button class="btn ghost slim" type="button" :disabled="busy.inject" title="只检查会不会加进 qB，不会真的发布" @click="runInjectPlan">{{ busy.inject ? '预检中…' : '预检下载器' }}</button>
               </div>
               <div v-if="sel.injectPlan" class="t-sub">下载器预检 · {{ sel.injectPlan.client === 'watch' ? 'watch' : 'qB' }}：{{ injectNote(sel) }}（只检查，不会发布）</div>
@@ -216,7 +214,6 @@
           <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" title="从源站取种，加入 qB 开始下载" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.act" title="用公开元数据填中文名和简介" @click="fetchMeta">查资料</button>
           <div class="spacer"></div>
           <input v-model="reason" class="input slim" placeholder="驳回理由（可留空）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>
@@ -879,6 +876,8 @@ onUnmounted(() => {
 .qd-advanced-sub { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .qd-advanced-sub > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
 .qd-advanced-sub > summary:hover { color: var(--accent); }
+.qd-desc-head, .qd-media-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qd-desc-head h3, .qd-media-head h3 { margin: 0; }
 .qd-final-desc { margin-top: 8px; font-size: 12px; }
 .qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
 .qd-final-desc > summary:hover { color: var(--accent); }
