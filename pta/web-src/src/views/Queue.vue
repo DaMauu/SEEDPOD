@@ -129,8 +129,8 @@
             <div class="qd-check-item"><span>媒介</span><b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></div>
             <div class="qd-check-item"><span>目标站查重</span><b :class="preflight.dupe.state === 'exists' || preflight.dupe.state === 'error' ? 'qd-stage-err' : (preflight.dupe.state === 'passed' ? 'qd-ok' : '')">{{ preflight.dupe.label }}</b></div>
             <div class="qd-check-item"><span>infohash</span><b v-if="preflight.torrent.hash">{{ preflight.torrent.hash.slice(0, 12) }}… <em v-if="preflight.checked" :class="preflight.hashUnchanged ? 'qd-ok' : 'qd-stage-err'">{{ preflight.hashUnchanged ? '清洗后不变' : '清洗后变了' }}</em><em v-else class="soft">清洗只换 announce，应不变</em></b><b v-else class="soft">先下载种子</b></div>
-            <div class="qd-check-item qd-check-wide"><span>种子</span><b>{{ preflight.torrent.name || '先下载种子' }}</b></div>
-            <div class="qd-check-item qd-check-wide"><span>Tracker</span><b>{{ preflight.trackerNote }}</b></div>
+            <div class="qd-check-item"><span>种子</span><b>{{ preflight.torrent.name || '先下载种子' }}</b></div>
+            <div class="qd-check-item"><span>Tracker</span><b>{{ preflight.trackerNote }}</b></div>
           </div>
           <div v-if="preflight.warnings && preflight.warnings.length" class="qd-warn">需处理：{{ preflight.warnings.join('；') }}</div>
         </section>
@@ -730,12 +730,11 @@ onUnmounted(() => {
 .qd-preflight { margin-top: 10px; padding: 10px 12px; }
 .qd-preflight-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .qd-preflight-head h3 { margin: 0; font-size: 10px; letter-spacing: .6px; }
-.qd-check-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 18px; }
-.qd-check-item { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 11.5px; color: var(--muted); }
-.qd-check-item > span { flex: 0 0 auto; color: var(--muted-2); }
-.qd-check-item > b { min-width: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.qd-check-grid { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 5px 12px; align-items: baseline; }
+.qd-check-item { display: contents; }
+.qd-check-item > span { font-size: 11px; color: var(--muted-2); white-space: nowrap; text-align: right; }
+.qd-check-item > b { min-width: 0; color: var(--ink); font-size: 11.5px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
 .qd-check-item em { font-style: normal; font-weight: 500; }
-.qd-check-wide { grid-column: 1 / -1; }
 .qd-ok { color: var(--green); }
 .qd-warn { margin-top: 6px; font-size: 11.5px; color: #b45309; line-height: 1.6; }
 .qd-status { margin-top: 8px; }
@@ -777,8 +776,7 @@ onUnmounted(() => {
   .queue-detail { padding: 14px 12px 10px; }
   .qd-field { grid-template-columns: 46px minmax(0, 1fr) 82px; gap: 8px; }
   .qd-action-btn { font-size: 10px; }
-  .qd-check-grid { grid-template-columns: 1fr; }
-  .qd-check-wide { grid-column: auto; }
+  .qd-check-grid { grid-template-columns: 68px minmax(0, 1fr); }
   .qd-targets-foot, .qd-actions { gap: 6px; }
 }
 </style>
