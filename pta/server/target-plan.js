@@ -2,6 +2,7 @@
 const flowConfig = require('./flow-config');
 const meta = require('./meta');
 const targetDefaults = require('./target-defaults');
+const mediainfo = require('./mediainfo');
 const { composeSubtitle, expand, hideContent, stripHide, infoFieldKey, descrFieldKey } = require('./target-html');
 
 function makePlan(deps) {
@@ -121,8 +122,11 @@ function makePlan(deps) {
     const bdKey = infoFieldKey(t.upload.fields, 'bdinfo');
     const miKey = infoFieldKey(t.upload.fields, 'mediainfo');
     const descrKey = descrFieldKey(t.upload.fields);
-    const srcBd = String(item.bdinfo || '').trim() || hideContent(item.descrBb || item.intro, 'bdinfo');
-    const srcMi = String(item.mediainfo || '').trim() || hideContent(item.descrBb || item.intro, 'mediainfo');
+    const ex = mediainfo.extractFromBbcode(item.descrBb || item.intro || '');
+    let srcBd = String(item.bdinfo || '').trim();
+    if (mediainfo.isWeakMedia(srcBd)) srcBd = (ex.bdinfo && ex.bdinfo.raw) || hideContent(item.descrBb || item.intro, 'bdinfo') || '';
+    let srcMi = String(item.mediainfo || '').trim();
+    if (mediainfo.isWeakMedia(srcMi)) srcMi = (ex.mediainfo && ex.mediainfo.raw) || hideContent(item.descrBb || item.intro, 'mediainfo') || '';
     let descrLive = descrKey ? String(fields[descrKey] || '') : '';
     if (bdKey && srcBd) {
       fields[bdKey] = srcBd;

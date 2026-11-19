@@ -106,6 +106,25 @@ async function runUpload(C) {
     need(d.checked === true && d.hashUnchanged === true, '清洗校验没通过：' + JSON.stringify({ checked: d.checked, hashUnchanged: d.hashUnchanged }));
   });
 
+  await check('源站简介里的 MediaInfo 自动带入计划与发布前检查', async function () {
+    const miBb = '[quote]\nGeneral\nComplete name : Auto.Media.2024.mkv\nFormat : Matroska\nFile size : 1.0 GiB\n\nVideo\nFormat : HEVC\nWidth : 3840 pixels\nHeight : 2160 pixels\nBit depth : 10 bits\n\nAudio #1\nFormat : DTS XLL\nCommercial name : DTS-HD Master Audio\nChannel(s) : 6 channels\nLanguage : Chinese\n[/quote]';
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Auto.Media.2024.2160p', status: 'pending', site: 'demo-a.example', targetSite: '127.0.0.1', descrBb: miBb })
+    });
+    need(add.status === 200 && add.body.ok, '建自动媒体队列失败');
+    const id = add.body.data.id;
+    const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id })
+    });
+    need(p.status === 200 && p.body.ok, '自动媒体计划失败：' + JSON.stringify(p.body && p.body.error));
+    const descr = String(p.body.data.fields.descr || '');
+    need(/\[hide=mediainfo\]/.test(descr) && /General/.test(descr), '计划没自动补 MediaInfo：' + descr.slice(-160));
+    const pv = await json(BASE + '/api/queue/' + encodeURIComponent(id) + '/publish-preview?host=127.0.0.1');
+    need(pv.status === 200 && pv.body.ok, '自动媒体预览失败');
+    need(pv.body.data.media && pv.body.data.media.kind === 'mediainfo' && /2160p/.test(pv.body.data.media.summary || ''), '预览没显示自动识别的媒体信息：' + JSON.stringify(pv.body.data.media));
+  });
+
   await check('目标站副标题优先用源副标题', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

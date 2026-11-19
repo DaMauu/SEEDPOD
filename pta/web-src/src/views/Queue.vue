@@ -92,9 +92,11 @@
           </section>
 
           <section class="sd-card qd-desc-card">
-            <div class="qd-desc-head"><h3>简介</h3><button class="btn ghost slim" type="button" :disabled="media.preparing" title="用当前标题/简介和 MediaInfo 生成最终发布内容" @click="prepareRelease">{{ media.preparing ? '整理中…' : '整理发布资料' }}</button></div>
+            <div class="qd-desc-head"><h3>简介</h3><button class="btn ghost slim" type="button" :disabled="prepBusy" title="用当前标题/简介和源站媒体信息生成最终发布内容" @click="prepareRelease">{{ prepBusy ? '整理中…' : '整理发布资料' }}</button></div>
             <textarea v-model="form.intro" class="input sd-note" rows="3"></textarea>
-            <div v-if="media.prepareMsg" class="t-sub">{{ media.prepareMsg }}</div>
+            <div v-if="prepMsg" class="t-sub">{{ prepMsg }}</div>
+            <div v-if="preflight && preflight.media" class="t-sub">媒体信息：已从源站简介识别 {{ preflight.media.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo' }} · {{ preflight.media.summary }}</div>
+            <div v-else-if="preflight" class="soft">媒体信息：源站简介里没识别到 MediaInfo/BDInfo；发布时不带。</div>
             <details v-if="sel.prepared && sel.prepared.description" class="qd-final-desc">
               <summary>最终简介预览（发布时用这份）</summary>
               <pre>{{ sel.prepared.description }}</pre>
@@ -120,53 +122,6 @@
             <div v-if="sel.imagePlan" class="t-sub">图床：{{ hostLabel(sel.imagePlan.provider) }} · {{ sel.imagePlan.total }} 张 · {{ sel.imagePlan.dryRun ? '演练' : (sel.imagePlan.uploaded + ' 张已传' + (sel.imagePlan.failed ? '，' + sel.imagePlan.failed + ' 张失败' : '')) }}</div>
           </section>
 
-          <details class="qd-advanced">
-          <summary>高级：MediaInfo / 截图（日常可忽略）</summary>
-          <section class="sd-card qd-media">
-            <div class="qd-media-head"><h3>MediaInfo / BDInfo</h3><button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析 MediaInfo' }}</button></div>
-            <div class="soft">目标站要求简介带媒体信息时才用；不填也能发布。粘贴完整文本后点右上角「解析 MediaInfo」。</div>
-            <div class="qd-field qd-media-info">
-              <textarea v-model="media.infoText" class="input sd-note" rows="4" placeholder="粘贴完整 MediaInfo（从 General 开始）或 BDInfo（从 Disc Title 开始）"></textarea>
-            </div>
-            <div v-if="media.parseMsg" class="t-sub">{{ media.parseMsg }}</div>
-            <div v-if="media.info" class="t-sub">已识别：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
-
-            <details class="qd-advanced-sub">
-              <summary>从视频文件读取信息 / 截图（可选）</summary>
-              <div class="qd-field">
-                <span>文件路径</span>
-                <div class="qd-path-row">
-                  <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
-                  <button class="btn ghost slim" type="button" :disabled="media.pathLoading" @click="fillMediaPath">{{ media.pathLoading ? '读取中…' : '从 qB 取路径' }}</button>
-                </div>
-              </div>
-              <div class="soft">文件必须在 {{ media.root || 'PTA_MEDIA_ROOT' }} 下；不填也能发布。</div>
-              <div class="qd-actions">
-                <button class="btn ghost slim" type="button" :disabled="media.probing || !media.path.trim()" title="读取分辨率、编码、时长等；只用于预览" @click="probeMedia">{{ media.probing ? '读取中…' : '读取视频信息' }}</button>
-                <button class="btn ghost slim" type="button" :disabled="media.shooting || !media.path.trim()" title="从视频里截 3 张图；日常可不做" @click="shootMedia">{{ media.shooting ? '截图中…' : '从视频截图' }}</button>
-              </div>
-              <div v-if="!media.path.trim()" class="soft">这两个按钮要先填文件路径，或点「从 qB 取路径」。</div>
-              <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
-            </details>
-
-            <details class="qd-advanced-sub">
-              <summary>临时种子 / 下载器预检（排错用，一般不用）</summary>
-              <div class="soft">正常发布用源种，不用生成临时种子。下载器预检只检查会不会加进 qB，不会发布。</div>
-              <div class="qd-field">
-                <span>Tracker（仅生成临时种子）</span>
-                <div class="qd-path-row">
-                  <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
-                  <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="生成一个临时种子；正常发布用源种，不需要这个" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成临时种子' }}</button>
-                </div>
-              </div>
-              <div class="qd-actions">
-                <button class="btn ghost slim" type="button" :disabled="busy.inject" title="只检查会不会加进 qB，不会真的发布" @click="runInjectPlan">{{ busy.inject ? '预检中…' : '预检下载器' }}</button>
-              </div>
-              <div v-if="sel.injectPlan" class="t-sub">下载器预检 · {{ sel.injectPlan.client === 'watch' ? 'watch' : 'qB' }}：{{ injectNote(sel) }}（只检查，不会发布）</div>
-              <div v-if="media.torrent" class="t-sub">临时种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
-            </details>
-          </section>
-          </details>
         </div>
 
         <div v-if="sel.qb || sel.sourceState" class="t-sub qd-download">qB：{{ qbText() }}</div>
@@ -259,14 +214,16 @@ const sel = ref(null)
 const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
-const busy = reactive({ act: false, approve: false, publish: false, target: false, images: false, inject: false })
+const busy = reactive({ act: false, approve: false, publish: false, target: false, images: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
-const media = reactive({ path: '', announce: '', infoText: '', info: null, parseMsg: '', prepareMsg: '', parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
+const prepBusy = ref(false)
+const prepMsg = ref('')
 const preflight = ref(null)
 const metaBusy = ref(false)
 const metaMsg = ref('')
 let previewSeq = 0
-let mediaCfgLoaded = false
+let metaSeq = 0
+let selectSeq = 0
 const filePick = ref(null)
 let timer = null
 let qTimer = null
@@ -298,7 +255,6 @@ async function doRetryTarget(host) {
   busy.target = true
   try {
     const body = { queueId: sel.value.id, targets: [host], dryRun: false }
-    if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
     const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
     })
@@ -358,20 +314,15 @@ async function loadQueuePage(p) {
   } catch (e) { reportError('Queue', e) }
 }
 async function select(id) {
+  const seq = ++selectSeq
   if (progressTimer) { clearInterval(progressTimer); progressTimer = null }
   try {
     const j = await (await fetch('/api/queue/' + encodeURIComponent(id), { credentials: 'same-origin' })).json()
     if (!j || !j.ok) return
+    if (seq !== selectSeq) return
     sel.value = j.data
-    media.path = ''
-    media.announce = ''
-    media.infoText = j.data.mediaInfo || j.data.bdinfo || ''
-    media.info = (j.data.prepared && j.data.prepared.media) || null
-    media.parseMsg = ''
-    media.prepareMsg = ''
-    media.probe = null
-    media.torrent = null
-    loadMediaConfig()
+    prepBusy.value = false
+    prepMsg.value = ''
     form.title = j.data.title || ''
     form.cn = j.data.cn || ''
     form.intro = j.data.intro || ''
@@ -380,6 +331,8 @@ async function select(id) {
     form.imageHost = j.data.imageHost || '站内'
     form.anonymous = !!j.data.anonymous
     reason.value = ''
+    metaSeq++
+    metaBusy.value = false
     metaMsg.value = ''
     await loadPreview()
   } catch (e) { reportError('Queue', e) }
@@ -428,10 +381,11 @@ function pubNote(q) {
 function injectNote(q) {
   return String((q && q.injectPlan && q.injectPlan.message) || '').replace(/^演练：/, '')
 }
-async function saveFields() {
-  if (!sel.value) return { ok: false, error: { message: '没选中条目' } }
+async function saveFields(onlyId) {
+  const id = String(onlyId || (sel.value && sel.value.id) || '')
+  if (!id) return { ok: false, error: { message: '没选中条目' } }
   try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(id) + '/action', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         action: 'save', title: form.title, cn: form.cn, intro: form.intro,
@@ -505,6 +459,9 @@ async function act(action) {
 }
 async function fetchMeta() {
   if (!sel.value || metaBusy.value) return
+  const id = sel.value.id
+  const seq = ++metaSeq
+  const queryTitle = form.title || sel.value.title
   metaBusy.value = true
   metaMsg.value = '正在查资料，最多等 20 秒…'
   const ctrl = new AbortController()
@@ -513,8 +470,9 @@ async function fetchMeta() {
     const j = await (await fetch('/api/meta/fetch', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       signal: ctrl.signal,
-      body: JSON.stringify({ title: form.title || sel.value.title, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
+      body: JSON.stringify({ title: queryTitle, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
     })).json()
+    if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
     if (j && j.ok && j.data) {
       /* 接口返回是 { ok, data: { ok, provider, data: {title, overview} } }，兼容扁平结构 */
       const payload = j.data
@@ -537,7 +495,8 @@ async function fetchMeta() {
       } else if (!changed.length) {
         metaMsg.value = '查到了 ' + got.join(' / ') + '，和现有内容一样，没有改动'
       } else {
-        const saved = await saveFields()
+        const saved = await saveFields(id)
+        if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
         metaMsg.value = '已更新 ' + changed.join(' / ') + ' · 来源 ' + provider + (saved.ok ? ' · 已保存' : ' · 保存失败，发布前会再保存一次')
       }
       toast(metaMsg.value)
@@ -546,12 +505,13 @@ async function fetchMeta() {
       toast(metaMsg.value)
     }
   } catch (e) {
+    if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
     if (e && e.name === 'AbortError') metaMsg.value = '查询超时（20 秒），稍后再试'
     else { reportError('Queue.fetchMeta', e); metaMsg.value = '资料请求发不出去' }
     toast(metaMsg.value)
   } finally {
     clearTimeout(timer)
-    metaBusy.value = false
+    if (seq === metaSeq) metaBusy.value = false
   }
 }
 function submitTarget() {
@@ -585,10 +545,10 @@ async function doSubmitTarget(targets, confirmHosts) {
       busy.target = false
       return
     }
-    /* 发布前用当前表单重新整理一次，确保简介/MediaInfo 和图床链接是最新的 */
+    /* 发布前用当前表单重新整理一次，确保简介/媒体信息和图床链接是最新的 */
     const prep = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mediaInfo: media.infoText, targets: form.targets, host: form.targetSite })
+      body: JSON.stringify({ targets: form.targets, host: form.targetSite })
     })).json()
     if (!prep || !prep.ok) {
       toast('发布资料没整理好：' + ((prep && prep.error && prep.error.message) || '检查简介/媒体信息'))
@@ -596,7 +556,6 @@ async function doSubmitTarget(targets, confirmHosts) {
       return
     }
     const body = { queueId: sel.value.id, dryRun: false, confirmHosts: Array.isArray(confirmHosts) ? confirmHosts : [] }
-    if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
     const multi = targets.length > 1
     const url = multi ? '/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload'
       : '/api/targets/' + encodeURIComponent(targets[0]) + '/upload'
@@ -621,62 +580,6 @@ async function doSubmitTarget(targets, confirmHosts) {
   } catch (e) { toast('提交请求发不出去') }
   busy.target = false
 }
-function fmtSize(n) {
-  let v = Number(n) || 0
-  if (!v) return '—'
-  const u = ['B', 'KB', 'MB', 'GB', 'TB']
-  let i = 0
-  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++ }
-  return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + ' ' + u[i]
-}
-async function loadMediaConfig() {
-  if (mediaCfgLoaded || !loggedIn()) return
-  try {
-    const j = await (await fetch('/api/media/config', { credentials: 'same-origin' })).json()
-    if (j && j.ok) { media.root = j.data.root || ''; mediaCfgLoaded = true }
-  } catch (e) { reportError('Queue', e) }
-}
-async function fillMediaPath() {
-  if (!sel.value || media.pathLoading) return
-  media.pathLoading = true
-  try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/media-path', { method: 'POST', credentials: 'same-origin' })).json()
-    if (j && j.ok && j.data && j.data.path) {
-      media.path = j.data.path
-      toast('已从 qB 填入路径：' + j.data.path)
-    } else if (j && j.ok && j.data && j.data.added) {
-      toast(j.data.message || '已加入 qB，下载完成后再点一次')
-    } else toast((j && j.error && j.error.message) || '没取到路径')
-  } catch (e) { toast('读取路径请求发不出去') }
-  media.pathLoading = false
-}
-async function probeMedia() {
-  if (!sel.value || media.probing) return
-  if (!media.path.trim()) { toast('先填媒体文件路径'); return }
-  media.probing = true
-  try {
-    const j = await (await fetch('/api/media/probe', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ path: media.path.trim() })
-    })).json()
-    if (j && j.ok) { media.probe = j.data; toast('探测完成：' + (j.data.summary || j.data.format || 'OK')) }
-    else toast((j && j.error && j.error.message) || '探测失败')
-  } catch (e) { toast('探测请求发不出去') }
-  media.probing = false
-}
-async function runInjectPlan() {
-  if (!sel.value || busy.inject) return
-  busy.inject = true
-  try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/inject', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ dryRun: true })
-    })).json()
-    if (j && j.ok) { toast('注入检查：' + (j.data.message || 'OK')); await refresh() }
-    else toast((j && j.error && j.error.message) || '注入检查失败')
-  } catch (e) { reportError('Queue.runInjectPlan', e); toast('注入检查请求发不出去') }
-  busy.inject = false
-}
 async function imageAction(dryRun) {
   if (!sel.value || busy.images) return
   if (!(sel.value.shots || []).length) { toast('先加截图'); return }
@@ -684,7 +587,7 @@ async function imageAction(dryRun) {
   try {
     const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/images', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageHost: form.imageHost, dryRun })
+      body: JSON.stringify({ imageHost: form.imageHost, dryRun: dryRun })
     })).json()
     if (j && j.ok) {
       toast(dryRun ? ('图床演练：' + j.data.total + ' 张，没有上传') : ('图床上传：成功 ' + j.data.uploaded + '，失败 ' + j.data.failed))
@@ -693,94 +596,40 @@ async function imageAction(dryRun) {
   } catch (e) { reportError('Queue.imageAction', e); toast('图床请求发不出去') }
   busy.images = false
 }
-async function parseMediaInfo() {
-  if (!sel.value || media.parsing) return
-  if (!media.infoText.trim()) { toast('先粘贴 MediaInfo 或 BDInfo'); return }
-  media.parsing = true
-  try {
-    const j = await (await fetch('/api/meta/mediainfo', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text: media.infoText })
-    })).json()
-    if (j && j.ok) {
-      media.info = j.data
-      media.parseMsg = '已识别 ' + (j.data.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo') + '：' + (j.data.summary || 'OK')
-      toast(media.parseMsg)
-    } else {
-      media.parseMsg = (j && j.error && j.error.message) || '没认出格式：请粘贴完整 MediaInfo（从 General 开始）或 BDInfo（从 Disc Title 开始）'
-      toast(media.parseMsg)
-    }
-  } catch (e) { reportError('Queue.parseMediaInfo', e); media.parseMsg = '解析请求发不出去'; toast(media.parseMsg) }
-  media.parsing = false
-}
 async function prepareRelease() {
-  if (!sel.value || media.preparing) return
-  media.preparing = true
-  media.prepareMsg = ''
+  if (!sel.value || prepBusy.value) return
+  prepBusy.value = true
+  prepMsg.value = ''
   try {
     const saved = await saveFields()
     if (!saved.ok) {
-      media.prepareMsg = '整理失败：' + ((saved.error && saved.error.message) || '标题/简介没保存上')
-      toast(media.prepareMsg)
-      media.preparing = false
+      prepMsg.value = '整理失败：' + ((saved.error && saved.error.message) || '标题/简介没保存上')
+      toast(prepMsg.value)
       return
     }
     const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mediaInfo: media.infoText, targets: form.targets, host: form.targetSite })
+      body: JSON.stringify({ targets: form.targets, host: form.targetSite })
     })).json()
     if (j && j.ok) {
-      media.info = (j.data.prepared && j.data.prepared.media) || media.info
-      media.prepareMsg = '已整理：发布时会用当前标题/简介和 MediaInfo；点上方「简介」里的「最终简介预览」查看。'
-      toast('发布资料已整理' + (media.info && media.info.summary ? '：' + media.info.summary : ''))
+      const m = j.data && j.data.prepared && j.data.prepared.media
+      const summary = m && m.summary ? m.summary : ''
+      toast('发布资料已整理' + (summary ? '：' + summary : ''))
       await refresh()
-      media.prepareMsg = '已整理：发布时会用当前标题/简介和 MediaInfo；点上方「简介」里的「最终简介预览」查看。'
+      prepMsg.value = summary
+        ? ('已整理：发布时会用当前标题/简介和源站媒体信息。媒体：' + summary)
+        : '已整理：源站简介里没识别到媒体信息，发布时不带。'
     } else {
-      media.prepareMsg = '整理失败：' + ((j && j.error && j.error.message) || '服务端没返回结果')
-      toast(media.prepareMsg)
+      prepMsg.value = '整理失败：' + ((j && j.error && j.error.message) || '服务端没返回结果')
+      toast(prepMsg.value)
     }
   } catch (e) {
     reportError('Queue.prepareRelease', e)
-    media.prepareMsg = '整理请求发不出去'
-    toast(media.prepareMsg)
+    prepMsg.value = '整理请求发不出去'
+    toast(prepMsg.value)
+  } finally {
+    prepBusy.value = false
   }
-  media.preparing = false
-}
-async function shootMedia() {
-  if (!sel.value || media.shooting) return
-  if (!media.path.trim()) { toast('先填媒体文件路径'); return }
-  media.shooting = true
-  try {
-    const j = await (await fetch('/api/media/shots', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ path: media.path.trim(), count: 3, width: 1280 })
-    })).json()
-    if (!j || !j.ok) { toast((j && j.error && j.error.message) || '截图失败'); media.shooting = false; return }
-    const shots = (j.data.items || []).map(x => ({ name: x.name, url: x.dataUrl }))
-    if (!shots.length) { toast('没有生成截图'); media.shooting = false; return }
-    const add = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/shots', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ shots })
-    })).json()
-    toast(add && add.ok ? ('已加入 ' + shots.length + ' 张截图') : ((add && add.error && add.error.message) || '截图没存进队列'))
-    await refresh()
-  } catch (e) { toast('截图请求发不出去') }
-  media.shooting = false
-}
-async function makeMediaTorrent() {
-  if (!sel.value || media.making) return
-  if (!media.path.trim()) { toast('先填媒体文件路径'); return }
-  if (!media.announce.trim()) { toast('先填 tracker announce'); return }
-  media.making = true
-  try {
-    const j = await (await fetch('/api/media/torrent', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ path: media.path.trim(), announce: media.announce.trim(), name: sel.value.title })
-    })).json()
-    if (j && j.ok) { media.torrent = j.data; toast('种子已生成：' + j.data.infohash) }
-    else toast((j && j.error && j.error.message) || '生成种子失败')
-  } catch (e) { toast('种子请求发不出去') }
-  media.making = false
 }
 async function bulkApprove() {
   if (busy.approve) return
@@ -858,7 +707,7 @@ async function removeShot(i) {
     await refresh()
   } catch (e) { toast('删除失败') }
 }
-function ensureQueue() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadMediaConfig(); loadQueuePage() } }
+function ensureQueue() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadQueuePage() } }
 onMounted(() => {
   window.addEventListener('hashchange', ensureQueue)
   timer = setInterval(() => { if (!loaded) ensureQueue() }, 1500)
@@ -893,16 +742,9 @@ onUnmounted(() => {
 .queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .queue-list { width: 320px; flex: 0 0 320px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; }
-.qd-advanced { margin-top: 4px; }
-.qd-advanced > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); padding: 6px 0; }
-.qd-advanced > summary:hover { color: var(--accent); }
-.qd-advanced > .sd-card { margin-top: 4px; }
-.qd-advanced-sub { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
-.qd-advanced-sub > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
-.qd-advanced-sub > summary:hover { color: var(--accent); }
 .qd-meta-msg { margin-top: -2px; }
-.qd-desc-head, .qd-media-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.qd-desc-head h3, .qd-media-head h3 { margin: 0; }
+.qd-desc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qd-desc-head h3 { margin: 0; }
 .qd-final-desc { margin-top: 8px; font-size: 12px; }
 .qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
 .qd-final-desc > summary:hover { color: var(--accent); }
@@ -1055,7 +897,4 @@ onUnmounted(() => {
 .qd-target-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .qd-target-result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .qd-target-result .qd-stage-err { flex: 1 1 100%; }
-.qd-media-info { flex-direction: column; align-items: stretch; gap: 6px; }
-.qd-media-info > span { flex: none; }
-.qd-media-info .sd-note { width: 100%; height: auto; min-height: 78px; }
 </style>

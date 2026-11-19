@@ -166,7 +166,9 @@ function parseSubtitleLine(line) {
 }
 function parseBdinfo(raw) {
   const text = normalizeBdinfo(raw);
-  const out = { kind: 'bdinfo', title: '', label: '', discSize: '', discSizeBytes: 0, protection: '', playlist: '', size: '', sizeBytes: 0, sizeText: '', length: '', durationText: '', bitrate: '', videos: [], audios: [], subtitles: [], video: null, audio: [], subtitle: [], flags: {}, summary: '', raw: text.slice(0, 200000) };
+  const first = text.search(/^(Disc (Title|Label|Size)|Playlist)\s*:/mi);
+  const body = first >= 0 ? text.slice(first) : text;
+  const out = { kind: 'bdinfo', title: '', label: '', discSize: '', discSizeBytes: 0, protection: '', playlist: '', size: '', sizeBytes: 0, sizeText: '', length: '', durationText: '', bitrate: '', videos: [], audios: [], subtitles: [], video: null, audio: [], subtitle: [], flags: {}, summary: '', raw: body.slice(0, 200000) };
   text.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).forEach(function (line) {
     let v;
     if ((v = bdValue(line, 'Disc Title'))) out.title = v;
@@ -215,7 +217,9 @@ function parseMediainfo(raw) {
       if (!(key in cur.fields)) cur.fields[key] = m[2].trim();
     }
   });
-  const out = { kind: 'mediainfo', sections: sections.map(function (s) { return s.name; }), title: '', label: '', size: '', sizeBytes: 0, sizeText: '', duration: '', durationText: '', bitrate: '', format: '', video: null, audio: [], subtitle: [], flags: {}, summary: '', raw: text.slice(0, 200000) };
+  const first = text.search(/^(General|常规|概览|Video|视频|Audio|音频|Text|字幕|文本|Menu|菜单)\s*$/mi);
+  const body = first >= 0 ? text.slice(first) : text;
+  const out = { kind: 'mediainfo', sections: sections.map(function (s) { return s.name; }), title: '', label: '', size: '', sizeBytes: 0, sizeText: '', duration: '', durationText: '', bitrate: '', format: '', video: null, audio: [], subtitle: [], flags: {}, summary: '', raw: body.slice(0, 200000) };
   const gen = sections.find(function (s) { return s.base === 'General'; });
   if (gen) {
     out.format = fieldValue(gen, ['Format']);
@@ -294,6 +298,34 @@ function parseTextSection(sec) {
   return { raw: sec.lines.join('\n').slice(0, 500), format: fieldValue(sec, ['Format']), language: languageOf(language + ' ' + title), title: title, forced: forced };
 }
 
+function isWeakMedia(raw) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s) return true;
+  /* 有明确分段标记就认为可用；只把“时长: …”这类残缺字段判为弱值 */
+  if (/(^|\n)\s*(General|Video|Audio|Text|Disc Title|Disc Label|Playlist|Complete name|常规|视频|音频|字幕|碟片名称|播放列表)\b/i.test(s)) return false;
+  if (/^(时长|片长|Duration|Length)\s*[:：]/i.test(s) && s.length < 80) return true;
+  return false;
+}
+
+/* 从源站简介 BBCode 里找 [hide]/[quote]/[code] 包着的 MediaInfo/BDInfo，返回两类里最完整的一份 */
+function extractFromBbcode(raw) {
+  const text = String(raw == null ? '' : raw);
+  const out = { mediainfo: null, bdinfo: null };
+  const re = /\[(hide|quote|code)(?:=[^\]]*)?\]([\s\S]*?)\[\/\1\]/gi;
+  let m;
+  while ((m = re.exec(text))) {
+    const p = parse(m[2]);
+    if (!p.kind) continue;
+    const rec = { kind: p.kind, raw: p.raw, summary: p.summary, length: p.raw.length };
+    if (!out[p.kind] || rec.length > out[p.kind].length) out[p.kind] = rec;
+  }
+  if (!out.mediainfo && !out.bdinfo) {
+    const p = parse(text);
+    if (p.kind) out[p.kind] = { kind: p.kind, raw: p.raw, summary: p.summary, length: p.raw.length };
+  }
+  return out;
+}
+
 function parse(raw) {
   const text = clean(raw);
   if (!text) return { kind: '', summary: '', error: 'empty', raw: '' };
@@ -310,4 +342,4 @@ function toBBCode(parsed) {
   return ('【' + label + '】\n[quote]\n' + raw + '\n[/quote]').slice(0, 20000);
 }
 
-module.exports = { parse: parse, parseBdinfo: parseBdinfo, parseMediainfo: parseMediainfo, toBBCode: toBBCode, summaryOf: summaryOf, languageOf: languageOf };
+module.exports = { parse: parse, parseBdinfo: parseBdinfo, parseMediainfo: parseMediainfo, extractFromBbcode: extractFromBbcode, isWeakMedia: isWeakMedia, toBBCode: toBBCode, summaryOf: summaryOf, languageOf: languageOf };

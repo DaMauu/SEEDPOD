@@ -461,7 +461,11 @@ async function main() {
     const qid = await page.evaluate(async () => {
       const r = await fetch('/api/queue', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Smoke Queue 2020 2160p', status: 'pending', site: 'demo-a.example', targetSite: 'target.example', downloadUrl: 'http://127.0.0.1:1/t.torrent', res: '2160p', size: '20 GB', imageHost: '本地图床' })
+        body: JSON.stringify({
+          title: 'Smoke Queue 2020 2160p', status: 'pending', site: 'demo-a.example', targetSite: 'target.example',
+          downloadUrl: 'http://127.0.0.1:1/t.torrent', res: '2160p', size: '20 GB', imageHost: '本地图床',
+          descrBb: '[quote]\nGeneral\nComplete name : Smoke.Media.2024.mkv\nFormat : Matroska\nFile size : 1.0 GiB\n\nVideo\nFormat : HEVC\nWidth : 3840 pixels\nHeight : 2160 pixels\nBit depth : 10 bits\n\nAudio #1\nFormat : DTS XLL\nCommercial name : DTS-HD Master Audio\nChannel(s) : 6 channels\nLanguage : Chinese\n[/quote]'
+        })
       });
       const j = await r.json();
       return j.data && j.data.id;
@@ -491,41 +495,71 @@ async function main() {
     const metaSaved = await page.evaluate(async (id) => (await fetch('/api/queue/' + id)).json(), qid);
     need(metaSaved.ok && metaSaved.data.cn === '冒烟中文名' && metaSaved.data.intro === '冒烟简介', '查资料结果没保存：' + JSON.stringify({ cn: metaSaved.data && metaSaved.data.cn, intro: metaSaved.data && metaSaved.data.intro }));
     await page.unroute('**/api/meta/fetch');
-    await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
-    await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
-    await page.waitForTimeout(150);
     await page.waitForSelector('.qd-preflight', { timeout: 3000 });
     const pf = await page.locator('.qd-preflight').innerText();
     need(/发布前检查/.test(pf) && /电影/.test(pf) && /只换目标站通用 announce/.test(pf), '发布前检查缺失：' + pf.slice(0, 160));
     need(/目标站查重/.test(pf) && /发布时自动查/.test(pf), '目标站查重状态缺失：' + pf.slice(0, 200));
     const txt = await page.locator('#queue-detail').innerText();
     need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
-    need(await page.locator('.qd-media').count() === 1, '媒体卡缺失');
-    const mtxt = await page.locator('.qd-media').innerText();
-    need(/读取视频信息/.test(mtxt) && /从视频截图/.test(mtxt) && /生成临时种子/.test(mtxt), '媒体按钮缺失：' + mtxt.slice(0, 80));
-    need(await page.locator('.qd-media-info textarea').count() === 1, 'MediaInfo/BDInfo 输入框缺失');
-    await page.fill('.qd-media-info textarea', 'Disc Title: Smoke.Media.2024.2160p\nDisc Size: 1,000,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps');
-    await page.getByRole('button', { name: '解析 MediaInfo' }).click();
-    await page.waitForTimeout(500);
-    const parsed = await page.locator('.qd-media').innerText();
-    need(/2160p/.test(parsed) && /BDInfo/.test(parsed), '媒体解析没显示摘要：' + parsed.slice(0, 120));
+    const autoMedia = await page.locator('.qd-desc-card').innerText();
+    need(/已从源站简介识别 MediaInfo/.test(autoMedia) && /2160p/.test(autoMedia), '源站媒体信息没自动识别：' + autoMedia.slice(0, 200));
     await page.locator('.qd-pubinfo input.input').first().fill('Smoke Queue Edited 2020 2160p');
     await page.getByRole('button', { name: '整理发布资料' }).click();
     await page.waitForTimeout(900);
     const saved = await page.evaluate(async (id) => (await fetch('/api/queue/' + id)).json(), qid);
     need(saved.ok && saved.data.title === 'Smoke Queue Edited 2020 2160p', '整理资料没保存标题：' + (saved.data && saved.data.title));
     need(saved.data.prepared && /Smoke Queue Edited/.test(saved.data.prepared.title || ''), '整理资料没用到新标题：' + JSON.stringify(saved.data.prepared && saved.data.prepared.title));
-    const prepared = await page.locator('.qd-media').innerText();
-    need(/2160p/.test(prepared), '整理后媒体摘要丢失：' + prepared.slice(0, 160));
     const descCard = await page.locator('.qd-desc-card').innerText();
-    need(/已整理/.test(descCard), '整理后没有提示：' + descCard.slice(0, 160));
+    need(/已整理/.test(descCard) && /2160p/.test(descCard), '整理后媒体提示缺失：' + descCard.slice(0, 180));
     await page.locator('.qd-desc-card details.qd-final-desc').evaluate((el) => { el.open = true });
     const finalDesc = await page.locator('.qd-desc-card details.qd-final-desc').innerText();
-    need(/BDInfo|Disc Title|2160p/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));
+    need(/General|2160p|DTS-HD MA/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));
     await page.getByRole('button', { name: '图床演练' }).click();
     await page.waitForTimeout(1200);
     const shotTxt = await page.locator('.qd-shots').innerText();
-    need(/图床：本地图床/.test(shotTxt) && /演练/.test(shotTxt), '图床演练没显示摘要：' + shotTxt.slice(0, 120));
+    need(/图床：本地图床/.test(shotTxt) && /演练/.test(shotTxt), '图床演练没显示摘要：' + shotTxt.replace(/\n/g, ' / ').slice(0, 160));
+  });
+
+  await check('查资料切条目不会串到当前条目', async () => {
+    const ids = await page.evaluate(async () => {
+      const mk = async (title) => {
+        const r = await fetch('/api/queue', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title, status: 'pending', site: 'demo-a.example', targetSite: 'target.example' })
+        });
+        return (await r.json()).data.id;
+      };
+      return [await mk('Race A 2024 1080p'), await mk('Race B 2024 1080p')];
+    });
+    await page.evaluate(() => { location.hash = '#dashboard' });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { location.hash = '#queue' });
+    await page.waitForTimeout(800);
+    await page.route('**/api/meta/fetch', async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      const t = String(body.title || '');
+      const isA = t.indexOf('Race A') >= 0;
+      await new Promise((r) => setTimeout(r, isA ? 700 : 50));
+      const title = isA ? 'A 中文名' : 'B 中文名';
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { ok: true, provider: 'race', data: { title, overview: title + ' 简介' } } })
+      });
+    });
+    await page.locator('.q-item').filter({ hasText: 'Race A' }).first().click();
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: '查资料' }).click();
+    await page.waitForTimeout(100);
+    await page.locator('.q-item').filter({ hasText: 'Race B' }).first().click();
+    await page.waitForTimeout(1200);
+    const cn = await page.locator('.qd-pubinfo input.input').nth(1).inputValue();
+    need(cn !== 'A 中文名', '切条目后查资料结果串到了当前条目：' + cn);
+    await page.unroute('**/api/meta/fetch');
+    await page.evaluate(async (list) => { for (const id of list) await fetch('/api/queue/' + id, { method: 'DELETE' }); }, ids);
+    await page.evaluate(() => { location.hash = '#dashboard' });
+    await page.waitForTimeout(200);
+    await page.evaluate(() => { location.hash = '#queue' });
+    await page.waitForTimeout(500);
   });
 
   await check('数据清单渲染、筛选与标记', async () => {
@@ -583,18 +617,12 @@ async function main() {
     need(await page.locator('#node-modal-vue').count() === 0, '取消没关闭弹窗');
   });
 
-  await check('注入演练面板', async () => {
-    await page.evaluate(() => { location.hash = '#queue'; });
-    await page.waitForTimeout(800);
-    await page.locator('.q-item').first().evaluate(function (el) { el.click(); });
-    await page.waitForTimeout(400);
-    await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
-    await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
-    await page.waitForTimeout(150);
-    await page.locator('button').filter({ hasText: '预检下载器' }).first().evaluate(function (el) { el.click(); });
-    await page.waitForTimeout(900);
-    const txt = await page.locator('#queue-detail').innerText();
-    need(/下载器预检 · qB：会通过 qB 加种（只检查，不会发布）/.test(txt), '下载器预检没显示：' + txt.slice(0, 240));
+  await check('高级媒体/临时种子入口已移除', async () => {
+    await page.evaluate(() => { location.hash = '#queue' });
+    await page.waitForTimeout(700);
+    need(await page.locator('details.qd-advanced').count() === 0, '高级折叠区还在');
+    need(await page.locator('button').filter({ hasText: '预检下载器' }).count() === 0, '下载器预检按钮还在');
+    need(await page.locator('button').filter({ hasText: '生成临时种子' }).count() === 0, '临时种子按钮还在');
   });
 
   await check('无 JS 报错', async () => {

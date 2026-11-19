@@ -120,6 +120,17 @@ check('BDInfo：中文标签也能认', () => {
   need(p.video && p.video.resolution === '1080p', '分辨率：' + JSON.stringify(p.video));
 });
 
+check('从源站 BBCode 自动提取 MediaInfo/BDInfo', () => {
+  const bb = '[quote]\n引用\n' + MI + '\n[/quote]\n[hide=bdinfo]\n' + BD + '\n[/hide]';
+  const ex = mi.extractFromBbcode(bb);
+  need(ex.mediainfo && ex.mediainfo.kind === 'mediainfo', 'MediaInfo 没提取到：' + JSON.stringify(ex.mediainfo));
+  need(ex.bdinfo && ex.bdinfo.kind === 'bdinfo', 'BDInfo 没提取到：' + JSON.stringify(ex.bdinfo));
+  need(ex.mediainfo.raw.indexOf('General') === 0, 'MediaInfo 没从 General 开始：' + ex.mediainfo.raw.slice(0, 40));
+  need(ex.bdinfo.raw.indexOf('Disc Title') === 0, 'BDInfo 没从 Disc Title 开始：' + ex.bdinfo.raw.slice(0, 40));
+  need(mi.isWeakMedia('时长: 24 min 52 s') === true, '弱媒体字段没识别');
+  need(mi.isWeakMedia(ex.mediainfo.raw) === false, '完整 MediaInfo 被当成弱字段');
+});
+
 check('无法识别的文本不瞎猜', () => {
   const p = mi.parse('这不是 MediaInfo，也不是 BDInfo。');
   need(p.kind === '', 'kind 应为空：' + p.kind);

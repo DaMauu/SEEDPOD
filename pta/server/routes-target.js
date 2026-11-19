@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const flowConfig = require('./flow-config');
 const torrentClean = require('./torrent-clean');
+const mediainfo = require('./mediainfo');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
@@ -242,6 +243,19 @@ module.exports = function (app, ctx) {
       } catch (e) { checked = false; hashUnchanged = null; }
     }
     const cleanOn = flowConfig.on(flowConfig.read(ctx), '上传前清洗 tracker', true);
+    /* 媒体信息：优先用已存字段，弱值就去源站简介里重新识别 */
+    let media = null;
+    const bb = String(item.data.descrBb || item.data.intro || '');
+    const ex = mediainfo.extractFromBbcode(bb);
+    let mediaRaw = '';
+    if (!mediainfo.isWeakMedia(item.data.bdinfo)) mediaRaw = item.data.bdinfo;
+    else if (!mediainfo.isWeakMedia(item.data.mediainfo)) mediaRaw = item.data.mediainfo;
+    else if (ex.bdinfo) mediaRaw = ex.bdinfo.raw;
+    else if (ex.mediainfo) mediaRaw = ex.mediainfo.raw;
+    if (mediaRaw) {
+      const p2 = mediainfo.parse(mediaRaw);
+      if (p2.kind) media = { kind: p2.kind, summary: p2.summary || '', source: 'source' };
+    }
     const f = plan.fields || {};
     /* 目标站查重状态：只读队列里已有的结果，不在待审页发请求 */
     const dr = (item.data.dupeResults && item.data.dupeResults[host]) || null;
@@ -259,6 +273,7 @@ module.exports = function (app, ctx) {
       host: host,
       ready: !!plan.ready,
       dupe: dupe,
+      media: media,
       warnings: plan.warnings || [],
       labels: plan.labels || {},
       fields: { type: f.type || '', source_sel: f.source_sel || '', team_sel: f.team_sel || '', medium_sel: f.medium_sel || '', standard_sel: f.standard_sel || '' },
