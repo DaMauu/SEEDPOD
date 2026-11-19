@@ -133,6 +133,11 @@ module.exports = function (app, ctx) {
     if (b.imageHost !== undefined) it.imageHost = String(b.imageHost).slice(0, 40);
     if (b.anonymous !== undefined) it.anonymous = !!b.anonymous;
 
+    if (b.action === 'download') {
+      const r = await ctx.publisher.ensureSource(req.params.id, { allowWhenRealOff: true });
+      if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+      return ok(reply, { id: req.params.id, complete: !!r.complete, progress: Number(r.progress) || 0, hash: r.hash || '', message: r.complete ? '下载完成' : '已加入 qB' });
+    }
     if (b.action === 'publish') {
       db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
         .run(it.title, JSON.stringify(it), now(), it.id);
@@ -142,7 +147,7 @@ module.exports = function (app, ctx) {
     }
 
     const target = { approve: 'approved', reject: 'rejected', skip: 'skipped', retry: 'pending' }[b.action];
-    if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / publish / retry');
+    if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / download / publish / retry');
     if (b.action === 'reject' && !String(b.reason || '').trim()) return bad(reply, 'BAD_REQUEST', '驳回要写理由');
     it.status = target;
     it.actionAt = now();

@@ -4,11 +4,13 @@ const fs = require('fs');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
+const { makeCrossseed } = require('./crossseed');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
   const target = makeTarget(ctx);
   const targetService = makeTargetService(ctx, target);
+  const crossseed = makeCrossseed(ctx);
   const now = () => new Date().toISOString();
 
   function loadQueue(id) {
@@ -29,6 +31,19 @@ module.exports = function (app, ctx) {
   function saveQueue(it) {
     db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
       .run(JSON.stringify(it), now(), it.id);
+  }
+  async function runCrossseed(id, hosts) {
+    if (!hosts || !hosts.length) return;
+    const item = loadQueue(id);
+    if (!item) return;
+    for (const host of hosts) {
+      try {
+        const r = await crossseed.run({ id: item.id, data: item.data }, host, {});
+        if (ctx.logEvent) ctx.logEvent(r.ok ? 'info' : 'warn', '目标站', '辅种' + (r.ok ? '完成' : '待重试') + ' · ' + host + ' · queue ' + id + (r.error ? ' · ' + r.error : ''));
+      } catch (e) {
+        if (ctx.logEvent) ctx.logEvent('warn', '目标站', '辅种异常 · ' + host + ' · queue ' + id + ' · ' + String(e && e.message || e).slice(0, 120));
+      }
+    }
   }
   function realGate(item, hosts, body) {
     if (!body || body.dryRun !== false) return null;
@@ -234,6 +249,10 @@ module.exports = function (app, ctx) {
     }
     const r = await targetService.uploadMany(b);
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    if (b.dryRun === false) {
+      const hosts = ((r.data && r.data.targets) || []).filter(function (x) { return x && x.ok; }).map(function (x) { return x.host; });
+      await runCrossseed(req.params.id, hosts);
+    }
     return ok(reply, r.data);
   });
 

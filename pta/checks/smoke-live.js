@@ -467,6 +467,8 @@ async function main() {
     need(await page.locator('.q-item').count() === 1, '队列条目数量不对');
     await page.locator('.q-item').first().click();
     await page.waitForTimeout(400);
+    await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
+    await page.waitForTimeout(150);
     const txt = await page.locator('#queue-detail').innerText();
     need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
     need(await page.locator('.qd-media').count() === 1, '媒体卡缺失');

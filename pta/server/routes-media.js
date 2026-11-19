@@ -51,7 +51,7 @@ module.exports = function (app, ctx) {
       if (!hash) return bad(reply, 'BAD_SOURCE', '源种解析不出 infohash', 422);
       found = await qb.findTorrent(dl, hash, (meta && meta.name) || it.title);
       if (!found || !found.found) {
-        const src = await ctx.publisher.ensureSource(req.params.id, {});
+        const src = await ctx.publisher.ensureSource(req.params.id, { allowWhenRealOff: true });
         if (!src.ok) return bad(reply, src.code || 'QB_ADD_FAILED', src.message || '加入 qB 失败', src.http || 502);
         if (!src.complete) {
           const pct = Math.round((Number(src.progress) || 0) * 100);

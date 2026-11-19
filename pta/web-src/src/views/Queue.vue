@@ -147,6 +147,8 @@
             <div v-if="sel.imagePlan" class="t-sub">图床：{{ hostLabel(sel.imagePlan.provider) }} · {{ sel.imagePlan.total }} 张 · {{ sel.imagePlan.dryRun ? '演练' : (sel.imagePlan.uploaded + ' 张已传' + (sel.imagePlan.failed ? '，' + sel.imagePlan.failed + ' 张失败' : '')) }}</div>
           </section>
 
+          <details class="qd-advanced">
+          <summary>高级：媒体 / 截图 / 种子</summary>
           <section class="sd-card qd-media">
             <h3>媒体</h3>
             <div class="qd-field">
@@ -176,10 +178,12 @@
             <div v-if="media.info" class="t-sub">媒体：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
             <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
             <div v-if="media.torrent" class="t-sub">种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
-            <div v-else class="soft">先填 {{ media.root || 'PTA_MEDIA_ROOT' }} 下的文件路径；生成种子后可随“提交目标站”一起用。</div>
+            <div v-else class="soft">先填 {{ media.root || 'PTA_MEDIA_ROOT' }} 下的文件路径；生成种子后可随“发布到目标站”一起用。</div>
           </section>
+          </details>
         </div>
 
+        <div v-if="sel.qb || sel.sourceState" class="t-sub qd-download">qB：{{ qbText() }}</div>
         <div v-if="sel.pubMsg" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ sel.pubMsg }}</div>
         <div v-if="sel.targetUpload" class="qd-status" :class="sel.targetVerify && sel.targetVerify.found ? 'ok' : ''">
           目标站 {{ sel.targetUpload.host }} · {{ sel.targetUpload.message || '已提交' }}
@@ -205,8 +209,8 @@
           </div>
         </div>
         <div class="qd-actions">
-          <button class="btn primary slim" type="button" :disabled="busy.act" @click="act('publish')">{{ sel.status === 'failed' ? '重试发布' : '通过并发布' }}</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite" title="把种子提交到目标站；真发布关闭时会提示" @click="submitTarget">{{ busy.target ? '提交中…' : '提交目标站' }}</button>
+          <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
+          <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.inject" @click="runInjectPlan">{{ busy.inject ? '演练中…' : '注入演练' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
@@ -264,6 +268,7 @@ let mediaCfgLoaded = false
 const filePick = ref(null)
 let timer = null
 let qTimer = null
+let progressTimer = null
 let loaded = false
 
 const OLD_AUTO_WARN = /^(必填字段 |字段 .* 的值不在站点选项里)/
@@ -372,6 +377,7 @@ async function loadQueuePage(p) {
   } catch (e) { reportError('Queue', e) }
 }
 async function select(id) {
+  if (progressTimer) { clearInterval(progressTimer); progressTimer = null }
   try {
     const j = await (await fetch('/api/queue/' + encodeURIComponent(id), { credentials: 'same-origin' })).json()
     if (!j || !j.ok) return
@@ -418,6 +424,42 @@ async function apiAction(body) {
   })
   return { status: r.status, body: await r.json().catch(() => null) }
 }
+function downloadReady() {
+  const q = sel.value || {}
+  if (q.sourceState && q.sourceState.complete) return true
+  return !!(q.qb && Number(q.qb.progress) >= 0.999)
+}
+function qbText() {
+  const q = sel.value || {}
+  if (q.sourceState && q.sourceState.complete) return '已完成'
+  if (q.sourceState && q.sourceState.progress != null) {
+    const pct = Math.round(Number(q.sourceState.progress) * 100)
+    return pct + '%' + (q.sourceState.state ? ' · ' + q.sourceState.state : '')
+  }
+  if (q.qb && q.qb.state) return Math.round((Number(q.qb.progress) || 0) * 100) + '% · ' + q.qb.state
+  return '未加入'
+}
+function startProgressPoll() {
+  if (progressTimer) return
+  progressTimer = setInterval(async function () {
+    if (!sel.value) { clearInterval(progressTimer); progressTimer = null; return }
+    try {
+      /* 重新让服务端查一次 qB 进度；只查已记录的 infohash，不再打源站 */
+      const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
+        method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'download' })
+      })
+      const j = await r.json().catch(() => null)
+      if (j && j.ok && j.data) {
+        sel.value.sourceState = {
+          ok: true, at: new Date().toISOString(), hash: j.data.hash || '',
+          progress: Number(j.data.progress) || 0, complete: !!j.data.complete, state: ''
+        }
+        if (downloadReady()) { clearInterval(progressTimer); progressTimer = null; toast('下载完成，可以发布') }
+      }
+    } catch (e) { reportError('Queue.progress', e) }
+  }, 8000)
+}
 async function act(action) {
   if (!sel.value || busy.act) return
   if (action === 'reject' && !reason.value.trim()) { toast('驳回要写理由'); return }
@@ -431,9 +473,13 @@ async function act(action) {
   try {
     const r = await apiAction(body)
     const j = r.body
-    if (j && j.ok) toast(action === 'publish' ? '已发布：' + (sel.value.cn || sel.value.title) : '操作完成')
+    if (j && j.ok) {
+      if (action === 'download') toast((j.data && j.data.message ? j.data.message : '已加入 qB') + (j.data && j.data.progress != null ? ' · ' + Math.round(Number(j.data.progress) * 100) + '%' : ''))
+      else toast(action === 'publish' ? '已发布：' + (sel.value.cn || sel.value.title) : '操作完成')
+    }
     else toast((j && j.error && j.error.message) || ('操作失败 ' + r.status))
     await refresh()
+    if (action === 'download' && !downloadReady()) startProgressPoll()
   } catch (e) { toast('请求发不出去') }
   busy.act = false
 }
@@ -759,6 +805,7 @@ onUnmounted(() => {
   window.removeEventListener('hashchange', ensureQueue)
   if (timer) clearInterval(timer)
   if (qTimer) clearTimeout(qTimer)
+  if (progressTimer) clearInterval(progressTimer)
 })
 </script>
 
@@ -777,6 +824,11 @@ onUnmounted(() => {
 .queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .queue-list { width: 320px; flex: 0 0 320px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; }
+.qd-advanced { margin-top: 4px; }
+.qd-advanced > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); padding: 6px 0; }
+.qd-advanced > summary:hover { color: var(--accent); }
+.qd-advanced > .sd-card { margin-top: 4px; }
+.qd-download { padding: 4px 0 6px; }
 .qd-path-row { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
 .qd-path-row .input { flex: 1 1 auto; min-width: 0; }
 .queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }

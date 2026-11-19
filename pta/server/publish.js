@@ -211,24 +211,34 @@ function makePublisher(ctx) {
     const cur = load(id);
     if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
     const it = cur.data;
-    if (!ctx.allowReal('realPublish')) return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开', http: 409 };
+    /* 下载源种只是往 qB 里加种，不是真发布；调用方可显式跳过 realPublish 门禁 */
+    if (!b.allowWhenRealOff && !ctx.allowReal('realPublish')) {
+      return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开', http: 409 };
+    }
     const dl = downloaderOf(b, it);
     if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB', http: 400 };
     if (String(dl.kind || 'qb') !== 'qb') return { ok: true, complete: true, skipped: 'non-qb' };
-    if (!it.downloadUrl) return { ok: false, code: 'NO_SOURCE_URL', message: '条目没有源种下载地址', http: 400 };
-    const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
-    if (got.err) {
-      it.sourceState = { at: now(), ok: false, error: got.err };
-      save(it);
-      return { ok: false, code: 'SOURCE_FETCH_FAILED', message: got.err };
+    /* 已经记过 infohash 的，只查 qB 进度，不再反复打源站 */
+    const cached = it.sourceState && it.sourceState.ok && it.sourceState.hash ? it.sourceState : null;
+    let meta = cached ? { hash: cached.hash, name: cached.name || '' } : null;
+    let found = meta ? await qb.findTorrent(dl, meta.hash, meta.name) : { found: false };
+    let got = null;
+    if (!meta || !found.found) {
+      if (!it.downloadUrl) return { ok: false, code: 'NO_SOURCE_URL', message: '条目没有源种下载地址', http: 400 };
+      got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
+      if (got.err) {
+        it.sourceState = { at: now(), ok: false, error: got.err };
+        save(it);
+        return { ok: false, code: 'SOURCE_FETCH_FAILED', message: got.err };
+      }
+      meta = qb.parseTorrent(got.buf);
+      if (!meta.hash) {
+        it.sourceState = { at: now(), ok: false, error: '源种解析不出 infohash' };
+        save(it);
+        return { ok: false, code: 'BAD_SOURCE_TORRENT', message: '源种解析不出 infohash' };
+      }
+      if (!found.found) found = await qb.findTorrent(dl, meta.hash, meta.name);
     }
-    const meta = qb.parseTorrent(got.buf);
-    if (!meta.hash) {
-      it.sourceState = { at: now(), ok: false, error: '源种解析不出 infohash' };
-      save(it);
-      return { ok: false, code: 'BAD_SOURCE_TORRENT', message: '源种解析不出 infohash' };
-    }
-    let found = await qb.findTorrent(dl, meta.hash, meta.name);
     if (!found.found) {
       const add = await qb.addTorrent(dl, got.buf, {
         savePath: b.savePath || it.savePath,
