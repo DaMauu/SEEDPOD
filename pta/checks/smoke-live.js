@@ -479,6 +479,19 @@ async function main() {
     need(await page.locator('.q-item').count() === 1, '队列条目数量不对');
     await page.locator('.q-item').first().click();
     await page.waitForTimeout(400);
+    await page.route('**/api/meta/fetch', (route) => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ ok: true, provider: 'smoke', data: { title: '冒烟中文名', overview: '冒烟简介' } })
+    }));
+    await page.getByRole('button', { name: '查资料' }).click();
+    await page.waitForTimeout(350);
+    need((await page.locator('.qd-pubinfo input.input').nth(1).inputValue()) === '冒烟中文名', '查资料没填中文名');
+    need((await page.locator('.qd-desc-card textarea').inputValue()) === '冒烟简介', '查资料没填简介');
+    need(/已填入 中文名 \/ 简介/.test(await page.locator('.qd-meta-msg').innerText()), '查资料没显示结果');
+    await page.unroute('**/api/meta/fetch');
+    await page.getByRole('button', { name: '查一次' }).click();
+    await page.waitForTimeout(500);
+    need(/无重复|已有同片/.test(await page.locator('.qd-pubinfo').innerText()), '本地查重没出结果');
     await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
     await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
     await page.waitForTimeout(150);

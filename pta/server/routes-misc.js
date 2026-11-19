@@ -46,7 +46,12 @@ module.exports = function (app, ctx) {
   app.get('/api/meta/providers', async () => ok(metaExt.providers()));
   app.post('/api/meta/fetch', async (req, reply) => {
     const b = req.body || {};
-    const r = await metaExt.fetchMeta({ title: b.title, year: b.year, type: b.type, provider: b.provider, key: b.key,
+    /* 用解析后的干净片名和年份去查，避免把 2160p/制作组带进搜索词 */
+    const parsed = meta.parseRelease(String(b.title || ''));
+    const qTitle = String(parsed.title || b.title || '').trim();
+    const qYear = b.year || parsed.year || '';
+    const qType = b.type || (parsed.category === 'tv' ? 'tv' : 'movie');
+    const r = await metaExt.fetchMeta({ title: qTitle, year: qYear, type: qType, provider: b.provider, key: b.key,
       requireYear: false, castLimit: 8 });
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r);

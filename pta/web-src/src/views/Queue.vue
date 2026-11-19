@@ -81,7 +81,8 @@
               </select>
             </div>
             <div class="qd-field"><span>标题</span><div class="qd-path-row"><input v-model="form.title" class="input"><button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">回填源标题</button></div></div>
-            <div class="qd-field"><span>副标题</span><div class="qd-path-row"><input v-model="form.cn" class="input"><button class="btn ghost slim" type="button" :disabled="busy.act" title="用公开元数据填中文名和简介" @click="fetchMeta">查资料</button></div></div>
+            <div class="qd-field"><span>副标题</span><div class="qd-path-row"><input v-model="form.cn" class="input"><button class="btn ghost slim" type="button" :disabled="metaBusy" title="用公开元数据填中文名和简介" @click="fetchMeta">{{ metaBusy ? '查询中…' : '查资料' }}</button></div></div>
+            <div v-if="metaMsg" class="t-sub qd-meta-msg">{{ metaMsg }}</div>
             <div class="qd-field">
               <span>图床</span>
               <select v-model="form.imageHost" class="input">
@@ -89,7 +90,7 @@
               </select>
             </div>
             <div class="qd-field"><span>匿名发布</span><input v-model="form.anonymous" type="checkbox"></div>
-            <div class="qd-field"><span>查重</span><b :class="(sel.checkCls || '') + '-t'">{{ sel.check || '' }}</b></div>
+            <div class="qd-field"><span>本地查重</span><div class="qd-path-row"><b :class="(sel.checkCls || '') + '-t'">{{ sel.check || '未查' }}</b><button class="btn ghost slim" type="button" :disabled="busy.check" title="只比对待审/已发布/词条库，不请求目标站；目标站查重在发布时自动做" @click="checkOne">{{ busy.check ? '查重中…' : '查一次' }}</button></div></div>
           </section>
 
           <section class="sd-card qd-desc-card">
@@ -263,6 +264,8 @@ const busy = reactive({ act: false, check: false, approve: false, publish: false
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parseMsg: '', prepareMsg: '', parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
 const preflight = ref(null)
+const metaBusy = ref(false)
+const metaMsg = ref('')
 let previewSeq = 0
 let mediaCfgLoaded = false
 const filePick = ref(null)
@@ -378,6 +381,7 @@ async function select(id) {
     form.imageHost = j.data.imageHost || '站内'
     form.anonymous = !!j.data.anonymous
     reason.value = ''
+    metaMsg.value = ''
     await loadPreview()
   } catch (e) { reportError('Queue', e) }
 }
@@ -501,18 +505,30 @@ async function act(action) {
   busy.act = false
 }
 async function fetchMeta() {
-  if (!sel.value) return
+  if (!sel.value || metaBusy.value) return
+  metaBusy.value = true
+  metaMsg.value = ''
   try {
     const j = await (await fetch('/api/meta/fetch', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: sel.value.title, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
+      body: JSON.stringify({ title: form.title || sel.value.title, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
     })).json()
     if (j && j.ok && j.data) {
-      if (j.data.title) form.cn = j.data.title
-      if (j.data.overview) form.intro = j.data.overview
-      toast('已填入资料 · ' + j.provider)
-    } else toast((j && j.error && j.error.message) || '没查到资料')
-  } catch (e) { toast('资料请求发不出去') }
+      const filled = []
+      if (j.data.title) { form.cn = j.data.title; filled.push('中文名') }
+      if (j.data.overview) { form.intro = j.data.overview; filled.push('简介') }
+      metaMsg.value = filled.length ? ('已填入 ' + filled.join(' / ') + ' · 来源 ' + (j.provider || '公开资料')) : '查到了，但没有中文名或简介；可以手动补'
+      toast(metaMsg.value)
+    } else {
+      metaMsg.value = '没查到：' + ((j && j.error && j.error.message) || '换个片名或年份再试')
+      toast(metaMsg.value)
+    }
+  } catch (e) {
+    reportError('Queue.fetchMeta', e)
+    metaMsg.value = '资料请求发不出去'
+    toast(metaMsg.value)
+  }
+  metaBusy.value = false
 }
 function submitTarget() {
   if (!sel.value || busy.target) return
@@ -773,6 +789,22 @@ async function bulkPublish() {
   if (go) go('批量发布', '会把「已通过」的条目逐条走发布链路；真发布关闭时会逐条失败。继续？', fn)
   else fn()
 }
+async function checkOne() {
+  if (!sel.value || busy.check) return
+  busy.check = true
+  try {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/check', {
+      method: 'POST', credentials: 'same-origin'
+    })).json()
+    if (j && j.ok) toast(j.data.duplicate ? ('本地已有：' + j.data.matched) : '本地库里没有重复')
+    else toast((j && j.error && j.error.message) || '查重失败')
+    await refresh()
+  } catch (e) {
+    reportError('Queue.checkOne', e)
+    toast('查重请求发不出去')
+  }
+  busy.check = false
+}
 async function bulkCheck() {
   if (busy.check) return
   const list = items.value.filter(x => x.status === 'pending' || x.status === 'approved')
@@ -876,6 +908,7 @@ onUnmounted(() => {
 .qd-advanced-sub { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .qd-advanced-sub > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
 .qd-advanced-sub > summary:hover { color: var(--accent); }
+.qd-meta-msg { margin-top: -2px; }
 .qd-desc-head, .qd-media-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .qd-desc-head h3, .qd-media-head h3 { margin: 0; }
 .qd-final-desc { margin-top: 8px; font-size: 12px; }
