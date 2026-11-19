@@ -5,14 +5,15 @@
     </div>
     <input v-model="q" class="input slim" id="queue-q" placeholder="搜标题 / 中文名" style="width:220px" @input="debounced">
     <div class="spacer"></div>
-    <span class="t-sub" id="queue-count">共 {{ matched }} 条</span>
-    <button class="btn ghost slim" id="q-bulkapprove" type="button" :disabled="busy.approve" @click="bulkApprove">全部批准</button>
-    <button class="btn ghost slim" id="q-bulkpublish" type="button" :disabled="busy.publish" @click="bulkPublish">全部发布</button>
+    <span v-if="tab !== 'failed'" class="t-sub" id="queue-count">共 {{ matched }} 条</span>
+    <button v-if="tab !== 'failed'" class="btn ghost slim" id="q-bulkapprove" type="button" :disabled="busy.approve" @click="bulkApprove">全部批准</button>
+    <button v-if="tab !== 'failed'" class="btn ghost slim" id="q-bulkpublish" type="button" :disabled="busy.publish" @click="bulkPublish">全部发布</button>
   </div>
 
   <div class="queue-split">
     <aside class="queue-list">
-      <div class="queue-items" id="queue-items">
+      <QueueFailures v-if="tab === 'failed'" :q="q" :active-id="sel ? sel.id : ''" :reload-key="failReload" @select="select" @replayed="onFailuresReplayed" />
+      <div v-else class="queue-items" id="queue-items">
         <div v-if="!items.length" class="sites-empty">没有匹配的条目</div>
         <button v-for="it in items" :key="it.id" class="q-item" :class="{ on: sel && sel.id === it.id }" type="button" @click="select(it.id)">
           <span class="q-title">
@@ -105,21 +106,26 @@
 
           <section class="sd-card qd-shots">
             <h3>截图</h3>
-            <div class="shots">
-              <template v-for="(shot, i) in (sel.shots || [])" :key="i">
-                <div class="shot has">
-                  <img :src="shot.url" alt="">
-                  <span>{{ i + 1 }}</span>
-                  <button class="shot-del" type="button" title="删除" @click.stop="removeShot(i)">×</button>
-                </div>
-              </template>
-              <button class="shot add" type="button" @click="pickFiles">上传</button>
-            </div>
-            <div class="qd-actions">
-              <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(true)">图床演练</button>
-              <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(false)">上传截图</button>
-            </div>
-            <div v-if="sel.imagePlan" class="t-sub">图床：{{ hostLabel(sel.imagePlan.provider) }} · {{ sel.imagePlan.total }} 张 · {{ sel.imagePlan.dryRun ? '演练' : (sel.imagePlan.uploaded + ' 张已传' + (sel.imagePlan.failed ? '，' + sel.imagePlan.failed + ' 张失败' : '')) }}</div>
+            <div v-if="(sel.sourceImages || []).length" class="t-sub">源站简介里有 {{ sel.sourceImages.length }} 张截图，发布时会随简介保留，不用手动上传。</div>
+            <div v-else class="soft">源站简介里没有截图。</div>
+            <details class="qd-manual-shots" :open="(sel.shots || []).length > 0">
+              <summary>{{ (sel.shots || []).length ? '手动补充的截图' : ((sel.sourceImages || []).length ? '手动补图（一般不用）' : '源站没有截图？手动补') }}</summary>
+              <div class="shots">
+                <template v-for="(shot, i) in (sel.shots || [])" :key="i">
+                  <div class="shot has">
+                    <img :src="shot.url" alt="">
+                    <span>{{ i + 1 }}</span>
+                    <button class="shot-del" type="button" title="删除" @click.stop="removeShot(i)">×</button>
+                  </div>
+                </template>
+                <button class="shot add" type="button" @click="pickFiles">上传</button>
+              </div>
+              <div class="qd-actions">
+                <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(true)">图床演练</button>
+                <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(false)">上传截图</button>
+              </div>
+              <div v-if="sel.imagePlan" class="t-sub">图床：{{ hostLabel(sel.imagePlan.provider) }} · {{ sel.imagePlan.total }} 张 · {{ sel.imagePlan.dryRun ? '演练' : (sel.imagePlan.uploaded + ' 张已传' + (sel.imagePlan.failed ? '，' + sel.imagePlan.failed + ' 张失败' : '')) }}</div>
+            </details>
           </section>
 
         </div>
@@ -196,6 +202,7 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, loggedIn, viewVisible, confirmBox } from '../utils/ui'
+import QueueFailures from '../components/QueueFailures.vue'
 
 const tabs = [
   { v: 'all', label: '全部' },
@@ -219,6 +226,7 @@ const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: ''
 const prepBusy = ref(false)
 const prepMsg = ref('')
 const preflight = ref(null)
+const failReload = ref(0)
 const metaBusy = ref(false)
 const metaMsg = ref('')
 let previewSeq = 0
@@ -294,6 +302,7 @@ async function loadSites() {
 }
 async function loadQueuePage(p) {
   if (!loggedIn()) return
+  if (tab.value === 'failed') return
   if (p) page.value = p
   const status = tab.value === 'all' ? '' : tab.value === 'approved' ? 'approved,published' : tab.value
   const qs = new URLSearchParams({ limit: '50', offset: String((page.value - 1) * 50) })
@@ -350,8 +359,16 @@ async function fillSourceTitle() {
   else toast((j && j.error && j.error.message) || '回填失败')
 }
 async function refresh() {
+  if (tab.value === 'failed') {
+    failReload.value++
+    if (sel.value) await select(sel.value.id)
+    return
+  }
   if (sel.value) await select(sel.value.id)
   await loadQueuePage()
+}
+function onFailuresReplayed() {
+  if (sel.value) select(sel.value.id)
 }
 async function apiAction(body) {
   const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
@@ -491,24 +508,24 @@ async function fetchMeta() {
         if (form.intro !== overview) { form.intro = overview; changed.push('简介') }
       }
       if (!got.length) {
-        metaMsg.value = '查到了，但没有中文名或简介；可以手动补'
+        metaMsg.value = '查到了，但资料源没返回中文名或简介；可以手动补'
       } else if (!changed.length) {
-        metaMsg.value = '查到了 ' + got.join(' / ') + '，和现有内容一样，没有改动'
+        const found = []
+        if (title) found.push('中文名「' + title.slice(0, 40) + '」')
+        if (overview) found.push('简介 ' + overview.length + ' 字')
+        metaMsg.value = '查到了 ' + found.join('、') + '；和现有内容一样，没有改动'
       } else {
         const saved = await saveFields(id)
         if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
         metaMsg.value = '已更新 ' + changed.join(' / ') + ' · 来源 ' + provider + (saved.ok ? ' · 已保存' : ' · 保存失败，发布前会再保存一次')
       }
-      toast(metaMsg.value)
     } else {
       metaMsg.value = '没查到：' + ((j && j.error && j.error.message) || '换个片名或年份再试')
-      toast(metaMsg.value)
     }
   } catch (e) {
     if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
     if (e && e.name === 'AbortError') metaMsg.value = '查询超时（20 秒），稍后再试'
     else { reportError('Queue.fetchMeta', e); metaMsg.value = '资料请求发不出去' }
-    toast(metaMsg.value)
   } finally {
     clearTimeout(timer)
     if (seq === metaSeq) metaBusy.value = false
@@ -744,6 +761,9 @@ onUnmounted(() => {
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; }
 .qd-meta-msg { margin-top: -2px; }
 .qd-desc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qd-manual-shots { margin-top: 8px; }
+.qd-manual-shots > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
+.qd-manual-shots > summary:hover { color: var(--accent); }
 .qd-desc-head h3 { margin: 0; }
 .qd-final-desc { margin-top: 8px; font-size: 12px; }
 .qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }

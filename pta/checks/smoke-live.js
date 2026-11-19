@@ -464,7 +464,8 @@ async function main() {
         body: JSON.stringify({
           title: 'Smoke Queue 2020 2160p', status: 'pending', site: 'demo-a.example', targetSite: 'target.example',
           downloadUrl: 'http://127.0.0.1:1/t.torrent', res: '2160p', size: '20 GB', imageHost: '本地图床',
-          descrBb: '[quote]\nGeneral\nComplete name : Smoke.Media.2024.mkv\nFormat : Matroska\nFile size : 1.0 GiB\n\nVideo\nFormat : HEVC\nWidth : 3840 pixels\nHeight : 2160 pixels\nBit depth : 10 bits\n\nAudio #1\nFormat : DTS XLL\nCommercial name : DTS-HD Master Audio\nChannel(s) : 6 channels\nLanguage : Chinese\n[/quote]'
+          descrBb: '[quote]\nGeneral\nComplete name : Smoke.Media.2024.mkv\nFormat : Matroska\nFile size : 1.0 GiB\n\nVideo\nFormat : HEVC\nWidth : 3840 pixels\nHeight : 2160 pixels\nBit depth : 10 bits\n\nAudio #1\nFormat : DTS XLL\nCommercial name : DTS-HD Master Audio\nChannel(s) : 6 channels\nLanguage : Chinese\n[/quote]\n[img]https://example.invalid/shot.jpg[/img]',
+          sourceImages: ['https://example.invalid/shot.jpg']
         })
       });
       const j = await r.json();
@@ -514,6 +515,9 @@ async function main() {
     await page.locator('.qd-desc-card details.qd-final-desc').evaluate((el) => { el.open = true });
     const finalDesc = await page.locator('.qd-desc-card details.qd-final-desc').innerText();
     need(/General|2160p|DTS-HD MA/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));
+    const shotCard = await page.locator('.qd-shots').innerText();
+    need(/源站简介里有 1 张截图/.test(shotCard), '源站截图数量没显示：' + shotCard.replace(/\n/g, ' / ').slice(0, 120));
+    await page.locator('.qd-shots details.qd-manual-shots').evaluate((el) => { el.open = true });
     await page.getByRole('button', { name: '图床演练' }).click();
     await page.waitForTimeout(1200);
     const shotTxt = await page.locator('.qd-shots').innerText();
@@ -559,6 +563,36 @@ async function main() {
     await page.evaluate(() => { location.hash = '#dashboard' });
     await page.waitForTimeout(200);
     await page.evaluate(() => { location.hash = '#queue' });
+    await page.waitForTimeout(500);
+  });
+
+  await check('待审「失败」标签显示失败与重试并可重新排队', async () => {
+    const id = await page.evaluate(async () => {
+      const r = await fetch('/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Smoke Failed 2024', status: 'failed', stage: 'failed', stageFailedFrom: 'target',
+          stageLastError: 'TARGET_UNREACHABLE 测试失败', stageLastErrorCode: 'TARGET_UNREACHABLE', stageAttempts: 3,
+          site: 'demo-a.example', targetSite: 'target.example'
+        })
+      });
+      return (await r.json()).data.id;
+    });
+    await page.evaluate(() => { location.hash = '#dashboard' });
+    await page.waitForTimeout(200);
+    await page.evaluate(() => { location.hash = '#queue' });
+    await page.waitForTimeout(700);
+    await page.locator('#queue-tabs button').filter({ hasText: '失败' }).click();
+    await page.waitForSelector('.qf-row', { timeout: 3000 });
+    const rowTxt = await page.locator('.qf-row').first().innerText();
+    need(/Smoke Failed/.test(rowTxt), '失败条目没显示：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
+    need(/重新排队/.test(rowTxt) && /自动重试用完|待重试/.test(rowTxt), '失败状态/重排按钮缺失：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
+    await page.locator('.qf-row').first().getByRole('button', { name: '重新排队' }).click();
+    await page.waitForTimeout(700);
+    const q = await page.evaluate(async (qid) => (await (await fetch('/api/queue/' + qid)).json()), id);
+    need(q.ok && q.data.status === 'pending', '重新排队没把状态改回 pending：' + JSON.stringify(q.data && q.data.status));
+    await page.evaluate(async (qid) => { await fetch('/api/queue/' + qid, { method: 'DELETE' }); }, id);
+    await page.locator('#queue-tabs button').filter({ hasText: '全部' }).click();
     await page.waitForTimeout(500);
   });
 

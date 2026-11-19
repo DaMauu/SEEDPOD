@@ -1,10 +1,11 @@
 {
-  "at": "2026-11-19T16:19:27.820Z",
+  "at": "2026-11-19T16:53:01.435Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/CrawlCard.vue": "7a23304c538747c5",
     "components/FlowGates.vue": "3f44c71518d518ff",
     "components/PublishCard.vue": "2949f37316ed09fe",
+    "components/QueueFailures.vue": "7d9a217294d4f87d",
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "ea5e921926989002",
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
@@ -18,7 +19,7 @@
     "components/SitesToolbar.vue": "abb6a24517b70d29",
     "components/TargetPickerModal.vue": "7553c808796e7707",
     "styles/00-base.css": "27e89665e8794d25",
-    "styles/01-shell.css": "d4952dee62af09a1",
+    "styles/01-shell.css": "d3cd5f10e436edf6",
     "styles/02-shell-layout.css": "5774cc1094e8e18e",
     "styles/03-shared-components.css": "7e7aec9ead2b16f2",
     "styles/04-shared-forms-drawers.css": "68cce45b930cdb56",
@@ -33,9 +34,9 @@
     "views/Crawl.css": "499176b1b81d4257",
     "views/Crawl.vue": "0e2abf7de3616497",
     "views/Dashboard.vue": "d564aa263d86b482",
-    "views/Logs.vue": "6323dca55bc8df20",
+    "views/Logs.vue": "ee1cd60333bc52f6",
     "views/Nodes.vue": "493811e7ecd3283b",
-    "views/Queue.vue": "404ef82911fcbc56",
+    "views/Queue.vue": "a1d6793849aed442",
     "views/Settings.vue": "5d4c5756e639d3cf",
     "views/Sites.vue": "e99cae4355e8a25c",
     "views/Sources.vue": "d95f1d8b3f02f764"
