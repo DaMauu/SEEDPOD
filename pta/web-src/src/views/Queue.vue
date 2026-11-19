@@ -6,7 +6,6 @@
     <input v-model="q" class="input slim" id="queue-q" placeholder="搜标题 / 中文名" style="width:220px" @input="debounced">
     <div class="spacer"></div>
     <span class="t-sub" id="queue-count">共 {{ matched }} 条</span>
-    <button class="btn ghost slim" id="q-bulkcheck" type="button" :disabled="busy.check" @click="bulkCheck">{{ busy.check ? '查重中…' : '批量查重' }}</button>
     <button class="btn ghost slim" id="q-bulkapprove" type="button" :disabled="busy.approve" @click="bulkApprove">全部批准</button>
     <button class="btn ghost slim" id="q-bulkpublish" type="button" :disabled="busy.publish" @click="bulkPublish">全部发布</button>
   </div>
@@ -90,7 +89,6 @@
               </select>
             </div>
             <div class="qd-field"><span>匿名发布</span><input v-model="form.anonymous" type="checkbox"></div>
-            <div class="qd-field"><span>本地查重</span><div class="qd-path-row"><b :class="(sel.checkCls || '') + '-t'">{{ sel.check || '未查' }}</b><button class="btn ghost slim" type="button" :disabled="busy.check" title="只比对待审/已发布/词条库，不请求目标站；目标站查重在发布时自动做" @click="checkOne">{{ busy.check ? '查重中…' : '查一次' }}</button></div></div>
           </section>
 
           <section class="sd-card qd-desc-card">
@@ -182,6 +180,7 @@
             <span>分类 <b>{{ preflight.labels.type || preflight.fields.type || '未映射' }}</b></span>
             <span>制作组 <b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></span>
             <span>媒介 <b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></span>
+            <span>目标站查重 <b :class="preflight.dupe.state === 'exists' || preflight.dupe.state === 'error' ? 'qd-stage-err' : (preflight.dupe.state === 'passed' ? 'qd-ok' : '')">{{ preflight.dupe.label }}</b></span>
           </div>
           <div class="qd-preflight-row">
             <span>种子 <b>{{ preflight.torrent.name || '先下载种子' }}</b></span>
@@ -260,7 +259,7 @@ const sel = ref(null)
 const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
-const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
+const busy = reactive({ act: false, approve: false, publish: false, target: false, images: false, inject: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parseMsg: '', prepareMsg: '', parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
 const preflight = ref(null)
@@ -788,38 +787,6 @@ async function bulkPublish() {
   }
   if (go) go('批量发布', '会把「已通过」的条目逐条走发布链路；真发布关闭时会逐条失败。继续？', fn)
   else fn()
-}
-async function checkOne() {
-  if (!sel.value || busy.check) return
-  busy.check = true
-  try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/check', {
-      method: 'POST', credentials: 'same-origin'
-    })).json()
-    if (j && j.ok) toast(j.data.duplicate ? ('本地已有：' + j.data.matched) : '本地库里没有重复')
-    else toast((j && j.error && j.error.message) || '查重失败')
-    await refresh()
-  } catch (e) {
-    reportError('Queue.checkOne', e)
-    toast('查重请求发不出去')
-  }
-  busy.check = false
-}
-async function bulkCheck() {
-  if (busy.check) return
-  const list = items.value.filter(x => x.status === 'pending' || x.status === 'approved')
-  if (!list.length) { toast('当前列表没有可查重的条目'); return }
-  busy.check = true
-  let dup = 0
-  for (const it of list) {
-    try {
-      const j = await (await fetch('/api/queue/' + encodeURIComponent(it.id) + '/check', { method: 'POST', credentials: 'same-origin' })).json()
-      if (j && j.ok && j.data.duplicate) dup++
-    } catch (e) { reportError('Queue', e) }
-  }
-  busy.check = false
-  toast('查重完成：' + list.length + ' 条，重复 ' + dup + ' 条')
-  await refresh()
 }
 function pickFiles() { if (filePick.value) filePick.value.click() }
 function shrink(file) {

@@ -489,15 +489,13 @@ async function main() {
     need((await page.locator('.qd-desc-card textarea').inputValue()) === '冒烟简介', '查资料没填简介');
     need(/已填入 中文名 \/ 简介/.test(await page.locator('.qd-meta-msg').innerText()), '查资料没显示结果');
     await page.unroute('**/api/meta/fetch');
-    await page.getByRole('button', { name: '查一次' }).click();
-    await page.waitForTimeout(500);
-    need(/无重复|已有同片/.test(await page.locator('.qd-pubinfo').innerText()), '本地查重没出结果');
     await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
     await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
     await page.waitForTimeout(150);
     await page.waitForSelector('.qd-preflight', { timeout: 3000 });
     const pf = await page.locator('.qd-preflight').innerText();
     need(/发布前检查/.test(pf) && /电影/.test(pf) && /只换目标站通用 announce/.test(pf), '发布前检查缺失：' + pf.slice(0, 160));
+    need(/目标站查重/.test(pf) && /发布时自动查/.test(pf), '目标站查重状态缺失：' + pf.slice(0, 200));
     const txt = await page.locator('#queue-detail').innerText();
     need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
     need(await page.locator('.qd-media').count() === 1, '媒体卡缺失');

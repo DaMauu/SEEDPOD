@@ -243,9 +243,22 @@ module.exports = function (app, ctx) {
     }
     const cleanOn = flowConfig.on(flowConfig.read(ctx), '上传前清洗 tracker', true);
     const f = plan.fields || {};
+    /* 目标站查重状态：只读队列里已有的结果，不在待审页发请求 */
+    const dr = (item.data.dupeResults && item.data.dupeResults[host]) || null;
+    let dupe = { state: 'unchecked', label: '发布时自动查' };
+    if (dr) {
+      dupe = (dr.found || dr.skip)
+        ? { state: 'exists', label: '目标站已有同种，发布会跳过' }
+        : { state: 'passed', label: '目标站查重已通过' };
+    } else if (item.data.dupePassedAt) {
+      dupe = { state: 'passed', label: '目标站查重已通过' };
+    } else if (item.data.dupeLastError) {
+      dupe = { state: 'error', label: '上次查重失败：' + String(item.data.dupeLastError).slice(0, 80) };
+    }
     return ok(reply, {
       host: host,
       ready: !!plan.ready,
+      dupe: dupe,
       warnings: plan.warnings || [],
       labels: plan.labels || {},
       fields: { type: f.type || '', source_sel: f.source_sel || '', team_sel: f.team_sel || '', medium_sel: f.medium_sel || '', standard_sel: f.standard_sel || '' },
