@@ -26,7 +26,7 @@
       <div v-if="tab !== 'failed'" class="queue-page">
         <div class="queue-pager">
           <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && loadQueuePage(page - 1)">上一页</span>
-          <span class="pager-meta" :title="'第 ' + page + ' / ' + pages + ' 页 · 共 ' + matched + ' 条'">{{ page }} / {{ pages }} 页 · 共 {{ matched }} 条</span>
+          <span class="pager-meta" :title="'第 ' + page + ' / ' + pages + ' 页 · 共 ' + matched + ' 条'">{{ page }} / {{ pages }} 页 · {{ matched }} 条</span>
           <span class="pager-link" :class="{ off: page >= pages }" @click="page < pages && loadQueuePage(page + 1)">下一页</span>
         </div>
       </div>
@@ -680,7 +680,7 @@ onUnmounted(() => {
 
 /* 分页 */
 .queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
-.queue-pager { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.queue-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
 .queue-pager .pager-link { flex: 0 0 auto; font-size: 10.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .queue-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
 .queue-pager .pager-meta { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
