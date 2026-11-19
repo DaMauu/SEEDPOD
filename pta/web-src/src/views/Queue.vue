@@ -84,22 +84,16 @@
           </div>
           <div class="qd-field">
             <span>标题</span>
-            <div class="qd-control">
-              <div class="qd-control-row">
-                <input v-model="form.title" class="input">
-                <button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">回填源标题</button>
-              </div>
-            </div>
+            <div class="qd-control"><input v-model="form.title" class="input"></div>
+            <button class="btn ghost slim qd-action-btn" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">回填源标题</button>
           </div>
           <div class="qd-field">
             <span>副标题</span>
             <div class="qd-control">
-              <div class="qd-control-row">
-                <input v-model="form.cn" class="input">
-                <button class="btn ghost slim" type="button" :disabled="metaBusy" title="用公开元数据拼副标题和简介" @click="fetchMeta">{{ metaBusy ? '查询中…' : '查资料' }}</button>
-              </div>
+              <input v-model="form.cn" class="input">
               <div v-if="metaMsg" class="t-sub qd-meta-msg">{{ metaMsg }}</div>
             </div>
+            <button class="btn ghost slim qd-action-btn" type="button" :disabled="metaBusy" title="用公开元数据拼副标题和简介" @click="fetchMeta">{{ metaBusy ? '查询中…' : '查资料' }}</button>
           </div>
           <div class="qd-field">
             <span>图床</span>
@@ -110,16 +104,15 @@
           <div class="qd-field qd-field-top">
             <span>简介</span>
             <div class="qd-control qd-desc-control">
-              <div class="qd-desc-head"><span class="soft">最终发布用</span><button class="btn ghost slim" type="button" :disabled="prepBusy" title="用当前标题/简介和源站媒体信息生成最终发布内容" @click="prepareRelease">{{ prepBusy ? '整理中…' : '整理发布资料' }}</button></div>
               <textarea v-model="form.intro" class="input sd-note" rows="4"></textarea>
               <div v-if="prepMsg" class="t-sub">{{ prepMsg }}</div>
               <div v-if="preflight && preflight.media" class="t-sub">媒体信息：已从源站简介识别 {{ preflight.media.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo' }} · {{ preflight.media.summary }}</div>
-              <div v-else-if="preflight" class="soft">媒体信息：源站简介里没识别到 MediaInfo/BDInfo；发布时不带。</div>
               <details v-if="sel.prepared && sel.prepared.description" class="qd-final-desc">
                 <summary>最终简介预览（发布时用这份）</summary>
                 <pre>{{ sel.prepared.description }}</pre>
               </details>
             </div>
+            <button class="btn ghost slim qd-action-btn" type="button" :disabled="prepBusy" title="用当前标题/简介和源站媒体信息生成最终发布内容" @click="prepareRelease">{{ prepBusy ? '整理中…' : '整理发布资料' }}</button>
           </div>
         </section>
 
@@ -712,23 +705,20 @@ onUnmounted(() => {
 .qd-target-result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .qd-target-result .qd-stage-err { flex: 1 1 100%; }
 
-/* 发布信息：所有字段一列，标签固定、控件右对齐 */
-.qd-pubinfo { padding: 12px 14px 10px; border-radius: 10px; margin-top: 10px; }
-.qd-pub-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+/* 发布信息：标签固定，中间控件，右侧留动作按钮位；外层不再套框 */
+.qd-pubinfo { padding: 0; border: 0; border-radius: 0; background: transparent; margin-top: 8px; }
+.qd-pub-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
 .qd-pub-head h3 { margin: 0; font-size: 10px; letter-spacing: .6px; }
 .qd-anon { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); cursor: pointer; }
-.qd-field { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 10px; padding: 4px 0; font-size: 12px; color: var(--muted); }
+.qd-field { display: grid; grid-template-columns: 52px minmax(0, 1fr) 92px; align-items: center; gap: 10px; padding: 4px 0; font-size: 12px; color: var(--muted); }
 .qd-field-top { align-items: start; }
 .qd-field > span { font-size: 11.5px; color: var(--muted); }
 .qd-field .input, .qd-field .select { width: 100%; min-width: 0; height: 30px; font-size: 11.5px; }
 .qd-control { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.qd-control-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.qd-control-row .input { flex: 1 1 auto; width: auto; min-width: 0; }
-.qd-control-row .btn { flex: 0 0 auto; white-space: nowrap; }
 .qd-desc-control { gap: 6px; }
-.qd-desc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.qd-desc-head .soft { font-size: 11px; }
 .qd-desc-control .sd-note { width: 100%; height: 92px; min-height: 92px; font-size: 11.5px; line-height: 1.5; }
+.qd-action-btn { width: 100%; justify-content: center; padding-left: 0; padding-right: 0; font-size: 10.5px; white-space: nowrap; }
+.qd-field-top .qd-action-btn { align-self: start; }
 .qd-meta-msg { margin-top: 0; }
 .qd-download { padding: 4px 0 6px; }
 .qd-final-desc { margin-top: 4px; font-size: 12px; }
@@ -785,9 +775,8 @@ onUnmounted(() => {
 
 @media (max-width: 600px) {
   .queue-detail { padding: 14px 12px 10px; }
-  .qd-field { grid-template-columns: 46px minmax(0, 1fr); gap: 8px; }
-  .qd-control-row { gap: 4px; }
-  .qd-control-row .btn { padding-left: 6px; padding-right: 6px; }
+  .qd-field { grid-template-columns: 46px minmax(0, 1fr) 82px; gap: 8px; }
+  .qd-action-btn { font-size: 10px; }
   .qd-check-grid { grid-template-columns: 1fr; }
   .qd-check-wide { grid-column: auto; }
   .qd-targets-foot, .qd-actions { gap: 6px; }

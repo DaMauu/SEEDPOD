@@ -5,9 +5,9 @@
       <button class="btn ghost slim" type="button" @click="toggleDead">{{ deadOnly ? '看全部' : '只看重试用完' }}</button>
       <button class="btn ghost slim" type="button" :disabled="loading" @click="load">{{ loading ? '读取中…' : '刷新' }}</button>
     </div>
-    <div v-if="!rows.length" class="sites-empty">{{ loading ? '读取中…' : '没有卡住的条目' }}</div>
+    <div v-if="!visible.length" class="sites-empty">{{ loading ? '读取中…' : '没有卡住的条目' }}</div>
     <div v-else class="qf-list">
-      <div v-for="it in rows" :key="it.id" class="qf-row" :class="{ on: it.id === activeId }" @click="$emit('select', it.id)">
+      <div v-for="it in pageRows" :key="it.id" class="qf-row" :class="{ on: it.id === activeId }" @click="$emit('select', it.id)">
         <div class="qf-main">
           <div class="qf-title">{{ it.title || it.id }}</div>
           <div class="qf-meta">
@@ -17,6 +17,13 @@
           </div>
         </div>
         <button class="btn ghost slim qf-replay" type="button" title="清掉错误和次数，放回待处理，下一轮重新跑" @click.stop="replay(it)">重新排队</button>
+      </div>
+    </div>
+    <div v-if="visible.length" class="qf-pager-wrap">
+      <div class="qf-pager">
+        <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && (page = page - 1)">上一页</span>
+        <span class="qf-page-meta">第 {{ page }} / {{ pages }} 页 · 共 {{ visible.length }} 条</span>
+        <span class="pager-link" :class="{ off: page >= pages }" @click="page < pages && (page = page + 1)">下一页</span>
       </div>
     </div>
   </div>
@@ -39,6 +46,8 @@ const dead = ref(0)
 const deadOnly = ref(false)
 const loading = ref(false)
 const loaded = ref(false)
+const page = ref(1)
+const pageSize = 20
 
 const STAGE_TEXT = { review: '补资料', prepared: '准备', previewed: '预览', submitted: '提交', injected: '注入', publish: '发布', target: '目标站', dedupe: '查重', crawl: '抓取' }
 function stageText(s) { return STAGE_TEXT[s] || s || '未知' }
@@ -72,15 +81,19 @@ function summary(it) {
 }
 
 const term = computed(() => String(props.q || '').trim().toLowerCase())
-const rows = computed(() => {
+const visible = computed(() => {
   const t = term.value
   return (items.value || []).filter((it) => !t || String(it.title || '').toLowerCase().indexOf(t) >= 0 || String(it.id || '').toLowerCase().indexOf(t) >= 0)
 })
+const pages = computed(() => Math.max(1, Math.ceil(visible.value.length / pageSize)))
+const pageRows = computed(() => visible.value.slice((page.value - 1) * pageSize, page.value * pageSize))
 const countText = computed(() => {
   if (!loaded.value) return '读取中…'
   const base = '共 ' + total.value + ' 条' + (dead.value ? ' · 重试用完 ' + dead.value : '')
-  return term.value ? base + ' · 匹配 ' + rows.value.length : base
+  return term.value ? base + ' · 匹配 ' + visible.value.length : base
 })
+watch(() => props.q, () => { page.value = 1 })
+watch(pages, (n) => { if (page.value > n) page.value = n })
 
 async function load() {
   loading.value = true
@@ -91,6 +104,7 @@ async function load() {
       total.value = Number(j.data.total) || 0
       dead.value = Number(j.data.dead) || 0
       loaded.value = true
+      if (page.value > pages.value) page.value = pages.value
     } else toast((j && j.error && j.error.message) || '失败队列读取失败')
   } catch (e) {
     toast('失败队列请求发不出去')
@@ -99,6 +113,7 @@ async function load() {
 }
 function toggleDead() {
   deadOnly.value = !deadOnly.value
+  page.value = 1
   load()
 }
 async function replay(it) {
@@ -118,10 +133,10 @@ onMounted(load)
 </script>
 
 <style scoped>
-.qf-wrap { display: flex; flex-direction: column; min-height: 0; }
+.qf-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .qf-bar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 0 2px 6px; border-bottom: 1px solid var(--line); }
 .qf-count { flex: 1 1 auto; font-size: 11px; color: var(--muted); }
-.qf-list { display: flex; flex-direction: column; gap: 4px; overflow: auto; padding-top: 6px; }
+.qf-list { display: flex; flex-direction: column; gap: 4px; overflow: auto; padding-top: 6px; flex: 1; min-height: 0; }
 .qf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; text-align: left; }
 .qf-row:hover { background: #f7f8fa; }
 .qf-row.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: var(--accent-soft); }
@@ -131,7 +146,12 @@ onMounted(load)
 .qf-meta .badge { flex: 0 0 auto; }
 .qf-sum { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .qf-next { flex: 0 0 auto; font-size: 10px; color: var(--muted-2); }
-.qf-replay { align-self: center; white-space: nowrap; }
+.qf-replay { align-self: center; white-space: nowrap; height: 22px; min-height: 22px; padding: 0 6px; font-size: 10px; line-height: 20px; border-radius: 6px; }
+.qf-pager-wrap { flex: 0 0 auto; padding: 8px 2px 0; border-top: 1px solid var(--line); background: #fff; }
+.qf-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.qf-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
+.qf-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
+.qf-page-meta { flex: 1; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) {
   .qf-next { display: none; }
   .qf-row { gap: 6px; padding: 6px; }

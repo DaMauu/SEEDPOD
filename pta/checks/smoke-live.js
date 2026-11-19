@@ -575,6 +575,8 @@ async function main() {
     const rowTxt = await page.locator('.qf-row').first().innerText();
     need(/Smoke Failed/.test(rowTxt), '失败条目没显示：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
     need(/重新排队/.test(rowTxt) && /自动重试用完|待重试/.test(rowTxt), '失败状态/重排按钮缺失：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
+    const pagerTxt = await page.locator('.qf-pager').innerText();
+    need(/上一页/.test(pagerTxt) && /下一页/.test(pagerTxt), '失败分页按钮缺失：' + pagerTxt.replace(/\n/g, ' / '));
     await page.locator('.qf-row').first().getByRole('button', { name: '重新排队' }).click();
     await page.waitForTimeout(700);
     const q = await page.evaluate(async (qid) => (await (await fetch('/api/queue/' + qid)).json()), id);
