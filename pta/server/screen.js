@@ -1,6 +1,7 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
 const marksMod = require('./marks');
+const meta = require('./meta');
 const { tx } = require('./db');
 
 function flowRules(sets, rx) {
@@ -88,6 +89,7 @@ function screenCatalog(ctx, opts) {
     const it = jparse(r.data) || {};
     checked++;
     const title = String(it.title || '');
+    const parsed = meta.parseRelease(title);
     const detailText = [title, it.tags, it.subtitle, it.descr, it.intro].filter(Boolean).join(' ');
     const res = String(it.res || '').toLowerCase() || match.resOf(title);
     const bytes = Number(it.sizeBytes) || match.sizeBytesOf(it) || 0;
@@ -116,6 +118,9 @@ function screenCatalog(ctx, opts) {
     } catch (e) { defaultTarget = ''; }
     const item = { id: 'q_' + String(++seq).padStart(4, '0'), status: 'pending', createdAt: now(), title: title,
       targetSite: defaultTarget,
+      cat: String(it.catName || parsed.catName || it.category || parsed.category || '').slice(0, 60),
+      catName: String(it.catName || parsed.catName || '').slice(0, 60),
+      category: String(it.category || parsed.category || '').slice(0, 40),
       res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
       downloadUrl: it.downloadUrl || '', detailsUrl: String(it.detailsUrl || '').slice(0, 300), siteId: it.siteId || '',
       subtitle: String(it.subtitle || '').slice(0, 300), cn: cnOf(it.subtitle),

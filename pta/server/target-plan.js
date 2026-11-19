@@ -64,10 +64,38 @@ function makePlan(deps) {
         sport: ['体育'], book: ['电子书', '书'], software: ['软件'], study: ['学习'],
         game: ['游戏'], other: ['其他', '其它']
       };
-      const raw = String(item.cat || '').trim();
-      const keys = [raw].concat(ALIAS[raw.toLowerCase()] || []);
+      const CN_GENERIC = {
+        '电影': 'movie', '电视剧': 'tv', '剧集': 'tv', '动漫': 'anime', '动画': 'anime', '综艺': 'show',
+        '纪录': 'doc', '纪录片': 'doc', '音乐': 'music', 'MV': 'music', '舞台演出': 'music',
+        '体育': 'sport', '电子书': 'book', '书': 'book', '软件': 'software', '学习': 'study',
+        '游戏': 'game', '其他': 'other', '其它': 'other'
+      };
+      let raw = String(item.cat || item.catName || item.category || '').trim();
+      if (!raw && item.catalogId) {
+        try {
+          const crow = one('SELECT data FROM catalog WHERE id = ?', item.catalogId);
+          const cd = crow ? (ctx.jparse ? ctx.jparse(crow.data) : JSON.parse(crow.data)) : null;
+          raw = String((cd && (cd.catName || cd.category || cd.cat)) || '').trim();
+        } catch (e) { raw = ''; }
+      }
+      if (!raw) {
+        try { const p = meta.parseRelease(item.title); raw = String(p.catName || p.category || '').trim(); } catch (e) { raw = ''; }
+      }
+      const normKey = function (x) { return String(x || '').toLowerCase().replace(/[\s._-]+/g, ''); };
+      const generic = ALIAS[raw.toLowerCase()] ? raw.toLowerCase() : (CN_GENERIC[raw] || '');
+      const keys = [raw];
+      if (generic) { keys.push(generic); (ALIAS[generic] || []).forEach(function (x) { keys.push(x); }); }
+      const catKeys = Object.keys(t.catMap || {});
       let mapped = null;
-      for (const k of keys) { if (k && t.catMap[k] != null) { mapped = t.catMap[k]; break; } }
+      for (const k of keys) {
+        if (!k) continue;
+        if (t.catMap[k] != null) { mapped = t.catMap[k]; break; }
+        const hit = catKeys.filter(function (x) { return normKey(x) === normKey(k); })[0];
+        if (hit && t.catMap[hit] != null) { mapped = t.catMap[hit]; break; }
+        const nk = normKey(k);
+        const fuzzy = catKeys.filter(function (x) { const nx = normKey(x); return nx.length >= 2 && (nx.indexOf(nk) >= 0 || nk.indexOf(nx) >= 0); })[0];
+        if (fuzzy && t.catMap[fuzzy] != null) { mapped = t.catMap[fuzzy]; break; }
+      }
       if (mapped != null) v.catId = String(mapped);
       else if (/^\d+$/.test(raw)) v.catId = raw;
     }
