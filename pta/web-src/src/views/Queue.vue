@@ -516,15 +516,21 @@ async function fetchMeta() {
       body: JSON.stringify({ title: form.title || sel.value.title, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
     })).json()
     if (j && j.ok && j.data) {
+      /* 接口返回是 { ok, data: { ok, provider, data: {title, overview} } }，兼容扁平结构 */
+      const payload = j.data
+      const d = payload.data || payload
+      const provider = payload.provider || j.provider || '公开资料'
+      const title = d.title || d.name || d.cn || ''
+      const overview = d.overview || d.intro || d.summary || d.description || ''
       const got = []
       const changed = []
-      if (j.data.title) {
+      if (title) {
         got.push('中文名')
-        if (form.cn !== j.data.title) { form.cn = j.data.title; changed.push('中文名') }
+        if (form.cn !== title) { form.cn = title; changed.push('中文名') }
       }
-      if (j.data.overview) {
+      if (overview) {
         got.push('简介')
-        if (form.intro !== j.data.overview) { form.intro = j.data.overview; changed.push('简介') }
+        if (form.intro !== overview) { form.intro = overview; changed.push('简介') }
       }
       if (!got.length) {
         metaMsg.value = '查到了，但没有中文名或简介；可以手动补'
@@ -532,7 +538,7 @@ async function fetchMeta() {
         metaMsg.value = '查到了 ' + got.join(' / ') + '，和现有内容一样，没有改动'
       } else {
         const saved = await saveFields()
-        metaMsg.value = '已更新 ' + changed.join(' / ') + ' · 来源 ' + (j.provider || '公开资料') + (saved.ok ? ' · 已保存' : ' · 保存失败，发布前会再保存一次')
+        metaMsg.value = '已更新 ' + changed.join(' / ') + ' · 来源 ' + provider + (saved.ok ? ' · 已保存' : ' · 保存失败，发布前会再保存一次')
       }
       toast(metaMsg.value)
     } else {

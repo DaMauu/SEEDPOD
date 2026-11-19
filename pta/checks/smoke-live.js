@@ -481,7 +481,7 @@ async function main() {
     await page.waitForTimeout(400);
     await page.route('**/api/meta/fetch', (route) => route.fulfill({
       status: 200, contentType: 'application/json',
-      body: JSON.stringify({ ok: true, provider: 'smoke', data: { title: '冒烟中文名', overview: '冒烟简介' } })
+      body: JSON.stringify({ ok: true, data: { ok: true, provider: 'smoke', data: { title: '冒烟中文名', overview: '冒烟简介' } } })
     }));
     await page.getByRole('button', { name: '查资料' }).click();
     await page.waitForTimeout(350);
