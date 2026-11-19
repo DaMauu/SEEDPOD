@@ -182,7 +182,7 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 配置 ---- */
-  const DEF = { runMode: 'test', listInterval: 10, interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: true, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1 };
+  const DEF = { runMode: 'test', listInterval: 10, interval: 60, windowMinutes: 60, maxPerWindow: 20, breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false, detail: true, testOnly: true, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1 };
   const LIM = { listInterval: [6, 60], interval: [8, 600], windowMinutes: [1, 1440], maxPerWindow: [1, 1000], breaker: [1, 10], concurrency: [1, 5] };
   function readCfg() { return Object.assign({}, DEF, configSchema.read(ctx)); }
   app.get('/api/config', async () => ok({ sys: { concurrency: 1, minInterval: 8, retry: 3, backoff: 30, breakerMinutes: 15, audit: true }, user: readCfg(), limits: LIM }));
@@ -200,6 +200,7 @@ module.exports = function (app, ctx) {
     if (b.realCrawl !== undefined) next.realCrawl = !!b.realCrawl;
     if (b.realPublish !== undefined) next.realPublish = !!b.realPublish;
     if (b.realImages !== undefined) next.realImages = !!b.realImages;
+    if (b.testOnly !== undefined) next.testOnly = !!b.testOnly;
     if (b.detail !== undefined) next.detail = !!b.detail;
     if (b.targetHost !== undefined) next.targetHost = String(b.targetHost || '').trim().toLowerCase().slice(0, 200);
     if (b.retryMax !== undefined) {

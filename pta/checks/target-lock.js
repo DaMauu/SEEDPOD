@@ -65,16 +65,26 @@ function fetchA(url, opts) {
       need(r.status === 403 && r.body && r.body.error && r.body.error.code === 'TEST_ITEM_BLOCKED', '没拦住测试标题：' + JSON.stringify(r));
     });
 
-    await check('主站未确认 → 403 MAIN_TARGET_LOCKED', async function () {
+    await check('测试站模式 → 主站 403 TEST_ONLY', async function () {
       const id = await mk('Normal Movie 2024 1080p', 'main.example');
       const r = await upload(id, { host: 'main.example' });
-      need(r.status === 403 && r.body && r.body.error && r.body.error.code === 'MAIN_TARGET_LOCKED', '没拦住主站：' + JSON.stringify(r));
+      need(r.status === 403 && r.body && r.body.error && r.body.error.code === 'TEST_ONLY', '没拦住主站：' + JSON.stringify(r));
     });
 
-    await check('主站输入域名后放行到真发布门禁', async function () {
+    await check('测试站模式 → 输入域名也不能发主站', async function () {
       const id = await mk('Normal Movie 2024 1080p', 'main.example');
       const r = await upload(id, { host: 'main.example', confirmHosts: ['main.example'] });
+      need(r.status === 403 && r.body && r.body.error && r.body.error.code === 'TEST_ONLY', '确认后仍应拦：' + JSON.stringify(r));
+    });
+
+    await check('关闭测试站模式后，主站仍需输入域名', async function () {
+      await fetchA(BASE + '/api/config/user', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ testOnly: false }) });
+      const id = await mk('Normal Movie 2024 1080p', 'main.example');
+      let r = await upload(id, { host: 'main.example' });
+      need(r.status === 403 && r.body && r.body.error && r.body.error.code === 'MAIN_TARGET_LOCKED', '没要求确认：' + JSON.stringify(r));
+      r = await upload(id, { host: 'main.example', confirmHosts: ['main.example'] });
       need(r.status === 409 && r.body && r.body.error && r.body.error.code === 'REAL_PUBLISH_DISABLED', '确认后状态不对：' + JSON.stringify(r));
+      await fetchA(BASE + '/api/config/user', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ testOnly: true }) });
     });
 
     await check('测试站不需要主站确认', async function () {

@@ -38,9 +38,13 @@ module.exports = function (app, ctx) {
     }
     const cfgRow = one("SELECT v FROM meta WHERE k = 'config'");
     const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
-    if (cfg.allowMainTarget === true) return null;
     const confirmed = Array.isArray(body.confirmHosts) ? body.confirmHosts.map(function (h) { return String(h).toLowerCase(); }) : [];
-    const bad = (hosts || []).map(function (h) { return String(h || '').toLowerCase(); }).filter(function (h) { return h && !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(h) && confirmed.indexOf(h) < 0; });
+    const nonTest = (hosts || []).map(function (h) { return String(h || '').toLowerCase(); }).filter(function (h) { return h && !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(h); });
+    if (cfg.testOnly !== false && nonTest.length) {
+      return { code: 'TEST_ONLY', message: '当前只允许提交到测试站：' + nonTest.join('、'), http: 403 };
+    }
+    if (cfg.allowMainTarget === true) return null;
+    const bad = nonTest.filter(function (h) { return confirmed.indexOf(h) < 0; });
     if (bad.length) return { code: 'MAIN_TARGET_LOCKED', message: '这是主站，需要单独输入域名确认：' + bad.join('、'), http: 403 };
     return null;
   }
@@ -89,6 +93,7 @@ module.exports = function (app, ctx) {
     const cfg = JSON.parse(row ? row.v : 'null') || {};
     const targetHost = String(cfg.targetHost || '').toLowerCase();
     const list = target.list().filter(function (t) {
+      if (cfg.testOnly !== false && !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(String(t.host || ''))) return false;
       return t.enabled !== false || t.host === targetHost;
     });
     return ok(list);

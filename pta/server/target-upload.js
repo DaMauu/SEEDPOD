@@ -41,6 +41,9 @@ async function upload(host, body) {
       const testHost = /^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(host);
       const cfgRow = ctx.one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
+      if (!testHost && cfg.testOnly !== false) {
+        return { ok: false, code: 'TEST_ONLY', message: '当前只允许提交到测试站', http: 403 };
+      }
       const confirmed = Array.isArray(b.confirmHosts) && b.confirmHosts.indexOf(host) >= 0;
       if (!testHost && cfg.allowMainTarget !== true && !confirmed) {
         return { ok: false, code: 'MAIN_TARGET_LOCKED', message: '这是主站，需要单独输入域名确认', http: 403 };
