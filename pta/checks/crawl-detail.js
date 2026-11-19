@@ -93,6 +93,22 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
       need(r4 && !r4.err, '第四轮失败：' + JSON.stringify(r4));
       need(r4.detail.tried === 0 && r4.detail.backlog === 0, '补完后不该再抓详情：' + JSON.stringify(r4.detail));
     });
+
+    await check('改分类预设不清 fullDoneAt', async function () {
+      const row = one("SELECT v FROM meta WHERE k = 'crawl-state'");
+      const st = row ? JSON.parse(row.v) : {};
+      st[HOST] = st[HOST] || {};
+      st[HOST].fullDoneAt = '2026-01-01T00:00:00Z';
+      st[HOST].page = 0;
+      db2.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
+      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401', '402'] } } } }, null, 2));
+      resetGaps();
+      const r = await core.crawlOnce(HOST, { limit: 100, detail: false });
+      need(r && !r.err, '改预设后抓取失败：' + JSON.stringify(r));
+      const row2 = one("SELECT v FROM meta WHERE k = 'crawl-state'");
+      const st2 = row2 ? JSON.parse(row2.v) : {};
+      need(st2[HOST] && st2[HOST].fullDoneAt, '改分类预先把全量标记清掉了');
+    });
   } finally {
     if (global.fetch !== realFetch) global.fetch = realFetch;
     if (global.__detailDb) { try { global.__detailDb.close(); } catch (e) { /* 忽略 */ } }
