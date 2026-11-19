@@ -26,7 +26,7 @@
       <div v-if="tab !== 'failed'" class="queue-page">
         <div class="queue-pager">
           <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && loadQueuePage(page - 1)">上一页</span>
-          <span class="pager-meta" :title="'第 ' + page + ' / ' + pages + ' 页 · 共 ' + matched + ' 条'">{{ page }} / {{ pages }} 页 · {{ matched }} 条</span>
+          <span class="pager-meta" :title="'第 ' + page + ' / ' + pages + ' 页 · 共 ' + matched + ' 条'">{{ page }}/{{ pages }} 页 · {{ matched }} 条</span>
           <span class="pager-link" :class="{ off: page >= pages }" @click="page < pages && loadQueuePage(page + 1)">下一页</span>
         </div>
       </div>

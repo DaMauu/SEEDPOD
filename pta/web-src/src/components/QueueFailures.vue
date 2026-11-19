@@ -1,10 +1,5 @@
 <template>
   <div class="qf-wrap">
-    <div class="qf-bar">
-      <span class="qf-count">{{ countText }}</span>
-      <button class="btn ghost slim" type="button" title="只看自动重试用完" @click="toggleDead">{{ deadOnly ? '看全部' : '只看用完' }}</button>
-      <button class="btn ghost slim" type="button" :disabled="loading" @click="load">{{ loading ? '读取中…' : '刷新' }}</button>
-    </div>
     <div v-if="!visible.length" class="sites-empty">{{ loading ? '读取中…' : '没有卡住的条目' }}</div>
     <div v-else class="qf-list">
       <div v-for="it in pageRows" :key="it.id" class="qf-row" :class="{ on: it.id === activeId }" @click="$emit('select', it.id)">
@@ -22,7 +17,7 @@
     <div v-if="visible.length" class="qf-pager-wrap">
       <div class="qf-pager">
         <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && (page = page - 1)">上一页</span>
-        <span class="qf-page-meta">{{ page }} / {{ pages }} 页 · {{ visible.length }} 条</span>
+        <span class="qf-page-meta" :title="'第 ' + page + ' / ' + pages + ' 页 · 共 ' + visible.length + ' 条'">{{ page }}/{{ pages }} 页 · {{ visible.length }} 条</span>
         <span class="pager-link" :class="{ off: page >= pages }" @click="page < pages && (page = page + 1)">下一页</span>
       </div>
     </div>
@@ -41,11 +36,7 @@ const props = defineProps({
 const emit = defineEmits(['select', 'replayed'])
 
 const items = ref([])
-const total = ref(0)
-const dead = ref(0)
-const deadOnly = ref(false)
-const loading = ref(false)
-const loaded = ref(false)
+const loading = ref(true)
 const page = ref(1)
 const pageSize = 20
 
@@ -87,34 +78,18 @@ const visible = computed(() => {
 })
 const pages = computed(() => Math.max(1, Math.ceil(visible.value.length / pageSize)))
 const pageRows = computed(() => visible.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-const countText = computed(() => {
-  if (!loaded.value) return '读取中…'
-  const base = total.value + ' 条' + (dead.value ? ' · 用完 ' + dead.value : '')
-  return term.value ? base + ' · 匹配 ' + visible.value.length : base
-})
-watch(() => props.q, () => { page.value = 1 })
-watch(pages, (n) => { if (page.value > n) page.value = n })
-
 async function load() {
   loading.value = true
   try {
-    const j = await (await fetch('/api/failures?limit=200&dead=' + (deadOnly.value ? '1' : '0'), { credentials: 'same-origin' })).json()
+    const j = await (await fetch('/api/failures?limit=200', { credentials: 'same-origin' })).json()
     if (j && j.ok) {
       items.value = Array.isArray(j.data.items) ? j.data.items : []
-      total.value = Number(j.data.total) || 0
-      dead.value = Number(j.data.dead) || 0
-      loaded.value = true
       if (page.value > pages.value) page.value = pages.value
     } else toast((j && j.error && j.error.message) || '失败队列读取失败')
   } catch (e) {
     toast('失败队列请求发不出去')
   }
   loading.value = false
-}
-function toggleDead() {
-  deadOnly.value = !deadOnly.value
-  page.value = 1
-  load()
 }
 async function replay(it) {
   try {
@@ -134,9 +109,6 @@ onMounted(load)
 
 <style scoped>
 .qf-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
-.qf-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 3px; padding: 0 9px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.qf-count { flex: 1 1 auto; min-width: 0; font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.qf-bar .btn { flex: 0 0 auto; height: 20px; min-height: 20px; padding: 0 4px; font-size: 9.5px; line-height: 18px; }
 .qf-list { display: flex; flex-direction: column; gap: 2px; overflow: auto; padding-top: 6px; flex: 1; min-height: 0; }
 .qf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 9px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; }
 .qf-row:hover { background: #f7f8fa; }
@@ -148,8 +120,8 @@ onMounted(load)
 .qf-sum { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .qf-next { flex: 0 0 auto; font-size: 10px; color: var(--muted-2); }
 .qf-replay { align-self: center; white-space: nowrap; height: 24px; min-height: 24px; padding: 0 7px; font-size: 10.5px; line-height: 22px; border-radius: 6px; }
-.qf-pager-wrap { flex: 0 0 auto; padding: 8px 9px 0; border-top: 1px solid var(--line); background: #fff; }
-.qf-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.qf-pager-wrap { flex: 0 0 auto; width: 100%; box-sizing: border-box; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
+.qf-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
 .qf-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .qf-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
 .qf-page-meta { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
