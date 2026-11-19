@@ -8,13 +8,15 @@
     <div v-if="!rows.length" class="sites-empty">{{ loading ? '读取中…' : '没有卡住的条目' }}</div>
     <div v-else class="qf-list">
       <div v-for="it in rows" :key="it.id" class="qf-row" :class="{ on: it.id === activeId }" @click="$emit('select', it.id)">
-        <span class="qf-title">{{ it.title || it.id }}</span>
-        <span class="qf-meta">
-          <span class="badge" :class="it.dead ? 'red' : 'amber'">{{ it.dead ? '自动重试用完' : '待重试' }}</span>
-          <span>{{ summary(it) }}</span>
-        </span>
-        <span v-if="it.nextRetryAt" class="qf-next">下次 {{ whenText(it.nextRetryAt) }}</span>
-        <button class="btn ghost slim" type="button" title="清掉错误和次数，放回待处理，下一轮重新跑" @click.stop="replay(it)">重新排队</button>
+        <div class="qf-main">
+          <div class="qf-title">{{ it.title || it.id }}</div>
+          <div class="qf-meta">
+            <span class="badge" :class="it.dead ? 'red' : 'amber'">{{ it.dead ? '自动重试用完' : '待重试' }}</span>
+            <span class="qf-sum">{{ summary(it) }}</span>
+            <span v-if="it.nextRetryAt" class="qf-next">下次 {{ whenText(it.nextRetryAt) }}</span>
+          </div>
+        </div>
+        <button class="btn ghost slim qf-replay" type="button" title="清掉错误和次数，放回待处理，下一轮重新跑" @click.stop="replay(it)">重新排队</button>
       </div>
     </div>
   </div>
@@ -117,13 +119,21 @@ onMounted(load)
 
 <style scoped>
 .qf-wrap { display: flex; flex-direction: column; min-height: 0; }
-.qf-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 2px 8px; border-bottom: 1px solid var(--line); }
-.qf-count { flex: 1 1 auto; font-size: 11.5px; color: var(--muted); }
-.qf-list { display: flex; flex-direction: column; gap: 6px; overflow: auto; padding-top: 8px; }
-.qf-row { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; cursor: pointer; text-align: left; }
-.qf-row.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.qf-title { font-size: 12.5px; font-weight: 600; color: var(--ink); line-height: 1.4; word-break: break-word; }
-.qf-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 11px; color: var(--muted); line-height: 1.4; }
-.qf-next { font-size: 10.5px; color: var(--muted-2); }
-.qf-row .btn { align-self: flex-start; margin-top: 2px; }
+.qf-bar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 0 2px 6px; border-bottom: 1px solid var(--line); }
+.qf-count { flex: 1 1 auto; font-size: 11px; color: var(--muted); }
+.qf-list { display: flex; flex-direction: column; gap: 4px; overflow: auto; padding-top: 6px; }
+.qf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; text-align: left; }
+.qf-row:hover { background: #f7f8fa; }
+.qf-row.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: var(--accent-soft); }
+.qf-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qf-title { font-size: 11.5px; font-weight: 600; color: var(--ink); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qf-meta { display: flex; align-items: center; gap: 4px 6px; min-width: 0; font-size: 10.5px; color: var(--muted); line-height: 1.35; white-space: nowrap; overflow: hidden; }
+.qf-meta .badge { flex: 0 0 auto; }
+.qf-sum { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.qf-next { flex: 0 0 auto; font-size: 10px; color: var(--muted-2); }
+.qf-replay { align-self: center; white-space: nowrap; }
+@media (max-width: 600px) {
+  .qf-next { display: none; }
+  .qf-row { gap: 6px; padding: 6px; }
+}
 </style>

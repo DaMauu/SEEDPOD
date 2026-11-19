@@ -5,6 +5,7 @@ const screen = require('./screen');
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
+const collage = require('./collage');
 const { makeErrorStats } = require('./error-stats');
 const { makeFailureQueue } = require('./failure-queue');
 const { makeTarget } = require('./target');
@@ -54,6 +55,17 @@ module.exports = function (app, ctx) {
     const t0 = Date.now();
     const r = await metaExt.fetchMeta({ title: qTitle, year: qYear, type: qType, provider: b.provider, key: b.key,
       requireYear: false, castLimit: 8 });
+    /* 用队列条目的原盘/地区/媒体信息 + 资料源导演/主演拼副标题 */
+    if (r.ok) {
+      try {
+        const qr = b.queueId ? one('SELECT data FROM queue WHERE id = ?', String(b.queueId)) : null;
+        const item = qr ? (jparse(qr.data) || {}) : null;
+        if (item) {
+          const cn = collage.composeSubtitle(item, r.data || {});
+          if (cn) r.cnSubtitle = cn;
+        }
+      } catch (e) { /* 拼贴失败不影响资料返回 */ }
+    }
     if (ctx.logEvent) {
       ctx.logEvent(r.ok ? 'info' : 'warn', '资料', '查询「' + qTitle + '」' +
         (r.ok ? ' · ' + (r.provider || '公开资料') + ' 已找到' : ' · ' + (r.code || '') + ' ' + (r.message || '')) +

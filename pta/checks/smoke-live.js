@@ -480,15 +480,15 @@ async function main() {
     await page.waitForTimeout(400);
     await page.route('**/api/meta/fetch', (route) => route.fulfill({
       status: 200, contentType: 'application/json',
-      body: JSON.stringify({ ok: true, data: { ok: true, provider: 'smoke', data: { title: '冒烟中文名', overview: '冒烟简介' } } })
+      body: JSON.stringify({ ok: true, data: { ok: true, provider: 'smoke', cnSubtitle: '冒烟中文名 | 导演:测试', data: { title: '冒烟中文名', overview: '冒烟简介' } } })
     }));
     await page.getByRole('button', { name: '查资料' }).click();
     await page.waitForTimeout(350);
-    need((await page.locator('.qd-pubinfo input.input').nth(1).inputValue()) === '冒烟中文名', '查资料没填中文名');
-    need((await page.locator('.qd-desc-card textarea').inputValue()) === '冒烟简介', '查资料没填简介');
-    need(/已更新 中文名 \/ 简介/.test(await page.locator('.qd-meta-msg').innerText()), '查资料没显示结果');
+    need((await page.locator('.qd-pubinfo input.input').nth(1).inputValue()) === '冒烟中文名 | 导演:测试', '查资料没拼副标题');
+    need((await page.locator('.qd-pubinfo textarea').inputValue()) === '冒烟简介', '查资料没填简介');
+    need(/已更新 副标题 \/ 简介/.test(await page.locator('.qd-meta-msg').innerText()), '查资料没显示结果');
     const metaSaved = await page.evaluate(async (id) => (await fetch('/api/queue/' + id)).json(), qid);
-    need(metaSaved.ok && metaSaved.data.cn === '冒烟中文名' && metaSaved.data.intro === '冒烟简介', '查资料结果没保存：' + JSON.stringify({ cn: metaSaved.data && metaSaved.data.cn, intro: metaSaved.data && metaSaved.data.intro }));
+    need(metaSaved.ok && metaSaved.data.cn === '冒烟中文名 | 导演:测试' && metaSaved.data.intro === '冒烟简介', '查资料结果没保存：' + JSON.stringify({ cn: metaSaved.data && metaSaved.data.cn, intro: metaSaved.data && metaSaved.data.intro }));
     await page.unroute('**/api/meta/fetch');
     await page.waitForSelector('.qd-preflight', { timeout: 3000 });
     const pf = await page.locator('.qd-preflight').innerText();
@@ -497,7 +497,7 @@ async function main() {
     const txt = await page.locator('#queue-detail').innerText();
     need(/发布信息/.test(txt) && /简介/.test(txt), '详情没渲染：' + txt.slice(0, 80));
     need(await page.locator('.qd-shots').count() === 0, '截图卡还在');
-    const autoMedia = await page.locator('.qd-desc-card').innerText();
+    const autoMedia = await page.locator('.qd-pubinfo').innerText();
     need(/已从源站简介识别 MediaInfo/.test(autoMedia) && /2160p/.test(autoMedia), '源站媒体信息没自动识别：' + autoMedia.slice(0, 200));
     await page.locator('.qd-pubinfo input.input').first().fill('Smoke Queue Edited 2020 2160p');
     await page.getByRole('button', { name: '整理发布资料' }).click();
@@ -505,10 +505,10 @@ async function main() {
     const saved = await page.evaluate(async (id) => (await fetch('/api/queue/' + id)).json(), qid);
     need(saved.ok && saved.data.title === 'Smoke Queue Edited 2020 2160p', '整理资料没保存标题：' + (saved.data && saved.data.title));
     need(saved.data.prepared && /Smoke Queue Edited/.test(saved.data.prepared.title || ''), '整理资料没用到新标题：' + JSON.stringify(saved.data.prepared && saved.data.prepared.title));
-    const descCard = await page.locator('.qd-desc-card').innerText();
+    const descCard = await page.locator('.qd-pubinfo').innerText();
     need(/已整理/.test(descCard) && /2160p/.test(descCard), '整理后媒体提示缺失：' + descCard.slice(0, 180));
-    await page.locator('.qd-desc-card details.qd-final-desc').evaluate((el) => { el.open = true });
-    const finalDesc = await page.locator('.qd-desc-card details.qd-final-desc').innerText();
+    await page.locator('.qd-pubinfo details.qd-final-desc').evaluate((el) => { el.open = true });
+    const finalDesc = await page.locator('.qd-pubinfo details.qd-final-desc').innerText();
     need(/General|2160p|DTS-HD MA/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));
   });
 

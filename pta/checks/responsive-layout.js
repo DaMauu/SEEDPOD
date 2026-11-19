@@ -188,7 +188,7 @@ async function run() {
         const detail = document.querySelector('[data-view="queue"] .queue-detail')
         const item = document.querySelector('[data-view="queue"] .q-item')
         const title = document.querySelector('[data-view="queue"] .qd-title-row h2')
-        const grid = document.querySelector('[data-view="queue"] .qd-grid')
+        const grid = document.querySelector('[data-view="queue"] .qd-pubinfo')
         const box = e => e ? { x: Math.round(e.getBoundingClientRect().x), right: Math.round(e.getBoundingClientRect().right), w: Math.round(e.getBoundingClientRect().width), h: Math.round(e.getBoundingClientRect().height) } : null
         return { list: box(list), detail: box(detail), item: box(item), title: box(title), grid: box(grid), iw: innerWidth }
       })

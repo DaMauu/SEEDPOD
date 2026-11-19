@@ -69,42 +69,59 @@
           </div>
         </div>
 
-        <div class="qd-grid">
-          <section class="sd-card qd-pubinfo">
+        <section class="sd-card qd-pubinfo">
+          <div class="qd-pub-head">
             <h3>发布信息</h3>
-            <div class="qd-field">
-              <span>目标站</span>
-              <select v-model="form.targetSite" class="input" @change="loadPreview">
-                <option value="">未选择</option>
-                <option v-if="form.targetSite && !sites.some(s => s.name === form.targetSite)" :value="form.targetSite">{{ form.targetSite }}</option>
-                <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
-              </select>
+            <label class="qd-anon"><input v-model="form.anonymous" type="checkbox"> 匿名发布</label>
+          </div>
+          <div class="qd-field">
+            <span>目标站</span>
+            <select v-model="form.targetSite" class="input" @change="loadPreview">
+              <option value="">未选择</option>
+              <option v-if="form.targetSite && !sites.some(s => s.name === form.targetSite)" :value="form.targetSite">{{ form.targetSite }}</option>
+              <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
+            </select>
+          </div>
+          <div class="qd-field">
+            <span>标题</span>
+            <div class="qd-control">
+              <div class="qd-control-row">
+                <input v-model="form.title" class="input">
+                <button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">回填源标题</button>
+              </div>
             </div>
-            <div class="qd-field"><span>标题</span><div class="qd-path-row"><input v-model="form.title" class="input"><button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">回填源标题</button></div></div>
-            <div class="qd-field"><span>副标题</span><div class="qd-path-row"><input v-model="form.cn" class="input"><button class="btn ghost slim" type="button" :disabled="metaBusy" title="用公开元数据填中文名和简介" @click="fetchMeta">{{ metaBusy ? '查询中…' : '查资料' }}</button></div></div>
-            <div v-if="metaMsg" class="t-sub qd-meta-msg">{{ metaMsg }}</div>
-            <div class="qd-field">
-              <span>图床</span>
-              <select v-model="form.imageHost" class="input">
-                <option v-for="h in hosts" :key="h">{{ h }}</option>
-              </select>
+          </div>
+          <div class="qd-field">
+            <span>副标题</span>
+            <div class="qd-control">
+              <div class="qd-control-row">
+                <input v-model="form.cn" class="input">
+                <button class="btn ghost slim" type="button" :disabled="metaBusy" title="用公开元数据拼副标题和简介" @click="fetchMeta">{{ metaBusy ? '查询中…' : '查资料' }}</button>
+              </div>
+              <div v-if="metaMsg" class="t-sub qd-meta-msg">{{ metaMsg }}</div>
             </div>
-            <div class="qd-field"><span>匿名发布</span><input v-model="form.anonymous" type="checkbox"></div>
-          </section>
-
-          <section class="sd-card qd-desc-card">
-            <div class="qd-desc-head"><h3>简介</h3><button class="btn ghost slim" type="button" :disabled="prepBusy" title="用当前标题/简介和源站媒体信息生成最终发布内容" @click="prepareRelease">{{ prepBusy ? '整理中…' : '整理发布资料' }}</button></div>
-            <textarea v-model="form.intro" class="input sd-note" rows="3"></textarea>
-            <div v-if="prepMsg" class="t-sub">{{ prepMsg }}</div>
-            <div v-if="preflight && preflight.media" class="t-sub">媒体信息：已从源站简介识别 {{ preflight.media.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo' }} · {{ preflight.media.summary }}</div>
-            <div v-else-if="preflight" class="soft">媒体信息：源站简介里没识别到 MediaInfo/BDInfo；发布时不带。</div>
-            <details v-if="sel.prepared && sel.prepared.description" class="qd-final-desc">
-              <summary>最终简介预览（发布时用这份）</summary>
-              <pre>{{ sel.prepared.description }}</pre>
-            </details>
-          </section>
-
-        </div>
+          </div>
+          <div class="qd-field">
+            <span>图床</span>
+            <select v-model="form.imageHost" class="input">
+              <option v-for="h in hosts" :key="h">{{ h }}</option>
+            </select>
+          </div>
+          <div class="qd-field qd-field-top">
+            <span>简介</span>
+            <div class="qd-control qd-desc-control">
+              <div class="qd-desc-head"><span class="soft">最终发布用</span><button class="btn ghost slim" type="button" :disabled="prepBusy" title="用当前标题/简介和源站媒体信息生成最终发布内容" @click="prepareRelease">{{ prepBusy ? '整理中…' : '整理发布资料' }}</button></div>
+              <textarea v-model="form.intro" class="input sd-note" rows="4"></textarea>
+              <div v-if="prepMsg" class="t-sub">{{ prepMsg }}</div>
+              <div v-if="preflight && preflight.media" class="t-sub">媒体信息：已从源站简介识别 {{ preflight.media.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo' }} · {{ preflight.media.summary }}</div>
+              <div v-else-if="preflight" class="soft">媒体信息：源站简介里没识别到 MediaInfo/BDInfo；发布时不带。</div>
+              <details v-if="sel.prepared && sel.prepared.description" class="qd-final-desc">
+                <summary>最终简介预览（发布时用这份）</summary>
+                <pre>{{ sel.prepared.description }}</pre>
+              </details>
+            </div>
+          </div>
+        </section>
 
         <div v-if="sel.qb || sel.sourceState" class="t-sub qd-download">qB：{{ qbText() }}</div>
         <section v-if="preflight" class="sd-card qd-preflight">
@@ -112,21 +129,16 @@
             <h3>发布前检查</h3>
             <span class="badge" :class="preflight.ready ? 'green' : 'amber'">{{ preflight.ready ? '可提交' : '有缺项' }}</span>
           </div>
-          <div class="qd-preflight-row">
-            <span>目标站 <b>{{ preflight.host }}</b></span>
-            <span>分类 <b>{{ preflight.labels.type || preflight.fields.type || '未映射' }}</b></span>
-            <span>制作组 <b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></span>
-            <span>媒介 <b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></span>
-            <span>目标站查重 <b :class="preflight.dupe.state === 'exists' || preflight.dupe.state === 'error' ? 'qd-stage-err' : (preflight.dupe.state === 'passed' ? 'qd-ok' : '')">{{ preflight.dupe.label }}</b></span>
+          <div class="qd-check-grid">
+            <div class="qd-check-item"><span>目标站</span><b>{{ preflight.host }}</b></div>
+            <div class="qd-check-item"><span>分类</span><b>{{ preflight.labels.type || preflight.fields.type || '未映射' }}</b></div>
+            <div class="qd-check-item"><span>制作组</span><b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></div>
+            <div class="qd-check-item"><span>媒介</span><b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></div>
+            <div class="qd-check-item"><span>目标站查重</span><b :class="preflight.dupe.state === 'exists' || preflight.dupe.state === 'error' ? 'qd-stage-err' : (preflight.dupe.state === 'passed' ? 'qd-ok' : '')">{{ preflight.dupe.label }}</b></div>
+            <div class="qd-check-item"><span>infohash</span><b v-if="preflight.torrent.hash">{{ preflight.torrent.hash.slice(0, 12) }}… <em v-if="preflight.checked" :class="preflight.hashUnchanged ? 'qd-ok' : 'qd-stage-err'">{{ preflight.hashUnchanged ? '清洗后不变' : '清洗后变了' }}</em><em v-else class="soft">清洗只换 announce，应不变</em></b><b v-else class="soft">先下载种子</b></div>
+            <div class="qd-check-item qd-check-wide"><span>种子</span><b>{{ preflight.torrent.name || '先下载种子' }}</b></div>
+            <div class="qd-check-item qd-check-wide"><span>Tracker</span><b>{{ preflight.trackerNote }}</b></div>
           </div>
-          <div class="qd-preflight-row">
-            <span>种子 <b>{{ preflight.torrent.name || '先下载种子' }}</b></span>
-            <span v-if="preflight.torrent.hash">infohash <b>{{ preflight.torrent.hash.slice(0, 12) }}…</b>
-              <em v-if="preflight.checked" :class="preflight.hashUnchanged ? 'qd-ok' : 'qd-stage-err'">{{ preflight.hashUnchanged ? '清洗后不变' : '清洗后变了' }}</em>
-              <em v-else class="soft">清洗只换 announce，应不变</em>
-            </span>
-          </div>
-          <div class="qd-preflight-row"><span>Tracker <b>{{ preflight.trackerNote }}</b></span></div>
           <div v-if="preflight.warnings && preflight.warnings.length" class="qd-warn">需处理：{{ preflight.warnings.join('；') }}</div>
         </section>
         <div v-if="pubNote(sel)" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ pubNote(sel) }}</div>
@@ -459,7 +471,7 @@ async function fetchMeta() {
     const j = await (await fetch('/api/meta/fetch', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       signal: ctrl.signal,
-      body: JSON.stringify({ title: queryTitle, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
+      body: JSON.stringify({ queueId: id, title: queryTitle, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
     })).json()
     if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
     if (j && j.ok && j.data) {
@@ -468,12 +480,20 @@ async function fetchMeta() {
       const d = payload.data || payload
       const provider = payload.provider || j.provider || '公开资料'
       const title = d.title || d.name || d.cn || ''
+      const cn = payload.cnSubtitle || title
       const overview = d.overview || d.intro || d.summary || d.description || ''
       const got = []
       const changed = []
-      if (title) {
-        got.push('中文名')
-        if (form.cn !== title) { form.cn = title; changed.push('中文名') }
+      const kept = []
+      if (cn) {
+        got.push('副标题')
+        const cur = String(form.cn || '').trim()
+        const cnRich = /\|/.test(cn) || cn.length > String(title || '').length + 4
+        const curRich = /\|/.test(cur) || cur.length > String(title || '').length + 4
+        if (!cur) { form.cn = cn; changed.push('副标题') }
+        else if (cur === cn) { /* 一样 */ }
+        else if (!curRich || cnRich) { form.cn = cn; changed.push('副标题') }
+        else kept.push('副标题')
       }
       if (overview) {
         got.push('简介')
@@ -483,9 +503,9 @@ async function fetchMeta() {
         metaMsg.value = '查到了，但资料源没返回中文名或简介；可以手动补'
       } else if (!changed.length) {
         const found = []
-        if (title) found.push('中文名「' + title.slice(0, 40) + '」')
+        if (cn) found.push('副标题「' + cn.slice(0, 50) + '」')
         if (overview) found.push('简介 ' + overview.length + ' 字')
-        metaMsg.value = '查到了 ' + found.join('、') + '；和现有内容一样，没有改动'
+        metaMsg.value = '查到了 ' + found.join('、') + (kept.length ? '；现有' + kept.join(' / ') + '更完整，已保留' : '；和现有内容一样，没有改动')
       } else {
         const saved = await saveFields(id)
         if (seq !== metaSeq || !sel.value || sel.value.id !== id) return
@@ -650,159 +670,126 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.qd-preflight { display:flex; flex-direction:column; gap:5px; }
-.qd-preflight-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.qd-preflight-head h3 { margin:0; }
-.qd-preflight-row { display:flex; flex-wrap:wrap; gap:2px 14px; font-size:11.5px; color:var(--muted); }
-.qd-preflight-row b { color:var(--text); font-weight:600; }
-.qd-preflight-row em { font-style:normal; }
-.qd-ok { color:var(--green); }
-
-/* Queue 页面样式：迁入 scoped，shared/shell 保留全局 */
-.queue-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+/* 顶部工具栏 */
+.queue-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 .queue-bar .spacer { flex: 1; }
-.queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
-.queue-list { width: 320px; flex: 0 0 320px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
-.queue-items { flex: 1; overflow-y: auto; padding: 6px; }
-.qd-meta-msg { margin-top: -2px; }
-.qd-desc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.qd-desc-head h3 { margin: 0; }
-.qd-final-desc { margin-top: 8px; font-size: 12px; }
-.qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
-.qd-final-desc > summary:hover { color: var(--accent); }
-.qd-final-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; background: var(--panel-2); padding: 10px; border-radius: 8px; font-size: 11.5px; }
-.qd-download { padding: 4px 0 6px; }
-.qd-path-row { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
-.qd-path-row .input { flex: 1 1 auto; min-width: 0; }
+
+/* 左侧列表 + 右侧详情 */
+.queue-split { flex: 1; min-height: 0; display: flex; gap: 12px; align-items: stretch; }
+.queue-list { width: 264px; flex: 0 0 264px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.queue-items { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; }
+.q-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: none; padding: 7px 9px; border-radius: 9px; cursor: pointer; font: inherit; }
+.q-item:hover { background: #f7f8fa; }
+.q-item.on { background: var(--accent-soft); }
+.q-title { flex: 1; min-width: 0; }
+.q-title b { display: block; font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-title i { display: block; margin-top: 1px; font-style: normal; font-size: 10px; color: var(--muted-2); }
+
+/* 分页 */
 .queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
 .queue-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
 .queue-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .queue-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
 .queue-pager .pager-meta { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.q-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none; padding: 9px 10px; border-radius: 10px; cursor: pointer; font: inherit; }
-.q-item:hover { background: #f7f8fa; }
-.q-item.on { background: var(--accent-soft); }
-.q-title { flex: 1; min-width: 0; }
-.q-title b { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.q-title i { display: block; margin-top: 2px; font-style: normal; font-size: 10.5px; color: var(--muted-2); }
-.queue-detail { flex: 1; min-width: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 20px 22px 16px; display: flex; flex-direction: column; overflow: hidden; }
+
+/* 详情外壳 */
+.queue-detail { flex: 1; min-width: 0; min-height: 0; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px 14px; display: flex; flex-direction: column; overflow: hidden; }
 .qd-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .qd-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
-.qd-head { display: flex; align-items: center; gap: 12px; }
+.qd-head { display: flex; align-items: flex-start; gap: 14px; }
 .qd-id { min-width: 0; }
-.qd-id h2 { margin: 0; font-size: 15.5px; font-weight: 600; }
-.qd-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 12.5px; color: var(--muted); }
-.qd-field .input, .qd-field .select { width: 220px; height: 30px; font-size: 12px; }
-.qd-actions { display: flex; align-items: center; gap: 8px; padding-top: 12px; margin-top: 10px; border-top: 1px solid var(--line); }
-.qd-actions .spacer { flex: 1; }
-.qd-field .input, .qd-field .select { height: 32px; }
-.queue-detail { display: flex; flex-direction: column; min-height: 0; }
-.qd-head { align-items: flex-start; gap: 12px; }
-.qd-title-row { display: flex; align-items: center; gap: 8px; }
-.qd-title-row h2 { font-size: 16px; }
-.qd-meta { display: flex; align-items: center; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.qd-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qd-title-row h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.qd-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
 .qd-meta span { font-size: 11px; color: var(--muted-2); }
 .qd-meta b { margin-left: 5px; font-size: 11.5px; font-weight: 500; color: var(--ink); }
-.qd-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 10px; margin-top: 12px; align-content: start; }
-.qd-grid .sd-card { padding: 12px 14px 10px; border-radius: 10px; }
-.qd-grid .sd-card h3 { margin-bottom: 6px; font-size: 10px; letter-spacing: .6px; }
-.qd-field { padding: 3px 0; font-size: 12px; }
-.qd-field .input, .qd-field .select { width: 250px; height: 28px; font-size: 11.5px; }
-.qd-grid .sd-note { width: 100%; height: 92px; font-size: 11.5px; line-height: 1.5; }
-.qd-status { margin-top: 10px; }
-.qd-targets-foot { margin-top: auto; display: flex; align-items: flex-start; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+
+/* 阶段 / 目标站结果 */
+.qd-stage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+.qd-stage .t-sub { font-size: 11px; }
+.qd-stage-err { flex: 1 1 100%; font-size: 11.5px; color: var(--red); line-height: 1.5; overflow-wrap: anywhere; }
+.qd-target-results { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.qd-target-result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.qd-target-result .qd-stage-err { flex: 1 1 100%; }
+
+/* 发布信息：所有字段一列，标签固定、控件右对齐 */
+.qd-pubinfo { padding: 12px 14px 10px; border-radius: 10px; margin-top: 10px; }
+.qd-pub-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.qd-pub-head h3 { margin: 0; font-size: 10px; letter-spacing: .6px; }
+.qd-anon { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); cursor: pointer; }
+.qd-field { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 10px; padding: 4px 0; font-size: 12px; color: var(--muted); }
+.qd-field-top { align-items: start; }
+.qd-field > span { font-size: 11.5px; color: var(--muted); }
+.qd-field .input, .qd-field .select { width: 100%; min-width: 0; height: 30px; font-size: 11.5px; }
+.qd-control { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.qd-control-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.qd-control-row .input { flex: 1 1 auto; width: auto; min-width: 0; }
+.qd-control-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.qd-desc-control { gap: 6px; }
+.qd-desc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.qd-desc-head .soft { font-size: 11px; }
+.qd-desc-control .sd-note { width: 100%; height: 92px; min-height: 92px; font-size: 11.5px; line-height: 1.5; }
+.qd-meta-msg { margin-top: 0; }
+.qd-download { padding: 4px 0 6px; }
+.qd-final-desc { margin-top: 4px; font-size: 12px; }
+.qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
+.qd-final-desc > summary:hover { color: var(--accent); }
+.qd-final-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; margin: 6px 0 0; padding: 0; background: none; border: 0; font-size: 11.5px; line-height: 1.55; }
+
+/* 发布前检查：两列键值，不再散着一行 */
+.qd-preflight { margin-top: 10px; padding: 10px 12px; }
+.qd-preflight-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.qd-preflight-head h3 { margin: 0; font-size: 10px; letter-spacing: .6px; }
+.qd-check-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 18px; }
+.qd-check-item { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 11.5px; color: var(--muted); }
+.qd-check-item > span { flex: 0 0 auto; color: var(--muted-2); }
+.qd-check-item > b { min-width: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.qd-check-item em { font-style: normal; font-weight: 500; }
+.qd-check-wide { grid-column: 1 / -1; }
+.qd-ok { color: var(--green); }
+.qd-warn { margin-top: 6px; font-size: 11.5px; color: #b45309; line-height: 1.6; }
+.qd-status { margin-top: 8px; }
+
+/* 底栏：去掉边框，保持紧凑 */
+.qd-targets-foot { margin-top: 6px; display: flex; align-items: flex-start; gap: 8px; padding-top: 6px; border-top: 0; flex-wrap: wrap; }
 .qd-targets-lbl { font-size: 11px; color: var(--muted); white-space: nowrap; padding-top: 4px; }
 .qd-targets-foot .pick-row { flex: 1 1 auto; min-width: 0; }
-.qd-actions { margin-top: 0; padding-top: 8px; border-top: 0; }
-.qd-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 26px; align-items: center; }
-.qd-warn { flex-basis: 100%; font-size: 11.5px; color: #b45309; line-height: 1.6; }
-@media (max-width: 900px) {
-.queue-bar { flex-wrap: wrap; gap: 8px; }
-}
-@media (max-width: 900px) {
-.queue-split { flex-direction: column; gap: 10px; }
-}
-@media (max-width: 900px) {
-.queue-list, .queue-detail { width: 100%; max-width: none; }
-.qd-head { flex-direction: column; gap: 6px; }
-.qd-id { width: 100%; }
-.qd-meta { margin-top: 4px; gap: 6px 14px; }
-}
+.qd-target-chips { justify-content: flex-start; gap: 6px; }
+.qd-target-check { display: none; }
+.qd-actions { display: flex; align-items: center; gap: 8px; padding-top: 6px; margin-top: 6px; border-top: 0; flex-wrap: wrap; }
+.qd-actions .spacer { flex: 1; }
 
-.q-item { padding: 6px 9px; }
-.qd-head { margin-bottom: 2px; }
-.qd-field { padding: 4px 0; font-size: 12px; }
-.qd-field .input, .qd-field .select { height: 30px; }
-.qd-actions { padding-top: 8px; margin-top: 8px; }
-.queue-list { width: 264px; flex: 0 0 264px; }
-.q-item { padding: 7px 10px; gap: 8px; }
-.q-title b { font-size: 12px; }
-.q-title i { font-size: 10px; margin-top: 1px; }
-.queue-list { max-height: calc(100vh - 210px); }
-.queue-split { align-items: stretch; height: calc(100vh - 208px); }
-.qd-grid { flex: 1; min-height: 0; }
-.qd-actions { margin-top: 10px; }
-.qd-grid { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
-.queue-detail { align-self: flex-start; display: block; }
-.qd-grid { flex: none; grid-template-rows: auto; align-content: start; }
-.qd-field { display: flex; align-items: center; gap: 12px; }
-.qd-field > span { flex: 0 0 48px; }
-.qd-field .input, .qd-field .select { flex: 1 1 auto; width: auto; min-width: 0; }
-.queue-split { height: auto; flex: 0 0 auto; align-items: flex-start; }
-.queue-list { max-height: none; }
-.qd-grid { grid-template-rows: minmax(0, 1fr); }
-.qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px; align-items: stretch; height: auto; }
-.qd-pubinfo { grid-column: 1 / -1; }
-.qd-desc-card { display: flex; flex-direction: column; }
-.qd-desc-card textarea { flex: 1; height: auto; min-height: 84px; }
-.queue-split { align-items: stretch; }
-.queue-detail { align-self: stretch; display: flex; flex-direction: column; }
-.qd-actions { margin-top: auto; }
-
-@media (max-width: 600px) {
-.qd-grid { grid-template-columns: 1fr; min-width: 0; }
-.qd-grid .sd-card { min-width: 0; }
-}
-
-@media (max-width: 900px) {
-.queue-split { height: auto; flex: 0 0 auto; align-items: stretch; }
-.queue-list, .queue-detail { width: 100%; max-width: none; flex: 0 0 auto; }
-.queue-list { max-height: none; }
-}
-
-/* 桌面：固定高度双栏，列表/详情各自滚动，页脚不会被长列表推走 */
+/* 桌面：固定高度，列表/详情各自滚动 */
 @media (min-width: 901px) {
   :global(.view[data-view="queue"]) { height: calc(100vh - 150px); min-height: 520px; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
-  .queue-split { flex: 1 1 auto; height: auto; min-height: 0; align-items: stretch; }
-  .queue-list { height: auto; max-height: none; min-height: 0; flex: 0 0 264px; overflow: hidden; }
+  .queue-split { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+  .queue-list { height: auto; max-height: none; min-height: 0; overflow: hidden; }
   .queue-items { min-height: 0; overflow-y: auto; }
   .queue-detail { height: auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
   .qd-scroll { min-height: 0; overflow-y: auto; }
+  .qd-actions { margin-top: 0; }
 }
-/* 手机：列表给固定视窗，详情在下面；页脚仍在内容末尾 */
+
 @media (max-width: 900px) {
+  .queue-split { flex-direction: column; gap: 10px; height: auto; align-items: stretch; }
+  .queue-list, .queue-detail { width: 100%; max-width: none; flex: 0 0 auto; }
   .queue-list { max-height: 46vh; }
   .queue-items { overflow-y: auto; }
-}
-:global(.view[data-view="queue"]) { justify-content: flex-start; overflow: hidden; }
-/* 手机端让整页自然滚动，避免详情内部滚动把顶部查重卡住 */
-@media (max-width: 900px) {
-  :global(.view[data-view="queue"]) { height: auto; min-height: calc(100vh - 150px); justify-content: flex-start; }
-  .queue-split { height: auto !important; }
+  .qd-head { flex-direction: column; gap: 6px; }
+  .qd-id { width: 100%; }
+  .qd-meta { margin-top: 4px; gap: 6px 14px; }
   .queue-detail { height: auto; overflow: visible; }
   .qd-body { display: block; }
   .qd-scroll { height: auto; overflow: visible; }
 }
 
-/* Queue 媒体截图：页面专属 */
-.qd-stage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
-.qd-stage .t-sub { font-size: 11px; }
-.qd-stage-err { flex: 1 1 100%; font-size: 11.5px; color: var(--red); line-height: 1.5; overflow-wrap: anywhere; }
-.qd-targets-row { align-items: flex-start; }
-.qd-target-chips { justify-content: flex-start; gap: 6px; }
-.qd-target-check { display: none; }
-.qd-target-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-.qd-target-result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
-.qd-target-result .qd-stage-err { flex: 1 1 100%; }
+@media (max-width: 600px) {
+  .queue-detail { padding: 14px 12px 10px; }
+  .qd-field { grid-template-columns: 46px minmax(0, 1fr); gap: 8px; }
+  .qd-control-row { gap: 4px; }
+  .qd-control-row .btn { padding-left: 6px; padding-right: 6px; }
+  .qd-check-grid { grid-template-columns: 1fr; }
+  .qd-check-wide { grid-column: auto; }
+  .qd-targets-foot, .qd-actions { gap: 6px; }
+}
 </style>
