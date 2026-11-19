@@ -480,6 +480,7 @@ async function main() {
     await page.locator('.q-item').first().click();
     await page.waitForTimeout(400);
     await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
+    await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
     await page.waitForTimeout(150);
     await page.waitForSelector('.qd-preflight', { timeout: 3000 });
     const pf = await page.locator('.qd-preflight').innerText();
@@ -495,8 +496,12 @@ async function main() {
     await page.waitForTimeout(500);
     const parsed = await page.locator('.qd-media').innerText();
     need(/2160p/.test(parsed) && /BDInfo/.test(parsed), '媒体解析没显示摘要：' + parsed.slice(0, 120));
+    await page.locator('.qd-pubinfo input.input').first().fill('Smoke Queue Edited 2020 2160p');
     await page.getByRole('button', { name: '整理发布资料' }).click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(900);
+    const saved = await page.evaluate(async (id) => (await fetch('/api/queue/' + id)).json(), qid);
+    need(saved.ok && saved.data.title === 'Smoke Queue Edited 2020 2160p', '整理资料没保存标题：' + (saved.data && saved.data.title));
+    need(saved.data.prepared && /Smoke Queue Edited/.test(saved.data.prepared.title || ''), '整理资料没用到新标题：' + JSON.stringify(saved.data.prepared && saved.data.prepared.title));
     const prepared = await page.locator('.qd-media').innerText();
     need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
     const pack = await page.locator('.qd-prepared').innerText();
@@ -567,10 +572,13 @@ async function main() {
     await page.waitForTimeout(800);
     await page.locator('.q-item').first().evaluate(function (el) { el.click(); });
     await page.waitForTimeout(400);
-    await page.locator('button').filter({ hasText: '检查 qB 注入' }).first().evaluate(function (el) { el.click(); });
+    await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
+    await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
+    await page.waitForTimeout(150);
+    await page.locator('button').filter({ hasText: '预检下载器' }).first().evaluate(function (el) { el.click(); });
     await page.waitForTimeout(900);
     const txt = await page.locator('#queue-detail').innerText();
-    need(/注入检查 · qB：会通过 qB 加种/.test(txt), '注入检查没显示：' + txt.slice(0, 200));
+    need(/下载器预检 · qB：会通过 qB 加种（只检查，不会发布）/.test(txt), '下载器预检没显示：' + txt.slice(0, 240));
   });
 
   await check('无 JS 报错', async () => {

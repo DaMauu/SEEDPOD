@@ -128,11 +128,16 @@ module.exports = function (app, ctx) {
     if (b.targets !== undefined) {
       const arr = Array.isArray(b.targets) ? b.targets : String(b.targets).split(',');
       it.targets = arr.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(function (h, i, a) { return h && /^[a-z0-9][a-z0-9.-]*$/i.test(h) && a.indexOf(h) === i }).slice(0, 20);
-      if (it.targets.length) it.targetSite = it.targets[0];
+      if (it.targets.length && b.targetSite === undefined) it.targetSite = it.targets[0];
     }
     if (b.imageHost !== undefined) it.imageHost = String(b.imageHost).slice(0, 40);
     if (b.anonymous !== undefined) it.anonymous = !!b.anonymous;
 
+    if (b.action === 'save') {
+      db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
+        .run(it.title, JSON.stringify(it), now(), it.id);
+      return ok(reply, { id: it.id, title: it.title, cn: it.cn, intro: it.intro, targetSite: it.targetSite });
+    }
     if (b.action === 'download') {
       const r = await ctx.publisher.ensureSource(req.params.id, { allowWhenRealOff: true });
       if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
@@ -147,7 +152,7 @@ module.exports = function (app, ctx) {
     }
 
     const target = { approve: 'approved', reject: 'rejected', skip: 'skipped', retry: 'pending' }[b.action];
-    if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / download / publish / retry');
+    if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / save / download / publish / retry');
     if (b.action === 'reject' && !String(b.reason || '').trim()) return bad(reply, 'BAD_REQUEST', '驳回要写理由');
     it.status = target;
     it.actionAt = now();

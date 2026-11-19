@@ -5,6 +5,11 @@ const sizeLib = require('./adapters/size');
 
 function clean(s) {
   return String(s == null ? '' : s)
+    .replace(/^\uFEFF/, '')
+    .replace(/```(?:mediainfo|bdinfo)?/gi, '')
+    .replace(/\[\/?(?:quote|code|hide|b|i|u|size|font|color|img)(?:=[^\]]*)?\]/gi, '')
+    .replace(/【(?:MediaInfo|BDInfo)】/gi, '')
+    .replace(/：/g, ':')
     .replace(/\r\n?/g, '\n')
     .replace(/\u00a0/g, ' ')
     .replace(/[ \t]+\n/g, '\n')
@@ -92,6 +97,10 @@ const BD_LABELS = ['Disc Title', 'Disc Label', 'Disc Size', 'Protection', 'Playl
   .sort(function (a, b) { return b.length - a.length; });
 function normalizeBdinfo(raw) {
   let s = clean(raw);
+  const cn = { '碟片名称': 'Disc Title', '碟片标签': 'Disc Label', '碟片大小': 'Disc Size', '播放列表': 'Playlist', '总码率': 'Total Bitrate', '长度': 'Length', '视频': 'Video', '音频': 'Audio', '字幕': 'Subtitles' };
+  Object.keys(cn).forEach(function (k) {
+    s = s.replace(new RegExp('^\\s*' + k + '\\s*:\\s*', 'gim'), cn[k] + ': ');
+  });
   const labels = BD_LABELS.map(function (label) { return label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|');
   s = s.replace(new RegExp('(^|[^\\n])[ \\t]*(' + labels + ')[ \\t]*:', 'gim'), function (_, prev, label) {
     return prev + '\n' + label + ':';
@@ -182,7 +191,8 @@ function parseBdinfo(raw) {
   return out;
 }
 
-const MI_HEADER = /^(General|Video|Audio(?:\s*#\d+)?|Text(?:\s*#\d+)?|Menu(?:\s*#\d+)?|Chapters?)\s*$/i;
+const MI_HEADER = /^(General|常规|概览|Video|视频|Audio(?:\s*#\d+)?|音频(?:\s*#\d+)?|Text(?:\s*#\d+)?|字幕(?:\s*#\d+)?|文本(?:\s*#\d+)?|Menu(?:\s*#\d+)?|菜单(?:\s*#\d+)?|Chapters?|章节)\s*$/i;
+const MI_BASE = { '常规': 'General', '概览': 'General', '视频': 'Video', '音频': 'Audio', '字幕': 'Text', '文本': 'Text', '菜单': 'Menu', '章节': 'Chapters' };
 function parseMediainfo(raw) {
   const text = clean(raw);
   const sections = [];
@@ -192,7 +202,8 @@ function parseMediainfo(raw) {
     if (!t) return;
     const h = MI_HEADER.exec(t);
     if (h) {
-      cur = { name: h[1], base: h[1].replace(/\s*#\d+$/, ''), fields: {}, lines: [] };
+      const rawBase = h[1].replace(/\s*#\d+$/, '');
+      cur = { name: h[1], base: MI_BASE[rawBase] || rawBase, fields: {}, lines: [] };
       sections.push(cur);
       return;
     }
@@ -286,8 +297,9 @@ function parseTextSection(sec) {
 function parse(raw) {
   const text = clean(raw);
   if (!text) return { kind: '', summary: '', error: 'empty', raw: '' };
-  if (/(^|\n)\s*Disc (Title|Label|Size)\s*:/i.test(text) || /(^|\n)\s*Playlist\s*:/i.test(text)) return parseBdinfo(text);
-  if (/(^|\n)\s*(General|Video|Audio(?:\s*#\d+)?|Text(?:\s*#\d+)?|Menu)\s*$/mi.test(text) || /(^|\n)\s*Complete name\s*:/i.test(text)) return parseMediainfo(text);
+  if (/(^|\n)\s*(Disc (Title|Label|Size)|碟片(名称|标签|大小)|Playlist|播放列表)\s*:/i.test(text)) return parseBdinfo(text);
+  const hasSection = text.split('\n').some(function (l) { return MI_HEADER.test(l.trim()); });
+  if (hasSection || /(^|\n)\s*Complete name\s*:/i.test(text)) return parseMediainfo(text);
   return { kind: '', summary: '', error: 'unrecognized', raw: text.slice(0, 200000) };
 }
 function toBBCode(parsed) {

@@ -339,6 +339,21 @@ async function main() {
     need(pj.error && pj.error.code === 'REAL_PUBLISH_DISABLED', '错误码不对：' + JSON.stringify(pj));
   });
 
+  await check('队列保存字段不改变状态', async () => {
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Save Queue Title', status: 'pending', site: 'demo-a.example' })
+    })).json();
+    const j = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'save', title: 'Save Queue Title Updated', cn: '保存副标题', intro: '保存简介' })
+    })).json();
+    need(j.ok && j.data.title === 'Save Queue Title Updated', '保存标题失败：' + JSON.stringify(j));
+    const g = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
+    need(g.data.title === 'Save Queue Title Updated' && g.data.cn === '保存副标题' && g.data.intro === '保存简介', '保存字段没落库：' + JSON.stringify({ title: g.data.title, cn: g.data.cn, intro: g.data.intro }));
+    need(g.data.status === 'pending', '保存不该改状态：' + g.data.status);
+  });
+
   await check('MediaInfo/BDInfo 准备与解析', async () => {
     const bd = 'Disc Title: Media.Info.Test.2024.2160p\nDisc Label: Media Info Test\nDisc Size: 1,000,000,000 bytes\nSize: 900,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 23.976 fps / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps';
     const add = await (await fetchA(BASE + '/api/queue', {

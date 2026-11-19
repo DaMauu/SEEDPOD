@@ -148,40 +148,53 @@
           </section>
 
           <details class="qd-advanced">
-          <summary>高级：媒体信息与临时种子（日常可忽略）</summary>
+          <summary>高级：MediaInfo / 截图（日常可忽略）</summary>
           <section class="sd-card qd-media">
-            <h3>媒体</h3>
-            <div class="soft">这里只用于读取视频信息、生成截图/临时种子和整理发布资料；正常转载不用填。</div>
-            <div class="qd-field">
-              <span>文件（可选）</span>
-              <div class="qd-path-row">
-                <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
-                <button class="btn ghost slim" type="button" :disabled="media.pathLoading" @click="fillMediaPath">{{ media.pathLoading ? '读取中…' : '从 qB 取路径' }}</button>
-              </div>
-            </div>
-            <div class="soft">只用于读取媒体信息和截图；不填也能发布。文件必须在 {{ media.root || 'PTA_MEDIA_ROOT' }} 下。</div>
-            <div class="qd-field">
-              <span>Tracker（仅生成临时种子）</span>
-              <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
-            </div>
-            <div class="soft">正常发布不用填；目标站会用自己的 tracker。</div>
+            <h3>MediaInfo / BDInfo</h3>
+            <div class="soft">目标站要求简介带媒体信息时才用；不填也能发布。</div>
             <div class="qd-field qd-media-info">
-              <span>MediaInfo/BDInfo</span>
-              <textarea v-model="media.infoText" class="input sd-note" rows="3" placeholder="粘贴 MediaInfo 或 BDInfo 文本"></textarea>
+              <textarea v-model="media.infoText" class="input sd-note" rows="4" placeholder="粘贴完整 MediaInfo（从 General 开始）或 BDInfo（从 Disc Title 开始）"></textarea>
             </div>
-            <div class="soft">粘贴后点「解析 MediaInfo」，内容会写进目标站简介。</div>
             <div class="qd-actions">
-              <button class="btn ghost slim" type="button" :disabled="media.probing || !media.path.trim()" title="读取分辨率、编码、时长等；只用于预览" @click="probeMedia">{{ media.probing ? '读取中…' : '读取视频信息' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.shooting || !media.path.trim()" title="从视频里截 3 张图；日常可不做" @click="shootMedia">{{ media.shooting ? '截图中…' : '从视频截图' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="生成一个临时种子；正常发布用源种，不需要这个" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成临时种子' }}</button>
               <button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析 MediaInfo' }}</button>
               <button class="btn ghost slim" type="button" :disabled="media.preparing" @click="prepareRelease">{{ media.preparing ? '整理中…' : '整理发布资料' }}</button>
             </div>
-            <div v-if="!media.path.trim()" class="soft">先填文件路径，或点「从 qB 取路径」自动找。</div>
-            <div v-if="media.info" class="t-sub">媒体：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
-            <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
-            <div v-if="media.torrent" class="t-sub">种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
-            <div v-else class="soft">先填 {{ media.root || 'PTA_MEDIA_ROOT' }} 下的文件路径；生成种子后可随“发布到目标站”一起用。</div>
+            <div v-if="media.parseMsg" class="t-sub">{{ media.parseMsg }}</div>
+            <div v-if="media.prepareMsg" class="t-sub">{{ media.prepareMsg }}</div>
+            <div v-if="media.info" class="t-sub">已识别：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
+
+            <details class="qd-advanced-sub">
+              <summary>从视频文件读取信息 / 截图（可选）</summary>
+              <div class="qd-field">
+                <span>文件路径</span>
+                <div class="qd-path-row">
+                  <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
+                  <button class="btn ghost slim" type="button" :disabled="media.pathLoading" @click="fillMediaPath">{{ media.pathLoading ? '读取中…' : '从 qB 取路径' }}</button>
+                </div>
+              </div>
+              <div class="soft">文件必须在 {{ media.root || 'PTA_MEDIA_ROOT' }} 下；不填也能发布。</div>
+              <div class="qd-actions">
+                <button class="btn ghost slim" type="button" :disabled="media.probing || !media.path.trim()" title="读取分辨率、编码、时长等；只用于预览" @click="probeMedia">{{ media.probing ? '读取中…' : '读取视频信息' }}</button>
+                <button class="btn ghost slim" type="button" :disabled="media.shooting || !media.path.trim()" title="从视频里截 3 张图；日常可不做" @click="shootMedia">{{ media.shooting ? '截图中…' : '从视频截图' }}</button>
+              </div>
+              <div v-if="!media.path.trim()" class="soft">这两个按钮要先填文件路径，或点「从 qB 取路径」。</div>
+              <div v-if="media.probe" class="t-sub">{{ media.probe.summary }} · {{ media.probe.durationText }} · {{ fmtSize(media.probe.size) }}</div>
+            </details>
+
+            <details class="qd-advanced-sub">
+              <summary>临时种子 / 下载器预检（排错用，一般不用）</summary>
+              <div class="soft">正常发布用源种，不用生成临时种子。下载器预检只检查会不会加进 qB，不会发布。</div>
+              <div class="qd-field">
+                <span>Tracker（仅生成临时种子）</span>
+                <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
+              </div>
+              <div class="qd-actions">
+                <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="生成一个临时种子；正常发布用源种，不需要这个" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成临时种子' }}</button>
+                <button class="btn ghost slim" type="button" :disabled="busy.inject" title="只检查会不会加进 qB，不会真的发布" @click="runInjectPlan">{{ busy.inject ? '预检中…' : '预检下载器' }}</button>
+              </div>
+              <div v-if="sel.injectPlan" class="t-sub">下载器预检 · {{ sel.injectPlan.client === 'watch' ? 'watch' : 'qB' }}：{{ injectNote(sel) }}（只检查，不会发布）</div>
+              <div v-if="media.torrent" class="t-sub">临时种子 {{ String(media.torrent.infohash).slice(0, 12) }}… · {{ fmtSize(media.torrent.size) }}</div>
+            </details>
           </section>
           </details>
         </div>
@@ -208,17 +221,11 @@
           <div class="qd-preflight-row"><span>Tracker <b>{{ preflight.trackerNote }}</b></span></div>
           <div v-if="preflight.warnings && preflight.warnings.length" class="qd-warn">需处理：{{ preflight.warnings.join('；') }}</div>
         </section>
-        <div v-if="sel.pubMsg" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ sel.pubMsg }}</div>
+        <div v-if="pubNote(sel)" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ pubNote(sel) }}</div>
         <div v-if="sel.targetUpload" class="qd-status" :class="sel.targetVerify && sel.targetVerify.found ? 'ok' : ''">
           目标站 {{ sel.targetUpload.host }} · {{ sel.targetUpload.message || '已提交' }}
           <a v-if="sel.targetUpload.detailsUrl" :href="sel.targetUpload.detailsUrl" target="_blank" rel="noopener noreferrer">详情</a>
           <span v-if="sel.targetVerify"> · 回查：{{ sel.targetVerify.found ? '已找到' : '未找到' }}</span>
-        </div>
-        <div v-if="sel.injectPlan" class="qd-status" :class="sel.injectPlan.ok === false ? 'bad' : ''">
-          注入检查 · {{ sel.injectPlan.client === 'watch' ? 'watch' : 'qB' }}：{{ sel.injectPlan.message }}
-          <span v-if="sel.injectPlan.hash"> · {{ String(sel.injectPlan.hash).slice(0, 12) }}…</span>
-          <span v-if="sel.injectPlan.retry"> · 重试</span>
-          <span v-if="sel.injectPlan.idempotent"> · 已注入，跳过</span>
         </div>
 
         </div>
@@ -235,7 +242,6 @@
         <div class="qd-actions">
           <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.inject" title="只检查会不会加进 qB，不会真的发布" @click="runInjectPlan">{{ busy.inject ? '检查中…' : '检查 qB 注入' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="fetchMeta">查资料</button>
@@ -287,7 +293,7 @@ const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [
 const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
-const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
+const media = reactive({ path: '', announce: '', infoText: '', info: null, parseMsg: '', prepareMsg: '', parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
 const preflight = ref(null)
 let previewSeq = 0
 let mediaCfgLoaded = false
@@ -412,6 +418,8 @@ async function select(id) {
     media.announce = ''
     media.infoText = j.data.mediaInfo || j.data.bdinfo || ''
     media.info = (j.data.prepared && j.data.prepared.media) || null
+    media.parseMsg = ''
+    media.prepareMsg = ''
     media.probe = null
     media.torrent = null
     loadMediaConfig()
@@ -463,6 +471,29 @@ async function loadPreview() {
     preflight.value = j && j.ok ? j.data : null
   } catch (e) {
     if (seq === previewSeq) preflight.value = null
+  }
+}
+function pubNote(q) {
+  const m = String((q && q.pubMsg) || '')
+  return /^演练：/.test(m) ? '' : m
+}
+function injectNote(q) {
+  return String((q && q.injectPlan && q.injectPlan.message) || '').replace(/^演练：/, '')
+}
+async function saveFields() {
+  if (!sel.value) return { ok: false, error: { message: '没选中条目' } }
+  try {
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save', title: form.title, cn: form.cn, intro: form.intro,
+        targetSite: form.targetSite, targets: form.targets, imageHost: form.imageHost, anonymous: form.anonymous
+      })
+    })).json()
+    return j || { ok: false, error: { message: '保存没回应' } }
+  } catch (e) {
+    reportError('Queue.saveFields', e)
+    return { ok: false, error: { message: '保存请求发不出去' } }
   }
 }
 function downloadReady() {
@@ -548,7 +579,7 @@ function submitTarget() {
     lock.open = true; lock.host = main[0]; lock.hosts = main; lock.targets = targets; lock.typed = ''; lock.fn = null
     return
   }
-  confirmBox('真实提交到测试站？', '会把「' + sel.value.title + '」提交到：' + targets.join('、') + '。\n\n服务端还会查 cookie、源种完成度和目标站查重。', function () { doSubmitTarget(targets, []) })
+  confirmBox('真实提交到测试站？', '会把「' + (form.title || sel.value.title) + '」提交到：' + targets.join('、') + '。\n\n服务端还会查 cookie、源种完成度和目标站查重。', function () { doSubmitTarget(targets, []) })
 }
 function confirmLock() {
   if (lock.typed.trim() !== lock.host) return
@@ -563,6 +594,12 @@ async function doSubmitTarget(targets, confirmHosts) {
   if (!sel.value || busy.target) return
   busy.target = true
   try {
+    const saved = await saveFields()
+    if (!saved.ok) {
+      toast('标题/简介没保存上：' + ((saved.error && saved.error.message) || '先检查标题'))
+      busy.target = false
+      return
+    }
     const body = { queueId: sel.value.id, dryRun: false, confirmHosts: Array.isArray(confirmHosts) ? confirmHosts : [] }
     if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
     const multi = targets.length > 1
@@ -672,25 +709,46 @@ async function parseMediaInfo() {
     })).json()
     if (j && j.ok) {
       media.info = j.data
-      toast('已识别 ' + (j.data.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo') + '：' + (j.data.summary || 'OK'))
-    } else toast((j && j.error && j.error.message) || '没认出格式')
-  } catch (e) { reportError('Queue.parseMediaInfo', e); toast('解析请求发不出去') }
+      media.parseMsg = '已识别 ' + (j.data.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo') + '：' + (j.data.summary || 'OK')
+      toast(media.parseMsg)
+    } else {
+      media.parseMsg = (j && j.error && j.error.message) || '没认出格式：请粘贴完整 MediaInfo（从 General 开始）或 BDInfo（从 Disc Title 开始）'
+      toast(media.parseMsg)
+    }
+  } catch (e) { reportError('Queue.parseMediaInfo', e); media.parseMsg = '解析请求发不出去'; toast(media.parseMsg) }
   media.parsing = false
 }
 async function prepareRelease() {
   if (!sel.value || media.preparing) return
   media.preparing = true
+  media.prepareMsg = ''
   try {
+    const saved = await saveFields()
+    if (!saved.ok) {
+      media.prepareMsg = '整理失败：' + ((saved.error && saved.error.message) || '标题/简介没保存上')
+      toast(media.prepareMsg)
+      media.preparing = false
+      return
+    }
     const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ mediaInfo: media.infoText, targets: form.targets, host: form.targetSite })
     })).json()
     if (j && j.ok) {
       media.info = (j.data.prepared && j.data.prepared.media) || media.info
-      toast('上传准备完成' + (media.info && media.info.summary ? '：' + media.info.summary : ''))
+      media.prepareMsg = '已整理：发布时会用当前标题、副标题、简介和 MediaInfo。'
+      toast('发布资料已整理' + (media.info && media.info.summary ? '：' + media.info.summary : ''))
       await refresh()
-    } else toast((j && j.error && j.error.message) || '准备失败')
-  } catch (e) { reportError('Queue.prepareRelease', e); toast('准备请求发不出去') }
+      media.prepareMsg = '已整理：发布时会用当前标题、副标题、简介和 MediaInfo。'
+    } else {
+      media.prepareMsg = '整理失败：' + ((j && j.error && j.error.message) || '服务端没返回结果')
+      toast(media.prepareMsg)
+    }
+  } catch (e) {
+    reportError('Queue.prepareRelease', e)
+    media.prepareMsg = '整理请求发不出去'
+    toast(media.prepareMsg)
+  }
   media.preparing = false
 }
 async function shootMedia() {
@@ -876,6 +934,9 @@ onUnmounted(() => {
 .qd-advanced > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); padding: 6px 0; }
 .qd-advanced > summary:hover { color: var(--accent); }
 .qd-advanced > .sd-card { margin-top: 4px; }
+.qd-advanced-sub { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.qd-advanced-sub > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
+.qd-advanced-sub > summary:hover { color: var(--accent); }
 .qd-download { padding: 4px 0 6px; }
 .qd-path-row { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
 .qd-path-row .input { flex: 1 1 auto; min-width: 0; }

@@ -40,7 +40,7 @@ module.exports = function (app, ctx) {
     if (!text.trim()) return bad(reply, 'BAD_REQUEST', 'text 必填');
     if (text.length > 200000) return bad(reply, 'TOO_LARGE', '文本超过 200000 字符', 413);
     const parsed = mediainfo.parse(text);
-    if (!parsed.kind) return bad(reply, 'NO_MEDIAINFO', '没认出 MediaInfo / BDInfo 格式', 422);
+    if (!parsed.kind) return bad(reply, 'NO_MEDIAINFO', '没认出格式：请粘贴完整 MediaInfo（从 General 开始）或 BDInfo（从 Disc Title 开始）', 422);
     return ok(reply, parsed);
   });
   app.get('/api/meta/providers', async () => ok(metaExt.providers()));

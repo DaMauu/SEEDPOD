@@ -102,6 +102,24 @@ check('BDInfo：内联字段也能断行', () => {
   need(p.flags.chineseSub, '中字没识别');
 });
 
+check('MediaInfo：BOM、BBCode 包裹、中文分段都能认', () => {
+  const wrapped = mi.parse('\uFEFF[quote]\n' + MI + '\n[/quote]');
+  need(wrapped.kind === 'mediainfo', 'BBCode/BOM 包裹没认出：' + wrapped.kind);
+  need(wrapped.video && wrapped.video.codec === 'HEVC', '包裹后视频没解析');
+  const cn = mi.parse('常规\nComplete name : demo.mkv\nFile size : 1.0 GiB\n\n视频\nFormat : HEVC\nWidth : 3840 pixels\nHeight : 2160 pixels\nBit depth : 10 bits\n\n音频 #1\nFormat : DTS XLL\nCommercial name : DTS-HD Master Audio\nChannel(s) : 6 channels\nLanguage : Chinese');
+  need(cn.kind === 'mediainfo', '中文分段没认出：' + cn.kind);
+  need(cn.video && cn.video.codec === 'HEVC' && cn.video.resolution === '2160p', '中文分段视频：' + JSON.stringify(cn.video));
+  need(cn.audio.length === 1 && cn.audio[0].format === 'DTS-HD MA', '中文分段音轨：' + JSON.stringify(cn.audio));
+});
+
+check('BDInfo：中文标签也能认', () => {
+  const cn = '碟片名称: Demo Disc\n碟片大小: 1,000,000,000 bytes\n播放列表: 00800.MPLS\n长度: 1:30:00.000\n视频: MPEG-4 AVC Video / 1080p / 23.976 fps\n音频: Chinese / DTS / 5.1\n字幕: Chinese / 20 kbps';
+  const p = mi.parse(cn);
+  need(p.kind === 'bdinfo', '中文 BDInfo 没认出：' + p.kind);
+  need(p.title === 'Demo Disc', '标题：' + p.title);
+  need(p.video && p.video.resolution === '1080p', '分辨率：' + JSON.stringify(p.video));
+});
+
 check('无法识别的文本不瞎猜', () => {
   const p = mi.parse('这不是 MediaInfo，也不是 BDInfo。');
   need(p.kind === '', 'kind 应为空：' + p.kind);
