@@ -61,7 +61,7 @@ function makeScheduler(ctx, deps) {
     try {
       try {
       failpoint('crawl');
-      steps.crawl = await runCrawlPhase({ db: ctx.db, one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want });
+      steps.crawl = await runCrawlPhase({ db: ctx.db, one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want, logEvent: ctx.logEvent });
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
       } catch (e) { phaseError('crawl', e); }
 

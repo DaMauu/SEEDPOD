@@ -2,7 +2,7 @@
 function makeCrawlPhase() {
   const sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   return async function runCrawlPhase(o) {
-    const { db, one, all, jparse, crawl, allowReal, bumpSiteFail, resetSiteFail, want, sleepFn } = o;
+    const { db, one, all, jparse, crawl, allowReal, bumpSiteFail, resetSiteFail, want, sleepFn, logEvent } = o;
         const sleepFor = sleepFn || sleep;
         if (!want('crawl')) {
           return { skipped: 'step not selected' };
@@ -69,7 +69,11 @@ function makeCrawlPhase() {
               const key = String(r.pageKey || '');
               if (pageNo > 0 && key && key === lastKey) { endBy = 'repeated-page'; break; }
               lastKey = key;
-              if (mode === 'incremental' && Number(r.added) === 0) { endBy = 'no-new'; break; }
+              if (mode === 'incremental' && Number(r.added) === 0) {
+                endBy = 'no-new';
+                if (logEvent) logEvent('info', '抓取', x.host + ' · 增量无新增，下一轮从第 1 页再查');
+                break;
+              }
               if (!Number(r.rows)) { endBy = 'end'; break; }
               await sleepFor(gapMs + 250);
             }
@@ -77,7 +81,10 @@ function makeCrawlPhase() {
             try {
               const st = readState();
               const rec = st[x.host] || {};
-              if (mode === 'full' && endBy === 'end') rec.fullDoneAt = new Date().toISOString();
+              if (mode === 'full' && endBy === 'end') {
+                rec.fullDoneAt = new Date().toISOString();
+                if (logEvent) logEvent('info', '抓取', x.host + ' · 全量完成，下一轮转增量');
+              }
               if (mode === 'incremental') { rec.page = 0; rec.catIdx = 0; }
               st[x.host] = rec;
               saveState(st);
