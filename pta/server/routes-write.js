@@ -132,6 +132,11 @@ module.exports = function (app, ctx) {
     }
     if (b.imageHost !== undefined) it.imageHost = String(b.imageHost).slice(0, 40);
     if (b.anonymous !== undefined) it.anonymous = !!b.anonymous;
+    /* 改了正文/媒体字段，旧的 prepared 快照就作废，发布前会重新整理 */
+    if (b.title !== undefined || b.cn !== undefined || b.intro !== undefined || b.mediaInfo !== undefined || b.bdinfo !== undefined) {
+      delete it.prepared;
+      delete it.preparedAt;
+    }
 
     if (b.action === 'save') {
       db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')

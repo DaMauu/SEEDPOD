@@ -370,6 +370,7 @@ async function main() {
     need(/【BDInfo】/.test(p.description) && /\[quote\]/.test(p.description), '简介没拼 BDInfo');
     const got = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
     need(got.ok && String(got.data.mediaInfo || '').indexOf('Disc Title') === 0, 'mediaInfo 没存进队列');
+    need(String(got.data.bdinfo || '').indexOf('Disc Title') === 0, 'bdinfo 没写回队列');
     const parsed = await (await fetchA(BASE + '/api/meta/mediainfo', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: bd })
     })).json();

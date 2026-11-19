@@ -129,6 +129,12 @@ function makeRelease(ctx) {
     if (typeof body.mediaInfo === 'string' && body.mediaInfo.trim()) it.mediaInfo = body.mediaInfo.slice(0, 200000);
     if (typeof body.bdinfo === 'string' && body.bdinfo.trim()) it.bdinfo = body.bdinfo.slice(0, 200000);
     const prepared = build(it, body);
+    /* 只写回原始媒体文本；最终简介留在 prepared，避免把图床链接污染回源简介 */
+    const mediaText = String(body.mediaInfo || body.bdinfo || it.mediaInfo || it.bdinfo || '').trim();
+    if (prepared.media && mediaText) {
+      if (prepared.media.kind === 'bdinfo') it.bdinfo = mediaText.slice(0, 200000);
+      else it.mediainfo = mediaText.slice(0, 200000);
+    }
     it.prepared = prepared;
     it.preparedAt = prepared.at;
     it.targets = (prepared.targets || []).map(function (t) { return t.host }).filter(Boolean);

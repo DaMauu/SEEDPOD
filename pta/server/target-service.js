@@ -96,10 +96,10 @@ function makeTargetService(ctx, target) {
   function preparedItem(item, host) {
     const p = item && item.prepared;
     if (!p) return item;
+    /* 队列字段是事实源；标题/副标题只兜底，最终简介用最近一次 prepared */
     const out = Object.assign({}, item);
-    if (p.title) out.title = p.title;
-    if (p.subtitle) out.cn = p.subtitle;
-    if (item.descrBb) out.descrBb = item.descrBb;
+    if (!out.title && p.title) out.title = p.title;
+    if (!out.cn && p.subtitle) out.cn = p.subtitle;
     if (p.description) out.intro = item.descrBb || p.description;
     return out;
   }

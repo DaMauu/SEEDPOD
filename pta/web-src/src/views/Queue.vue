@@ -80,7 +80,7 @@
                 <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
               </select>
             </div>
-            <div class="qd-field"><span>标题</span><input v-model="form.title" class="input"></div>
+            <div class="qd-field"><span>标题</span><div class="qd-path-row"><input v-model="form.title" class="input"><button class="btn ghost slim" type="button" title="只回填标题：源种里只有文件名；副标题和简介来自源站页面" @click="fillSourceTitle">用源种名</button></div></div>
             <div class="qd-field"><span>副标题</span><input v-model="form.cn" class="input"></div>
             <div class="qd-field">
               <span>图床</span>
@@ -92,40 +92,13 @@
             <div class="qd-field"><span>查重</span><b :class="(sel.checkCls || '') + '-t'">{{ sel.check || '' }}</b></div>
           </section>
 
-          <section v-if="sel.prepared" class="sd-card qd-prepared">
-            <div class="qd-prepared-head"><h3>上传准备</h3><button class="btn ghost slim" type="button" @click="fillSourceTitle">回填源标题</button></div>
-            <div class="t-sub">标题：{{ sel.prepared.title || '—' }}</div>
-            <div class="t-sub">副标题：{{ sel.prepared.subtitle || '—' }}</div>
-            <div class="t-sub">媒体：{{ sel.prepared.media ? sel.prepared.media.summary : '未填' }} · 图床 {{ (sel.prepared.imageLinks || []).length }} 张 · 截图 {{ sel.prepared.shots || 0 }}</div>
-            <div v-if="(sel.prepared.targets || []).length" class="qd-target-plans">
-              <div class="qd-target-plan-head">多目标预检</div>
-              <div v-for="t in sel.prepared.targets" :key="t.host" class="qd-target-plan">
-                <span class="badge" :class="t.target ? (t.target.ready === false ? 'amber' : 'green') : 'red'">{{ t.host }}</span>
-                <span v-if="t.target" class="t-sub">{{ t.target.engine }} · {{ Object.keys(t.target.fields || {}).length }} 字段</span>
-                <span v-if="t.target && planWarnings(t.target).length" class="qd-stage-err">需处理：{{ planWarnings(t.target).join('；') }}</span>
-                <span v-if="t.target && planAutoCount(t.target)" class="t-sub">已自动填 {{ planAutoCount(t.target) }} 个字段</span>
-                <span v-if="!t.target" class="qd-stage-err">{{ t.error || '未就绪' }}</span>
-                <div v-if="t.target && t.target.fields" class="qd-plan-fields">
-                  <span v-for="(v, k) in t.target.fields" :key="k" class="chip np">{{ k }}：{{ String(v).slice(0, 60) }}</span>
-                </div>
-                <div v-if="t.target && (t.target.autoActions || []).length" class="qd-plan-actions">
-                  <span v-for="a in t.target.autoActions" :key="a" class="t-sub">· {{ a }}</span>
-                </div>
-              </div>
-            </div>
-            <details class="qd-prepared-desc"><summary>简介预览</summary><pre>{{ sel.prepared.description || '（空）' }}</pre></details>
-          </section>
-
           <section class="sd-card qd-desc-card">
             <h3>简介</h3>
             <textarea v-model="form.intro" class="input sd-note" rows="3"></textarea>
-            <div class="qd-tags">
-              <template v-if="tags.chips.length">
-                <em v-for="c in tags.chips" :key="c" class="chip np">{{ c }}</em>
-              </template>
-              <span v-else class="soft">点「草稿预览」后显示发布标签</span>
-              <div v-if="tags.warnings.length" class="qd-warn">缺项：{{ tags.warnings.join('；') }}</div>
-            </div>
+            <details v-if="sel.prepared && sel.prepared.description" class="qd-final-desc">
+              <summary>最终简介预览（发布时用这份）</summary>
+              <pre>{{ sel.prepared.description }}</pre>
+            </details>
           </section>
 
           <section class="sd-card qd-shots">
@@ -240,11 +213,10 @@
           </div>
         </div>
         <div class="qd-actions">
-          <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
+          <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" title="从源站取种，加入 qB 开始下载" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.act" @click="fetchMeta">查资料</button>
+          <button class="btn ghost slim" type="button" :disabled="busy.act" title="用公开元数据填中文名和简介" @click="fetchMeta">查资料</button>
           <div class="spacer"></div>
           <input v-model="reason" class="input slim" placeholder="驳回理由（可留空）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>
@@ -290,7 +262,6 @@ const sel = ref(null)
 const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
-const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parseMsg: '', prepareMsg: '', parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
@@ -302,27 +273,6 @@ let timer = null
 let qTimer = null
 let progressTimer = null
 let loaded = false
-
-const OLD_AUTO_WARN = /^(必填字段 |字段 .* 的值不在站点选项里)/
-function planWarnings(t) {
-  const out = []
-  ;((t && t.warnings) || []).forEach(function (w) {
-    const s = String(w || '')
-    if (OLD_AUTO_WARN.test(s)) return
-    if (/^分类没映射/.test(s)) { out.push('目标站分类没映射，请到「站点映射」补上'); return }
-    if (/^制作组 .* 没映射到站点 id/.test(s)) { out.push(s.replace(/^制作组 (.*?) 没映射到站点 id，已留空$/, '制作组「$1」没映射到目标站，发布前需要手选')); return }
-    if (s === '没有 cookie') { out.push('目标站没有 cookie'); return }
-    if (s === '没有上传地址') { out.push('目标站没有上传地址'); return }
-    if (s === '上传字段为空') { out.push('目标站上传字段为空'); return }
-    if (s === '没有回查地址') { out.push('目标站没有回查地址'); return }
-    out.push(s)
-  })
-  return out
-}
-function planAutoCount(t) {
-  const old = ((t && t.warnings) || []).filter(function (w) { return OLD_AUTO_WARN.test(String(w || '')) }).length
-  return ((t && t.notes) || []).length + old
-}
 
 const LABELS = {
   pending: ['待确认', 'amber'], approved: ['已通过', 'green'], published: ['已发布', 'green'],
@@ -430,8 +380,6 @@ async function select(id) {
     form.targets = Array.isArray(j.data.targets) ? j.data.targets.slice() : (j.data.targetSite ? [j.data.targetSite] : [])
     form.imageHost = j.data.imageHost || '站内'
     form.anonymous = !!j.data.anonymous
-    tags.chips = []
-    tags.warnings = []
     reason.value = ''
     await loadPreview()
   } catch (e) { reportError('Queue', e) }
@@ -600,6 +548,16 @@ async function doSubmitTarget(targets, confirmHosts) {
       busy.target = false
       return
     }
+    /* 发布前用当前表单重新整理一次，确保简介/MediaInfo 和图床链接是最新的 */
+    const prep = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
+      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mediaInfo: media.infoText, targets: form.targets, host: form.targetSite })
+    })).json()
+    if (!prep || !prep.ok) {
+      toast('发布资料没整理好：' + ((prep && prep.error && prep.error.message) || '检查简介/媒体信息'))
+      busy.target = false
+      return
+    }
     const body = { queueId: sel.value.id, dryRun: false, confirmHosts: Array.isArray(confirmHosts) ? confirmHosts : [] }
     if (media.torrent && media.torrent.base64) body.torrentBase64 = media.torrent.base64
     const multi = targets.length > 1
@@ -736,10 +694,10 @@ async function prepareRelease() {
     })).json()
     if (j && j.ok) {
       media.info = (j.data.prepared && j.data.prepared.media) || media.info
-      media.prepareMsg = '已整理：发布时会用当前标题、副标题、简介和 MediaInfo。'
+      media.prepareMsg = '已整理：发布时会用当前标题/简介和 MediaInfo；点上方「简介」里的「最终简介预览」查看。'
       toast('发布资料已整理' + (media.info && media.info.summary ? '：' + media.info.summary : ''))
       await refresh()
-      media.prepareMsg = '已整理：发布时会用当前标题、副标题、简介和 MediaInfo。'
+      media.prepareMsg = '已整理：发布时会用当前标题/简介和 MediaInfo；点上方「简介」里的「最终简介预览」查看。'
     } else {
       media.prepareMsg = '整理失败：' + ((j && j.error && j.error.message) || '服务端没返回结果')
       toast(media.prepareMsg)
@@ -786,21 +744,6 @@ async function makeMediaTorrent() {
     else toast((j && j.error && j.error.message) || '生成种子失败')
   } catch (e) { toast('种子请求发不出去') }
   media.making = false
-}
-async function preview() {
-  if (!sel.value) return
-  try {
-    const j = await (await fetch('/api/publish/preview?id=' + encodeURIComponent(sel.value.id), { credentials: 'same-origin' })).json()
-    if (!j || !j.ok) { toast((j && j.error && j.error.message) || '草稿生成失败'); return }
-    const d = j.data
-    form.title = d.title || form.title
-    form.cn = d.subtitle || form.cn
-    form.intro = d.description || form.intro
-    const t = d.tags || {}
-    tags.chips = Object.keys(t).filter(k => t[k]).map(k => t[k]).filter((v, i, a) => a.indexOf(v) === i)
-    tags.warnings = (d.warnings || []).slice()
-    toast(d.ready ? '草稿齐了' : '草稿有缺项：' + tags.warnings.join(' · '))
-  } catch (e) { toast('草稿请求发不出去') }
 }
 async function bulkApprove() {
   if (busy.approve) return
@@ -909,7 +852,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.qd-prepared-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .qd-preflight { display:flex; flex-direction:column; gap:5px; }
 .qd-preflight-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .qd-preflight-head h3 { margin:0; }
@@ -937,6 +879,10 @@ onUnmounted(() => {
 .qd-advanced-sub { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .qd-advanced-sub > summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
 .qd-advanced-sub > summary:hover { color: var(--accent); }
+.qd-final-desc { margin-top: 8px; font-size: 12px; }
+.qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
+.qd-final-desc > summary:hover { color: var(--accent); }
+.qd-final-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; background: var(--panel-2); padding: 10px; border-radius: 8px; font-size: 11.5px; }
 .qd-download { padding: 4px 0 6px; }
 .qd-path-row { display: flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
 .qd-path-row .input { flex: 1 1 auto; min-width: 0; }
@@ -1088,12 +1034,4 @@ onUnmounted(() => {
 .qd-media-info { flex-direction: column; align-items: stretch; gap: 6px; }
 .qd-media-info > span { flex: none; }
 .qd-media-info .sd-note { width: 100%; height: auto; min-height: 78px; }
-.qd-prepared { grid-column: 1 / -1; }
-.qd-prepared-desc { margin-top: 8px; font-size: 12px; }
-.qd-prepared-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; background: var(--panel-2); padding: 10px; border-radius: 8px; font-size: 11.5px; }
-.qd-target-plans { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
-.qd-target-plan-head { font-size: 11px; font-weight: 600; color: var(--muted); }
-.qd-target-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
-.qd-plan-fields { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; }
-.qd-plan-actions { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; }
 </style>

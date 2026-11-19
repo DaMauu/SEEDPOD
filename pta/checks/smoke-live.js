@@ -503,9 +503,10 @@ async function main() {
     need(saved.ok && saved.data.title === 'Smoke Queue Edited 2020 2160p', '整理资料没保存标题：' + (saved.data && saved.data.title));
     need(saved.data.prepared && /Smoke Queue Edited/.test(saved.data.prepared.title || ''), '整理资料没用到新标题：' + JSON.stringify(saved.data.prepared && saved.data.prepared.title));
     const prepared = await page.locator('.qd-media').innerText();
-    need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
-    const pack = await page.locator('.qd-prepared').innerText();
-    need(/上传准备/.test(pack) && /2160p/.test(pack) && /多目标预检/.test(pack) && /简介预览/.test(pack), '上传准备预览缺失：' + pack.slice(0, 160));
+    need(/2160p/.test(prepared) && /已整理/.test(prepared), '整理后媒体摘要/提示缺失：' + prepared.slice(0, 160));
+    await page.locator('.qd-desc-card details.qd-final-desc').evaluate((el) => { el.open = true });
+    const finalDesc = await page.locator('.qd-desc-card details.qd-final-desc').innerText();
+    need(/BDInfo|Disc Title|2160p/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));
     await page.getByRole('button', { name: '图床演练' }).click();
     await page.waitForTimeout(1200);
     const shotTxt = await page.locator('.qd-shots').innerText();
