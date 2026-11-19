@@ -104,30 +104,6 @@
             </details>
           </section>
 
-          <section class="sd-card qd-shots">
-            <h3>截图</h3>
-            <div v-if="(sel.sourceImages || []).length" class="t-sub">源站简介里有 {{ sel.sourceImages.length }} 张截图，发布时会随简介保留，不用手动上传。</div>
-            <div v-else class="soft">源站简介里没有截图。</div>
-            <details class="qd-manual-shots" :open="(sel.shots || []).length > 0">
-              <summary>{{ (sel.shots || []).length ? '手动补充的截图' : ((sel.sourceImages || []).length ? '手动补图（一般不用）' : '源站没有截图？手动补') }}</summary>
-              <div class="shots">
-                <template v-for="(shot, i) in (sel.shots || [])" :key="i">
-                  <div class="shot has">
-                    <img :src="shot.url" alt="">
-                    <span>{{ i + 1 }}</span>
-                    <button class="shot-del" type="button" title="删除" @click.stop="removeShot(i)">×</button>
-                  </div>
-                </template>
-                <button class="shot add" type="button" @click="pickFiles">上传</button>
-              </div>
-              <div class="qd-actions">
-                <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(true)">图床演练</button>
-                <button class="btn ghost slim" type="button" :disabled="busy.images" @click="imageAction(false)">上传截图</button>
-              </div>
-              <div v-if="sel.imagePlan" class="t-sub">图床：{{ hostLabel(sel.imagePlan.provider) }} · {{ sel.imagePlan.total }} 张 · {{ sel.imagePlan.dryRun ? '演练' : (sel.imagePlan.uploaded + ' 张已传' + (sel.imagePlan.failed ? '，' + sel.imagePlan.failed + ' 张失败' : '')) }}</div>
-            </details>
-          </section>
-
         </div>
 
         <div v-if="sel.qb || sel.sourceState" class="t-sub qd-download">qB：{{ qbText() }}</div>
@@ -183,8 +159,6 @@
     </div>
   </div>
 
-  <input ref="filePick" type="file" accept="image/*" multiple hidden @change="onFiles">
-
   <div v-if="lock.open" class="modal-mask" id="main-target-lock">
     <div class="modal">
       <div class="modal-head"><h2>主站真实提交</h2></div>
@@ -221,7 +195,7 @@ const sel = ref(null)
 const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
-const busy = reactive({ act: false, approve: false, publish: false, target: false, images: false })
+const busy = reactive({ act: false, approve: false, publish: false, target: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const prepBusy = ref(false)
 const prepMsg = ref('')
@@ -232,7 +206,6 @@ const metaMsg = ref('')
 let previewSeq = 0
 let metaSeq = 0
 let selectSeq = 0
-const filePick = ref(null)
 let timer = null
 let qTimer = null
 let progressTimer = null
@@ -246,7 +219,6 @@ function label(s) { return (LABELS[s] || ['未知', 'gray'])[0] }
 function statusTone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
 const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预览', submitted: '已提交', injected: '已注入', failed: '失败' }
 const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red' }
-function hostLabel(s) { return ({ none: '站内', local: '本地图床', pixhost: 'Pixhost', imgbox: 'Imgbox', custom: '自定义' })[s] || s || '—' }
 function stageLabel(s) { return STAGE_LABEL[s] || s || '草稿' }
 function stageTone(s) { return STAGE_TONE[s] || '' }
 function targetTone(s) { return STAGE_TONE[s] || '' }
@@ -597,22 +569,6 @@ async function doSubmitTarget(targets, confirmHosts) {
   } catch (e) { toast('提交请求发不出去') }
   busy.target = false
 }
-async function imageAction(dryRun) {
-  if (!sel.value || busy.images) return
-  if (!(sel.value.shots || []).length) { toast('先加截图'); return }
-  busy.images = true
-  try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/images', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ imageHost: form.imageHost, dryRun: dryRun })
-    })).json()
-    if (j && j.ok) {
-      toast(dryRun ? ('图床演练：' + j.data.total + ' 张，没有上传') : ('图床上传：成功 ' + j.data.uploaded + '，失败 ' + j.data.failed))
-      await refresh()
-    } else toast((j && j.error && j.error.message) || '图床操作失败')
-  } catch (e) { reportError('Queue.imageAction', e); toast('图床请求发不出去') }
-  busy.images = false
-}
 async function prepareRelease() {
   if (!sel.value || prepBusy.value) return
   prepBusy.value = true
@@ -679,51 +635,6 @@ async function bulkPublish() {
   if (go) go('批量发布', '会把「已通过」的条目逐条走发布链路；真发布关闭时会逐条失败。继续？', fn)
   else fn()
 }
-function pickFiles() { if (filePick.value) filePick.value.click() }
-function shrink(file) {
-  return new Promise(resolve => {
-    const fr = new FileReader()
-    fr.onload = () => {
-      const img = new Image()
-      img.onload = () => {
-        try {
-          const max = 1600
-          const scale = Math.min(1, max / Math.max(img.width, img.height))
-          const cw = Math.round(img.width * scale), ch = Math.round(img.height * scale)
-          const cv = document.createElement('canvas')
-          cv.width = cw; cv.height = ch
-          cv.getContext('2d').drawImage(img, 0, 0, cw, ch)
-          resolve(cv.toDataURL('image/jpeg', 0.82))
-        } catch (e) { resolve(String(fr.result)) }
-      }
-      img.onerror = () => resolve(String(fr.result))
-      img.src = String(fr.result)
-    }
-    fr.readAsDataURL(file)
-  })
-}
-async function onFiles(e) {
-  const files = Array.from(e.target.files || []).slice(0, 6)
-  if (!sel.value || !files.length) return
-  const shots = []
-  for (const f of files) shots.push({ name: f.name, url: await shrink(f) })
-  try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/shots', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ shots })
-    })).json()
-    toast(j && j.ok ? '已加入 ' + shots.length + ' 张截图' : ((j && j.error && j.error.message) || '上传失败'))
-    await refresh()
-  } catch (err) { toast('截图上传失败') }
-  e.target.value = ''
-}
-async function removeShot(i) {
-  if (!sel.value) return
-  try {
-    await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/shots/' + i, { method: 'DELETE', credentials: 'same-origin' })
-    await refresh()
-  } catch (e) { toast('删除失败') }
-}
 function ensureQueue() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadQueuePage() } }
 onMounted(() => {
   window.addEventListener('hashchange', ensureQueue)
@@ -746,12 +657,6 @@ onUnmounted(() => {
 .qd-preflight-row b { color:var(--text); font-weight:600; }
 .qd-preflight-row em { font-style:normal; }
 .qd-ok { color:var(--green); }
-.shot { position: relative; }
-.shot-del {
-  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
-  border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff;
-  font-size: 12px; line-height: 18px; cursor: pointer;
-}
 
 /* Queue 页面样式：迁入 scoped，shared/shell 保留全局 */
 .queue-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -761,9 +666,6 @@ onUnmounted(() => {
 .queue-items { flex: 1; overflow-y: auto; padding: 6px; }
 .qd-meta-msg { margin-top: -2px; }
 .qd-desc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.qd-manual-shots { margin-top: 8px; }
-.qd-manual-shots > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
-.qd-manual-shots > summary:hover { color: var(--accent); }
 .qd-desc-head h3 { margin: 0; }
 .qd-final-desc { margin-top: 8px; font-size: 12px; }
 .qd-final-desc > summary { cursor: pointer; color: var(--muted); font-size: 11.5px; }
@@ -807,8 +709,6 @@ onUnmounted(() => {
 .qd-field { padding: 3px 0; font-size: 12px; }
 .qd-field .input, .qd-field .select { width: 250px; height: 28px; font-size: 11.5px; }
 .qd-grid .sd-note { width: 100%; height: 92px; font-size: 11.5px; line-height: 1.5; }
-.qd-grid .shots { gap: 6px; }
-.qd-grid .shot { width: 62px; height: 42px; font-size: 10px; }
 .qd-status { margin-top: 10px; }
 .qd-targets-foot { margin-top: auto; display: flex; align-items: flex-start; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .qd-targets-lbl { font-size: 11px; color: var(--muted); white-space: nowrap; padding-top: 4px; }
@@ -843,24 +743,19 @@ onUnmounted(() => {
 .qd-grid { flex: 1; min-height: 0; }
 .qd-actions { margin-top: 10px; }
 .qd-grid { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
-.qd-shots { margin-top: auto; }
 .queue-detail { align-self: flex-start; display: block; }
 .qd-grid { flex: none; grid-template-rows: auto; align-content: start; }
-.qd-shots { margin-top: 0; }
 .qd-field { display: flex; align-items: center; gap: 12px; }
 .qd-field > span { flex: 0 0 48px; }
 .qd-field .input, .qd-field .select { flex: 1 1 auto; width: auto; min-width: 0; }
 .queue-split { height: auto; flex: 0 0 auto; align-items: flex-start; }
 .queue-list { max-height: none; }
-.qd-side .sd-card, .qd-shots { height: 152px; display: flex; flex-direction: column; }
-.qd-shots { height: auto; flex: 1 1 auto; justify-content: center; }
 .qd-grid { grid-template-rows: minmax(0, 1fr); }
 .qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px; align-items: stretch; height: auto; }
 .qd-pubinfo { grid-column: 1 / -1; }
 .qd-desc-card { display: flex; flex-direction: column; }
 .qd-desc-card textarea { flex: 1; height: auto; min-height: 84px; }
-.qd-shots { display: flex; flex-direction: column; justify-content: flex-start; height: auto; }
 .queue-split { align-items: stretch; }
 .queue-detail { align-self: stretch; display: flex; flex-direction: column; }
 .qd-actions { margin-top: auto; }
@@ -901,13 +796,6 @@ onUnmounted(() => {
 }
 
 /* Queue 媒体截图：页面专属 */
-.shots { display: flex; gap: 8px; }
-.shot { width: 96px; height: 60px; border-radius: 8px; background: var(--panel-2); display: grid; place-items: center; font-size: 11px; color: var(--muted-2); border: 1px dashed var(--line-2); }
-.shot.add { cursor: pointer; }
-.shot.add:hover { color: var(--accent); border-color: var(--accent); }
-.shot.has { padding: 0; overflow: hidden; border-style: solid; border-color: var(--line-2); }
-.shot.has img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.shot.has span { display: none; }
 .qd-stage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
 .qd-stage .t-sub { font-size: 11px; }
 .qd-stage-err { flex: 1 1 100%; font-size: 11.5px; color: var(--red); line-height: 1.5; overflow-wrap: anywhere; }

@@ -471,12 +471,6 @@ async function main() {
       const j = await r.json();
       return j.data && j.data.id;
     });
-    await page.evaluate(async (id) => {
-      await fetch('/api/queue/' + encodeURIComponent(id) + '/shots', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ shots: [{ name: 'shot1.png', url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=' }] })
-      });
-    }, qid);
     await page.evaluate(() => { location.hash = '#dashboard'; });
     await page.waitForTimeout(250);
     await page.evaluate(() => { location.hash = '#queue'; });
@@ -501,7 +495,8 @@ async function main() {
     need(/发布前检查/.test(pf) && /电影/.test(pf) && /只换目标站通用 announce/.test(pf), '发布前检查缺失：' + pf.slice(0, 160));
     need(/目标站查重/.test(pf) && /发布时自动查/.test(pf), '目标站查重状态缺失：' + pf.slice(0, 200));
     const txt = await page.locator('#queue-detail').innerText();
-    need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
+    need(/发布信息/.test(txt) && /简介/.test(txt), '详情没渲染：' + txt.slice(0, 80));
+    need(await page.locator('.qd-shots').count() === 0, '截图卡还在');
     const autoMedia = await page.locator('.qd-desc-card').innerText();
     need(/已从源站简介识别 MediaInfo/.test(autoMedia) && /2160p/.test(autoMedia), '源站媒体信息没自动识别：' + autoMedia.slice(0, 200));
     await page.locator('.qd-pubinfo input.input').first().fill('Smoke Queue Edited 2020 2160p');
@@ -515,13 +510,6 @@ async function main() {
     await page.locator('.qd-desc-card details.qd-final-desc').evaluate((el) => { el.open = true });
     const finalDesc = await page.locator('.qd-desc-card details.qd-final-desc').innerText();
     need(/General|2160p|DTS-HD MA/.test(finalDesc), '最终简介预览没生成：' + finalDesc.slice(0, 160));
-    const shotCard = await page.locator('.qd-shots').innerText();
-    need(/源站简介里有 1 张截图/.test(shotCard), '源站截图数量没显示：' + shotCard.replace(/\n/g, ' / ').slice(0, 120));
-    await page.locator('.qd-shots details.qd-manual-shots').evaluate((el) => { el.open = true });
-    await page.getByRole('button', { name: '图床演练' }).click();
-    await page.waitForTimeout(1200);
-    const shotTxt = await page.locator('.qd-shots').innerText();
-    need(/图床：本地图床/.test(shotTxt) && /演练/.test(shotTxt), '图床演练没显示摘要：' + shotTxt.replace(/\n/g, ' / ').slice(0, 160));
   });
 
   await check('查资料切条目不会串到当前条目', async () => {
