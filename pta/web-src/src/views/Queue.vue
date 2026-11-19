@@ -128,6 +128,13 @@
             <div class="qd-check-item"><span>制作组</span><b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></div>
             <div class="qd-check-item"><span>媒介</span><b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></div>
             <div class="qd-check-item"><span>目标站查重</span><b :class="preflight.dupe.state === 'exists' || preflight.dupe.state === 'error' ? 'qd-stage-err' : (preflight.dupe.state === 'passed' ? 'qd-ok' : '')">{{ preflight.dupe.label }}</b></div>
+            <div v-if="preflight.retry" class="qd-check-item">
+              <span>失败与重试</span>
+              <b :class="preflight.retry.dead ? 'qd-stage-err' : ''">
+                <template v-if="preflight.retry.dead">自动重试用完，需要重新排队 · 试了 {{ preflight.retry.attempts }} 次</template>
+                <template v-else>待重试 · 试了 {{ preflight.retry.attempts }} 次<span v-if="preflight.retry.nextRetryAt"> · 下次 {{ stageTime(preflight.retry.nextRetryAt) }}</span></template>
+              </b>
+            </div>
             <div class="qd-check-item"><span>infohash</span><b v-if="preflight.torrent.hash">{{ preflight.torrent.hash.slice(0, 12) }}… <em v-if="preflight.checked" :class="preflight.hashUnchanged ? 'qd-ok' : 'qd-stage-err'">{{ preflight.hashUnchanged ? '清洗后不变' : '清洗后变了' }}</em><em v-else class="soft">清洗只换 announce，应不变</em></b><b v-else class="soft">先下载种子</b></div>
             <div class="qd-check-item"><span>种子</span><b>{{ preflight.torrent.name || '先下载种子' }}</b></div>
             <div class="qd-check-item"><span>Tracker</span><b>{{ preflight.trackerNote }}</b></div>
@@ -680,7 +687,7 @@ onUnmounted(() => {
 
 /* 分页 */
 .queue-page { flex: 0 0 auto; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
-.queue-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.queue-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 0; background: #fafbfd; }
 .queue-pager .pager-link { flex: 0 0 auto; font-size: 10.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .queue-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
 .queue-pager .pager-meta { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

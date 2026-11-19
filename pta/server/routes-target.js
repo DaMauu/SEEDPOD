@@ -5,6 +5,7 @@ const path = require('path');
 const flowConfig = require('./flow-config');
 const torrentClean = require('./torrent-clean');
 const mediainfo = require('./mediainfo');
+const { failuresOf, isDead } = require('./failure-queue');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
@@ -243,6 +244,24 @@ module.exports = function (app, ctx) {
       } catch (e) { checked = false; hashUnchanged = null; }
     }
     const cleanOn = flowConfig.on(flowConfig.read(ctx), '上传前清洗 tracker', true);
+    /* 失败与重试状态：只读队列，给发布前检查显示是否已用完自动重试 */
+    let retry = null;
+    const fails = failuresOf(item.data);
+    if (fails.length) {
+      const cfgRow2 = one("SELECT v FROM meta WHERE k = 'config'");
+      const cfg2 = JSON.parse(cfgRow2 ? cfgRow2.v : 'null') || {};
+      const max = Math.max(0, Math.min(10, cfg2.retryMax === undefined ? 2 : Number(cfg2.retryMax) || 0));
+      const next = fails.map(function (f) { return f.nextRetryAt; }).filter(Boolean).sort()[0] || '';
+      retry = {
+        dead: isDead(fails, max),
+        count: fails.length,
+        attempts: Math.max.apply(null, fails.map(function (f) { return Number(f.attempts) || 0; })),
+        nextRetryAt: next,
+        stage: fails[0].stage || '',
+        code: fails[0].code || '',
+        message: fails[0].message || ''
+      };
+    }
     /* 媒体信息：优先用已存字段，弱值就去源站简介里重新识别 */
     let media = null;
     const bb = String(item.data.descrBb || item.data.intro || '');
@@ -273,6 +292,7 @@ module.exports = function (app, ctx) {
       host: host,
       ready: !!plan.ready,
       dupe: dupe,
+      retry: retry,
       media: media,
       warnings: plan.warnings || [],
       labels: plan.labels || {},

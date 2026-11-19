@@ -2,13 +2,11 @@
   <div class="qf-wrap">
     <div v-if="!visible.length" class="sites-empty">{{ loading ? '读取中…' : '没有卡住的条目' }}</div>
     <div v-else class="qf-list">
-      <div v-for="it in pageRows" :key="it.id" class="qf-row" :class="{ on: it.id === activeId }" @click="$emit('select', it.id)">
+      <div v-for="it in pageRows" :key="it.id" class="qf-row" :class="{ on: it.id === activeId }" :title="(it.title || it.id) + ' · ' + summary(it) + (it.nextRetryAt ? ' · 下次 ' + whenText(it.nextRetryAt) : '')" @click="$emit('select', it.id)">
         <div class="qf-main">
           <div class="qf-title">{{ it.title || it.id }}</div>
           <div class="qf-meta">
-            <span class="badge" :class="it.dead ? 'red' : 'amber'">{{ it.dead ? '自动重试用完' : '待重试' }}</span>
             <span class="qf-sum">{{ summary(it) }}</span>
-            <span v-if="it.nextRetryAt" class="qf-next">下次 {{ whenText(it.nextRetryAt) }}</span>
           </div>
         </div>
         <button class="btn ghost slim qf-replay" type="button" title="清掉错误和次数，放回待处理，下一轮重新跑" @click.stop="replay(it)">重新排队</button>
@@ -110,18 +108,17 @@ onMounted(load)
 <style scoped>
 .qf-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
 .qf-list { display: flex; flex-direction: column; gap: 2px; overflow: auto; padding-top: 6px; flex: 1; min-height: 0; }
-.qf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 9px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; }
-.qf-row:hover { background: #f7f8fa; }
-.qf-row.on { background: var(--accent-soft); box-shadow: none; }
+.qf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 9px; border: 0; border-radius: 0; background: none; cursor: pointer; text-align: left; }
+.qf-row.on { background: none; box-shadow: inset 2px 0 0 var(--accent); }
 .qf-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .qf-title { font-size: 11.5px; font-weight: 600; color: var(--ink); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .qf-meta { display: flex; align-items: center; gap: 4px 6px; min-width: 0; font-size: 10.5px; color: var(--muted); line-height: 1.35; white-space: nowrap; overflow: hidden; }
 .qf-meta .badge { flex: 0 0 auto; }
 .qf-sum { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .qf-next { flex: 0 0 auto; font-size: 10px; color: var(--muted-2); }
-.qf-replay { align-self: center; white-space: nowrap; height: 24px; min-height: 24px; padding: 0 7px; font-size: 10.5px; line-height: 22px; border-radius: 6px; }
+.qf-replay { align-self: center; white-space: nowrap; height: 20px; min-height: 20px; padding: 0 4px; font-size: 9.5px; line-height: 18px; border-radius: 3px; }
 .qf-pager-wrap { flex: 0 0 auto; width: 100%; box-sizing: border-box; padding: 8px 10px 10px; border-top: 1px solid var(--line); background: #fff; }
-.qf-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: #fafbfd; }
+.qf-pager { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 5px 8px; border: 1px solid var(--line); border-radius: 0; background: #fafbfd; }
 .qf-pager .pager-link { font-size: 11.5px; color: var(--accent); cursor: pointer; user-select: none; white-space: nowrap; }
 .qf-pager .pager-link.off { color: var(--muted-2); cursor: default; opacity: .55; }
 .qf-page-meta { flex: 1; min-width: 0; text-align: center; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

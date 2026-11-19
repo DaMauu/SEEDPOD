@@ -574,7 +574,11 @@ async function main() {
     await page.waitForSelector('.qf-row', { timeout: 3000 });
     const rowTxt = await page.locator('.qf-row').first().innerText();
     need(/Smoke Failed/.test(rowTxt), '失败条目没显示：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
-    need(/重新排队/.test(rowTxt) && /自动重试用完|待重试/.test(rowTxt), '失败状态/重排按钮缺失：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
+    need(/重新排队/.test(rowTxt) && /试了 3 次/.test(rowTxt), '失败状态/重排按钮缺失：' + rowTxt.replace(/\n/g, ' / ').slice(0, 160));
+    await page.locator('.qf-row').first().click();
+    await page.waitForTimeout(500);
+    const pfRetry = await page.locator('.qd-preflight').innerText();
+    need(/失败与重试/.test(pfRetry) && /自动重试用完/.test(pfRetry), '发布前检查没显示自动重试用完：' + pfRetry.replace(/\n/g, ' / ').slice(0, 200));
     need(await page.locator('.queue-page').count() === 0, '失败页出现了两个分页');
     const pagerTxt = await page.locator('.qf-pager').innerText();
     need(/上一页/.test(pagerTxt) && /下一页/.test(pagerTxt), '失败分页按钮缺失：' + pagerTxt.replace(/\n/g, ' / '));

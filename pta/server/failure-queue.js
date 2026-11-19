@@ -6,6 +6,54 @@ const DEAD_AFTER_MS = 24 * 3600 * 1000;
 const RETENTION_DAYS = 30;
 const RETENTION_MAX = 1000;
 
+function failuresOf(d) {
+  const out = [];
+  const at = d.stageUpdatedAt || '';
+  if (d.stage === 'failed' || d.stageLastError) {
+    out.push({
+      kind: 'stage', stage: d.stageFailedFrom || d.stage || 'publish',
+      code: errors.normalize(d.stageLastErrorCode || 'UNKNOWN'),
+      message: String(d.stageLastError || d.retryMsg || '').slice(0, 300),
+      attempts: Number(d.retries || d.stageAttempts) || 0,
+      nextRetryAt: String(d.nextRetryAt || d.stageNextRetryAt || ''),
+      lastAttemptAt: String(at)
+    });
+  }
+  const trs = d.targetResults || {};
+  Object.keys(trs).forEach(function (host) {
+    const tr = trs[host] || {};
+    if (tr.stage !== 'failed' && !tr.nextRetryAt && !tr.error) return;
+    out.push({
+      kind: 'target', host: host, stage: 'target',
+      code: errors.normalize(tr.errorCode || 'UNKNOWN'),
+      message: String(tr.error || '').slice(0, 300),
+      attempts: Number(tr.attempts) || 0,
+      nextRetryAt: String(tr.nextRetryAt || ''),
+      lastAttemptAt: String(tr.at || '')
+    });
+  });
+  if (d.dedupeLastError) {
+    out.push({ kind: 'dedupe', stage: 'dedupe', code: errors.normalize(d.dedupeLastErrorCode || 'UNKNOWN'),
+      message: String(d.dedupeLastError).slice(0, 300), attempts: Number(d.dedupeAttempts) || 0,
+      nextRetryAt: String(d.dedupeNextRetryAt || ''), lastAttemptAt: String(d.dedupeLastAttemptAt || '') });
+  }
+  if (d.metaLastError) {
+    out.push({ kind: 'review', stage: 'review', code: errors.normalize(d.metaLastErrorCode || 'UNKNOWN'),
+      message: String(d.metaLastError).slice(0, 300), attempts: Number(d.metaAttempts) || 0,
+      nextRetryAt: String(d.metaNextRetryAt || ''), lastAttemptAt: String(d.metaLastAttemptAt || '') });
+  }
+  return out;
+}
+
+function isDead(failures, max) {
+  const now = Date.now();
+  return (failures || []).some(function (f) {
+    const at = Date.parse(f.lastAttemptAt || '') || 0;
+    if (max > 0 && f.attempts >= max) return true;
+    return at > 0 && now - at > DEAD_AFTER_MS && !f.nextRetryAt;
+  });
+}
+
 function makeFailureQueue(ctx) {
   const { db, one, all, jparse } = ctx;
 
@@ -15,54 +63,6 @@ function makeFailureQueue(ctx) {
       const cfg = JSON.parse(row ? row.v : 'null') || {};
       return Math.max(0, Math.min(10, cfg.retryMax === undefined ? 2 : Number(cfg.retryMax) || 0));
     } catch (e) { return 2; }
-  }
-
-  function failuresOf(d) {
-    const out = [];
-    const at = d.stageUpdatedAt || '';
-    if (d.stage === 'failed' || d.stageLastError) {
-      out.push({
-        kind: 'stage', stage: d.stageFailedFrom || d.stage || 'publish',
-        code: errors.normalize(d.stageLastErrorCode || 'UNKNOWN'),
-        message: String(d.stageLastError || d.retryMsg || '').slice(0, 300),
-        attempts: Number(d.retries || d.stageAttempts) || 0,
-        nextRetryAt: String(d.nextRetryAt || d.stageNextRetryAt || ''),
-        lastAttemptAt: String(at)
-      });
-    }
-    const trs = d.targetResults || {};
-    Object.keys(trs).forEach(function (host) {
-      const tr = trs[host] || {};
-      if (tr.stage !== 'failed' && !tr.nextRetryAt && !tr.error) return;
-      out.push({
-        kind: 'target', host: host, stage: 'target',
-        code: errors.normalize(tr.errorCode || 'UNKNOWN'),
-        message: String(tr.error || '').slice(0, 300),
-        attempts: Number(tr.attempts) || 0,
-        nextRetryAt: String(tr.nextRetryAt || ''),
-        lastAttemptAt: String(tr.at || '')
-      });
-    });
-    if (d.dedupeLastError) {
-      out.push({ kind: 'dedupe', stage: 'dedupe', code: errors.normalize(d.dedupeLastErrorCode || 'UNKNOWN'),
-        message: String(d.dedupeLastError).slice(0, 300), attempts: Number(d.dedupeAttempts) || 0,
-        nextRetryAt: String(d.dedupeNextRetryAt || ''), lastAttemptAt: String(d.dedupeLastAttemptAt || '') });
-    }
-    if (d.metaLastError) {
-      out.push({ kind: 'review', stage: 'review', code: errors.normalize(d.metaLastErrorCode || 'UNKNOWN'),
-        message: String(d.metaLastError).slice(0, 300), attempts: Number(d.metaAttempts) || 0,
-        nextRetryAt: String(d.metaNextRetryAt || ''), lastAttemptAt: String(d.metaLastAttemptAt || '') });
-    }
-    return out;
-  }
-
-  function isDead(failures, max) {
-    const now = Date.now();
-    return (failures || []).some(function (f) {
-      const at = Date.parse(f.lastAttemptAt || '') || 0;
-      if (max > 0 && f.attempts >= max) return true;
-      return at > 0 && now - at > DEAD_AFTER_MS && !f.nextRetryAt;
-    });
   }
 
   /* 保留策略：只做视图过滤，不删队列数据。
@@ -168,4 +168,4 @@ function makeFailureQueue(ctx) {
   return { list: list, replay: replay, failuresOf: failuresOf };
 }
 
-module.exports = { makeFailureQueue, DEAD_AFTER_MS };
+module.exports = { makeFailureQueue, failuresOf, isDead, DEAD_AFTER_MS };
