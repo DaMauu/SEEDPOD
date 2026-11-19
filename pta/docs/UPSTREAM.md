@@ -221,3 +221,11 @@
 - 放弃预生成副本；上传只清洗目标站通用 announce，发布成功后抓详情页权威种子。
 - 权威种子加 qB 时 `skip_checking=true`，save path 复用源种；文件结构一致，不用硬链接。
 - 同 infohash 的站不能加第二份，直接报错；不伪造、不串 tracker。
+
+## 2026-11-19 · auto_feed 点击目标站后的链路（只记思路，不复制代码）
+
+- 源站详情页：目标站链接点击时先做禁转/排他检查与二次确认；立即开空白标签避免弹窗拦截；把源种预下载成 base64；生成 handoff token 附到目标站上传页 URL；元数据写入 userscript 存储；最后才导航。
+- 目标站上传页：按 URL token → window.name 标记 → pending 转发标记 → 最近缓存依次取回转发数据；显示绿色“转发数据”提示并自动填表；表单晚渲染时用 load 事件 + MutationObserver 重试，最多约 15 秒；填完不自动提交，由用户确认后手动点上传。
+- 填表范围：标题/副标题/简介、IMDb/豆瓣、类型/媒介/分辨率/编码/音频/地区/制作组、HDR/DoVi/Atmos/中字等标签、匿名默认值；站点适配器再补自己的数字字典。
+- 种子处理：从源种重建顶层 announce、creation date、encoding，截取 info 到 private 标志，强制 private=1，并在 info 末尾追加 source=目标站名；因此 infohash 会变，不是字节级保留 info。
+- 可借的思路：预下载与持久化、目标站字段字典、填完不自动提交。不能借：重建 info 改 hash；我们的清洗必须保留 info 原始字节，发布后拉目标站权威种做辅种。
