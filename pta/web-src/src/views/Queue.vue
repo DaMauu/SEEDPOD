@@ -23,7 +23,7 @@
           <span class="badge" :class="statusTone(it.status)">{{ label(it.status) }}</span>
         </button>
       </div>
-      <div class="queue-page">
+      <div v-if="tab !== 'failed'" class="queue-page">
         <div class="queue-pager">
           <span class="pager-link" :class="{ off: page <= 1 }" @click="page > 1 && loadQueuePage(page - 1)">上一页</span>
           <span class="pager-meta">第 {{ page }} / {{ pages }} 页 · 共 {{ matched }} 条</span>
