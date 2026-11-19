@@ -506,28 +506,47 @@ async function act(action) {
 async function fetchMeta() {
   if (!sel.value || metaBusy.value) return
   metaBusy.value = true
-  metaMsg.value = ''
+  metaMsg.value = '正在查资料，最多等 20 秒…'
+  const ctrl = new AbortController()
+  const timer = setTimeout(function () { ctrl.abort() }, 20000)
   try {
     const j = await (await fetch('/api/meta/fetch', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      signal: ctrl.signal,
       body: JSON.stringify({ title: form.title || sel.value.title, year: sel.value.year, type: sel.value.cat === 'tv' ? 'tv' : 'movie' })
     })).json()
     if (j && j.ok && j.data) {
-      const filled = []
-      if (j.data.title) { form.cn = j.data.title; filled.push('中文名') }
-      if (j.data.overview) { form.intro = j.data.overview; filled.push('简介') }
-      metaMsg.value = filled.length ? ('已填入 ' + filled.join(' / ') + ' · 来源 ' + (j.provider || '公开资料')) : '查到了，但没有中文名或简介；可以手动补'
+      const got = []
+      const changed = []
+      if (j.data.title) {
+        got.push('中文名')
+        if (form.cn !== j.data.title) { form.cn = j.data.title; changed.push('中文名') }
+      }
+      if (j.data.overview) {
+        got.push('简介')
+        if (form.intro !== j.data.overview) { form.intro = j.data.overview; changed.push('简介') }
+      }
+      if (!got.length) {
+        metaMsg.value = '查到了，但没有中文名或简介；可以手动补'
+      } else if (!changed.length) {
+        metaMsg.value = '查到了 ' + got.join(' / ') + '，和现有内容一样，没有改动'
+      } else {
+        const saved = await saveFields()
+        metaMsg.value = '已更新 ' + changed.join(' / ') + ' · 来源 ' + (j.provider || '公开资料') + (saved.ok ? ' · 已保存' : ' · 保存失败，发布前会再保存一次')
+      }
       toast(metaMsg.value)
     } else {
       metaMsg.value = '没查到：' + ((j && j.error && j.error.message) || '换个片名或年份再试')
       toast(metaMsg.value)
     }
   } catch (e) {
-    reportError('Queue.fetchMeta', e)
-    metaMsg.value = '资料请求发不出去'
+    if (e && e.name === 'AbortError') metaMsg.value = '查询超时（20 秒），稍后再试'
+    else { reportError('Queue.fetchMeta', e); metaMsg.value = '资料请求发不出去' }
     toast(metaMsg.value)
+  } finally {
+    clearTimeout(timer)
+    metaBusy.value = false
   }
-  metaBusy.value = false
 }
 function submitTarget() {
   if (!sel.value || busy.target) return

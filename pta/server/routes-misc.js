@@ -51,8 +51,14 @@ module.exports = function (app, ctx) {
     const qTitle = String(parsed.title || b.title || '').trim();
     const qYear = b.year || parsed.year || '';
     const qType = b.type || (parsed.category === 'tv' ? 'tv' : 'movie');
+    const t0 = Date.now();
     const r = await metaExt.fetchMeta({ title: qTitle, year: qYear, type: qType, provider: b.provider, key: b.key,
       requireYear: false, castLimit: 8 });
+    if (ctx.logEvent) {
+      ctx.logEvent(r.ok ? 'info' : 'warn', '资料', '查询「' + qTitle + '」' +
+        (r.ok ? ' · ' + (r.provider || '公开资料') + ' 已找到' : ' · ' + (r.code || '') + ' ' + (r.message || '')) +
+        ' · ' + (Date.now() - t0) + 'ms');
+    }
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r);
   });

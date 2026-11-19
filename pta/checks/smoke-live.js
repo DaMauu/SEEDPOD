@@ -487,7 +487,9 @@ async function main() {
     await page.waitForTimeout(350);
     need((await page.locator('.qd-pubinfo input.input').nth(1).inputValue()) === '冒烟中文名', '查资料没填中文名');
     need((await page.locator('.qd-desc-card textarea').inputValue()) === '冒烟简介', '查资料没填简介');
-    need(/已填入 中文名 \/ 简介/.test(await page.locator('.qd-meta-msg').innerText()), '查资料没显示结果');
+    need(/已更新 中文名 \/ 简介/.test(await page.locator('.qd-meta-msg').innerText()), '查资料没显示结果');
+    const metaSaved = await page.evaluate(async (id) => (await fetch('/api/queue/' + id)).json(), qid);
+    need(metaSaved.ok && metaSaved.data.cn === '冒烟中文名' && metaSaved.data.intro === '冒烟简介', '查资料结果没保存：' + JSON.stringify({ cn: metaSaved.data && metaSaved.data.cn, intro: metaSaved.data && metaSaved.data.intro }));
     await page.unroute('**/api/meta/fetch');
     await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
     await page.locator('.qd-media details.qd-advanced-sub').evaluateAll((els) => els.forEach((el) => { el.open = true }));
