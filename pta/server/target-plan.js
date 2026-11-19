@@ -182,6 +182,21 @@ function makePlan(deps) {
       notes.push(k);
       delete fields[k];
     });
+    /* 给预览用的可读标签：把数字 id 翻回站点选项文字，不额外请求站点 */
+    const labels = {};
+    const reverse = function (map, val) {
+      return Object.keys(map || {}).filter(function (k) { return String(map[k]) === String(val); })[0] || '';
+    };
+    ['type', 'cat', 'category', 'source_sel', 'team_sel', 'medium_sel', 'standard_sel', 'codec_sel', 'audiocodec_sel'].forEach(function (k) {
+      if (fields[k] === undefined) return;
+      const opts = selects[k];
+      if (Array.isArray(opts)) {
+        const hit = opts.filter(function (o) { return String(o.value) === String(fields[k]); })[0];
+        if (hit && hit.label) { labels[k] = String(hit.label); return; }
+      }
+      if (k === 'type' || k === 'cat' || k === 'category') labels[k] = reverse(t.catMap, fields[k]);
+      else if (k === 'team_sel') labels[k] = reverse((t.valueMaps && t.valueMaps.team) || {}, fields[k]);
+    });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
     const hasCookie = !!(c && c.cookie);
@@ -193,7 +208,7 @@ function makePlan(deps) {
     return { ok: true, data: {
       host: t.host, engine: t.engine, url: t.base + t.upload.path, method: 'POST',
       fileField: t.upload.fileField, fields: fields,
-      tags: tags, tagFields: tagFields,
+      tags: tags, tagFields: tagFields, labels: labels,
       autoActions: (function () {
         const f = flowConfig.read(ctx);
         return [

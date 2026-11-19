@@ -1,5 +1,7 @@
 /* 发布核心：dry-run、真发布（取种 + qB add + 回查）、状态落账。
    路由与调度器共用，避免两份实现。 */
+const fs = require('fs');
+const path = require('path');
 const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
@@ -82,11 +84,11 @@ function makePublisher(ctx) {
       out.watchPath = d.dir;
       out.savePath = d.dir;
       out.filename = watch.safeName(String(it.title || 'upload').slice(0, 60) + '.torrent');
-      out.message = '演练：会写入 watch 目录 ' + d.dir;
+      out.message = '会写入 watch 目录 ' + d.dir;
     } else {
       out.wouldAdd = true;
       out.url = String(dl.url || '');
-      out.message = '演练：会通过 qB 加种' + (out.savePath ? ' · 保存到 ' + out.savePath : '');
+      out.message = '会通过 qB 加种' + (out.savePath ? ' · 保存到 ' + out.savePath : '');
     }
     if (it.stage === 'failed' && it.stageFailedFrom === 'injected') {
       out.retry = true;
@@ -237,6 +239,13 @@ function makePublisher(ctx) {
         save(it);
         return { ok: false, code: 'BAD_SOURCE_TORRENT', message: '源种解析不出 infohash' };
       }
+      /* 缓存源种，发布前预览用它验证清洗前后 infohash；文件 0600，只落私有 data */
+      try {
+        const dir = path.join(DATA_DIR, 'torrents');
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const file = path.join(dir, 'source-' + meta.hash + '.torrent');
+        if (!fs.existsSync(file)) fs.writeFileSync(file, got.buf, { mode: 0o600 });
+      } catch (e) { /* 忽略：预览没有缓存也能显示“应不变” */ }
       if (!found.found) found = await qb.findTorrent(dl, meta.hash, meta.name);
     }
     if (!found.found) {

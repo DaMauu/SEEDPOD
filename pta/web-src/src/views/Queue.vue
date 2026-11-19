@@ -74,7 +74,7 @@
             <h3>发布信息</h3>
             <div class="qd-field">
               <span>目标站</span>
-              <select v-model="form.targetSite" class="input">
+              <select v-model="form.targetSite" class="input" @change="loadPreview">
                 <option value="">未选择</option>
                 <option v-if="form.targetSite && !sites.some(s => s.name === form.targetSite)" :value="form.targetSite">{{ form.targetSite }}</option>
                 <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
@@ -148,31 +148,34 @@
           </section>
 
           <details class="qd-advanced">
-          <summary>高级：媒体 / 截图 / 种子</summary>
+          <summary>高级：媒体信息与临时种子（日常可忽略）</summary>
           <section class="sd-card qd-media">
             <h3>媒体</h3>
+            <div class="soft">这里只用于读取视频信息、生成截图/临时种子和整理发布资料；正常转载不用填。</div>
             <div class="qd-field">
-              <span>文件</span>
+              <span>文件（可选）</span>
               <div class="qd-path-row">
                 <input v-model="media.path" class="input" :placeholder="media.root ? media.root + '/...' : '服务器上的文件路径'">
                 <button class="btn ghost slim" type="button" :disabled="media.pathLoading" @click="fillMediaPath">{{ media.pathLoading ? '读取中…' : '从 qB 取路径' }}</button>
               </div>
             </div>
-            <div class="soft">文件必须在 {{ media.root || 'PTA_MEDIA_ROOT' }} 下；只填 MediaInfo 文本不需要这里。</div>
+            <div class="soft">只用于读取媒体信息和截图；不填也能发布。文件必须在 {{ media.root || 'PTA_MEDIA_ROOT' }} 下。</div>
             <div class="qd-field">
-              <span>Tracker</span>
+              <span>Tracker（仅生成临时种子）</span>
               <input v-model="media.announce" class="input" placeholder="http://tracker.example/announce">
             </div>
+            <div class="soft">正常发布不用填；目标站会用自己的 tracker。</div>
             <div class="qd-field qd-media-info">
               <span>MediaInfo/BDInfo</span>
               <textarea v-model="media.infoText" class="input sd-note" rows="3" placeholder="粘贴 MediaInfo 或 BDInfo 文本"></textarea>
             </div>
+            <div class="soft">粘贴后点「解析 MediaInfo」，内容会写进目标站简介。</div>
             <div class="qd-actions">
-              <button class="btn ghost slim" type="button" :disabled="media.probing || !media.path.trim()" title="先填媒体文件路径，或点从 qB 取路径" @click="probeMedia">{{ media.probing ? '探测中…' : '探测' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.shooting || !media.path.trim()" title="先填媒体文件路径，或点从 qB 取路径" @click="shootMedia">{{ media.shooting ? '截图中…' : '生成截图' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="先填文件路径和 tracker announce" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成种子' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析媒体信息' }}</button>
-              <button class="btn ghost slim" type="button" :disabled="media.preparing" @click="prepareRelease">{{ media.preparing ? '准备中…' : '准备上传' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.probing || !media.path.trim()" title="读取分辨率、编码、时长等；只用于预览" @click="probeMedia">{{ media.probing ? '读取中…' : '读取视频信息' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.shooting || !media.path.trim()" title="从视频里截 3 张图；日常可不做" @click="shootMedia">{{ media.shooting ? '截图中…' : '从视频截图' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.making || !media.path.trim() || !media.announce.trim()" title="生成一个临时种子；正常发布用源种，不需要这个" @click="makeMediaTorrent">{{ media.making ? '生成中…' : '生成临时种子' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.parsing || !media.infoText.trim()" @click="parseMediaInfo">{{ media.parsing ? '解析中…' : '解析 MediaInfo' }}</button>
+              <button class="btn ghost slim" type="button" :disabled="media.preparing" @click="prepareRelease">{{ media.preparing ? '整理中…' : '整理发布资料' }}</button>
             </div>
             <div v-if="!media.path.trim()" class="soft">先填文件路径，或点「从 qB 取路径」自动找。</div>
             <div v-if="media.info" class="t-sub">媒体：{{ media.info.summary || media.info.kind }}<span v-if="media.info.kind"> · {{ media.info.kind }}</span></div>
@@ -184,6 +187,27 @@
         </div>
 
         <div v-if="sel.qb || sel.sourceState" class="t-sub qd-download">qB：{{ qbText() }}</div>
+        <section v-if="preflight" class="sd-card qd-preflight">
+          <div class="qd-preflight-head">
+            <h3>发布前检查</h3>
+            <span class="badge" :class="preflight.ready ? 'green' : 'amber'">{{ preflight.ready ? '可提交' : '有缺项' }}</span>
+          </div>
+          <div class="qd-preflight-row">
+            <span>目标站 <b>{{ preflight.host }}</b></span>
+            <span>分类 <b>{{ preflight.labels.type || preflight.fields.type || '未映射' }}</b></span>
+            <span>制作组 <b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></span>
+            <span>媒介 <b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></span>
+          </div>
+          <div class="qd-preflight-row">
+            <span>种子 <b>{{ preflight.torrent.name || '先下载种子' }}</b></span>
+            <span v-if="preflight.torrent.hash">infohash <b>{{ preflight.torrent.hash.slice(0, 12) }}…</b>
+              <em v-if="preflight.checked" :class="preflight.hashUnchanged ? 'qd-ok' : 'qd-stage-err'">{{ preflight.hashUnchanged ? '清洗后不变' : '清洗后变了' }}</em>
+              <em v-else class="soft">清洗只换 announce，应不变</em>
+            </span>
+          </div>
+          <div class="qd-preflight-row"><span>Tracker <b>{{ preflight.trackerNote }}</b></span></div>
+          <div v-if="preflight.warnings && preflight.warnings.length" class="qd-warn">需处理：{{ preflight.warnings.join('；') }}</div>
+        </section>
         <div v-if="sel.pubMsg" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ sel.pubMsg }}</div>
         <div v-if="sel.targetUpload" class="qd-status" :class="sel.targetVerify && sel.targetVerify.found ? 'ok' : ''">
           目标站 {{ sel.targetUpload.host }} · {{ sel.targetUpload.message || '已提交' }}
@@ -191,7 +215,7 @@
           <span v-if="sel.targetVerify"> · 回查：{{ sel.targetVerify.found ? '已找到' : '未找到' }}</span>
         </div>
         <div v-if="sel.injectPlan" class="qd-status" :class="sel.injectPlan.ok === false ? 'bad' : ''">
-          注入演练：{{ sel.injectPlan.client }} · {{ sel.injectPlan.message }}
+          注入检查 · {{ sel.injectPlan.client === 'watch' ? 'watch' : 'qB' }}：{{ sel.injectPlan.message }}
           <span v-if="sel.injectPlan.hash"> · {{ String(sel.injectPlan.hash).slice(0, 12) }}…</span>
           <span v-if="sel.injectPlan.retry"> · 重试</span>
           <span v-if="sel.injectPlan.idempotent"> · 已注入，跳过</span>
@@ -199,8 +223,8 @@
 
         </div>
 
-        <div class="qd-targets-foot">
-          <span class="qd-targets-lbl">多目标</span>
+        <div v-if="sites.length > 1" class="qd-targets-foot">
+          <span class="qd-targets-lbl">同时发布到</span>
           <div class="pick-row qd-target-chips">
             <label v-for="s in sites" :key="s.name" class="cat-chip" :class="{ on: form.targets.includes(s.name) }" :title="s.name">
               <input type="checkbox" :value="s.name" v-model="form.targets" class="qd-target-check">
@@ -211,7 +235,7 @@
         <div class="qd-actions">
           <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.inject" @click="runInjectPlan">{{ busy.inject ? '演练中…' : '注入演练' }}</button>
+          <button class="btn ghost slim" type="button" :disabled="busy.inject" title="只检查会不会加进 qB，不会真的发布" @click="runInjectPlan">{{ busy.inject ? '检查中…' : '检查 qB 注入' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="preview">草稿预览</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="fetchMeta">查资料</button>
@@ -264,6 +288,8 @@ const tags = reactive({ chips: [], warnings: [] })
 const busy = reactive({ act: false, check: false, approve: false, publish: false, target: false, images: false, inject: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const media = reactive({ path: '', announce: '', infoText: '', info: null, parsing: false, preparing: false, probing: false, shooting: false, making: false, pathLoading: false, probe: null, torrent: null, root: '' })
+const preflight = ref(null)
+let previewSeq = 0
 let mediaCfgLoaded = false
 const filePick = ref(null)
 let timer = null
@@ -399,6 +425,7 @@ async function select(id) {
     tags.chips = []
     tags.warnings = []
     reason.value = ''
+    await loadPreview()
   } catch (e) { reportError('Queue', e) }
 }
 function setTab(v) { tab.value = v; page.value = 1; loadQueuePage(1) }
@@ -423,6 +450,20 @@ async function apiAction(body) {
     body: JSON.stringify(body)
   })
   return { status: r.status, body: await r.json().catch(() => null) }
+}
+async function loadPreview() {
+  if (!sel.value) { preflight.value = null; return }
+  const id = sel.value.id
+  const host = form.targetSite || sel.value.targetSite || ''
+  const seq = ++previewSeq
+  try {
+    const q = host ? '?host=' + encodeURIComponent(host) : ''
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(id) + '/publish-preview' + q, { credentials: 'same-origin' })).json()
+    if (seq !== previewSeq || !sel.value || sel.value.id !== id) return
+    preflight.value = j && j.ok ? j.data : null
+  } catch (e) {
+    if (seq === previewSeq) preflight.value = null
+  }
 }
 function downloadReady() {
   const q = sel.value || {}
@@ -455,7 +496,7 @@ function startProgressPoll() {
           ok: true, at: new Date().toISOString(), hash: j.data.hash || '',
           progress: Number(j.data.progress) || 0, complete: !!j.data.complete, state: ''
         }
-        if (downloadReady()) { clearInterval(progressTimer); progressTimer = null; toast('下载完成，可以发布') }
+        if (downloadReady()) { clearInterval(progressTimer); progressTimer = null; toast('下载完成，可以发布'); loadPreview() }
       }
     } catch (e) { reportError('Queue.progress', e) }
   }, 8000)
@@ -599,9 +640,9 @@ async function runInjectPlan() {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ dryRun: true })
     })).json()
-    if (j && j.ok) { toast('注入演练：' + (j.data.message || 'OK')); await refresh() }
-    else toast((j && j.error && j.error.message) || '注入演练失败')
-  } catch (e) { reportError('Queue.runInjectPlan', e); toast('注入演练请求发不出去') }
+    if (j && j.ok) { toast('注入检查：' + (j.data.message || 'OK')); await refresh() }
+    else toast((j && j.error && j.error.message) || '注入检查失败')
+  } catch (e) { reportError('Queue.runInjectPlan', e); toast('注入检查请求发不出去') }
   busy.inject = false
 }
 async function imageAction(dryRun) {
@@ -811,6 +852,13 @@ onUnmounted(() => {
 
 <style scoped>
 .qd-prepared-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.qd-preflight { display:flex; flex-direction:column; gap:5px; }
+.qd-preflight-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.qd-preflight-head h3 { margin:0; }
+.qd-preflight-row { display:flex; flex-wrap:wrap; gap:2px 14px; font-size:11.5px; color:var(--muted); }
+.qd-preflight-row b { color:var(--text); font-weight:600; }
+.qd-preflight-row em { font-style:normal; }
+.qd-ok { color:var(--green); }
 .shot { position: relative; }
 .shot-del {
   position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;

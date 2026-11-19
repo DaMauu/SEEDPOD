@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-19T04:51:36.755Z",
+  "at": "2026-11-19T05:15:02.495Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/CrawlCard.vue": "7a23304c538747c5",
@@ -35,7 +35,7 @@
     "views/Dashboard.vue": "d564aa263d86b482",
     "views/Logs.vue": "6323dca55bc8df20",
     "views/Nodes.vue": "493811e7ecd3283b",
-    "views/Queue.vue": "cb8df164791e421b",
+    "views/Queue.vue": "aa298c307ed0b9e4",
     "views/Settings.vue": "5d4c5756e639d3cf",
     "views/Sites.vue": "e99cae4355e8a25c",
     "views/Sources.vue": "d95f1d8b3f02f764"

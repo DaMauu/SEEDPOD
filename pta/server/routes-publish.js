@@ -98,7 +98,6 @@ module.exports = function (app, ctx) {
       const cur = load(req.params.id);
       if (cur) {
         cur.data.injectPlan = r.data;
-        cur.data.pubMsg = r.data.message;
         save(cur.data);
       }
       return ok(reply, r.data);

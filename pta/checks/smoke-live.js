@@ -44,6 +44,18 @@ async function main() {
     seedSite.run(x[0], JSON.stringify({ url: x[1], arch: x[2], title: x[3], base: true }), new Date().toISOString());
   });
   seedDb.close();
+  fs.writeFileSync(path.join(DATA, 'site-pack.json'), JSON.stringify({
+    version: 1,
+    sites: {
+      'target.example': {
+        engine: 'nexusphp', base: 'http://127.0.0.1:1',
+        upload: { path: '/takeupload.php', formPath: '/upload.php', fileField: 'file', fields: { name: '{title}' } },
+        verify: { path: '/torrents.php?search={title}' },
+        catMap: { '电影': '401' },
+        valueMaps: { team: { 'CMCT': '8' } }
+      }
+    }
+  }, null, 2), { mode: 0o600 });
 
   const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
@@ -469,18 +481,21 @@ async function main() {
     await page.waitForTimeout(400);
     await page.locator('details.qd-advanced').evaluate((el) => { el.open = true });
     await page.waitForTimeout(150);
+    await page.waitForSelector('.qd-preflight', { timeout: 3000 });
+    const pf = await page.locator('.qd-preflight').innerText();
+    need(/发布前检查/.test(pf) && /电影/.test(pf) && /只换目标站通用 announce/.test(pf), '发布前检查缺失：' + pf.slice(0, 160));
     const txt = await page.locator('#queue-detail').innerText();
     need(/发布信息/.test(txt) && /截图/.test(txt), '详情没渲染：' + txt.slice(0, 80));
     need(await page.locator('.qd-media').count() === 1, '媒体卡缺失');
     const mtxt = await page.locator('.qd-media').innerText();
-    need(/探测/.test(mtxt) && /生成截图/.test(mtxt) && /生成种子/.test(mtxt), '媒体按钮缺失：' + mtxt.slice(0, 80));
+    need(/读取视频信息/.test(mtxt) && /从视频截图/.test(mtxt) && /生成临时种子/.test(mtxt), '媒体按钮缺失：' + mtxt.slice(0, 80));
     need(await page.locator('.qd-media-info textarea').count() === 1, 'MediaInfo/BDInfo 输入框缺失');
     await page.fill('.qd-media-info textarea', 'Disc Title: Smoke.Media.2024.2160p\nDisc Size: 1,000,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps');
-    await page.getByRole('button', { name: '解析媒体信息' }).click();
+    await page.getByRole('button', { name: '解析 MediaInfo' }).click();
     await page.waitForTimeout(500);
     const parsed = await page.locator('.qd-media').innerText();
     need(/2160p/.test(parsed) && /BDInfo/.test(parsed), '媒体解析没显示摘要：' + parsed.slice(0, 120));
-    await page.getByRole('button', { name: '准备上传' }).click();
+    await page.getByRole('button', { name: '整理发布资料' }).click();
     await page.waitForTimeout(800);
     const prepared = await page.locator('.qd-media').innerText();
     need(/2160p/.test(prepared), '准备后媒体摘要丢了：' + prepared.slice(0, 120));
@@ -552,10 +567,10 @@ async function main() {
     await page.waitForTimeout(800);
     await page.locator('.q-item').first().evaluate(function (el) { el.click(); });
     await page.waitForTimeout(400);
-    await page.locator('button').filter({ hasText: '注入演练' }).first().evaluate(function (el) { el.click(); });
+    await page.locator('button').filter({ hasText: '检查 qB 注入' }).first().evaluate(function (el) { el.click(); });
     await page.waitForTimeout(900);
     const txt = await page.locator('#queue-detail').innerText();
-    need(/注入演练：qb/.test(txt) && /qB/.test(txt), '注入演练没显示：' + txt.slice(0, 200));
+    need(/注入检查 · qB：会通过 qB 加种/.test(txt), '注入检查没显示：' + txt.slice(0, 200));
   });
 
   await check('无 JS 报错', async () => {

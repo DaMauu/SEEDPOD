@@ -92,10 +92,20 @@ async function main() {
         verify: { path: '/torrents?search={title}' }, catMap: { 'movie': '1' } },
       'gazelle.example': { engine: 'gazelle', base: 'http://127.0.0.1:' + mockPort },
       'nexus-default.example': { engine: 'nexusphp', base: 'http://127.0.0.1:' + mockPort,
-        catMap: [{ id: '401', label: 'Movies', purpose: 'movie' }, { id: '402', label: 'TV', purpose: 'tv' }] }
+        catMap: [{ id: '401', label: 'Movies', purpose: 'movie' }, { id: '402', label: 'TV', purpose: 'tv' }] },
+      'labels.example': { engine: 'nexusphp', base: 'http://127.0.0.1:' + mockPort,
+        upload: { path: '/takeupload.php', formPath: '/upload-form', fileField: 'file', fields: { name: '{title}', type: '{catId}', team_sel: '{team}' } },
+        verify: { path: '/torrents.php?search={title}' },
+        catMap: { '电影': '401' },
+        valueMaps: { team: { 'CMCT': '8' } },
+        form: { selects: { type: [{ value: '401', label: '电影' }], team_sel: [{ value: '8', label: 'CMCT' }] } } }
     }
   };
   fs.writeFileSync(path.join(DATA, 'site-pack.json'), JSON.stringify(pack, null, 2), { mode: 0o600 });
+  fs.writeFileSync(path.join(DATA, 'site-maps.json'), JSON.stringify({
+    version: 1,
+    sites: { 'labels.example': { form: { selects: { type: [{ value: '401', label: '电影' }], team_sel: [{ value: '8', label: 'CMCT' }] } } } }
+  }, null, 2), { mode: 0o600 });
 
   child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),
@@ -124,7 +134,7 @@ async function main() {
   let qid = '';
 
   await runCatalog({ check: check, need: need, json: json, BASE: BASE, DATA: DATA, mockPort: mockPort });
-  qid = await runUpload({ check: check, need: need, json: json, BASE: BASE, torrent: torrent, hash: hash, hits: hits, state: state, mockPort: mockPort, makeTorrent2: makeTorrent2 });
+  qid = await runUpload({ check: check, need: need, json: json, BASE: BASE, DATA: DATA, torrent: torrent, hash: hash, hits: hits, state: state, mockPort: mockPort, makeTorrent2: makeTorrent2 });
   await runDeleteVerify({ check: check, need: need, json: json, BASE: BASE, torrent: torrent, hits: hits, state: state, mockPort: mockPort, qid: qid });
 }
 

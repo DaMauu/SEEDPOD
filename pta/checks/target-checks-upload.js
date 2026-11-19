@@ -1,8 +1,9 @@
 /* target 上传/计划检查组：干跑字段、分类/标签/BDInfo、门禁、提交与查重。 */
 const fs = require('fs');
+const path = require('path');
 const { infoHash } = require('./target-mock');
 async function runUpload(C) {
-  const { check, need, json, BASE, torrent, hash, hits, state, mockPort, makeTorrent2 } = C;
+  const { check, need, json, BASE, DATA, torrent, hash, hits, state, mockPort, makeTorrent2 } = C;
   let qid = '';
   await check('队列条目与干跑表单映射', async function () {
     const add = await json(BASE + '/api/queue', {
@@ -58,6 +59,50 @@ async function runUpload(C) {
     need(multi3.body.data.targets[0].data.cleaned === true, '清洗标记没出来');
     need(multi3.body.data.targets[0].data.torrent.hash === hash, '清洗后 infohash 变了');
     need(hits.length === 0, '清洗干跑发了请求：' + hits.length);
+  });
+
+  await check('计划返回可读分类/制作组标签', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Label 2024 1080p Blu-ray', cn: '标签', intro: 'x', targetSite: 'labels.example', status: 'approved', cat: '电影', team: 'CMCT' })
+    });
+    need(add.status === 200 && add.body.ok, '建标签队列失败');
+    const p = await json(BASE + '/api/targets/labels.example/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, '标签计划失败：' + JSON.stringify(p.body && p.body.error));
+    need(p.body.data.labels && p.body.data.labels.type === '电影', '分类标签没回填：' + JSON.stringify(p.body.data.labels));
+    need(p.body.data.labels.team_sel === 'CMCT', '制作组标签没回填：' + JSON.stringify(p.body.data.labels));
+  });
+
+  await check('发布前检查只读返回计划，不发目标站请求', async function () {
+    const before = hits.length;
+    const pv = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/publish-preview?host=127.0.0.1');
+    need(pv.status === 200 && pv.body.ok, '预览失败：' + pv.status + ' ' + JSON.stringify(pv.body && pv.body.error));
+    const d = pv.body.data;
+    need(d.host === '127.0.0.1' && d.ready === true, '预览计划没就绪：' + JSON.stringify(d));
+    need(typeof d.trackerNote === 'string' && d.trackerNote.length > 0, '预览缺 tracker 说明');
+    need(d.torrent && d.torrent.hash === '', '没有源种时不该编 hash：' + JSON.stringify(d.torrent));
+    need(hits.length === before, '预览不该发目标站请求：' + (hits.length - before));
+  });
+
+  await check('发布前检查用缓存源种验证清洗不改 infohash', async function () {
+    const dir = path.join(DATA, 'torrents');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'source-' + hash + '.torrent'), torrent, { mode: 0o600 });
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    const row = db.prepare('SELECT data FROM queue WHERE id = ?').get(qid);
+    const it = JSON.parse(row.data);
+    it.sourceState = { ok: true, at: new Date().toISOString(), hash: hash, name: 'Source.Torrent.2024', progress: 1, complete: true };
+    db.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(it), qid);
+    db.close();
+    const pv = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/publish-preview?host=127.0.0.1');
+    need(pv.status === 200 && pv.body.ok, '预览失败：' + JSON.stringify(pv.body && pv.body.error));
+    const d = pv.body.data;
+    need(d.torrent && d.torrent.hash === hash, '预览没读到缓存源种：' + JSON.stringify(d.torrent));
+    need(d.checked === true && d.hashUnchanged === true, '清洗校验没通过：' + JSON.stringify({ checked: d.checked, hashUnchanged: d.hashUnchanged }));
   });
 
   await check('目标站副标题优先用源副标题', async function () {

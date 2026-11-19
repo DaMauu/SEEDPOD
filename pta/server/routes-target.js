@@ -1,6 +1,9 @@
 /* 目标站提交与回查（Fastify v2）。
    干跑默认；真提交必须 realPublish=true；cookie 只从加密凭据读。 */
 const fs = require('fs');
+const path = require('path');
+const flowConfig = require('./flow-config');
+const torrentClean = require('./torrent-clean');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
@@ -210,6 +213,48 @@ module.exports = function (app, ctx) {
     const r = target.plan(req.params.host, item.data);
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     return ok(reply, r.data);
+  });
+
+  /* 发布前检查：只读计划和本地缓存源种，不请求目标站、不上传、不返回 announce 明文 */
+  app.get('/api/queue/:id/publish-preview', async (req, reply) => {
+    const item = loadQueue(req.params.id);
+    if (!item) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
+    const host = String((req.query && req.query.host) || item.data.targetSite || '').trim().toLowerCase();
+    if (!host) return bad(reply, 'NO_TARGET', '还没选目标站', 400);
+    const p = target.plan(host, item.data);
+    if (!p.ok) return bad(reply, p.code || 'PLAN_FAILED', p.message || '目标站计划失败', p.http || 400);
+    const plan = p.data || {};
+    const src = item.data.sourceState || {};
+    const sourceHash = String(src.hash || (item.data.prepared && item.data.prepared.torrent && item.data.prepared.torrent.hash) || '');
+    let checked = false;
+    let hashUnchanged = null;
+    if (sourceHash) {
+      try {
+        const file = path.join(ctx.DATA_DIR, 'torrents', 'source-' + sourceHash + '.torrent');
+        if (fs.existsSync(file)) {
+          const buf = fs.readFileSync(file);
+          const before = torrentClean.infoHashOf(buf);
+          /* 占位 announce 只为验证清洗不碰 info；不依赖目标站网络，也不回传真实 passkey */
+          const after = torrentClean.infoHashOf(torrentClean.replaceAnnounce(buf, 'https://preview.invalid/announce'));
+          checked = true;
+          hashUnchanged = before === after && before === sourceHash;
+        }
+      } catch (e) { checked = false; hashUnchanged = null; }
+    }
+    const cleanOn = flowConfig.on(flowConfig.read(ctx), '上传前清洗 tracker', true);
+    const f = plan.fields || {};
+    return ok(reply, {
+      host: host,
+      ready: !!plan.ready,
+      warnings: plan.warnings || [],
+      labels: plan.labels || {},
+      fields: { type: f.type || '', source_sel: f.source_sel || '', team_sel: f.team_sel || '', medium_sel: f.medium_sel || '', standard_sel: f.standard_sel || '' },
+      torrent: { hash: sourceHash, name: String(src.name || ''), size: String(item.data.size || '') },
+      checked: checked,
+      hashUnchanged: hashUnchanged,
+      cleanEnabled: cleanOn,
+      trackerNote: cleanOn ? '只换目标站通用 announce；找不到就停，不直传' : '未清洗：源站 tracker 会带过去'
+    });
   });
 
   app.post('/api/targets/:host/upload', async (req, reply) => {
