@@ -93,6 +93,49 @@ function seedDb() {
       await page.close();
     });
 
+    await check('多目标回查展示不串站，缺 host 不借用旧结果', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const items = {
+        q_verify_a: { id: 'q_verify_a', title: 'Verify A', status: 'pending', stage: 'draft', targetSite: 'a.example', targets: ['a.example', 'b.example'],
+          targetUpload: { host: 'a.example', message: '已提交' },
+          targetVerifyByHost: { 'a.example': { found: false }, 'b.example': { found: true } },
+          targetVerify: { found: true } },
+        q_verify_b: { id: 'q_verify_b', title: 'Verify B', status: 'pending', stage: 'draft', targetSite: 'a.example', targets: ['a.example', 'b.example'],
+          targetUpload: { message: '已提交' },
+          targetVerify: { found: true } }
+      };
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [items.q_verify_a, items.q_verify_b], matched: 2, counts: {} } }) });
+      });
+      await page.route(/\/api\/queue\/(q_verify_[ab])$/, async function (route) {
+        const id = route.request().url().split('/').pop();
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: items[id] }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'a.example', hasCookie: true }, { host: 'b.example', hasCookie: true }] }) });
+      });
+      await page.route('**/api/sites', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(900);
+      await page.locator('.q-item').filter({ hasText: 'Verify A' }).click();
+      await page.waitForTimeout(450);
+      const aText = await page.locator('.qd-status').first().innerText();
+      need(aText.indexOf('回查：未找到') >= 0, 'A 站回查没按 byHost 显示：' + aText);
+      need(aText.indexOf('回查：已找到') < 0, 'A 站借用了 B 站结果：' + aText);
+      await page.locator('.q-item').filter({ hasText: 'Verify B' }).click();
+      await page.waitForTimeout(450);
+      const bText = await page.locator('.qd-status').first().innerText();
+      need(bText.indexOf('回查：') < 0, '缺 host 的多目标借用了旧回查：' + bText);
+      await page.close();
+    });
+
     await check('驳回条目可点重新送审回待确认', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let status = 'rejected';

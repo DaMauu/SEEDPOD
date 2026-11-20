@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.567 · 2026-11-22
+
+### 审计三十七轮
+- 回查失败写 `targetVerifyByHost[host].found=false`，手动回查同步旧字段；失败不会覆盖其他目标站结果。
+- 前端多目标回查只读当前 host；缺 host 且多目标时不再借用 `targetVerify` 旧结果。
+- target 40/40，frontend-regress 21/21。
+- 全量 run.sh 通过。
+
 ## v0.7.566 · 2026-11-22
 
 ### 审计三十六轮

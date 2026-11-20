@@ -239,7 +239,10 @@ function verifyOf(item) {
   if (!item) return null
   const host = String((item.targetUpload && item.targetUpload.host) || '').toLowerCase()
   const byHost = item.targetVerifyByHost || {}
-  return (host && byHost[host]) || item.targetVerify || null
+  if (host && byHost[host]) return byHost[host]
+  /* 没有 host 时只有单目标才能沿用旧字段，多目标不能用别人的回查结果 */
+  const targets = Array.isArray(item.targets) && item.targets.length ? item.targets : (item.targetSite ? [item.targetSite] : [])
+  return targets.length <= 1 ? (item.targetVerify || null) : null
 }
 async function retryStage() {
   if (!sel.value) return

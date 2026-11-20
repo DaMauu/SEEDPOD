@@ -380,7 +380,9 @@ module.exports = function (app, ctx) {
     const r = await target.verify(req.params.host, item.data, t.buf, { url: b.url });
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
     if (!item.data.targetVerifyByHost || typeof item.data.targetVerifyByHost !== 'object') item.data.targetVerifyByHost = {};
-    item.data.targetVerifyByHost[String(req.params.host || '').toLowerCase()] = Object.assign({}, r.data, { at: now() });
+    const rec = Object.assign({}, r.data, { at: now() });
+    item.data.targetVerifyByHost[String(req.params.host || '').toLowerCase()] = rec;
+    item.data.targetVerify = rec;
     saveQueue(item.data);
     return ok(reply, r.data);
   });

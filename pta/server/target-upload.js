@@ -26,6 +26,11 @@ function setVerify(itemData, host, data) {
   return rec;
 }
 
+/* 回查失败也要落 found:false，UI 才能显示“未找到”而不是停留在旧结果 */
+function markVerifyFailed(itemData, host, last) {
+  return setVerify(itemData, host, Object.assign({}, last || {}, { found: false }));
+}
+
 function makeUpload(deps) {
   const ctx = deps.ctx;
   const target = deps.target;
@@ -265,10 +270,12 @@ async function uploadInner(host, body) {
       cleaned: cleaned
     };
     /* 回查：详情页 → 搜索，各给 2 次机会，容忍索引延迟 */
+    let lastVerify = null;
     if (shouldVerify && !verified) {
       for (let i = 0; i < 3 && !verified; i++) {
         if (i) await new Promise(function (r2) { setTimeout(r2, 3000); });
         const v = await target.verify(host, uploadItem, t.buf, { url: i === 0 ? (r.data.detailsUrl || undefined) : undefined });
+        if (v.ok && v.data) lastVerify = v.data;
         if (v.ok && v.data && v.data.deleted) deletedSee = v.data;
         if (v.ok && v.data && v.data.found) {
           verified = v.data;
@@ -285,7 +292,8 @@ async function uploadInner(host, body) {
     }
     if (shouldVerify && (!verified || !verified.found)) {
       const msg = '提交返回 200，但回查未找到（可能待审核/索引延迟）';
-      const failed = { stage: 'failed', error: msg, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString(), verify: verified || null, detailsUrl: item.data.targetUpload.detailsUrl || '' };
+      const miss = markVerifyFailed(item.data, host, lastVerify || {});
+      const failed = { stage: 'failed', error: msg, nextRetryAt: new Date(Date.now() + 15 * 60000).toISOString(), verify: miss, detailsUrl: item.data.targetUpload.detailsUrl || '' };
       setTargetResult(item.data, host, failed);
       if (targetHosts(item.data).length <= 1) stage.fail(item.data, item.data.stage || 'previewed', msg);
       saveQueue(item.data);
@@ -368,4 +376,4 @@ async function uploadInner(host, body) {
   return { upload: upload };
 }
 
-module.exports = { makeUpload, pickAnnounce, setVerify };
+module.exports = { makeUpload, pickAnnounce, setVerify, markVerifyFailed };

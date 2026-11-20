@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { infoHash } = require('./target-mock');
-const { pickAnnounce, setVerify } = require('../server/target-upload');
+const { pickAnnounce, setVerify, markVerifyFailed } = require('../server/target-upload');
 const torrentClean = require('../server/torrent-clean');
 const { sameSiteUrl } = require('../server/target-submit');
 async function runUpload(C) {
@@ -531,6 +531,16 @@ async function runUpload(C) {
     need(item.data.targetVerifyByHost['a.example'].found === true, 'a 站回查丢了：' + JSON.stringify(item.data.targetVerifyByHost));
     need(item.data.targetVerifyByHost['b.example'].found === false, 'b 站回查丢了：' + JSON.stringify(item.data.targetVerifyByHost));
     need(item.data.targetVerifyByHost['a.example'].detailsUrl === 'https://a.example/t/1', 'a 站详情被覆盖');
+  });
+
+  await check('回查失败写 found:false 且不覆盖其他站', async function () {
+    const item = { data: {} };
+    setVerify(item.data, 'b.example', { found: true });
+    const rec = markVerifyFailed(item.data, 'a.example', { url: 'https://a.example/t/1', found: false });
+    need(rec.found === false && rec.url === 'https://a.example/t/1', '失败记录字段不对：' + JSON.stringify(rec));
+    need(item.data.targetVerifyByHost['a.example'].found === false, '失败没写 byHost');
+    need(item.data.targetVerifyByHost['b.example'].found === true, 'b 站被覆盖');
+    need(item.data.targetVerify.found === false, '旧字段没同步失败');
   });
 
   await check('announce 候选优先 passkey', async function () {
