@@ -13,6 +13,9 @@ function applyStatus(ctx, ids, target, reason) {
       const it = jparse(row.data) || {};
       it.status = target;
       it.actionAt = now;
+      if (target === 'rejected') it.rejectedAt = now;
+      /* 批准或退回待审时清掉旧驳回理由 */
+      if (target === 'approved' || target === 'pending') { delete it.reason; delete it.rejectedAt; }
       if (reason) it.reason = String(reason).slice(0, 500);
       db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
         .run(target, JSON.stringify(it), now, id);

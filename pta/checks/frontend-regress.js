@@ -93,6 +93,44 @@ function seedDb() {
       await page.close();
     });
 
+    await check('驳回条目可点重新送审回待确认', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let status = 'rejected';
+      let retried = 0;
+      const item = function () { return { id: 'q_rej', title: 'Rejected Row 2020', status: status, stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] }; };
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [item()], matched: 1, counts: {} } }) });
+      });
+      await page.route('**/api/queue/q_rej', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+      });
+      await page.route('**/api/queue/q_rej/action', async function (route) {
+        const body = JSON.parse(route.request().postData() || '{}');
+        if (body.action === 'retry') { retried++; status = 'pending'; }
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(900);
+      await page.locator('.q-item').first().click();
+      await page.waitForTimeout(500);
+      const retryBtn = page.locator('.qd-actions button').filter({ hasText: '重新送审' });
+      need((await retryBtn.count()) === 1, '驳回条目没有重新送审按钮');
+      need((await page.locator('.qd-actions button').filter({ hasText: '驳回' }).count()) === 0, '驳回状态仍显示驳回按钮');
+      await retryBtn.click();
+      await page.waitForTimeout(700);
+      need(retried === 1, '没发 retry：' + retried);
+      need((await page.locator('.qd-actions button').filter({ hasText: '重新送审' }).count()) === 0, '送回待审后按钮没消失');
+      await page.close();
+    });
+
     await check('队列切目标站后提交到新站', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       const uploads = [];

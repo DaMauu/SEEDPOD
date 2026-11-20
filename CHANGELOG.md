@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.562 · 2026-11-22
+
+### 审计三十二轮
+- 驳回后可重新送审：`retry` 清掉 reason/rejectedAt、阶段回 draft、状态回 pending；批准也清旧理由。
+- 队列详情对 rejected 显示“重新送审”而不是“驳回”。
+- 驳回项不进入 `/api/failures` 和统计 failures；api-v2 45/45，frontend-regress 20/20。
+- 全量 run.sh 通过。
+
 ## v0.7.561 · 2026-11-22
 
 ### 审计三十一轮

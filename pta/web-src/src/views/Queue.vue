@@ -139,7 +139,8 @@
         <div class="qd-actions">
           <button class="btn primary slim" type="button" :disabled="busy.act || downloadReady()" title="从源站取种，加入 qB 开始下载" @click="act('download')">{{ downloadReady() ? '已下载' : '下载种子' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
-          <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
+          <button v-if="sel.status === 'rejected'" class="btn primary slim" type="button" :disabled="busy.act" title="清掉驳回理由，放回待确认" @click="act('retry')">重新送审</button>
+          <button v-else class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <div class="spacer"></div>
           <input v-model="reason" class="input slim" placeholder="驳回理由（必填）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>

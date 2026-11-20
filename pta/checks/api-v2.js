@@ -494,6 +494,37 @@ async function main() {
     need(g.ok && g.data.matched === 2, '批量后状态不对：' + g.data.matched);
   });
 
+  await check('驳回后可重新送审：清理由、回待审、不进失败统计', async () => {
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Reject Retry 2020', status: 'approved', site: 'demo-a.example' })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const id = q.data.id;
+    await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', reason: '先驳回' })
+    });
+    const retry = await (await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'retry' })
+    })).json();
+    need(retry.ok && retry.data.status === 'pending', '重新送审没回待审：' + JSON.stringify(retry));
+    need(retry.data.reason === undefined && retry.data.rejectedAt === undefined, '旧驳回理由没清：' + JSON.stringify({ reason: retry.data.reason, at: retry.data.rejectedAt }));
+    need(retry.data.stage === 'draft', '重新送审阶段不对：' + retry.data.stage);
+    const fails = await (await fetchA(BASE + '/api/failures?limit=200')).json();
+    need(fails.ok && (fails.data.items || []).every(function (x) { return x.id !== id; }), '驳回项混进了失败列表');
+    const ov = await (await fetchA(BASE + '/api/stats/overview')).json();
+    need(ov.ok && (ov.data.failures.items || []).every(function (x) { return x.id !== id; }), '驳回项混进了统计失败');
+    await fetchA(BASE + '/api/queue/' + id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', reason: '再驳一次' })
+    });
+    const bulk = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'approve', ids: [id] })
+    })).json();
+    need(bulk.ok && bulk.data.changed === 1, '批量重新批准失败：' + JSON.stringify(bulk));
+    const after = await (await fetchA(BASE + '/api/queue/' + id)).json();
+    need(after.data.status === 'approved' && after.data.reason === undefined, '批准后旧理由还在：' + JSON.stringify({ status: after.data.status, reason: after.data.reason }));
+  });
+
   await check('驳回状态只进全部列表，计数和统计一致', async () => {
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

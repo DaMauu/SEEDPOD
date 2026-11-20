@@ -196,12 +196,13 @@ const { tx } = require('./db');
     const target = { approve: 'approved', reject: 'rejected', skip: 'skipped', retry: 'pending' }[b.action];
     if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / save / download / publish / retry');
     if (b.action === 'reject' && !String(b.reason || '').trim()) return bad(reply, 'BAD_REQUEST', '驳回要写理由');
+    const wasRejected = it.status === 'rejected';
     it.status = target;
     it.actionAt = now();
     if (b.action === 'retry') {
       /* 重新排队要把 failed 阶段也退回去，否则失败状态会一直跟着条目 */
       const from = String(it.stageFailedFrom || '');
-      it.stage = ['draft', 'prepared', 'previewed'].indexOf(from) >= 0 ? from : 'prepared';
+      it.stage = wasRejected ? 'draft' : (['draft', 'prepared', 'previewed'].indexOf(from) >= 0 ? from : 'prepared');
       delete it.stageFailedFrom;
       delete it.stageLastError;
       delete it.stageLastErrorCode;
@@ -210,6 +211,9 @@ const { tx } = require('./db');
       delete it.stageEvidence;
       it.stageAttempts = 0;
     }
+    /* 驳回原因只在驳回状态保留；重新送审/批准后不能继续挂着旧理由 */
+    if (b.action === 'reject') it.rejectedAt = now();
+    if (target === 'pending' || target === 'approved') { delete it.reason; delete it.rejectedAt; }
     if (b.reason) it.reason = String(b.reason).slice(0, 500);
     db.prepare('UPDATE queue SET status = ?, title = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(target, it.title, JSON.stringify(it), now(), it.id);
