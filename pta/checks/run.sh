@@ -75,6 +75,7 @@ run media media.js
 run media-api media-api.js
 run clients clients.js
 run downloader-policy downloader-policy.js
+run downloader-probe downloader-probe.js
 run cli cli.js
 run resume resume.js
 run sidecar sidecar.js
