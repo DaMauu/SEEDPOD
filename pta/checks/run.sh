@@ -27,6 +27,7 @@ fi
 run smoke smoke-live.js
 run responsive responsive-layout.js
 run frontend-regress frontend-regress.js
+run ui-visual ui-visual.js
 run adapter adapter.js
 run crawl-detail crawl-detail.js
 run crawl-loop crawl-loop.js
