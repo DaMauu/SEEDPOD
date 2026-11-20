@@ -165,6 +165,7 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
 import { apiJson, errorText, qs } from '../utils/api'
+import { stageTime } from '../utils/format'
 import { toast, loggedIn, viewVisible, confirmBox } from '../utils/ui'
 import QueueFailures from '../components/QueueFailures.vue'
 import QueuePreflight from '../components/QueuePreflight.vue'
@@ -233,7 +234,6 @@ async function doRetryTarget(host) {
   } catch (e) { reportError('Queue.retryTarget', e); toast('重试请求发不出去') }
   busy.target = false
 }
-function stageTime(iso) { return String(iso || '').slice(5, 16).replace('T', ' ') }
 function verifyOf(item) {
   if (!item) return null
   const host = String((item.targetUpload && item.targetUpload.host) || '').toLowerCase()

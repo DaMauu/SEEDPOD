@@ -26,8 +26,8 @@
 </template>
 
 <script setup>
+import { stageTime } from '../utils/format'
 defineProps({ preflight: { type: Object, required: true } })
-function stageTime(iso) { return String(iso || '').slice(5, 16).replace('T', ' ') }
 </script>
 
 <style scoped>
