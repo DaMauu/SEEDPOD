@@ -5,36 +5,23 @@
 .t-sub { margin-top: 3px; }
 /* right-side floating rail on wide screens */
 @media (min-width: 1320px) {
-  .dock {
-    left: auto; right: 24px; top: 50%; bottom: auto;
-    transform: translateY(-50%);
-    flex-direction: column; align-items: stretch;
-    padding: 8px; gap: 3px; border-radius: 20px;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
+  .dock { align-items: stretch; gap: 3px; border-radius: 20px;
   }
-  .dock-item { padding: 9px 14px; border-radius: 12px; }
+  .dock-item { border-radius: 12px; }
 }
 @media (min-width: 1320px) {
-  .dock { right: 14px; }
 }
 /* give the right rail breathing room */
-.main { max-width: 1240px; }
-@media (min-width: 1320px) { .dock { right: 10px; } }
+@media (min-width: 1320px) { }
 @media (min-width: 1320px) {
-  .dock { right: 26px; }
-  .dock-item { padding: 8px 12px; font-size: 12px; }
 }
 /* more breathing room from the browser edge */
-.main { max-width: 1200px; }
 /* top row two columns, bottom three */
-.main { max-width: 1252px; }
 @media (min-width: 1320px) {
-  .dock-item { padding: 8px 9px; font-size: 12px; }
 }
 /* restore full content width, compact rail */
 @media (min-width: 1320px) {
-  .dock-item { padding: 8px 7px; font-size: 11.5px; gap: 4px; }
+  .dock-item { font-size: 11.5px; }
 }
 
 .live { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: var(--green); margin-left: 8px; }
@@ -43,28 +30,24 @@
 /* icon rail */
 .dock-item svg { width: 17px; height: 17px; flex: 0 0 17px; }
 @media (min-width: 1320px) {
-  .dock { right: 36px; padding: 6px; }
 }
-@media (min-width: 1320px) { .dock { right: 56px; } }
-@media (min-width: 1320px) { .dock { right: 32px; } }
+@media (min-width: 1320px) { }
+@media (min-width: 1320px) { }
 /* topbar menu */
-@media (min-width: 1320px) { .dock { right: 48px; } }
-@media (min-width: 1320px) { .dock { right: 54px; } }
+@media (min-width: 1320px) { }
+@media (min-width: 1320px) { }
 /* rail 80px from browser edge */
 /* nav lives in the top-right menu */
-.dock { display: none !important; }
-.main { max-width: 1280px; }
 /* restore side rail, nav also in menu */
 .dock { display: flex !important; }
 .main { max-width: 1230px; }
 @media (min-width: 1320px) {
-  .dock { right: 80px; padding: 6px; }
+  .dock { padding: 6px; }
   .dock-item { position: relative; padding: 9px; gap: 0; }
   .dock-label { display: none; }
 }
 /* dock hugs the card right edge (constant ~16px gap), never nearer than 80px to the window edge */
 @media (min-width: 1320px) {
-  .dock { right: max(20px, calc(50vw - 646px)); }
 }
 
 /* no-reload views */
@@ -73,17 +56,19 @@
 @keyframes viewIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .view.active { animation: none; } }
 /* dock a touch further right */
-@media (min-width: 1320px) { .dock { right: max(20px, calc(50vw - 636px)); } }
+@media (min-width: 1320px) { }
 .pills-row { display: flex; align-items: center; gap: 14px; }
-@media (min-width: 1320px) { .dock { right: max(20px, calc(50vw - 656px)); } }
+@media (min-width: 1320px) { .dock {
+    left: auto; top: 50%; bottom: auto;
+    transform: translateY(-50%);
+    flex-direction: column;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto; right: max(20px, calc(50vw - 656px)); } }
 
 @media (max-width: 1319px) { .view { padding-bottom: 64px; } }
 @media (min-width: 1320px) { .main { padding-bottom: 36px; } }
 
 
 /* 页脚贴底：内容短时不被吊在中间；底部横条区间给它留高度 */
-.main { min-height: 100vh; display: flex; flex-direction: column; }
-.dev-foot { margin-top: auto; }
 @media (min-width: 901px) and (max-width: 1099px) {
-  .main { padding-bottom: 180px; }
 }

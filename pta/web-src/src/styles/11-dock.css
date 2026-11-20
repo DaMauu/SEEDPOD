@@ -13,7 +13,7 @@
 .dock-item .dock-label::after { display: none; }
 .dock-icon { width: 18px; height: 18px; flex: 0 0 18px; display: block; }
 @media (max-width: 900px) {
-  .dock {
+  .dock { border-top: 1px solid var(--line); z-index: 60;
     left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); top: auto; transform: none;
     width: auto; max-width: none; height: auto;
     min-height: calc(58px + env(safe-area-inset-bottom, 0px));

@@ -1,13 +1,6 @@
 .dock { overflow: visible; }
 /* 选中行去掉圆角 */
-body::after {
-  content: ""; position: fixed; inset: -6%; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(52% 42% at 50% 0%, rgba(79, 70, 229, .12), rgba(79, 70, 229, 0) 72%),
-    radial-gradient(40% 34% at 82% 12%, rgba(79, 70, 229, .08), rgba(79, 70, 229, 0) 74%);
-  opacity: .35;
-  animation: bg-heartbeat 2.6s ease-in-out infinite;
-  will-change: opacity, transform;
+body::after { position: fixed; z-index: 0;
 }
 .layout { position: relative; z-index: 1; }
 @keyframes bg-heartbeat {
@@ -21,12 +14,6 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   body::after { animation: none; opacity: .42; }
 }
-body::after {
-  background:
-    radial-gradient(54% 44% at 50% 0%, rgba(79, 70, 229, .18), rgba(79, 70, 229, 0) 72%),
-    radial-gradient(42% 36% at 84% 14%, rgba(79, 70, 229, .11), rgba(79, 70, 229, 0) 74%);
-  opacity: .45;
-}
 @keyframes bg-heartbeat {
   0%   { opacity: .38; transform: scale(1); }
   7%   { opacity: .92; transform: scale(1.02); }
@@ -36,6 +23,8 @@ body::after {
   100% { opacity: .38; transform: scale(1); }
 }
 body::after {
+  content: ""; inset: -6%; pointer-events: none;
+  will-change: opacity, transform;
   background:
     radial-gradient(46% 54% at 92% 90%, rgba(79, 70, 229, .26), rgba(79, 70, 229, 0) 72%),
     radial-gradient(34% 42% at 58% 104%, rgba(79, 70, 229, .14), rgba(79, 70, 229, 0) 76%);

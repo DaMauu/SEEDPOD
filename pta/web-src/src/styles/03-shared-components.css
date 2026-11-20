@@ -34,15 +34,13 @@
 .link-btn + .link-btn:hover { background: var(--panel-2); color: var(--ink); }
 .btn.ghost.slim { border: 1px solid var(--line-2); background: #fff; color: var(--muted); }
 .btn.ghost.slim:hover { color: var(--ink); border-color: #d8dbe2; }
-.ava {
-  flex: 0 0 26px; width: 26px; height: 26px; border-radius: 8px;
-  display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 600;
-}
 .ava.np { background: var(--accent-soft); color: var(--accent); }
 .ava.u3d { background: #f3e8ff; color: #7e22ce; }
 .chip.gz { background: #ecfeff; color: #0e7490; }
 .ava.gz { background: #ecfeff; color: #0e7490; }
-.ava { font-size: 10px; letter-spacing: .2px; }
+.ava {
+  flex: 0 0 26px; width: 26px; height: 26px; border-radius: 8px;
+  display: grid; place-items: center; font-style: normal; font-weight: 600; font-size: 10px; letter-spacing: .2px; }
 .btn.slim:disabled { opacity: .45; cursor: default; }
 .chip.oth { background: #f1f5f9; color: #64748b; }
 .chip.unk { background: #fff; color: var(--muted-2); border: 1px dashed #d8dbe2; }

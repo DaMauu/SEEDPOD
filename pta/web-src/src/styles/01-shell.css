@@ -19,18 +19,17 @@
 /* main two-column */
 
 .panel {
-  background: var(--panel); border-radius: var(--radius);
-  padding: 16px 18px; box-shadow: var(--shadow);
+  background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow);
 }
 
 /* lists */
 .list { display: flex; flex-direction: column; }
-.t-main { font-size: 13.5px; font-weight: 500; color: var(--ink); }
-.t-sub { font-size: 11.5px; color: var(--muted-2); margin-top: 2px; }
+.t-main { font-weight: 500; color: var(--ink); }
+.t-sub { font-size: 11.5px; color: var(--muted-2); }
 .list .btn.ghost.sm { color: var(--accent); font-weight: 600; padding: 0; }
 
 /* cards elsewhere (settings / nodes) */
-.card { background: var(--panel); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+.card { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
 .zone-sub { font-size: 10px; letter-spacing: 1px; color: var(--muted-2); text-transform: uppercase; }
 
 /* badges */
@@ -56,8 +55,7 @@
 .btn.primary:hover { background: #4338ca; border-color: #4338ca; }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
 .btn.ghost:hover { background: var(--panel-2); }
-.btn.danger { background: transparent; border-color: transparent; color: var(--red); }
-.btn.danger:hover { background: var(--red-soft); }
+.btn.danger { background: transparent; }
 .btn.sm { padding: 4px 9px; font-size: 12px; }
 
 /* toolbar / inputs */
@@ -111,10 +109,9 @@ tbody tr:hover td { background: #fafbff; }
 
 /* floating dock */
 .dock {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 2px; padding: 7px;
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); align-items: center; gap: 2px; padding: 7px;
   background: #fff; border-radius: 999px; box-shadow: var(--shadow-lg);
-  z-index: 60; max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none;
+  z-index: 60; max-width: calc(100vw - 24px); scrollbar-width: none;
 }
 .dock::-webkit-scrollbar { display: none; }
 .dock-item {
