@@ -89,11 +89,11 @@ function makeCrawlPhase() {
               st[x.host] = rec;
               saveState(st);
             } catch (e) { /* 状态写失败不影响本轮抓取 */ }
-            if (siteOk) ok++;
-            else if (siteFailed) failed++;
+            if (siteFailed) failed++;
+            else if (siteOk) ok++;
             else { siteSkipped = true; skipped++; }
           }
-          return { sites: sites.length, ok: ok, failed: failed, skipped: skipped, waiting: allSites.length - due.length, added: added, rows: rows, pages: pages };
+          return { sites: sites.length, ok: ok, failed: failed, skipped: skipped, waiting: allSites.length - sites.length, added: added, rows: rows, pages: pages };
         } else {
           return { skipped: 'realCrawl off' };
         }

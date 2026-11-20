@@ -160,6 +160,10 @@ module.exports = function (app, ctx) {
         out.selected--;
         out.skipped++;
         out.byReason['目标站已有'] = (out.byReason['目标站已有'] || 0) + 1;
+      } else if (r.errors.length || r.disabled) {
+        /* 查重失败不能算通过；保留错误，下一轮或人工重试 */
+        out.dupe.failed = (out.dupe.failed || 0) + 1;
+        db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), id);
       } else {
         it.dupePassedAt = it.dupePassedAt || now();
         db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), id);

@@ -119,7 +119,7 @@ function makeTargetService(ctx, target) {
     const item = loadQueue(b.queueId);
     if (!item) return { ok: false, code: 'NOT_FOUND', message: '队列条目不存在', http: 404 };
     let hosts = Array.isArray(b.targets) ? b.targets : (typeof b.targets === 'string' ? b.targets.split(',') : []);
-    hosts = hosts.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(Boolean);
+    hosts = hosts.map(function (h) { return String(h || '').trim().toLowerCase() }).filter(function (h, i, a) { return h && a.indexOf(h) === i; });
     if (!hosts.length) hosts = targetHosts(item.data);
     if (!hosts.length) return { ok: false, code: 'NO_TARGET', message: '没有配置目标站', http: 400 };
     const perTarget = {};

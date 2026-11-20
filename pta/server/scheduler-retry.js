@@ -49,6 +49,17 @@ function makeRetryPhases() {
           if (r.ok) {
             ok++;
             resetSiteFail(it.targetSite || it.site);
+            /* 成功后清掉重试标记，避免失败队列继续显示陈旧重试时间 */
+            try {
+              const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
+              const done = cur ? (jparse(cur.data) || it) : it;
+              delete done.nextRetryAt;
+              delete done.retryMsg;
+              delete done.retries;
+              delete done.stageNextRetryAt;
+              ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+                .run(JSON.stringify(done), new Date().toISOString(), row.id);
+            } catch (e) { /* 清理失败不挡后续辅种 */ }
             const cur = one('SELECT data FROM queue WHERE id = ?', row.id);
             const done = cur ? (jparse(cur.data) || null) : null;
             if (done) {

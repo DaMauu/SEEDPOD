@@ -114,6 +114,8 @@ module.exports = function (app, ctx) {
     const row = one('SELECT data FROM queue WHERE id = ?', req.params.id);
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
+    /* 旧/坏数据可能没有 id，后续 UPDATE 不能拿 undefined 当键 */
+    it.id = req.params.id;
     const b = req.body || {};
     if (b.title !== undefined) {
       const t = String(b.title).trim();
@@ -171,6 +173,18 @@ module.exports = function (app, ctx) {
     if (b.action === 'reject' && !String(b.reason || '').trim()) return bad(reply, 'BAD_REQUEST', '驳回要写理由');
     it.status = target;
     it.actionAt = now();
+    if (b.action === 'retry') {
+      /* 重新排队要把 failed 阶段也退回去，否则失败状态会一直跟着条目 */
+      const from = String(it.stageFailedFrom || '');
+      it.stage = ['draft', 'prepared', 'previewed'].indexOf(from) >= 0 ? from : 'prepared';
+      delete it.stageFailedFrom;
+      delete it.stageLastError;
+      delete it.stageLastErrorCode;
+      delete it.stageNextRetryAt;
+      delete it.stageUpdatedAt;
+      delete it.stageEvidence;
+      it.stageAttempts = 0;
+    }
     if (b.reason) it.reason = String(b.reason).slice(0, 500);
     db.prepare('UPDATE queue SET status = ?, title = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(target, it.title, JSON.stringify(it), now(), it.id);

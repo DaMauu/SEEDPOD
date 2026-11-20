@@ -48,6 +48,8 @@ run site-pack site-pack.js
 run backup backup.js
 run publish publish.js
 run scheduler scheduler.js
+run scheduler-crawl scheduler-crawl.js
+run scheduler-dedupe scheduler-dedupe.js
 run failpoint failpoint.js
 run errors errors.js
 run failures failures.js

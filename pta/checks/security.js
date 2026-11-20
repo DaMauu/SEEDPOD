@@ -41,6 +41,16 @@ check('密钥解析', () => {
   need(box.parseKey('') === null, '空密钥应判为无效');
 });
 
+check('下载器密码 v2 可读', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-qbpass-'));
+  const key = box.loadKey(dir);
+  const enc = box.encrypt('qb-pass', key.key);
+  const qb = require('../server/qb');
+  const got = qb._dlPass({ pass: enc }, dir);
+  fs.rmSync(dir, { recursive: true, force: true });
+  need(got === 'qb-pass', 'v2 下载器密码读不出：' + got.slice(0, 12));
+});
+
 check('密钥可从独立文件读取', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-key-'));
   const key = crypto.randomBytes(32);

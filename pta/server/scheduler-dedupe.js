@@ -23,6 +23,11 @@ function makeDedupePhase(deps) {
           dedupe.skipped++;
           ctx.db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
             .run('skipped', JSON.stringify(Object.assign({}, it, { status: 'skipped' })), new Date().toISOString(), row.id);
+        } else if (r.errors.length || r.disabled) {
+          /* 查重没查成/开关关闭：不能标记已通过，留给下一轮或人工 */
+          dedupe.failed = (dedupe.failed || 0) + 1;
+          ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?')
+            .run(JSON.stringify(it), new Date().toISOString(), row.id);
         } else {
           it.dupePassedAt = new Date().toISOString();
           dedupe.kept++;

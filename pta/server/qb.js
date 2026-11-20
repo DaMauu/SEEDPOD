@@ -2,6 +2,16 @@
 const secretbox = require('./secretbox');
 const crypto = require('crypto');
 const path = require('path');
+function passOf(v, ring) {
+  const s = String(v || '');
+  if (!s) return '';
+  if (/^v[12]:/.test(s)) {
+    try { return secretbox.decrypt(s, ring); } catch (e) { return ''; }
+  }
+  /* 兼容旧明文；下一次保存会换成 v2 密文 */
+  return s;
+}
+
 function makeQb(DATA_DIR) {
 const KEYRING = secretbox.loadKey(DATA_DIR);
 const DL_TIMEOUT = 8000;
@@ -59,14 +69,7 @@ function sanitizeDl(body, prev) {
 }
 
 /* 老数据里可能是明文密码，读到明文就原样用，下次保存自然换成密文 */
-function dlPass(d) {
-  const v = String((d && d.pass) || '');
-  if (!v) return '';
-  if (v.slice(0, 3) === 'v1:') {
-    try { return secretbox.decrypt(v, KEYRING); } catch (e) { return ''; }
-  }
-  return v;
-}
+function dlPass(d) { return passOf(d && d.pass, KEYRING); }
 
 async function probeDownloader(d) {
   const steps = [];
@@ -432,4 +435,4 @@ async function trackerStatus(d, hash) {
 
 return { probeDownloader, qbCategories, addTorrent, addTrackers, resumeTorrent, stopTorrent, removeTorrent, listTorrents, trackerStatus, parseTorrent, findTorrent, dlPass, publicDl, normDlUrl, sanitizeDl };
 }
-module.exports = { makeQb };
+module.exports = { makeQb, _dlPass: function (d, dir) { return passOf(d && d.pass, secretbox.loadKey(dir)); } };

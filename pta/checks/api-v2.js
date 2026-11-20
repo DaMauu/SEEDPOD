@@ -370,6 +370,19 @@ async function main() {
     need(!g.data.dupePassedAt && !g.data.dupeResults && !g.data.dupeSkipped, '改标题/目标站后旧查重缓存没清：' + JSON.stringify({ passed: g.data.dupePassedAt, results: g.data.dupeResults, skipped: g.data.dupeSkipped }));
   });
 
+  await check('失败条目重新排队会清失败阶段', async () => {
+    const add = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Retry Stage 2024 1080p', status: 'failed', stage: 'failed', stageFailedFrom: 'prepared', stageLastError: 'TARGET_UNREACHABLE', stageAttempts: 3 })
+    })).json();
+    need(add.ok && add.data.id, '建失败条目失败');
+    const r = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'retry' })
+    })).json();
+    need(r.ok && r.data.status === 'pending', '重新排队状态不对：' + JSON.stringify(r));
+    need(r.data.stage === 'prepared' && !r.data.stageLastError && Number(r.data.stageAttempts) === 0, '失败阶段没清：' + JSON.stringify({ stage: r.data.stage, err: r.data.stageLastError, attempts: r.data.stageAttempts }));
+  });
+
   await check('MediaInfo/BDInfo 准备与解析', async () => {
     const bd = 'Disc Title: Media.Info.Test.2024.2160p\nDisc Label: Media Info Test\nDisc Size: 1,000,000,000 bytes\nSize: 900,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 23.976 fps / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps';
     const add = await (await fetchA(BASE + '/api/queue', {
