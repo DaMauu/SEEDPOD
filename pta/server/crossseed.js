@@ -6,7 +6,7 @@ const flowConfig = require('./flow-config');
 
 function makeCrossseed(ctx) {
   const { one, all, jparse } = ctx;
-  const qb = makeQb(ctx.DATA_DIR);
+  const qb = ctx.qb || makeQb(ctx.DATA_DIR);
   const now = () => new Date().toISOString();
   /* 自己落库，不依赖 ctx.targetService（调度里没挂这个对象） */
   function saveQueue(data) {
@@ -63,7 +63,8 @@ function makeCrossseed(ctx) {
       const ex = await qb.findTorrent(dl, meta.hash);
       if (ex.found) add = { ok: true, existing: true, message: '辅种种已在 qB 里' };
     }
-    if (!add.ok) return { ok: false, error: add.error || 'QB_ADD_FAILED', message: add.message || '' };
+    /* 加种失败也要落 retryAt/attempts，否则调度每轮都会立刻重试 */
+    if (!add.ok) return markFail(add.error || 'QB_ADD_FAILED', { message: String(add.message || '').slice(0, 200) });
     /* qB 可能因为队列上限把新种停在 stopped 状态，这里显式续上再校验 */
     try { await qb.resumeTorrent(dl, meta.hash); } catch (e) { /* 续不上交给后面的校验报错 */ }
     /* 加完校验：进度 1 + 至少一个 tracker working */

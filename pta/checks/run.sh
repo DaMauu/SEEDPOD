@@ -60,6 +60,7 @@ run deploy-docker deploy-docker.js
 run publish publish.js
 run scheduler scheduler.js
 run scheduler-crossseed scheduler-crossseed.js
+run crossseed crossseed.js
 run scheduler-crawl scheduler-crawl.js
 run scheduler-dedupe scheduler-dedupe.js
 run scheduler-publish scheduler-publish.js
