@@ -43,8 +43,8 @@ async function saveLimits() {
   limits.windowMinutes = Math.min(1440, Math.max(1, Number(limits.windowMinutes) || 60))
   limits.maxPerWindow = Math.min(1000, Math.max(1, Number(limits.maxPerWindow) || 20))
   limits.breaker = Math.min(10, Math.max(1, Number(limits.breaker) || 3))
-  await patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value })
-  toast('请求限制已保存')
+  const j = await patchUser({ listInterval: limits.listInterval, interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value })
+  toast(j && j.ok ? '请求限制已保存' : ((j && j.error && j.error.message) || '请求限制保存失败'))
 }
 async function runRound() {
   if (sched.running) return

@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const secretbox = require('./secretbox');
 const adapters = require('./adapters');
+const jsonFile = require('./json-file');
+const urlGuard = require('./url-guard');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -12,9 +14,9 @@ module.exports = function (app, ctx) {
 
   function readStatus() { try { return JSON.parse(fs.readFileSync(STATUS_FILE, 'utf8')) || {}; } catch (e) { return {}; } }
   function writeStatus(host, rec) {
-    try { const all2 = readStatus(); all2[host] = rec; fs.writeFileSync(STATUS_FILE, JSON.stringify(all2, null, 1), { mode: 0o600 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
+    try { const all2 = readStatus(); all2[host] = rec; jsonFile.writeAtomic(STATUS_FILE, all2, 0o600); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   }
-  function readDef(host) { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } }
+  function readDef(host) { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } }
   function cred(host) {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
     if (!r || !r.cookie) return '';
@@ -22,10 +24,12 @@ module.exports = function (app, ctx) {
   }
 
   app.post('/api/sites/:host/session-test', async (req, reply) => {
-    const host = req.params.host;
+    const host = String(req.params.host || '');
+    if (!/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '站点域名不合法');
     const cookie = cred(host);
     if (!cookie) return bad(reply, 'NO_COOKIE', '这个站还没导入 cookie', 409);
     const def = readDef(host);
+    if (def && def.base && !urlGuard.baseOk(host, def.base)) return bad(reply, 'BAD_BASE', '站点 base 不是该站域名');
     const base = (def && def.base ? String(def.base) : 'https://' + host).replace(/\/+$/, '');
     const engine = (def && def.engine) || '';
     const probePath = engine === 'nexusphp' || engine === '' ? '/index.php' : '/torrents';
@@ -53,6 +57,7 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     const items = Array.isArray(b.items) ? b.items : [];
     if (!items.length) return bad(reply, 'BAD_REQUEST', 'items 不能为空');
+    if (KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 SECRET_FILE/SECRET', 409);
     let saved = 0, skipped = 0;
     for (const it of items.slice(0, 200)) {
       const host = String((it && it.host) || '').trim();

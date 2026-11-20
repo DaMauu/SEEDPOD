@@ -10,7 +10,7 @@ export function confirmBox(title, text, fn) {
 }
 
 export function loggedIn() {
-  return !document.querySelector('#login-mask')
+  return window.__ptaAuthed === true
 }
 
 export function initialsOf(text) {

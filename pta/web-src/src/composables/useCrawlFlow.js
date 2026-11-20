@@ -84,15 +84,20 @@ async function loadFlow() {
 async function saveFetch() {
   if (busy.fetch) return
   busy.fetch = true
-  const [a, b] = await Promise.all([
-    patchUser({ interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value }),
-    putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny }),
-    saveTypes(),
-    saveFilters()
-  ])
-  busy.fetch = false
-  const bad = [a, b].find(j => !j || !j.ok)
-  toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '抓取设置已保存')
+  try {
+    const [a, b, c, d] = await Promise.all([
+      patchUser({ listInterval: limits.listInterval, interval: limits.interval, windowMinutes: limits.windowMinutes, maxPerWindow: limits.maxPerWindow, breaker: limits.breaker, detail: !!detail.value }),
+      putFlow({ fetch: serialize(rules.fetch) }, { deny: rx.deny }),
+      saveTypes(),
+      saveFilters()
+    ])
+    const bad = [a, b, c, d].find(j => !j || !j.ok)
+    toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '抓取设置已保存')
+  } catch (e) {
+    toast('保存请求发不出去')
+  } finally {
+    busy.fetch = false
+  }
 }
 
 async function saveScreen() {

@@ -14,6 +14,7 @@ const WATCH = path.join(DATA, 'watch');
 const BASE = 'http://127.0.0.1:' + PORT;
 const USER = 'check';
 const PASS = 'check-pass';
+process.env.PTA_DATA = DATA;
 const watch = require(path.join(ROOT, 'server', 'clients', 'watch.js'));
 const { makeQb } = require(path.join(ROOT, 'server', 'qb.js'));
 const qb = makeQb(DATA);
@@ -61,6 +62,7 @@ function torrentFiles() {
 async function main() {
   await check('watch 模块：路径校验、写入、探测', async function () {
     need(watch.normDir('relative/path').err, '相对路径没被拒');
+    need(watch.normDir('/etc').err, '系统目录没被拒');
     need(watch.normDir('/').err, '根目录没被拒');
     const t = watch.test({ dir: WATCH });
     need(t.pass === true, '目录探测失败：' + t.error);
@@ -127,14 +129,14 @@ async function main() {
   });
 
   await check('发布到 watch 目录', async function () {
-    const cred = await json(BASE + '/api/credentials/demo-a.example', {
+    const cred = await json(BASE + '/api/credentials/127.0.0.1', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ cookie: 'sid=source-cookie' })
     });
     need(cred.status === 200 && cred.body.ok, '来源 cookie 保存失败');
     const item = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Watch Publish 2020 1080p', site: 'demo-a.example', targetSite: 'target.example',
+      body: JSON.stringify({ title: 'Watch Publish 2020 1080p', site: '127.0.0.1', targetSite: 'target.example',
         downloadUrl: src.base + '/t.torrent', status: 'approved', size: '20 GB', infohash: HASH })
     });
     need(item.status === 200 && item.body.ok, '建队列失败');
@@ -179,7 +181,7 @@ async function main() {
   await check('调度重试 failed 条目', async function () {
     const item = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Watch Retry 2020 1080p', site: 'demo-a.example', targetSite: 'target.example',
+      body: JSON.stringify({ title: 'Watch Retry 2020 1080p', site: '127.0.0.1', targetSite: 'target.example',
         downloadUrl: src.base + '/t.torrent', status: 'failed', size: '20 GB', retries: 0 })
     });
     need(item.status === 200 && item.body.ok, '建 failed 队列失败：' + JSON.stringify(item.body && item.body.error));
@@ -203,7 +205,7 @@ async function main() {
     need(qbDl.status === 200 && qbDl.body.ok, 'qB 下载器创建失败：' + JSON.stringify(qbDl.body && qbDl.body.error));
     const item = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Inject Retry 2020 1080p', site: 'demo-a.example', targetSite: 'target.example',
+      body: JSON.stringify({ title: 'Inject Retry 2020 1080p', site: '127.0.0.1', targetSite: 'target.example',
         downloadUrl: src.base + '/t.torrent', status: 'approved', size: '20 GB', infohash: HASH,
         stage: 'failed', stageFailedFrom: 'injected', stageNextRetryAt: new Date(Date.now() + 60000).toISOString() })
     });

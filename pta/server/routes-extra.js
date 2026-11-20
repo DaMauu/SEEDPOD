@@ -2,10 +2,14 @@
 const fs = require('fs');
 const path = require('path');
 const form = require('./form');
+const { makeTarget } = require('./target');
+const { makeTargetService } = require('./target-service');
+const { hostsOf } = require('./dedupe-item');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
+  const targetService = makeTargetService(ctx, makeTarget(ctx));
 
   /* 上传表单识别：只解析用户贴进来的本地 HTML，不联网。 */
   app.post('/api/form/parse', async (req, reply) => {
@@ -30,6 +34,31 @@ module.exports = function (app, ctx) {
     const errors = [];
     if (action === 'publish') {
       for (const id of ids.slice(0, 200)) {
+        const row = one('SELECT data FROM queue WHERE id = ?', id);
+        if (!row) { skipped++; continue; }
+        const it = jparse(row.data) || {};
+        /* 先确认源种在 qB 里下完，和调度发布保持同一道闸门 */
+        let src = null;
+        try { src = await ctx.publisher.ensureSource(id, {}); } catch (e) { src = { ok: false, code: 'SOURCE_CHECK_FAILED', message: String(e && e.message || e).slice(0, 120) }; }
+        if (!src || !src.ok || !src.complete) {
+          skipped++;
+          if (errors.length < 3) errors.push({ id: id, code: (src && src.code) || 'SOURCE_INCOMPLETE', message: (src && src.message) || '源种还没下完' });
+          continue;
+        }
+        const hosts = hostsOf(it);
+        /* 已经提交/注入过的站不重复上传；只传还没完成的 */
+        const trs = it.targetResults || {};
+        const need = hosts.filter(function (h) { const tr = trs[h] || {}; return tr.stage !== 'submitted' && tr.stage !== 'injected'; });
+        /* 批量发布必须和单人流程一致：先上传目标站，全部成功后才注入下载器 */
+        if (need.length) {
+          const up = await targetService.uploadMany({ queueId: id, targets: need, dryRun: false });
+          const failed = ((up && up.data && up.data.targets) || []).filter(function (x) { return !x.ok && !x.skipped; })[0];
+          if (!up || !up.ok || failed) {
+            skipped++;
+            if (errors.length < 3) errors.push({ id: id, code: (failed && failed.code) || (up && up.code) || 'UPLOAD_FAILED', message: (failed && failed.message) || (up && up.message) || '目标站上传失败' });
+            continue;
+          }
+        }
         const r = await ctx.publisher.publishItem(id, { dryRun: false });
         if (r.ok) changed++;
         else { skipped++; if (errors.length < 3) errors.push({ id: id, code: r.code, message: r.message }); }

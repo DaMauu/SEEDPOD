@@ -76,7 +76,7 @@
           </div>
           <div class="qd-field">
             <span>目标站</span>
-            <select v-model="form.targetSite" class="input" @change="loadPreview">
+            <select v-model="form.targetSite" class="input" @change="onTargetSiteChange">
               <option value="">未选择</option>
               <option v-if="form.targetSite && !sites.some(s => s.name === form.targetSite)" :value="form.targetSite">{{ form.targetSite }}</option>
               <option v-for="s in sites" :key="s.name" :value="s.name">{{ s.title || s.name }}</option>
@@ -198,6 +198,7 @@ const metaMsg = ref('')
 let previewSeq = 0
 let metaSeq = 0
 let selectSeq = 0
+let queueSeq = 0
 let timer = null
 let qTimer = null
 let progressTimer = null
@@ -261,7 +262,7 @@ async function loadSites() {
     if (list.length) sites.value = list.map(t => ({ name: t.host, title: t.host }))
     else {
       const { body: s } = await apiJson('/api/sites')
-      if (s && s.ok && s.data) sites.value = s.data.sites || []
+      if (s && s.ok && s.data) sites.value = (s.data.sites || []).map(function (x) { return { name: x.host, title: x.title || x.host } })
     }
   } catch (e) { reportError('Queue', e) }
 }
@@ -271,9 +272,11 @@ async function loadQueuePage(p) {
   if (p) page.value = p
   const status = tab.value === 'all' ? '' : tab.value === 'approved' ? 'approved,published' : tab.value
   const query = qs({ limit: 50, offset: (page.value - 1) * 50, status: status, q: q.value.trim() })
+  const seq = ++queueSeq
   try {
     const { body: j } = await apiJson('/api/queue?' + query)
-    if (!j || !j.ok) return
+    if (seq !== queueSeq) return
+    if (!j || !j.ok) { toast(errorText(j, '队列加载失败')); return }
     items.value = j.data.items || []
     matched.value = Number(j.data.matched) || 0
     pages.value = Math.max(1, Math.ceil(matched.value / 50))
@@ -299,7 +302,7 @@ async function select(id) {
     form.cn = j.data.cn || ''
     form.intro = j.data.intro || ''
     form.targetSite = j.data.targetSite || ''
-    form.targets = Array.isArray(j.data.targets) ? j.data.targets.slice() : (j.data.targetSite ? [j.data.targetSite] : [])
+    form.targets = mergeTargets(j.data.targetSite, j.data.targets)
     form.imageHost = j.data.imageHost || '站内'
     form.anonymous = !!j.data.anonymous
     reason.value = ''
@@ -395,9 +398,11 @@ function startProgressPoll() {
   if (progressTimer) return
   progressTimer = setInterval(async function () {
     if (!sel.value) { clearInterval(progressTimer); progressTimer = null; return }
+    const id = sel.value.id
     try {
       /* 重新让服务端查一次 qB 进度；只查已记录的 infohash，不再打源站 */
-      const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', { method: 'POST', body: { action: 'download' } })
+      const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/action', { method: 'POST', body: { action: 'download' } })
+      if (!sel.value || sel.value.id !== id) return
       if (j && j.ok && j.data) {
         sel.value.sourceState = {
           ok: true, at: new Date().toISOString(), hash: j.data.hash || '',
@@ -498,10 +503,21 @@ async function fetchMeta() {
     if (seq === metaSeq) metaBusy.value = false
   }
 }
+function mergeTargets(primary, list) {
+  const out = []
+  const add = function (h) { h = String(h || '').trim().toLowerCase(); if (h && out.indexOf(h) < 0) out.push(h) }
+  add(primary)
+  ;(Array.isArray(list) ? list : []).forEach(add)
+  return out
+}
+function onTargetSiteChange() {
+  form.targets = form.targetSite ? [form.targetSite] : []
+  loadPreview()
+}
 function submitTarget() {
   if (!sel.value || busy.target) return
   const primary = form.targetSite || sel.value.targetSite
-  const targets = (form.targets && form.targets.length ? form.targets.slice() : (primary ? [primary] : []))
+  const targets = mergeTargets(primary, form.targets)
   if (!targets.length) { toast('先选目标站'); return }
   const main = targets.filter(function (h) { return !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(h) })
   if (main.length) {

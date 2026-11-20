@@ -6,6 +6,7 @@ const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
 const collage = require('./collage');
+const jsonFile = require('./json-file');
 const { makeErrorStats } = require('./error-stats');
 const { makeFailureQueue } = require('./failure-queue');
 const { makeTarget } = require('./target');
@@ -99,8 +100,8 @@ module.exports = function (app, ctx) {
   app.post('/api/catalog/check', async (req) => {
     const b = req.body || {};
     const ids = Array.isArray(b.ids) ? b.ids.map(String) : [];
-    const limit = Math.min(Number(b.limit) || 100, 500);
-    const rows = all("SELECT id, data FROM catalog WHERE status = 'new' LIMIT ?", limit);
+    const limit = Math.max(1, Math.min(Number(b.limit) || 100, 500));
+    const rows = all("SELECT id, data FROM catalog WHERE status = 'new' ORDER BY created_at DESC LIMIT ?", limit);
     const seen = {};
     all('SELECT id, data FROM queue').forEach(function (r) { const it = jparse(r.data) || {}; if (it.infohash) seen[String(it.infohash).toLowerCase()] = it.id || 'queue'; });
     let checked = 0, dup = 0;
@@ -188,9 +189,12 @@ module.exports = function (app, ctx) {
     if (!title) return bad(reply, 'BAD_REQUEST', 'title 必填');
     let items = [];
     try { items = JSON.parse(fs.readFileSync(LIB_FILE, 'utf8')) || []; } catch (e) { items = []; }
-    const entry = { id: 'lib_' + String(items.length + 1).padStart(4, '0'), title: title, addedAt: now() };
+    if (!Array.isArray(items)) items = [];
+    if (items.length >= 5000) return bad(reply, 'LIBRARY_FULL', '本地库最多 5000 条', 409);
+    const maxId = items.reduce(function (m, x) { const n = Number(String(x && x.id || '').replace(/^lib_/, '')) || 0; return Math.max(m, n); }, 0);
+    const entry = { id: 'lib_' + String(maxId + 1).padStart(4, '0'), title: title.slice(0, 300), addedAt: now() };
     items.push(entry);
-    try { fs.writeFileSync(LIB_FILE, JSON.stringify(items, null, 1), { mode: 0o600 }); } catch (e) { return bad(reply, 'STORAGE_FAILED', '写入本地库失败', 500); }
+    try { jsonFile.writeAtomic(LIB_FILE, items, 0o600); } catch (e) { return bad(reply, 'STORAGE_FAILED', '写入本地库失败', 500); }
     return ok(reply, entry);
   });
 

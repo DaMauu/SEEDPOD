@@ -49,9 +49,10 @@ function saveSource() {
   loadTypes()
 }
 
-function pickTarget(host) {
+async function pickTarget(host) {
+  const j = await patchUser({ targetHost: host })
+  if (!j || !j.ok) { toast((j && j.error && j.error.message) || '发布目标保存失败'); return }
   targetHost.value = host
-  patchUser({ targetHost: host })
   try { localStorage.setItem('pta.target', host) } catch (e) { reportError('Crawl', e) }
   targetOpen.value = false
   toast('发布目标改为：' + ((targetSite.value && targetSite.value.title) || host))

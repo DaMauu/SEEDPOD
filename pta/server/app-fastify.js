@@ -54,7 +54,10 @@ function parseCookies(req) {
   (req.headers.cookie || '').split(';').forEach(function (p) {
     const i = p.indexOf('=');
     if (i < 0) return;
-    out[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim());
+    const k = p.slice(0, i).trim();
+    let v = p.slice(i + 1).trim();
+    try { v = decodeURIComponent(v); } catch (e) { /* 畸形 cookie 不抛异常 */ }
+    if (k) out[k] = v;
   });
   return out;
 }
@@ -78,6 +81,13 @@ let logEvent = null;
 
 async function build() {
   const app = Fastify({ logger: false, bodyLimit: 8 * 1024 * 1024 });
+  /* 统一错误出口：内部细节只进服务端日志，不回给客户端 */
+  app.setErrorHandler(function (err, req, reply) {
+    const code = err && err.statusCode && err.statusCode < 500 ? (err.code || 'BAD_REQUEST') : 'INTERNAL';
+    const status = err && err.statusCode && err.statusCode < 500 ? err.statusCode : 500;
+    try { console.error('[seedpod] request error', req && req.url, err && err.message ? err.message : err); } catch (e) { /* 日志失败不影响响应 */ }
+    reply.code(status).send({ ok: false, error: { code: code, message: status === 500 ? '服务器内部错误' : (err && err.message ? String(err.message).slice(0, 200) : '请求不合法') } });
+  });
   ENDPOINT_COUNT = 0;
   app.addHook('onRoute', function (route) {
     if (String(route.url || '').indexOf('/api/') === 0) ENDPOINT_COUNT += 1;
@@ -104,6 +114,14 @@ async function build() {
       return bad(reply, 'RATE_LIMITED', '尝试太多，' + Math.ceil((rec.lockUntil - nowMs) / 1000) + ' 秒后再试', 429);
     }
     if (!b || b.user !== PTA_USER || b.pass !== PTA_PASS) {
+      if (LOGIN_FAILS.size >= 5000) {
+        for (const k of LOGIN_FAILS.keys()) {
+          const x = LOGIN_FAILS.get(k);
+          if (!x || (x.lockUntil || 0) < nowMs) LOGIN_FAILS.delete(k);
+          if (LOGIN_FAILS.size < 4000) break;
+        }
+        if (LOGIN_FAILS.size >= 5000) LOGIN_FAILS.clear();
+      }
       const r = rec && nowMs - rec.firstAt < 10 * 60000 ? rec : { count: 0, firstAt: nowMs, lockUntil: 0 };
       r.count += 1;
       if (r.count >= 5) { r.lockUntil = nowMs + 10 * 60000; r.count = 0; }
@@ -118,7 +136,7 @@ async function build() {
     const secure = cookieSecure(req) ? '; Secure' : '';
     reply.header('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax' + secure + '; Max-Age=' + (SESSION_TTL / 1000));
     if (logEvent) logEvent('info', '登录', '登录成功 · 用户 ' + PTA_USER);
-    return ok(reply, { user: PTA_USER, token: tok });
+    return ok(reply, { user: PTA_USER });
   });
   app.get('/api/session', async (req, reply) => (sessionOk(req) ? ok(reply, { user: PTA_USER }) : reply.code(401).send({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } })));
   app.post('/api/logout', async (req, reply) => {
@@ -154,6 +172,15 @@ async function build() {
   app.addHook('preHandler', async (req, reply) => {
     const p = req.raw.url.split('?')[0];
     if (!p.startsWith('/api/')) return;
+    /* 浏览器跨站写请求带 Origin 时必须同源；curl/CLI 不带 Origin 仍可用 */
+    const origin = String(req.headers.origin || '').trim();
+    if (origin && ['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(String(req.method || '').toUpperCase()) >= 0) {
+      let oh = '';
+      try { oh = new URL(origin).host.toLowerCase(); } catch (e) { oh = ''; }
+      const hh = String(req.headers.host || '').toLowerCase();
+      const fh = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim().toLowerCase();
+      if (!oh || (oh !== hh && oh !== fh)) return bad(reply, 'BAD_ORIGIN', '跨站请求被拒绝', 403);
+    }
     if (p === '/api/health' || p === '/api/login' || p === '/api/hooks/run') return;
     if (!sessionOk(req)) return bad(reply, 'UNAUTHORIZED', '需要登录', 401);
   });
@@ -192,7 +219,7 @@ async function build() {
   app.get('/api/queue', async (req) => {
     const statuses = String(req.query.status || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
     const q = String(req.query.q || '').trim().toLowerCase();
-    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 100, 500));
     const offset = Math.max(0, Number(req.query.offset) || 0);
     const where = [], args = [];
     if (statuses.length) {

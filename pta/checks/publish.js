@@ -164,7 +164,7 @@ async function main() {
     need(st.trackers[0].working === true && st.trackers[0].numPeers === 2, 'tracker 工作状态不对：' + JSON.stringify(st.trackers[0]));
   });
 
-  const cred = await (await fetchA(BASE + '/api/credentials/demo-a.example', {
+  const cred = await (await fetchA(BASE + '/api/credentials/127.0.0.1', {
     method: 'PUT', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ cookie: 'sid=source-cookie' })
   })).json();
@@ -173,7 +173,7 @@ async function main() {
   const item = await (await fetchA(BASE + '/api/queue', {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      title: 'Fixture Publish 2020 2160p', site: 'demo-a.example', targetSite: 'target.example',
+      title: 'Fixture Publish 2020 2160p', site: '127.0.0.1', targetSite: 'target.example',
       downloadUrl: src.base + '/t.torrent', status: 'approved', size: '20 GB'
     })
   })).json();

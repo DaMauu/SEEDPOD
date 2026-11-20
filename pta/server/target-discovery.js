@@ -19,7 +19,7 @@ function makeDiscovery(deps) {
     const pages = ['/usercp.php', '/usercp.php?action=personal'];
     let uid = '';
     try {
-      const idx = await fetch(t.base + '/index.php', { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(15000) });
+      const idx = await fetch(t.base + '/index.php', { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(15000) });
       const html = await idx.text().catch(function () { return ''; });
       const m = /userdetails\.php\?id=(\d+)/i.exec(html);
       if (m) uid = m[1];
@@ -27,7 +27,7 @@ function makeDiscovery(deps) {
     if (uid) pages.push('/userdetails.php?id=' + uid);
     for (const p of pages) {
       let res;
-      try { res = await fetch(t.base + p, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(15000) }); }
+      try { res = await fetch(t.base + p, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(15000) }); }
       catch (e) { continue; }
       if (res.status !== 200) continue;
       const html = await res.text().catch(function () { return ''; });
@@ -105,7 +105,7 @@ function makeDiscovery(deps) {
     const all = cachedTargetCandidates(host);
     const formPath = t.upload.formPath || t.upload.path;
     try {
-      const res = await fetch(t.base + formPath, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+      const res = await fetch(t.base + formPath, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
       if (res.status === 200) {
         const html = await res.text().catch(function () { return ''; });
         if (!/takelogin\.php|login\.php|请先登录/i.test(html)) {

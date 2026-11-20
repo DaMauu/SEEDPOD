@@ -146,14 +146,20 @@ async function makeTorrent(opts) {
   if (!st.isFile()) throw new Error('目前只支持单文件种子');
   if (!/^https?:\/\//i.test(String(o.announce || ''))) throw new Error('announce 必须是 http/https');
   const pieceLength = Math.max(16384, Math.min(4 * 1024 * 1024, Number(o.pieceLength) || 262144));
-  const buf = fs.readFileSync(file);
-  if (!buf.length) throw new Error('文件是空的');
+  if (!st.size) throw new Error('文件是空的');
+  /* 分块读取哈希，不把大文件整块读进内存 */
   const pieces = [];
-  for (let i = 0; i < buf.length; i += pieceLength) {
-    pieces.push(crypto.createHash('sha1').update(buf.slice(i, i + pieceLength)).digest());
-  }
+  const fd = fs.openSync(file, 'r');
+  try {
+    const chunk = Buffer.allocUnsafe(Math.min(pieceLength, st.size));
+    for (let pos = 0; pos < st.size; pos += pieceLength) {
+      const n = fs.readSync(fd, chunk, 0, Math.min(pieceLength, st.size - pos), pos);
+      if (!n) break;
+      pieces.push(crypto.createHash('sha1').update(chunk.subarray(0, n)).digest());
+    }
+  } finally { fs.closeSync(fd); }
   const info = {
-    length: buf.length,
+    length: st.size,
     name: String(o.name || path.basename(file)),
     'piece length': pieceLength,
     pieces: Buffer.concat(pieces)
@@ -167,7 +173,7 @@ async function makeTorrent(opts) {
   };
   const encoded = bencode(torrent);
   return {
-    buffer: encoded, name: info.name, size: buf.length, pieceLength: pieceLength,
+    buffer: encoded, name: info.name, size: st.size, pieceLength: pieceLength,
     pieces: pieces.length, infohash: crypto.createHash('sha1').update(bencode(info)).digest('hex'),
     announce: torrent.announce
   };

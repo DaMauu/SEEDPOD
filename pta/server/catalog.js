@@ -2,6 +2,7 @@
    一条词条 = 某站某条种子在「还没筛选/发布」时的快照，只存文本字段，不存种子文件。
    抓取标记（禁转/独占/DIY/限转/未满 7 天）只做标记，不影响入库——是否跳过交给第二步筛选。 */
 const fs = require('fs');
+const jsonFile = require('./json-file');
 const path = require('path');
 
 const STATUSES = ['new', 'selected', 'archived', 'published', 'skipped'];
@@ -20,7 +21,7 @@ function createStore(file) {
     }
   }
   function write(store) {
-    fs.writeFileSync(file, JSON.stringify({ updatedAt: new Date().toISOString(), seq: store.seq, items: store.items }, null, 0), { mode: 0o600 });
+    jsonFile.writeAtomic(file, { updatedAt: new Date().toISOString(), seq: store.seq, items: store.items }, 0o600);
   }
   function clean(x) {
     const out = {};
@@ -118,7 +119,7 @@ function createStore(file) {
   function update(id, patch) {
     const store = read();
     const it = store.items.find(function (x) { return x.id === id; });
-    if (!it) return { err: u8bcdu6761u4e0du5b58u5728 };
+    if (!it) return { err: '词条不存在' };
     Object.keys(patch || {}).forEach(function (k) {
       if (FIELDS.indexOf(k) >= 0) it[k] = patch[k];
     });

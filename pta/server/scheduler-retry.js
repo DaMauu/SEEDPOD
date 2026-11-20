@@ -39,7 +39,7 @@ function makeRetryPhases() {
         const retryMax = Math.max(0, Math.min(10, cfg.retryMax === undefined ? 2 : Number(cfg.retryMax) || 0));
         const backoff = Math.max(1, Math.min(1440, cfg.retryBackoffMin === undefined ? 15 : Number(cfg.retryBackoffMin) || 15));
         let ok = 0, failed = 0, skipped = 0;
-        const rows2 = all("SELECT id, data FROM queue WHERE status = 'failed' LIMIT 10");
+        const rows2 = all("SELECT id, data FROM queue WHERE status = 'failed' ORDER BY updated_at ASC LIMIT 10");
         for (const row of rows2) {
           const it = jparse(row.data) || {};
           const retries = Number(it.retries) || 0;

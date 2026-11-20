@@ -37,6 +37,7 @@ module.exports = function (app, ctx) {
     } else {
       if (b.telegramToken !== undefined) {
         const tok = String(b.telegramToken || '').trim();
+        if (tok && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 SECRET_FILE/SECRET', 409);
         if (tok) cfg.notifyTgToken = secretbox.encrypt(tok.slice(0, 200), KEYRING.key);
       }
       if (b.telegramChat !== undefined) {

@@ -62,7 +62,16 @@ module.exports = function (app, ctx) {
     if (b.name !== undefined) d.name = String(b.name).slice(0, 60);
     if (b.kind !== undefined) { const k = kindOf(b.kind); if (!k) return bad(reply, 'UNSUPPORTED_DOWNLOADER', '只支持 qBittorrent 和 watch 目录', 400); d.kind = k; }
     if (b.watchPath !== undefined) { const w = watch.normDir(b.watchPath); if (w.err) return bad(reply, 'BAD_WATCH_PATH', w.err); d.watchPath = w.dir; }
-    if (b.url !== undefined) { const u = qb.normDlUrl(b.url); if (!u) return bad(reply, 'BAD_URL', '地址必须是 http/https 开头'); d.url = u; }
+    if (b.url !== undefined) {
+      const u = qb.normDlUrl(b.url);
+      if (!u) return bad(reply, 'BAD_URL', '地址必须是 http/https 开头');
+      let oldOrigin = '', newOrigin = '';
+      try { oldOrigin = new URL(d.url).origin; } catch (e) { oldOrigin = ''; }
+      try { newOrigin = new URL(u).origin; } catch (e) { newOrigin = ''; }
+      /* 换下载器地址时旧密码不再交给新 host */
+      if (oldOrigin && newOrigin && oldOrigin !== newOrigin && b.pass === undefined) d.pass = '';
+      d.url = u;
+    }
     if (b.user !== undefined) d.user = String(b.user).slice(0, 100);
     if (b.pass !== undefined) d.pass = b.pass ? secretbox.encrypt(String(b.pass).slice(0, 200), KEYRING.key) : '';
     if (b.disableAuth !== undefined) d.disableAuth = !!b.disableAuth;

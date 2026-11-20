@@ -8,6 +8,8 @@ const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const { typeOf } = require('./category-policy');
 const configSchema = require('./config-schema');
+const jsonFile = require('./json-file');
+const urlGuard = require('./url-guard');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -20,7 +22,7 @@ module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const KEYRING = secretbox.loadKey(DATA_DIR);
   const now = () => new Date().toISOString();
-  const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
+  const readDef = (host) => { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
   const readPresets = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
   const readCookie = (host) => {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
@@ -96,7 +98,7 @@ module.exports = function (app, ctx) {
     const prevTypes = Array.isArray((sites[host] || {}).types) ? sites[host].types.map(String) : [];
     const typesChanged = JSON.stringify(prevTypes) !== JSON.stringify(want);
     sites[host] = Object.assign({}, sites[host] || {}, { types: want, cats: cats, updatedAt: now() });
-    fs.writeFileSync(file, JSON.stringify(raw.sites ? raw : { sites: sites }, null, 2) + '\n', { mode: 0o600 });
+    jsonFile.writeAtomic(file, raw.sites ? raw : { sites: sites }, 0o600);
     /* 类型集合变了：下次抓取按全量重跑；单纯改分类预设仍走增量 */
     let rechecked = 0;
     if (typesChanged) {
@@ -147,6 +149,10 @@ module.exports = function (app, ctx) {
     return '';
   }
   async function detectFilters(host) {
+    const privateDef = readDef(host);
+    if (privateDef && privateDef.base && !urlGuard.baseOk(host, privateDef.base)) {
+      return { ok: false, code: 'BAD_BASE', message: '私有站点定义的 base 不是该站域名' };
+    }
     const def = defOf(host);
     if (!def.base) return { ok: false, code: 'NO_DEF', message: '没有站点定义' };
     const c = readCookie(host);
@@ -241,7 +247,7 @@ module.exports = function (app, ctx) {
     const sites = raw.sites && typeof raw.sites === 'object' ? raw.sites : raw;
     sites[host] = Object.assign({}, sites[host] || {}, { cats: cats, updatedAt: now() });
     const out = raw.sites ? raw : { sites: sites };
-    fs.writeFileSync(file, JSON.stringify(out, null, 2) + '\n', { mode: 0o600 });
+    jsonFile.writeAtomic(file, out, 0o600);
     return ok({ host: host, ids: ids.filter(function (id) { return known[id]; }), groups: Object.keys(cats).length });
   });
 

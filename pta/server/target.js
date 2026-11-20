@@ -12,6 +12,7 @@ const { makePlan } = require('./target-plan');
 const { makeSubmit } = require('./target-submit');
 const { makeTargetPages } = require('./target-pages');
 const { makeRequestQueue } = require('./request-queue');
+const urlGuard = require('./url-guard');
 const { catMapOf, composeSubtitle, expand, hideContent, stripHide, infoFieldKey, descrFieldKey,
   attrsOf, textOf, isDeletedPageText, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
 
@@ -85,6 +86,8 @@ function makeTarget(ctx) {
     const base = String(p.base || def.base || built.base || '').replace(/\/+$/, '');
     const e = ENGINES[engine];
     if (!engine || !base || !e) return null;
+    /* 私有 site-defs 可以改 base，但不能把已存 cookie 带到别的域；内置/测试包不强制 */
+    if (def.base && !urlGuard.baseOk(host, def.base)) return null;
     const pm = p.upload || def.uploadMap || built.upload || {};
     const upload = {
       path: String(pm.path || e.uploadPath),

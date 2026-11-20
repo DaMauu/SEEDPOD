@@ -63,11 +63,6 @@ function makeRelease(ctx) {
       h = String(h || '').trim().toLowerCase();
       if (h && hosts.indexOf(h) < 0) hosts.push(h);
     });
-    const targets = hosts.map(function (host) {
-      const tp = targetPlan(item, host);
-      return { host: host, target: tp.target, error: tp.error };
-    });
-    const first = targets[0] || { host: '', target: null, error: '' };
     const tr = torrentOf(b);
     const mediaText = String(b.mediaInfo || b.bdinfo || item.mediaInfo || item.bdinfo || '').trim();
     const media = mediaText ? mediainfo.parse(mediaText) : null;
@@ -96,6 +91,13 @@ function makeRelease(ctx) {
       });
       description = imagehost.replaceDescription(description, imageLinks);
     }
+    /* 目标站计划必须基于同一份最终简介，否则 prepared 字段和上传字段会对不上 */
+    const planItem = Object.assign({}, item, { descrBb: description, intro: description });
+    const targets = hosts.map(function (host) {
+      const tp = targetPlan(planItem, host);
+      return { host: host, target: tp.target, error: tp.error };
+    });
+    const first = targets[0] || { host: '', target: null, error: '' };
     return {
       at: now(),
       title: titleOn ? String(item.title || names.title) : '',
@@ -231,8 +233,14 @@ function makeRelease(ctx) {
       return fail('BAD_STAGE', 'run 只支持 prepared / previewed');
     }
     const limit = Math.max(1, Math.min(100, Number(b.limit) || 20));
-    const rows = all('SELECT id, status, data FROM queue ORDER BY created_at ASC LIMIT ?', limit);
-    const out = { stage: stage, checked: rows.length, prepared: 0, previewed: 0, skipped: 0, failed: 0, items: [] };
+    /* 已发布的旧条目不能占满窗口；先按阶段筛，避免后面的草稿永远轮不到 */
+    const candidates = all('SELECT id, status, data FROM queue ORDER BY created_at ASC LIMIT 1000');
+    const rows = candidates.filter(function (row) {
+      const it = jparse(row.data) || {};
+      const cur = it.stage || 'draft';
+      return stage === 'prepared' ? (cur === 'draft' || cur === 'failed') : (cur === 'prepared' || cur === 'failed');
+    }).slice(0, limit);
+    const out = { stage: stage, checked: candidates.length, prepared: 0, previewed: 0, skipped: Math.max(0, candidates.length - rows.length), failed: 0, items: [] };
     rows.forEach(function (row) {
       const it = jparse(row.data) || {};
       const cur = it.stage || 'draft';

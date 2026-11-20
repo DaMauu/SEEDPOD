@@ -50,7 +50,9 @@ function makeNotify(ctx) {
   }
   function sanitize(s) {
     const token = creds().token;
-    return String(s || '').split(token).join('<token>').slice(0, 160);
+    const text = String(s || '');
+    if (!token) return text.slice(0, 160);
+    return text.split(token).join('<token>').slice(0, 160);
   }
   async function send(event, text, extra, opts) {
     const c = readCfg(), t = creds();

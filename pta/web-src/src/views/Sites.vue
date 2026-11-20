@@ -128,6 +128,7 @@ const sites = computed(() => baseSites.value
       title: x.title || x.host,
       url: c.url || x.url || ('https://' + x.host),
       arch: c.arch || x.arch || '?',
+      added: !!x.added,
       enabled: c.enabled !== false,
       mode: c.mode || 'incremental',
       override: !!c.override,

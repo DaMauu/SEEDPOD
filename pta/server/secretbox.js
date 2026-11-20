@@ -24,6 +24,14 @@ function readKeyList(raw) {
   return String(raw || '').split(/[,\s]+/).map(parseKey).filter(Boolean);
 }
 
+/* 显式密钥无效/目录不可写时，同一进程内复用同一个临时 key；否则各模块各生成一把，密文互相解不开 */
+const FALLBACK_KEYS = new Map();
+function fallbackKey(tag) {
+  const id = String(tag || 'default');
+  if (!FALLBACK_KEYS.has(id)) FALLBACK_KEYS.set(id, crypto.randomBytes(32));
+  return FALLBACK_KEYS.get(id);
+}
+
 function loadKey(dataDir) {
   const explicit = String(require('./env').read('SECRET','PTA_SECRET') || '').trim();
   const previous = readKeyList(require('./env').read('SECRET_PREVIOUS','PTA_SECRET_PREVIOUS'));
@@ -32,7 +40,7 @@ function loadKey(dataDir) {
     if (fromEnv) return { key: fromEnv, keys: [fromEnv].concat(previous), oldKeys: previous, keyId: keyId(fromEnv), source: 'env', ok: true };
     // 显式给了密钥但解不开：不要回退生成新 key，避免把旧密文“洗掉”
     console.warn('[seedpod] SECRET 格式不对，拒绝生成新 key');
-    const fallback = crypto.randomBytes(32);
+    const fallback = fallbackKey('env:' + String(dataDir || ''));
     return { key: fallback, keys: [fallback].concat(previous), oldKeys: previous, keyId: keyId(fallback), source: 'invalid-env-secret', ok: false, reason: 'SECRET 格式不对' };
   }
   const secretFile = String(require('./env').read('SECRET_FILE','PTA_SECRET_FILE') || '').trim();
@@ -43,7 +51,7 @@ function loadKey(dataDir) {
     } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
     // 显式指定了密钥文件但读不到/无效：不要偷偷写 data/.secret
     console.warn('[seedpod] SECRET_FILE 读不到或格式不对，拒绝生成 data/.secret');
-    const fallback = crypto.randomBytes(32);
+    const fallback = fallbackKey('file:' + String(dataDir || ''));
     return { key: fallback, keys: [fallback].concat(previous), oldKeys: previous, keyId: keyId(fallback), source: 'invalid-secret-file', ok: false, reason: 'SECRET_FILE 读不到或格式不对' };
   }
   const file = path.join(dataDir, '.secret');
@@ -60,7 +68,8 @@ function loadKey(dataDir) {
   try {
     fs.writeFileSync(file, generated.toString('hex') + '\n', { mode: 0o600 });
   } catch (e) {
-    return { key: generated, keys: [generated].concat(previous), oldKeys: previous, keyId: keyId(generated), source: 'memory', ok: false, reason: '数据目录不可写，密钥只在内存' };
+    const fallback = fallbackKey('memory:' + String(dataDir || ''));
+    return { key: fallback, keys: [fallback].concat(previous), oldKeys: previous, keyId: keyId(fallback), source: 'memory', ok: false, reason: '数据目录不可写，密钥只在内存' };
   }
   return { key: generated, keys: [generated].concat(previous), oldKeys: previous, keyId: keyId(generated), source: 'generated', ok: true };
 }

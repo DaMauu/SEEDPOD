@@ -7,7 +7,7 @@ function makePublishPhase(deps) {
           const cfg = JSON.parse(cfgRow ? cfgRow.v : 'null') || {};
           /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
           const conc = Math.max(1, Math.min(5, Number(cfg.concurrency) || 1));
-          const rows = all("SELECT id, data FROM queue WHERE status = 'approved' LIMIT " + publishLimit);
+          const rows = all("SELECT id, data FROM queue WHERE status = 'approved' ORDER BY updated_at ASC LIMIT " + publishLimit);
           let ok = 0, failed = 0, held = 0;
           const errors = [];
           const queueRows = rows.slice();

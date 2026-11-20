@@ -9,8 +9,8 @@
           <i id="hero-delta">累计已发布</i>
         </div>
         <div class="stat-list">
-          <div class="hstat"><span>本月已发</span><b id="stat-month">{{ pubCount }}</b><i>目标 120</i></div>
-          <div class="hstat"><span>总发布数</span><b id="stat-total">{{ pubCount.toLocaleString() }}</b><i>历史累计</i></div>
+          <div class="hstat"><span>本月已发</span><b id="stat-month">{{ pubMonth }}</b><i>近 30 天</i></div>
+          <div class="hstat"><span>总发布数</span><b id="stat-total">{{ pubTotal.toLocaleString() }}</b><i>历史累计</i></div>
           <div class="hstat"><span>抓取总数</span><b id="stat-db">{{ catalogTotal.toLocaleString() }}</b><i>词条库累计</i></div>
         </div>
       </div>
@@ -88,7 +88,11 @@ let refreshTimer = null
 let loaded = false
 let busy = false
 
-const pubCount = computed(() => Number(ov.value && ov.value.queue && ov.value.queue.counts && ov.value.queue.counts.published) || 0)
+const pubStats = computed(() => (ov.value && ov.value.published) || {})
+const pubDays = computed(() => Array.isArray(pubStats.value.byDay) ? pubStats.value.byDay : [])
+const pubCount = computed(() => Number((pubDays.value[pubDays.value.length - 1] || {}).count) || 0)
+const pubMonth = computed(() => Number(pubStats.value.last30d) || 0)
+const pubTotal = computed(() => Number(pubStats.value.total) || 0)
 const catalogTotal = computed(() => Number(ov.value && ov.value.catalog && ov.value.catalog.total) || 0)
 
 const health = computed(() => {

@@ -175,10 +175,10 @@ async function uploadInner(host, body) {
     }
     const uploadItem = preparedItem(item.data, host);
     let plan = preparedPlan(item.data, host);
-    const liveDesc = String(item.data.descrBb || '');
+    const liveDesc = String(uploadItem.descrBb || uploadItem.intro || '');
     const staleDesc = !!(liveDesc && plan && plan.fields && String(plan.fields.descr || '') !== liveDesc.slice(0, 60000));
     if (mirrorChanged || staleDesc) {
-      const fresh = target.plan(host, item.data);
+      const fresh = target.plan(host, uploadItem);
       if (!fresh.ok) {
         return { ok: false, code: fresh.code || 'PLAN_FAILED', message: fresh.message || '图片转存后重建上传计划失败', http: fresh.http || 400 };
       }

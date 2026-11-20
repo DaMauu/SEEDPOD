@@ -69,8 +69,12 @@ module.exports = function (app, ctx) {
     return null;
   }
   function checkHost(item, host) {
-    if (item.targetSite && String(item.targetSite) !== String(host)) {
-      return { code: 'TARGET_MISMATCH', message: '条目目标站是 ' + item.targetSite + '，跟请求的 ' + host + ' 不一致' };
+    const want = String(host || '').trim().toLowerCase();
+    const allowed = [];
+    if (item && item.targetSite) allowed.push(String(item.targetSite).trim().toLowerCase());
+    (Array.isArray(item && item.targets) ? item.targets : []).forEach(function (h) { const x = String(h || '').trim().toLowerCase(); if (x) allowed.push(x); });
+    if (allowed.length && allowed.indexOf(want) < 0) {
+      return { code: 'TARGET_MISMATCH', message: '条目目标站是 ' + allowed.join('、') + '，跟请求的 ' + host + ' 不一致' };
     }
     return null;
   }
@@ -136,6 +140,9 @@ module.exports = function (app, ctx) {
 
   app.post('/api/targets/:host/delete', async (req, reply) => {
     const b = req.body || {};
+    /* 删除不可逆，和上传走同一套测试站/主站确认门禁 */
+    const gate = realGate({ title: '' }, [req.params.host], b);
+    if (gate) return bad(reply, gate.code, gate.message, gate.http);
     const r = await target.deleteTorrent(req.params.host, { id: b.id, url: b.url }, {
       dryRun: b.dryRun !== false, check: !!b.check, reason: b.reason, reasonType: b.reasonType
     });

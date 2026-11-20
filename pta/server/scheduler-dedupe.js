@@ -21,7 +21,7 @@ function makeDedupePhase(deps) {
         return { dedupe: dedupe, hooks: undefined };
       }
       const dedupeLimit = batch;
-      const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
+      const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' ORDER BY updated_at ASC LIMIT " + dedupeLimit) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;
       for (const row of pend) {
         const it = jparse(row.data) || {};

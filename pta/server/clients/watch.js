@@ -2,14 +2,29 @@
    不联网；只做本地文件写入与可写性探测。 */
 const fs = require('fs');
 const path = require('path');
+const env = require('../env');
 
-function normDir(raw) {
+/* watch 只能写进明确允许的根：WATCH_ROOT、MEDIA_ROOT、DATA_DIR/watch 或 DATA_DIR 本身 */
+function allowedRoots() {
+  const data = path.resolve(env.read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', '..', 'data'));
+  const list = [];
+  const extra = String(env.read('WATCH_ROOT','PTA_WATCH_ROOT') || '').trim();
+  if (extra) list.push(path.resolve(extra));
+  const media = String(env.read('MEDIA_ROOT','PTA_MEDIA_ROOT') || '').trim();
+  if (media) list.push(path.resolve(media));
+  list.push(path.join(data, 'watch'), data);
+  return list;
+}
+function normDir(raw, roots) {
   const s = String(raw || '').trim();
   if (!s) return { err: 'watch 目录不能为空' };
   if (!path.isAbsolute(s)) return { err: 'watch 目录必须是绝对路径' };
   if (s.length > 300) return { err: 'watch 目录太长' };
   const abs = path.resolve(s);
   if (abs === '/' || abs === '/proc' || abs === '/sys' || abs === '/dev') return { err: '不能使用系统目录' };
+  const allow = Array.isArray(roots) && roots.length ? roots : allowedRoots();
+  const ok = allow.some(function (r) { const x = path.resolve(r); return abs === x || abs.indexOf(x + path.sep) === 0; });
+  if (!ok) return { err: 'watch 目录不在允许范围；用 PTA_WATCH_ROOT 指定根目录' };
   return { dir: abs };
 }
 function safeName(raw) {

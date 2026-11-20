@@ -53,7 +53,7 @@ function screenCatalog(ctx, opts) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
   const b = opts || {};
-  const limit = Math.min(Number(b.limit) || 50, 200);
+  const limit = Math.max(1, Math.min(Number(b.limit) || 50, 200));
   const host = String(b.host || '').toLowerCase();
   const flowRow = one("SELECT v FROM meta WHERE k = 'flow'");
   const flow = JSON.parse(flowRow ? flowRow.v : 'null') || {};

@@ -65,7 +65,7 @@ module.exports = function (app, ctx) {
     if (!abs && found.savePath) abs = path.join(found.savePath, found.name || '');
     if (!abs) return bad(reply, 'NO_CONTENT_PATH', 'qB 没返回文件路径（版本太旧或种子还没开始）', 409);
     const VIDEO = /\.(mkv|mp4|ts|m2ts|iso|avi|mov|wmv|webm|flv)$/i;
-    let target = abs;
+    let selectedFile = abs;
     try {
       const st = fs.statSync(abs);
       if (st.isDirectory()) {
@@ -80,16 +80,16 @@ module.exports = function (app, ctx) {
           });
         });
         if (!best) return bad(reply, 'NO_VIDEO', '这个目录里没找到视频文件，请手填具体文件路径', 422);
-        target = best.path;
+        selectedFile = best.path;
       }
     } catch (e) {
       return bad(reply, 'PATH_NOT_FOUND', 'qB 给的路径在服务器上不存在：' + abs.slice(0, 160), 404);
     }
-    let realRoot = ROOT, real = target;
+    let realRoot = ROOT, real = selectedFile;
     try { realRoot = fs.realpathSync(ROOT); } catch (e) { realRoot = ROOT; }
-    try { real = fs.realpathSync(target); } catch (e) { real = target; }
+    try { real = fs.realpathSync(selectedFile); } catch (e) { real = selectedFile; }
     if (real !== realRoot && !real.startsWith(realRoot + path.sep)) {
-      return bad(reply, 'OUTSIDE_ROOT', '文件不在媒体目录下：' + target + '；把下载目录放到 ' + ROOT + ' 下，或手填相对路径', 409);
+      return bad(reply, 'OUTSIDE_ROOT', '文件不在媒体目录下：' + selectedFile + '；把下载目录放到 ' + ROOT + ' 下，或手填相对路径', 409);
     }
     return ok(reply, { path: path.relative(realRoot, real), absolute: real, from: 'qb' });
   });

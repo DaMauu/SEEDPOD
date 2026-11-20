@@ -2,6 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const secretbox = require('./secretbox');
+const jsonFile = require('./json-file');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -26,7 +27,7 @@ module.exports = function (app, ctx) {
   ctx.logEvent = logEvent;
 
   app.get('/api/logs', async (req) => {
-    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 100, 500));
     const level = String(req.query.level || '');
     const rows = level
       ? all('SELECT * FROM logs WHERE level = ? ORDER BY id DESC LIMIT ?', level, limit).reverse()
@@ -167,6 +168,7 @@ module.exports = function (app, ctx) {
   /* ---- 站点定义 ---- */
   const DEF_DIR = path.join(DATA_DIR, 'site-defs');
   function readDef(host) {
+    if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null;
     try { return JSON.parse(fs.readFileSync(path.join(DEF_DIR, host + '.json'), 'utf8')); } catch (e) { return null; }
   }
   app.get('/api/site-def/:host', async (req, reply) => {
@@ -181,13 +183,16 @@ module.exports = function (app, ctx) {
     if (!b || typeof b !== 'object' || Array.isArray(b)) return bad(reply, 'BAD_DEF', '站点定义必须是 JSON 对象');
     const text = JSON.stringify(b);
     if (text.length > 200 * 1024) return bad(reply, 'TOO_LARGE', '站点定义超过 200KB');
+    if (b.base && !require('./url-guard').baseOk(host, b.base)) {
+      return bad(reply, 'BAD_BASE', '站点 base 必须是该站域名或其子域，且非本机站点要用 https');
+    }
     const CAT_MODES = ['single', 'multi', 'bracket', 'indexed'];
     if (b.catMode !== undefined && b.catMode !== '' && CAT_MODES.indexOf(String(b.catMode)) < 0) {
       return bad(reply, 'BAD_CAT_MODE', 'catMode 只能是 ' + CAT_MODES.join(' / '));
     }
     try {
       fs.mkdirSync(DEF_DIR, { recursive: true, mode: 0o700 });
-      fs.writeFileSync(path.join(DEF_DIR, host + '.json'), JSON.stringify(b, null, 2) + '\n', { mode: 0o600 });
+      jsonFile.writeAtomic(path.join(DEF_DIR, host + '.json'), b, 0o600);
     } catch (e) {
       return bad(reply, 'WRITE_FAILED', '站点定义写入失败', 500);
     }

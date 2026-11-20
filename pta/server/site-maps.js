@@ -2,6 +2,7 @@
    文件是事实源，网页只是编辑器；升级不覆盖，能直接手改。 */
 const fs = require('fs');
 const path = require('path');
+const jsonFile = require('./json-file');
 
 function fileOf(DATA_DIR) { return path.join(DATA_DIR, 'site-maps.json'); }
 
@@ -16,8 +17,7 @@ function readAll(DATA_DIR) {
 
 function writeAll(DATA_DIR, data) {
   const file = fileOf(DATA_DIR);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', { mode: 0o600 });
+  jsonFile.writeAtomic(file, data, 0o600);
 }
 
 function cleanMap(obj, max) {

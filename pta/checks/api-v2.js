@@ -622,6 +622,23 @@ async function main() {
     await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
   });
 
+  await check('站点定义 base 必须是本站域名', async () => {
+    const host = 'badbase.example';
+    const bad = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', base: 'https://evil.example' })
+    });
+    need(bad.status === 400, '外部 base 没拦住：' + bad.status);
+    const bj = await bad.json();
+    need(bj.error && bj.error.code === 'BAD_BASE', '错误码不对：' + JSON.stringify(bj.error));
+    const okput = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', base: 'https://sub.' + host })
+    });
+    need(okput.status === 200, '同站子域 base 被拒：' + okput.status);
+    await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
+  });
+
   await check('站点定义 catMode 只接受已知值', async () => {
     const host = 'catmode.example';
     const bad = await fetchA(BASE + '/api/site-def/' + host, {

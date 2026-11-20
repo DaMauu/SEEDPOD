@@ -98,6 +98,7 @@ const downloaderCount = ref(0)
 const devText = ref('加载中…')
 const loginOpen = ref(false)
 const authed = ref(false)
+function setAuthed(v) { authed.value = !!v; window.__ptaAuthed = !!v }
 const login = reactive({ user: '', pass: '', err: '', busy: false })
 const confirmState = reactive({ open: false, title: '', text: '', fn: null })
 
@@ -153,7 +154,7 @@ function submitLogin() {
   }).then(function (res) {
     login.busy = false
     if (res.ok) {
-      authed.value = true
+      setAuthed(true)
       loginOpen.value = false
       login.pass = ''
       login.err = ''
@@ -168,11 +169,11 @@ function submitLogin() {
 }
 function probeAuth() {
   fetch('/api/session', { credentials: 'same-origin' }).then(function (r) {
-    authed.value = r.ok
+    setAuthed(r.ok)
     if (authed.value) { loginOpen.value = false; loadStats(); loadDev() }
     else loginOpen.value = true
   }).catch(function () {
-    authed.value = false
+    setAuthed(false)
     loginOpen.value = true
   })
 }
@@ -206,14 +207,23 @@ window.__ptaLoadOverview = function () {
     .then(function (j) { if (j && j.ok) window.__ptaOverview = j.data; }).catch(function (e) { reportError('App.overview', e) })
 }
 let timer = null
+function onUnauthorized() {
+  if (!authed.value) return
+  setAuthed(false)
+  loginOpen.value = true
+  login.err = '登录已失效，请重新登录'
+}
 onMounted(function () {
   window.addEventListener('hashchange', applyHash)
+  window.addEventListener('pta-unauthorized', onUnauthorized)
   applyHash()
   probeAuth()
   timer = setInterval(loadStats, 30000)
+  setInterval(probeAuth, 60000)
 })
 onUnmounted(function () {
   window.removeEventListener('hashchange', applyHash)
+  window.removeEventListener('pta-unauthorized', onUnauthorized)
   if (timer) clearInterval(timer)
 })
 </script>

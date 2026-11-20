@@ -13,7 +13,7 @@ function makeReviewPhase(deps) {
       const bdOn = flowConfig.onLegacy(flow, 'BDInfo', true, function (v) { return String(v) === '不要求' ? false : true; });
       const shotOn = flowConfig.onLegacy(flow, '截图至少几张', true, function (v) { return Number(v) > 0; });
       const yearOn = flowConfig.on(flow, '年份必须一致', true);
-      const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' LIMIT " + batch) : [];
+      const reviewRows = want('review') ? all("SELECT id, status, data FROM queue WHERE status = 'pending' ORDER BY updated_at ASC LIMIT " + batch) : [];
       const review = { checked: reviewRows.length, ready: 0, hold: 0, skipped: 0, reasons: [], skippedStep: !want('review'), filled: 0, detailFetched: 0 };
       let fillTries = 0, detailTries = 0;
       for (const row of reviewRows) {

@@ -3,7 +3,7 @@
     <div id="crawl-panel">
       <FlowGates :gates="gates" :sched="sched" @toggle="toggleGate" @toggle-auto="toggleAuto" @run-round="runRound" />
       <SchedulerBar :sched="sched" :sched-text="schedText" :limits="limits" @every="setEveryValue" @save="saveLimits" />
-      <CrawlCard v-model:source-host="sourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" />
+      <CrawlCard :source-host="sourceHost" @update:source-host="onSourceHost" :site-options="siteOptions" :busy="busy" :fetch-sum="fetchSum" :plan="plan" :fetch-rows="fetchRows" :detail="detail" @show-plan="showPlan" @save-fetch="saveFetch" @toggle-fetch-chip="toggleFetchChip" @toggle-detail="toggleDetail" />
       <ScreenDedupeCard :busy="busy" :rx-rows="rxRows" :auto-dupe="autoDupe" :dedupe-switches="dedupeSwitches" :dedupe-inputs="dedupeInputs" :rule-component="RuleOrSpecial" :rule-control="RuleControl" @save="saveScreen" @toggle-auto-dupe="autoDupe = !autoDupe" />
       <PublishCard :groups="pubGroups" :busy="busy" :rule-component="RuleOrSpecial" @maps="mapOpen = true" @save="savePub" />
     </div>
@@ -79,6 +79,10 @@ const { limits, sched, schedText, gates, loadSched, setEveryValue, saveLimits, r
 const { loadFlow, saveFetch, saveScreen, savePub, toggleDetail } = useCrawlFlow({ rules: rules, rx: rx, limits: limits, detail: detail, autoDupe: autoDupe, busy: busy, toast: toast, getJson: getJson, putFlow: putFlow, patchUser: patchUser, saveTypes: saveTypes, saveFilters: saveFilters })
 const { plan, showPlan } = useCrawlPlan({ sourceHost: sourceHost, busy: busy, toast: toast })
 const { sites, siteStatus, siteCfg, targetOpen, targetQ, siteOptions, targetSite, targetOptions, loadSites, saveSource, pickTarget } = useCrawlSites({ getJson: getJson, patchUser: patchUser, toast: toast, reportError: reportError, loadTypes: loadTypes, loadSched: function () { return loadSched() }, sourceHost: sourceHost, targetHost: targetHost })
+function onSourceHost(v) {
+  sourceHost.value = v
+  saveSource()
+}
 useCrawlBoot({ sites: sites, gates: gates, loadSites: loadSites, loadGates: loadGates, loadFlow: loadFlow })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {

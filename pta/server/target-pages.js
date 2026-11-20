@@ -71,6 +71,13 @@ function makeTargetPages(deps) {
     };
     if (o.dryRun !== false) return { ok: true, data: Object.assign({ dryRun: true, sent: false }, plan) };
     if (!ctx.allowReal('realPublish')) return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true 再试', http: 409 };
+    let actionUrl;
+    try { actionUrl = new URL(form.action, t.base + '/'); } catch (e) { return { ok: false, code: 'BAD_DELETE_ACTION', message: '删除表单地址不合法', http: 422 }; }
+    const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    const actHost = String(actionUrl.hostname || '').toLowerCase();
+    if (!baseHost || (actHost !== baseHost && !actHost.endsWith('.' + baseHost))) {
+      return { ok: false, code: 'BAD_DELETE_ACTION', message: '删除表单指向了外部域名，为免 cookie 外泄先停下', http: 422 };
+    }
     const body = new URLSearchParams();
     Object.keys(form.hidden).forEach(function (k) { body.set(k, form.hidden[k]); });
     if (radio) body.set(form.radioName, radio.value);
@@ -79,7 +86,7 @@ function makeTargetPages(deps) {
     form.submit.forEach(function (b) { if (b.name) body.set(b.name, b.value); });
     let res;
     try {
-      res = await fetch(new URL(form.action, t.base + '/').toString(), {
+      res = await fetch(actionUrl.toString(), {
         method: 'POST', headers: Object.assign({ 'content-type': 'application/x-www-form-urlencoded' }, headers),
         body: body.toString(), redirect: 'manual', signal: AbortSignal.timeout(30000)
       });
@@ -108,9 +115,10 @@ function makeTargetPages(deps) {
     const pageHost = (function () { try { return new URL(pageUrl).hostname.toLowerCase(); } catch (e) { return ''; } })();
     if (!baseHost || (pageHost !== baseHost && !pageHost.endsWith('.' + baseHost))) return { ok: false, code: 'BAD_DETAILS_HOST', message: '详情页域名不一致' };
     let page;
-    try { page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) }); }
+    try { page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) }); }
     catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上' }; }
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status };
+    if ((Number(page.headers.get('content-length')) || 0) > 2 * 1024 * 1024) return { ok: false, code: 'DETAILS_TOO_LARGE', message: '详情页超过 2MB' };
     const html = await page.text().catch(function () { return ''; });
     const d = adapters.parseDetail(html);
     return { ok: true, data: {
@@ -137,7 +145,7 @@ function makeTargetPages(deps) {
     if (!baseHost || (pageHost !== baseHost && !pageHost.endsWith('.' + baseHost))) return { ok: false, code: 'BAD_DETAILS_HOST', message: '详情页域名和站点不一致，为免 cookie 外泄先停下', http: 400 };
     const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
     let page;
-    try { page = await fetch(pageUrl, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(20000) }); }
+    try { page = await fetch(pageUrl, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) }); }
     catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上', http: 502 }; }
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status, http: 502 };
     const html = await page.text().catch(function () { return ''; });
@@ -152,9 +160,10 @@ function makeTargetPages(deps) {
       const dlHost = (function () { try { return new URL(link).hostname.toLowerCase(); } catch (e) { return ''; } })();
       if (dlHost !== baseHost && !dlHost.endsWith('.' + baseHost)) { last = 'BAD_DOWNLOAD_HOST'; continue; }
       let res;
-      try { res = await fetch(link, { headers: headers, redirect: 'follow', signal: AbortSignal.timeout(30000) }); }
+      try { res = await fetch(link, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(30000) }); }
       catch (e) { last = 'DOWNLOAD_UNREACHABLE'; continue; }
       if (res.status !== 200) { last = 'DOWNLOAD_HTTP_' + res.status; continue; }
+      if ((Number(res.headers.get('content-length')) || 0) > 10 * 1024 * 1024) { last = 'TORRENT_TOO_LARGE'; continue; }
       const buf = Buffer.from(await res.arrayBuffer());
       if (!buf.length || buf.length > 10 * 1024 * 1024) { last = buf.length ? 'TORRENT_TOO_LARGE' : 'EMPTY_TORRENT'; continue; }
       if (buf[0] !== 0x64) { last = 'NOT_TORRENT'; continue; }

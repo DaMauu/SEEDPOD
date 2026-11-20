@@ -89,6 +89,7 @@ async function mirrorDescription(description, opts) {
       if (isPrivateUrl(res.url, o.allowPrivate === true)) throw new Error('图片跳转到内网地址');
       const type = String(res.headers.get('content-type') || '').toLowerCase();
       if (type && type.indexOf('image/') !== 0) throw new Error('不是图片：' + type.slice(0, 40));
+      if ((Number(res.headers.get('content-length')) || 0) > 5 * 1024 * 1024) throw new Error('图片超过 5MB');
       const buf = Buffer.from(await res.arrayBuffer());
       if (!buf.length) throw new Error('图片是空文件');
       const mime = type || 'image/jpeg';

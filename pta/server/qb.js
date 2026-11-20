@@ -16,23 +16,6 @@ function makeQb(DATA_DIR) {
 const KEYRING = secretbox.loadKey(DATA_DIR);
 const DL_TIMEOUT = 8000;
 
-function readDl() {
-  try {
-    const raw = JSON.parse(fs.readFileSync(DL_FILE, 'utf8'));
-    return { seq: Number(raw && raw.seq) || 0, items: Array.isArray(raw && raw.items) ? raw.items : [] };
-  } catch (e) {
-    return { seq: 0, items: [] };
-  }
-}
-function writeDl(d) {
-  try {
-    fs.writeFileSync(DL_FILE, JSON.stringify({ seq: d.seq, items: d.items }, null, 1), { mode: 0o600 });
-  } catch (e) {
-    const err = new Error(e.code === "EACCES" ? "数据目录不可写，检查挂载权限" : "写入下载器失败：" + e.message);
-    err.code = "STORAGE_FAILED";
-    throw err;
-  }
-}
 function publicDl(d) {
   return { id: d.id, name: d.name || '', url: d.url, user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth,
     lastProbe: d.lastProbe || null };

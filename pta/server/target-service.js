@@ -100,7 +100,8 @@ function makeTargetService(ctx, target) {
     const out = Object.assign({}, item);
     if (!out.title && p.title) out.title = p.title;
     if (!out.cn && p.subtitle) out.cn = p.subtitle;
-    if (p.description) out.intro = item.descrBb || p.description;
+    /* 最终简介以 prepared 为准：里面才有图床链接、媒体块和清洗后的空行 */
+    if (p.description) { out.descrBb = p.description; out.intro = p.description; }
     return out;
   }
 

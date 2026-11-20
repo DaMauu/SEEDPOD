@@ -1,8 +1,13 @@
 /* 追加到 app-fastify.js 的写接口片段：词条库、队列、流程规则、配置。
    在 build() 内被 require 注入（见 app-fastify.js 末尾 require('./routes-write')(app, ctx)）。 */
+const { makeTarget } = require('./target');
+const { makeTargetService } = require('./target-service');
+const { hostsOf } = require('./dedupe-item');
+
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
+  const targetService = makeTargetService(ctx, makeTarget(ctx));
   const configSchema = require('./config-schema');
 
   function updCatalog(id, patch) {
@@ -161,8 +166,21 @@ module.exports = function (app, ctx) {
       return ok(reply, { id: req.params.id, complete: !!r.complete, progress: Number(r.progress) || 0, hash: r.hash || '', message: r.complete ? '下载完成' : '已加入 qB' });
     }
     if (b.action === 'publish') {
+      if (!ctx.allowReal('realPublish')) return bad(reply, 'REAL_PUBLISH_DISABLED', '真发布还没打开：把配置 realPublish 设为 true（或设 ALLOW_REAL=1）再试', 409);
       db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
         .run(it.title, JSON.stringify(it), now(), it.id);
+      let src = null;
+      try { src = await ctx.publisher.ensureSource(it.id, {}); } catch (e) { src = { ok: false, code: 'SOURCE_CHECK_FAILED', message: String(e && e.message || e).slice(0, 120) }; }
+      if (!src || !src.ok) return bad(reply, (src && src.code) || 'SOURCE_CHECK_FAILED', (src && src.message) || '源种检查失败', (src && src.http) || 502);
+      if (!src.complete) return bad(reply, 'SOURCE_INCOMPLETE', '源种还没下完，等 qB 100% 再发布', 409);
+      const hosts = hostsOf(it);
+      const trs = it.targetResults || {};
+      const need = hosts.filter(function (h) { const tr = trs[h] || {}; return tr.stage !== 'submitted' && tr.stage !== 'injected'; });
+      if (need.length) {
+        const up = await targetService.uploadMany({ queueId: it.id, targets: need, dryRun: false });
+        const failed = ((up && up.data && up.data.targets) || []).filter(function (x) { return !x.ok && !x.skipped; })[0];
+        if (!up || !up.ok || failed) return bad(reply, (failed && failed.code) || (up && up.code) || 'UPLOAD_FAILED', (failed && failed.message) || (up && up.message) || '目标站上传失败', 502);
+      }
       const r = await ctx.publisher.publishItem(req.params.id, { dryRun: false });
       if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
       return ok(reply, r.data);

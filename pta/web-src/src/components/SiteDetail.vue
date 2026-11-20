@@ -276,6 +276,7 @@ const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
 const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDetail: false, priority: 'normal' })
 const defText = ref('')
 const defSaving = ref(false)
+const defReady = ref(true)
 const defMsg = ref('')
 const catKind = ref('object')
 const catRows = ref([])
@@ -384,6 +385,12 @@ function fillForm(site) {
 }
 function catRowsFromDef(def) {
   if (!def) return { kind: 'object', rows: [] }
+  /* 站点包例外写的是 catList；优先展示它，保存时再统一成 catMap */
+  if (Array.isArray(def.catList) && def.catList.length) {
+    return { kind: 'array', rows: def.catList.map(function (x) {
+      return { id: String((x && x.id) || ''), label: String((x && x.label) || ''), purpose: String((x && x.purpose) || 'other') }
+    }) }
+  }
   const cm = def.catMap
   if (Array.isArray(cm)) {
     return { kind: 'array', rows: cm.map(function (x) {
@@ -440,19 +447,27 @@ async function loadDetail(target) {
   defMsg.value = ''
   try {
     const rs = await Promise.all([
-      fetch('/api/site-def/' + encodeURIComponent(h), { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null }),
+      fetch('/api/site-def/' + encodeURIComponent(h), { credentials: 'same-origin' }).then(function (r) {
+        return r.json().catch(function () { return null }).then(function (body) { return { status: r.status, body: body } })
+      }).catch(function () { return { status: 0, body: null } }),
       fetch('/api/sites/' + encodeURIComponent(h) + '/search', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null }),
       fetch('/api/catalog?site=' + encodeURIComponent(h) + '&limit=6', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null })
     ])
     if (host.value !== h) return
     const dj = rs[0], pj = rs[1], cj = rs[2]
-    if (dj && dj.ok && dj.data) {
-      detail.def = dj.data
-      defText.value = JSON.stringify(dj.data, null, 2)
-      syncCatRows(dj.data)
-      syncUpForm(dj.data)
-    } else {
+    defReady.value = false
+    if (dj && dj.body && dj.body.ok && dj.body.data) {
+      detail.def = dj.body.data
+      defText.value = JSON.stringify(dj.body.data, null, 2)
+      syncCatRows(dj.body.data)
+      syncUpForm(dj.body.data)
+      defReady.value = true
+    } else if (dj && dj.status === 404) {
       loadDefFallback(h)
+      defReady.value = true
+    } else {
+      defText.value = ''
+      defMsg.value = '站点定义加载失败；先不要保存，刷新重试'
     }
     if (pj && pj.ok) detail.preset = (pj.data && pj.data.preset) || null
     if (cj && cj.ok) {
@@ -562,6 +577,7 @@ async function crawlOne(site) {
 }
 async function saveDef() {
   if (!host.value || defSaving.value) return
+  if (!defReady.value) { toast('站点定义没加载成功，先刷新重试'); return }
   let def
   try { def = JSON.parse(defText.value) } catch (e) { toast('JSON 格式不对'); return }
   defSaving.value = true
@@ -582,6 +598,7 @@ async function saveDef() {
 }
 async function saveCatMap() {
   if (!host.value || catSaving.value) return
+  if (!defReady.value) { catMsg.value = '站点定义没加载成功，先刷新重试'; return }
   let def
   try { def = JSON.parse(defText.value) } catch (e) { catMsg.value = '上面的 JSON 格式不对，先修好再保存映射'; return }
   if (!def || typeof def !== 'object' || Array.isArray(def)) { catMsg.value = '站点定义必须是 JSON 对象'; return }
@@ -597,6 +614,7 @@ async function saveCatMap() {
       seen[r.id] = true
       if (!catPurposes.some(function (p) { return p.v === r.purpose })) r.purpose = 'other'
     }
+    delete def.catList
     def.catMap = rows
     const cats = {}
     rows.forEach(function (r) { (cats[r.purpose] = cats[r.purpose] || []).push(r.id) })
@@ -632,6 +650,7 @@ async function saveCatMap() {
   catSaving.value = false
 }
 async function saveUpForm() {
+  if (!defReady.value) { toast('站点定义没加载成功，先刷新重试'); return }
   if (!host.value || upSaving.value) return
   let def
   try { def = JSON.parse(defText.value) } catch (e) { upMsg.value = '上面的 JSON 格式不对，先修好再保存上传映射'; return }

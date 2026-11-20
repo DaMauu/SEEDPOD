@@ -1,6 +1,7 @@
 /* 上传提交与回查：取种、提交、发布后校验。 */
 const adapters = require('./adapters');
 const match = require('./match');
+const urlGuard = require('./url-guard');
 
 /* 来源种子下载地址必须落在来源站（含子域）或其 base 域，避免把 cookie 带到外部 host */
 function sameSiteUrl(site, base, raw) {
@@ -57,7 +58,7 @@ function makeSubmit(deps) {
     try {
       res = await fetch(dlUrl, {
         headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        redirect: 'follow', signal: AbortSignal.timeout(20000)
+        redirect: 'manual', signal: AbortSignal.timeout(20000)
       });
     } catch (e) {
       return { err: '下载种子失败：' + String(e && e.message || e).slice(0, 120) };
@@ -66,17 +67,18 @@ function makeSubmit(deps) {
       /* Unit3D 下载路由有 /torrents/download/ID 和 /torrents/ID/download 两种；
          404 时回详情页找真实下载链接再试一次 */
       const t = resolve(item.site);
-      if (item.detailsUrl && t && t.base) {
+      if (item.detailsUrl && t && t.base && urlGuard.sameSite(item.site, t.base, item.detailsUrl)) {
         try {
           const pageUrl = new URL(item.detailsUrl, t.base + '/').toString();
           const gate2 = await throttle(item.site, 'write');
           if (gate2.ok) {
-            const page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
-            const html = await page.text().catch(function () { return ''; });
-            const links = downloadLinksFromDetails(html, t.base);
+            const page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+            const html = (page.status >= 200 && page.status < 300) ? await page.text().catch(function () { return ''; }) : '';
+            const links = downloadLinksFromDetails(html, t.base).filter(function (x) { return urlGuard.sameSite(item.site, t.base, x); });
             for (const link of links.slice(0, 4)) {
-              const r2 = await fetch(link, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+              const r2 = await fetch(link, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
               if (r2.status !== 200) continue;
+              if ((Number(r2.headers.get('content-length')) || 0) > 10 * 1024 * 1024) continue;
               const b2 = Buffer.from(await r2.arrayBuffer());
               if (b2.length && b2.length <= 10 * 1024 * 1024 && b2[0] === 0x64) return { buf: b2 };
             }
@@ -85,6 +87,8 @@ function makeSubmit(deps) {
       }
       return { err: '下载种子返回 ' + res.status };
     }
+    const clen = Number(res.headers.get('content-length')) || 0;
+    if (clen > 10 * 1024 * 1024) { try { res.body && res.body.cancel(); } catch (e) { /* 取消失败不挡错误返回 */ } return { err: '种子超过 10MB' }; }
     const buf = Buffer.from(await res.arrayBuffer());
     if (!buf.length) return { err: '种子是空文件' };
     if (buf.length > 10 * 1024 * 1024) return { err: '种子超过 10MB' };
@@ -171,11 +175,19 @@ function makeSubmit(deps) {
     if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
     const meta = buf ? torrentMeta(buf) : { hash: '', name: '' };
     const url = (opts && opts.url) || p.data.verifyUrl;
+    /* 手工回查地址必须落在目标站，否则会把 cookie 带到外部 host */
+    try {
+      const base = new URL(p.data.url);
+      const u = new URL(url, p.data.url);
+      const bh = base.hostname.toLowerCase();
+      const uh = u.hostname.toLowerCase();
+      if (uh !== bh && !uh.endsWith('.' + bh)) return { ok: false, code: 'BAD_VERIFY_URL', message: '回查地址不是目标站域名', http: 400 };
+    } catch (e) { return { ok: false, code: 'BAD_VERIFY_URL', message: '回查地址不合法', http: 400 }; }
     let res;
     try {
       res = await fetch(url, {
         headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        redirect: 'follow', signal: AbortSignal.timeout(20000)
+        redirect: 'manual', signal: AbortSignal.timeout(20000)
       });
     } catch (e) {
       return { ok: false, code: 'TARGET_UNREACHABLE', message: '目标站连不上', http: 502 };

@@ -46,6 +46,7 @@ function chevBase(cfg) {
   return String(cfg.endpoint || '').replace(/\/api\/1\/upload\/?$/i, '').replace(/\/+$/, '');
 }
 let SSO_COOKIE_CACHE = { host: '', value: '', at: 0 };
+const urlGuard = require('./url-guard');
 function siteCookie(host) {
   const h = String(host || '').toLowerCase();
   if (SSO_COOKIE_CACHE.host === h && Date.now() - SSO_COOKIE_CACHE.at < 60000) return SSO_COOKIE_CACHE.value;
@@ -72,12 +73,20 @@ async function cheveretoSsoLogin(cfg) {
   cookieJarFrom(r, jar);
   let url = String(r.headers.get('location') || '');
   if (!url) throw new Error('图床 SSO 没有跳转地址');
+  {
+    const first = new URL(url, base + '/');
+    if (!urlGuard.matches(host, first.hostname)) throw new Error('图床 SSO 跳转到非授权站点，拒绝发送猫站 cookie');
+    url = first.toString();
+  }
   r = await fetch(url, { headers: Object.assign({}, ua, { cookie: ptcookie }), redirect: 'manual', signal: AbortSignal.timeout(25000) });
   url = String(r.headers.get('location') || '');
   if (!url) throw new Error('猫站 OAuth 没有回调地址，cookie 可能失效');
   for (let i = 0; i < 4 && url; i++) {
-    const next = new URL(url, base + '/').toString();
-    if (next.indexOf(base) !== 0) throw new Error('图床 SSO 跳转到外部域名：' + next.slice(0, 80));
+    const nextUrl = new URL(url, base + '/');
+    if (!/^https?:$/.test(nextUrl.protocol) || !urlGuard.matches(new URL(base).hostname, nextUrl.hostname)) {
+      throw new Error('图床 SSO 跳转到外部域名：' + nextUrl.toString().slice(0, 80));
+    }
+    const next = nextUrl.toString();
     r = await fetch(next, { headers: Object.assign({}, ua, { cookie: cookieHeader(jar) }), redirect: 'manual', signal: AbortSignal.timeout(20000) });
     cookieJarFrom(r, jar);
     url = String(r.headers.get('location') || '');

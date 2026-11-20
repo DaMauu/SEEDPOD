@@ -8,6 +8,7 @@ const watch = require('./clients/watch');
 const stage = require('./stage');
 const flowConfig = require('./flow-config');
 const { tx } = require('./db');
+const urlGuard = require('./url-guard');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
@@ -97,16 +98,26 @@ function makePublisher(ctx) {
     }
     return out;
   }
-  async function fetchTorrent(url, cookie) {
+  async function fetchTorrent(url, cookie, host) {
     if (!/^https?:\/\//i.test(String(url || ''))) return { err: '下载地址必须是 http/https' };
     if (!cookie) return { err: '来源站没有 cookie，取不到种子' };
+    if (!urlGuard.sameSite(host, '', url)) return { err: '下载地址不是来源站域名，拒绝发送 cookie' };
+    let current = String(url);
     let res;
     try {
-      res = await fetch(url, { headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+      for (let i = 0; i < 3; i++) {
+        res = await fetch(current, { headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+        if (res.status < 300 || res.status >= 400) break;
+        const loc = res.headers.get('location') || '';
+        if (!loc || !urlGuard.sameSite(host, current, loc)) return { err: '下载地址跳转到外部域名，拒绝继续' };
+        current = new URL(loc, current).toString();
+      }
     } catch (e) {
       return { err: e && e.name === 'TimeoutError' ? '下载种子超时' : '下载种子失败：' + String(e && e.message || e).slice(0, 120) };
     }
     if (res.status !== 200) return { err: '下载种子返回 ' + res.status };
+    const clen = Number(res.headers.get('content-length')) || 0;
+    if (clen > 10 * 1024 * 1024) { try { res.body && res.body.cancel(); } catch (e) { /* 取消失败不挡错误返回 */ } return { err: '种子超过 10MB' }; }
     const buf = Buffer.from(await res.arrayBuffer());
     if (!buf.length) return { err: '种子是空文件' };
     if (buf.length > 10 * 1024 * 1024) return { err: '种子超过 10MB' };
@@ -144,7 +155,7 @@ function makePublisher(ctx) {
       return { ok: false, code: 'BAD_STATE', message: '当前状态 ' + it.status + ' 不能发布', http: 400 };
     }
 
-    const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
+    const got = await fetchTorrent(it.downloadUrl, cookieOf(it.site), it.site);
     if (got.err) {
       stage.fail(it, it.stage || 'previewed', got.err);
       save(it);
@@ -227,7 +238,7 @@ function makePublisher(ctx) {
     let got = null;
     if (!meta || !found.found) {
       if (!it.downloadUrl) return { ok: false, code: 'NO_SOURCE_URL', message: '条目没有源种下载地址', http: 400 };
-      got = await fetchTorrent(it.downloadUrl, cookieOf(it.site));
+      got = await fetchTorrent(it.downloadUrl, cookieOf(it.site), it.site);
       if (got.err) {
         it.sourceState = { at: now(), ok: false, error: got.err };
         save(it);

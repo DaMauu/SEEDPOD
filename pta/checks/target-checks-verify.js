@@ -73,6 +73,14 @@ async function runDeleteVerify(C) {
     }
   });
 
+  await check('手工回查地址只允许目标站域名', async function () {
+    const evil = await json(BASE + '/api/targets/127.0.0.1/verify', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), url: 'https://evil.example/details.php?id=42' })
+    });
+    need(evil.status === 400 && evil.body && evil.body.error && evil.body.error.code === 'BAD_VERIFY_URL', '外部回查地址没拦住：' + evil.status + ' ' + JSON.stringify(evil.body && evil.body.error));
+  });
+
   await check('回查不把搜索框回显当命中', async function () {
     const add = await json(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
