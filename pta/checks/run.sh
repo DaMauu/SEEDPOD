@@ -50,6 +50,7 @@ run publish publish.js
 run scheduler scheduler.js
 run scheduler-crawl scheduler-crawl.js
 run scheduler-dedupe scheduler-dedupe.js
+run scheduler-publish scheduler-publish.js
 run failpoint failpoint.js
 run errors errors.js
 run failures failures.js

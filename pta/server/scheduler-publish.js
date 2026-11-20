@@ -18,7 +18,7 @@ function makePublishPhase(deps) {
               if (!it.targetSite || !it.downloadUrl) continue;
               /* 转载流程：源种先进 qB 并下到 100%，没完成就等下一轮，不传目标站 */
               let src = null;
-              try { src = await deps.publish.ensureSource(row.id, {}); }
+              try { src = await pubDeps.publish.ensureSource(row.id, {}); }
               catch (e) { src = { ok: false, code: 'SOURCE_CHECK_FAILED', message: String(e && e.message || e).slice(0, 160) }; }
               if (!src.ok) {
                 failed++;
@@ -46,7 +46,8 @@ function makePublishPhase(deps) {
                   const msg = (first && (first.message || first.code)) || (up && (up.message || up.code)) || '目标站上传失败';
                   bumpSiteFail(host, msg);
                   if (errors.length < 3) errors.push({ id: row.id, code: (first && first.code) || (up && up.code) || 'UPLOAD_FAILED', message: host + ' · ' + msg });
-                  break;
+                  /* 一个目标失败也继续尝试其余目标，避免后面的站永远轮不到 */
+                  continue;
                 }
                 resetSiteFail(host);
               }
@@ -60,7 +61,7 @@ function makePublishPhase(deps) {
                   try { await targetService.fetchPublished(host, after); } catch (e) { /* 补抓失败不挡发布 */ }
                 }
               }
-              const r = await deps.publish.publishItem(row.id, { dryRun: false });
+              const r = await pubDeps.publish.publishItem(row.id, { dryRun: false });
               if (r.ok) {
                 ok++;
                 resetSiteFail(it.targetSite || it.site);

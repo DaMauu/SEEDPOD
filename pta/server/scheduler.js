@@ -75,7 +75,7 @@ function makeScheduler(ctx, deps) {
       /* 查重（初筛之后、补齐之前）：逐目标站检查，命中就跳过该站 */
       try {
       failpoint('dedupe');
-      const dedupePhase = await runDedupePhase({ want: want, all: all, jparse: jparse, targetService: targetService, ctx: ctx, batch: batch, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, pipeline: pipeline, steps: steps });
+      const dedupePhase = await runDedupePhase({ want: want, all: all, jparse: jparse, targetService: targetService, ctx: ctx, batch: batch, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, pipeline: pipeline, steps: steps, force: !!(only && only.indexOf('dedupe') >= 0) });
       steps.dedupe = dedupePhase.dedupe;
       steps.hooksDedupe = dedupePhase.hooks;
       } catch (e) { phaseError('dedupe', e); }

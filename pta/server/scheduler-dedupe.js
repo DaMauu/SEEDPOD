@@ -4,8 +4,22 @@ const { dedupeItem, hostsOf } = require('./dedupe-item');
 
 function makeDedupePhase(deps) {
   return async function runDedupePhase(o) {
-    const { want, all, jparse, targetService, ctx, batch, bumpSiteFail, resetSiteFail, pipeline, steps } = o;
+    const { want, all, jparse, targetService, ctx, batch, bumpSiteFail, resetSiteFail, pipeline, steps, force } = o;
       const dedupe = { checked: 0, kept: 0, skipped: 0, errors: [], skippedStep: false, disabled: false, requests: 0 };
+      /* 自动查重开关：关掉时调度不做，但显式指定 dedupe 步骤仍可强制跑 */
+      let autoDupe = true;
+      try {
+        const row = ctx.one("SELECT v FROM meta WHERE k = 'config'");
+        const cfg = row ? (JSON.parse(row.v) || {}) : {};
+        autoDupe = cfg.autoDupe === true;
+      } catch (e) { autoDupe = false; }
+      if (!force && !autoDupe) {
+        dedupe.skippedStep = true;
+        dedupe.disabled = true;
+        dedupe.skippedReason = 'autoDupe off';
+        if (pipeline) await pipeline.run('dedupe', ctx, steps);
+        return { dedupe: dedupe, hooks: undefined };
+      }
       const dedupeLimit = batch;
       const pend = want('dedupe') ? all("SELECT id, data FROM queue WHERE status = 'pending' LIMIT " + dedupeLimit) : [];
       if (!want('dedupe')) dedupe.skippedStep = true;

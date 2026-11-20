@@ -39,17 +39,24 @@ function makeCrossseed(ctx) {
     const pub = tr.publishedTorrent || tr.targetTorrent;
     if (!pub || !pub.path || !fs.existsSync(pub.path)) return markFail('NO_PUBLISHED_TORRENT');
     const sourceHash = (tr.sourceTorrent && tr.sourceTorrent.infohash) || item.data.infohash || '';
-    if (!sourceHash) return { ok: false, error: 'NO_SOURCE_HASH' };
+    if (!sourceHash) return markFail('NO_SOURCE_HASH');
     const rows = all('SELECT data FROM downloaders').map(function (r) { return jparse(r.data); }).filter(function (x) { return x && (x.kind || 'qb') === 'qb'; });
     const dl = rows.filter(function (x) { return !o.downloader || String(x.id) === String(o.downloader); })[0];
-    if (!dl) return { ok: false, error: 'NO_QB' };
+    if (!dl) return markFail('NO_QB');
     const found = await qb.findTorrent(dl, sourceHash);
     if (!found.found) return markFail('SOURCE_NOT_IN_QB');
     if (Number(found.progress) < 0.999) return markFail('SOURCE_INCOMPLETE', { progress: Number(found.progress) || 0 });
     const buf = fs.readFileSync(pub.path);
     const meta = qb.parseTorrent(buf);
-    if (!meta.hash) return { ok: false, error: 'BAD_TARGET_TORRENT' };
-    if (meta.hash === sourceHash) return { ok: false, error: 'SAME_INFOHASH' };
+    if (!meta.hash) return markFail('BAD_TARGET_TORRENT');
+    if (meta.hash === sourceHash) {
+      /* 同 infohash 说明不用辅种，记成功并停止重试 */
+      tr.crossseed = { at: now(), ok: true, skipped: 'same_infohash', targetHash: meta.hash, attempts: (Number((tr.crossseed && tr.crossseed.attempts) || 0) + 1) };
+      results[h] = tr;
+      item.data.targetResults = results;
+      saveQueue(item.data);
+      return { ok: true, skipped: 'same_infohash' };
+    }
     const skip = flowConfig.on(flowConfig.read(ctx), '辅种跳过校验', true);
     let add = await qb.addTorrent(dl, buf, { savePath: found.savePath || '', skipChecking: skip, paused: false, category: found.category || '' });
     if (!add.ok && /fails|already|duplicate|exist/i.test(String(add.message || ''))) {

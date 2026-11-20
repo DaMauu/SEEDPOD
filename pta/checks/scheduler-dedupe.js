@@ -19,6 +19,7 @@ const all = (sql, ...a) => db.prepare(sql).all(...a);
 const jparse = (s) => { try { return JSON.parse(s); } catch (e) { return null; } };
 const ctx = { db: db, DATA_DIR: DATA, one: one, all: all, jparse: jparse };
 const now = new Date().toISOString();
+db.prepare("INSERT INTO meta(k, v) VALUES('config', ?)").run(JSON.stringify({ autoDupe: true }));
 function put(id) {
   const d = { id: id, title: id, status: 'pending', targetSite: 'target.example', infohash: 'abc' };
   db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)').run(id, 'pending', id, JSON.stringify(d), now, now);
@@ -29,6 +30,18 @@ const pipeline = { run: async function () { return {}; } };
 
 (async function () {
   try {
+    await check('autoDupe 关闭时自动跳过，显式步骤可强制', async function () {
+      db.prepare("UPDATE meta SET v = ? WHERE k = 'config'").run(JSON.stringify({ autoDupe: false }));
+      const targetService = { checkDupe: async function () { throw new Error('不该调用'); } };
+      const off = await phase({ want: function () { return true; }, all: all, jparse: jparse, targetService: targetService, ctx: ctx, batch: 5, bumpSiteFail: function () {}, resetSiteFail: function () {}, pipeline: pipeline, steps: {} });
+      need(off.dedupe.skippedStep === true && off.dedupe.disabled === true, 'autoDupe 关闭没跳过：' + JSON.stringify(off.dedupe));
+      put('q_force');
+      const force = await phase({ want: function () { return true; }, all: all, jparse: jparse, targetService: { checkDupe: async function () { return { ok: true, found: false, skip: false }; } }, ctx: ctx, batch: 5, bumpSiteFail: function () {}, resetSiteFail: function () {}, pipeline: pipeline, steps: {}, force: true });
+      need(force.dedupe.checked >= 1, '显式 dedupe 没强制跑：' + JSON.stringify(force.dedupe));
+      db.prepare('UPDATE queue SET status = ? WHERE id = ?').run('skipped', 'q_force');
+      db.prepare("UPDATE meta SET v = ? WHERE k = 'config'").run(JSON.stringify({ autoDupe: true }));
+    });
+
     await check('查重失败不标记已通过', async function () {
       put('q_0001');
       const targetService = { checkDupe: async function () { const e = new Error('目标站不可用'); e.code = 'TARGET_UNREACHABLE'; throw e; } };

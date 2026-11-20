@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.529 · 2026-11-21
+
+### 调度逻辑修复
+- 调度发布误用空闭包 `deps`，自动发布会直接 `SOURCE_CHECK_FAILED`；改用 `o.deps`。
+- 多目标发布一个站失败后继续尝试其余目标，全部尝试后才决定是否注入。
+- `autoDupe` 开关接上调度查重；显式指定 dedupe 步骤仍可强制。
+- 辅种早退（NO_QB/NO_SOURCE_HASH/坏种）落失败状态；同 infohash 记成功不再重试。
+- 新增 scheduler-publish 1/1；scheduler-dedupe 3/3。
+
 ## v0.7.528 · 2026-11-21
 
 ### 修复
