@@ -16,7 +16,7 @@ const { isPrivateUrl, isBlacklisted, looksDirect, ogImageFromHtml, resolveImageS
 /* 同一张源图只传一次：源 URL → 图床 URL 持久化到 meta，跨条目复用 */
 
 
-async function mirrorDescription(description, opts) {
+async function mirrorDescriptionInner(description, opts) {
   const o = opts || {};
   const mode = String(o.mode || '转存到图床');
   const items = extractImages(description);
@@ -141,5 +141,14 @@ async function mirrorDescription(description, opts) {
   };
 }
 
+
+/* 图床转存串行化：同一批/并发调用共享同一轮，后到者命中前一轮写入的缓存 */
+let MIRROR_QUEUE = Promise.resolve();
+function mirrorDescription(description, opts) {
+  const run = function () { return mirrorDescriptionInner(description, opts); };
+  const p = MIRROR_QUEUE.then(run, run);
+  MIRROR_QUEUE = p.catch(function () { /* 前一轮失败不挡后一轮 */ });
+  return p;
+}
 
 module.exports = { process: processShots, _ssoLogin: _ssoLogin, _webUpload: _webUpload, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, isBlacklisted: isBlacklisted, looksDirect: looksDirect, isLikelyThumb: isLikelyThumb, originalFromThumb: originalFromThumb, resolveImageSource: resolveImageSource, ogImageFromHtml: ogImageFromHtml, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };

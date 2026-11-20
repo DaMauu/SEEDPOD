@@ -138,6 +138,22 @@ async function main() {
     need(r.ok === false && r.channel === 'webhook', '双通道失败结果不对：' + JSON.stringify(r));
   });
 
+  await check('Telegram 关闭后自动切到 webhook', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook' }));
+    const st = n2.status();
+    need(st.channel === 'webhook' && st.telegram === false && st.webhook === true, '渠道切换状态不对：' + JSON.stringify(st));
+    const before = hits.length;
+    const r = await n2.send('publish.failed', 'webhook switch', {}, { force: true });
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r.ok === true && r.channel === 'webhook', '没切到 webhook：' + JSON.stringify(r));
+    need(hits.length === before + 1 && hits[hits.length - 1].url === '/webhook', 'webhook 请求不对');
+  });
+
   await check('events=off 全部跳过', async function () {
     events = 'off';
     const before = hits.length;

@@ -100,6 +100,31 @@ check('越界路径备份被拒绝', function () {
   need(/越界/.test(r.stderr || r.stdout), '没有提示越界');
 });
 
+check('恢复到不可写目录失败，备份仍可正常恢复', function () {
+  const ro = path.join(TMP, 'restore-ro');
+  fs.mkdirSync(ro, { recursive: true });
+  fs.chmodSync(ro, 0o500);
+  const bad = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), BAK, ro], { encoding: 'utf8' });
+  fs.chmodSync(ro, 0o700);
+  need(bad.status !== 0, '不可写目录恢复仍成功');
+  const good = path.join(TMP, 'restore-good');
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), BAK, good], { encoding: 'utf8' });
+  need(r.status === 0, '备份本身不可再恢复：' + (r.stderr || r.stdout));
+  const d = new DatabaseSync(path.join(good, 'seedpod.db'), { readOnly: true });
+  need(d.prepare('SELECT COUNT(*) AS n FROM queue').get().n === 1, '恢复后行数不对');
+  d.close();
+});
+
+check('恢复时磁盘写入上限失败，备份仍完整', function () {
+  const out = path.join(TMP, 'restore-limited');
+  const script = path.join(ROOT, 'scripts', 'restore.sh');
+  const r = spawnSync('bash', ['-c', 'ulimit -f 1; exec bash "$0" "$1" "$2"', script, BAK, out], { encoding: 'utf8' });
+  need(r.status !== 0, '恢复磁盘上限没失败');
+  const good = path.join(TMP, 'restore-after-limit');
+  const ok = spawnSync('bash', [script, BAK, good], { encoding: 'utf8' });
+  need(ok.status === 0, '失败后备份不可恢复：' + (ok.stderr || ok.stdout));
+});
+
 check('输出目录不可写时失败且源库不受影响', function () {
   const ro = path.join(TMP, 'ro');
   fs.mkdirSync(ro, { recursive: true });

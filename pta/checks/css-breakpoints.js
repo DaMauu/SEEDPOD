@@ -5,7 +5,10 @@ const path = require('path');
 const postcss = require('postcss');
 
 const ROOT = path.resolve(__dirname, '..', 'web-src', 'src');
-const BASE = path.resolve(__dirname, '..', 'fixtures', 'css-breakpoint-baseline.json');
+const BASE = (function () {
+  const i = process.argv.indexOf('--baseline');
+  return i >= 0 ? path.resolve(process.argv[i + 1]) : path.resolve(__dirname, '..', 'fixtures', 'css-breakpoint-baseline.json');
+})();
 const UPDATE = process.argv.indexOf('--update') >= 0;
 function walk(dir, out) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

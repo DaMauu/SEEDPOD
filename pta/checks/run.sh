@@ -29,6 +29,7 @@ run responsive responsive-layout.js
 run frontend-regress frontend-regress.js
 run ui-visual ui-visual.js
 run css-breakpoints css-breakpoints.js
+run css-baseline-update css-baseline-update.js
 run adapter adapter.js
 run crawl-detail crawl-detail.js
 run crawl-loop crawl-loop.js

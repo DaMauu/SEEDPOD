@@ -203,6 +203,19 @@ async function main() {
     need(/超过|大小/.test(String(r.message || '')), '错误没说明大小：' + r.message);
   });
 
+  await check('图床并发转存同一张只上传一次', async function () {
+    const stamp = Date.now() + '-' + Math.random().toString(16).slice(2);
+    const url = 'http://127.0.0.1:' + port + '/mirror/concurrent-' + stamp + '.png';
+    const desc = '[img]' + url + '[/img]';
+    const before = hits;
+    const out = await Promise.all([
+      imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true }),
+      imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true })
+    ]);
+    need(out[0].uploaded === 1 && out[1].uploaded === 0 && out[1].skipped === 1, '并发结果不对：' + JSON.stringify(out.map(function (x) { return { uploaded: x.uploaded, skipped: x.skipped, failed: x.failed }; })));
+    need(hits - before === 2, '并发请求数不对：' + (hits - before));
+  });
+
   await check('图床页面解析原图并回填', async function () {
     const page = 'http://127.0.0.1:' + port + '/page/1';
     const desc = '[center][url=' + page + '][img=300x300]' + page + '[/img][/url][/center]';
