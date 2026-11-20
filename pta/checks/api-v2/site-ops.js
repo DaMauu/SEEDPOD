@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports = async function run(ctx) {
   const { BASE, DATA, ROOT, fetchA, check, need } = ctx;
-  await check('删除词条摘掉队列 catalogId，队列条目保留', async () => {
+  await check('删除词条不删已发布历史，失败队列保留', async () => {
     const cid = 'cat_del_ref';
     const addC = await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -16,16 +16,43 @@ module.exports = async function run(ctx) {
       body: JSON.stringify({ title: 'Ref Queue 2020', site: 'demo-a.example', catalogId: cid, status: 'pending' })
     })).json();
     need(addQ.ok && addQ.data.id, '建引用队列失败：' + JSON.stringify(addQ));
+    const failedQ = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Failed Ref 2020', site: 'demo-a.example', catalogId: cid, status: 'failed', stage: 'failed', stageLastError: 'fixture failed' })
+    })).json();
+    need(failedQ.ok && failedQ.data.id, '建失败引用失败：' + JSON.stringify(failedQ));
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      db.prepare('INSERT INTO published(id, data, created_at) VALUES(?, ?, ?)')
+        .run('pub_ref_1', JSON.stringify({ id: 'pub_ref_1', title: 'Published Ref', catalogId: cid, publishedAt: new Date().toISOString() }), new Date().toISOString());
+      db.close();
+    }
     const del = await (await fetchA(BASE + '/api/catalog/' + cid, { method: 'DELETE' })).json();
-    need(del.ok && del.data.detached === 1, '删除没摘引用：' + JSON.stringify(del));
+    need(del.ok && del.data.detached === 2, '删除没摘引用：' + JSON.stringify(del));
     const q = await (await fetchA(BASE + '/api/queue/' + encodeURIComponent(addQ.data.id))).json();
     need(q.ok, '队列条目没了：' + JSON.stringify(q));
     need(q.data.catalogId === undefined, 'catalogId 还在：' + JSON.stringify(q.data.catalogId));
     need(typeof q.data.catalogDeletedAt === 'string', '没留删除时间');
+    const fq = await (await fetchA(BASE + '/api/queue/' + encodeURIComponent(failedQ.data.id))).json();
+    need(fq.ok && fq.data.stage === 'failed', '失败项阶段被改：' + JSON.stringify(fq.data && fq.data.stage));
+    const fails = await (await fetchA(BASE + '/api/failures?limit=200')).json();
+    need(fails.ok && (fails.data.items || []).some(function (x) { return x.id === failedQ.data.id; }), '删除词条把失败队列项弄丢');
+    const pubs = await (await fetchA(BASE + '/api/published')).json();
+    need(pubs.ok && (pubs.data.items || []).some(function (x) { return x.id === 'pub_ref_1'; }), '删除词条把已发布历史删了');
+    const ov = await (await fetchA(BASE + '/api/stats/overview')).json();
+    need(ov.ok && Number(ov.data.published.total) >= 1, '发布统计丢了历史');
     const list = await (await fetchA(BASE + '/api/catalog?limit=500')).json();
     need(list.ok && (list.data.items || []).every(function (x) { return x.id !== cid; }), '词条没删掉');
     const again = await fetchA(BASE + '/api/catalog/' + cid, { method: 'DELETE' });
     need(again.status === 404, '重复删除状态码不对：' + again.status);
+    await fetchA(BASE + '/api/queue/' + failedQ.data.id, { method: 'DELETE' });
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      db.prepare("DELETE FROM published WHERE id = 'pub_ref_1'").run();
+      db.close();
+    }
   });
 
   await check('保存类型：变了清全量游标，没变不动', async () => {
