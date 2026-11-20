@@ -67,6 +67,32 @@ check('解密、分类自动匹配和上传映射', function () {
   need(a.upload && a.upload.formPath === '/upload.php', '上传映射丢了');
 });
 
+check('站点包旧 key 可解，mtime 变化会刷新缓存', function () {
+  const oldKey = crypto.randomBytes(32).toString('hex');
+  const oldPack = { v: 1, version: 1, updatedAt: new Date().toISOString(), sites: { 'old.example': { engine: 'nexusphp', base: 'https://old.example' } } };
+  const oldFile = path.join(TMP, 'old-key.enc');
+  fs.writeFileSync(oldFile, secretbox.encrypt(JSON.stringify(oldPack), secretbox.parseKey(oldKey)));
+  const prev = process.env.PTA_SITE_PACK_KEY_PREVIOUS;
+  process.env.PTA_SITE_PACK_KEY_PREVIOUS = oldKey;
+  sitePack.reset();
+  const old = sitePack.load({ file: oldFile, key: KEY });
+  if (prev === undefined) delete process.env.PTA_SITE_PACK_KEY_PREVIOUS; else process.env.PTA_SITE_PACK_KEY_PREVIOUS = prev;
+  need(old.ok && old.pack.sites['old.example'], '旧 key 没解开：' + old.reason);
+
+  sitePack.reset();
+  const first = sitePack.load({ file: ENC, key: KEY });
+  const cacheFile = path.join(TMP, 'cache-refresh.enc');
+  fs.writeFileSync(cacheFile, fs.readFileSync(ENC));
+  const one = sitePack.load({ file: cacheFile, key: KEY });
+  need(one.ok && one.pack.sites['a.example'], '首次缓存加载失败');
+  const changed = JSON.parse(JSON.stringify(one.pack));
+  changed.sites['fresh.example'] = { engine: 'nexusphp', base: 'https://fresh.example' };
+  fs.writeFileSync(cacheFile, secretbox.encrypt(JSON.stringify(changed), secretbox.parseKey(KEY)));
+  fs.utimesSync(cacheFile, new Date(), new Date(Date.now() + 2000));
+  const two = sitePack.load({ file: cacheFile, key: KEY });
+  need(two.ok && two.pack.sites['fresh.example'], 'mtime 变化没刷新缓存');
+});
+
 check('缺密钥回退 NO_KEY', function () {
   const r = sitePack.load({ file: ENC, key: '' });
   need(!r.ok && r.reason === 'NO_KEY', '缺密钥应回退 NO_KEY：' + JSON.stringify(r));

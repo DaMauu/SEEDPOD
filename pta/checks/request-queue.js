@@ -53,6 +53,28 @@ async function main() {
     need(ms >= 55, '三个并发没串行：' + ms);
   });
 
+  await check('状态落库，新实例继续等待', async function () {
+    clear();
+    await queue.wait('write');
+    const st1 = queue.status();
+    const q2 = makeRequestQueue(ctx);
+    const st2 = q2.status();
+    need(st1.nextAt > 0 && st1.nextAt === st2.nextAt, '新实例没读到 nextAt：' + JSON.stringify({ a: st1.nextAt, b: st2.nextAt }));
+    const t = Date.now();
+    await q2.wait('write');
+    need(Date.now() - t >= 10, '新实例没继续等待：' + (Date.now() - t));
+  });
+
+  await check('写库失败后队列能恢复', async function () {
+    const bad = makeRequestQueue({ db: { prepare: function () { throw new Error('db down'); } }, one: function () { return null; } });
+    let failed = false;
+    try { await bad.wait('write'); } catch (e) { failed = true; }
+    need(failed, '写库失败没有抛出');
+    const t = Date.now();
+    await queue.wait('write');
+    need(Date.now() - t >= 0, '失败后队列卡死');
+  });
+
   await check('旧 PTA_ 名字仍兼容', function () {
     delete process.env.SEARCH_WAIT_SEC;
     delete process.env.UPLOAD_WAIT_SEC;
