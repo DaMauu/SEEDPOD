@@ -1,6 +1,6 @@
 /* 7 个页面 × 360/390/768/1280 的 computed-style 基线。
    默认对比 pta/fixtures/ui-computed-baseline.json；布局/断点改动必须 --update 并说明原因。 */
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -9,6 +9,7 @@ const { loadPlaywright, launchChromium } = require('./browser');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'fixtures', 'ui-computed-baseline.json');
+const SHOTS = path.join(ROOT, 'fixtures', 'ui-shots');
 const UPDATE = process.argv.indexOf('--update') >= 0;
 const PORT = Number(process.env.PTA_CHECK_PORT || 8105);
 const BASE = 'http://127.0.0.1:' + PORT;
@@ -99,24 +100,28 @@ function collectScript(args) {
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
+    await page.addStyleTag({ content: '#dev-foot{display:none!important}.log-ts,.time{visibility:hidden!important}*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
     for (const width of WIDTHS) {
       await page.setViewportSize({ width: width, height: 900 });
       for (const view of VIEWS) {
         await page.evaluate(function (v) { location.hash = '#' + v; }, view);
         await page.waitForTimeout(450);
         current[width + '|' + view] = await page.evaluate(collectScript(), { view: view, selectors: SELECTORS[view], props: PROPS });
+        const shot = path.join(SHOTS, view + '-' + width + '.png');
+        await page.screenshot({ path: UPDATE ? shot : path.join(TMP, view + '-' + width + '.png'), fullPage: true });
       }
     }
   } finally {
     if (browser) await browser.close().catch(function () {});
     child.kill('SIGTERM');
-    fs.rmSync(TMP, { recursive: true, force: true });
   }
   if (UPDATE || !fs.existsSync(OUT)) {
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
+    fs.mkdirSync(SHOTS, { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(current, null, 2) + '\n');
-    console.log('已写入 UI computed 基线：' + OUT);
+    console.log('已写入 UI computed/截图基线：' + OUT);
     console.log(JSON.stringify({ snapshots: Object.keys(current).length }));
+    fs.rmSync(TMP, { recursive: true, force: true });
     return;
   }
   const base = JSON.parse(fs.readFileSync(OUT, 'utf8'));
@@ -134,5 +139,25 @@ function collectScript(args) {
     diffs.slice(0, 20).forEach(function (d) { console.log('  ' + d); });
     process.exit(1);
   }
-  console.log('UI computed 基线一致：' + Object.keys(current).length + ' 个页面/宽度快照');
+  const shotDiffs = [];
+  for (const view of VIEWS) {
+    for (const width of WIDTHS) {
+      const base = path.join(SHOTS, view + '-' + width + '.png');
+      const now = path.join(TMP, view + '-' + width + '.png');
+      if (!fs.existsSync(base)) { shotDiffs.push(view + '@' + width + ': 缺基线截图'); continue; }
+      const r = spawnSync('compare', ['-metric', 'AE', '-fuzz', '2%', base, now, 'null:'], { encoding: 'utf8' });
+      const raw = String(r.stderr || r.stdout || '').trim().split(/\s+/)[0];
+      const n = Number(raw);
+      if (!Number.isFinite(n)) { shotDiffs.push(view + '@' + width + ': compare 不可用 ' + raw); continue; }
+      if (n > 800) shotDiffs.push(view + '@' + width + ': 截图差异 ' + n + ' 像素');
+    }
+  }
+  if (shotDiffs.length) {
+    console.log('UI 截图基线不一致 ' + shotDiffs.length + ' 项：');
+    shotDiffs.slice(0, 20).forEach(function (d) { console.log('  ' + d); });
+    fs.rmSync(TMP, { recursive: true, force: true });
+    process.exit(1);
+  }
+  fs.rmSync(TMP, { recursive: true, force: true });
+  console.log('UI computed/截图基线一致：' + Object.keys(current).length + ' 个页面/宽度快照');
 })();

@@ -193,6 +193,86 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Sources 登录后重载站点/目标列表', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let authed = false;
+      await page.route('**/api/credentials', async function (route) {
+        if (!authed) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'target-fixture.example', hasCookie: true }] }) });
+      });
+      await page.route('**/api/site-defs', async function (route) {
+        if (!authed) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { 'target-fixture.example': { engine: 'nexusphp' } } }) });
+      });
+      await page.goto(BASE + '/#sources', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(400);
+      authed = true;
+      await page.fill('#login-user', USER);
+      await page.fill('#login-pass', PASS);
+      await page.click('#login-submit');
+      await page.waitForTimeout(1000);
+      const opts = await page.locator('#dl-target option').allTextContents();
+      need(opts.some(function (x) { return x.indexOf('target-fixture.example') >= 0; }), '登录后目标列表没重载：' + JSON.stringify(opts));
+      await page.close();
+    });
+
+    await check('SiteDetail 定义加载失败不覆盖保存', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let puts = 0;
+      await page.route('**/api/site-def/**', async function (route) {
+        if (route.request().method() === 'PUT') { puts++; return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }); }
+        return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'INTERNAL', message: 'fixture fail' } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sites'; });
+      await page.waitForTimeout(700);
+      await page.locator('[data-view="sites"] .site-item').first().click();
+      await page.waitForTimeout(500);
+      const detail = await page.locator('.sites-detail-pane').innerText();
+      need(detail.indexOf('站点定义加载失败') >= 0, '没显示加载失败：' + detail.slice(0, 120));
+      await page.locator('button').filter({ hasText: '保存定义' }).click();
+      await page.waitForTimeout(300);
+      need(puts === 0, '加载失败后仍然 PUT 覆盖：' + puts);
+      await page.close();
+    });
+
+    await check('Nodes 改地址后测试用表单配置', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let probeBody = null, testHits = 0;
+      await page.route('**/api/downloaders', async function (route) {
+        if (route.request().method() === 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ id: 'dl_001', name: 'old', kind: 'qb', url: 'http://old.example:8080', user: 'u', hasPass: true, passReadable: true }] }) });
+        return route.continue();
+      });
+      await page.route('**/api/downloaders/dl_001/cats', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { cats: [] } }) });
+      });
+      await page.route('**/api/downloaders/dl_001/test', async function (route) { testHits++; return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { pass: true } }) }); });
+      await page.route('**/api/downloaders/probe', async function (route) {
+        probeBody = JSON.parse(route.request().postData() || '{}');
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { pass: false, steps: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#crawl'; });
+      await page.waitForTimeout(900);
+      await page.locator('.nr-set').first().click();
+      await page.waitForTimeout(300);
+      const urlInput = page.locator('.modal .field').filter({ hasText: 'Web 地址' }).locator('input');
+      await urlInput.fill('http://new.example:8080');
+      await page.locator('button').filter({ hasText: '测试连接' }).click();
+      await page.waitForTimeout(500);
+      need(testHits === 0, '改地址后仍测旧配置：' + testHits);
+      need(probeBody && probeBody.url === 'http://new.example:8080', '探测没用新地址：' + JSON.stringify(probeBody));
+      await page.close();
+    });
+
     await check('直达设置页登录后数据能加载', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.goto(BASE + '/#settings', { waitUntil: 'domcontentloaded' });
