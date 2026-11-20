@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.566 · 2026-11-22
+
+### 审计三十六轮
+- stage 定期一致性：published 必须 injected、injected 必须 published、failed 状态与 stage 一致、旧数据补 injected 且不可回退、history 末条校验；stage 9/9。
+- 辅种成功/失败都不改 `targetVerify` / `targetVerifyByHost`，回查状态保持；crossseed 4/4。
+- 全量 run.sh 通过。
+
 ## v0.7.565 · 2026-11-22
 
 ### 审计三十五轮

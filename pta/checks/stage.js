@@ -47,6 +47,34 @@ check('成功推进清除错误', function () {
   need(it.stageNextRetryAt === '', 'nextRetryAt 没清');
 });
 
+check('published 必须是 injected，injected 必须 published', function () {
+  const ok = stage.ensure({ status: 'published', stage: 'injected' });
+  need(stage.validate(ok).length === 0, '正常 published 被误报：' + JSON.stringify(stage.validate(ok)));
+  const bad = stage.ensure({ status: 'published', stage: 'previewed' });
+  need(stage.validate(bad).some(function (x) { return /published 但 stage/.test(x); }), 'published 阶段不一致没报');
+  const injected = stage.ensure({ status: 'approved', stage: 'injected' });
+  need(stage.validate(injected).some(function (x) { return /injected 但 status/.test(x); }), 'injected 状态不一致没报');
+});
+
+check('failed 状态与 stage 必须一致', function () {
+  const it = stage.ensure({ status: 'failed', stage: 'previewed' });
+  need(stage.validate(it).some(function (x) { return /status failed/.test(x); }), 'failed 状态不一致没报');
+  const ok = stage.ensure({ status: 'failed', stage: 'failed', stageLastError: 'boom' });
+  need(stage.validate(ok).length === 0, '正常 failed 被误报：' + JSON.stringify(stage.validate(ok)));
+});
+
+check('旧 published 数据自动补 injected，且不能回退', function () {
+  const it = stage.ensure({ status: 'published' });
+  need(it.stage === 'injected', '旧数据没补 injected：' + it.stage);
+  stage.set(it, 'prepared');
+  need(it.stage === 'injected', 'injected 被回退：' + it.stage);
+});
+
+check('stageHistory 最后一条与 stage 不一致会报', function () {
+  const it = stage.ensure({ stage: 'prepared', stageHistory: [{ stage: 'draft', at: 'x', ok: true }] });
+  need(stage.validate(it).some(function (x) { return /stageHistory/.test(x); }), 'history 不一致没报');
+});
+
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
 const failed = results.filter(function (r) { return !r[0]; }).length;
 console.log('\n' + (results.length - failed) + '/' + results.length + ' 通过');

@@ -46,7 +46,9 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
 function seed() {
   const data = {
     id: 'q_cs', status: 'published', stage: 'injected', infohash: SOURCE, title: 'Crossseed Row',
-    targetResults: { 'a.example': { stage: 'injected', publishedTorrent: { path: FILE }, sourceTorrent: { infohash: SOURCE } } }
+    targetResults: { 'a.example': { stage: 'injected', publishedTorrent: { path: FILE }, sourceTorrent: { infohash: SOURCE } } },
+    targetVerify: { found: true, at: '2026-11-01T00:00:00.000Z' },
+    targetVerifyByHost: { 'a.example': { found: true, at: '2026-11-01T00:00:00.000Z' } }
   };
   db.prepare('INSERT OR REPLACE INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
     .run(data.id, data.status, data.title, JSON.stringify(data), '2026-11-01', '2026-11-01');
@@ -69,6 +71,8 @@ function read() {
       need(tr.crossseed && tr.crossseed.ok === true, 'crossseed 没写成功：' + JSON.stringify(tr.crossseed));
       need(tr.crossseed.targetHash === TARGET && tr.crossseed.error === '' && tr.crossseed.retryAt === '', '成功字段不对：' + JSON.stringify(tr.crossseed));
       need(tr.crossseed.attempts === 1, 'attempts 不对：' + tr.crossseed.attempts);
+      need(d.targetVerify && d.targetVerify.found === true, 'targetVerify 被辅种改掉');
+      need(d.targetVerifyByHost && d.targetVerifyByHost['a.example'].found === true, 'targetVerifyByHost 被辅种改掉');
     });
 
     await check('同 infohash 记成功并停止重试', async function () {
@@ -88,6 +92,8 @@ function read() {
       const c = read().targetResults['a.example'].crossseed;
       need(c.ok === false && c.error === 'QB_ADD_FAILED' && c.message === 'add denied', '失败没写回：' + JSON.stringify(c));
       need(c.attempts === 1 && Date.parse(c.retryAt) > Date.now(), 'retryAt 不对：' + JSON.stringify(c));
+      const d = read();
+      need(d.targetVerify && d.targetVerify.found === true && d.targetVerifyByHost['a.example'].found === true, '失败时回查状态被清');
     });
 
     await check('源种不在 qB 记失败，重试累加 attempts', async function () {
