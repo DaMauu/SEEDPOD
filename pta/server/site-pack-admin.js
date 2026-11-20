@@ -106,7 +106,8 @@ function confirm(ctx, body, opts) {
   const b = body || {};
   const host = String(b.host || '').trim().toLowerCase();
   if (!safeHost(host)) return { ok: false, code: 'BAD_HOST', message: '站点域名不合法', http: 400 };
-  const ids = (Array.isArray(b.ids) ? b.ids : [b.id]).map(function (x) { return String(x == null ? '' : x); }).filter(Boolean);
+  const rawIds = (Array.isArray(b.ids) ? b.ids : [b.id]).map(function (x) { return String(x == null ? '' : x); }).filter(Boolean);
+  const ids = Array.from(new Set(rawIds)).slice(0, 500);
   if (!ids.length) return { ok: false, code: 'BAD_CATEGORY', message: '至少选一个分类', http: 400 };
   const purpose = String(b.purpose || '');
   if (!PURPOSES.has(purpose)) return { ok: false, code: 'BAD_PURPOSE', message: '分类用途不合法', http: 400 };

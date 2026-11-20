@@ -126,6 +126,7 @@ let defsLoaded = false
 let targetsLoaded = false
 let bootTimer = null
 let loadBusy = false
+let loadSeq = 0
 
 function matchRes(title) {
   const m = /\b(2160p|1080p|1080i|720p|576p|480p)\b/i.exec(String(title || ''))
@@ -203,17 +204,19 @@ async function loadTargets() {
   } catch (e) { reportError('Sources', e) }
 }
 async function loadSources() {
-  if (loadBusy || !loggedIn()) return
-  loadBusy = true
+  if (!loggedIn()) return
+  const seq = ++loadSeq
   try {
     const qs = new URLSearchParams({ limit: String(LOAD_MAX) })
     if (status.value) qs.set('status', status.value)
     const j = await (await fetch('/api/catalog?' + qs.toString(), { credentials: 'same-origin' })).json()
+    /* 快速切筛选时只让最后一次响应落地 */
+    if (seq !== loadSeq) return
     if (!j || !j.ok) return
     rowsAll.value = (j.data.items || []).map(mapRow)
     total.value = Number(j.data.total) || 0
     loaded = true
-  } catch (e) { reportError('Sources', e) } finally { loadBusy = false }
+  } catch (e) { reportError('Sources', e) } finally { if (seq === loadSeq) loadBusy = false }
 }
 function ensureSources() {
   if (!viewVisible('sources') || !loggedIn()) return
@@ -400,8 +403,6 @@ function exportJson() {
 onMounted(() => {
   window.addEventListener('hashchange', ensureSources)
   bootTimer = setInterval(() => { if (!loaded) ensureSources() }, 1500)
-  loadDefs()
-  loadTargets()
   ensureSources()
 })
 onUnmounted(() => {

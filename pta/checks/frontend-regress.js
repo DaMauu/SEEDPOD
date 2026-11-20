@@ -345,6 +345,66 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Dashboard 今日按 byDay 当天算，不混用发布总数', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let statHits = 0;
+      await page.route(/\/api\/stats\/overview/, async function (route) {
+        statHits++;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+          ok: true, data: {
+            queue: { counts: { published: 5 } },
+            catalog: { total: 11413 },
+            published: { total: 99, last7d: 3, last30d: 12, byDay: [{ day: '2026-11-20', count: 7 }, { day: '2026-11-21', count: 0 }] }
+          }
+        }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(2200);
+      const today = (await page.locator('#hero-num').innerText()).trim();
+      const month = (await page.locator('#stat-month').innerText()).trim();
+      const total = (await page.locator('#stat-total').innerText()).trim();
+      need(today === '0' && month === '12' && total === '99' && statHits >= 1, '统计不对：' + JSON.stringify({ today: today, month: month, total: total, hits: statHits }));
+      await page.close();
+    });
+
+    await check('Sources 快速切筛选只保留最后一次响应', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let firstStarted = null;
+      const started = new Promise(function (resolve) { firstStarted = resolve; });
+      await page.route('**/api/site-defs', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      });
+      await page.route('**/api/credentials', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/catalog?**', async function (route) {
+        const status = new URL(route.request().url()).searchParams.get('status') || '';
+        if (!status) {
+          firstStarted();
+          await new Promise(function (r) { setTimeout(r, 900); });
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [{ id: 'slow', site: 'test-1.example', title: 'Old Slow Row', status: 'new', cat: '', catName: '' }] } }) });
+        }
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [{ id: 'fast', site: 'test-1.example', title: 'New Fast Row', status: 'skipped', cat: '', catName: '' }] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await Promise.race([started, new Promise(function (_, reject) { setTimeout(function () { reject(new Error('列表请求没启动')); }, 5000); })]);
+      await page.locator('#dl-status').selectOption('skipped');
+      await page.waitForTimeout(1400);
+      const text = await page.locator('#dl-body').innerText();
+      need(text.indexOf('New Fast Row') >= 0, '新筛选没显示：' + text);
+      need(text.indexOf('Old Slow Row') < 0, '旧响应覆盖了新筛选：' + text);
+      await page.close();
+    });
+
     await check('Logs SSE 连续失败会探会话，离开页面停止重连', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let sseHits = 0, sessionHits = 0;

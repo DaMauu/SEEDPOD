@@ -130,6 +130,22 @@ check('确认例外写私有 data/site-defs', function () {
   need((fs.statSync(file).mode & 0o777) === 0o600, '私有定义不是 0600');
 });
 
+check('例外确认去重/限量，坏 host 和未知分类被拒', function () {
+  const dup = admin.confirm({ DATA_DIR: TMP }, { host: 'a.example', ids: ['401', '401', '402'], purpose: 'tv' }, { file: ENC, key: KEY });
+  need(dup.ok && dup.data.changed === 2, '重复 id 没去重：' + JSON.stringify(dup));
+  const d = JSON.parse(fs.readFileSync(path.join(DEF, 'a.example.json'), 'utf8'));
+  const hit = (d.catList || []).filter(function (x) { return x.id === '401'; })[0];
+  need(hit && hit.purpose === 'tv', '去重后用途不对：' + JSON.stringify(d.catList));
+  const badHost = admin.confirm({ DATA_DIR: TMP }, { host: '../evil', id: '401', purpose: 'tv' }, { file: ENC, key: KEY });
+  need(!badHost.ok && badHost.code === 'BAD_HOST', '坏 host 没拒：' + JSON.stringify(badHost));
+  const missing = admin.confirm({ DATA_DIR: TMP }, { host: 'a.example', id: '999999', purpose: 'tv' }, { file: ENC, key: KEY });
+  need(!missing.ok && missing.code === 'NO_CATEGORY', '未知分类没拒：' + JSON.stringify(missing));
+  const many = [];
+  for (let i = 0; i < 900; i++) many.push(i % 2 ? '401' : '402');
+  const capped = admin.confirm({ DATA_DIR: TMP }, { host: 'a.example', ids: many, purpose: 'movie' }, { file: ENC, key: KEY });
+  need(capped.ok && capped.data.changed <= 500, '大量 id 没限量：' + JSON.stringify(capped.data));
+});
+
 check('确认后覆盖率和例外数回读', function () {
   const o = admin.overview({ DATA_DIR: TMP }, { file: ENC, key: KEY });
   need(o.coverage.mapped === 3 && o.coverage.other === 0, '确认后覆盖率不对：' + JSON.stringify(o.coverage));

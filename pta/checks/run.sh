@@ -50,6 +50,7 @@ run api api-v2.js
 run form form.js
 run site-pack site-pack.js
 run backup backup.js
+run day-boundary day-boundary.js
 run backup-concurrency backup-concurrency.js
 run backup-interrupt backup-interrupt.js
 run deploy-docker deploy-docker.js

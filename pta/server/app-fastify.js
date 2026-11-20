@@ -285,14 +285,16 @@ async function build() {
     const pubRows = all('SELECT data, created_at FROM published');
     const bySite = {}, byDay = {};
     let last7 = 0, last30 = 0;
-    for (let i = 13; i >= 0; i--) byDay[new Date(nowMs - i * 86400000).toISOString().slice(0, 10)] = 0;
+    /* 面板按服务器本地时区算“今天”，否则东八区凌晨发布会算到昨天 */
+    const dayOf = require('./day').dayOf;
+    for (let i = 13; i >= 0; i--) byDay[dayOf(nowMs - i * 86400000)] = 0;
     pubRows.forEach(function (r) {
       const p = jparse(r.data) || {};
       const t = Date.parse(p.publishedAt || r.created_at || '') || 0;
       if (t) {
         if (nowMs - t <= 7 * 86400000) last7++;
         if (nowMs - t <= 30 * 86400000) last30++;
-        const day = new Date(t).toISOString().slice(0, 10);
+        const day = dayOf(t);
         if (byDay[day] !== undefined) byDay[day]++;
       }
       let hosts = Object.keys(p.targetResults || {}).filter(function (h) { return (p.targetResults[h] || {}).publishedTorrent; });
