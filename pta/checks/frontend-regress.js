@@ -371,6 +371,54 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Sources 导出全部页，归档后分页回到 1/1', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+      const rows = [];
+      for (let i = 0; i < 150; i++) {
+        rows.push({ id: 'a_' + i, site: 'site-a.example', title: 'Archived Row ' + i, status: 'skipped', cat: '', catName: '' });
+      }
+      let archived = false;
+      await page.route('**/api/site-defs', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      });
+      await page.route('**/api/credentials', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/catalog/bulk', async function (route) {
+        archived = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { changed: 150, status: 'archived' } }) });
+      });
+      await page.route('**/api/catalog?**', async function (route) {
+        const items = archived ? [] : rows;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: items.length, items: items } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await page.waitForTimeout(1800);
+      await page.locator('#dl-status').selectOption('skipped');
+      await page.waitForTimeout(600);
+      await page.click('#dl-next');
+      await page.waitForTimeout(200);
+      need((await page.locator('#dl-body .dl-row').count()) === 50, '第二页不是 50 行');
+
+      const [download] = await Promise.all([page.waitForEvent('download'), page.click('#dl-export')]);
+      need(download.suggestedFilename() === 'pta-catalog.json', '导出文件名不对：' + download.suggestedFilename());
+      const file = await download.path();
+      const exported = JSON.parse(fs.readFileSync(file, 'utf8'));
+      need(Array.isArray(exported) && exported.length === 150, '导出不是全部页：' + exported.length);
+
+      await page.click('#dl-archive');
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(900);
+      need((await page.locator('#dl-page').innerText()).indexOf('1 / 1') >= 0, '归档后分页没回 1/1：' + (await page.locator('#dl-page').innerText()));
+      need((await page.locator('#dl-body').innerText()).indexOf('数据清单还是空的') >= 0, '归档后没显示空状态：' + (await page.locator('#dl-body').innerText()));
+      await page.close();
+    });
+
     await check('Sources 批量送审/归档失败后按钮恢复并可重试', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.route('**/api/site-defs', async function (route) {

@@ -10,16 +10,8 @@ module.exports = function (app, ctx) {
   const targetService = makeTargetService(ctx, makeTarget(ctx));
   const configSchema = require('./config-schema');
 const catalogBulk = require('./catalog-bulk');
+const catalogItem = require('./catalog-item');
 
-  function updCatalog(id, patch) {
-    const row = one('SELECT data FROM catalog WHERE id = ?', id);
-    if (!row) return null;
-    const it = Object.assign(jparse(row.data) || {}, patch);
-    const st = it.status || 'new';
-    db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?')
-      .run(JSON.stringify(it), st, now(), id);
-    return it;
-  }
   function getCatalog(id) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);
     return row ? jparse(row.data) : null;
@@ -51,7 +43,7 @@ const catalogBulk = require('./catalog-bulk');
   app.post('/api/catalog/:id/status', async (req, reply) => {
     const status = String((req.body && req.body.status) || '');
     if (!['new', 'selected', 'archived', 'published', 'skipped'].includes(status)) return bad(reply, 'BAD_REQUEST', 'status 不合法');
-    const it = updCatalog(req.params.id, { status: status });
+    const it = catalogItem.updCatalog(ctx, req.params.id, { status: status });
     if (!it) return bad(reply, 'NOT_FOUND', '词条不存在', 404);
     return ok(reply, it);
   });
@@ -64,7 +56,7 @@ const catalogBulk = require('./catalog-bulk');
     ['noRedistribute', 'exclusive', 'diy', 'hr', 'limited', 'limitedDays', 'existing'].forEach(function (k) {
       if (src[k]) marks[k] = src[k] === true ? true : Number(src[k]) || 0;
     });
-    const next = updCatalog(req.params.id, { marks: marks });
+    const next = catalogItem.updCatalog(ctx, req.params.id, { marks: marks });
     return ok(reply, next);
   });
 
