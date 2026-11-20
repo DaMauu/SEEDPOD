@@ -12,6 +12,7 @@ module.exports = function (app, ctx) {
 const catalogBulk = require('./catalog-bulk');
 const catalogItem = require('./catalog-item');
 const { tx } = require('./db');
+const catalogSync = require('./catalog-sync');
 
   function getCatalog(id) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);
@@ -197,6 +198,9 @@ const { tx } = require('./db');
     if (!target) return bad(reply, 'BAD_REQUEST', 'action 只能是 approve / reject / skip / save / download / publish / retry');
     if (b.action === 'reject' && !String(b.reason || '').trim()) return bad(reply, 'BAD_REQUEST', '驳回要写理由');
     const wasRejected = it.status === 'rejected';
+    if (it.status === 'published' && (b.action === 'retry' || b.action === 'reject' || b.action === 'skip')) {
+      return bad(reply, 'PUBLISHED_LOCKED', '已发布的条目不在这里回滚；要撤种先去目标站和下载器处理', 409);
+    }
     it.status = target;
     it.actionAt = now();
     if (b.action === 'retry') {
@@ -217,14 +221,20 @@ const { tx } = require('./db');
     if (b.reason) it.reason = String(b.reason).slice(0, 500);
     db.prepare('UPDATE queue SET status = ?, title = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(target, it.title, JSON.stringify(it), now(), it.id);
+    catalogSync.apply(ctx, it, target, it.reason);
     return ok(reply, it);
   });
 
   app.delete('/api/queue/:id', async (req, reply) => {
-    const row = one('SELECT id FROM queue WHERE id = ?', req.params.id);
+    const row = one('SELECT id, status, data FROM queue WHERE id = ?', req.params.id);
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
+    if (row.status === 'published' || one('SELECT 1 AS x FROM published WHERE id = ?', req.params.id)) {
+      return bad(reply, 'PUBLISHED_LOCKED', '已发布的条目不删；先处理目标站和下载器里的种子', 409);
+    }
+    const it = jparse(row.data) || {};
     db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id);
-    return ok(reply, { id: req.params.id });
+    catalogSync.reset(ctx, it);
+    return ok(reply, { id: req.params.id, catalogReset: !!it.catalogId });
   });
 
   /* ---- 流程规则 ---- */

@@ -42,8 +42,8 @@ module.exports = function (app, ctx) {
     }
     const target = { approve: 'approved', reject: 'rejected', skip: 'skipped' }[action];
     /* 批量状态整批事务：中途失败不留半批，重复 id 不重复计数 */
-    changed = queueBulk.applyStatus(ctx, ids, target, b.reason);
-    return ok(reply, { changed: changed, status: target });
+    const out = queueBulk.applyStatus(ctx, ids, target, b.reason);
+    return ok(reply, { changed: out.changed, locked: out.locked, status: target });
   });
 
   /* 抓取执行：演练默认；真抓需显式打开 realCrawl（或 ALLOW_REAL=1） */

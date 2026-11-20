@@ -265,6 +265,13 @@ async function main() {
     for (const it of (q.data && q.data.items) || []) {
       await fetchA(BASE + '/api/queue/' + encodeURIComponent(it.id), { method: 'DELETE' });
     }
+    /* 删队列会把来源词条回到 new；这条夹具也要清掉，避免下一轮又被送审 */
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      db.prepare("DELETE FROM catalog WHERE title LIKE 'No Intro%'").run();
+      db.close();
+    }
   });
 
   await check('排除正则命中即拒绝，旧白名单不再生效', async () => {
@@ -492,6 +499,63 @@ async function main() {
     need(j.ok && j.data.changed >= 2, '批量批准没生效：' + JSON.stringify(j));
     const g = await (await fetchA(BASE + '/api/queue?status=approved&q=Bulk')).json();
     need(g.ok && g.data.matched === 2, '批量后状态不对：' + g.data.matched);
+  });
+
+  await check('队列状态同步回词条，已发布不可回滚/删除', async () => {
+    const cid = 'cat_sync_1';
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ id: cid, title: 'Sync Row', status: 'new' }] })
+    });
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Sync Queue 2020', status: 'pending', site: 'demo-a.example', catalogId: cid })
+    })).json();
+    need(q.ok && q.data.id, '建同步条目失败：' + JSON.stringify(q));
+    const cat = async function () {
+      const j = await (await fetchA(BASE + '/api/catalog?limit=500')).json();
+      return (j.data.items || []).filter(function (x) { return x.id === cid; })[0] || {};
+    };
+    await fetchA(BASE + '/api/queue/' + q.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', reason: '不同步会错' })
+    });
+    let c = await cat();
+    need(c.status === 'skipped' && c.skipReason === '不同步会错', '驳回没同步词条：' + JSON.stringify({ status: c.status, reason: c.skipReason }));
+    await fetchA(BASE + '/api/queue/' + q.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'retry' })
+    });
+    c = await cat();
+    need(c.status === 'selected' && c.skipReason === undefined, '重新送审没同步回已送审：' + JSON.stringify({ status: c.status, reason: c.skipReason }));
+    await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'skip', ids: [q.data.id] })
+    });
+    c = await cat();
+    need(c.status === 'skipped' && c.skipReason === '已跳过', '批量跳过没同步词条：' + JSON.stringify({ status: c.status, reason: c.skipReason }));
+    const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
+    need(del.ok && del.data.catalogReset === true, '删除队列没回词条：' + JSON.stringify(del));
+    c = await cat();
+    need(c.status === 'new', '删除后词条没回待筛选：' + c.status);
+
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db.prepare('INSERT INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)')
+      .run('q_pub_lock', 'published', 'Published Lock', JSON.stringify({ id: 'q_pub_lock', status: 'published', title: 'Published Lock' }), '2026-01-01', '2026-01-01');
+    db.close();
+    const retry = await fetchA(BASE + '/api/queue/q_pub_lock/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'retry' })
+    });
+    need(retry.status === 409, '已发布还能回滚：' + retry.status);
+    const rj = await retry.json();
+    need(rj.error && rj.error.code === 'PUBLISHED_LOCKED', '回滚错误码不对：' + JSON.stringify(rj.error));
+    const delPub = await fetchA(BASE + '/api/queue/q_pub_lock', { method: 'DELETE' });
+    need(delPub.status === 409, '已发布还能删除：' + delPub.status);
+    const bulk = await (await fetchA(BASE + '/api/queue/bulk', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'skip', ids: ['q_pub_lock'] })
+    })).json();
+    need(bulk.ok && bulk.data.changed === 0 && bulk.data.locked === 1, '批量改已发布没锁：' + JSON.stringify(bulk));
+    const db2 = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db2.prepare("DELETE FROM queue WHERE id = 'q_pub_lock'").run();
+    db2.close();
   });
 
   await check('驳回后可重新送审：清理由、回待审、不进失败统计', async () => {
