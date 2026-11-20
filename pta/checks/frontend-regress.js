@@ -371,6 +371,54 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Sources 翻页与筛选组合：回第一页、状态不显示旧数据', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const rows = [];
+      for (let i = 0; i < 230; i++) {
+        rows.push({ id: 'c_' + i, site: i % 2 ? 'site-b.example' : 'site-a.example', title: 'Row ' + String(i).padStart(3, '0'), status: 'new', cat: '', catName: '' });
+      }
+      await page.route('**/api/site-defs', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      });
+      await page.route('**/api/credentials', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/catalog?**', async function (route) {
+        const status = new URL(route.request().url()).searchParams.get('status') || '';
+        if (status === 'skipped') {
+          await new Promise(function (r) { setTimeout(r, 500); });
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [{ id: 'sk', site: 'site-b.example', title: 'Skipped Row', status: 'skipped', cat: '', catName: '' }] } }) });
+        }
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: rows.length, items: rows } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await page.waitForTimeout(1800);
+      need((await page.locator('#dl-page').innerText()).indexOf('1 / 3') >= 0, '初始分页不对：' + (await page.locator('#dl-page').innerText()));
+      need((await page.locator('#dl-body .dl-row').count()) === 100, '第一页不是 100 行');
+      await page.click('#dl-next');
+      await page.waitForTimeout(200);
+      need((await page.locator('#dl-page').innerText()).indexOf('2 / 3') >= 0, '下一页没生效');
+      need((await page.locator('#dl-body .dl-row').first().innerText()).indexOf('Row 100') >= 0, '第二页起点不对');
+
+      await page.locator('#dl-site').selectOption('site-b.example');
+      await page.waitForTimeout(250);
+      need((await page.locator('#dl-page').innerText()).indexOf('1 / 2') >= 0, '筛选后没回第一页：' + (await page.locator('#dl-page').innerText()));
+      need((await page.locator('#dl-body .dl-row').first().innerText()).indexOf('Row 001') >= 0, '筛选后起点不对');
+
+      await page.locator('#dl-status').selectOption('skipped');
+      await page.waitForTimeout(120);
+      need((await page.locator('#dl-body .dl-row').count()) === 0, '切状态后仍显示旧状态数据');
+      await page.waitForTimeout(700);
+      need((await page.locator('#dl-body').innerText()).indexOf('Skipped Row') >= 0, '新状态数据没显示');
+      need((await page.locator('#dl-page').innerText()).indexOf('1 / 1') >= 0, '状态分页不对');
+      await page.close();
+    });
+
     await check('Sources 快速切筛选只保留最后一次响应', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let firstStarted = null;

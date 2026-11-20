@@ -49,6 +49,7 @@ run mock-shape mock-shape.js
 run api api-v2.js
 run form form.js
 run site-pack site-pack.js
+run site-pack-concurrency site-pack-concurrency.js
 run backup backup.js
 run day-boundary day-boundary.js
 run backup-concurrency backup-concurrency.js

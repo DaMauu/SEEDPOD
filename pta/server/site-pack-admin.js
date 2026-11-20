@@ -102,6 +102,27 @@ function overview(ctx, opts) {
   result.exceptions = exceptions.slice(0, limit);
   return result;
 }
+function sleepSync(ms) {
+  try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch (e) { /* 退化为忙等 */ }
+}
+/* 跨进程互斥：mkdir 是原子的；锁目录超过 15 秒视为残留 */
+function acquireLock(dir) {
+  const lock = path.join(dir, '.site-pack.lock');
+  const t0 = Date.now();
+  for (;;) {
+    try { fs.mkdirSync(lock, { mode: 0o700 }); break; }
+    catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      let st;
+      try { st = fs.statSync(lock); } catch (e2) { continue; }
+      if (Date.now() - st.mtimeMs > 15000) { try { fs.rmdirSync(lock); } catch (e3) { /* 别人刚删 */ } continue; }
+      if (Date.now() - t0 > 5000) throw new Error('站点包正在写入，稍后重试');
+      sleepSync(20);
+    }
+  }
+  return function () { try { fs.rmdirSync(lock); } catch (e) { /* 已释放 */ } };
+}
+
 function confirm(ctx, body, opts) {
   const b = body || {};
   const host = String(b.host || '').trim().toLowerCase();
@@ -116,29 +137,42 @@ function confirm(ctx, body, opts) {
   const built = (r.pack.sites || {})[host];
   if (!built) return { ok: false, code: 'NO_SITE', message: '站点包里没有这个站', http: 404 };
   const dataDir = ctx.DATA_DIR;
-  const priv = privateDef(dataDir, host) || {};
-  const source = (Array.isArray(priv.catList) && priv.catList.length) ? priv.catList : catListOf(built);
-  const list = source.map(function (x) {
-    return { id: String(x && x.id != null ? x.id : ''), label: String(x && x.label || ''), purpose: String(x && x.purpose || 'other') };
-  });
-  let changed = 0;
-  list.forEach(function (x) {
-    if (ids.indexOf(String(x.id)) >= 0) { x.purpose = purpose; changed++; }
-  });
-  if (!changed) return { ok: false, code: 'NO_CATEGORY', message: '站点包里没有这些分类', http: 404 };
-  const cats = {};
-  list.forEach(function (x) { (cats[x.purpose] = cats[x.purpose] || []).push(String(x.id)); });
-  const catMap = {};
-  Object.keys(cats).forEach(function (p) { if (cats[p].length) catMap[p] = String(cats[p][0]); });
-  const next = Object.assign({}, priv, { catList: list, cats: cats, catMap: catMap });
-  delete next._catStats;
   const dir = path.join(dataDir, 'site-defs');
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  const file = path.join(dir, host + '.json');
-  const tmp = file + '.tmp-' + process.pid + '-' + Date.now();
-  fs.writeFileSync(tmp, JSON.stringify(next, null, 2) + '\n', { mode: 0o600 });
-  fs.renameSync(tmp, file);
-  return { ok: true, data: { host: host, ids: ids, purpose: purpose, changed: changed, saved: true, at: new Date().toISOString() } };
+  let release;
+  try {
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    release = acquireLock(dir);
+  } catch (e) {
+    return { ok: false, code: 'SITE_PACK_BUSY', message: '站点包正在写入，稍后重试', http: 409 };
+  }
+  try {
+    /* 测试钩子：持锁后延迟，用来复现并发读改写 */
+    const delay = Number(require('./env').read('SITE_PACK_TEST_DELAY_MS', 'PTA_SITE_PACK_TEST_DELAY_MS') || 0);
+    if (delay > 0 && delay < 5000) sleepSync(delay);
+    const priv = privateDef(dataDir, host) || {};
+    const source = (Array.isArray(priv.catList) && priv.catList.length) ? priv.catList : catListOf(built);
+    const list = source.map(function (x) {
+      return { id: String(x && x.id != null ? x.id : ''), label: String(x && x.label || ''), purpose: String(x && x.purpose || 'other') };
+    });
+    let changed = 0;
+    list.forEach(function (x) {
+      if (ids.indexOf(String(x.id)) >= 0) { x.purpose = purpose; changed++; }
+    });
+    if (!changed) return { ok: false, code: 'NO_CATEGORY', message: '站点包里没有这些分类', http: 404 };
+    const cats = {};
+    list.forEach(function (x) { (cats[x.purpose] = cats[x.purpose] || []).push(String(x.id)); });
+    const catMap = {};
+    Object.keys(cats).forEach(function (p) { if (cats[p].length) catMap[p] = String(cats[p][0]); });
+    const next = Object.assign({}, priv, { catList: list, cats: cats, catMap: catMap });
+    delete next._catStats;
+    const file = path.join(dir, host + '.json');
+    const tmp = file + '.tmp-' + process.pid + '-' + Date.now();
+    fs.writeFileSync(tmp, JSON.stringify(next, null, 2) + '\n', { mode: 0o600 });
+    fs.renameSync(tmp, file);
+    return { ok: true, data: { host: host, ids: ids, purpose: purpose, changed: changed, saved: true, at: new Date().toISOString() } };
+  } finally {
+    release();
+  }
 }
 
 module.exports = { overview: overview, confirm: confirm, catListOf: catListOf, privatePurposes: privatePurposes };

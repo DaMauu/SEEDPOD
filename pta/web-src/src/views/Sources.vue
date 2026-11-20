@@ -235,6 +235,8 @@ const typeOptions = computed(() => Array.from(new Set(rowsAll.value.map(r => r.t
 const filtered = computed(() => {
   const needle = q.value.trim().toLowerCase()
   return rowsAll.value.filter(r => {
+    /* 状态已由服务端筛过；这里再挡一次，切换后旧响应不会顶着新标签显示 */
+    if (status.value && r.status !== status.value) return false
     if (needle && (r.title + ' ' + r.res + ' ' + r.site).toLowerCase().indexOf(needle) === -1) return false
     if (site.value && r.site !== site.value) return false
     if (type.value && r.type !== type.value) return false
