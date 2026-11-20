@@ -23,11 +23,15 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
 
 function seedDb() {
   const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
-  db.exec("CREATE TABLE IF NOT EXISTS sites (host TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT); CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, level TEXT, src TEXT, msg TEXT);");
+  db.exec("CREATE TABLE IF NOT EXISTS sites (host TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT); CREATE TABLE IF NOT EXISTS queue (id TEXT PRIMARY KEY, status TEXT, title TEXT, data TEXT NOT NULL, created_at TEXT, updated_at TEXT); CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, level TEXT, src TEXT, msg TEXT);");
   const now = new Date().toISOString();
   const ins = db.prepare('INSERT OR REPLACE INTO sites(host, data, updated_at) VALUES(?, ?, ?)');
   ins.run('test-1.example', JSON.stringify({ url: 'https://test-1.example/index.php', arch: 'NP', title: '测试站点一' }), now);
   ins.run('test-2.example', JSON.stringify({ url: 'https://test-2.example/index.php', arch: 'NP', title: '测试站点二' }), now);
+  const q = db.prepare('INSERT OR REPLACE INTO queue(id, status, title, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)');
+  q.run('q_0001', 'pending', 'Target Switch 2024', JSON.stringify({ id: 'q_0001', title: 'Target Switch 2024', status: 'pending', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'], sourceState: { ok: true, complete: true } }), now, now);
+  q.run('q_0002', 'pending', 'Progress Poll 2024', JSON.stringify({ id: 'q_0002', title: 'Progress Poll 2024', status: 'pending', stage: 'draft', targetSite: 'test-p.example', targets: ['test-p.example'] }), now, now);
+  q.run('q_0003', 'pending', 'Switch Target B 2024', JSON.stringify({ id: 'q_0003', title: 'Switch Target B 2024', status: 'pending', stage: 'draft', targetSite: 'test-c.example', targets: ['test-c.example'] }), now, now);
   db.close();
 }
 
@@ -86,6 +90,106 @@ function seedDb() {
       need(small === 'block', '800px dock 文字应显示：' + small);
       need(mid === 'none', '1200px dock 文字应隐藏：' + mid);
       need(pad === '36px', '1200px main 底部间距不对：' + pad);
+      await page.close();
+    });
+
+    await check('队列切目标站后提交到新站', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const uploads = [];
+      await page.route('**/api/**', async function (route) {
+        const u = new URL(route.request().url());
+        const p = u.pathname;
+        if (p === '/api/targets') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }, { host: 'test-b.example', hasCookie: true }] }) });
+        if (p === '/api/queue/q_0001/publish-preview') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { ready: true } }) });
+        if (p === '/api/queue/q_0001/action' || p === '/api/queue/q_0001/prepare') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { prepared: {} } }) });
+        if (p === '/api/targets/test-b.example/upload') {
+          uploads.push({ url: route.request().url(), body: route.request().postData() || '' });
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+        }
+        return route.continue();
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(600);
+      await page.locator('.q-item').filter({ hasText: 'Target Switch 2024' }).click();
+      await page.waitForTimeout(400);
+      const sel = page.locator('.qd-field').filter({ hasText: '目标站' }).locator('select');
+      await sel.selectOption('test-b.example');
+      await page.locator('button').filter({ hasText: '发布到目标站' }).click();
+      await page.waitForTimeout(300);
+      need(await page.locator('#confirm-yes').count() === 1, '提交确认框没出现');
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(700);
+      need(uploads.length === 1, '没有发出一次上传：' + uploads.length);
+      need(uploads[0].url.indexOf('test-b.example') >= 0 && uploads[0].url.indexOf('test-a.example') < 0, '上传目标没切到 B：' + uploads[0].url);
+      await page.close();
+    });
+
+    await check('下载轮询切条目后不覆盖新条目', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let pollStarted = null;
+      const started = new Promise(function (resolve) { pollStarted = resolve; });
+      let downloadCount = 0;
+      await page.route('**/api/queue/q_0002/action', async function (route) {
+        const body = JSON.parse(route.request().postData() || '{}');
+        if (body.action !== 'download') return route.continue();
+        downloadCount++;
+        if (downloadCount === 1) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { message: '已加入 qB', progress: 0.2, hash: 'p' } }) });
+        pollStarted();
+        await new Promise(function (r) { setTimeout(r, 1200); });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { complete: true, progress: 1, hash: 'p' } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(600);
+      await page.locator('.q-item').filter({ hasText: 'Progress Poll 2024' }).click();
+      await page.waitForTimeout(400);
+      await page.locator('button').filter({ hasText: '下载种子' }).click();
+      await Promise.race([started, new Promise(function (_, reject) { setTimeout(function () { reject(new Error('轮询没启动')); }, 10000); })]);
+      await page.locator('.q-item').filter({ hasText: 'Switch Target B 2024' }).click();
+      await page.waitForTimeout(1600);
+      need(await page.locator('.qd-download').count() === 0, '旧轮询把进度写到新条目：' + (await page.locator('.qd-download').innerText().catch(function () { return ''; })));
+      await page.close();
+    });
+
+    await check('队列列表慢响应不覆盖新页签', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let firstStarted = null;
+      const started = new Promise(function (resolve) { firstStarted = resolve; });
+      await page.route('**/api/**', async function (route) {
+        const u = new URL(route.request().url());
+        if (u.pathname !== '/api/queue' || route.request().method() !== 'GET') return route.continue();
+        const status = u.searchParams.get('status') || '';
+        if (!status) {
+          firstStarted();
+          await new Promise(function (r) { setTimeout(r, 900); });
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [{ id: 'race-pending', title: 'Race Pending', status: 'pending' }], matched: 1, counts: {} } }) });
+        }
+        if (status.indexOf('approved') >= 0) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [{ id: 'race-approved', title: 'Race Approved', status: 'approved' }], matched: 1, counts: {} } }) });
+        }
+        return route.continue();
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await Promise.race([started, new Promise(function (_, reject) { setTimeout(function () { reject(new Error('列表请求没启动')); }, 5000); })]);
+      await page.locator('#queue-tabs button').filter({ hasText: '已通过' }).click();
+      await page.waitForTimeout(1300);
+      const text = await page.locator('.queue-items').innerText();
+      need(text.indexOf('Race Approved') >= 0, '新页签没显示：' + text);
+      need(text.indexOf('Race Pending') < 0, '旧响应覆盖了新页签：' + text);
       await page.close();
     });
 
