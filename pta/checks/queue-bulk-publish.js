@@ -87,6 +87,15 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
     need(published[0] === 'q_review' && uploads.length === 1, '没走到发布门禁');
   });
 
+  await check('部分成功：成功项保留，错误最多 3 条', async function () {
+    uploads.length = 0; published.length = 0;
+    const r = await runBulkPublish(ctx, ['q_ok', 'q_inj', 'q_bad', 'q_nosrc', 'q_pubfail']);
+    need(r.changed === 2 && r.skipped === 3, '计数不对：' + JSON.stringify(r));
+    need(r.errors.length === 3, '错误没限量：' + JSON.stringify(r.errors));
+    need(published.indexOf('q_ok') >= 0 && published.indexOf('q_inj') >= 0, '成功项没发布：' + JSON.stringify(published));
+    need(published.indexOf('q_bad') < 0 && published.indexOf('q_nosrc') < 0 && published.indexOf('q_pubfail') >= 0, '失败项处理不对：' + JSON.stringify(published));
+  });
+
   const pass = results.filter(function (r) { return r[0]; }).length;
   results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
   console.log('\n' + pass + '/' + results.length + ' 通过');

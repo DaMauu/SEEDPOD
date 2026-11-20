@@ -135,9 +135,13 @@ function makePublisher(ctx) {
     if (stage.isInjected(it)) return { ok: true, data: { id: it.id, skipped: true, published: true, msg: '已注入过，跳过重复操作' } };
     if (!it.title) return { ok: false, code: 'BAD_ITEM', message: '条目没有标题，发不了', http: 400 };
     if (!it.targetSite) return { ok: false, code: 'NO_TARGET', message: '还没选目标站', http: 400 };
-    /* 终审没过的条目不能真发布；演练仍可看计划 */
-    if (!dryRun && it.review && it.review.ok === false && Array.isArray(it.review.missing) && it.review.missing.length) {
-      return { ok: false, code: 'REVIEW_HOLD', message: '终审未通过：' + it.review.missing.join('、'), http: 409 };
+    /* 终审没过的条目不能真发布；演练仍可看计划。
+       ok=false 或 missing 非空任一成立就拦，防止手改出“ok=true + 旧 missing”的矛盾数据。 */
+    if (!dryRun && it.review) {
+      const miss = Array.isArray(it.review.missing) ? it.review.missing.filter(Boolean) : [];
+      if (it.review.ok === false || miss.length) {
+        return { ok: false, code: 'REVIEW_HOLD', message: '终审未通过：' + (miss.length ? miss.join('、') : '请重新跑终审'), http: 409 };
+      }
     }
     const dl = downloaderOf(b, it);
     if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB 或 watch', http: 400 };

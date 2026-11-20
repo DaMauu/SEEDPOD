@@ -40,6 +40,27 @@ const base = { id: 'q_gate', status: 'pending', stage: 'previewed', title: 'Revi
       need(d.status === 'pending' && d.stage === 'previewed', '被拦后状态变了：' + JSON.stringify({ s: d.status, g: d.stage }));
     });
 
+    await check('旧数据没有 review 字段仍可继续', async function () {
+      const legacy = Object.assign({}, base);
+      delete legacy.review;
+      put(legacy);
+      const r = await publisher.publishItem('q_gate', { dryRun: false });
+      need(r.ok === false && r.code === 'NO_DOWNLOADER', '旧数据被误拦：' + JSON.stringify(r));
+    });
+
+    await check('ok=false 但 missing 缺失也拦', async function () {
+      put(Object.assign({}, base, { review: { ok: false } }));
+      const r = await publisher.publishItem('q_gate', { dryRun: false });
+      need(r.ok === false && r.code === 'REVIEW_HOLD', 'ok=false 没拦：' + JSON.stringify(r));
+      need(/重新跑终审/.test(r.message), '错误提示不对：' + r.message);
+    });
+
+    await check('手改成 ok=true 但 missing 非空仍拦', async function () {
+      put(Object.assign({}, base, { review: { ok: true, missing: ['简介'] } }));
+      const r = await publisher.publishItem('q_gate', { dryRun: false });
+      need(r.ok === false && r.code === 'REVIEW_HOLD' && /简介/.test(r.message), '矛盾数据没拦：' + JSON.stringify(r));
+    });
+
     await check('补全终审后可继续到后续门禁', async function () {
       put(Object.assign({}, base, { review: { ok: true, missing: [] } }));
       const r = await publisher.publishItem('q_gate', { dryRun: false });
