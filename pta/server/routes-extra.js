@@ -5,6 +5,7 @@ const form = require('./form');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { hostsOf } = require('./dedupe-item');
+const queueBulk = require('./queue-bulk');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
@@ -66,16 +67,8 @@ module.exports = function (app, ctx) {
       return ok(reply, { changed: changed, skipped: skipped, errors: errors });
     }
     const target = { approve: 'approved', reject: 'rejected', skip: 'skipped' }[action];
-    ids.slice(0, 200).forEach(function (id) {
-      const row = one('SELECT data FROM queue WHERE id = ?', id);
-      if (!row) return;
-      const it = jparse(row.data) || {};
-      it.status = target;
-      it.actionAt = now();
-      if (b.reason) it.reason = String(b.reason).slice(0, 500);
-      db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?').run(target, JSON.stringify(it), now(), id);
-      changed++;
-    });
+    /* 批量状态整批事务：中途失败不留半批，重复 id 不重复计数 */
+    changed = queueBulk.applyStatus(ctx, ids, target, b.reason);
     return ok(reply, { changed: changed, status: target });
   });
 
