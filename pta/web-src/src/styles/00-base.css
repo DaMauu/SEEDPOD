@@ -39,8 +39,6 @@
   --shadow-lg: 0 10px 40px rgba(16, 24, 40, .12);
 }
 
-html, body { height: 100%; }
-
 body {
   margin: 0;
   background: var(--bg);
@@ -51,5 +49,5 @@ body {
 
 a { color: inherit; text-decoration: none; }
 
-.main { margin: 0 auto; }
+.main { margin: 0 auto; padding: 30px 32px 128px; max-width: 1230px; min-height: 100vh; display: flex; flex-direction: column; }
 

@@ -1,13 +1,10 @@
-.panel { padding: 14px 16px; }
-.main { padding: 30px 32px 128px; }
-.card { padding: 18px 20px; }
-.t-main { font-size: 13.5px; }
-.t-sub { margin-top: 3px; }
+.panel {
+  background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; }
+.card { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; }
+.t-main { font-weight: 500; color: var(--ink); font-size: 13.5px; }
+.t-sub { font-size: 11.5px; color: var(--muted-2); margin-top: 3px; }
 /* right-side floating rail on wide screens */
 @media (min-width: 1320px) {
-  .dock { align-items: stretch; gap: 3px; border-radius: 20px;
-  }
-  .dock-item { border-radius: 12px; }
 }
 @media (min-width: 1320px) {
 }
@@ -21,7 +18,6 @@
 }
 /* restore full content width, compact rail */
 @media (min-width: 1320px) {
-  .dock-item { font-size: 11.5px; }
 }
 
 .live { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: var(--green); margin-left: 8px; }
@@ -39,11 +35,8 @@
 /* rail 80px from browser edge */
 /* nav lives in the top-right menu */
 /* restore side rail, nav also in menu */
-.dock { display: flex !important; }
-.main { max-width: 1230px; }
 @media (min-width: 1320px) {
-  .dock { padding: 6px; }
-  .dock-item { position: relative; padding: 9px; gap: 0; }
+  .dock-item { border-radius: 12px; font-size: 11.5px; position: relative; padding: 9px; gap: 0; }
   .dock-label { display: none; }
 }
 /* dock hugs the card right edge (constant ~16px gap), never nearer than 80px to the window edge */
@@ -58,7 +51,7 @@
 /* dock a touch further right */
 @media (min-width: 1320px) { }
 .pills-row { display: flex; align-items: center; gap: 14px; }
-@media (min-width: 1320px) { .dock {
+@media (min-width: 1320px) { .dock { align-items: stretch; gap: 3px; border-radius: 20px; padding: 6px;
     left: auto; top: 50%; bottom: auto;
     transform: translateY(-50%);
     flex-direction: column;

@@ -50,7 +50,7 @@
 .sd-card.wide { grid-column: 1 / -1; }
 .sd-card h3 { margin: 0 0 10px; font-size: 10.5px; font-weight: 600; letter-spacing: .8px; color: var(--muted-2); }
 .sd-note { width: 100% !important; height: auto !important; padding: 10px 12px; resize: vertical; line-height: 1.65; font-family: inherit; }
-.btn.danger { color: var(--red) !important; border-color: #f1d4d4 !important; }
+.btn.danger { background: transparent; color: var(--red) !important; border-color: #f1d4d4 !important; }
 .btn.danger:hover { background: var(--red-soft) !important; }
 button.switch { border: 0; background: none; padding: 0; cursor: pointer; }
 .modal-mask { position: fixed; inset: 0; background: rgba(17,24,39,.26); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; z-index: 300; }

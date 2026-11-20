@@ -1,5 +1,4 @@
 /* 共用：多选行、规则行、抽屉头 */
-.set-field .ctl .pick-row { display: flex; gap: 5px; }
 .set-field .ctl .pick-row .cat-chip { padding: 4px 9px; font-size: 11.5px; }
 /* 流程页：去掉手风琴，全部常驻展开 */
 .drawer-head:hover { background: none; }

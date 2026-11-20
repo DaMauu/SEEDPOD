@@ -13,7 +13,8 @@
 .dock-item .dock-label::after { display: none; }
 .dock-icon { width: 18px; height: 18px; flex: 0 0 18px; display: block; }
 @media (max-width: 900px) {
-  .dock { border-top: 1px solid var(--line); z-index: 60;
+  .dock { position: fixed;
+    display: flex; flex-direction: row; border-top: 1px solid var(--line); z-index: 60;
     left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); top: auto; transform: none;
     width: auto; max-width: none; height: auto;
     min-height: calc(58px + env(safe-area-inset-bottom, 0px));
@@ -32,7 +33,6 @@
     gap: 2px; padding: 4px 2px; min-height: 44px; border-radius: 12px;
   }
   .dock .dock-label { display: block; font-size: 9.5px; line-height: 1.2; text-align: center; white-space: nowrap; }
-  .main { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
 /* 901–1099：底部横条浮在页脚上方；1100 起改成右侧竖排，彻底避开页脚 */
 @media (min-width: 901px) and (max-width: 1099px) {

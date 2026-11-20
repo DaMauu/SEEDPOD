@@ -3,7 +3,6 @@
 .set-fields { margin-top: 14px; }
 .set-field { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px 0; border-bottom: 1px solid #f4f5f8; }
 .set-field:last-child { border-bottom: 0; }
-.set-field .ctl { flex: 0 0 auto; }
 .set-field .ctl .input, .set-field .ctl .select { width: 240px; height: 34px; font-size: 12.5px; }
 @media (max-width: 1000px) {
   /* 窄屏也不换行：标签在左，控件在右；只让控件内部换行 */
@@ -18,9 +17,6 @@
 .set-field .lbl span { display: block; font-size: 13px; color: var(--ink); font-weight: 500; }
 .set-field .lbl i { display: block; font-style: normal; font-size: 11px; color: var(--muted); margin-top: 5px; }
 /* 共用抽屉 */
-.drawer-head { display: flex; background: none; font: inherit; }
-.drawer-title { color: var(--ink); }
-.drawer-body { display: none; }
 .drawer.open .drawer-body { display: block; }
 /* 流程页：抽屉作为独立卡片 */
 .drawer + .drawer { border-top: 0; }
@@ -34,15 +30,13 @@
 /* 节点抽屉内部 */
 .drawer { background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; position: relative; }
 .drawer.open { box-shadow: 0 6px 18px -6px rgba(16,24,40,.12), 0 1px 2px rgba(16,24,40,.04); }
-.drawer-head { align-items: center; width: 100%; gap: 18px; border-radius: 14px; }
 /* 流程页：撑满视口，展开不产生整页滚动条 */
-.drawer-body-flush { display: flex; }
 .drawer:not(.open) .drawer-body-flush { display: none; }
 /* 全局隐藏滚动条（仍可滚动） */
 * { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
-html, body { overflow-x: hidden; }
-.drawer-body-flush { flex-direction: column; padding: 0; overflow: hidden; }
+html, body { height: 100%; overflow-x: hidden; }
+.drawer-body-flush { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 /* 站点独立页 */
 .drawer:not(.open) .drawer-desc { display: block; }
 .drawer:not(.open) .drawer-title { font-size: 14.5px; }

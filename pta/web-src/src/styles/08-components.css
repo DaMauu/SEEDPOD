@@ -1,5 +1,5 @@
 /* ---------- 请求层：锁定值 / 区间提示 / 正则测试 ---------- */
-.set-field .ctl { display: flex; align-items: center; gap: 8px; }
+.set-field .ctl { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
 .set-field .ctl .input.num { width: 116px; }
 .set-field .ctl .fixed-val {
   display: inline-flex; align-items: center; height: 34px; padding: 0 11px;

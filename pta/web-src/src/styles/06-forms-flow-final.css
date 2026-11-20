@@ -7,16 +7,15 @@
 /* 手风琴内表单：单列一行一项 */
 
 /* 搜索预设：标签与选项同一行，按钮区、输入区分开成块 */
-.set-field .ctl .pick-row { flex-wrap: wrap; justify-content: flex-end; max-width: none; }
+.set-field .ctl .pick-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; max-width: none; }
 /* 更紧凑：搜索预设与整体表单密度 */
 /* 整体再压一档 */
-.drawer-title { font-weight: 600; letter-spacing: -.01em; font-size: 14px; }
-.drawer-body { padding: 0 22px 10px; }
+.drawer-title { color: var(--ink); font-weight: 600; letter-spacing: -.01em; font-size: 14px; }
 /* 分区头压成一行，行高再收 */
-.drawer-head { padding: 10px 22px; }
+.drawer-head { display: flex; background: none; font: inherit; align-items: center; width: 100%; gap: 18px; border-radius: 14px; text-align: left; border: 0; cursor: default; position: relative; padding: 10px 22px; }
 .drawer-t { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .drawer-desc { margin: 0; font-size: 10.5px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drawer-body { padding-bottom: 8px; }
+.drawer-body { display: none; padding: 0 22px 10px; padding-bottom: 8px; }
 /* ===== 流程页最终版式：统一间距与密度 ===== */
 
 /* 多选按钮行：标签固定宽，选项一行铺开 */
@@ -38,7 +37,6 @@
 .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: .02em; }
 /* 设置 / 日志 / 数据清单 / 待审核：按流程页密度压紧 */
 /* 栏目操作放到标题栏右侧 */
-.drawer-head { text-align: left; border: 0; cursor: default; position: relative; }
 .drawer-head-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .drawer-head-right .drawer-meta { margin: 0; }
 .drawer-head-right .btn { height: 28px; padding: 0 12px; font-size: 11.5px; border-radius: 8px; }
