@@ -127,8 +127,18 @@ check('从源站 BBCode 自动提取 MediaInfo/BDInfo', () => {
   need(ex.bdinfo && ex.bdinfo.kind === 'bdinfo', 'BDInfo 没提取到：' + JSON.stringify(ex.bdinfo));
   need(ex.mediainfo.raw.indexOf('General') === 0, 'MediaInfo 没从 General 开始：' + ex.mediainfo.raw.slice(0, 40));
   need(ex.bdinfo.raw.indexOf('Disc Title') === 0, 'BDInfo 没从 Disc Title 开始：' + ex.bdinfo.raw.slice(0, 40));
+  need(ex.bdinfo.bbcode === '[hide=bdinfo]\n' + BD + '\n[/hide]', 'BDInfo 原 BBCode 没保留：' + JSON.stringify(ex.bdinfo.bbcode));
+  need(mi.toBBCode(ex.bdinfo).indexOf('[hide=bdinfo]') === 0 && mi.toBBCode(ex.bdinfo).indexOf('【BDInfo】') < 0, '回填又重包了一层：' + mi.toBBCode(ex.bdinfo).slice(0, 80));
   need(mi.isWeakMedia('时长: 24 min 52 s') === true, '弱媒体字段没识别');
   need(mi.isWeakMedia(ex.mediainfo.raw) === false, '完整 MediaInfo 被当成弱字段');
+});
+
+check('技术块里的历史空行会折叠，正文空行保留', () => {
+  const dirty = '[quote]\nGeneral\n\nComplete name : x\n\nVideo\n\nFormat : HEVC\n[/quote]\n\n正文第一段\n\n正文第二段';
+  const clean = mi.tidyBbcode(dirty);
+  const block = clean.slice(0, clean.indexOf('[/quote]') + 8);
+  need(block.indexOf('\n\n') < 0, '技术块里还有空行：' + JSON.stringify(block));
+  need(clean.indexOf('正文第一段\n\n正文第二段') > 0, '正文段落空行被误删：' + JSON.stringify(clean));
 });
 
 check('无法识别的文本不瞎猜', () => {

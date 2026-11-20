@@ -51,6 +51,8 @@ function toBbcode(html) {
     .replace(/<legend\b[^>]*>/gi, '').replace(/<\/legend>/gi, '\n')
     .replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/gi, function (_, inner) { return '\n[quote]' + text(inner) + '[/quote]\n'; });
   s = s.replace(/<br\s*\/?>/gi, '\n');
+  /* <br> 后紧跟 </div>/</p> 时只留一个换行，避免每行被拆成两行 */
+  s = s.replace(/\n(?=<\/(?:p|div|li|tr|h\d)>)/gi, '');
   s = s.replace(/<\/(?:p|div|li|tr|h\d)>/gi, '\n');
   s = s.replace(/<img\b[^>]*(?:data-src|src)\s*=\s*["']([^"']+)["'][^>]*>/gi, function (_, src) {
     const u = decode(src).trim();

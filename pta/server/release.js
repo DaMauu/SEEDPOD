@@ -71,8 +71,14 @@ function makeRelease(ctx) {
     const tr = torrentOf(b);
     const mediaText = String(b.mediaInfo || b.bdinfo || item.mediaInfo || item.bdinfo || '').trim();
     const media = mediaText ? mediainfo.parse(mediaText) : null;
-    const mediaBlock = media && media.kind ? mediainfo.toBBCode(media) : '';
-    let description = names.description;
+    let mediaBlock = media && media.kind ? mediainfo.toBBCode(media) : '';
+    /* 媒体文本就是从源站简介原样提取的：优先用原 BBCode 整块，避免加标签和空行 */
+    if (media && media.kind && mediaBlock) {
+      const ex = mediainfo.extractFromBbcode(item.descrBb || item.intro || '');
+      const src = ex[media.kind];
+      if (src && src.bbcode && String(src.raw).trim() === mediaText.trim()) mediaBlock = String(src.bbcode).trim().slice(0, 20000);
+    }
+    let description = mediainfo.tidyBbcode(names.description);
     const attachMedia = b.attachMedia !== undefined ? b.attachMedia !== false : flowConfig.on(flow, '自动附加 MediaInfo', true);
     if (mediaBlock && attachMedia) {
       const already = description.indexOf(media.raw) >= 0 ||

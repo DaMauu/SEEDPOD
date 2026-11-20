@@ -316,12 +316,13 @@ function extractFromBbcode(raw) {
   while ((m = re.exec(text))) {
     const p = parse(m[2]);
     if (!p.kind) continue;
-    const rec = { kind: p.kind, raw: p.raw, summary: p.summary, length: p.raw.length };
+    /* bbcode 保留源站原样整块（[hide]/[quote]/[code]），回填时不再重新加行 */
+    const rec = { kind: p.kind, raw: p.raw, summary: p.summary, length: p.raw.length, bbcode: m[0] };
     if (!out[p.kind] || rec.length > out[p.kind].length) out[p.kind] = rec;
   }
   if (!out.mediainfo && !out.bdinfo) {
     const p = parse(text);
-    if (p.kind) out[p.kind] = { kind: p.kind, raw: p.raw, summary: p.summary, length: p.raw.length };
+    if (p.kind) out[p.kind] = { kind: p.kind, raw: p.raw, summary: p.summary, length: p.raw.length, bbcode: '' };
   }
   return out;
 }
@@ -334,12 +335,24 @@ function parse(raw) {
   if (hasSection || /(^|\n)\s*Complete name\s*:/i.test(text)) return parseMediainfo(text);
   return { kind: '', summary: '', error: 'unrecognized', raw: text.slice(0, 200000) };
 }
+/* 历史数据里的技术块可能被 HTML 转换插了空行；只在技术块内折叠连续空行 */
+function tidyBbcode(text) {
+  return String(text == null ? '' : text).replace(/\[(hide|quote|code)(?:=[^\]]*)?\]([\s\S]*?)\[\/\1\]/gi, function (m, tag, inner) {
+    if (!/(General|Complete name|Disc Title|Disc Label|Video\s*:|Audio\s*:|Disc Size)/i.test(inner)) return m;
+    const open = /^\[[^\]]+\]/.exec(m)[0];
+    const body = inner.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{2,}/g, '\n').trim();
+    return open + '\n' + body + '\n[/' + tag + ']';
+  });
+}
+
 function toBBCode(parsed) {
   if (!parsed || !parsed.raw || (parsed.kind !== 'bdinfo' && parsed.kind !== 'mediainfo')) return '';
+  /* 源站已有完整 BBCode 块就原样用；只有裸文本才补标准包裹 */
+  if (parsed.bbcode) return String(parsed.bbcode).trim().slice(0, 20000);
   const raw = String(parsed.raw).trim();
   if (/^(?:【(?:BDInfo|MediaInfo)】\s*)?\[(?:quote|code|hide)(?:=[^\]]*)?\]/i.test(raw)) return raw.slice(0, 20000);
   const label = parsed.kind === 'bdinfo' ? 'BDInfo' : 'MediaInfo';
   return ('【' + label + '】\n[quote]\n' + raw + '\n[/quote]').slice(0, 20000);
 }
 
-module.exports = { parse: parse, parseBdinfo: parseBdinfo, parseMediainfo: parseMediainfo, extractFromBbcode: extractFromBbcode, isWeakMedia: isWeakMedia, toBBCode: toBBCode, summaryOf: summaryOf, languageOf: languageOf };
+module.exports = { tidyBbcode: tidyBbcode, parse: parse, parseBdinfo: parseBdinfo, parseMediainfo: parseMediainfo, extractFromBbcode: extractFromBbcode, isWeakMedia: isWeakMedia, toBBCode: toBBCode, summaryOf: summaryOf, languageOf: languageOf };
