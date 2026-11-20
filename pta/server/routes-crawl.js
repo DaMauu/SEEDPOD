@@ -161,7 +161,7 @@ module.exports = function (app, ctx) {
     const url = def.base.replace(/\/+$/, '') + path0;
     let html = '';
     try {
-      const r = await fetch(url, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0' }, redirect: 'follow', signal: AbortSignal.timeout(20000) });
+      const r = await fetch(url, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
       if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
       html = await r.text();
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }

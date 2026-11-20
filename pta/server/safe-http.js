@@ -34,7 +34,7 @@ function requestOnce(u, address, opts) {
       path: u.pathname + u.search,
       method: opts.method || 'GET',
       headers: headers,
-      servername: u.hostname,
+      servername: u.hostname, agent: false,
       timeout: Number(opts.timeoutMs) || 20000,
       lookup: function (hostname, options, cb) {
         if (options && options.all) return cb(null, [address]);
