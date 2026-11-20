@@ -174,10 +174,11 @@ async function main() {
     need((r.description.match(/\/img\/\d+\.jpg/g) || []).length === 10, '10 张链接没全替换');
   });
 
-  await check('单张超过 8MB 也转存', async function () {
+  await check('远程图片超过上限不下载', async function () {
     const url = 'http://127.0.0.1:' + port + '/mirror/big.png';
     const r = await imagehost.mirrorDescription('[img]' + url + '[/img]', { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
-    need(r.ok && r.uploaded === 1 && r.failed === 0, '9MB 图片没转：' + JSON.stringify({ uploaded: r.uploaded, failed: r.failed, code: r.code, error: r.message }));
+    need(!r.ok && r.failed === 1, '大图没拦住：' + JSON.stringify({ ok: r.ok, failed: r.failed, error: r.message }));
+    need(/超过|大小/.test(String(r.message || '')), '错误没说明大小：' + r.message);
   });
 
   await check('图床页面解析原图并回填', async function () {
@@ -283,9 +284,13 @@ async function main() {
 
   await check('图床 SSO 并发只登录一次', async function () {
     const http = require('http');
-    let goauth = 0;
+    let goauth = 0, failFirst = true;
     const server = http.createServer(function (req, res) {
-      if (req.url === '/connect/goauth') { goauth++; res.writeHead(302, { location: '/pt-authorize' }); res.end(); return; }
+      if (req.url === '/connect/goauth') {
+        goauth++;
+        if (failFirst) { failFirst = false; res.writeHead(500); res.end('oauth down'); return; }
+        res.writeHead(302, { location: '/pt-authorize' }); res.end(); return;
+      }
       if (req.url === '/pt-authorize') { res.writeHead(302, { location: '/callback' }); res.end(); return; }
       if (req.url === '/callback') { res.writeHead(302, { location: '/' }); res.end(); return; }
       if (req.url === '/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<script>auth_token = "0123456789abcdef";</script>'); return; }
@@ -295,9 +300,12 @@ async function main() {
     const port = server.address().port;
     const cfg = { endpoint: 'http://127.0.0.1:' + port + '/api/1/upload', ssoHost: '127.0.0.1', ssoCookie: 'sid=x' };
     try {
+      let failed = false;
+      try { await imagehost._ssoLogin(cfg); } catch (e) { failed = true; }
+      need(failed, '首次 SSO 失败没抛出');
       const [a, b] = await Promise.all([imagehost._ssoLogin(cfg), imagehost._ssoLogin(cfg)]);
       need(a && b && a.token === b.token, '并发 SSO 结果不一致');
-      need(goauth === 1, '并发 SSO 登录次数不对：' + goauth);
+      need(goauth === 2, '失败后并发登录次数不对：' + goauth);
     } finally { server.close(); }
   });
 

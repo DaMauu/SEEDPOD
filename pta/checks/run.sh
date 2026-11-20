@@ -49,6 +49,7 @@ run form form.js
 run site-pack site-pack.js
 run backup backup.js
 run backup-concurrency backup-concurrency.js
+run backup-interrupt backup-interrupt.js
 run deploy-docker deploy-docker.js
 run publish publish.js
 run scheduler scheduler.js

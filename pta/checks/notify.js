@@ -27,6 +27,9 @@ function listen() {
       req.on('data', function (c) { body += c; });
       req.on('end', function () {
         hits.push({ url: req.url, body: body ? JSON.parse(body) : null });
+        if (req.url === '/webhook-always-fail') {
+          res.writeHead(500); res.end('fail'); return;
+        }
         if (req.url === '/webhook-flaky') {
           const n = hits.filter(function (x) { return x.url === '/webhook-flaky'; }).length;
           if (n === 1) { res.writeHead(500); res.end('fail'); return; }
@@ -109,6 +112,21 @@ async function main() {
     need(r.ok === true && r.channel === 'webhook' && r.attempts === 2, 'webhook 重试不对：' + JSON.stringify(r));
     const got = hits.filter(function (x) { return x.url === '/webhook-flaky'; });
     need(got.length === 2, 'webhook 请求次数不对：' + got.length);
+  });
+
+  await check('webhook 重试有上限', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-always-fail' }));
+    const before = hits.filter(function (x) { return x.url === '/webhook-always-fail'; }).length;
+    const r = await n2.send('publish.failed', 'always fail', {}, { force: true, webhookRetries: 99, webhookDelayMs: 0 });
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    const after = hits.filter(function (x) { return x.url === '/webhook-always-fail'; }).length;
+    need(r.ok === false && r.attempts === 4, '重试上限不对：' + JSON.stringify(r));
+    need(after - before === 4, '实际请求次数不对：' + (after - before));
   });
 
   await check('events=off 全部跳过', async function () {

@@ -63,6 +63,20 @@ check('目标已有 db 时默认拒绝覆盖', function () {
   need(/FORCE=1/.test(r.stderr || r.stdout), '没有提示 FORCE=1');
 });
 
+check('大文件随备份恢复', function () {
+  const big = Buffer.alloc(8 * 1024 * 1024, 7);
+  fs.mkdirSync(path.join(SRC, 'site-defs'), { recursive: true });
+  fs.writeFileSync(path.join(SRC, 'site-defs', 'big.bin'), big);
+  const bak2 = path.join(TMP, 'large.tar.gz');
+  const dst2 = path.join(TMP, 'large-dst');
+  const b = spawnSync('bash', [path.join(ROOT, 'scripts', 'backup.sh'), SRC, bak2], { encoding: 'utf8' });
+  need(b.status === 0, '大文件备份失败：' + (b.stderr || b.stdout));
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), bak2, dst2], { encoding: 'utf8' });
+  need(r.status === 0, '大文件恢复失败：' + (r.stderr || r.stdout));
+  const got = fs.readFileSync(path.join(dst2, 'site-defs', 'big.bin'));
+  need(got.length === big.length && got.equals(big), '大文件内容不一致');
+});
+
 check('FORCE=1 可以覆盖恢复', function () {
   const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), BAK, DST], { encoding: 'utf8', env: Object.assign({}, process.env, { FORCE: '1' }) });
   need(r.status === 0, 'FORCE 恢复失败：' + (r.stderr || r.stdout));

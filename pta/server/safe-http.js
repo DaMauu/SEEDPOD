@@ -57,9 +57,24 @@ function requestOnce(u, address, opts) {
     req.end();
   });
 }
+async function limitedResponse(raw, opts) {
+  const res = await fetch(raw, opts);
+  const max = Number(opts.maxBytes) || 10 * 1024 * 1024;
+  const len = Number(res.headers.get('content-length')) || 0;
+  if (len > max) { try { res.body && res.body.cancel(); } catch (e) { /* 忽略 */ } throw new Error('响应超过大小限制'); }
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length > max) throw new Error('响应超过大小限制');
+  return {
+    status: res.status, ok: res.ok, url: res.url || String(raw),
+    headers: res.headers,
+    text: function () { return Promise.resolve(buf.toString('utf8')); },
+    arrayBuffer: function () { return Promise.resolve(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)); },
+    body: { cancel: function () {} }
+  };
+}
 async function safeFetch(raw, opts) {
   const o = opts || {};
-  if (o.allowPrivate) return fetch(raw, o);
+  if (o.allowPrivate) return limitedResponse(raw, o);
   let current = String(raw || '');
   for (let hop = 0; hop < 5; hop++) {
     const gate = await urlGuard.assertPublicHttp(current, {});
