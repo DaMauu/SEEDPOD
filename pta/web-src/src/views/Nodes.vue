@@ -108,6 +108,7 @@ const modalOpen = ref(false)
 const editing = ref('')
 const form = reactive({ kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
 const busy = reactive({ saveDownloader: false, test: false, cats: false })
+let catsSeq = 0
 const testResult = ref('')
 const passBroken = ref(false)
 const passPlaceholder = computed(function () { return passBroken.value ? '旧密码解不开，重新输入' : (editing.value ? '留空表示不改已存的密码' : '不设置就留空'); })
@@ -279,13 +280,16 @@ async function loadCats(nd) {
   const node = nd || nodes.value.find(x => x.id === editing.value)
   if (!node || !node.id) { catsMsg.value = '先保存下载器，再读它的分类'; return }
   if (busy.cats) return
+  const seq = ++catsSeq
   busy.cats = true
-  const j = await fetch('/api/downloaders/' + encodeURIComponent(node.id) + '/cats', { credentials: 'same-origin' })
-    .then(r => r.json()).catch(() => null)
-  busy.cats = false
-  if (!j || !j.ok) { catsMsg.value = (j && j.error && j.error.message) || '读取失败'; return }
-  cats.value = (j.data && j.data.cats) || []
-  catsMsg.value = cats.value.length ? ('已读取 ' + cats.value.length + ' 个') : '下载器里还没有分类'
+  try {
+    const j = await fetch('/api/downloaders/' + encodeURIComponent(node.id) + '/cats', { credentials: 'same-origin' })
+      .then(r => r.json()).catch(() => null)
+    if (seq !== catsSeq || editing.value !== node.id) return
+    if (!j || !j.ok) { catsMsg.value = (j && j.error && j.error.message) || '读取失败'; return }
+    cats.value = (j.data && j.data.cats) || []
+    catsMsg.value = cats.value.length ? ('已读取 ' + cats.value.length + ' 个') : '下载器里还没有分类'
+  } finally { busy.cats = false }
 }
 function removeNode() {
   const node = nodes.value.find(x => x.id === editing.value)

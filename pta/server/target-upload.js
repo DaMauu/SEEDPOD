@@ -352,7 +352,7 @@ async function uploadInner(host, body) {
     if (!dryRun && UPLOADING.has(key)) {
       return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个目标站正在提交，等这次结束', http: 409 };
     }
-    const queued = !dryRun && !b.skipQueueLock;
+    const queued = !dryRun && !b[uploadLock.SKIP];
     if (queued && qid && !uploadLock.acquire(qid)) {
       return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个条目正在提交，等这次结束', http: 409 };
     }

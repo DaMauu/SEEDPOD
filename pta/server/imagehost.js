@@ -72,6 +72,10 @@ async function mirrorDescription(description, opts) {
       continue;
     }
     const direct = resolved.direct;
+    {
+      const dg = await urlGuard.assertPublicHttp(direct, { allowPrivate: o.allowPrivate === true });
+      if (!dg.ok) { failed++; lastError = dg.err; continue; }
+    }
     if (isOurImageHost(direct)) {
       map[url] = direct;
       if (resolved.page) map[resolved.page] = direct;

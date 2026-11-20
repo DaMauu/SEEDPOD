@@ -143,7 +143,8 @@ function makeTargetService(ctx, target) {
     const out = [];
     try {
       for (const host of hosts) {
-        const one = Object.assign({}, b, { skipQueueLock: true });
+        const one = Object.assign({}, b);
+        one[uploadLock.SKIP] = true;
         if (perTarget[host]) one.torrentBase64 = perTarget[host];
         if (perAnnounce[host]) one.cleanAnnounce = perAnnounce[host];
         else if (hosts.length > 1) one.cleanAnnounce = '';

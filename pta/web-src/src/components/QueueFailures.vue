@@ -74,6 +74,7 @@ const visible = computed(() => {
   const t = term.value
   return (items.value || []).filter((it) => !t || String(it.title || '').toLowerCase().indexOf(t) >= 0 || String(it.id || '').toLowerCase().indexOf(t) >= 0)
 })
+watch(term, function () { page.value = 1 })
 const pages = computed(() => Math.max(1, Math.ceil(visible.value.length / pageSize)))
 const pageRows = computed(() => visible.value.slice((page.value - 1) * pageSize, page.value * pageSize))
 async function load() {

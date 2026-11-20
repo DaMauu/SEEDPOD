@@ -103,27 +103,33 @@ async function saveFetch() {
 async function saveScreen() {
   if (busy.dedupe) return
   busy.dedupe = true
-  const [a, b] = await Promise.all([
-    putFlow({ fetch: serialize(rules.fetch), dedupe: serialize(rules.dedupe) }, { deny: rx.deny }),
-    patchUser({ autoDupe: !!autoDupe.value })
-  ])
-  busy.dedupe = false
-  const bad = [a, b].find(j => !j || !j.ok)
-  toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '初筛与查重已保存')
+  try {
+    const [a, b] = await Promise.all([
+      putFlow({ fetch: serialize(rules.fetch), dedupe: serialize(rules.dedupe) }, { deny: rx.deny }),
+      patchUser({ autoDupe: !!autoDupe.value })
+    ])
+    const bad = [a, b].find(j => !j || !j.ok)
+    toast(bad ? ((bad && bad.error && bad.error.message) || '服务端拒绝了这次保存') : '初筛与查重已保存')
+  } catch (e) { toast('保存请求发不出去') } finally { busy.dedupe = false }
 }
 
 async function savePub() {
   if (busy.pub) return
   busy.pub = true
-  const j = await putFlow({ pub: serialize(rules.pub) }, { deny: rx.deny })
-  busy.pub = false
-  toast(j && j.ok ? '发布设置已保存' : ((j && j.error && j.error.message) || '服务端拒绝了这次保存'))
+  try {
+    const j = await putFlow({ pub: serialize(rules.pub) }, { deny: rx.deny })
+    toast(j && j.ok ? '发布设置已保存' : ((j && j.error && j.error.message) || '服务端拒绝了这次保存'))
+  } catch (e) { toast('保存请求发不出去') } finally { busy.pub = false }
 }
 
 async function toggleDetail() {
-  detail.value = !detail.value
-  const j = await patchUser({ detail: !!detail.value })
-  toast(j && j.ok ? (detail.value ? '已开启抓详情页：每条多一次请求' : '已关闭抓详情页') : '开关没存上')
+  const prev = detail.value
+  detail.value = !prev
+  try {
+    const j = await patchUser({ detail: !!detail.value })
+    if (!j || !j.ok) { detail.value = prev; toast((j && j.error && j.error.message) || '开关没存上') }
+    else toast(detail.value ? '已开启抓详情页：每条多一次请求' : '已关闭抓详情页')
+  } catch (e) { detail.value = prev; toast('开关请求发不出去') }
 }
 
   return { loadFlow, saveFetch, saveScreen, savePub, toggleDetail };

@@ -106,7 +106,10 @@ function goFailures() {
   location.hash = '#queue'
 }
 function ensureLogs() {
-  if (!viewVisible('logs') || !loggedIn()) return
+  if (!viewVisible('logs') || !loggedIn()) {
+    if (es) { es.close(); es = null }
+    return
+  }
   if (!loaded) loadLogs()
   else connect()
 }
