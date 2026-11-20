@@ -82,6 +82,8 @@ run meta-ext meta-ext.js
 run media media.js
 run media-api media-api.js
 run clients clients.js
+run qb-session qb-session.js
+run target-discovery target-discovery.js
 run downloader-policy downloader-policy.js
 run downloader-probe downloader-probe.js
 run cli cli.js

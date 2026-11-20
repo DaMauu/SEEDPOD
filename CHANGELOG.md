@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.552 · 2026-11-21
+
+### 审计二十二轮
+- 新增 qb-session 夹具：4.x SID、5.x QBT_SID、401 重登录、分类读取，4/4。
+- 新增 target-discovery 夹具：usercp/上传页 announce 合并、cookie 只发目标站、无 cookie 报错，3/3。
+- 全量 run.sh 通过。
+
 ## v0.7.551 · 2026-11-21
 
 ### 审计二十一轮
