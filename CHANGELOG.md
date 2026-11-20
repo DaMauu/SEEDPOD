@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.568 · 2026-11-22
+
+### 审计三十八轮
+- `targetResults.verify` 与 `targetVerifyByHost` 同步：手动回查、回查失败、目标站已存在都写同一快照。
+- 回查失败重试：到点 advance 回 prepared 并清错误/重试时间，未到点返回 wait 且保持 failed；api-v2 47/47。
+- target 40/40，frontend-regress 21/21。
+- 全量 run.sh 通过。
+
 ## v0.7.567 · 2026-11-22
 
 ### 审计三十七轮

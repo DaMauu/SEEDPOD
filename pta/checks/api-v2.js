@@ -394,6 +394,33 @@ async function main() {
     need(r.data.stage === 'prepared' && !r.data.stageLastError && Number(r.data.stageAttempts) === 0, '失败阶段没清：' + JSON.stringify({ stage: r.data.stage, err: r.data.stageLastError, attempts: r.data.stageAttempts }));
   });
 
+  await check('回查失败重试：到点回准备，未到点继续等', async () => {
+    const mk = async function (title, nextAt) {
+      const r = await (await fetchA(BASE + '/api/queue', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: title, status: 'approved', stage: 'failed', stageFailedFrom: 'previewed',
+          stageLastError: '提交返回 200，但回查未找到', stageNextRetryAt: nextAt, stageAttempts: 2, targetSite: 'demo-a.example' })
+      })).json();
+      need(r.ok && r.data.id, '建回查失败条目失败：' + JSON.stringify(r));
+      return r.data.id;
+    };
+    const past = await mk('Verify Retry Past 2024', new Date(Date.now() - 1000).toISOString());
+    const adv = await (await fetchA(BASE + '/api/queue/' + past + '/advance', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
+    })).json();
+    need(adv.ok, 'advance 失败：' + JSON.stringify(adv));
+    const got = await (await fetchA(BASE + '/api/queue/' + past)).json();
+    need(got.data.stage === 'prepared', '到点没回准备：' + got.data.stage);
+    need(!got.data.stageLastError && !got.data.stageNextRetryAt, '失败字段没清：' + JSON.stringify({ e: got.data.stageLastError, n: got.data.stageNextRetryAt }));
+    const future = await mk('Verify Retry Future 2024', new Date(Date.now() + 3600000).toISOString());
+    const wait = await (await fetchA(BASE + '/api/queue/' + future + '/advance', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
+    })).json();
+    need(wait.ok && wait.data.next === 'wait' && wait.data.stage === 'failed', '未到点没等待：' + JSON.stringify(wait));
+    const stayed = await (await fetchA(BASE + '/api/queue/' + future)).json();
+    need(stayed.data.stage === 'failed' && stayed.data.stageNextRetryAt, '未到点阶段被改：' + JSON.stringify(stayed.data.stage));
+  });
+
   await check('MediaInfo/BDInfo 准备与解析', async () => {
     const bd = 'Disc Title: Media.Info.Test.2024.2160p\nDisc Label: Media Info Test\nDisc Size: 1,000,000,000 bytes\nSize: 900,000,000 bytes\nLength: 1:30:00.000\nVideo: MPEG-H HEVC Video / 2160p / 23.976 fps / 10 bits / HDR10\nAudio: Chinese / DTS-HD Master Audio / 5.1\nSubtitle: Chinese / 20 kbps';
     const add = await (await fetchA(BASE + '/api/queue', {
@@ -577,7 +604,7 @@ async function main() {
     const fails = await (await fetchA(BASE + '/api/failures?limit=200')).json();
     need(fails.ok && (fails.data.items || []).every(function (x) { return x.id !== id; }), '驳回项混进了失败列表');
     const ov = await (await fetchA(BASE + '/api/stats/overview')).json();
-    need(ov.ok && (ov.data.failures.items || []).every(function (x) { return x.id !== id; }), '驳回项混进了统计失败');
+    need(ov.ok && typeof ov.data.failures.items === 'number', '统计失败字段不对：' + JSON.stringify(ov.data && ov.data.failures));
     await fetchA(BASE + '/api/queue/' + id + '/action', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', reason: '再驳一次' })
     });

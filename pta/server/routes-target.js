@@ -9,6 +9,7 @@ const { failuresOf, isDead } = require('./failure-queue');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
+const { setVerify } = require('./target-upload');
 const { makeCrossseed } = require('./crossseed');
 
 module.exports = function (app, ctx) {
@@ -379,10 +380,7 @@ module.exports = function (app, ctx) {
     if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
     const r = await target.verify(req.params.host, item.data, t.buf, { url: b.url });
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
-    if (!item.data.targetVerifyByHost || typeof item.data.targetVerifyByHost !== 'object') item.data.targetVerifyByHost = {};
-    const rec = Object.assign({}, r.data, { at: now() });
-    item.data.targetVerifyByHost[String(req.params.host || '').toLowerCase()] = rec;
-    item.data.targetVerify = rec;
+    setVerify(item.data, req.params.host, r.data);
     saveQueue(item.data);
     return ok(reply, r.data);
   });

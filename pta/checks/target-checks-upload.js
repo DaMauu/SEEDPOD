@@ -534,13 +534,16 @@ async function runUpload(C) {
   });
 
   await check('回查失败写 found:false 且不覆盖其他站', async function () {
-    const item = { data: {} };
+    const item = { data: { targetResults: { 'a.example': { stage: 'injected', verify: { found: true } }, 'b.example': { stage: 'injected' } } } };
     setVerify(item.data, 'b.example', { found: true });
     const rec = markVerifyFailed(item.data, 'a.example', { url: 'https://a.example/t/1', found: false });
     need(rec.found === false && rec.url === 'https://a.example/t/1', '失败记录字段不对：' + JSON.stringify(rec));
     need(item.data.targetVerifyByHost['a.example'].found === false, '失败没写 byHost');
     need(item.data.targetVerifyByHost['b.example'].found === true, 'b 站被覆盖');
     need(item.data.targetVerify.found === false, '旧字段没同步失败');
+    need(item.data.targetResults['a.example'].verify.found === false, 'targetResults.verify 没同步失败');
+    need(item.data.targetResults['a.example'].stage === 'injected', 'targetResults 阶段被改');
+    need(item.data.targetResults['b.example'].verify.found === true, 'b 站 targetResults 回查不对');
   });
 
   await check('announce 候选优先 passkey', async function () {

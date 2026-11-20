@@ -20,9 +20,12 @@ function pickAnnounce(list) {
 function setVerify(itemData, host, data) {
   const rec = Object.assign({}, data || {}, { at: new Date().toISOString() });
   if (!itemData.targetVerifyByHost || typeof itemData.targetVerifyByHost !== 'object') itemData.targetVerifyByHost = {};
-  itemData.targetVerifyByHost[String(host).toLowerCase()] = rec;
+  const key = String(host).toLowerCase();
+  itemData.targetVerifyByHost[key] = rec;
   /* 兼容旧字段：只作最近一次回查，UI 已按 host 读取 */
   itemData.targetVerify = rec;
+  /* targetResults.verify 是同一目标站的快照，手动回查/失败也要同步，避免长期分叉 */
+  if (itemData.targetResults && itemData.targetResults[key]) itemData.targetResults[key].verify = rec;
   return rec;
 }
 
@@ -209,6 +212,7 @@ async function uploadInner(host, body) {
       if (chk.found && chk.skip) {
         const msg = '目标站已有这条资源，跳过';
         setTargetResult(item.data, host, { stage: 'skipped', error: msg, verify: chk.verify });
+        if (chk.verify) setVerify(item.data, host, chk.verify);
         if (targetHosts(item.data).length <= 1) stage.set(item.data, 'submitted', { evidence: { host: host, skipped: 'target_exists' } });
         saveQueue(item.data);
         return { ok: false, skipped: true, code: 'TARGET_EXISTS', message: msg, http: 200, data: { host: host, verify: chk.verify } };
