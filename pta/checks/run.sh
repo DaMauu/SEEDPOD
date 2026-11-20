@@ -58,7 +58,9 @@ run backup-concurrency backup-concurrency.js
 run backup-interrupt backup-interrupt.js
 run deploy-docker deploy-docker.js
 run publish publish.js
+run publish-review-gate publish-review-gate.js
 run scheduler scheduler.js
+run review-branches review-branches.js
 run scheduler-crossseed scheduler-crossseed.js
 run crossseed crossseed.js
 run scheduler-crawl scheduler-crawl.js

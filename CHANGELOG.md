@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.572 · 2026-11-22
+
+### 审计四十二轮
+- 真发布补 `REVIEW_HOLD` 门禁：终审 `review.ok=false` 且有 missing 时直接拒绝，状态/阶段不变；dry-run 仍可看计划。新增 publish-review-gate 2/2。
+- 新增 review-branches 3/3：缺项转人工、齐全+realPublish 开自动批准、关则保持 pending。
+- 全量 run.sh 通过。
+
 ## v0.7.571 · 2026-11-22
 
 ### 审计四十一轮
