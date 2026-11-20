@@ -116,7 +116,8 @@ function acquireLock(dir) {
       let st;
       try { st = fs.statSync(lock); } catch (e2) { continue; }
       if (Date.now() - st.mtimeMs > 15000) { try { fs.rmdirSync(lock); } catch (e3) { /* 别人刚删 */ } continue; }
-      if (Date.now() - t0 > 5000) throw new Error('站点包正在写入，稍后重试');
+      const waitMs = Number(require('./env').read('SITE_PACK_LOCK_WAIT_MS', 'PTA_SITE_PACK_LOCK_WAIT_MS') || 5000);
+      if (Date.now() - t0 > Math.max(50, Math.min(60000, waitMs))) throw new Error('站点包正在写入，稍后重试');
       sleepSync(20);
     }
   }

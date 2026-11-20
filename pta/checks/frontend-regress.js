@@ -371,6 +371,45 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Sources 批量送审/归档失败后按钮恢复并可重试', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.route('**/api/site-defs', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      });
+      await page.route('**/api/credentials', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/catalog?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [{ id: 'c_1', site: 'site-a.example', title: 'Bulk Fail Row', status: 'new', cat: '', catName: '' }] } }) });
+      });
+      await page.route('**/api/catalog/screen', async function (route) {
+        return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'INTERNAL', message: 'fixture screen fail' } }) });
+      });
+      await page.route('**/api/catalog/bulk', async function (route) {
+        return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'INTERNAL', message: 'fixture archive fail' } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await page.waitForTimeout(1800);
+
+      await page.click('#dl-screen');
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(500);
+      need((await page.locator('#toast').innerText()).indexOf('fixture screen fail') >= 0, '送审失败没提示：' + (await page.locator('#toast').innerText()));
+      need(!(await page.locator('#dl-screen').isDisabled()), '送审失败后按钮没恢复');
+
+      await page.click('#dl-archive');
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(500);
+      need((await page.locator('#toast').innerText()).indexOf('fixture archive fail') >= 0, '归档失败没提示：' + (await page.locator('#toast').innerText()));
+      need(!(await page.locator('#dl-archive').isDisabled()), '归档失败后按钮没恢复');
+      await page.close();
+    });
+
     await check('Sources 翻页与筛选组合：回第一页、状态不显示旧数据', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       const rows = [];

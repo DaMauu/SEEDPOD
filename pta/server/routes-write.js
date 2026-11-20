@@ -9,6 +9,7 @@ module.exports = function (app, ctx) {
   const now = () => new Date().toISOString();
   const targetService = makeTargetService(ctx, makeTarget(ctx));
   const configSchema = require('./config-schema');
+const catalogBulk = require('./catalog-bulk');
 
   function updCatalog(id, patch) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);
@@ -97,8 +98,8 @@ module.exports = function (app, ctx) {
         }).map(function (r) { return r.id; });
       want = Array.from(new Set(want.concat(dup)));
     }
-    let changed = 0;
-    want.slice(0, 1000).forEach(function (id) { if (updCatalog(id, { status: status })) changed++; });
+    /* 批量状态整批事务：中途失败不留半批 */
+    const changed = catalogBulk.applyBulk(ctx, want.slice(0, 1000), status);
     return ok(reply, { changed: changed, status: status });
   });
 

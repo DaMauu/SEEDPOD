@@ -48,6 +48,7 @@ run secret-rotate secret-rotate.js
 run mock-shape mock-shape.js
 run api api-v2.js
 run form form.js
+run catalog-bulk catalog-bulk.js
 run site-pack site-pack.js
 run site-pack-concurrency site-pack-concurrency.js
 run backup backup.js

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const admin = require('../server/site-pack-admin');
 
 const ROOT = path.resolve(__dirname, '..');
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-packcc-'));
@@ -51,11 +52,33 @@ function worker(id, purpose) {
     lockLeft = fs.existsSync(path.join(DEF, '.site-pack.lock'));
   } catch (e) { /* 下面报错 */ }
   const purposeOf = function (id) { const hit = list.filter(function (x) { return x.id === id; })[0]; return hit ? hit.purpose : ''; };
+  const lockDir = path.join(DEF, '.site-pack.lock');
+  let staleOk = false, timeoutOk = false, releaseOk = false;
+  try {
+    fs.mkdirSync(lockDir);
+    const old = new Date(Date.now() - 20000);
+    fs.utimesSync(lockDir, old, old);
+    const r = admin.confirm({ DATA_DIR: TMP }, { host: 'a.example', id: '401', purpose: 'movie' }, { file: ENC, key: KEY });
+    staleOk = r.ok && !fs.existsSync(lockDir);
+  } catch (e) { staleOk = false; }
+  try {
+    fs.mkdirSync(lockDir);
+    process.env.PTA_SITE_PACK_LOCK_WAIT_MS = '120';
+    const t = Date.now();
+    const r = admin.confirm({ DATA_DIR: TMP }, { host: 'a.example', id: '402', purpose: 'tv' }, { file: ENC, key: KEY });
+    delete process.env.PTA_SITE_PACK_LOCK_WAIT_MS;
+    timeoutOk = !r.ok && r.code === 'SITE_PACK_BUSY' && Date.now() - t >= 100;
+    fs.rmdirSync(lockDir);
+  } catch (e) { timeoutOk = false; try { fs.rmdirSync(lockDir); } catch (e2) { /* 已清理 */ } }
+  try {
+    const r = admin.confirm({ DATA_DIR: TMP }, { host: 'a.example', id: '999999', purpose: 'tv' }, { file: ENC, key: KEY });
+    releaseOk = !r.ok && r.code === 'NO_CATEGORY' && !fs.existsSync(lockDir);
+  } catch (e) { releaseOk = false; }
   const pass = build.status === 0 && both.every(function (x) { return x.code === 0; }) &&
-    purposeOf('401') === 'movie' && purposeOf('402') === 'tv' && !lockLeft;
+    purposeOf('401') === 'movie' && purposeOf('402') === 'tv' && !lockLeft && staleOk && timeoutOk && releaseOk;
   console.log((pass ? 'PASS' : 'FAIL') + '  两个进程并发确认不丢更新' + (pass ? '' : '：' + JSON.stringify({
     build: build.status, workers: both.map(function (x) { return { code: x.code, out: x.out.slice(0, 120), err: x.err.slice(0, 120) }; }),
-    purposes: { '401': purposeOf('401'), '402': purposeOf('402') }, lockLeft: lockLeft
+    purposes: { '401': purposeOf('401'), '402': purposeOf('402') }, lockLeft: lockLeft, staleOk: staleOk, timeoutOk: timeoutOk, releaseOk: releaseOk
   })));
   console.log('\n' + (pass ? '1/1' : '0/1') + ' 通过');
   fs.rmSync(TMP, { recursive: true, force: true });
