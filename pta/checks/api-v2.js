@@ -494,6 +494,33 @@ async function main() {
     need(g.ok && g.data.matched === 2, '批量后状态不对：' + g.data.matched);
   });
 
+  await check('驳回状态只进全部列表，计数和统计一致', async () => {
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Reject Me 2020', status: 'approved', site: 'demo-a.example' })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const noReason = await fetchA(BASE + '/api/queue/' + q.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject' })
+    });
+    need(noReason.status === 400, '驳回不写理由没拦：' + noReason.status);
+    const rej = await (await fetchA(BASE + '/api/queue/' + q.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'reject', reason: 'fixture reject' })
+    })).json();
+    need(rej.ok && rej.data.status === 'rejected' && rej.data.reason === 'fixture reject', '驳回没落库：' + JSON.stringify(rej));
+    const detail = await (await fetchA(BASE + '/api/queue/' + q.data.id)).json();
+    need(detail.data.status === 'rejected' && typeof detail.data.actionAt === 'string', '详情状态不对：' + JSON.stringify(detail.data.status));
+    const approved = await (await fetchA(BASE + '/api/queue?status=approved&q=Reject Me')).json();
+    need(approved.ok && approved.data.matched === 0, '已通过列表还有驳回项：' + approved.data.matched);
+    const pending = await (await fetchA(BASE + '/api/queue?status=pending&q=Reject Me')).json();
+    need(pending.ok && pending.data.matched === 0, '待确认列表还有驳回项：' + pending.data.matched);
+    const allList = await (await fetchA(BASE + '/api/queue?limit=500')).json();
+    need(allList.ok && allList.data.items.some(function (x) { return x.id === q.data.id; }), '全部列表看不到驳回项');
+    need(Number(allList.data.counts.rejected) >= 1, '驳回计数缺失：' + JSON.stringify(allList.data.counts));
+    const ov = await (await fetchA(BASE + '/api/stats/overview')).json();
+    need(ov.ok && Number(ov.data.queue.counts.rejected) === Number(allList.data.counts.rejected), '统计与列表口径不一致：' + JSON.stringify({ list: allList.data.counts.rejected, ov: ov.data.queue.counts.rejected }));
+  });
+
   await check('队列批量发布全部失败：错误限量、状态不变', async () => {
     const ids = [];
     for (let i = 0; i < 5; i++) {
