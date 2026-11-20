@@ -38,14 +38,14 @@ function makeTargetService(ctx, target) {
   }
   function targetHosts(item) {
     const list = [];
+    if (item.targetSite) list.push(String(item.targetSite).toLowerCase());
     (Array.isArray(item.targets) ? item.targets : []).forEach(function (h) { h = String(h || '').toLowerCase(); if (h && list.indexOf(h) < 0) list.push(h); });
-    if (!list.length && item.targetSite) list.push(String(item.targetSite).toLowerCase());
     return list;
   }
   function allDone(item) {
     const hosts = targetHosts(item);
     if (!hosts.length) return false;
-    return hosts.every(function (h) { const r = targetResults(item)[h]; return r && (r.stage === 'submitted' || r.stage === 'injected'); });
+    return hosts.every(function (h) { const r = targetResults(item)[h]; return r && (r.stage === 'submitted' || r.stage === 'injected' || r.stage === 'skipped'); });
   }
   function setTargetResult(item, host, rec) {
     const r = targetResults(item);
