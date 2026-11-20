@@ -355,7 +355,10 @@ onUnmounted(() => {
   if (qTimer) clearTimeout(qTimer)
 })
 function onKey(e) {
-  if (e.key === 'Escape' && sel.value) clearSelected()
+  if (e.key !== 'Escape' || !sel.value) return
+  const t = e.target && e.target.tagName
+  if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || (e.target && e.target.isContentEditable)) return
+  clearSelected()
 }
 </script>
 
