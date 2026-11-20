@@ -138,6 +138,9 @@ function makeRelease(ctx) {
     }
     if (typeof body.mediaInfo === 'string' && body.mediaInfo.trim()) it.mediaInfo = body.mediaInfo.slice(0, 200000);
     if (typeof body.bdinfo === 'string' && body.bdinfo.trim()) it.bdinfo = body.bdinfo.slice(0, 200000);
+    /* 历史简介里的技术块可能被 HTML 转换插过空行；整理时顺手修掉，正文段落不动 */
+    if (it.descrBb) it.descrBb = mediainfo.tidyBbcode(it.descrBb);
+    if (it.intro) it.intro = mediainfo.tidyBbcode(it.intro);
     /* 源站简介里自带的 MediaInfo/BDInfo 自动识别；已有完整字段不覆盖，弱字段清掉 */
     const ex = mediainfo.extractFromBbcode(it.descrBb || it.intro || '');
     if (ex.mediainfo && mediainfo.isWeakMedia(it.mediainfo)) it.mediainfo = ex.mediainfo.raw;
