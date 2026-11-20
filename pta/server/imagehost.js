@@ -2,7 +2,7 @@
    默认只演练；真上传由调用方显式 allowReal，并且只接受已验证的 custom/local 接口。
    Pixhost / Imgbox 暂只做计划，不拿未验证的接口去真传。 */
 const { providerKey, defaultProvider, configFor, dataUrlOf } = require('./imagehost-config');
-const { processShots, uploadOne, sleep, _ssoLogin } = require('./imagehost-upload');
+const { processShots, uploadOne, sleep, _ssoLogin, _webUpload } = require('./imagehost-upload');
 const urlGuard = require('./url-guard');
 const { safeFetch } = require('./safe-http');
 const { isPrivateUrl, isBlacklisted, looksDirect, ogImageFromHtml, resolveImageSource, extractImages, isLikelyThumb, originalFromThumb, readMirrorCache, writeMirrorCache, isOurImageHost, escapeRe, replaceDescription } = require('./imagehost-source');
@@ -142,4 +142,4 @@ async function mirrorDescription(description, opts) {
 }
 
 
-module.exports = { process: processShots, _ssoLogin: _ssoLogin, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, isBlacklisted: isBlacklisted, looksDirect: looksDirect, isLikelyThumb: isLikelyThumb, originalFromThumb: originalFromThumb, resolveImageSource: resolveImageSource, ogImageFromHtml: ogImageFromHtml, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };
+module.exports = { process: processShots, _ssoLogin: _ssoLogin, _webUpload: _webUpload, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, isBlacklisted: isBlacklisted, looksDirect: looksDirect, isLikelyThumb: isLikelyThumb, originalFromThumb: originalFromThumb, resolveImageSource: resolveImageSource, ogImageFromHtml: ogImageFromHtml, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };

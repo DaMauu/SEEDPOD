@@ -20,6 +20,7 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
 
 let hits = 0;
 let retryHits = 0;
+let expireHits = 0;
 const bodies = [];
 const server = http.createServer(function (req, res) {
   const chunks = [];
@@ -46,6 +47,27 @@ const server = http.createServer(function (req, res) {
     if (req.method === 'GET' && req.url === '/') {
       res.writeHead(200, { 'content-type': 'text/html', 'set-cookie': 'PHPSESSID=test-sess; Path=/' });
       res.end('<html><script>auth_token = "fedcba9876543210fedcba9876543210";</script>home</html>');
+      return;
+    }
+    if (req.method === 'GET' && req.url === '/expire/login') {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<html><script>auth_token = "0123456789abcdef";</script></html>');
+      return;
+    }
+    if (req.method === 'POST' && req.url === '/expire/login') {
+      res.writeHead(302, { location: '/', 'set-cookie': 'PHPSESSID=expire-sess; Path=/' });
+      res.end();
+      return;
+    }
+    if (req.method === 'GET' && req.url === '/expire/') {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<html><script>auth_token = "0123456789abcdef";</script></html>');
+      return;
+    }
+    if (req.method === 'POST' && req.url === '/expire/json') {
+      if (expireHits++ === 0) { res.writeHead(401); res.end('expired'); return; }
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ status_code: 200, image: { url: 'http://127.0.0.1:' + server.address().port + '/expire-ok.jpg' } }));
       return;
     }
     if (req.method === 'POST' && req.url.indexOf('/json') === 0) {
@@ -280,6 +302,14 @@ async function main() {
     process.env.IMAGE_HOST_PROVIDER = '';
     process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
     delete process.env.IMAGE_HOST_SSO_HOST;
+  });
+
+  await check('图床会话过期后重新登录再传', async function () {
+    const cfg = { endpoint: 'http://127.0.0.1:' + port + '/expire/api/1/upload', auth: 'chevereto', user: 'u', pass: 'p' };
+    const buf = Buffer.from(PNG.split(',')[1], 'base64');
+    const r = await imagehost._webUpload(buf, 'image/png', 'expire.png', cfg);
+    need(r && /expire-ok\.jpg/.test(r.url), '过期后没重登上传：' + JSON.stringify(r));
+    need(expireHits === 2, '重登上传次数不对：' + expireHits);
   });
 
   await check('图床 SSO 并发只登录一次', async function () {

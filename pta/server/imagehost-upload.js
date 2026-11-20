@@ -268,4 +268,4 @@ async function processShots(providerName, shots, opts) {
   };
 }
 
-module.exports = { processShots, uploadOne, sleep, _ssoLogin: cheveretoSsoLogin };
+module.exports = { processShots, uploadOne, sleep, _ssoLogin: cheveretoSsoLogin, _webUpload: cheveretoWebUpload };

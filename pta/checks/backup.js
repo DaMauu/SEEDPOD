@@ -100,6 +100,28 @@ check('越界路径备份被拒绝', function () {
   need(/越界/.test(r.stderr || r.stdout), '没有提示越界');
 });
 
+check('输出目录不可写时失败且源库不受影响', function () {
+  const ro = path.join(TMP, 'ro');
+  fs.mkdirSync(ro, { recursive: true });
+  fs.chmodSync(ro, 0o500);
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'backup.sh'), SRC, path.join(ro, 'out.tar.gz')], { encoding: 'utf8' });
+  fs.chmodSync(ro, 0o700);
+  need(r.status !== 0, '不可写目录仍成功');
+  const d = new DatabaseSync(path.join(SRC, 'seedpod.db'), { readOnly: true });
+  need(d.prepare('SELECT COUNT(*) AS n FROM queue').get().n === 1, '源库被破坏');
+  d.close();
+});
+
+check('磁盘写入上限触发失败时源库不受影响', function () {
+  const out = path.join(TMP, 'full.tar.gz');
+  const script = path.join(ROOT, 'scripts', 'backup.sh');
+  const r = spawnSync('bash', ['-c', 'ulimit -f 1; exec bash "$0" "$1" "$2"', script, SRC, out], { encoding: 'utf8' });
+  need(r.status !== 0, '磁盘上限没让备份失败');
+  const d = new DatabaseSync(path.join(SRC, 'seedpod.db'), { readOnly: true });
+  need(d.prepare('SELECT COUNT(*) AS n FROM queue').get().n === 1, '源库被破坏');
+  d.close();
+});
+
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
 const pass = results.filter(function (r) { return r[0]; }).length;
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });

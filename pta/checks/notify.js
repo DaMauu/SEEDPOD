@@ -129,6 +129,15 @@ async function main() {
     need(after - before === 4, '实际请求次数不对：' + (after - before));
   });
 
+  await check('Telegram 和 webhook 同时失败返回错误', async function () {
+    const api = process.env.PTA_TELEGRAM_API;
+    process.env.PTA_TELEGRAM_API = 'http://127.0.0.1:' + port + '/bad';
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-always-fail' }));
+    const r = await n2.send('publish.failed', 'both fail', {}, { force: true, webhookRetries: 0 });
+    if (api === undefined) delete process.env.PTA_TELEGRAM_API; else process.env.PTA_TELEGRAM_API = api;
+    need(r.ok === false && r.channel === 'webhook', '双通道失败结果不对：' + JSON.stringify(r));
+  });
+
   await check('events=off 全部跳过', async function () {
     events = 'off';
     const before = hits.length;
