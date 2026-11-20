@@ -653,7 +653,12 @@ async function bulkPublish() {
   if (go) go('批量发布', '会把「已通过」的条目逐条走发布链路；真发布关闭时会逐条失败。继续？', fn)
   else fn()
 }
-function ensureQueue() { if (viewVisible('queue') && loggedIn()) { loadSites(); loadQueuePage() } }
+async function ensureQueue() {
+  if (!viewVisible('queue') || !loggedIn()) return
+  loadSites()
+  await loadQueuePage()
+  if (sel.value) await select(sel.value.id)
+}
 onMounted(() => {
   window.addEventListener('hashchange', ensureQueue)
   timer = setInterval(() => { if (!loaded) ensureQueue() }, 1500)

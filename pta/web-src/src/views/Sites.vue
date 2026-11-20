@@ -337,9 +337,8 @@ async function applyBulk() {
     } catch (e) { reportError('Sites', e) }
   }
   busy.bulk = false
-  bulkOpen.value = false
-  picks.value = []
   toast('已应用到 ' + n + ' 个站点')
+  if (n > 0) { bulkOpen.value = false; picks.value = [] }
   await loadAll()
 }
 onMounted(() => {

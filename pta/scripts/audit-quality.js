@@ -118,6 +118,7 @@ function collect(files) {
   let lines = 0, maxLines = 0, maxFile = '', maxCodeLines = 0, maxCodeFile = '', todos = 0, consoleLogs = 0, emptyCatch = 0;
   const fnMap = {};
   let cssSelectors = {};
+  let cssContext = {};
   for (const f of src) {
     const s = read(f);
     const n = s.split('\n').length;
@@ -139,12 +140,19 @@ function collect(files) {
         postcss.parse(s).walkRules(r => {
           const k = r.selector.replace(/\s+/g, ' ').trim();
           cssSelectors[k] = (cssSelectors[k] || 0) + 1;
+          /* 同一选择器在不同 @media 断点下是刻意覆盖，不算重复；同上下文重复才算 */
+          const ctx = [];
+          let p = r.parent;
+          while (p && p.type === 'atrule') { ctx.push('@' + p.name + ' ' + (p.params || '')); p = p.parent; }
+          const ck = ctx.reverse().join(' > ') + '||' + k;
+          cssContext[ck] = (cssContext[ck] || 0) + 1;
         });
       } catch (e) { /* 忽略：失败不影响主流程 */ }
     }
   }
   const dupFunctions = Object.keys(fnMap).filter(k => fnMap[k] > 1);
-  const dupCss = Object.keys(cssSelectors).filter(k => cssSelectors[k] > 1).length;
+  const dupCss = Object.keys(cssContext).filter(k => cssContext[k] > 1).length;
+  const cssVariants = Object.keys(cssSelectors).filter(k => cssSelectors[k] > 1).length;
   const ptaScope = PROJECT === 'pta' || !!FEATURE || /\/pta\//.test(FILE);
   const globalServerFiles = ptaScope ? walk(path.join(ROOT, 'server'), [], x => x.endsWith('.js')) : [];
   const serverText = globalServerFiles.map(read).join('\n');
@@ -192,7 +200,7 @@ function collect(files) {
     }
   }
   const shared = files.filter(f => /\/components\/|styles\/(00-base|01-shell|03-shared|08-components|09-responsive|11-dock)/.test(f)).length;
-  return { files, src, docs, lines, maxLines, maxFile, maxCodeLines, maxCodeFile, todos, consoleLogs, emptyCatch, dupFunctions, dupCss, routes: routes.size, frontCalls: frontCalls.size, missingApis, checks, rules, missingDocs, versionOk, missingImports, shared, version };
+  return { files, src, docs, lines, maxLines, maxFile, maxCodeLines, maxCodeFile, todos, consoleLogs, emptyCatch, dupFunctions, dupCss, cssVariants, routes: routes.size, frontCalls: frontCalls.size, missingApis, checks, rules, missingDocs, versionOk, missingImports, shared, version };
 }
 
 function score(c, scope) {
@@ -230,7 +238,8 @@ function findings(c) {
   if (c.missingImports.length) out.push(`有 ${c.missingImports.length} 个 import 找不到目标：${c.missingImports.slice(0, 3).join('、')}`);
   if (c.rules.todo) out.push(`${c.rules.todo} 条流程规则仍是未接状态（共 ${c.rules.total} 条）`);
   if (c.dupFunctions.length) out.push(`重复函数名 ${c.dupFunctions.length} 个：${c.dupFunctions.slice(0, 8).join('、')}`);
-  if (c.dupCss) out.push(`CSS 有 ${c.dupCss} 个选择器出现多次，可继续合并`);
+  if (c.dupCss) out.push(`CSS 有 ${c.dupCss} 个同上下文选择器重复，可继续合并`);
+  if (c.cssVariants && !c.dupCss) out.push(`CSS 断点变体 ${c.cssVariants} 个（跨 @media 刻意覆盖，不计重复）`);
   if (c.missingDocs.length) out.push(`缺少文档：${c.missingDocs.join('、')}`);
   if (!c.versionOk) out.push('版本号没有同步到 CHANGELOG/HANDOFF');
   return out;

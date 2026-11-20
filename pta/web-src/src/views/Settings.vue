@@ -201,7 +201,10 @@ function ensureSettings() {
 function logout() {
   confirmBox('退出登录', '会清掉当前浏览器的会话 cookie，下次要重新登录。退出？', () => {
     fetch('/api/logout', { method: 'POST', credentials: 'same-origin' })
-      .then(() => { toast('已退出，正在刷新'); setTimeout(() => location.reload(), 500) })
+      .then(function (r) {
+        if (!r.ok) { toast('退出请求失败，会话可能还在'); return }
+        toast('已退出，正在刷新'); setTimeout(() => location.reload(), 500)
+      })
       .catch(() => toast('退出请求发不出去'))
   })
 }
