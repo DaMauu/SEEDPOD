@@ -348,14 +348,26 @@ async function main() {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ title: 'Save Queue Title', status: 'pending', site: 'demo-a.example' })
     })).json();
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      const row = db.prepare('SELECT data FROM queue WHERE id = ?').get(add.data.id);
+      const d = JSON.parse(row.data);
+      d.dupePassedAt = '2026-01-01T00:00:00.000Z';
+      d.dupeResults = { 'demo-a.example': { found: false, skip: false, at: '2026-01-01T00:00:00.000Z' } };
+      d.dupeSkipped = true;
+      db.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(d), add.data.id);
+      db.close();
+    }
     const j = await (await fetchA(BASE + '/api/queue/' + add.data.id + '/action', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'save', title: 'Save Queue Title Updated', cn: '保存副标题', intro: '保存简介' })
+      body: JSON.stringify({ action: 'save', title: 'Save Queue Title Updated', cn: '保存副标题', intro: '保存简介', targetSite: 'demo-a.example' })
     })).json();
     need(j.ok && j.data.title === 'Save Queue Title Updated', '保存标题失败：' + JSON.stringify(j));
     const g = await (await fetchA(BASE + '/api/queue/' + add.data.id)).json();
     need(g.data.title === 'Save Queue Title Updated' && g.data.cn === '保存副标题' && g.data.intro === '保存简介', '保存字段没落库：' + JSON.stringify({ title: g.data.title, cn: g.data.cn, intro: g.data.intro }));
     need(g.data.status === 'pending', '保存不该改状态：' + g.data.status);
+    need(!g.data.dupePassedAt && !g.data.dupeResults && !g.data.dupeSkipped, '改标题/目标站后旧查重缓存没清：' + JSON.stringify({ passed: g.data.dupePassedAt, results: g.data.dupeResults, skipped: g.data.dupeSkipped }));
   });
 
   await check('MediaInfo/BDInfo 准备与解析', async () => {
@@ -528,6 +540,16 @@ async function main() {
       db.close();
     }
 
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      const item = (id, reason) => ({ id: id, site: host, siteId: id, title: id, status: 'skipped', skipReason: reason, skippedAt: '2026-01-01T00:00:00.000Z' });
+      db.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run('cat_type_1', host, 't1', '', 'type skip', 'skipped', JSON.stringify(item('cat_type_1', '类型不符 音乐')), '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
+      db.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run('cat_type_2', host, 't2', '', 'other skip', 'skipped', JSON.stringify(item('cat_type_2', '体积偏小')), '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
+      db.close();
+    }
     const put1 = await fetchA(BASE + '/api/crawl/types/' + host, {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ types: ['电影'] })
     });
@@ -535,6 +557,16 @@ async function main() {
     need(put1.status === 200 && j1.ok, '保存类型失败：' + put1.status);
     need(j1.data.fullReset === true, '首次保存没标全量：' + JSON.stringify(j1.data));
     need(j1.data.matched && j1.data.matched[0] === '电影', '类型没匹配：' + JSON.stringify(j1.data));
+    need(j1.data.rechecked === 1, '类型不符词条没重置：' + JSON.stringify(j1.data));
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      const a = JSON.parse(db.prepare("SELECT data FROM catalog WHERE id = 'cat_type_1'").get().data);
+      const b = JSON.parse(db.prepare("SELECT data FROM catalog WHERE id = 'cat_type_2'").get().data);
+      db.close();
+      need(a.status === 'new' && !a.skipReason && !a.skippedAt, '类型不符词条没回到待审：' + JSON.stringify({ status: a.status, reason: a.skipReason }));
+      need(b.status === 'skipped' && b.skipReason === '体积偏小', '非类型跳过被误重置：' + JSON.stringify({ status: b.status, reason: b.skipReason }));
+    }
     {
       const { DatabaseSync } = require('node:sqlite');
       const db2 = new DatabaseSync(path.join(DATA, 'seedpod.db'));

@@ -63,6 +63,14 @@ function q(id, title) {
       const ids = all('SELECT id FROM queue ORDER BY id').map(function (x) { return x.id; });
       need(ids.indexOf('q_0004') >= 0, '没有生成 q_0004：' + JSON.stringify(ids));
     });
+    await check('数字分类没映射时不放行', async function () {
+      const d = { id: 'cat_800001', site: 'source.example', siteId: 'x1', title: 'Unknown Cat 2024 1080p', cat: '999', catName: '999', status: 'new' };
+      db.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(d.id, d.site, d.siteId, '', d.title, 'new', JSON.stringify(d), new Date().toISOString(), new Date().toISOString());
+      const r = screenCatalog(ctx, { limit: 5 });
+      need((r.byReason['类型未知 999'] || 0) === 1, '未映射数字分类没被拦：' + JSON.stringify(r.byReason));
+    });
+
     await check('跨站同片只留一条，后到的记 dupeOf', async function () {
       const a = { id: 'cat_700001', site: 'a.example', siteId: '1', title: 'Same Movie 2024 1080p', cat: '401', catName: '电影', status: 'new', infohash: 'abc123' };
       const b = { id: 'cat_700002', site: 'b.example', siteId: '2', title: 'Same Movie 2024 1080p', cat: '401', catName: '电影', status: 'new', infohash: 'abc123' };

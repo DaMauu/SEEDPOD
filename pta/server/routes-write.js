@@ -137,6 +137,16 @@ module.exports = function (app, ctx) {
       delete it.prepared;
       delete it.preparedAt;
     }
+    /* 标题或目标站变了，旧查重结果不再可信；不清会跳过重新查重 */
+    if (b.title !== undefined || b.targetSite !== undefined || b.targets !== undefined) {
+      delete it.dupePassedAt;
+      delete it.dupeResults;
+      delete it.dupeSkipped;
+      delete it.dupeLastError;
+      delete it.dupeLastErrorCode;
+      delete it.dupeLastAttemptAt;
+      delete it.dupeNextRetryAt;
+    }
 
     if (b.action === 'save') {
       db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')

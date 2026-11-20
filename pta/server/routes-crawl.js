@@ -98,6 +98,7 @@ module.exports = function (app, ctx) {
     sites[host] = Object.assign({}, sites[host] || {}, { types: want, cats: cats, updatedAt: now() });
     fs.writeFileSync(file, JSON.stringify(raw.sites ? raw : { sites: sites }, null, 2) + '\n', { mode: 0o600 });
     /* 类型集合变了：下次抓取按全量重跑；单纯改分类预设仍走增量 */
+    let rechecked = 0;
     if (typesChanged) {
       try {
         const stRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
@@ -109,8 +110,23 @@ module.exports = function (app, ctx) {
           db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
         }
       } catch (e) { /* 清游标失败不阻塞类型保存 */ }
+      /* 之前因“类型不符”被跳过的词条要回到待审，否则改类型也永远不会重审 */
+      try {
+        all("SELECT id, data FROM catalog WHERE site = ? AND status = 'skipped'", host).forEach(function (row) {
+          let d = null;
+          try { d = JSON.parse(row.data); } catch (e) { d = null; }
+          if (!d || !/^类型(不符|未知)/.test(String(d.skipReason || ''))) return;
+          delete d.skipReason;
+          delete d.skippedAt;
+          delete d.dupeOf;
+          d.status = 'new';
+          db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?')
+            .run(JSON.stringify(d), 'new', now(), row.id);
+          rechecked++;
+        });
+      } catch (e) { /* 重置失败不阻塞类型保存 */ }
     }
-    return ok({ host: host, types: want, matched: matched, unmatched: unmatched, ids: seen.size, fullReset: typesChanged });
+    return ok({ host: host, types: want, matched: matched, unmatched: unmatched, ids: seen.size, fullReset: typesChanged, rechecked: rechecked });
   });
 
   function defOf(host) {

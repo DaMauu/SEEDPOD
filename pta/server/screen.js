@@ -129,6 +129,10 @@ function screenCatalog(ctx, opts) {
     const bytes = Number(it.sizeBytes) || match.sizeBytesOf(it) || 0;
     let reason = marksMod.complianceReason(it, Date.now());
     if (!reason && wantTypes.length && ci.type && wantTypes.indexOf(ci.type) < 0) reason = '类型不符 ' + ci.type;
+    /* 数字分类又没映射：不能当成未知类型放行，否则 413 之类会绕过闸门 */
+    if (!reason && wantTypes.length && !ci.type && /^\d+$/.test(String(it.catName || it.cat || '').trim())) {
+      reason = '类型未知 ' + String(it.catName || it.cat).trim();
+    }
     if (!reason && it.site && siteOn[String(it.site).toLowerCase()] === false) reason = '来源站已停用';
     else if (!reason && hit(rx.deny, title)) reason = '命中排除规则';
     else if (rules.res.length && res && rules.res.indexOf(res) < 0) reason = '分辨率不符 ' + res;
