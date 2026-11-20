@@ -76,8 +76,11 @@ function startMock(hash, torrentBuf, state, hits, root) {
         });
         hits.push({ fields: fields, file: file, cookie: req.headers.cookie || '' });
         state.published = true;
-        res.writeHead(200, { 'content-type': 'text/html' });
-        res.end('<html><body><a href="details.php?id=999">推荐</a> 上传成功 <a href="details.php?id=42&uploaded=1">详情</a></body></html>');
+        const delay = Number(state.uploadDelayMs) || 0;
+        setTimeout(function () {
+          res.writeHead(200, { 'content-type': 'text/html' });
+          res.end('<html><body><a href="details.php?id=999">推荐</a> 上传成功 <a href="details.php?id=42&uploaded=1">详情</a></body></html>');
+        }, delay);
       });
       return;
     }

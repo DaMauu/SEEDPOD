@@ -341,7 +341,20 @@ module.exports = function (app, ctx) {
       if (!gate.ok) return bad(reply, gate.code, gate.message, gate.http || 400);
     }
     const r = await targetService.uploadMany(b);
-    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+    if (!r.ok) {
+      if (ctx.notify) {
+        ctx.notify.send('target.failed', 'SEEDPOD 目标站提交失败：' + (r.message || r.code),
+          { id: req.params.id, code: r.code || '' }).catch(function (e) { console.warn('[seedpod] notify failed:', e && e.message ? e.message : e) });
+      }
+      return bad(reply, r.code, r.message, r.http || 400);
+    }
+    if (b.dryRun === false && ctx.notify) {
+      ((r.data && r.data.targets) || []).forEach(function (t) {
+        if (!t || t.ok || t.skipped) return;
+        ctx.notify.send('target.failed', 'SEEDPOD 目标站提交失败：' + t.host + ' · ' + (t.message || t.code),
+          { id: req.params.id, host: t.host, code: t.code || '' }).catch(function (e) { console.warn('[seedpod] notify failed:', e && e.message ? e.message : e) });
+      });
+    }
     if (b.dryRun === false) {
       const hosts = ((r.data && r.data.targets) || []).filter(function (x) { return x && x.ok; }).map(function (x) { return x.host; });
       await runCrossseed(req.params.id, hosts);
@@ -359,7 +372,8 @@ module.exports = function (app, ctx) {
     if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
     const r = await target.verify(req.params.host, item.data, t.buf, { url: b.url });
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
-    item.data.targetVerify = Object.assign({}, r.data, { at: now() });
+    if (!item.data.targetVerifyByHost || typeof item.data.targetVerifyByHost !== 'object') item.data.targetVerifyByHost = {};
+    item.data.targetVerifyByHost[String(req.params.host || '').toLowerCase()] = Object.assign({}, r.data, { at: now() });
     saveQueue(item.data);
     return ok(reply, r.data);
   });

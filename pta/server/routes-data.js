@@ -181,6 +181,10 @@ module.exports = function (app, ctx) {
     if (!b || typeof b !== 'object' || Array.isArray(b)) return bad(reply, 'BAD_DEF', '站点定义必须是 JSON 对象');
     const text = JSON.stringify(b);
     if (text.length > 200 * 1024) return bad(reply, 'TOO_LARGE', '站点定义超过 200KB');
+    const CAT_MODES = ['single', 'multi', 'bracket', 'indexed'];
+    if (b.catMode !== undefined && b.catMode !== '' && CAT_MODES.indexOf(String(b.catMode)) < 0) {
+      return bad(reply, 'BAD_CAT_MODE', 'catMode 只能是 ' + CAT_MODES.join(' / '));
+    }
     try {
       fs.mkdirSync(DEF_DIR, { recursive: true, mode: 0o700 });
       fs.writeFileSync(path.join(DEF_DIR, host + '.json'), JSON.stringify(b, null, 2) + '\n', { mode: 0o600 });

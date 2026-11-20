@@ -16,6 +16,10 @@ check('注册表：retryable 与旧码映射', () => {
   need(errors.normalize('CRAWL_FAILED') === 'TARGET_UNREACHABLE', '旧抓取码没映射');
   need(errors.describe('BDINFO_REQUIRED').stage === 'publish', '阶段不对');
   need(errors.normalize('NOPE') === 'UNKNOWN', '未知码没归 UNKNOWN');
+  [['NO_CATEGORY_TYPES', 'crawl'], ['UPLOAD_IN_PROGRESS', 'publish'], ['CLEAN_REQUIRED', 'publish']].forEach(function (p) {
+    const d = errors.describe(p[0]);
+    need(d.code === p[0] && d.stage === p[1], p[0] + ' 没注册：' + JSON.stringify(d));
+  });
 });
 
 check('失败统计：scheduler + queue + targetResults', () => {

@@ -7,6 +7,7 @@ const dupeClassify = require('./dupe-classify');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const { typeOf } = require('./category-policy');
+const configSchema = require('./config-schema');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -258,7 +259,7 @@ module.exports = function (app, ctx) {
       searchUrls.push({ cat: '合并', catId: allIds.join('/'), url: u });
     }
     return ok(reply, {
-      siteHost: host, runMode: cfg.runMode || 'test', listInterval: cfg.listInterval || 10, interval: cfg.interval || 600,
+      siteHost: host, runMode: cfg.runMode || configSchema.DEFAULTS.runMode, listInterval: cfg.listInterval || configSchema.DEFAULTS.listInterval, interval: cfg.interval || configSchema.DEFAULTS.interval,
       catGroups: groups.length, catIds: ids, estimatedQueries: allIds.length ? 1 : 0,
       searchUrls: searchUrls, warnings: warnings, engine: preset && preset.engine || ''
     });

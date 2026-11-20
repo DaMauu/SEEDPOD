@@ -39,6 +39,22 @@ function q(id, title) {
       const qs = all('SELECT data FROM queue').map(function (x) { return jparse(x.data); });
       need(qs.length === 1 && qs[0].catName === '电影', '队列分类不对：' + JSON.stringify(qs));
     });
+    await check('前 500 条都跳过时，新条目仍能送审', async function () {
+      const base = Date.now();
+      for (let i = 0; i < 505; i++) {
+        const id = 'cat_' + String(100 + i).padStart(6, '0');
+        const d = { id: id, site: 'source.example', siteId: id, title: 'Music Filler ' + i + ' 2024', cat: '413', catName: '413', status: 'new' };
+        db.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .run(id, 'source.example', id, '', d.title, 'new', JSON.stringify(d), new Date(base + i).toISOString(), new Date(base + i).toISOString());
+      }
+      cat('cat_999999', 'Latest Movie 2024 1080p', 'source.example', '401');
+      db.prepare("UPDATE catalog SET created_at = ? WHERE id = 'cat_999999'").run(new Date(base + 9999).toISOString());
+      const r = screenCatalog(ctx, { limit: 5 });
+      need(r.selected === 1, '最新电影没被送审：' + JSON.stringify(r));
+      const qs = all('SELECT title FROM queue').map(function (x) { return x.title; });
+      need(qs.indexOf('Latest Movie 2024 1080p') >= 0, '队列里没有最新电影：' + JSON.stringify(qs));
+    });
+
     await check('queue id 从 MAX 生成，不因空洞冲突', async function () {
       q('q_0003', 'Existing Gap 2024');
       cat('cat_000003', 'Movie Two 2024 1080p', 'source.example', '401');

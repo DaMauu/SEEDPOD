@@ -15,6 +15,16 @@ function pickAnnounce(list) {
     arr.filter(function (x) { return x && x.kind === 'generic'; })[0] || null;
 }
 
+/* 回查结果按目标站隔离保存，避免多目标时互相覆盖 */
+function setVerify(itemData, host, data) {
+  const rec = Object.assign({}, data || {}, { at: new Date().toISOString() });
+  if (!itemData.targetVerifyByHost || typeof itemData.targetVerifyByHost !== 'object') itemData.targetVerifyByHost = {};
+  itemData.targetVerifyByHost[String(host).toLowerCase()] = rec;
+  /* 兼容旧字段：只作最近一次回查，UI 已按 host 读取 */
+  itemData.targetVerify = rec;
+  return rec;
+}
+
 function makeUpload(deps) {
   const ctx = deps.ctx;
   const target = deps.target;
@@ -215,7 +225,7 @@ async function uploadInner(host, body) {
         if (v.ok && v.data && v.data.found) {
           verified = v.data;
           reused = true;
-          item.data.targetVerify = Object.assign({}, v.data, { at: now() });
+          setVerify(item.data, host, v.data);
           prev.verified = true;
           prev.stage = 'submitted';
           prev.error = '';
@@ -261,7 +271,7 @@ async function uploadInner(host, body) {
         if (v.ok && v.data && v.data.deleted) deletedSee = v.data;
         if (v.ok && v.data && v.data.found) {
           verified = v.data;
-          item.data.targetVerify = Object.assign({}, v.data, { at: now() });
+          setVerify(item.data, host, v.data);
         }
       }
     }
@@ -348,4 +358,4 @@ async function uploadInner(host, body) {
   return { upload: upload };
 }
 
-module.exports = { makeUpload, pickAnnounce };
+module.exports = { makeUpload, pickAnnounce, setVerify };

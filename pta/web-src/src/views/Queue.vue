@@ -145,7 +145,7 @@
         <div v-if="sel.targetUpload" class="qd-status" :class="sel.targetVerify && sel.targetVerify.found ? 'ok' : ''">
           目标站 {{ sel.targetUpload.host }} · {{ sel.targetUpload.message || '已提交' }}
           <a v-if="sel.targetUpload.detailsUrl" :href="sel.targetUpload.detailsUrl" target="_blank" rel="noopener noreferrer">详情</a>
-          <span v-if="sel.targetVerify"> · 回查：{{ sel.targetVerify.found ? '已找到' : '未找到' }}</span>
+          <span v-if="verifyOf(sel)"> · 回查：{{ verifyOf(sel).found ? '已找到' : '未找到' }}</span>
         </div>
 
         </div>
@@ -258,6 +258,12 @@ async function doRetryTarget(host) {
   busy.target = false
 }
 function stageTime(iso) { return String(iso || '').slice(5, 16).replace('T', ' ') }
+function verifyOf(item) {
+  if (!item) return null
+  const host = String((item.targetUpload && item.targetUpload.host) || '').toLowerCase()
+  const byHost = item.targetVerifyByHost || {}
+  return (host && byHost[host]) || item.targetVerify || null
+}
 async function retryStage() {
   if (!sel.value) return
   try {

@@ -10,6 +10,7 @@ const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const flowConfig = require('./flow-config');
 const { typeOf } = require('./category-policy');
+const configSchema = require('./config-schema');
 const { makeMetaFill } = require('./meta-fill');
 
 const BUSY = new Set();
@@ -45,7 +46,7 @@ function makeCrawl(ctx) {
   function limitsOf(host) {
     const siteCfg = one('SELECT data FROM sites WHERE host = ?', host);
     const s = siteCfg ? (jparse(siteCfg.data) || {}) : {};
-    const C = cfg();
+    const C = configSchema.readWithDefaults(ctx);
     const OV = { '1 分钟': 60000, '5 分钟': 300000, '15 分钟': 900000, '1 小时': 3600000 };
     const listGap = Math.max(6, Math.min(Number(C.listInterval) || 10, 60)) * 1000;
     const detailGap = Math.max(8, Math.min(Number(C.interval) || 600, 600)) * 1000;

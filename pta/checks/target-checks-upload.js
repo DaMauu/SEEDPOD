@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { infoHash } = require('./target-mock');
-const { pickAnnounce } = require('../server/target-upload');
+const { pickAnnounce, setVerify } = require('../server/target-upload');
 const torrentClean = require('../server/torrent-clean');
 const { sameSiteUrl } = require('../server/target-submit');
 async function runUpload(C) {
@@ -494,10 +494,43 @@ async function runUpload(C) {
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
   });
 
+  await check('同一目标站并发提交只放行一个', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Lock Upload 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: 'movie', res: '1080p' })
+    });
+    need(add.status === 200 && add.body.ok, '建并发队列失败');
+    const id = add.body.data.id;
+    const before = hits.length;
+    state.uploadDelayMs = 400;
+    const mk = function () {
+      return json(BASE + '/api/targets/127.0.0.1/upload', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ queueId: id, torrentBase64: makeTorrent2().toString('base64'), dryRun: false, verify: false, preCheckDupe: false })
+      });
+    };
+    const both = await Promise.all([mk(), mk()]);
+    state.uploadDelayMs = 0;
+    const okc = both.filter(function (r) { return r.status === 200 && r.body && r.body.ok; }).length;
+    const busy = both.filter(function (r) { return r.status === 409 && r.body && r.body.error && r.body.error.code === 'UPLOAD_IN_PROGRESS'; }).length;
+    need(okc === 1, '并发提交成功数不对：' + JSON.stringify(both.map(function (r) { return r.status; })));
+    need(busy === 1, '并发提交没拦住第二个：' + JSON.stringify(both.map(function (r) { return r.body && r.body.error && r.body.error.code; })));
+    need(hits.length === before + 1, '并发提交发了多次上传：' + (hits.length - before));
+  });
+
   await check('来源种子 URL 只允许同站', async function () {
     need(sameSiteUrl('source.example', 'https://source.example', 'https://source.example/download.php?id=1') === true, '同站被拒');
     need(sameSiteUrl('source.example', 'https://source.example', 'https://cdn.source.example/t.torrent') === true, '子域被拒');
     need(sameSiteUrl('source.example', 'https://source.example', 'https://evil.example/t.torrent') === false, '外部 host 没拒');
+  });
+
+  await check('回查结果按目标站隔离', async function () {
+    const item = { data: {} };
+    setVerify(item.data, 'a.example', { found: true, detailsUrl: 'https://a.example/t/1' });
+    setVerify(item.data, 'b.example', { found: false });
+    need(item.data.targetVerifyByHost['a.example'].found === true, 'a 站回查丢了：' + JSON.stringify(item.data.targetVerifyByHost));
+    need(item.data.targetVerifyByHost['b.example'].found === false, 'b 站回查丢了：' + JSON.stringify(item.data.targetVerifyByHost));
+    need(item.data.targetVerifyByHost['a.example'].detailsUrl === 'https://a.example/t/1', 'a 站详情被覆盖');
   });
 
   await check('announce 候选优先 passkey', async function () {

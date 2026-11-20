@@ -4,6 +4,12 @@ const SCHEMA_VERSION = 1;
 const FLOW_VERSION = 1;
 const SCHEDULER_VERSION = 1;
 const BOOL_KEYS = ['realCrawl', 'realPublish', 'realImages', 'autoDupe', 'detail', 'testOnly'];
+/* 配置默认值只在这维护；路由、抓取、调度都从这里读，不要再各写一份 */
+const DEFAULTS = {
+  runMode: 'test', listInterval: 10, interval: 60, windowMinutes: 60, maxPerWindow: 20,
+  breaker: 3, autoDupe: false, realCrawl: false, realPublish: false, realImages: false,
+  detail: true, testOnly: true, retryMax: 2, retryBackoffMin: 15, targetHost: '', concurrency: 1
+};
 
 function truthy(v) {
   if (typeof v === 'boolean') return v;
@@ -36,6 +42,10 @@ function read(ctx) {
     raw = JSON.parse(row ? row.v : 'null');
   } catch (e) { raw = null; }
   return migrate(raw);
+}
+/* 库里的值覆盖默认值；未知字段保留 */
+function readWithDefaults(ctx) {
+  return Object.assign({}, DEFAULTS, read(ctx));
 }
 function write(ctx, cfg) {
   const out = migrate(cfg);
@@ -92,4 +102,4 @@ function ensureAll(ctx) {
   };
 }
 
-module.exports = { SCHEMA_VERSION, FLOW_VERSION, SCHEDULER_VERSION, migrate, migrateFlow, migrateScheduler, read, write, ensure, ensureAll };
+module.exports = { DEFAULTS: DEFAULTS, SCHEMA_VERSION, FLOW_VERSION, SCHEDULER_VERSION, migrate, migrateFlow, migrateScheduler, read, readWithDefaults, write, ensure, ensureAll };

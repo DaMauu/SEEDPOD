@@ -104,9 +104,10 @@ function screenCatalog(ctx, opts) {
     return { label: label && !/^\d+$/.test(label) ? label : '', type: type || '' };
   }
 
+  /* 新入库优先，避免前 500 条老数据全是跳过项时，新条目永远轮不到 */
   const rows = host
-    ? all("SELECT id, site, data FROM catalog WHERE status = 'new' AND site = ? LIMIT 500", host)
-    : all("SELECT id, site, data FROM catalog WHERE status = 'new' LIMIT 500");
+    ? all("SELECT id, site, data FROM catalog WHERE status = 'new' AND site = ? ORDER BY created_at DESC, rowid DESC LIMIT 500", host)
+    : all("SELECT id, site, data FROM catalog WHERE status = 'new' ORDER BY created_at DESC, rowid DESC LIMIT 500");
   let checked = 0, selected = 0, skipped = 0;
   const byReason = {};
   const selectedIds = [];

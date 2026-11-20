@@ -172,6 +172,10 @@ async function main() {
     const j = await (await fetchA(BASE + '/api/config')).json();
     need(j.ok && j.data.sys && j.data.user && j.data.limits, '结构不完整');
     need(j.data.sys.audit === true, 'sys.audit 不为 true');
+    const schema = require('../server/config-schema');
+    Object.keys(schema.DEFAULTS).forEach(function (k) {
+      need(j.data.user[k] === schema.DEFAULTS[k], '默认值漂移：' + k + '=' + JSON.stringify(j.data.user[k]));
+    });
   });
 
   await check('flow 能写能读', async () => {
@@ -487,6 +491,53 @@ async function main() {
     need(!(list2.data.sites || []).some(x => x.host === 'added.example'), '移除后列表还在');
   });
 
+  await check('保存类型：变了清全量游标，没变不动', async () => {
+    const host = 'types.example';
+    const put0 = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', base: 'https://types.example', catMap: { '电影': '401', '音乐': '413' } })
+    });
+    need(put0.status === 200, '站点定义保存失败 ' + put0.status);
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      const row = db.prepare("SELECT v FROM meta WHERE k = 'crawl-state'").get();
+      const st = row ? JSON.parse(row.v) : {};
+      st[host] = { page: 3, catIdx: 1, fullDoneAt: '2026-01-01T00:00:00.000Z', lastAt: 1 };
+      db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
+      db.close();
+    }
+
+    const put1 = await fetchA(BASE + '/api/crawl/types/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ types: ['电影'] })
+    });
+    const j1 = await put1.json();
+    need(put1.status === 200 && j1.ok, '保存类型失败：' + put1.status);
+    need(j1.data.fullReset === true, '首次保存没标全量：' + JSON.stringify(j1.data));
+    need(j1.data.matched && j1.data.matched[0] === '电影', '类型没匹配：' + JSON.stringify(j1.data));
+    {
+      const { DatabaseSync } = require('node:sqlite');
+      const db2 = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+      const st2 = JSON.parse((db2.prepare("SELECT v FROM meta WHERE k = 'crawl-state'").get() || {}).v || '{}');
+      db2.close();
+      need(!st2[host].fullDoneAt, '类型变了 fullDoneAt 没清：' + JSON.stringify(st2[host]));
+      need(st2[host].page === 0 && st2[host].catIdx === 0, '类型变了游标没归零：' + JSON.stringify(st2[host]));
+    }
+
+    const put2 = await fetchA(BASE + '/api/crawl/types/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ types: ['电影'] })
+    });
+    const j2 = await put2.json();
+    need(j2.ok && j2.data.fullReset === false, '类型没变却清了全量：' + JSON.stringify(j2.data));
+
+    const put3 = await fetchA(BASE + '/api/crawl/types/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ types: ['音乐'] })
+    });
+    const j3 = await put3.json();
+    need(j3.ok && j3.data.fullReset === true, '类型再变没标全量：' + JSON.stringify(j3.data));
+    await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
+  });
+
   await check('抓取状态可读', async () => {
     const host = 'cursor.example';
     const add = await fetchA(BASE + '/api/sites', {
@@ -503,6 +554,23 @@ async function main() {
     db.close();
     const s = await (await fetchA(BASE + '/api/crawl/status?host=' + host)).json();
     need(s.ok && s.data.page === 7 && s.data.catIdx === 2 && s.data.count === 5, '状态字段不对：' + JSON.stringify(s));
+    await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
+  });
+
+  await check('站点定义 catMode 只接受已知值', async () => {
+    const host = 'catmode.example';
+    const bad = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', base: 'https://catmode.example', catMode: 'wild' })
+    });
+    need(bad.status === 400, '未知 catMode 没拦住：' + bad.status);
+    const bj = await bad.json();
+    need(bj.error && bj.error.code === 'BAD_CAT_MODE', '错误码不对：' + JSON.stringify(bj.error));
+    const good = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ engine: 'nexusphp', base: 'https://catmode.example', catMode: 'indexed' })
+    });
+    need(good.status === 200, '已知 catMode 被拒：' + good.status);
     await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' });
   });
 

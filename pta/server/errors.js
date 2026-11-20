@@ -29,7 +29,19 @@ const CODES = {
   IMAGE_HOST_NOT_CONFIGURED: { stage: 'image', level: 'error', message: '图床未配置', retryable: false },
   IMAGES_MIRROR_FAILED: { stage: 'image', level: 'warn', message: '图片转存全部失败', retryable: true },
   IMAGES_MIRRORED_PARTIAL: { stage: 'image', level: 'warn', message: '部分图片转存失败', retryable: true },
-  RETRY_FAILED: { stage: 'retry', level: 'error', message: '重试失败', retryable: true }
+  RETRY_FAILED: { stage: 'retry', level: 'error', message: '重试失败', retryable: true },
+  NO_CATEGORY_TYPES: { stage: 'crawl', level: 'warn', message: '站点没保存抓取类型', retryable: false },
+  NO_CATEGORY_MATCH: { stage: 'crawl', level: 'warn', message: '类型没匹配到站点分类', retryable: false },
+  CLEAN_REQUIRED: { stage: 'publish', level: 'warn', message: '源种需先清洗', retryable: false },
+  CLEAN_FAILED: { stage: 'publish', level: 'error', message: '种子清洗失败', retryable: false },
+  UPLOAD_IN_PROGRESS: { stage: 'publish', level: 'warn', message: '同目标站正在提交', retryable: true },
+  DEDUPE_FAILED: { stage: 'dedupe', level: 'error', message: '查重失败', retryable: true },
+  TEST_ITEM_BLOCKED: { stage: 'publish', level: 'warn', message: '测试种子被拦截', retryable: false },
+  TEST_ONLY: { stage: 'publish', level: 'warn', message: '测试站模式拦截主站', retryable: false },
+  BUSY: { stage: 'crawl', level: 'warn', message: '同站点正在抓取', retryable: true },
+  SITE_PACK_UNAVAILABLE: { stage: 'crawl', level: 'error', message: '站点包不可用', retryable: false },
+  SOURCE_FETCH_FAILED: { stage: 'publish', level: 'error', message: '源种下载失败', retryable: true },
+  NO_SOURCE_URL: { stage: 'publish', level: 'error', message: '没有源种下载地址', retryable: false }
 };
 
 /* 旧字符串码/别名 → 新码；没有映射的保持原样，统计时归 UNKNOWN。 */
