@@ -38,10 +38,10 @@ check('列出失败与死信', () => {
 
 check('单条重放恢复 pending 且保留目标结果', () => {
   const r = q.replay('q_fail');
-  need(r.ok && r.status === 'pending' && r.stage === 'publish', '重放结果不对：' + JSON.stringify(r));
+  need(r.ok && r.status === 'pending' && r.stage === 'previewed', '重放结果不对：' + JSON.stringify(r));
   const row = one("SELECT status,data FROM queue WHERE id='q_fail'");
   const d = jparse(row.data);
-  need(row.status === 'pending' && d.stage === 'publish' && !d.stageLastError && d.retries === 0, '队列没重置：' + JSON.stringify(d));
+  need(row.status === 'pending' && d.stage === 'previewed' && !d.stageLastError && d.retries === 0, '队列没重置：' + JSON.stringify(d));
   need(d.targetResults['demo.example'].stage === 'pending', '目标站失败没重置：' + JSON.stringify(d.targetResults));
   need(!d.dupePassedAt && (!d.dupeResults || !Object.keys(d.dupeResults).length), '重放后查重状态没清：' + JSON.stringify({ dupePassedAt: d.dupePassedAt, dupeResults: d.dupeResults }));
   need(q.list({ limit: 10 }).total === 0, '重放后仍被列为失败');

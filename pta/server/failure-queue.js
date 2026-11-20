@@ -1,6 +1,7 @@
 /* 失败队列：列出 queue 里的阶段失败 / 目标站失败 / 待重试，支持单条重放。
    只读写本地 SQLite；不重建队列、不重复上传已提交的条目。 */
 const errors = require('./errors');
+const stage = require('./stage');
 
 const DEAD_AFTER_MS = 24 * 3600 * 1000;
 const RETENTION_DAYS = 30;
@@ -127,14 +128,16 @@ function makeFailureQueue(ctx) {
       return { ok: false, code: 'ALREADY_SUBMITTED', message: '目标站已有权威种子，不能重放', http: 409 };
     }
     d.status = 'pending';
-    d.stage = String(d.stageFailedFrom || 'prepared');
-    delete d.stageLastError;
+    /* 只回非终态：提交/注入失败也回 previewed，避免 pending 却带终态阶段 */
+    const from = ['draft', 'prepared', 'previewed'].indexOf(String(d.stageFailedFrom || '')) >= 0 ? d.stageFailedFrom : 'previewed';
+    stage.set(d, from, { countAttempt: false, evidence: { replayedAt: new Date().toISOString() } });
     delete d.stageLastErrorCode;
     delete d.stageNextRetryAt;
     delete d.nextRetryAt;
     delete d.retryMsg;
     d.retries = 0;
     d.stageAttempts = 0;
+    const byHost = d.targetVerifyByHost && typeof d.targetVerifyByHost === 'object' ? d.targetVerifyByHost : null;
     Object.keys(trs).forEach(function (h) {
       const tr = trs[h] || {};
       if (tr.stage === 'failed' || tr.nextRetryAt || tr.error) {
@@ -143,8 +146,16 @@ function makeFailureQueue(ctx) {
         delete tr.nextRetryAt;
         delete tr.error;
         delete tr.errorCode;
+        /* 旧回查结果属于上一次失败尝试，重放后不能继续展示 */
+        delete tr.verify;
+        if (byHost) delete byHost[String(h).toLowerCase()];
       }
     });
+    if (byHost) {
+      const left = Object.keys(byHost);
+      if (!left.length) { delete d.targetVerifyByHost; delete d.targetVerify; }
+      else d.targetVerify = byHost[left[left.length - 1]];
+    }
     delete d.dupePassedAt;
     delete d.dupeSkipped;
     d.dupeResults = {};

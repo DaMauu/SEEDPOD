@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.569 · 2026-11-22
+
+### 审计三十九轮
+- 回查失败重试成功：advance 清零 stageAttempts，history 追加 draft/prepared，末条与 stage 一致；api-v2 47/47。
+- 失败队列 replay：只回 draft/prepared/previewed，阶段/attempts/history 归零；失败目标清掉旧 verify 和 byHost，其他目标保持；新增 failure-replay 3/3。
+- 全量 run.sh 通过。
+
 ## v0.7.568 · 2026-11-22
 
 ### 审计三十八轮

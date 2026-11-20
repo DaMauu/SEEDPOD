@@ -209,7 +209,9 @@ function makeRelease(ctx) {
       if (it.stageFailedFrom === 'injected') {
         return { ok: true, data: { id: id, stage: 'failed', next: 'publish', note: '注入失败；用 publish 重试，成功后自动标 injected' } };
       }
-      stage.set(it, 'draft', { evidence: { retryAt: now() } });
+      /* 重试是一个新周期：attempts 清零，history 追加 draft 后再进 prepare */
+      stage.set(it, 'draft', { countAttempt: false, evidence: { retryAt: now() } });
+      it.stageAttempts = 0;
       save(cur);
       return prepare(id, body);
     }

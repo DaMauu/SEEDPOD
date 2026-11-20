@@ -412,6 +412,9 @@ async function main() {
     const got = await (await fetchA(BASE + '/api/queue/' + past)).json();
     need(got.data.stage === 'prepared', '到点没回准备：' + got.data.stage);
     need(!got.data.stageLastError && !got.data.stageNextRetryAt, '失败字段没清：' + JSON.stringify({ e: got.data.stageLastError, n: got.data.stageNextRetryAt }));
+    need(Number(got.data.stageAttempts) === 0, '重试后 attempts 没归零：' + got.data.stageAttempts);
+    const hist = got.data.stageHistory || [];
+    need(hist.length && hist[hist.length - 1].stage === 'prepared', 'history 末条不是 prepared：' + JSON.stringify(hist.slice(-2)));
     const future = await mk('Verify Retry Future 2024', new Date(Date.now() + 3600000).toISOString());
     const wait = await (await fetchA(BASE + '/api/queue/' + future + '/advance', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
