@@ -281,6 +281,26 @@ async function main() {
     delete process.env.IMAGE_HOST_SSO_HOST;
   });
 
+  await check('图床 SSO 并发只登录一次', async function () {
+    const http = require('http');
+    let goauth = 0;
+    const server = http.createServer(function (req, res) {
+      if (req.url === '/connect/goauth') { goauth++; res.writeHead(302, { location: '/pt-authorize' }); res.end(); return; }
+      if (req.url === '/pt-authorize') { res.writeHead(302, { location: '/callback' }); res.end(); return; }
+      if (req.url === '/callback') { res.writeHead(302, { location: '/' }); res.end(); return; }
+      if (req.url === '/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<script>auth_token = "0123456789abcdef";</script>'); return; }
+      res.writeHead(404); res.end();
+    });
+    await new Promise(function (r) { server.listen(0, '127.0.0.1', r); });
+    const port = server.address().port;
+    const cfg = { endpoint: 'http://127.0.0.1:' + port + '/api/1/upload', ssoHost: '127.0.0.1', ssoCookie: 'sid=x' };
+    try {
+      const [a, b] = await Promise.all([imagehost._ssoLogin(cfg), imagehost._ssoLogin(cfg)]);
+      need(a && b && a.token === b.token, '并发 SSO 结果不一致');
+      need(goauth === 1, '并发 SSO 登录次数不对：' + goauth);
+    } finally { server.close(); }
+  });
+
   await check('replaceDescription 去掉 data URL 并只保留新链接', function () {
     const desc = '简介\n[img]' + PNG + '[/img]';
     const links = [{ name: 'shot1.jpg', url: 'https://img.example/1.jpg' }];

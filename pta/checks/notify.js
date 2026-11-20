@@ -27,6 +27,11 @@ function listen() {
       req.on('data', function (c) { body += c; });
       req.on('end', function () {
         hits.push({ url: req.url, body: body ? JSON.parse(body) : null });
+        if (req.url === '/webhook-flaky') {
+          const n = hits.filter(function (x) { return x.url === '/webhook-flaky'; }).length;
+          if (n === 1) { res.writeHead(500); res.end('fail'); return; }
+          res.writeHead(200); res.end('ok'); return;
+        }
         if (/^\/bad\//.test(req.url)) {
           res.writeHead(500, { 'content-type': 'application/json' });
           res.end(JSON.stringify({ ok: false, description: 'fixture telegram down' }));
@@ -90,6 +95,20 @@ async function main() {
     if (prev === undefined) delete process.env.PTA_TELEGRAM_API; else process.env.PTA_TELEGRAM_API = prev;
     need(r.ok === true && r.channel === 'webhook', '没走 webhook：' + JSON.stringify(r));
     need(hits[hits.length - 1].body.event === 'publish.failed', 'webhook 事件不对：' + JSON.stringify(hits[hits.length - 1].body));
+  });
+
+  await check('webhook 失败按次数重试', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-flaky' }));
+    const r = await n2.send('publish.failed', 'retry webhook', {}, { force: true, webhookRetries: 1, webhookDelayMs: 0 });
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r.ok === true && r.channel === 'webhook' && r.attempts === 2, 'webhook 重试不对：' + JSON.stringify(r));
+    const got = hits.filter(function (x) { return x.url === '/webhook-flaky'; });
+    need(got.length === 2, 'webhook 请求次数不对：' + got.length);
   });
 
   await check('events=off 全部跳过', async function () {

@@ -78,16 +78,24 @@ function makeNotify(ctx) {
       }
     }
     if (c.webhook) {
-      try {
-        const r = await fetch(c.webhook, {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ event: event, text: msg, at: now(), source: 'seedpod' }),
-          signal: AbortSignal.timeout(5000)
-        });
-        return { ok: r.ok, channel: 'webhook', status: r.status, skipped: false };
-      } catch (e) {
-        return { ok: false, channel: 'webhook', status: 0, skipped: false, error: sanitize(e && e.message || e) };
+      const tries = Math.max(0, Math.min(3, opts && opts.webhookRetries !== undefined ? Number(opts.webhookRetries) : 1));
+      const delay = Math.max(0, Math.min(5000, opts && opts.webhookDelayMs !== undefined ? Number(opts.webhookDelayMs) : 300));
+      let last = null;
+      for (let attempt = 0; attempt <= tries; attempt++) {
+        try {
+          const r = await fetch(c.webhook, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ event: event, text: msg, at: now(), source: 'seedpod' }),
+            signal: AbortSignal.timeout(5000)
+          });
+          if (r.ok) return { ok: true, channel: 'webhook', status: r.status, skipped: false, attempts: attempt + 1 };
+          last = { ok: false, channel: 'webhook', status: r.status, skipped: false, error: 'HTTP ' + r.status, attempts: attempt + 1 };
+        } catch (e) {
+          last = { ok: false, channel: 'webhook', status: 0, skipped: false, error: sanitize(e && e.message || e), attempts: attempt + 1 };
+        }
+        if (attempt < tries && delay) await new Promise(function (r) { setTimeout(r, delay); });
       }
+      return last;
     }
     if (telegramError) return telegramError;
     return { ok: true, skipped: true, reason: 'no_channel' };

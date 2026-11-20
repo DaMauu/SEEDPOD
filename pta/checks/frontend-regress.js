@@ -230,7 +230,7 @@ function seedDb() {
       });
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.evaluate(function () { location.hash = '#sources'; });
-      await page.waitForTimeout(900);
+      await page.waitForTimeout(2000);
       const hrefs = await page.locator('.dl-title a').evaluateAll(function (as) { return as.map(function (a) { return a.getAttribute('href') || ''; }); });
       need(hrefs.length >= 2, '外链没渲染：' + hrefs.length);
       hrefs.forEach(function (h) { need(/^https?:\/\//i.test(h), '出现了非 http 外链：' + h); });

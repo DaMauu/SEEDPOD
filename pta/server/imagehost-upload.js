@@ -24,6 +24,7 @@ function sleep(ms) {
 /* Chevereto 网页会话：账号密码登录 → auth_token + cookie → /json 上传。
    不依赖 API key；会话缓存在进程内，失效自动重登一次。 */
 let CHEV_SESSION = null;
+let SSO_PENDING = null;
 
 function cookieJarFrom(res, jar) {
   const list = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
@@ -61,7 +62,7 @@ function siteCookie(host) {
   SSO_COOKIE_CACHE = { host: h, value: cookie, at: Date.now() };
   return cookie;
 }
-async function cheveretoSsoLogin(cfg) {
+async function cheveretoSsoLoginInner(cfg) {
   const base = chevBase(cfg);
   if (!base) throw new Error('没有配置图床地址');
   const host = String(cfg.ssoHost || require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || 'pterclub.net').toLowerCase();
@@ -103,6 +104,13 @@ async function cheveretoSsoLogin(cfg) {
   CHEV_SESSION = { base: base, cookie: cookieHeader(jar), token: token, at: Date.now() };
   return CHEV_SESSION;
 }
+function cheveretoSsoLogin(cfg) {
+  /* 并发上传共用同一次 SSO 登录，避免同时打两次授权页 */
+  if (SSO_PENDING) return SSO_PENDING;
+  SSO_PENDING = cheveretoSsoLoginInner(cfg).finally(function () { SSO_PENDING = null; });
+  return SSO_PENDING;
+}
+
 async function cheveretoLogin(cfg) {
   const base = chevBase(cfg);
   if (!base) throw new Error('没有配置图床地址');
@@ -260,4 +268,4 @@ async function processShots(providerName, shots, opts) {
   };
 }
 
-module.exports = { processShots, uploadOne, sleep };
+module.exports = { processShots, uploadOne, sleep, _ssoLogin: cheveretoSsoLogin };
