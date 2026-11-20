@@ -1,7 +1,7 @@
 {
-  "at": "2026-11-20T18:52:52.706Z",
+  "at": "2026-11-20T18:57:39.632Z",
   "files": {
-    "App.vue": "031ade067f478929",
+    "App.vue": "fe0896639d16a401",
     "components/CrawlCard.vue": "7a23304c538747c5",
     "components/FlowGates.vue": "3f44c71518d518ff",
     "components/PublishCard.vue": "2949f37316ed09fe",
@@ -37,9 +37,9 @@
     "views/Dashboard.vue": "6bd71ba790d3f09a",
     "views/Logs.vue": "2e6106b72913fc4a",
     "views/Nodes.vue": "d49fcf2e6b8eb87c",
-    "views/Queue.vue": "d5844b763e23fe3a",
-    "views/Settings.vue": "5d4c5756e639d3cf",
+    "views/Queue.vue": "33c5a569d58b9aa5",
+    "views/Settings.vue": "4c43e1920eb2f64f",
     "views/Sites.vue": "090ebbb7536f00eb",
-    "views/Sources.vue": "d95f1d8b3f02f764"
+    "views/Sources.vue": "9b71153a571fa87c"
   }
 }

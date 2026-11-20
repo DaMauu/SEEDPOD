@@ -122,6 +122,8 @@ const targetHosts = ref([])
 const busy = reactive({ dupe: false, check: false, screen: false, archive: false })
 const defs = ref({})
 let loaded = false
+let defsLoaded = false
+let targetsLoaded = false
 let bootTimer = null
 let loadBusy = false
 
@@ -189,6 +191,7 @@ async function loadDefs() {
     if (Array.isArray(j.data)) j.data.forEach(d => { if (d && d.host) out[d.host] = d })
     else if (j.data && typeof j.data === 'object') Object.keys(j.data).forEach(h => { out[h] = j.data[h] })
     defs.value = out
+    defsLoaded = true
   } catch (e) { reportError('Sources', e) }
 }
 async function loadTargets() {
@@ -196,6 +199,7 @@ async function loadTargets() {
     const j = await (await fetch('/api/credentials', { credentials: 'same-origin' })).json()
     if (!j || !j.ok || !Array.isArray(j.data)) return
     targetHosts.value = j.data.filter(c => c.hasCookie).map(c => c.host).sort()
+    targetsLoaded = true
   } catch (e) { reportError('Sources', e) }
 }
 async function loadSources() {
@@ -212,7 +216,10 @@ async function loadSources() {
   } catch (e) { reportError('Sources', e) } finally { loadBusy = false }
 }
 function ensureSources() {
-  if (viewVisible('sources') && loggedIn()) loadSources()
+  if (!viewVisible('sources') || !loggedIn()) return
+  if (!defsLoaded) loadDefs()
+  if (!targetsLoaded) loadTargets()
+  loadSources()
 }
 function reload() {
   page.value = 0

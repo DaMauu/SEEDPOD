@@ -91,7 +91,10 @@ const VIEWS = [
 ]
 const navViews = VIEWS
 const current = ref('dashboard')
-const currentMeta = computed(function () { return VIEWS.filter(function (v) { return v.key === current.value; })[0] || VIEWS[0] })
+const currentMeta = computed(function () {
+  const v = VIEWS.filter(function (x) { return x.key === current.value; })[0] || VIEWS[0]
+  return Object.assign({}, v, { title: v.label })
+})
 const serviceOnline = ref(false)
 const pendingCount = ref(0)
 const downloaderCount = ref(0)

@@ -142,8 +142,8 @@ async function loadSettings() {
     if (s && s.ok) user.value = s.data.user || '—'
     if (nt && nt.ok) applyNotify(nt.data)
     if (dv && dv.ok && dv.data && dv.data.crypto) Object.assign(keyState, dv.data.crypto)
-    loaded = true
-  } catch (e) { reportError('Settings', e) }
+    loaded = !!(h && h.ok || s && s.ok || nt && nt.ok || dv && dv.ok)
+  } catch (e) { reportError('Settings', e); loaded = false }
 }
 function applyNotify(d) {
   if (!d) return
@@ -213,13 +213,16 @@ function clearCache() {
   })
 }
 
+function resetAfterAuth() { loaded = false }
 onMounted(() => {
   window.addEventListener('hashchange', ensureSettings)
+  window.addEventListener('pta-unauthorized', resetAfterAuth)
   timer = setInterval(ensureSettings, 1500)
   ensureSettings()
 })
 onUnmounted(() => {
   window.removeEventListener('hashchange', ensureSettings)
+  window.removeEventListener('pta-unauthorized', resetAfterAuth)
   if (timer) clearInterval(timer)
 })
 </script>

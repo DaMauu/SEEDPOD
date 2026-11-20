@@ -141,7 +141,7 @@
           <button class="btn ghost slim" type="button" :disabled="busy.target || !form.targetSite || !downloadReady()" :title="downloadReady() ? '真实提交到目标站' : '先下载种子并等 qB 100%'" @click="submitTarget">{{ busy.target ? '提交中…' : '发布到目标站' }}</button>
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('reject')">驳回</button>
           <div class="spacer"></div>
-          <input v-model="reason" class="input slim" placeholder="驳回理由（可留空）" style="width:200px">
+          <input v-model="reason" class="input slim" placeholder="驳回理由（必填）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>
         </div>
       </div>
@@ -210,30 +210,29 @@ const LABELS = {
 }
 function label(s) { return (LABELS[s] || ['未知', 'gray'])[0] }
 function statusTone(s) { return (LABELS[s] || ['未知', 'gray'])[1] }
-const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预览', submitted: '已提交', injected: '已注入', failed: '失败' }
-const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red' }
+const STAGE_LABEL = { draft: '草稿', prepared: '已准备', previewed: '已预览', submitted: '已提交', injected: '已注入', failed: '失败', skipped: '已跳过' }
+const STAGE_TONE = { prepared: 'blue', previewed: 'amber', submitted: 'blue', injected: 'green', failed: 'red', skipped: 'gray' }
 function stageLabel(s) { return STAGE_LABEL[s] || s || '草稿' }
 function stageTone(s) { return STAGE_TONE[s] || '' }
 function targetTone(s) { return STAGE_TONE[s] || '' }
 function retryTarget(host) {
   if (!/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(host)) {
     lock.open = true; lock.host = host; lock.hosts = [host]; lock.targets = [host]; lock.typed = ''
-    lock.fn = function () { doRetryTarget(host) }
+    lock.fn = function () { doRetryTarget(host, [host]) }
     return
   }
   doRetryTarget(host)
 }
-async function doRetryTarget(host) {
+async function doRetryTarget(host, confirmed) {
   if (!sel.value || busy.target) return
   const id = sel.value.id
   busy.target = true
   try {
-    const body = { queueId: id, targets: [host], dryRun: false }
+    const body = { queueId: id, targets: [host], dryRun: false, confirmHosts: Array.isArray(confirmed) ? confirmed : [] }
     const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/targets/upload', { method: 'POST', body: body })
     toast(j && j.ok ? '目标站重试完成' : errorText(j, '重试失败'))
     await refresh()
-  } catch (e) { reportError('Queue.retryTarget', e); toast('重试请求发不出去') }
-  busy.target = false
+  } catch (e) { reportError('Queue.retryTarget', e); toast('重试请求发不出去') } finally { busy.target = false }
 }
 function verifyOf(item) {
   if (!item) return null
