@@ -70,6 +70,22 @@ function ctxWith(allow) {
       need(d.status === 'pending', '关真发布仍自动批准：' + d.status);
       need(d.review.ok === true, 'review 应为通过：' + JSON.stringify(d.review));
     });
+    await check('补全后重新终审清掉旧 missing 并放行', async function () {
+      put(ready({ id: 'q_fix', intro: '' }));
+      db.prepare("DELETE FROM queue WHERE id <> 'q_fix'").run();
+      const r1 = await phase()({ want: function () { return true; }, batch: 5, ctx: ctxWith(true) });
+      need(r1.hold === 1 && r1.ready === 0, '首次终审没拦：' + JSON.stringify(r1));
+      let d = read('q_fix');
+      need(d.review.ok === false && d.review.missing.indexOf('简介') >= 0, '首次 missing 不对：' + JSON.stringify(d.review));
+      d.intro = '补好的简介';
+      db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(d), new Date().toISOString(), 'q_fix');
+      const r2 = await phase()({ want: function () { return true; }, batch: 5, ctx: ctxWith(true) });
+      need(r2.ready === 1 && r2.hold === 0, '补全后没放行：' + JSON.stringify(r2));
+      d = read('q_fix');
+      need(d.status === 'approved', '补全后状态不对：' + d.status);
+      need(d.review.ok === true && d.review.missing.length === 0, '旧 missing 没清：' + JSON.stringify(d.review));
+    });
+
   } finally {
     db.close();
     fs.rmSync(DATA, { recursive: true, force: true });

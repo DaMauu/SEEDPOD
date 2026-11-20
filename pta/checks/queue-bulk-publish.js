@@ -11,7 +11,8 @@ const items = {
   q_e2: { id: 'q_e2', targets: ['a.example'] },
   q_e3: { id: 'q_e3', targets: ['a.example'] },
   q_e4: { id: 'q_e4', targets: ['a.example'] },
-  q_e5: { id: 'q_e5', targets: ['a.example'] }
+  q_e5: { id: 'q_e5', targets: ['a.example'] },
+  q_review: { id: 'q_review', targets: ['a.example'], targetResults: {} }
 };
 const uploads = [];
 const published = [];
@@ -23,6 +24,7 @@ const publisher = {
   publishItem: async function (id) {
     published.push(id);
     if (id === 'q_pubfail') return { ok: false, code: 'QB_ADD_FAILED', message: 'qB 加种失败' };
+    if (id === 'q_review') return { ok: false, code: 'REVIEW_HOLD', message: '终审未通过：简介' };
     return { ok: true };
   }
 };
@@ -75,6 +77,14 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
     need(r.changed === 1 && r.skipped === 0, '结果不对：' + JSON.stringify(r));
     need(uploads.length === 0, '已注入目标仍上传：' + JSON.stringify(uploads));
     need(published[0] === 'q_inj', '没调用发布');
+  });
+
+  await check('终审未通过的条目批量发布会计入错误且不标记成功', async function () {
+    uploads.length = 0; published.length = 0;
+    const r = await runBulkPublish(ctx, ['q_review']);
+    need(r.changed === 0 && r.skipped === 1, '结果不对：' + JSON.stringify(r));
+    need(r.errors.length === 1 && r.errors[0].code === 'REVIEW_HOLD', '错误没透传：' + JSON.stringify(r.errors));
+    need(published[0] === 'q_review' && uploads.length === 1, '没走到发布门禁');
   });
 
   const pass = results.filter(function (r) { return r[0]; }).length;

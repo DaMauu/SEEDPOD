@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.573 · 2026-11-22
+
+### 审计四十三轮
+- 补全终审缺失项后重新终审会清掉旧 `review.missing` 并放行；review-branches 4/4。
+- 批量发布把 `REVIEW_HOLD` 计入 errors、不标记成功；queue-bulk-publish 3/3。
+- 全量 run.sh 通过。
+
 ## v0.7.572 · 2026-11-22
 
 ### 审计四十二轮
