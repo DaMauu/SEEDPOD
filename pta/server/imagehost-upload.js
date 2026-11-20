@@ -55,7 +55,7 @@ function siteCookie(host) {
     const db = openDB(path.join(dir, 'seedpod.db'));
     const row = db.prepare('SELECT cookie FROM credentials WHERE host = ?').get(h);
     db.close();
-    if (row && row.cookie) cookie = secretbox.decrypt(row.cookie, secretbox.loadKey(dir).key);
+    if (row && row.cookie) cookie = secretbox.decrypt(row.cookie, secretbox.loadKey(dir));
   } catch (e) { cookie = ''; }
   SSO_COOKIE_CACHE = { host: h, value: cookie, at: Date.now() };
   return cookie;

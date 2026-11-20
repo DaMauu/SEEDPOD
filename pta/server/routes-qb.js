@@ -15,7 +15,7 @@ module.exports = function (app, ctx) {
   const dlPass = function (d) {
     const v = String((d && d.pass) || '');
     if (!v) return '';
-    if (v.slice(0, 3) === 'v1:') { try { return secretbox.decrypt(v, KEYRING.key); } catch (e) { return ''; } }
+    if (/^v[12]:/.test(v)) { try { return secretbox.decrypt(v, KEYRING); } catch (e) { return ''; } }
     return v;
   };
   const publicDl = function (d) {

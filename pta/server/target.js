@@ -71,7 +71,7 @@ function makeTarget(ctx) {
   function cookieOf(host) {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
     if (!r || !r.cookie) return { err: '这个站还没有 cookie，先在站点页导入' };
-    try { return { cookie: secretbox.decrypt(r.cookie, KEYRING.key) }; }
+    try { return { cookie: secretbox.decrypt(r.cookie, KEYRING) }; }
     catch (e) { return { err: 'cookie 解不开，请重新导入' }; }
   }
 

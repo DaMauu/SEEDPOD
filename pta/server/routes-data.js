@@ -144,7 +144,7 @@ module.exports = function (app, ctx) {
     const rows = all('SELECT host, cookie, updated_at FROM credentials');
     return ok(rows.map(function (r) {
       let readable = false;
-      if (r.cookie) { try { readable = !!secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { readable = false; } }
+      if (r.cookie) { try { readable = !!secretbox.decrypt(r.cookie, KEYRING); } catch (e) { readable = false; } }
       return { host: r.host, hasCookie: !!r.cookie, readable: readable, updatedAt: r.updated_at || null };
     }));
   });

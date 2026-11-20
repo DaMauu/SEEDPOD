@@ -221,7 +221,7 @@ async function build() {
     return all('SELECT data FROM downloaders').map(function (r) {
       const d = jparse(r.data) || {};
       let passReadable = false;
-      if (d.pass) { try { passReadable = !!secretbox.decrypt(d.pass, KEYRING.key); } catch (e) { passReadable = false; } }
+      if (d.pass) { try { passReadable = !!secretbox.decrypt(d.pass, KEYRING); } catch (e) { passReadable = false; } }
       return { id: d.id, name: d.name, kind: d.kind || 'qb', url: d.url || '', watchPath: d.watchPath || '', user: d.user || '', hasPass: !!d.pass, passReadable: passReadable, disableAuth: !!d.disableAuth, lastProbe: d.lastProbe || null };
     });
   }

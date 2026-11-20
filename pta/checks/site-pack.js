@@ -53,7 +53,7 @@ check('生成加密包且密文不含明文 host', function () {
   need(fs.existsSync(ENC), '密文没写');
   const raw = fs.readFileSync(ENC, 'utf8');
   need(raw.indexOf('a.example') < 0 && raw.indexOf('b.example') < 0, '密文里能看到明文站名');
-  need(raw.slice(0, 3) === 'v1:', '不是 v1 密文');
+  need(/^v[12]:/.test(raw), '不是 v1/v2 密文');
 });
 
 check('解密、分类自动匹配和上传映射', function () {

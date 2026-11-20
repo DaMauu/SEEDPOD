@@ -1,5 +1,18 @@
 # 更新日志
 
+## v0.7.520 · 2026-11-20
+
+### 收尾审计 P2：状态校验、密钥轮换、前端 API、回归落点
+- 密钥：密文升级为 `v2:<keyId>`，支持 `PTA_SECRET_PREVIOUS` / `.secret.previous` 多版本解密；新增 `pta/scripts/rotate-secret.js`（默认预览，`--apply` 写库前备份）。
+- 站点包：支持 `PTA_SITE_PACK_KEY_PREVIOUS`。
+- 状态：`stage.ensure` 按 status 推断旧数据阶段；新增 `stage.validate`、`scripts/audit-state.js` 和 `state-consistency` 检查。
+- 跨站同片：明确“先到先得”，跳过词条记 `dupeOf` / `skipReason` / `skippedAt`；新增 `docs/DEDUPE.md`。
+- 前端：新增 `utils/api.js` 的 `apiJson/errorText`，Queue 统一走 API 客户端，错误码集中映射成中文。
+- 组件：拆出 `QueuePreflight.vue`，`Queue.vue` 从 808 行降到 760 行。
+- 日志：新增 `server/log.js`，抓取/初筛的可忽略异常不再完全静默。
+- 契约：`api-v2` 增加队列/词条/下载器/错误形状断言；新增 `mock-shape` 校验表单夹具与 mock 字段一致。
+- 回归落点：新增 `publish-id-capture` 静态回归和 `docs/AUDIT-REGRESSIONS.md`，12 个审计样例逐条对应检查文件。
+
 ## v0.7.519 · 2026-11-20
 
 ### 修复审计 P2：回查隔离、默认值、错误码、饥饿

@@ -32,12 +32,16 @@ run crawl-loop crawl-loop.js
 run category-policy category-policy.js
 run screen-type screen-type.js
 run prepare-guard prepare-guard.js
+run state-consistency state-consistency.js
+run publish-id-capture publish-id-capture.js
 run marks marks.js
 run dupe-classify dupe-classify.js
 run dupe-policy dupe-policy.js
 run collage collage.js
 run flow-config flow-config.js
 run security security.js
+run secret-rotate secret-rotate.js
+run mock-shape mock-shape.js
 run api api-v2.js
 run form form.js
 run site-pack site-pack.js

@@ -18,7 +18,7 @@ module.exports = function (app, ctx) {
   function cred(host) {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
     if (!r || !r.cookie) return '';
-    try { return secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { return ''; }
+    try { return secretbox.decrypt(r.cookie, KEYRING); } catch (e) { return ''; }
   }
 
   app.post('/api/sites/:host/session-test', async (req, reply) => {

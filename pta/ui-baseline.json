@@ -1,11 +1,12 @@
 {
-  "at": "2026-11-20T15:03:54.943Z",
+  "at": "2026-11-20T15:18:47.198Z",
   "files": {
     "App.vue": "9eab11e1f34aa0d7",
     "components/CrawlCard.vue": "7a23304c538747c5",
     "components/FlowGates.vue": "3f44c71518d518ff",
     "components/PublishCard.vue": "2949f37316ed09fe",
     "components/QueueFailures.vue": "272034438ca2afc0",
+    "components/QueuePreflight.vue": "6c8318508055fbc2",
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "ea5e921926989002",
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
@@ -36,7 +37,7 @@
     "views/Dashboard.vue": "d564aa263d86b482",
     "views/Logs.vue": "ee1cd60333bc52f6",
     "views/Nodes.vue": "493811e7ecd3283b",
-    "views/Queue.vue": "b7ca014672f269d5",
+    "views/Queue.vue": "6fe015e1ea81963e",
     "views/Settings.vue": "5d4c5756e639d3cf",
     "views/Sites.vue": "e99cae4355e8a25c",
     "views/Sources.vue": "d95f1d8b3f02f764"

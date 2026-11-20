@@ -11,6 +11,7 @@ const siteMaps = require('./site-maps');
 const flowConfig = require('./flow-config');
 const { typeOf } = require('./category-policy');
 const configSchema = require('./config-schema');
+const log = require('./log');
 const { makeMetaFill } = require('./meta-fill');
 
 const BUSY = new Set();
@@ -38,7 +39,7 @@ function makeCrawl(ctx) {
   const cookieOf = (host) => {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
     if (!r || !r.cookie) return '';
-    try { return secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { return ''; }
+    try { return secretbox.decrypt(r.cookie, KEYRING); } catch (e) { return ''; }
   };
 
   const metaFill = makeMetaFill(ctx);
@@ -110,7 +111,7 @@ function makeCrawl(ctx) {
     try {
       const maps = siteMaps.getHost(DATA_DIR, host).cat || {};
       Object.keys(maps).forEach(function (k) { catMap.push({ id: String(maps[k]), label: k, purpose: k }); });
-    } catch (e) { /* 忽略 */ }
+    } catch (e) { log.warn('crawl.site-maps', e); }
     const seenCat = {};
     catMap = catMap.filter(function (x) { if (!x || x.id == null) return false; const k = String(x.id); if (seenCat[k]) return false; seenCat[k] = true; return true; });
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
@@ -124,7 +125,7 @@ function makeCrawl(ctx) {
       Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { sel.push(String(id)); }); });
       if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
       siteTypes = Array.isArray(entry.types) ? entry.types.map(String).filter(Boolean) : [];
-    } catch (e) { /* 没预设就全抓 */ }
+    } catch (e) { log.warn('crawl.preset', e); }
     /* 类型是硬闸门：没保存类型就停，保存过类型就只抓对应分类 */
     if (!siteTypes.length) {
       return { err: { code: 'NO_CATEGORY_TYPES', message: '这个站还没保存抓取类型；先在流程页选来源站和类型并保存' } };
@@ -153,7 +154,7 @@ function makeCrawl(ctx) {
         });
         url0 = u.toString();
       }
-    } catch (e) { /* 过滤参数拼不上就按原地址抓 */ }
+    } catch (e) { log.warn('crawl.search-filters', e); }
     const lim = limitsOf(host);
     const state = readState();
     const today = new Date().toISOString().slice(0, 10);
@@ -259,7 +260,7 @@ function makeCrawl(ctx) {
           keep.forEach(function (x) { items.push(x); });
         }
       }
-    } catch (e) { /* 过滤失败按原结果 */ }
+    } catch (e) { log.warn('crawl.detail-filter', e); }
 
     /* 限制行：选中即排除（禁转/限转/HR/独占/DIY），列表标签先拦一遍 */
     let limitSel = [];
@@ -275,7 +276,7 @@ function makeCrawl(ctx) {
           keep.forEach(function (x) { items.push(x); });
         }
       }
-    } catch (e) { /* 规则读不到就不筛 */ }
+    } catch (e) { log.warn('crawl.limit-rules', e); }
 
     /* 先入库：列表字段已经够进初筛；详情单独补，不阻塞翻页 */
     const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0, ids: {} };

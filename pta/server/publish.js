@@ -42,7 +42,7 @@ function makePublisher(ctx) {
   function cookieOf(host) {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', String(host || ''));
     if (!r || !r.cookie) return '';
-    try { return secretbox.decrypt(r.cookie, KEYRING.key); } catch (e) { return ''; }
+    try { return secretbox.decrypt(r.cookie, KEYRING); } catch (e) { return ''; }
   }
   function downloaderOf(body, it) {
     const want = String((body && body.downloaderId) || it.downloaderId || '');

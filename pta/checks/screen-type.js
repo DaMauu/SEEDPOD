@@ -63,6 +63,24 @@ function q(id, title) {
       const ids = all('SELECT id FROM queue ORDER BY id').map(function (x) { return x.id; });
       need(ids.indexOf('q_0004') >= 0, '没有生成 q_0004：' + JSON.stringify(ids));
     });
+    await check('跨站同片只留一条，后到的记 dupeOf', async function () {
+      const a = { id: 'cat_700001', site: 'a.example', siteId: '1', title: 'Same Movie 2024 1080p', cat: '401', catName: '电影', status: 'new', infohash: 'abc123' };
+      const b = { id: 'cat_700002', site: 'b.example', siteId: '2', title: 'Same Movie 2024 1080p', cat: '401', catName: '电影', status: 'new', infohash: 'abc123' };
+      [a, b].forEach(function (d) {
+        db.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .run(d.id, d.site, d.siteId, d.infohash, d.title, 'new', JSON.stringify(d), new Date().toISOString(), new Date().toISOString());
+      });
+      const r = screenCatalog(ctx, { limit: 5 });
+      need(r.selected === 1 && (r.byReason['已有同片'] || 0) === 1, '跨站同片没跳过：' + JSON.stringify(r));
+      const kept = all("SELECT id, data FROM queue WHERE title = 'Same Movie 2024 1080p'");
+      need(kept.length === 1, '队列里同片不是一条：' + kept.length);
+      const rows = all("SELECT data FROM catalog WHERE id IN ('cat_700001', 'cat_700002')").map(function (x) { return jparse(x.data); });
+      const sk = rows.filter(function (x) { return x.status === 'skipped'; })[0];
+      const sel = rows.filter(function (x) { return x.status === 'selected'; })[0];
+      need(sk && sel && sk.dupeOf === kept[0].id, 'dupeOf 没指向保留词条：' + JSON.stringify({ rows: rows.map(function (x) { return { id: x.id, status: x.status, dupeOf: x.dupeOf }; }), kept: kept[0].id }));
+      need(sk.skipReason === '已有同片' && sk.skippedAt, '跳过原因/时间没记：' + JSON.stringify(sk));
+    });
+
   } finally {
     db.close();
     fs.rmSync(DATA, { recursive: true, force: true });

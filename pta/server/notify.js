@@ -24,7 +24,7 @@ function makeNotify(ctx) {
     const c = rawCfg();
     let token = '';
     const enc = String(c.notifyTgToken || '');
-    if (enc) { try { token = secretbox.decrypt(enc, KEYRING.key); } catch (e) { token = ''; } }
+    if (enc) { try { token = secretbox.decrypt(enc, KEYRING); } catch (e) { token = ''; } }
     const chat = String(c.notifyTgChat || '').trim();
     return { token: token, chat: chat, source: token && chat ? 'config' : '' };
   }

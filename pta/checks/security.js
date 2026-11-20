@@ -17,7 +17,12 @@ check('凭据加密往返', () => {
   const key = crypto.randomBytes(32);
   const plain = 'p@ssw0rd-测试-2FA';
   const enc = box.encrypt(plain, key);
-  need(enc.indexOf('v1:') === 0, '密文格式不对');
+  need(/^v2:[0-9a-f]{8}:/.test(enc), '密文格式不对');
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const ct = Buffer.concat([c.update(plain, 'utf8'), c.final()]);
+  const v1 = 'v1:' + Buffer.concat([iv, c.getAuthTag(), ct]).toString('base64');
+  need(box.decrypt(v1, key) === plain, 'v1 旧密文解不开');
   need(enc.indexOf(plain) < 0, '密文里出现了明文');
   need(box.decrypt(enc, key) === plain, '解密回不来');
   const key2 = crypto.randomBytes(32);

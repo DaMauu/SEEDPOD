@@ -117,30 +117,7 @@
         </section>
 
         <div v-if="sel.qb || sel.sourceState" class="t-sub qd-download">qB：{{ qbText() }}</div>
-        <section v-if="preflight" class="sd-card qd-preflight">
-          <div class="qd-preflight-head">
-            <h3>发布前检查</h3>
-            <span class="badge" :class="preflight.ready ? 'green' : 'amber'">{{ preflight.ready ? '可提交' : '有缺项' }}</span>
-          </div>
-          <div class="qd-check-grid">
-            <div class="qd-check-item"><span>目标站</span><b>{{ preflight.host }}</b></div>
-            <div class="qd-check-item"><span>分类</span><b>{{ preflight.labels.type || preflight.fields.type || '未映射' }}</b></div>
-            <div class="qd-check-item"><span>制作组</span><b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></div>
-            <div class="qd-check-item"><span>媒介</span><b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></div>
-            <div class="qd-check-item"><span>目标站查重</span><b :class="preflight.dupe.state === 'exists' || preflight.dupe.state === 'error' ? 'qd-stage-err' : (preflight.dupe.state === 'passed' ? 'qd-ok' : '')">{{ preflight.dupe.label }}</b></div>
-            <div v-if="preflight.retry" class="qd-check-item">
-              <span>失败与重试</span>
-              <b :class="preflight.retry.dead ? 'qd-stage-err' : ''">
-                <template v-if="preflight.retry.dead">自动重试用完，需要重新排队 · 试了 {{ preflight.retry.attempts }} 次</template>
-                <template v-else>待重试 · 试了 {{ preflight.retry.attempts }} 次<span v-if="preflight.retry.nextRetryAt"> · 下次 {{ stageTime(preflight.retry.nextRetryAt) }}</span></template>
-              </b>
-            </div>
-            <div class="qd-check-item"><span>infohash</span><b v-if="preflight.torrent.hash">{{ preflight.torrent.hash.slice(0, 12) }}… <em v-if="preflight.checked" :class="preflight.hashUnchanged ? 'qd-ok' : 'qd-stage-err'">{{ preflight.hashUnchanged ? '清洗后不变' : '清洗后变了' }}</em><em v-else class="soft">清洗只换 announce，应不变</em></b><b v-else class="soft">先下载种子</b></div>
-            <div class="qd-check-item"><span>种子</span><b>{{ preflight.torrent.name || '先下载种子' }}</b></div>
-            <div class="qd-check-item"><span>Tracker</span><b>{{ preflight.trackerNote }}</b></div>
-          </div>
-          <div v-if="preflight.warnings && preflight.warnings.length" class="qd-warn">需处理：{{ preflight.warnings.join('；') }}</div>
-        </section>
+        <QueuePreflight v-if="preflight" :preflight="preflight" />
         <div v-if="pubNote(sel)" class="qd-status" :class="sel.status === 'failed' ? 'bad' : 'ok'">{{ pubNote(sel) }}</div>
         <div v-if="sel.targetUpload" class="qd-status" :class="sel.targetVerify && sel.targetVerify.found ? 'ok' : ''">
           目标站 {{ sel.targetUpload.host }} · {{ sel.targetUpload.message || '已提交' }}
@@ -187,8 +164,10 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
+import { apiJson, errorText, qs } from '../utils/api'
 import { toast, loggedIn, viewVisible, confirmBox } from '../utils/ui'
 import QueueFailures from '../components/QueueFailures.vue'
+import QueuePreflight from '../components/QueuePreflight.vue'
 
 const tabs = [
   { v: 'all', label: '全部' },
@@ -248,11 +227,8 @@ async function doRetryTarget(host) {
   busy.target = true
   try {
     const body = { queueId: id, targets: [host], dryRun: false }
-    const r = await fetch('/api/queue/' + encodeURIComponent(id) + '/targets/upload', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
-    })
-    const j = await r.json().catch(() => null)
-    toast(j && j.ok ? '目标站重试完成' : ((j && j.error && j.error.message) || '重试失败'))
+    const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/targets/upload', { method: 'POST', body: body })
+    toast(j && j.ok ? '目标站重试完成' : errorText(j, '重试失败'))
     await refresh()
   } catch (e) { reportError('Queue.retryTarget', e); toast('重试请求发不出去') }
   busy.target = false
@@ -266,12 +242,10 @@ function verifyOf(item) {
 }
 async function retryStage() {
   if (!sel.value) return
+  const id = sel.value.id
   try {
-    const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/advance', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: '{}'
-    })
-    const j = await r.json()
-    if (!j || !j.ok) { toast((j && j.error && j.error.message) || '重试失败'); return }
+    const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/advance', { method: 'POST', body: {} })
+    if (!j || !j.ok) { toast(errorText(j, '重试失败')); return }
     toast(j.data.next ? '下一步：' + j.data.next : '阶段：' + stageLabel(j.data.stage))
     await refresh()
   } catch (e) { reportError('Queue.retryStage', e); toast('重试请求发不出去') }
@@ -282,11 +256,11 @@ function sub(it) {
 // 页面独立：队列只需要站点列表给下拉，不加载状态/配置。
 async function loadSites() {
   try {
-    const j = await (await fetch('/api/targets', { credentials: 'same-origin' })).json()
+    const { body: j } = await apiJson('/api/targets')
     const list = (j && j.ok && Array.isArray(j.data)) ? j.data.filter(t => t.hasCookie) : []
     if (list.length) sites.value = list.map(t => ({ name: t.host, title: t.host }))
     else {
-      const s = await (await fetch('/api/sites', { credentials: 'same-origin' })).json()
+      const { body: s } = await apiJson('/api/sites')
       if (s && s.ok && s.data) sites.value = s.data.sites || []
     }
   } catch (e) { reportError('Queue', e) }
@@ -296,11 +270,9 @@ async function loadQueuePage(p) {
   if (tab.value === 'failed') return
   if (p) page.value = p
   const status = tab.value === 'all' ? '' : tab.value === 'approved' ? 'approved,published' : tab.value
-  const qs = new URLSearchParams({ limit: '50', offset: String((page.value - 1) * 50) })
-  if (status) qs.set('status', status)
-  if (q.value.trim()) qs.set('q', q.value.trim())
+  const query = qs({ limit: 50, offset: (page.value - 1) * 50, status: status, q: q.value.trim() })
   try {
-    const j = await (await fetch('/api/queue?' + qs.toString(), { credentials: 'same-origin' })).json()
+    const { body: j } = await apiJson('/api/queue?' + query)
     if (!j || !j.ok) return
     items.value = j.data.items || []
     matched.value = Number(j.data.matched) || 0
@@ -317,7 +289,7 @@ async function select(id) {
   const seq = ++selectSeq
   if (progressTimer) { clearInterval(progressTimer); progressTimer = null }
   try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(id), { credentials: 'same-origin' })).json()
+    const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id))
     if (!j || !j.ok) return
     if (seq !== selectSeq) return
     sel.value = j.data
@@ -344,10 +316,10 @@ function debounced() {
 }
 async function fillSourceTitle() {
   if (!sel.value) return
-  const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/fill-source-title', { method: 'POST', credentials: 'same-origin' })
-  const j = await r.json().catch(() => null)
+  const id = sel.value.id
+  const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/fill-source-title', { method: 'POST' })
   if (j && j.ok) { toast('标题已回填：' + j.data.title); await refresh() }
-  else toast((j && j.error && j.error.message) || '回填失败')
+  else toast(errorText(j, '回填失败'))
 }
 async function refresh() {
   if (tab.value === 'failed') {
@@ -364,11 +336,7 @@ function onFailuresReplayed() {
 function stillSelected(id) { return !!(sel.value && sel.value.id === id) }
 async function apiAction(body, onlyId) {
   const id = String(onlyId || (sel.value && sel.value.id) || '')
-  const r = await fetch('/api/queue/' + encodeURIComponent(id) + '/action', {
-    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body)
-  })
-  return { status: r.status, body: await r.json().catch(() => null) }
+  return apiJson('/api/queue/' + encodeURIComponent(id) + '/action', { method: 'POST', body: body })
 }
 async function loadPreview() {
   if (!sel.value) { preflight.value = null; return }
@@ -377,7 +345,7 @@ async function loadPreview() {
   const seq = ++previewSeq
   try {
     const q = host ? '?host=' + encodeURIComponent(host) : ''
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(id) + '/publish-preview' + q, { credentials: 'same-origin' })).json()
+    const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/publish-preview' + q)
     if (seq !== previewSeq || !sel.value || sel.value.id !== id) return
     preflight.value = j && j.ok ? j.data : null
   } catch (e) {
@@ -395,13 +363,13 @@ async function saveFields(onlyId) {
   const id = String(onlyId || (sel.value && sel.value.id) || '')
   if (!id) return { ok: false, error: { message: '没选中条目' } }
   try {
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(id) + '/action', {
-      method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
+    const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(id) + '/action', {
+      method: 'POST',
+      body: {
         action: 'save', title: form.title, cn: form.cn, intro: form.intro,
         targetSite: form.targetSite, targets: form.targets, imageHost: form.imageHost, anonymous: form.anonymous
-      })
-    })).json()
+      }
+    })
     return j || { ok: false, error: { message: '保存没回应' } }
   } catch (e) {
     reportError('Queue.saveFields', e)
@@ -429,11 +397,7 @@ function startProgressPoll() {
     if (!sel.value) { clearInterval(progressTimer); progressTimer = null; return }
     try {
       /* 重新让服务端查一次 qB 进度；只查已记录的 infohash，不再打源站 */
-      const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
-        method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ action: 'download' })
-      })
-      const j = await r.json().catch(() => null)
+      const { body: j } = await apiJson('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', { method: 'POST', body: { action: 'download' } })
       if (j && j.ok && j.data) {
         sel.value.sourceState = {
           ok: true, at: new Date().toISOString(), hash: j.data.hash || '',
@@ -463,7 +427,7 @@ async function act(action) {
       if (action === 'download') toast((j.data && j.data.message ? j.data.message : '已加入 qB') + (j.data && j.data.progress != null ? ' · ' + Math.round(Number(j.data.progress) * 100) + '%' : ''))
       else toast(action === 'publish' ? '已发布：' + itemTitle : '操作完成')
     }
-    else toast((j && j.error && j.error.message) || ('操作失败 ' + r.status))
+    else toast(errorText(j, '操作失败 ' + r.status))
     await refresh()
     if (action === 'download' && !downloadReady()) startProgressPoll()
   } catch (e) { toast('请求发不出去') }
@@ -752,17 +716,6 @@ onUnmounted(() => {
 .qd-final-desc > summary:hover { color: var(--accent); }
 .qd-final-desc pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; margin: 6px 0 0; padding: 0; background: none; border: 0; font-size: 11.5px; line-height: 1.55; }
 
-/* 发布前检查：两列键值，不再散着一行 */
-.qd-preflight { margin-top: 10px; padding: 10px 12px; }
-.qd-preflight-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.qd-preflight-head h3 { margin: 0; font-size: 10px; letter-spacing: .6px; }
-.qd-check-grid { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 5px 12px; align-items: baseline; }
-.qd-check-item { display: contents; }
-.qd-check-item > span { font-size: 11px; color: var(--muted-2); white-space: nowrap; text-align: right; }
-.qd-check-item > b { min-width: 0; color: var(--ink); font-size: 11.5px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
-.qd-check-item em { font-style: normal; font-weight: 500; }
-.qd-ok { color: var(--green); }
-.qd-warn { margin-top: 6px; font-size: 11.5px; color: #b45309; line-height: 1.6; }
 .qd-status { margin-top: 8px; }
 
 /* 底栏：去掉边框，保持紧凑 */
@@ -802,7 +755,6 @@ onUnmounted(() => {
   .queue-detail { padding: 14px 12px 10px; }
   .qd-field { grid-template-columns: 46px minmax(0, 1fr) 82px; gap: 8px; }
   .qd-action-btn { font-size: 10px; }
-  .qd-check-grid { grid-template-columns: 68px minmax(0, 1fr); }
   .qd-targets-foot, .qd-actions { gap: 6px; }
 }
 </style>

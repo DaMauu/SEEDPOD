@@ -21,6 +21,9 @@ function load(opts) {
   const rawKey = o.key !== undefined ? o.key : require('./env').read('SITE_PACK_KEY','PTA_SITE_PACK_KEY');
   const key = secretbox.parseKey(rawKey);
   if (!key) return fail('NO_KEY');
+  /* 站点包密钥也支持轮换：旧 key 放 SITE_PACK_KEY_PREVIOUS，逗号/空白分隔 */
+  const prev = secretbox.readKeyList(require('./env').read('SITE_PACK_KEY_PREVIOUS','PTA_SITE_PACK_KEY_PREVIOUS') || '');
+  const ring = { keys: [key].concat(prev) };
   let st;
   try { st = fs.statSync(file); } catch (e) { return fail('NO_PACK'); }
   const kh = keyHash(rawKey);
@@ -28,7 +31,7 @@ function load(opts) {
   let pack;
   try {
     const payload = fs.readFileSync(file, 'utf8').trim();
-    const json = secretbox.decrypt(payload, key);
+    const json = secretbox.decrypt(payload, ring);
     pack = JSON.parse(json);
   } catch (e) {
     const result = fail('BAD_PACK');

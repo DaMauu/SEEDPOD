@@ -6,6 +6,7 @@ const { tx } = require('./db');
 const siteMaps = require('./site-maps');
 const sitePack = require('./site-pack');
 const { typeOf, selectedTypesOf } = require('./category-policy');
+const log = require('./log');
 
 function flowRules(sets, rx) {
   /* 只读 ② 初筛卡（fetch[1]），不跨区域借发布/查重卡的规则 */
@@ -66,17 +67,18 @@ function screenCatalog(ctx, opts) {
     const d = jparse(r.data) || {};
     siteOn[String(r.host).toLowerCase()] = d.enabled !== false;
   });
-  const seenTitles = new Set();
-  const seenHashes = new Set();
-  all('SELECT title, data FROM queue').forEach(function (r) {
-    seenTitles.add(norm(r.title));
+  /* 跨站同片策略：同 infohash / 规范化标题只保留最早一条，后来者记 dupeOf 方便追溯 */
+  const seenTitles = new Map();
+  const seenHashes = new Map();
+  all('SELECT id, title, data FROM queue').forEach(function (r) {
+    seenTitles.set(norm(r.title), r.id);
     const it = jparse(r.data) || {};
-    if (it.infohash) seenHashes.add(String(it.infohash).toLowerCase());
+    if (it.infohash) seenHashes.set(String(it.infohash).toLowerCase(), r.id);
   });
-  all('SELECT data FROM published').forEach(function (r) {
+  all('SELECT id, data FROM published').forEach(function (r) {
     const it = jparse(r.data) || {};
-    seenTitles.add(norm(it.title));
-    if (it.infohash) seenHashes.add(String(it.infohash).toLowerCase());
+    seenTitles.set(norm(it.title), r.id);
+    if (it.infohash) seenHashes.set(String(it.infohash).toLowerCase(), r.id);
   });
 
   const wantTypes = selectedTypesOf(flow);
@@ -89,7 +91,7 @@ function screenCatalog(ctx, opts) {
         const maps = siteMaps.getHost(DATA_DIR, it.site).cat || {};
         const hit = Object.keys(maps).filter(function (k) { return String(maps[k]) === raw; })[0];
         if (hit) { label = hit; type = typeOf(hit); }
-      } catch (e) { /* 忽略 */ }
+      } catch (e) { log.warn('screen.site-maps', e); }
     }
     if (!type && it.site) {
       try {
@@ -99,7 +101,7 @@ function screenCatalog(ctx, opts) {
           const hit = Object.keys(cm).filter(function (k) { return String(cm[k]) === raw; })[0];
           if (hit) { label = hit; type = typeOf(hit); }
         }
-      } catch (e) { /* 忽略 */ }
+      } catch (e) { log.warn('screen.site-pack', e); }
     }
     return { label: label && !/^\d+$/.test(label) ? label : '', type: type || '' };
   }
@@ -137,7 +139,10 @@ function screenCatalog(ctx, opts) {
     else if (it.infohash && seenHashes.has(String(it.infohash).toLowerCase())) reason = '已有同片';
 
     if (reason) {
-      const next = Object.assign({}, it, { status: 'skipped' });
+      const next = Object.assign({}, it, { status: 'skipped', skippedAt: now(), skipReason: reason });
+      if (reason === '已有同片') {
+        next.dupeOf = (it.infohash && seenHashes.get(String(it.infohash).toLowerCase())) || seenTitles.get(norm(title)) || '';
+      }
       db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(next), 'skipped', now(), r.id);
       byReason[reason] = (byReason[reason] || 0) + 1;
       skipped++;
@@ -172,8 +177,8 @@ function screenCatalog(ctx, opts) {
       const next = Object.assign({}, it, { status: 'selected' });
       db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(next), 'selected', now(), r.id);
     });
-    seenTitles.add(norm(title));
-    if (it.infohash) seenHashes.add(String(it.infohash).toLowerCase());
+    seenTitles.set(norm(title), item.id);
+    if (it.infohash) seenHashes.set(String(it.infohash).toLowerCase(), item.id);
     selectedIds.push(item.id);
     selected++;
   }

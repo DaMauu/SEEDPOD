@@ -25,7 +25,7 @@ module.exports = function (app, ctx) {
   const readCookie = (host) => {
     const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
     if (!r || !r.cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie，查不了' } };
-    try { return { cookie: secretbox.decrypt(r.cookie, KEYRING.key) }; } catch (e) { return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } }; }
+    try { return { cookie: secretbox.decrypt(r.cookie, KEYRING) }; } catch (e) { return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } }; }
   };
   const cfgRow = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
 

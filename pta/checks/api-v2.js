@@ -491,6 +491,26 @@ async function main() {
     need(!(list2.data.sites || []).some(x => x.host === 'added.example'), '移除后列表还在');
   });
 
+  await check('队列表/详情/词条/下载器返回稳定形状', async () => {
+    const add = await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Shape Check 2024 1080p', status: 'pending' })
+    });
+    const aj = await add.json();
+    need(aj.ok && aj.data && typeof aj.data.id === 'string', '建队列形状不对：' + JSON.stringify(aj));
+    const list = await (await fetchA(BASE + '/api/queue?limit=5')).json();
+    need(list.ok && Array.isArray(list.data.items) && typeof list.data.matched === 'number' && typeof list.data.counts === 'object', '队列表形状不对：' + JSON.stringify(list.data));
+    need(list.data.items.every(function (x) { return typeof x.id === 'string' && typeof x.title === 'string' && typeof x.status === 'string'; }), '队列条目字段不全');
+    const one = await (await fetchA(BASE + '/api/queue/' + encodeURIComponent(aj.data.id))).json();
+    need(one.ok && one.data.id === aj.data.id, '队列详情形状不对');
+    const cat = await (await fetchA(BASE + '/api/catalog?limit=1')).json();
+    need(cat.ok && typeof cat.data.total === 'number' && typeof cat.data.matched === 'number' && cat.data.byStatus && Array.isArray(cat.data.items), '词条形状不对');
+    const dls = await (await fetchA(BASE + '/api/downloaders')).json();
+    need(dls.ok && Array.isArray(dls.data), '下载器形状不对');
+    const bad = await (await fetchA(BASE + '/api/queue/no-such-id')).json();
+    need(bad.error && bad.error.code === 'NOT_FOUND', '错误形状不对');
+  });
+
   await check('保存类型：变了清全量游标，没变不动', async () => {
     const host = 'types.example';
     const put0 = await fetchA(BASE + '/api/site-def/' + host, {
