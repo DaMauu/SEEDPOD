@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.547 · 2026-11-21
+
+### 审计十七轮
+- Telegram 失败时回退 webhook；notify 8/8。
+- SQLite 连接设置 busy_timeout/timeout，新增 4 进程并发写 100 次夹具，db-concurrency 1/1。
+- 全量 run.sh 通过。
+
 ## v0.7.546 · 2026-11-21
 
 ### 审计十六轮

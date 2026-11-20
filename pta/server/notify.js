@@ -61,6 +61,7 @@ function makeNotify(ctx) {
     const isError = /fail|error|target\.failed|publish\.failed|scheduler\.error/i.test(String(event)) || event === 'test';
     if (!force && c.events === 'error' && !isError) return { ok: true, skipped: true, reason: 'not_error' };
     const msg = String(text || '').slice(0, 2000);
+    let telegramError = null;
     if (t.token && t.chat) {
       try {
         const r = await fetch(t.api + '/bot' + t.token + '/sendMessage', {
@@ -69,10 +70,11 @@ function makeNotify(ctx) {
           signal: AbortSignal.timeout(5000)
         });
         const b = await r.json().catch(function () { return null; });
-        return { ok: r.ok && !!(b && b.ok), channel: 'telegram', status: r.status, skipped: false,
-          error: b && b.description ? String(b.description).slice(0, 160) : '' };
+        if (r.ok && b && b.ok) return { ok: true, channel: 'telegram', status: r.status, skipped: false, error: '' };
+        telegramError = { ok: false, channel: 'telegram', status: r.status, skipped: false,
+          error: b && b.description ? String(b.description).slice(0, 160) : ('HTTP ' + r.status) };
       } catch (e) {
-        return { ok: false, channel: 'telegram', status: 0, skipped: false, error: sanitize(e && e.message || e) };
+        telegramError = { ok: false, channel: 'telegram', status: 0, skipped: false, error: sanitize(e && e.message || e) };
       }
     }
     if (c.webhook) {
@@ -87,6 +89,7 @@ function makeNotify(ctx) {
         return { ok: false, channel: 'webhook', status: 0, skipped: false, error: sanitize(e && e.message || e) };
       }
     }
+    if (telegramError) return telegramError;
     return { ok: true, skipped: true, reason: 'no_channel' };
   }
   return { send: send, status: status, readCfg: readCfg };

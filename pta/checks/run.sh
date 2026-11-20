@@ -61,6 +61,7 @@ run dedupe-errors dedupe-errors.js
 run rules-registry rules-registry.js
 run config-migration config-migration.js
 run transactions transactions.js
+run db-concurrency db-concurrency.js
 run fault-injection fault-injection.js
 run request-queue request-queue.js
 run env-names env-names.js

@@ -27,6 +27,11 @@ function listen() {
       req.on('data', function (c) { body += c; });
       req.on('end', function () {
         hits.push({ url: req.url, body: body ? JSON.parse(body) : null });
+        if (/^\/bad\//.test(req.url)) {
+          res.writeHead(500, { 'content-type': 'application/json' });
+          res.end(JSON.stringify({ ok: false, description: 'fixture telegram down' }));
+          return;
+        }
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end(JSON.stringify({ ok: true, result: { message_id: hits.length } }));
       });
@@ -77,11 +82,22 @@ async function main() {
     need(hits[1].body.text.indexOf('通知测试') >= 0, '测试内容不对');
   });
 
+  await check('Telegram 失败时 webhook 兜底', async function () {
+    const prev = process.env.PTA_TELEGRAM_API;
+    process.env.PTA_TELEGRAM_API = 'http://127.0.0.1:' + port + '/bad';
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook' }));
+    const r = await n2.send('publish.failed', 'fallback test');
+    if (prev === undefined) delete process.env.PTA_TELEGRAM_API; else process.env.PTA_TELEGRAM_API = prev;
+    need(r.ok === true && r.channel === 'webhook', '没走 webhook：' + JSON.stringify(r));
+    need(hits[hits.length - 1].body.event === 'publish.failed', 'webhook 事件不对：' + JSON.stringify(hits[hits.length - 1].body));
+  });
+
   await check('events=off 全部跳过', async function () {
     events = 'off';
+    const before = hits.length;
     const r = await notify.send('publish.failed', '不会发');
     need(r.skipped === true && r.reason === 'off', 'off 没跳过：' + JSON.stringify(r));
-    need(hits.length === 2, 'off 时不该发请求');
+    need(hits.length === before, 'off 时不该发请求');
   });
 
   await check('面板加密配置兜底', async function () {
