@@ -63,6 +63,15 @@ check('目标已有 db 时默认拒绝覆盖', function () {
   need(/FORCE=1/.test(r.stderr || r.stdout), '没有提示 FORCE=1');
 });
 
+check('FORCE=1 可以覆盖恢复', function () {
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), BAK, DST], { encoding: 'utf8', env: Object.assign({}, process.env, { FORCE: '1' }) });
+  need(r.status === 0, 'FORCE 恢复失败：' + (r.stderr || r.stdout));
+  const restored = new DatabaseSync(path.join(DST, 'seedpod.db'), { readOnly: true });
+  const row = restored.prepare('SELECT title FROM queue WHERE id = ?').get('q_0001');
+  restored.close();
+  need(row && row.title === 'G6 Backup Persist', 'FORCE 恢复内容不对：' + JSON.stringify(row));
+});
+
 check('越界路径备份被拒绝', function () {
   const bad = path.join(TMP, 'bad.tar.gz');
   const badDir = path.join(TMP, 'bad');

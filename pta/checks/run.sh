@@ -48,6 +48,7 @@ run api api-v2.js
 run form form.js
 run site-pack site-pack.js
 run backup backup.js
+run deploy-docker deploy-docker.js
 run publish publish.js
 run scheduler scheduler.js
 run scheduler-crawl scheduler-crawl.js

@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.546 · 2026-11-21
+
+### 审计十六轮
+- backup 增 FORCE=1 覆盖恢复夹具，5/5。
+- 新增 deploy-docker 夹具：shell 语法、Dockerfile 多阶段/数据卷/健康检查、compose 配置、entrypoint 降权、deploy 排除与探活，6/6。
+- 全量 run.sh 通过。
+
 ## v0.7.545 · 2026-11-21
 
 ### 审计十五轮
