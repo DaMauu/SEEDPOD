@@ -2,6 +2,7 @@
 const path = require('path');
 const { openDB } = require('./db');
 const urlGuard = require('./url-guard');
+const { safeFetch } = require('./safe-http');
 
 function isPrivateUrl(raw, allowPrivate) {
   if (allowPrivate) return false;
@@ -72,10 +73,11 @@ async function resolveImageSource(raw, opts) {
   if (looksDirect(url)) return { ok: true, direct: url, page: '' };
   let res;
   try {
-    res = await fetch(url, {
+    res = await safeFetch(url, {
+      allowPrivate: o.allowPrivate === true,
       headers: Object.assign({ 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         accept: 'text/html,image/*,*/*' }, o.headers || {}),
-      redirect: 'follow', signal: AbortSignal.timeout(o.timeoutMs || 20000)
+      timeoutMs: o.timeoutMs || 20000, maxBytes: 5 * 1024 * 1024
     });
   } catch (e) { return { err: '图床页面连不上' }; }
   if (!res.ok) return { err: '图床页面返回 HTTP ' + res.status };

@@ -353,14 +353,15 @@ async function uploadInner(host, body) {
       return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个目标站正在提交，等这次结束', http: 409 };
     }
     const queued = !dryRun && !b[uploadLock.SKIP];
-    if (queued && qid && !uploadLock.acquire(qid)) {
+    const lockDb = ctx && ctx.db;
+    if (queued && qid && !uploadLock.acquire(qid, lockDb)) {
       return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个条目正在提交，等这次结束', http: 409 };
     }
     if (!dryRun) UPLOADING.add(key);
     try { return await uploadInner(host, b); }
     finally {
       if (!dryRun) UPLOADING.delete(key);
-      if (queued) uploadLock.release(qid);
+      if (queued) uploadLock.release(qid, lockDb);
     }
   }
 

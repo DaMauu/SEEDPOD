@@ -139,7 +139,7 @@ function makeTargetService(ctx, target) {
       Object.keys(rawAnn).forEach(function (h) { perAnnounce[String(h).toLowerCase()] = rawAnn[h]; });
     }
     const dryRun = b.dryRun !== false;
-    if (!dryRun && !uploadLock.acquire(item.id)) return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个条目正在提交，等这次结束', http: 409 };
+    if (!dryRun && !uploadLock.acquire(item.id, db)) return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个条目正在提交，等这次结束', http: 409 };
     const out = [];
     try {
       for (const host of hosts) {
@@ -151,7 +151,7 @@ function makeTargetService(ctx, target) {
         const r = await upload(host, one);
         out.push({ host: host, ok: !!r.ok, skipped: !!r.skipped, code: r.code || '', message: r.message || '', data: r.data || null });
       }
-    } finally { if (!dryRun) uploadLock.release(item.id); }
+    } finally { if (!dryRun) uploadLock.release(item.id, db); }
     return { ok: true, data: { queueId: item.id, dryRun: dryRun, targets: out, allOk: out.every(function (x) { return x.ok || x.skipped; }) } };
   }
 

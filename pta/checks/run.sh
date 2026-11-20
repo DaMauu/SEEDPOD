@@ -65,6 +65,7 @@ run detect detect.js
 run torrent-clean torrent-clean.js
 run target target.js
 run target-lock target-lock.js
+run upload-lock upload-lock.js
 run target-defaults target-defaults.js
 run meta meta.js
 run mediainfo mediainfo.js

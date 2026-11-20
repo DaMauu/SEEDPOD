@@ -4,6 +4,7 @@
 const { providerKey, defaultProvider, configFor, dataUrlOf } = require('./imagehost-config');
 const { processShots, uploadOne, sleep } = require('./imagehost-upload');
 const urlGuard = require('./url-guard');
+const { safeFetch } = require('./safe-http');
 const { isPrivateUrl, isBlacklisted, looksDirect, ogImageFromHtml, resolveImageSource, extractImages, isLikelyThumb, originalFromThumb, readMirrorCache, writeMirrorCache, isOurImageHost, escapeRe, replaceDescription } = require('./imagehost-source');
 
 /* 源站 BBCode 里的远程图片：下载后转存图床，替换成图床链接。
@@ -85,10 +86,11 @@ async function mirrorDescription(description, opts) {
       continue;
     }
     try {
-      const res = await fetch(direct, {
+      const res = await safeFetch(direct, {
+        allowPrivate: o.allowPrivate === true,
         headers: Object.assign({ 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
           (resolved.page || o.referer) ? { referer: resolved.page || String(o.referer) } : {}),
-        redirect: 'follow', signal: AbortSignal.timeout(o.timeoutMs || 20000)
+        timeoutMs: o.timeoutMs || 20000, maxBytes: 5 * 1024 * 1024
       });
       if (!res.ok) throw new Error('图片返回 HTTP ' + res.status);
       if (isPrivateUrl(res.url, o.allowPrivate === true)) throw new Error('图片跳转到内网地址');
