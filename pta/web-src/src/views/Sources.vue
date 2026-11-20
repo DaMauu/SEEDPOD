@@ -127,6 +127,7 @@ let targetsLoaded = false
 let bootTimer = null
 let loadBusy = false
 let loadSeq = 0
+const rowBusy = reactive({})
 
 function matchRes(title) {
   const m = /\b(2160p|1080p|1080i|720p|576p|480p)\b/i.exec(String(title || ''))
@@ -278,6 +279,9 @@ function dupeTip(r) {
   return '向 ' + (r.dupeTarget || '目标站') + ' 查过 · ' + (r.dupeAt || '') + (r.dupeTitle ? ' · 命中：' + r.dupeTitle : '')
 }
 async function toggleMark(r, key) {
+  const lock = 'm:' + r.id
+  if (rowBusy[lock]) return
+  rowBusy[lock] = true
   const cur = Object.assign({}, r.marks)
   if (cur[key]) delete cur[key]
   else cur[key] = true
@@ -288,9 +292,12 @@ async function toggleMark(r, key) {
     })).json()
     if (j && j.ok) { toast('已改标记'); loadSources(); return }
     toast((j && j.error && j.error.message) || '改标记失败')
-  } catch (e) { toast('改标记请求发不出去') }
+  } catch (e) { toast('改标记请求发不出去') } finally { delete rowBusy[lock] }
 }
 async function setStatus(r, next) {
+  const lock = 's:' + r.id
+  if (rowBusy[lock]) return
+  rowBusy[lock] = true
   try {
     const j = await (await fetch('/api/catalog/' + encodeURIComponent(r.id) + '/status', {
       method: 'POST', credentials: 'same-origin',
@@ -298,9 +305,12 @@ async function setStatus(r, next) {
     })).json()
     if (j && j.ok) { toast(next === 'archived' ? '已归档' : '已恢复为待筛选'); loadSources(); return }
     toast((j && j.error && j.error.message) || '操作失败')
-  } catch (e) { toast('请求发不出去') }
+  } catch (e) { toast('请求发不出去') } finally { delete rowBusy[lock] }
 }
 async function sendOne(r) {
+  const lock = 'x:' + r.id
+  if (rowBusy[lock]) return
+  rowBusy[lock] = true
   try {
     const j = await (await fetch('/api/catalog/screen', {
       method: 'POST', credentials: 'same-origin',
@@ -315,7 +325,7 @@ async function sendOne(r) {
       return
     }
     toast((j && j.error && j.error.message) || '送审失败')
-  } catch (e) { toast('送审请求发不出去') }
+  } catch (e) { toast('送审请求发不出去') } finally { delete rowBusy[lock] }
 }
 async function localCheck() {
   if (busy.check) return

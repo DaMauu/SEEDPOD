@@ -371,6 +371,90 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Sources 行内标记/状态失败后不改状态，恢复后可重试', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let markOk = false, statusOk = false, diy = false, archived = false;
+      await page.route('**/api/site-defs', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      });
+      await page.route('**/api/credentials', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/catalog?**', async function (route) {
+        const row = { id: 'row_1', site: 'site-a.example', title: 'Inline Row', status: archived ? 'archived' : 'new', cat: '', catName: '', marks: diy ? { diy: true } : {} };
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [row] } }) });
+      });
+      await page.route('**/api/catalog/row_1/marks', async function (route) {
+        if (!markOk) return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'INTERNAL', message: 'fixture mark fail' } }) });
+        diy = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'row_1', marks: { diy: true } } }) });
+      });
+      await page.route('**/api/catalog/row_1/status', async function (route) {
+        if (!statusOk) return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'INTERNAL', message: 'fixture status fail' } }) });
+        archived = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'row_1', status: 'archived' } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await page.waitForTimeout(1800);
+      const diyBtn = page.locator('.dl-row .mark-btn').filter({ hasText: 'DIY' });
+      await diyBtn.click();
+      await page.waitForTimeout(400);
+      need((await page.locator('#toast').innerText()).indexOf('fixture mark fail') >= 0, '标记失败没提示：' + (await page.locator('#toast').innerText()));
+      need((await page.locator('.dl-row .mark-btn.on').count()) === 0, '失败后标记被改');
+      markOk = true;
+      await diyBtn.click();
+      await page.waitForTimeout(700);
+      need((await page.locator('.dl-row .mark-btn.on').count()) === 1, '重试成功后标记没亮');
+
+      await page.locator('.dl-ops button').filter({ hasText: '归档' }).click();
+      await page.waitForTimeout(400);
+      need((await page.locator('#toast').innerText()).indexOf('fixture status fail') >= 0, '状态失败没提示：' + (await page.locator('#toast').innerText()));
+      need((await page.locator('.dl-row .badge').innerText()).indexOf('待筛选') >= 0, '失败后状态被改');
+      statusOk = true;
+      await page.locator('.dl-ops button').filter({ hasText: '归档' }).click();
+      await page.waitForTimeout(700);
+      need((await page.locator('.dl-row .badge').innerText()).indexOf('归档') >= 0, '重试后状态没变：' + (await page.locator('.dl-row .badge').innerText()));
+      need((await page.locator('.dl-ops button').filter({ hasText: '恢复' }).count()) === 1, '归档后没有恢复按钮');
+      await page.close();
+    });
+
+    await check('Sources 行内连点只发一次请求', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let markCalls = 0;
+      await page.route('**/api/site-defs', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+      });
+      await page.route('**/api/credentials', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/catalog?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [{ id: 'row_2', site: 'site-a.example', title: 'Busy Row', status: 'new', cat: '', catName: '', marks: {} }] } }) });
+      });
+      await page.route('**/api/catalog/row_2/marks', async function (route) {
+        markCalls++;
+        await new Promise(function (r) { setTimeout(r, 400); });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'row_2', marks: { diy: true } } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await page.waitForTimeout(1800);
+      const diyBtn = page.locator('.dl-row .mark-btn').filter({ hasText: 'DIY' });
+      await diyBtn.click();
+      await diyBtn.click();
+      await page.waitForTimeout(700);
+      need(markCalls === 1, '连点发了多次请求：' + markCalls);
+      await page.close();
+    });
+
     await check('Sources 导出全部页，归档后分页回到 1/1', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
       const rows = [];

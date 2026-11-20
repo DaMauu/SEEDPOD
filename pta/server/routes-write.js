@@ -11,6 +11,7 @@ module.exports = function (app, ctx) {
   const configSchema = require('./config-schema');
 const catalogBulk = require('./catalog-bulk');
 const catalogItem = require('./catalog-item');
+const { tx } = require('./db');
 
   function getCatalog(id) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);
@@ -61,10 +62,23 @@ const catalogItem = require('./catalog-item');
   });
 
   app.delete('/api/catalog/:id', async (req, reply) => {
-    const row = one('SELECT id FROM catalog WHERE id = ?', req.params.id);
+    const id = req.params.id;
+    const row = one('SELECT id FROM catalog WHERE id = ?', id);
     if (!row) return bad(reply, 'NOT_FOUND', '词条不存在', 404);
-    db.prepare('DELETE FROM catalog WHERE id = ?').run(req.params.id);
-    return ok(reply, { id: req.params.id });
+    /* 队列里的条目要保留：删词条时只摘掉 catalogId，避免留下悬空引用 */
+    let detached = 0;
+    tx(db, function () {
+      all('SELECT id, data FROM queue').forEach(function (q) {
+        const it = jparse(q.data) || {};
+        if (String(it.catalogId || '') !== String(id)) return;
+        delete it.catalogId;
+        it.catalogDeletedAt = now();
+        db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), q.id);
+        detached++;
+      });
+      db.prepare('DELETE FROM catalog WHERE id = ?').run(id);
+    });
+    return ok(reply, { id: id, detached: detached });
   });
 
   app.post('/api/catalog/bulk', async (req, reply) => {
