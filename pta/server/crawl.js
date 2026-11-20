@@ -9,6 +9,7 @@ const marksMod = require('./marks');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const flowConfig = require('./flow-config');
+const { typeOf } = require('./category-policy');
 const { makeMetaFill } = require('./meta-fill');
 
 const BUSY = new Set();
@@ -107,14 +108,26 @@ function makeCrawl(ctx) {
     const seenCat = {};
     catMap = catMap.filter(function (x) { if (!x || x.id == null) return false; const k = String(x.id); if (seenCat[k]) return false; seenCat[k] = true; return true; });
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
+    let siteTypes = [];
     try {
       const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {};
       const sites = raw.sites || raw;
-      const cats = (sites[host] && sites[host].cats) || {};
+      const entry = sites[host] || {};
+      const cats = entry.cats || {};
       const sel = [];
       Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { sel.push(String(id)); }); });
       if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
+      siteTypes = Array.isArray(entry.types) ? entry.types.map(String).filter(Boolean) : [];
     } catch (e) { /* 没预设就全抓 */ }
+    /* 类型是硬闸门：保存过类型就只抓对应分类；一个都没匹配到就停，不静默全抓 */
+    if (siteTypes.length) {
+      const filtered = catMap.filter(function (x) { return siteTypes.indexOf(typeOf(x.label)) >= 0 || siteTypes.indexOf(String(x.label)) >= 0; });
+      if (!filtered.length) {
+        return { err: { code: 'NO_CATEGORY_MATCH', message: '流程页选的类型在站点分类里没匹配到：' + siteTypes.join('/') } };
+      }
+      catMap = filtered;
+      if (ctx.logEvent) ctx.logEvent('info', '抓取', host + ' · 类型 ' + siteTypes.join('/') + ' · ' + catMap.length + ' 个分类');
+    }
     const hasCat = opts.catIdx !== undefined && opts.catIdx !== '' && Number(opts.catIdx) >= 0;
     const catIdx = hasCat ? Math.max(0, Number(opts.catIdx) || 0) : 0;
     const ids = catMap.length ? (hasCat ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : catMap.map(function (x) { return x.id; })) : [];

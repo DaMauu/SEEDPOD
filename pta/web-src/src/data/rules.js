@@ -39,7 +39,7 @@ import registry from '../../shared/rule-registry.json'
           "其他"
         ],
         "sel": [],
-        "hint": "按站映射到分类 id；选中的类型决定抓哪些分类"
+        "hint": "先选来源站：类型按站映射到分类 id，只对当前站生效"
       },
       {
         "t": "媒介",

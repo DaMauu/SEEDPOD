@@ -18,11 +18,19 @@ async function loadTypes() {
 
 async function saveTypes() {
   const row = typeRow.value
-  if (!row || !sourceHost.value) return
-  await fetch('/api/crawl/types/' + encodeURIComponent(sourceHost.value), {
+  if (!row) return
+  if (!sourceHost.value) {
+    if ((row.sel || []).length) toast('先选来源站：类型是按站保存的')
+    return
+  }
+  const r = await fetch('/api/crawl/types/' + encodeURIComponent(sourceHost.value), {
     method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ types: row.sel || [] })
   })
+  const j = await r.json().catch(() => null)
+  const unmatched = (j && j.ok && j.data && j.data.unmatched) || []
+  if (unmatched.length) toast('这些类型没匹配到本站分类：' + unmatched.join(' / '))
+  else if (!(row.sel || []).length) toast('类型已清空：本站会按全部分类抓')
 }
 
 async function saveFilters() {

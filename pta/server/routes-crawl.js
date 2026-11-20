@@ -6,6 +6,7 @@ const adapters = require('./adapters');
 const dupeClassify = require('./dupe-classify');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
+const { typeOf } = require('./category-policy');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -53,30 +54,10 @@ module.exports = function (app, ctx) {
     return out;
   }
 
-  const TYPE_RULES = [
-    ['电影', /电影|movie|film/i],
-    ['剧集', /剧集|电视剧|tv\s*series|series/i],
-    ['综艺', /综艺|tv\s*show|variety/i],
-    ['动漫', /动漫|动画|anime|animation/i],
-    ['纪录片', /纪录|documentary|docu/i],
-    ['音乐', /音乐|music|演唱会?|音频|\bmv\b/i],
-    ['体育', /体育|sport/i],
-    ['电子书', /电子书|有声书|ebook|audiobook|book/i],
-    ['软件', /软件|software|app/i],
-    ['学习', /学习|study|教育|tutorial/i],
-    ['短剧', /短剧|short/i],
-    ['舞台演出', /舞台|stage/i],
-    ['游戏', /游戏|game|playstation|xbox|nintendo/i],
-    ['其他', /其他|其它|other|misc/i]
-  ];
-  function typeOf(label) {
-    const s = String(label || '').replace(/\s+/g, '');
-    for (const pair of TYPE_RULES) if (pair[1].test(label) || pair[1].test(s)) return pair[0];
-    return '';
-  }
-
   app.get('/api/crawl/types/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
+    const p = presetOf(host) || {};
+    if (Array.isArray(p.types) && p.types.length) return ok({ host: host, types: p.types.map(String) });
     const ids = selectedIds(host);
     const list = catsOf(host);
     const byId = {};
@@ -92,23 +73,28 @@ module.exports = function (app, ctx) {
   app.put('/api/crawl/types/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
     if (!/^[a-z0-9][a-z0-9.-]*$/.test(host)) return bad(reply, 'BAD_HOST', '站点名不合法');
-    const want = (Array.isArray(req.body && req.body.types) ? req.body.types : []).map(function (x) { return String(x); });
+    const want = (Array.isArray(req.body && req.body.types) ? req.body.types : []).map(function (x) { return String(x); }).filter(Boolean);
     const list = catsOf(host);
     const cats = {};
-    let ids = 0;
+    const matched = [];
+    const unmatched = [];
+    const seen = new Set();
     want.forEach(function (t) {
-      const hit = list.filter(function (c) { return typeOf(c.label) === t || c.label === t; })[0];
-      if (!hit) return;
-      (cats[t] = cats[t] || []).push(hit.id);
-      ids++;
+      const hits = list.filter(function (c) { return typeOf(c.label) === t || c.label === t; });
+      if (!hits.length) { unmatched.push(t); return; }
+      matched.push(t);
+      hits.forEach(function (h) {
+        const id = String(h.id);
+        if (!seen.has(id)) { seen.add(id); (cats[t] = cats[t] || []).push(id); }
+      });
     });
     const file = path.join(DATA_DIR, 'site-search.local.json');
     let raw = {};
     try { raw = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (e) { raw = {}; }
     const sites = raw.sites && typeof raw.sites === 'object' ? raw.sites : raw;
-    sites[host] = Object.assign({}, sites[host] || {}, { cats: cats, updatedAt: now() });
+    sites[host] = Object.assign({}, sites[host] || {}, { types: want, cats: cats, updatedAt: now() });
     fs.writeFileSync(file, JSON.stringify(raw.sites ? raw : { sites: sites }, null, 2) + '\n', { mode: 0o600 });
-    return ok({ host: host, types: want, ids: ids });
+    return ok({ host: host, types: want, matched: matched, unmatched: unmatched, ids: seen.size });
   });
 
   function defOf(host) {
