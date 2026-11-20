@@ -8,6 +8,13 @@ const imagehost = require('./imagehost');
 const marks = require('./marks');
 const { dedupeSwitchOn } = require('./target-rules');
 
+/* 目标站 announce 候选优先级：passkey > generic > 站点根兜底 */
+function pickAnnounce(list) {
+  const arr = Array.isArray(list) ? list : [];
+  return arr.filter(function (x) { return x && x.kind === 'passkey'; })[0] ||
+    arr.filter(function (x) { return x && x.kind === 'generic'; })[0] || null;
+}
+
 function makeUpload(deps) {
   const ctx = deps.ctx;
   const target = deps.target;
@@ -25,8 +32,9 @@ function makeUpload(deps) {
   const setTargetResult = deps.setTargetResult;
   const preparedPlan = deps.preparedPlan;
   const allDone = deps.allDone;
+  const UPLOADING = new Set();
 
-async function upload(host, body) {
+async function uploadInner(host, body) {
     const b = body || {};
     const item = loadQueue(b.queueId);
     if (!item) return { ok: false, code: 'NOT_FOUND', message: '队列条目不存在', http: 404 };
@@ -135,13 +143,18 @@ async function upload(host, body) {
       const cand = await target.announceCandidates(host);
       if (cand.ok) {
         const list = cand.data.candidates || [];
-        const pick = list.filter(function (x) { return x.kind === 'generic'; })[0] || null;
+        const pick = pickAnnounce(list);
         if (pick) cleanAnnounce = pick.announce;
       }
     }
     if (!cleanAnnounce) {
       const tgt = target.resolve(host);
       if (tgt && tgt.base) cleanAnnounce = String(tgt.base).replace(/\/+$/, '') + '/announce.php';
+    }
+    const sourceAnnounce = torrentClean.announceOf(t.buf) || '';
+    const hasSourcePasskey = /passkey=/i.test(sourceAnnounce) || /passkey=/i.test(t.buf.toString('latin1'));
+    if (!wantClean && hasSourcePasskey) {
+      return { ok: false, code: 'CLEAN_REQUIRED', message: '源种 announce 含 passkey，必须先清洗再提交', http: 409 };
     }
     if (wantClean) {
       if (!cleanAnnounce) {
@@ -319,7 +332,20 @@ async function upload(host, body) {
     return { ok: true, data: Object.assign({}, r.data, { verify: verified, targetResults: item.data.targetResults }) };
   }
 
+  async function upload(host, body) {
+    const b = body || {};
+    const dryRun = b.dryRun !== false;
+    const item = loadQueue(b.queueId);
+    const key = String((item && item.id) || b.queueId || '') + '|' + String(host || '').toLowerCase();
+    if (!dryRun && UPLOADING.has(key)) {
+      return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个目标站正在提交，等这次结束', http: 409 };
+    }
+    if (!dryRun) UPLOADING.add(key);
+    try { return await uploadInner(host, b); }
+    finally { if (!dryRun) UPLOADING.delete(key); }
+  }
+
   return { upload: upload };
 }
 
-module.exports = { makeUpload };
+module.exports = { makeUpload, pickAnnounce };

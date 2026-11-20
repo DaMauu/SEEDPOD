@@ -30,6 +30,8 @@ run adapter adapter.js
 run crawl-detail crawl-detail.js
 run crawl-loop crawl-loop.js
 run category-policy category-policy.js
+run screen-type screen-type.js
+run prepare-guard prepare-guard.js
 run marks marks.js
 run dupe-classify dupe-classify.js
 run dupe-policy dupe-policy.js

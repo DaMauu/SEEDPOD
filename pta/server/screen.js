@@ -3,6 +3,9 @@ const match = require('./match');
 const marksMod = require('./marks');
 const meta = require('./meta');
 const { tx } = require('./db');
+const siteMaps = require('./site-maps');
+const sitePack = require('./site-pack');
+const { typeOf, selectedTypesOf } = require('./category-policy');
 
 function flowRules(sets, rx) {
   /* 只读 ② 初筛卡（fetch[1]），不跨区域借发布/查重卡的规则 */
@@ -46,7 +49,7 @@ function cnOf(subtitle) {
 }
 
 function screenCatalog(ctx, opts) {
-  const { db, one, all, jparse } = ctx;
+  const { db, one, all, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
   const b = opts || {};
   const limit = Math.min(Number(b.limit) || 50, 200);
@@ -76,12 +79,39 @@ function screenCatalog(ctx, opts) {
     if (it.infohash) seenHashes.add(String(it.infohash).toLowerCase());
   });
 
-  const rows = all("SELECT id, site, data FROM catalog WHERE status = 'new' LIMIT 500");
+  const wantTypes = selectedTypesOf(flow);
+  function catInfo(it) {
+    const raw = String(it.catName || it.category || it.cat || '').trim();
+    let label = raw;
+    let type = typeOf(raw);
+    if ((!type || /^\d+$/.test(raw)) && it.site) {
+      try {
+        const maps = siteMaps.getHost(DATA_DIR, it.site).cat || {};
+        const hit = Object.keys(maps).filter(function (k) { return String(maps[k]) === raw; })[0];
+        if (hit) { label = hit; type = typeOf(hit); }
+      } catch (e) { /* 忽略 */ }
+    }
+    if (!type && it.site) {
+      try {
+        const def = sitePack.siteOf(it.site) || {};
+        const cm = def.catMap;
+        if (cm && typeof cm === 'object') {
+          const hit = Object.keys(cm).filter(function (k) { return String(cm[k]) === raw; })[0];
+          if (hit) { label = hit; type = typeOf(hit); }
+        }
+      } catch (e) { /* 忽略 */ }
+    }
+    return { label: label && !/^\d+$/.test(label) ? label : '', type: type || '' };
+  }
+
+  const rows = host
+    ? all("SELECT id, site, data FROM catalog WHERE status = 'new' AND site = ? LIMIT 500", host)
+    : all("SELECT id, site, data FROM catalog WHERE status = 'new' LIMIT 500");
   let checked = 0, selected = 0, skipped = 0;
   const byReason = {};
   const selectedIds = [];
-  const n = (one('SELECT COUNT(*) AS n FROM queue') || { n: 0 }).n;
-  let seq = n;
+  const maxRow = one("SELECT MAX(CAST(SUBSTR(id, 3) AS INTEGER)) AS m FROM queue WHERE id LIKE 'q_%'");
+  let seq = Number(maxRow && maxRow.m) || 0;
 
   for (const r of rows) {
     if (selected >= limit) break;
@@ -90,10 +120,12 @@ function screenCatalog(ctx, opts) {
     checked++;
     const title = String(it.title || '');
     const parsed = meta.parseRelease(title);
+    const ci = catInfo(it);
     const detailText = [title, it.tags, it.subtitle, it.descr, it.intro].filter(Boolean).join(' ');
     const res = String(it.res || '').toLowerCase() || match.resOf(title);
     const bytes = Number(it.sizeBytes) || match.sizeBytesOf(it) || 0;
     let reason = marksMod.complianceReason(it, Date.now());
+    if (!reason && wantTypes.length && ci.type && wantTypes.indexOf(ci.type) < 0) reason = '类型不符 ' + ci.type;
     if (!reason && it.site && siteOn[String(it.site).toLowerCase()] === false) reason = '来源站已停用';
     else if (!reason && hit(rx.deny, title)) reason = '命中排除规则';
     else if (rules.res.length && res && rules.res.indexOf(res) < 0) reason = '分辨率不符 ' + res;
@@ -118,8 +150,9 @@ function screenCatalog(ctx, opts) {
     } catch (e) { defaultTarget = ''; }
     const item = { id: 'q_' + String(++seq).padStart(4, '0'), status: 'pending', createdAt: now(), title: title,
       targetSite: defaultTarget,
-      cat: String(it.catName || parsed.catName || it.category || parsed.category || '').slice(0, 60),
-      catName: String(it.catName || parsed.catName || '').slice(0, 60),
+      cat: String(ci.label || it.catName || parsed.catName || it.category || parsed.category || '').slice(0, 60),
+      catName: String(ci.label || it.catName || parsed.catName || '').slice(0, 60),
+      catId: String(it.cat || '').slice(0, 20),
       category: String(it.category || parsed.category || '').slice(0, 40),
       res: it.res || '', size: it.size || '', site: it.site || '', infohash: it.infohash || '', catalogId: r.id,
       downloadUrl: it.downloadUrl || '', detailsUrl: String(it.detailsUrl || '').slice(0, 300), siteId: it.siteId || '',

@@ -2,6 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 const { infoHash } = require('./target-mock');
+const { pickAnnounce } = require('../server/target-upload');
+const torrentClean = require('../server/torrent-clean');
+const { sameSiteUrl } = require('../server/target-submit');
 async function runUpload(C) {
   const { check, need, json, BASE, DATA, torrent, hash, hits, state, mockPort, makeTorrent2 } = C;
   let qid = '';
@@ -123,6 +126,21 @@ async function runUpload(C) {
     const pv = await json(BASE + '/api/queue/' + encodeURIComponent(id) + '/publish-preview?host=127.0.0.1');
     need(pv.status === 200 && pv.body.ok, '自动媒体预览失败');
     need(pv.body.data.media && pv.body.data.media.kind === 'mediainfo' && /2160p/.test(pv.body.data.media.summary || ''), '预览没显示自动识别的媒体信息：' + JSON.stringify(pv.body.data.media));
+  });
+
+  await check('数字源分类不直通目标站 catId', async function () {
+    const add = await json(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Numeric Cat 2024 1080p', targetSite: '127.0.0.1', status: 'approved', cat: '413', res: '1080p', size: '20 GB' })
+    });
+    need(add.status === 200 && add.body.ok, '建数字分类队列失败');
+    const p = await json(BASE + '/api/targets/127.0.0.1/plan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: add.body.data.id })
+    });
+    need(p.status === 200 && p.body.ok, '计划失败：' + JSON.stringify(p.body && p.body.error));
+    const f = p.body.data.fields || {};
+    need(f.type !== '413', '数字源分类被直通到目标站：' + JSON.stringify(f));
+    need(f.type === undefined || String(f.type) === '', '没映射时不该硬填 type：' + JSON.stringify(f.type));
   });
 
   await check('目标站副标题优先用源副标题', async function () {
@@ -476,6 +494,17 @@ async function runUpload(C) {
     need(hits.length === 1, '重复提交又发了请求：' + hits.length);
   });
 
+  await check('来源种子 URL 只允许同站', async function () {
+    need(sameSiteUrl('source.example', 'https://source.example', 'https://source.example/download.php?id=1') === true, '同站被拒');
+    need(sameSiteUrl('source.example', 'https://source.example', 'https://cdn.source.example/t.torrent') === true, '子域被拒');
+    need(sameSiteUrl('source.example', 'https://source.example', 'https://evil.example/t.torrent') === false, '外部 host 没拒');
+  });
+
+  await check('announce 候选优先 passkey', async function () {
+    const pick = pickAnnounce([{ kind: 'generic', announce: 'https://target.example/announce' }, { kind: 'passkey', announce: 'https://target.example/announce.php?passkey=x' }]);
+    need(pick && pick.kind === 'passkey', '没优先 passkey：' + JSON.stringify(pick));
+  });
+
   await check('上传前通用 announce 清洗', async function () {
     const j = await json(BASE + '/api/targets/127.0.0.1/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -495,6 +524,12 @@ async function runUpload(C) {
     });
     need(raw.status === 200 && raw.body.ok, '关清洗干跑失败');
     need(raw.body.data.cleaned === false, '关掉开关后仍清洗了');
+    const passTorrent = torrentClean.replaceAnnounce(torrent, 'https://source.example/announce.php?passkey=sourcepass');
+    const blocked = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: passTorrent.toString('base64'), dryRun: true })
+    });
+    need(blocked.status === 409 && blocked.body && blocked.body.error && blocked.body.error.code === 'CLEAN_REQUIRED', '关清洗时源种 passkey 没被拦住：' + blocked.status + ' ' + JSON.stringify(blocked.body && blocked.body.error));
     const on = await json(BASE + '/api/flow', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })

@@ -2,6 +2,20 @@
 const adapters = require('./adapters');
 const match = require('./match');
 
+/* 来源种子下载地址必须落在来源站（含子域）或其 base 域，避免把 cookie 带到外部 host */
+function sameSiteUrl(site, base, raw) {
+  let u;
+  try { u = new URL(String(raw || ''), base ? String(base).replace(/\/+$/, '') + '/' : undefined); }
+  catch (e) { return false; }
+  const hosts = [];
+  const siteHost = String(site || '').toLowerCase().trim();
+  if (siteHost) hosts.push(siteHost);
+  try { const b = new URL(String(base || '')); if (b.hostname) hosts.push(b.hostname.toLowerCase()); } catch (e) { /* 忽略 */ }
+  if (!hosts.length) return false;
+  const h = u.hostname.toLowerCase();
+  return hosts.some(function (x) { return h === x || h.endsWith('.' + x); });
+}
+
 function makeSubmit(deps) {
   const throttle = deps.throttle;
   const resolve = deps.resolve;
@@ -26,6 +40,10 @@ function makeSubmit(deps) {
       }
     }
     if (!/^https?:\/\//i.test(dlUrl)) return { err: '条目没有下载地址' };
+    const srcDef = resolve(item.site);
+    if (!sameSiteUrl(item.site, srcDef && srcDef.base, dlUrl)) {
+      return { err: '下载地址不是来源站域名，拒绝发送 cookie' };
+    }
     /* 来源站停用就不抓，避免对停用站发真实请求 */
     if (item.site) {
       const row = one('SELECT data FROM sites WHERE host = ?', String(item.site).toLowerCase());
@@ -221,4 +239,4 @@ function makeSubmit(deps) {
   return { submit: submit, verify: verify, fetchSourceTorrent: fetchSourceTorrent };
 }
 
-module.exports = { makeSubmit };
+module.exports = { makeSubmit, sameSiteUrl };

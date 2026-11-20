@@ -27,9 +27,9 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
     fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
     fs.writeFileSync(path.join(DATA, 'site-defs', HOST + '.json'), JSON.stringify({
       engine: 'nexusphp', base: 'https://detail.example', searchPath: '/torrents.php',
-      params: { name: '{q}', 'categories[0]': '{cats}' }, catMode: 'single'
+      params: { name: '{q}', 'categories[0]': '{cats}' }, catMode: 'single', catMap: { '电影': '401', '剧集': '402' }
     }, null, 2));
-    fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401'] } } } }, null, 2));
+    fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { types: ['电影'], cats: { 电影: ['401'] } } } }, null, 2));
 
     const db = openDB(path.join(DATA, 'seedpod.db'));
     const now = new Date().toISOString();
@@ -101,13 +101,20 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
       st[HOST].fullDoneAt = '2026-01-01T00:00:00Z';
       st[HOST].page = 0;
       db2.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
-      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401', '402'] } } } }, null, 2));
+      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { types: ['电影'], cats: { 电影: ['401', '402'] } } } }, null, 2));
       resetGaps();
       const r = await core.crawlOnce(HOST, { limit: 100, detail: false });
       need(r && !r.err, '改预设后抓取失败：' + JSON.stringify(r));
       const row2 = one("SELECT v FROM meta WHERE k = 'crawl-state'");
       const st2 = row2 ? JSON.parse(row2.v) : {};
       need(st2[HOST] && st2[HOST].fullDoneAt, '改分类预先把全量标记清掉了');
+    });
+    await check('没有保存类型时拒绝抓取，不静默全分类', async function () {
+      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401'] } } } }, null, 2));
+      resetGaps();
+      const r = await core.crawlOnce(HOST, { limit: 100, detail: false });
+      need(r && r.err && r.err.code === 'NO_CATEGORY_TYPES', '缺 types 没拦住：' + JSON.stringify(r));
+      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { types: ['电影'], cats: { 电影: ['401'] } } } }, null, 2));
     });
   } finally {
     if (global.fetch !== realFetch) global.fetch = realFetch;

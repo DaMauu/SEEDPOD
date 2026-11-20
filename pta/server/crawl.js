@@ -105,6 +105,11 @@ function makeCrawl(ctx) {
         : (def.catMap && typeof def.catMap === 'object'
           ? Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k }; })
           : catListFromCats(def.cats)));
+    /* 站点映射总表也补进 catMap，保证只有 site-maps 标签的站也能做类型过滤 */
+    try {
+      const maps = siteMaps.getHost(DATA_DIR, host).cat || {};
+      Object.keys(maps).forEach(function (k) { catMap.push({ id: String(maps[k]), label: k, purpose: k }); });
+    } catch (e) { /* 忽略 */ }
     const seenCat = {};
     catMap = catMap.filter(function (x) { if (!x || x.id == null) return false; const k = String(x.id); if (seenCat[k]) return false; seenCat[k] = true; return true; });
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
@@ -119,8 +124,11 @@ function makeCrawl(ctx) {
       if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
       siteTypes = Array.isArray(entry.types) ? entry.types.map(String).filter(Boolean) : [];
     } catch (e) { /* 没预设就全抓 */ }
-    /* 类型是硬闸门：保存过类型就只抓对应分类；一个都没匹配到就停，不静默全抓 */
-    if (siteTypes.length) {
+    /* 类型是硬闸门：没保存类型就停，保存过类型就只抓对应分类 */
+    if (!siteTypes.length) {
+      return { err: { code: 'NO_CATEGORY_TYPES', message: '这个站还没保存抓取类型；先在流程页选来源站和类型并保存' } };
+    }
+    {
       const filtered = catMap.filter(function (x) { return siteTypes.indexOf(typeOf(x.label)) >= 0 || siteTypes.indexOf(String(x.label)) >= 0; });
       if (!filtered.length) {
         return { err: { code: 'NO_CATEGORY_MATCH', message: '流程页选的类型在站点分类里没匹配到：' + siteTypes.join('/') } };
@@ -128,6 +136,8 @@ function makeCrawl(ctx) {
       catMap = filtered;
       if (ctx.logEvent) ctx.logEvent('info', '抓取', host + ' · 类型 ' + siteTypes.join('/') + ' · ' + catMap.length + ' 个分类');
     }
+    const catLabelById = {};
+    catMap.forEach(function (x) { catLabelById[String(x.id)] = String(x.label || x.purpose || ''); });
     const hasCat = opts.catIdx !== undefined && opts.catIdx !== '' && Number(opts.catIdx) >= 0;
     const catIdx = hasCat ? Math.max(0, Number(opts.catIdx) || 0) : 0;
     const ids = catMap.length ? (hasCat ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : catMap.map(function (x) { return x.id; })) : [];
@@ -192,9 +202,12 @@ function makeCrawl(ctx) {
       try { return new URL(str, def.base + '/').toString(); } catch (e) { return str; }
     };
     const items = rows.slice(0, limit).map(function (r) {
+      const rawCatName = String(r.catName || '');
+      const catId = String(r.catId || (/^\d+$/.test(rawCatName) ? rawCatName : ''));
+      const catLabel = catLabelById[catId] || (rawCatName && !/^\d+$/.test(rawCatName) ? rawCatName : '');
       const item = {
         site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
-        sizeBytes: Number(r.sizeBytes) || 0, cat: String(r.catId || ''), catName: r.catName || '',
+        sizeBytes: Number(r.sizeBytes) || 0, cat: catId, catName: catLabel,
         detailsUrl: absUrl(r.detailsUrl), downloadUrl: absUrl(r.downloadUrl), infohash: r.infohash || '',
         seeders: Number(r.seeders) || 0, addedAt: r.addedAt || '',
         tags: Array.isArray(r.tags) ? r.tags.join(',') : String(r.tags || '')

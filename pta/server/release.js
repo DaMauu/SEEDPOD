@@ -126,6 +126,10 @@ function makeRelease(ctx) {
     const cur = load(id);
     if (!cur) return fail('NOT_FOUND', '条目不存在', 404);
     const it = cur.data;
+    const curStage = String(it.stage || 'draft');
+    if (curStage === 'submitted' || curStage === 'injected') {
+      return fail('ALREADY_SUBMITTED', '这个条目已经提交/注入，不能重新准备', 409);
+    }
     if (typeof body.mediaInfo === 'string' && body.mediaInfo.trim()) it.mediaInfo = body.mediaInfo.slice(0, 200000);
     if (typeof body.bdinfo === 'string' && body.bdinfo.trim()) it.bdinfo = body.bdinfo.slice(0, 200000);
     /* 源站简介里自带的 MediaInfo/BDInfo 自动识别；已有完整字段不覆盖，弱字段清掉 */
@@ -145,7 +149,13 @@ function makeRelease(ctx) {
     it.preparedAt = prepared.at;
     it.targets = (prepared.targets || []).map(function (t) { return t.host }).filter(Boolean);
     if (it.targets.length) it.targetSite = it.targets[0];
-    stage.set(it, 'prepared', { evidence: { host: prepared.targetHost || '', targets: it.targets, shots: prepared.shots || 0, preparedAt: prepared.at } });
+    /* failed 保留失败阶段和错误；previewed 不回退；prepare 不计 retry attempts */
+    if (curStage !== 'failed') {
+      stage.set(it, curStage === 'previewed' ? 'previewed' : 'prepared', {
+        countAttempt: false,
+        evidence: { host: prepared.targetHost || '', targets: it.targets, shots: prepared.shots || 0, preparedAt: prepared.at }
+      });
+    }
     save(cur);
     return { ok: true, data: { id: id, stage: 'prepared', prepared: prepared } };
   }

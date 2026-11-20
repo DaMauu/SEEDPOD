@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.7.518 · 2026-11-20
+
+### 修复审计 P0/P1：类型闸门、发布安全、状态机、并发
+- 抓取：没有保存 types 直接拒绝（NO_CATEGORY_TYPES）；类型变化清 fullDoneAt，下次全量；catName 抓取时映射成可读标签；catMap 合并 site-maps。
+- 初筛：按 catId→label→typeOf 增加类型闸门；host 条件下推到 SQL；queue id 从 MAX 生成。
+- 发布：源种下载地址只允许同站/子域；announce 优先 passkey；关闭清洗时若源种含 passkey 直接拒绝；手动/调度上传加同 queue+host 内存锁。
+- 状态机：submitted/injected 不允许回退；prepare 对已提交返回 409；failed 保留错误/attempts；prepare 不再增加 retry attempts。
+- 前端：发布/整理/操作/重试捕获条目 id，切条目不会作用到新条目。
+- 目标站分类：数字源分类不再直通目标站 catId。
+- 新增 `prepare-guard` 2/2、`screen-type` 2/2；`target` 36/36、`crawl-detail` 3/3、`smoke` 28/28。
+- 行为变化：旧站点必须先按站保存「类型」，否则抓取会停下。
+
 ## v0.7.517 · 2026-11-20
 
 ### 分类政策：类型按站保存，抓取硬过滤

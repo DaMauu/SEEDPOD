@@ -17,9 +17,13 @@ function ensure(item) {
 function set(item, next, opts) {
   ensure(item);
   const o = opts || {};
-  item.stage = STAGES.indexOf(next) >= 0 ? next : 'draft';
+  const target = STAGES.indexOf(next) >= 0 ? next : 'draft';
+  /* submitted/injected 是终态：只允许前进到 injected 或失败，不能被 prepare/preview 回退 */
+  if (item.stage === 'injected' && target !== 'failed') return item;
+  if (item.stage === 'submitted' && target !== 'injected' && target !== 'failed' && target !== 'submitted') return item;
+  item.stage = target;
   item.stageUpdatedAt = now();
-  item.stageAttempts = Number(item.stageAttempts || 0) + 1;
+  if (o.countAttempt !== false) item.stageAttempts = Number(item.stageAttempts || 0) + 1;
   item.stageLastError = o.error ? String(o.error).slice(0, 500) : '';
   item.stageNextRetryAt = o.error ? String(o.nextRetryAt || '') : '';
   if (o.evidence) item.stageEvidence = Object.assign({}, item.stageEvidence || {}, o.evidence);

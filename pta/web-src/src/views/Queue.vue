@@ -244,10 +244,11 @@ function retryTarget(host) {
 }
 async function doRetryTarget(host) {
   if (!sel.value || busy.target) return
+  const id = sel.value.id
   busy.target = true
   try {
-    const body = { queueId: sel.value.id, targets: [host], dryRun: false }
-    const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload', {
+    const body = { queueId: id, targets: [host], dryRun: false }
+    const r = await fetch('/api/queue/' + encodeURIComponent(id) + '/targets/upload', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
     })
     const j = await r.json().catch(() => null)
@@ -354,8 +355,10 @@ async function refresh() {
 function onFailuresReplayed() {
   if (sel.value) select(sel.value.id)
 }
-async function apiAction(body) {
-  const r = await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/action', {
+function stillSelected(id) { return !!(sel.value && sel.value.id === id) }
+async function apiAction(body, onlyId) {
+  const id = String(onlyId || (sel.value && sel.value.id) || '')
+  const r = await fetch('/api/queue/' + encodeURIComponent(id) + '/action', {
     method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body)
   })
@@ -438,6 +441,8 @@ function startProgressPoll() {
 async function act(action) {
   if (!sel.value || busy.act) return
   if (action === 'reject' && !reason.value.trim()) { toast('驳回要写理由'); return }
+  const id = sel.value.id
+  const itemTitle = sel.value.cn || sel.value.title
   busy.act = true
   const body = { action }
   if (action === 'publish') Object.assign(body, {
@@ -446,11 +451,11 @@ async function act(action) {
   })
   if (action === 'reject') body.reason = reason.value
   try {
-    const r = await apiAction(body)
+    const r = await apiAction(body, id)
     const j = r.body
     if (j && j.ok) {
       if (action === 'download') toast((j.data && j.data.message ? j.data.message : '已加入 qB') + (j.data && j.data.progress != null ? ' · ' + Math.round(Number(j.data.progress) * 100) + '%' : ''))
-      else toast(action === 'publish' ? '已发布：' + (sel.value.cn || sel.value.title) : '操作完成')
+      else toast(action === 'publish' ? '已发布：' + itemTitle : '操作完成')
     }
     else toast((j && j.error && j.error.message) || ('操作失败 ' + r.status))
     await refresh()
@@ -546,27 +551,30 @@ function confirmLock() {
 }
 async function doSubmitTarget(targets, confirmHosts) {
   if (!sel.value || busy.target) return
+  const id = sel.value.id
   busy.target = true
   try {
-    const saved = await saveFields()
+    const saved = await saveFields(id)
     if (!saved.ok) {
       toast('标题/简介没保存上：' + ((saved.error && saved.error.message) || '先检查标题'))
       busy.target = false
       return
     }
+    if (!stillSelected(id)) { toast('条目已切换，取消发布'); busy.target = false; return }
     /* 发布前用当前表单重新整理一次，确保简介/媒体信息和图床链接是最新的 */
-    const prep = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
+    const prep = await (await fetch('/api/queue/' + encodeURIComponent(id) + '/prepare', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ targets: form.targets, host: form.targetSite })
     })).json()
+    if (!stillSelected(id)) { toast('条目已切换，取消发布'); busy.target = false; return }
     if (!prep || !prep.ok) {
       toast('发布资料没整理好：' + ((prep && prep.error && prep.error.message) || '检查简介/媒体信息'))
       busy.target = false
       return
     }
-    const body = { queueId: sel.value.id, dryRun: false, confirmHosts: Array.isArray(confirmHosts) ? confirmHosts : [] }
+    const body = { queueId: id, dryRun: false, confirmHosts: Array.isArray(confirmHosts) ? confirmHosts : [] }
     const multi = targets.length > 1
-    const url = multi ? '/api/queue/' + encodeURIComponent(sel.value.id) + '/targets/upload'
+    const url = multi ? '/api/queue/' + encodeURIComponent(id) + '/targets/upload'
       : '/api/targets/' + encodeURIComponent(targets[0]) + '/upload'
     if (multi) body.targets = targets
     const r = await fetch(url, {
@@ -591,27 +599,32 @@ async function doSubmitTarget(targets, confirmHosts) {
 }
 async function prepareRelease() {
   if (!sel.value || prepBusy.value) return
+  const id = sel.value.id
   prepBusy.value = true
   prepMsg.value = ''
   try {
-    const saved = await saveFields()
+    const saved = await saveFields(id)
     if (!saved.ok) {
       prepMsg.value = '整理失败：' + ((saved.error && saved.error.message) || '标题/简介没保存上')
       toast(prepMsg.value)
       return
     }
-    const j = await (await fetch('/api/queue/' + encodeURIComponent(sel.value.id) + '/prepare', {
+    if (!stillSelected(id)) { prepBusy.value = false; return }
+    const j = await (await fetch('/api/queue/' + encodeURIComponent(id) + '/prepare', {
       method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ targets: form.targets, host: form.targetSite })
     })).json()
+    if (!stillSelected(id)) { prepBusy.value = false; return }
     if (j && j.ok) {
       const m = j.data && j.data.prepared && j.data.prepared.media
       const summary = m && m.summary ? m.summary : ''
       toast('发布资料已整理' + (summary ? '：' + summary : ''))
       await refresh()
-      prepMsg.value = summary
-        ? ('已整理：发布时会用当前标题/简介和源站媒体信息。媒体：' + summary)
-        : '已整理：源站简介里没识别到媒体信息，发布时不带。'
+      if (stillSelected(id)) {
+        prepMsg.value = summary
+          ? ('已整理：发布时会用当前标题/简介和源站媒体信息。媒体：' + summary)
+          : '已整理：源站简介里没识别到媒体信息，发布时不带。'
+      }
     } else {
       prepMsg.value = '整理失败：' + ((j && j.error && j.error.message) || '服务端没返回结果')
       toast(prepMsg.value)

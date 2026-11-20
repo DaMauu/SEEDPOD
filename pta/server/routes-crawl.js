@@ -92,9 +92,24 @@ module.exports = function (app, ctx) {
     let raw = {};
     try { raw = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (e) { raw = {}; }
     const sites = raw.sites && typeof raw.sites === 'object' ? raw.sites : raw;
+    const prevTypes = Array.isArray((sites[host] || {}).types) ? sites[host].types.map(String) : [];
+    const typesChanged = JSON.stringify(prevTypes) !== JSON.stringify(want);
     sites[host] = Object.assign({}, sites[host] || {}, { types: want, cats: cats, updatedAt: now() });
     fs.writeFileSync(file, JSON.stringify(raw.sites ? raw : { sites: sites }, null, 2) + '\n', { mode: 0o600 });
-    return ok({ host: host, types: want, matched: matched, unmatched: unmatched, ids: seen.size });
+    /* 类型集合变了：下次抓取按全量重跑；单纯改分类预设仍走增量 */
+    if (typesChanged) {
+      try {
+        const stRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
+        const st = stRow ? (JSON.parse(stRow.v) || {}) : {};
+        if (st[host]) {
+          delete st[host].fullDoneAt;
+          st[host].page = 0;
+          st[host].catIdx = 0;
+          db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st));
+        }
+      } catch (e) { /* 清游标失败不阻塞类型保存 */ }
+    }
+    return ok({ host: host, types: want, matched: matched, unmatched: unmatched, ids: seen.size, fullReset: typesChanged });
   });
 
   function defOf(host) {

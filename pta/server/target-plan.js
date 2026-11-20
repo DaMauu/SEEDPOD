@@ -97,8 +97,8 @@ function makePlan(deps) {
         const fuzzy = catKeys.filter(function (x) { const nx = normKey(x); return nx.length >= 2 && (nx.indexOf(nk) >= 0 || nk.indexOf(nx) >= 0); })[0];
         if (fuzzy && t.catMap[fuzzy] != null) { mapped = t.catMap[fuzzy]; break; }
       }
+      /* 数字源分类不能直通目标站：必须经过目标站 catMap/类型映射，否则会把源站 413 当目标站 413 */
       if (mapped != null) v.catId = String(mapped);
-      else if (/^\d+$/.test(raw)) v.catId = raw;
     }
     const fields = {};
     Object.keys(t.upload.fields || {}).forEach(function (k) {
