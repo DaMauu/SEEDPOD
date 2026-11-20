@@ -193,6 +193,78 @@ function seedDb() {
       await page.close();
     });
 
+    await check('SiteDetail 保存成功后表单保留新值', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sites'; });
+      await page.waitForTimeout(700);
+      await page.locator('[data-view="sites"] .site-item').first().click();
+      await page.waitForTimeout(500);
+      const input = page.locator('.sites-detail-pane .set-field').filter({ hasText: '站点地址' }).locator('input');
+      await input.fill('https://changed.example/index.php');
+      await page.locator('button').filter({ hasText: '保存设置' }).click();
+      await page.waitForTimeout(900);
+      const val = await input.inputValue();
+      need(val === 'https://changed.example/index.php', '保存后表单回退了：' + val);
+      await page.close();
+    });
+
+    await check('Sources 外链只渲染安全协议', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.route('**/api/catalog?**', async function (route) {
+        const items = [
+          { id: 'cat_1', site: 'test-1.example', siteId: '1', title: 'Javascript Link', status: 'new', detailsUrl: 'javascript:alert(1)' },
+          { id: 'cat_2', site: 'test-1.example', siteId: '2', title: 'Data Link', status: 'new', detailsUrl: 'data:text/html,<script>alert(1)</script>' }
+        ];
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 2, matched: 2, items: items, byStatus: { new: 2 } } }) });
+      });
+      await page.route('**/api/credentials', async function (route) { return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) }); });
+      await page.route('**/api/site-defs', async function (route) { return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) }); });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sources'; });
+      await page.waitForTimeout(900);
+      const hrefs = await page.locator('.dl-title a').evaluateAll(function (as) { return as.map(function (a) { return a.getAttribute('href') || ''; }); });
+      need(hrefs.length >= 2, '外链没渲染：' + hrefs.length);
+      hrefs.forEach(function (h) { need(/^https?:\/\//i.test(h), '出现了非 http 外链：' + h); });
+      await page.close();
+    });
+
+    await check('Queue 返回页面刷新当前详情', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let version = 1;
+      const item = function (title) { return { id: 'q_0001', title: title, cn: title, status: 'pending', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] }; };
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [item('Detail Version 1')], matched: 1, counts: {} } }) });
+      });
+      await page.route('**/api/queue/q_0001', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item(version === 1 ? 'Detail Version 1' : 'Detail Version 2') }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(700);
+      need((await page.locator('.qd-title-row h2').innerText()) === 'Detail Version 1', '详情初始值不对');
+      version = 2;
+      await page.evaluate(function () { location.hash = '#dashboard'; });
+      await page.waitForTimeout(250);
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(700);
+      const title = await page.locator('.qd-title-row h2').innerText();
+      need(title === 'Detail Version 2', '返回队列没刷新详情：' + title);
+      await page.close();
+    });
+
     await check('Sources 登录后重载站点/目标列表', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let authed = false;
