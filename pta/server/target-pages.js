@@ -95,6 +95,10 @@ function makeTargetPages(deps) {
     }
     if (res.status >= 400) return { ok: false, code: 'DELETE_REJECTED', message: '删除请求返回 ' + res.status, http: 502 };
     const chkRes = await checkDeletedOnSite(t, id, headers);
+    /* 详情页 3xx 基本是登录页跳转：cookie 失效要单独报，不混成“没删掉” */
+    if (!chkRes.deleted && chkRes.checkStatus >= 300 && chkRes.checkStatus < 400) {
+      return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页跳转了，cookie 可能已失效', http: 401, data: { id: id, sent: true, checkStatus: chkRes.checkStatus } };
+    }
     const deleted = chkRes.deleted;
     const data = Object.assign({ dryRun: false, sent: true, status: res.status, location: !!res.headers.get('location'), deleted: deleted, checkStatus: chkRes.checkStatus }, plan);
     if (!deleted) return { ok: false, code: 'DELETE_UNCONFIRMED', message: '删除请求已提交，但详情页仍能打开，请人工确认', http: 502, data: data };
@@ -117,9 +121,12 @@ function makeTargetPages(deps) {
     let page;
     try { page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) }); }
     catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上' }; }
+    if (page.status >= 300 && page.status < 400) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页跳转了，cookie 可能已失效', http: 401 };
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status };
     if ((Number(page.headers.get('content-length')) || 0) > 2 * 1024 * 1024) return { ok: false, code: 'DETAILS_TOO_LARGE', message: '详情页超过 2MB' };
     const html = await page.text().catch(function () { return ''; });
+    /* 200 也可能是登录页：不能把空详情当成成功 */
+    if (/takelogin\.php|login\.php|请先登录|not\s+authorized/i.test(html)) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页要重新登录，cookie 可能失效', http: 401 };
     const d = adapters.parseDetail(html);
     return { ok: true, data: {
       url: pageUrl, subtitle: d.subtitle || '', descr: d.descr || '', descrBb: d.descrBb || '',
@@ -147,6 +154,7 @@ function makeTargetPages(deps) {
     let page;
     try { page = await fetch(pageUrl, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) }); }
     catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上', http: 502 }; }
+    if (page.status >= 300 && page.status < 400) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页跳转了，cookie 可能已失效', http: 401 };
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status, http: 502 };
     const html = await page.text().catch(function () { return ''; });
     if (/takelogin\.php|login\.php|请先登录/i.test(html)) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页要重新登录，cookie 可能失效', http: 401 };

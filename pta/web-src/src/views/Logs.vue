@@ -49,6 +49,7 @@ let es = null
 let timer = null
 let reconnectTimer = null
 let loaded = false
+let sseFails = 0
 const shown = computed(() => level.value === 'all' ? rows.value : rows.value.filter(r => r.lvl === level.value))
 
 function scrollDown() {
@@ -80,7 +81,9 @@ async function loadLogs() {
 function connect() {
   if (es || !window.EventSource) return
   es = new EventSource('/api/logs/stream?last=' + lastId.value)
+  es.onopen = () => { sseFails = 0 }
   es.onmessage = ev => {
+    sseFails = 0
     try {
       const d = JSON.parse(ev.data)
       push({
@@ -94,6 +97,12 @@ function connect() {
   }
   es.onerror = () => {
     if (es) { es.close(); es = null }
+    sseFails++
+    /* EventSource 不走全局 fetch 钩子：连续失败时主动探一次会话，过期就交给 App 弹登录 */
+    if (sseFails >= 3) {
+      sseFails = 0
+      fetch('/api/session', { credentials: 'same-origin' }).catch(() => null)
+    }
     if (!reconnectTimer) {
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null

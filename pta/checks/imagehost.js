@@ -362,6 +362,33 @@ async function main() {
     need(b === a, '重复替换不应再变：' + b);
   });
 
+  await check('图床配置：危险头被剔除、非法端点被拒、大 data URL 拒绝', async function () {
+    const cfgMod = require(path.join(ROOT, 'server', 'imagehost-config.js'));
+    const prev = process.env.PTA_IMAGE_HOST_HEADERS;
+    process.env.PTA_IMAGE_HOST_HEADERS = JSON.stringify({
+      Host: 'evil.example', Cookie: 'sid=leak', 'Content-Length': '1', 'X-Trace': 'ok', 'X-Num': 7,
+      'bad name': 'x', 'X-Obj': { a: 1 }
+    });
+    const h = cfgMod.envHeaders();
+    if (prev === undefined) delete process.env.PTA_IMAGE_HOST_HEADERS; else process.env.PTA_IMAGE_HOST_HEADERS = prev;
+    need(h['X-Trace'] === 'ok' && h['X-Num'] === '7', '正常头没保留：' + JSON.stringify(h));
+    need(!h.Host && !h.Cookie && !h['Content-Length'] && !h['bad name'] && !h['X-Obj'], '危险/非法头没剔除：' + JSON.stringify(h));
+
+    const prevUrl = process.env.PTA_IMAGE_HOST_URL;
+    const prevUrl2 = process.env.IMAGE_HOST_URL;
+    process.env.PTA_IMAGE_HOST_URL = 'javascript:alert(1)';
+    process.env.IMAGE_HOST_URL = 'javascript:alert(1)';
+    const bad = cfgMod.configFor('custom');
+    if (prevUrl === undefined) delete process.env.PTA_IMAGE_HOST_URL; else process.env.PTA_IMAGE_HOST_URL = prevUrl;
+    if (prevUrl2 === undefined) delete process.env.IMAGE_HOST_URL; else process.env.IMAGE_HOST_URL = prevUrl2;
+    need(bad.endpoint === '', '非法端点没拒：' + bad.endpoint);
+
+    const small = cfgMod.dataUrlOf('data:image/png;base64,' + Buffer.from('abc').toString('base64'));
+    need(small && small.buf.length === 3, '正常 data URL 解析失败');
+    const huge = cfgMod.dataUrlOf('data:image/png;base64,' + Buffer.alloc(cfgMod.MAX_DATA_URL + 1024, 1).toString('base64'));
+    need(huge === null, '超过上限的 data URL 没拒绝');
+  });
+
   server.close(function () {
     const failed = results.filter(function (r) { return !r[0]; }).length;
     results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });

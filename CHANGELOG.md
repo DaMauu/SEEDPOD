@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.554 · 2026-11-22
+
+### 审计二十四轮
+- target-pages 会话失效：详情页 200 登录页/302 跳转/删除后回查跳登录都返回 `LOGIN_REQUIRED`，不再当空详情或“未删除”；新增 target-pages-session 4/4。
+- 图床配置：自定义头剔除 Host/Cookie/Content-Length 等传输头，端点只接受 http/https，data URL 限 8MB；imagehost 24/24。
+- 前端日志：SSE 连续失败 3 次主动探会话，离开日志页停止重连；frontend-regress 12/12。
+- 全量 run.sh 通过。
+
 ## v0.7.553 · 2026-11-22
 
 ### 审计二十三轮

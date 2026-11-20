@@ -345,6 +345,35 @@ function seedDb() {
       await page.close();
     });
 
+    await check('Logs SSE 连续失败会探会话，离开页面停止重连', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let sseHits = 0, sessionHits = 0;
+      await page.route('**/api/session', async function (route) {
+        sessionHits++;
+        return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+      });
+      await page.route('**/api/logs/stream**', async function (route) {
+        sseHits++;
+        return route.fulfill({ status: 401, contentType: 'text/plain', body: 'unauthorized' });
+      });
+      await page.route('**/api/logs?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#logs'; });
+      await page.waitForTimeout(8000);
+      need(sessionHits >= 1, 'SSE 连续失败没探会话：' + sessionHits);
+      const before = sseHits;
+      await page.evaluate(function () { location.hash = '#dashboard'; });
+      await page.waitForTimeout(4000);
+      need(sseHits === before, '离开日志页后仍在重连：' + before + ' -> ' + sseHits);
+      await page.close();
+    });
+
     await check('直达设置页登录后数据能加载', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.goto(BASE + '/#settings', { waitUntil: 'domcontentloaded' });

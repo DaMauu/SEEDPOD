@@ -9,15 +9,30 @@ function providerKey(name) {
   return 'custom';
 }
 
+/* 自定义头只接受普通请求头：不许覆盖 cookie/host/content-length 这类传输头 */
+const HEADER_DENY = { host: 1, cookie: 1, 'set-cookie': 1, 'content-length': 1, 'transfer-encoding': 1, connection: 1, 'content-type': 1 };
 function envHeaders() {
   const raw = String(require('./env').read('IMAGE_HOST_HEADERS','PTA_IMAGE_HOST_HEADERS') || '').trim();
   if (!raw) return {};
-  try {
-    const j = JSON.parse(raw);
-    return j && typeof j === 'object' ? j : {};
-  } catch (e) {
-    return {};
-  }
+  let j;
+  try { j = JSON.parse(raw); } catch (e) { return {}; }
+  if (!j || typeof j !== 'object' || Array.isArray(j)) return {};
+  const out = {};
+  Object.keys(j).slice(0, 20).forEach(function (k) {
+    const name = String(k || '').trim();
+    if (!/^[a-z0-9-]{1,64}$/i.test(name)) return;
+    if (HEADER_DENY[name.toLowerCase()]) return;
+    const v = j[k];
+    if (v === null || v === undefined || typeof v === 'object') return;
+    out[name] = String(v).slice(0, 1000);
+  });
+  return out;
+}
+
+function httpEndpoint(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  try { const u = new URL(s); return /^https?:$/.test(u.protocol) ? u.toString() : ''; } catch (e) { return ''; }
 }
 
 function defaultProvider() {
@@ -32,7 +47,7 @@ function defaultProvider() {
 function configFor(provider) {
   if (provider === 'chevereto') {
     const raw = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || 'https://s3.pterclub.net').trim();
-    const url = /\/api\/1\/upload/i.test(raw) ? raw : raw.replace(/\/+$/, '') + '/api/1/upload';
+    const url = httpEndpoint(/\/api\/1\/upload/i.test(raw) ? raw : raw.replace(/\/+$/, '') + '/api/1/upload');
     return {
       endpoint: url,
       field: 'source',
@@ -47,7 +62,7 @@ function configFor(provider) {
   }
   if (provider === 'custom' || provider === 'local') {
     return {
-      endpoint: String(require('./env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') || '').trim(),
+      endpoint: httpEndpoint(require('./env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') || ''),
       field: String(require('./env').read('IMAGE_HOST_FIELD','PTA_IMAGE_HOST_FIELD') || 'file').trim() || 'file',
       token: String(require('./env').read('IMAGE_HOST_TOKEN','PTA_IMAGE_HOST_TOKEN') || '').trim(),
       headers: envHeaders(),
@@ -63,12 +78,15 @@ function configFor(provider) {
   return { endpoint: '', field: 'file', token: '', headers: {}, verified: false };
 }
 
+const MAX_DATA_URL = 8 * 1024 * 1024;
 function dataUrlOf(s) {
-  const m = /^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=\s]+)$/i.exec(String(s || '').trim());
+  const raw = String(s || '').trim();
+  if (raw.length > MAX_DATA_URL * 2) return null;
+  const m = /^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=\s]+)$/i.exec(raw);
   if (!m) return null;
   const buf = Buffer.from(m[2].replace(/\s+/g, ''), 'base64');
-  if (!buf.length) return null;
+  if (!buf.length || buf.length > MAX_DATA_URL) return null;
   return { mime: m[1].toLowerCase(), buf: buf };
 }
 
-module.exports = { providerKey, envHeaders, defaultProvider, configFor, dataUrlOf };
+module.exports = { providerKey, envHeaders, defaultProvider, configFor, dataUrlOf, httpEndpoint, MAX_DATA_URL };
