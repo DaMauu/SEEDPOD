@@ -331,9 +331,12 @@ async function uploadInner(host, body) {
       verified: !!(verified && verified.found), sourceTorrent: sourceTorrent,
       sourceTorrentError: sourceTorrentError, targetTorrent: publishedTorrent,
       targetTorrentError: publishedTorrentError, publishedTorrent: publishedTorrent,
-      publishedTorrentError: publishedTorrentError, cleaned: cleaned, error: ''
+      publishedTorrentError: publishedTorrentError, cleaned: cleaned, error: '',
+      /* 重放后的新周期从 0 次开始；回查快照也一起重建 */
+      attempts: 0, verify: verified && verified.found ? verified : null
     };
     setTargetResult(item.data, host, result);
+    if (verified && verified.found) setVerify(item.data, host, verified);
     item.data.targetUpload.sourceTorrent = sourceTorrent ? { infohash: sourceTorrent.infohash, size: sourceTorrent.size } : null;
     item.data.targetUpload.targetTorrent = publishedTorrent ? {
       infohash: publishedTorrent.infohash, size: publishedTorrent.size, sameInfohash: publishedTorrent.sameInfohash

@@ -93,6 +93,48 @@ function seedDb() {
       await page.close();
     });
 
+    await check('失败队列重放后详情自动回待确认', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let replayed = false;
+      const item = function () { return { id: 'q_fail_replay', title: 'Replay Failure Row', status: replayed ? 'pending' : 'failed', stage: replayed ? 'prepared' : 'failed', stageLastError: replayed ? '' : '回查未找到', targetSite: 'test-a.example', targets: ['test-a.example'] }; };
+      await page.route('**/api/failures?**', async function (route) {
+        const items = replayed ? [] : [{ id: 'q_fail_replay', title: 'Replay Failure Row', stage: 'failed', failures: [{ stage: 'previewed', code: 'VERIFY_FAILED', attempts: 1 }], dead: false }];
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: items.length, items: items, counts: {}, byStage: {}, retryMax: 2 } }) });
+      });
+      await page.route('**/api/failures/q_fail_replay/replay', async function (route) {
+        replayed = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 'q_fail_replay', status: 'pending', stage: 'prepared' }) });
+      });
+      await page.route('**/api/queue/q_fail_replay', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+      });
+      await page.route('**/api/sites', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(800);
+      await page.locator('#queue-tabs button').filter({ hasText: '失败' }).click();
+      await page.waitForTimeout(600);
+      await page.locator('.qf-row').first().click();
+      await page.waitForTimeout(500);
+      need((await page.locator('.qd-title-row').innerText()).indexOf('Replay Failure Row') >= 0, '失败详情没打开');
+      await page.locator('.qf-replay').first().click();
+      await page.waitForTimeout(900);
+      need(replayed === true, '没发 replay');
+      need((await page.locator('.qd-title-row').innerText()).indexOf('Replay Failure Row') >= 0, '重放后详情丢了');
+      const badge = await page.locator('.qd-title-row .badge').innerText();
+      need(badge.indexOf('待确认') >= 0, '重放后详情状态没刷新：' + badge);
+      await page.close();
+    });
+
     await check('多目标回查展示不串站，缺 host 不借用旧结果', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       const items = {
