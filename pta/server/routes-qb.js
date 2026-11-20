@@ -3,6 +3,7 @@ const path = require('path');
 const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
+const dlPolicy = require('./downloader-policy');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -95,6 +96,8 @@ module.exports = function (app, ctx) {
     if (kind === 'watch') return ok(reply, watch.test({ dir: b.watchPath }));
     const url = qb.normDlUrl(b.url || '');
     if (!url) return bad(reply, 'BAD_URL', '地址要填成 http://主机:端口');
+    const gate = await dlPolicy.assertProbeUrl(url);
+    if (!gate.ok) return bad(reply, gate.code, gate.message, 409);
     const r = await qb.probeDownloader({ url: url, user: b.user, pass: b.pass });
     return ok(reply, r);
   });

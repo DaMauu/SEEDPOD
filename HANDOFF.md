@@ -1,6 +1,16 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-21 14:20（当前 v0.7.537 / 审计七轮）
+最后更新：2026-11-21 15:00（当前 v0.7.538 / 审计八轮）
+
+## 2026-11-21 审计八轮（v0.7.538）
+
+- qB 探测默认拒内网，`PTA_DOWNLOADER_ALLOW` 白名单/`PTA_DOWNLOADER_DENY` 黑名单/`PTA_DOWNLOADER_ALLOW_PRIVATE=1` 开发开关；downloader-policy 3/3。
+- 删除一条被 901px 图标轨覆盖的重复 dock-label 规则。
+- 全量 run.sh 通过。
+
+## 2026-11-21 审计七轮（v0.7.537）
+
+- Escape 在输入框内不关闭站点面板。
 
 ## 2026-11-21 审计六轮（v0.7.536）
 
