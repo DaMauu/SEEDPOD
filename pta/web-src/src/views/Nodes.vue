@@ -249,7 +249,10 @@ async function testConn() {
   busy.test = true
   testResult.value = '正在连接…'
   let req
-  if (editing.value && !form.pass) {
+  const saved = editing.value ? nodes.value.find(function (n) { return n.id === editing.value }) : null
+  /* 只有地址/用户没改、密码留空时才测已存配置；否则必须用表单值测 */
+  const sameSaved = !!(saved && normUrl(form.url) === saved.url && String(form.user || '') === String(saved.user || ''))
+  if (editing.value && !form.pass && sameSaved) {
     req = fetch('/api/downloaders/' + encodeURIComponent(editing.value) + '/test', { method: 'POST', credentials: 'same-origin' })
   } else {
     req = fetch('/api/downloaders/probe', {

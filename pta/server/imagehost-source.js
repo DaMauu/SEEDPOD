@@ -1,6 +1,7 @@
 /* 图源解析 / 缩略图还原 / 简介替换 / 镜像缓存：不负责上传。 */
 const path = require('path');
 const { openDB } = require('./db');
+const urlGuard = require('./url-guard');
 
 function isPrivateUrl(raw, allowPrivate) {
   if (allowPrivate) return false;
@@ -66,6 +67,8 @@ async function resolveImageSource(raw, opts) {
   const url = String(raw || '').trim();
   if (!/^https?:\/\//i.test(url)) return { err: '不是 http/https 图片地址' };
   if (isPrivateUrl(url, o.allowPrivate === true)) return { err: '内网地址不抓' };
+  const gate = await urlGuard.assertPublicHttp(url, { allowPrivate: o.allowPrivate === true });
+  if (!gate.ok) return { err: gate.err };
   if (looksDirect(url)) return { ok: true, direct: url, page: '' };
   let res;
   try {
@@ -77,12 +80,16 @@ async function resolveImageSource(raw, opts) {
   } catch (e) { return { err: '图床页面连不上' }; }
   if (!res.ok) return { err: '图床页面返回 HTTP ' + res.status };
   if (isPrivateUrl(res.url, o.allowPrivate === true)) return { err: '图床页面跳转到内网' };
+  const after = await urlGuard.assertPublicHttp(res.url, { allowPrivate: o.allowPrivate === true });
+  if (!after.ok) return { err: after.err };
   const type = String(res.headers.get('content-type') || '').toLowerCase();
   if (type.indexOf('image/') === 0) return { ok: true, direct: res.url, page: url };
   const html = await res.text().catch(function () { return ''; });
   const direct = ogImageFromHtml(html, res.url || url);
   if (!direct) return { err: '图床页面里没找到原图直链' };
   if (isPrivateUrl(direct, o.allowPrivate === true)) return { err: '原图直链是内网地址' };
+  const dg = await urlGuard.assertPublicHttp(direct, { allowPrivate: o.allowPrivate === true });
+  if (!dg.ok) return { err: dg.err };
   return { ok: true, direct: direct, page: url };
 }
 

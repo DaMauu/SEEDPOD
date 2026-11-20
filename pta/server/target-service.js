@@ -3,6 +3,7 @@
 const { dupeDecision, dedupeSwitchOn } = require('./target-rules');
 const { makeUpload } = require('./target-upload');
 const { makeServiceCommon } = require('./target-service-common');
+const uploadLock = require('./upload-lock');
 
 /* 查重开关语义：其他重复一律跳过；DIY 开关开=仍可发；原盘/禁转开关开=跳过 */
 
@@ -137,16 +138,20 @@ function makeTargetService(ctx, target) {
     } else if (rawAnn && typeof rawAnn === 'object') {
       Object.keys(rawAnn).forEach(function (h) { perAnnounce[String(h).toLowerCase()] = rawAnn[h]; });
     }
+    const dryRun = b.dryRun !== false;
+    if (!dryRun && !uploadLock.acquire(item.id)) return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个条目正在提交，等这次结束', http: 409 };
     const out = [];
-    for (const host of hosts) {
-      const one = Object.assign({}, b);
-      if (perTarget[host]) one.torrentBase64 = perTarget[host];
-      if (perAnnounce[host]) one.cleanAnnounce = perAnnounce[host];
-      else if (hosts.length > 1) one.cleanAnnounce = '';
-      const r = await upload(host, one);
-      out.push({ host: host, ok: !!r.ok, skipped: !!r.skipped, code: r.code || '', message: r.message || '', data: r.data || null });
-    }
-    return { ok: true, data: { queueId: item.id, dryRun: b.dryRun !== false, targets: out, allOk: out.every(function (x) { return x.ok || x.skipped; }) } };
+    try {
+      for (const host of hosts) {
+        const one = Object.assign({}, b, { skipQueueLock: true });
+        if (perTarget[host]) one.torrentBase64 = perTarget[host];
+        if (perAnnounce[host]) one.cleanAnnounce = perAnnounce[host];
+        else if (hosts.length > 1) one.cleanAnnounce = '';
+        const r = await upload(host, one);
+        out.push({ host: host, ok: !!r.ok, skipped: !!r.skipped, code: r.code || '', message: r.message || '', data: r.data || null });
+      }
+    } finally { if (!dryRun) uploadLock.release(item.id); }
+    return { ok: true, data: { queueId: item.id, dryRun: dryRun, targets: out, allOk: out.every(function (x) { return x.ok || x.skipped; }) } };
   }
 
   async function probe(body) {

@@ -46,8 +46,9 @@ async function loadCoverage() {
   } catch (e) {
     reportError('SiteCoverage', e)
     error.value = '覆盖请求发不出去'
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 onMounted(loadCoverage)

@@ -7,6 +7,7 @@ const flowConfig = require('./flow-config');
 const imagehost = require('./imagehost');
 const marks = require('./marks');
 const { dedupeSwitchOn } = require('./target-rules');
+const uploadLock = require('./upload-lock');
 
 /* 目标站 announce 候选优先级：passkey > generic > 站点根兜底 */
 function pickAnnounce(list) {
@@ -346,13 +347,21 @@ async function uploadInner(host, body) {
     const b = body || {};
     const dryRun = b.dryRun !== false;
     const item = loadQueue(b.queueId);
-    const key = String((item && item.id) || b.queueId || '') + '|' + String(host || '').toLowerCase();
+    const qid = String((item && item.id) || b.queueId || '');
+    const key = qid + '|' + String(host || '').toLowerCase();
     if (!dryRun && UPLOADING.has(key)) {
       return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个目标站正在提交，等这次结束', http: 409 };
     }
+    const queued = !dryRun && !b.skipQueueLock;
+    if (queued && qid && !uploadLock.acquire(qid)) {
+      return { ok: false, code: 'UPLOAD_IN_PROGRESS', message: '这个条目正在提交，等这次结束', http: 409 };
+    }
     if (!dryRun) UPLOADING.add(key);
     try { return await uploadInner(host, b); }
-    finally { if (!dryRun) UPLOADING.delete(key); }
+    finally {
+      if (!dryRun) UPLOADING.delete(key);
+      if (queued) uploadLock.release(qid);
+    }
   }
 
   return { upload: upload };

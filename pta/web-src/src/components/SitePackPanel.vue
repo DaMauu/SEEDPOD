@@ -88,8 +88,9 @@ async function loadPack() {
   } catch (e) {
     reportError('SitePack', e)
     msg.value = '站点包请求发不出去'
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 async function confirmOne(e) {
   if (!e || !e.pick || saving.value) return

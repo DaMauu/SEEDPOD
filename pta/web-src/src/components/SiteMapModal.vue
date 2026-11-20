@@ -71,23 +71,26 @@ async function detect() {
   if (!host.value || loading.value) return
   loading.value = true
   msg.value = '识别中…'
-  const r = await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
-  const j = await r.json().catch(() => null)
-  loading.value = false
-  if (!j || !j.ok) { msg.value = (j && j.error && j.error.message) || '识别失败'; return }
-  catRows.value = rowsOf(j.data.cat)
-  form.value = j.data.form || null
-  const tc = (j.data.teamOptions || []).length
-  msg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
+  try {
+    const r = await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
+    const j = await r.json().catch(() => null)
+    if (!j || !j.ok) { msg.value = (j && j.error && j.error.message) || '识别失败'; return }
+    catRows.value = rowsOf(j.data.cat)
+    form.value = j.data.form || null
+    const tc = (j.data.teamOptions || []).length
+    msg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
+  } catch (e) { msg.value = '识别请求发不出去' } finally { loading.value = false }
 }
 async function saveMap() {
   if (!host.value) return
   const cat = {}, team = {}
   catRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) cat[String(r.k).trim()] = String(r.v).trim() })
   teamRows.value.forEach(r => { if (String(r.k).trim() && String(r.v).trim()) team[String(r.k).trim()] = String(r.v).trim() })
-  const r = await fetch('/api/maps/' + encodeURIComponent(host.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team, form: form.value }) })
-  const j = await r.json().catch(() => null)
-  msg.value = j && j.ok ? '已保存到 data/site-maps.json' : ((j && j.error && j.error.message) || '保存失败')
+  try {
+    const r = await fetch('/api/maps/' + encodeURIComponent(host.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team, form: form.value }) })
+    const j = await r.json().catch(() => null)
+    msg.value = j && j.ok ? '已保存到 data/site-maps.json' : ((j && j.error && j.error.message) || '保存失败')
+  } catch (e) { msg.value = '保存请求发不出去' }
 }
 
 watch(() => props.open, function (v) { if (v) init() })

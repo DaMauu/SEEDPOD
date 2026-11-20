@@ -3,6 +3,7 @@
    Pixhost / Imgbox 暂只做计划，不拿未验证的接口去真传。 */
 const { providerKey, defaultProvider, configFor, dataUrlOf } = require('./imagehost-config');
 const { processShots, uploadOne, sleep } = require('./imagehost-upload');
+const urlGuard = require('./url-guard');
 const { isPrivateUrl, isBlacklisted, looksDirect, ogImageFromHtml, resolveImageSource, extractImages, isLikelyThumb, originalFromThumb, readMirrorCache, writeMirrorCache, isOurImageHost, escapeRe, replaceDescription } = require('./imagehost-source');
 
 /* 源站 BBCode 里的远程图片：下载后转存图床，替换成图床链接。
@@ -87,6 +88,8 @@ async function mirrorDescription(description, opts) {
       });
       if (!res.ok) throw new Error('图片返回 HTTP ' + res.status);
       if (isPrivateUrl(res.url, o.allowPrivate === true)) throw new Error('图片跳转到内网地址');
+      const dg = await urlGuard.assertPublicHttp(res.url, { allowPrivate: o.allowPrivate === true });
+      if (!dg.ok) throw new Error(dg.err);
       const type = String(res.headers.get('content-type') || '').toLowerCase();
       if (type && type.indexOf('image/') !== 0) throw new Error('不是图片：' + type.slice(0, 40));
       if ((Number(res.headers.get('content-length')) || 0) > 5 * 1024 * 1024) throw new Error('图片超过 5MB');
