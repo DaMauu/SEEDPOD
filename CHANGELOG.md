@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.571 · 2026-11-22
+
+### 审计四十一轮
+- 拆分 frontend-regress：Dashboard/Sources 组移到 `pta/checks/frontend-regress/sources.js`，主文件 806 → 528 行，质量审计不再提示。
+- 新增 replay-scheduler 2/2：失败重放后的 pending 条目能被下一轮终审接续，未选终审时跳过。
+- 全量 run.sh 通过。
+
 ## v0.7.570 · 2026-11-22
 
 ### 审计四十轮
