@@ -52,6 +52,8 @@ function makeSubmit(deps) {
       if (row) { try { sd = JSON.parse(row.data) || {}; } catch (e) { sd = {}; } }
       if (sd && sd.enabled === false) return { err: '来源站已停用：' + item.site };
     }
+    const dnsGate = await urlGuard.assertNoRebind(dlUrl);
+    if (!dnsGate.ok) return { err: dnsGate.err };
     const c = cookieOf(item.site);
     if (c.err) return { err: '来源站没有 cookie，取不到种子' };
     let res;
@@ -62,6 +64,9 @@ function makeSubmit(deps) {
       });
     } catch (e) {
       return { err: '下载种子失败：' + String(e && e.message || e).slice(0, 120) };
+    }
+    if (res.status !== 200 && res.status >= 300 && res.status < 400) {
+      return { err: '下载地址跳转了，为避免 cookie 外泄停止' };
     }
     if (res.status !== 200) {
       /* Unit3D 下载路由有 /torrents/download/ID 和 /torrents/ID/download 两种；

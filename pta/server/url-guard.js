@@ -66,5 +66,23 @@ async function assertPublicHttp(raw, opts) {
   return { ok: true, url: u.toString() };
 }
 
-module.exports = { normHost, hostOf, matches, isLocalHost, baseOk, sameSite, assertPublicHttp, privateIp };
+/* DNS 重绑定防护：字面内网地址视为显式配置放行；公网域名解析到内网则拒绝。
+   解析失败按不可判定放行，避免离线/本地测试被误杀；真正的公网请求仍会在 fetch 处失败。 */
+async function assertNoRebind(raw, opts) {
+  const o = opts || {};
+  let u;
+  try { u = new URL(String(raw || '')); } catch (e) { return { ok: false, err: 'URL 不合法' }; }
+  if (!/^https?:$/.test(u.protocol)) return { ok: false, err: '只允许 http/https' };
+  const h = normHost(u.hostname);
+  if (!h) return { ok: false, err: 'URL 没有域名' };
+  if (isLocalHost(h) || privateIp(h)) return { ok: true, explicit: true };
+  let list = [];
+  try { list = o.lookup ? await o.lookup(h) : await dns.lookup(h, { all: true }); }
+  catch (e) { return { ok: true, unresolved: true }; }
+  if (!list.length) return { ok: true, unresolved: true };
+  if (list.some(function (x) { return privateIp(x.address); })) return { ok: false, err: '域名解析到内网地址，拒绝连接' };
+  return { ok: true };
+}
+
+module.exports = { normHost, hostOf, matches, isLocalHost, baseOk, sameSite, assertPublicHttp, assertNoRebind, privateIp };
 

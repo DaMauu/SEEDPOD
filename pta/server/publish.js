@@ -108,6 +108,8 @@ function makePublisher(ctx) {
     let res;
     try {
       for (let i = 0; i < 3; i++) {
+        const dnsGate = await urlGuard.assertNoRebind(current);
+        if (!dnsGate.ok) return { err: dnsGate.err };
         res = await fetch(current, { headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
         if (res.status < 300 || res.status >= 400) break;
         const loc = res.headers.get('location') || '';
@@ -320,7 +322,7 @@ function makePublisher(ctx) {
     return { ok: true, data: injectPlanFor(cur.data, dl, body) };
   }
 
-  return { publishItem, injectPlan, ensureSource };
+  return { publishItem, injectPlan, ensureSource, fetchTorrent };
 }
 
 module.exports = { makePublisher };

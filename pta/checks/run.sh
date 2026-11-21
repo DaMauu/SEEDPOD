@@ -44,6 +44,7 @@ run dupe-policy dupe-policy.js
 run collage collage.js
 run flow-config flow-config.js
 run security security.js
+run url-guard url-guard.js
 run secret-rotate secret-rotate.js
 run mock-shape mock-shape.js
 run api api-v2.js
