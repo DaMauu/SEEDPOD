@@ -354,6 +354,29 @@ module.exports = async function run(ctx) {
     need(got.status === 404, '条目没删');
   });
 
+  await check('删除 skipped 队列后来源词条回到待筛选', async () => {
+    const cid = 'cat_skip_del';
+    await fetchA(BASE + '/api/catalog', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: [{ id: cid, title: 'Skip Delete Catalog', status: 'selected' }] })
+    });
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Skip Delete Queue 2020', status: 'approved', site: 'demo-a.example', catalogId: cid,
+        targetResults: { 'a.example': { stage: 'skipped' } } })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
+    need(del.ok && del.data.catalogReset === true, '删除没标 catalogReset：' + JSON.stringify(del));
+    const list = await (await fetchA(BASE + '/api/catalog?limit=500')).json();
+    const c = (list.data.items || []).filter(function (x) { return x.id === cid; })[0];
+    need(c && c.status === 'new', '词条没回到 new：' + JSON.stringify(c && c.status));
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db.prepare('DELETE FROM catalog WHERE id = ?').run(cid);
+    db.close();
+  });
+
   await check('退出登录后会话失效', async () => {
     const r = await fetchA(BASE + '/api/logout', { method: 'POST' });
     need(r.ok, '退出失败');

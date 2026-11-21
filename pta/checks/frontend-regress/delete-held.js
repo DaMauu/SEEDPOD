@@ -8,7 +8,8 @@ module.exports = async function run(ctx) {
       await page.route('**/api/queue/q_del', async function (route) {
         if (route.request().method() !== 'DELETE') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
         calls++;
-        if (calls === 1) return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'TARGET_SUBMITTED', message: '目标站已提交/注入：a.example' } }) });
+        if (calls === 1) return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'INTERNAL', message: 'fixture delete fail' } }) });
+        if (calls === 2) return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'TARGET_SUBMITTED', message: '目标站已提交/注入：a.example' } }) });
         deleted = true;
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'q_del', cleanedFiles: 0, cleanupErrors: [{ hash: 'a'.repeat(40), error: 'EACCES' }] } }) });
       });
@@ -30,11 +31,17 @@ module.exports = async function run(ctx) {
       await page.waitForTimeout(900);
       await page.locator('.q-item').first().click();
       await page.waitForTimeout(450);
-      await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+      const delBtn = function () { return page.locator('.qd-actions button').filter({ hasText: '删除' }); };
+      await delBtn().click();
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(500);
+      need((await page.locator('#toast').innerText()).indexOf('fixture delete fail') >= 0, '500 错误没提示：' + (await page.locator('#toast').innerText()));
+      need(!(await delBtn().isDisabled()), '500 后删除按钮没恢复');
+      await delBtn().click();
       await page.click('#confirm-yes');
       await page.waitForTimeout(500);
       need((await page.locator('#toast').innerText()).indexOf('目标站已提交') >= 0, '提交门禁错误没提示：' + (await page.locator('#toast').innerText()));
-      await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+      await delBtn().click();
       await page.click('#confirm-yes');
       await page.waitForTimeout(700);
       const t = await page.locator('#toast').innerText();
