@@ -217,6 +217,66 @@ module.exports = async function run(ctx) {
     await page.close();
   });
 
+  await check('401 重登后搜索词和翻页位置保持', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const items = [];
+    for (let i = 0; i < 55; i++) {
+      items.push({ id: 'q_page_' + i, title: 'Paging Row ' + i, status: 'pending', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] });
+    }
+    let calls = 0;
+    await page.route('**/api/queue?**', async function (route) {
+      const u = new URL(route.request().url());
+      const q = String(u.searchParams.get('q') || '').toLowerCase();
+      const limit = Number(u.searchParams.get('limit')) || 50;
+      const offset = Number(u.searchParams.get('offset')) || 0;
+      const hit = items.filter(function (x) { return !q || x.title.toLowerCase().indexOf(q) >= 0; });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: hit.slice(offset, offset + limit), matched: hit.length, counts: {} } }) });
+    });
+    await page.route(/\/api\/queue\/(q_page_\d+)$/, async function (route) {
+      const id = route.request().url().split('/').pop();
+      const hit = items.filter(function (x) { return x.id === id; })[0];
+      if (route.request().method() === 'DELETE') {
+        calls++;
+        if (calls === 1) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: id, cleanedFiles: 0, cleanupErrors: [] } }) });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: hit }) });
+    });
+    await page.route('**/api/targets', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+    });
+    await page.route('**/api/sites', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#queue'; });
+    await page.waitForTimeout(900);
+    await page.fill('#queue-q', 'Paging Row');
+    await page.waitForTimeout(700);
+    await page.locator('.queue-pager .pager-link').filter({ hasText: '下一页' }).click();
+    await page.waitForTimeout(500);
+    need((await page.locator('.queue-pager .pager-meta').innerText()).indexOf('2/2') >= 0, '没到第二页');
+    await page.locator('.q-item').first().click();
+    await page.waitForTimeout(400);
+    const title = await page.locator('.qd-title-row').innerText();
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(600);
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.waitForTimeout(1200);
+    need((await page.locator('#queue-q').inputValue()) === 'Paging Row', '重登后搜索词丢了');
+    need((await page.locator('.queue-pager .pager-meta').innerText()).indexOf('2/2') >= 0, '重登后翻页位置丢了：' + (await page.locator('.queue-pager .pager-meta').innerText()));
+    need((await page.locator('.q-item.on').count()) === 1, '重登后选中态没恢复');
+    need((await page.locator('.qd-title-row').innerText()).indexOf(title) >= 0, '重登后详情没恢复');
+    await page.close();
+  });
+
   await check('多条缓存清理失败显示数量和首条错误', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     let deleted = false;

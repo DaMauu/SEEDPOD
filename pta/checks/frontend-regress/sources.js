@@ -133,6 +133,8 @@ module.exports = async function run(ctx) {
     await page.evaluate(function () { location.hash = '#sources'; });
     await page.waitForTimeout(1600);
     need((await page.locator('.dl-row').innerText()).indexOf('已有原盘') >= 0, '删除前没显示 dupe');
+    const markOpts = await page.locator('#dl-mark option').evaluateAll(function (os) { return os.map(function (o) { return (o.value || '') + ':' + (o.textContent || ''); }); });
+    need(!markOpts.some(function (x) { return /dupe|已有原盘/i.test(x); }), 'dupe 过滤下拉还暴露旧字段：' + JSON.stringify(markOpts));
     cleared = true;
     await page.evaluate(function () { location.hash = '#dashboard'; });
     await page.waitForTimeout(200);
