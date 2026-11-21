@@ -55,7 +55,10 @@ function sanitizeDl(body, prev) {
 /* 老数据里可能是明文密码，读到明文就原样用，下次保存自然换成密文 */
 function dlPass(d) { return passOf(d && d.pass, KEYRING); }
 
-async function probeDownloader(d) {
+async function probeDownloader(d, opts) {
+  const o = opts || {};
+  const limit = Math.max(100, Math.min(60000, Number(o.timeoutMs) || DL_TIMEOUT));
+  const baseSignal = o.signal ? (typeof AbortSignal.any === 'function' ? AbortSignal.any([o.signal, AbortSignal.timeout(limit)]) : AbortSignal.timeout(limit)) : AbortSignal.timeout(limit);
   const steps = [];
   const base = d.url;
   const cookie = { value: '' };
@@ -65,7 +68,7 @@ async function probeDownloader(d) {
     const h = Object.assign({}, (opts && opts.headers) || {});
     if (cookie.value) h.cookie = cookie.value;
     const res = await fetch(base + path, Object.assign({}, opts || {}, {
-      headers: h, redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT)
+      headers: h, redirect: 'manual', signal: baseSignal
     }));
     return { res: res, ms: ms(t0) };
   }
@@ -78,7 +81,7 @@ async function probeDownloader(d) {
         method: 'POST',
         headers: { 'content-type': 'application/x-www-form-urlencoded', referer: base, origin: base },
         body: 'username=' + encodeURIComponent(d.user || '') + '&password=' + encodeURIComponent(dlPass(d)),
-        redirect: 'manual', signal: AbortSignal.timeout(DL_TIMEOUT)
+        redirect: 'manual', signal: baseSignal
       });
       const setCookie = login.headers.get('set-cookie') || '';
       /* qBittorrent 4.x 用 SID，5.x 改成 QBT_SID_<端口>，而且 5.x 成功时返回 204 无正文 */
@@ -111,7 +114,7 @@ async function probeDownloader(d) {
     }
     return { pass: pass, version: pass ? version : '', freeSpace: freeSpace, totalSpace: totalSpace, savePath: savePath, steps: steps };
   } catch (e) {
-    steps.push({ step: 'connect', status: 0, ms: 0, error: e && e.name === 'TimeoutError' ? '连接超时' : String(e && e.message || e).slice(0, 160) });
+    steps.push({ step: 'connect', status: 0, ms: 0, error: e && (e.name === 'TimeoutError' || e.name === 'AbortError') ? '连接超时' : String(e && e.message || e).slice(0, 160) });
     return { pass: false, version: '', freeSpace: 0, totalSpace: 0, steps: steps };
   }
 }

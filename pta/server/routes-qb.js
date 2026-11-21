@@ -98,7 +98,7 @@ module.exports = function (app, ctx) {
     if (!url) return bad(reply, 'BAD_URL', '地址要填成 http://主机:端口');
     const gate = await dlPolicy.assertProbeUrl(url);
     if (!gate.ok) return bad(reply, gate.code, gate.message, 409);
-    const r = await qb.probeDownloader({ url: url, user: b.user, pass: b.pass });
+    const r = await qb.probeDownloader({ url: url, user: b.user, pass: b.pass }, { timeoutMs: b.timeoutMs });
     return ok(reply, r);
   });
 

@@ -622,6 +622,41 @@ function seedDb() {
 
     await require('./frontend-regress/sources')({ browser: browser, BASE: BASE, check: check, need: need, fs: fs });
 
+    await check('下载器探测超时后按钮恢复可重试', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let calls = 0;
+      await page.route('**/api/downloaders', async function (route) {
+        if (route.request().method() === 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+        return route.continue();
+      });
+      await page.route('**/api/downloaders/probe', async function (route) {
+        calls++;
+        await new Promise(function (r) { setTimeout(r, 350); });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { pass: false, steps: [{ step: 'connect', error: '连接超时', ms: 300 }] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#crawl'; });
+      await page.waitForTimeout(700);
+      await page.click('#node-add');
+      await page.waitForTimeout(300);
+      await page.locator('.modal .field').filter({ hasText: 'Web 地址' }).locator('input').fill('http://slow.example:8080');
+      const btn = page.locator('#node-test');
+      await btn.click();
+      await page.waitForTimeout(250);
+      need(await btn.isDisabled(), '探测中按钮没禁用');
+      await page.waitForTimeout(500);
+      need(!(await btn.isDisabled()), '超时后按钮没恢复');
+      need((await page.locator('.modal').innerText()).indexOf('连接超时') >= 0, '超时结果没显示');
+      await btn.click();
+      await page.waitForTimeout(500);
+      need(calls === 2, '按钮恢复后不能重试：' + calls);
+      await page.close();
+    });
+
     await check('Logs SSE 连续失败会探会话，离开页面停止重连', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let sseHits = 0, sessionHits = 0;

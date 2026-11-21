@@ -75,7 +75,7 @@
           <input v-model="form.watchPath" class="input" placeholder="/data/watch">
           <span class="soft">绝对路径；外部客户端监视这个目录，种子写入后由它接管。</span></label>
         <div class="sd-cookie-bar">
-          <button class="btn ghost slim" type="button" :disabled="busy.test" @click="testConn">{{ busy.test ? '连接中…' : '测试连接' }}</button>
+          <button class="btn ghost slim" id="node-test" type="button" :disabled="busy.test" @click="testConn">{{ busy.test ? '连接中…' : '测试连接' }}</button>
           <span class="sd-cookie-res">{{ testResult || '还没测试' }}</span>
         </div>
         <div v-if="editing && form.kind === 'qb'" class="nd-cats">

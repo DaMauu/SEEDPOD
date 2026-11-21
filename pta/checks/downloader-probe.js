@@ -2,6 +2,7 @@
    服务端用 PTA_DOWNLOADER_ALLOW=127.0.0.1、DENY=10.0.0.9 启动。 */
 const { spawn } = require('child_process');
 const fs = require('fs');
+const http = require('http');
 const os = require('os');
 const path = require('path');
 
@@ -44,7 +45,11 @@ async function json(url, opts) {
   let out = '';
   child.stdout.on('data', function (d) { out += d; });
   child.stderr.on('data', function (d) { out += d; });
+  let slow = null;
   try {
+    slow = http.createServer(function (req, res) { setTimeout(function () { try { res.writeHead(200); res.end('v4.6.0'); } catch (e) { /* 已断开 */ } }, 1500); });
+    await new Promise(function (r) { slow.listen(0, '127.0.0.1', r); });
+    const slowUrl = 'http://127.0.0.1:' + slow.address().port;
     const end = Date.now() + 8000;
     while (Date.now() < end) {
       try { const r = await fetch(BASE + '/api/health'); if (r.ok) break; } catch (e) { /* 等启动 */ }
@@ -75,6 +80,31 @@ async function json(url, opts) {
       need(r.body.data && r.body.data.pass === false, '端口 1 不该探测成功');
     });
 
+    await check('探测超时返回失败且不卡住', async function () {
+      const t = Date.now();
+      const r = await json(BASE + '/api/downloaders/probe', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: 'qb', url: slowUrl, timeoutMs: 150 })
+      });
+      const ms = Date.now() - t;
+      need(r.status === 200 && r.body && r.body.ok, '超时状态不对：' + r.status);
+      need(r.body.data && r.body.data.pass === false, '超时没返回失败');
+      need(ms < 1200, '超时没及时返回：' + ms);
+      need(JSON.stringify(r.body.data.steps).indexOf('超时') >= 0, '步骤没标超时：' + JSON.stringify(r.body.data.steps));
+    });
+
+    await check('并发探测各自超时互不阻塞', async function () {
+      const t = Date.now();
+      const list = await Promise.all([0, 1, 2].map(function () {
+        return json(BASE + '/api/downloaders/probe', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ kind: 'qb', url: slowUrl, timeoutMs: 150 })
+        });
+      }));
+      need(list.every(function (x) { return x.status === 200 && x.body.data && x.body.data.pass === false; }), '并发结果不对：' + JSON.stringify(list.map(function (x) { return x.status; })));
+      need(Date.now() - t < 1500, '并发探测串行超时：' + (Date.now() - t));
+    });
+
     await check('黑名单优先于私网默认拒绝', async function () {
       const r = await json(BASE + '/api/downloaders/probe', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -84,6 +114,7 @@ async function json(url, opts) {
       need(r.body && r.body.error && r.body.error.code === 'DOWNLOADER_DENIED', '黑名单错误码不对：' + JSON.stringify(r.body && r.body.error));
     });
   } finally {
+    if (slow) slow.close();
     child.kill('SIGTERM');
     fs.rmSync(DATA, { recursive: true, force: true });
   }
