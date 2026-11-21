@@ -118,6 +118,21 @@ async function main() {
     need(q2.status().nextAt > Date.now(), '执行后没推进 nextAt');
   });
 
+  await check('搜索/写入交替按 FIFO 公平执行', async function () {
+    clear();
+    const order = [];
+    const t0 = Date.now();
+    await Promise.all([
+      queue.wait('search').then(function () { order.push('s1'); }),
+      queue.wait('write').then(function () { order.push('w1'); }),
+      queue.wait('search').then(function () { order.push('s2'); }),
+      queue.wait('write').then(function () { order.push('w2'); })
+    ]);
+    const ms = Date.now() - t0;
+    need(order.join(',') === 's1,w1,s2,w2', '执行顺序不公平：' + order.join(','));
+    need(ms >= 180 && ms < 400, '总耗时不正常：' + ms);
+  });
+
   await check('状态里能看到两种间隔', function () {
     const st = queue.status();
     need(st.searchGapMs === 80 && st.writeGapMs === 30, '间隔不对：' + JSON.stringify(st));

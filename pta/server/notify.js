@@ -7,6 +7,7 @@ function makeNotify(ctx) {
   const KEYRING = secretbox.loadKey(DATA_DIR || require('./env').read('DATA_DIR','PTA_DATA') || '.');
   const now = () => new Date().toISOString();
   const COOLDOWN = { until: 0, reason: '' };
+  const COOLDOWN_MS = Math.max(0, Math.min(600000, Number(require('./env').read('NOTIFY_COOLDOWN_MS', 'PTA_NOTIFY_COOLDOWN_MS') || 60000)));
 
   function rawCfg() {
     try {
@@ -100,11 +101,11 @@ function makeNotify(ctx) {
         }
         if (attempt < tries && delay) await new Promise(function (r) { setTimeout(r, delay); });
       }
-      if (!force) { COOLDOWN.until = Date.now() + 60000; COOLDOWN.reason = (last && last.error) || 'webhook failed'; }
+      if (!force) { COOLDOWN.until = Date.now() + COOLDOWN_MS; COOLDOWN.reason = (last && last.error) || 'webhook failed'; }
       return last;
     }
     if (telegramError) {
-      if (!force) { COOLDOWN.until = Date.now() + 60000; COOLDOWN.reason = telegramError.error || 'telegram failed'; }
+      if (!force) { COOLDOWN.until = Date.now() + COOLDOWN_MS; COOLDOWN.reason = telegramError.error || 'telegram failed'; }
       return telegramError;
     }
     return { ok: true, skipped: true, reason: 'no_channel' };

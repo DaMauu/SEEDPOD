@@ -27,6 +27,11 @@ function listen() {
       req.on('data', function (c) { body += c; });
       req.on('end', function () {
         hits.push({ url: req.url, body: body ? JSON.parse(body) : null });
+        if (req.url === '/webhook-delay2') {
+          const n = hits.filter(function (x) { return x.url === '/webhook-delay2'; }).length;
+          if (n === 1) { res.writeHead(500); res.end('delay2 fail'); return; }
+          res.writeHead(200); res.end('ok'); return;
+        }
         if (req.url === '/webhook-delay') {
           const n = hits.filter(function (x) { return x.url === '/webhook-delay'; }).length;
           if (n === 1) { res.writeHead(500); res.end('delay fail'); return; }
@@ -188,6 +193,28 @@ async function main() {
     need(r1.ok === false && afterFirst === before + 1, '首次失败请求数不对：' + JSON.stringify({ r: r1, hits: afterFirst - before }));
     need(r2.ok === false && r2.skipped === true && r2.reason === 'cooldown', '没进入冷却：' + JSON.stringify(r2));
     need(hits.length === afterFirst, '冷却期又打了接口：' + (hits.length - afterFirst));
+  });
+
+  await check('冷却到期后重发成功并清掉冷却', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const prevCd = process.env.PTA_NOTIFY_COOLDOWN_MS;
+    process.env.PTA_NOTIFY_COOLDOWN_MS = '100';
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-delay2' }));
+    const r1 = await n2.send('publish.failed', 'delay2 first', {}, { webhookRetries: 0 });
+    const r2 = await n2.send('publish.failed', 'delay2 cooldown', {}, { webhookRetries: 0 });
+    await new Promise(function (r) { setTimeout(r, 140); });
+    const r3 = await n2.send('publish.failed', 'delay2 after', {}, { webhookRetries: 0 });
+    const r4 = await n2.send('publish.failed', 'delay2 clear', {}, { webhookRetries: 0 });
+    if (prevCd === undefined) delete process.env.PTA_NOTIFY_COOLDOWN_MS; else process.env.PTA_NOTIFY_COOLDOWN_MS = prevCd;
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r1.ok === false, '首次应失败：' + JSON.stringify(r1));
+    need(r2.skipped === true && r2.reason === 'cooldown', '冷却没生效：' + JSON.stringify(r2));
+    need(r3.ok === true && r3.channel === 'webhook', '冷却到期没恢复：' + JSON.stringify(r3));
+    need(r4.ok === true && r4.skipped !== true, '成功后冷却没清：' + JSON.stringify(r4));
   });
 
   await check('events=off 全部跳过', async function () {
