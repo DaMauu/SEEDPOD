@@ -34,7 +34,8 @@ const ctx = {
 const logEvents = [];
 const sends = [];
 let notifyEvents = 'error';
-ctx.notify = { status: function () { return { events: notifyEvents }; }, send: async function () { sends.push(notifyEvents); return { ok: true, skipped: notifyEvents === 'off', reason: notifyEvents === 'off' ? 'off' : '' }; } };
+let notifyFail = false;
+ctx.notify = { status: function () { return { events: notifyEvents }; }, send: async function () { sends.push(notifyEvents); return { ok: !notifyFail, skipped: notifyEvents === 'off', reason: notifyEvents === 'off' ? 'off' : (notifyFail ? 'send failed' : '') }; } };
 let crawlDelay = 0;
 let sourceComplete = false;
 const schedDeps = {
@@ -91,6 +92,12 @@ function need(c, m) { if (!c) throw new Error(m); }
       qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
       need(qd.heldAlertAt === undefined, '通知关闭却写了 heldAlertAt');
       notifyEvents = 'error';
+      notifyFail = true;
+      const rfail = await sched.runNow({ steps: ['publish'] });
+      need(rfail.steps.publish.heldOld === 1, '发送失败时 heldOld 统计不对：' + JSON.stringify(rfail.steps.publish));
+      qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
+      need(qd.heldAlertAt === undefined, '通知发送失败却写了 heldAlertAt');
+      notifyFail = false;
       const rold = await sched.runNow({ steps: ['publish'] });
       need(rold.steps.publish.heldOld === 1, '打开通知后没告警：' + JSON.stringify(rold.steps.publish));
       qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);

@@ -114,20 +114,34 @@ function makeScheduler(ctx, deps) {
       const crawlFail = (steps.crawl && steps.crawl.failed) || 0;
       const pubFail = (steps.publish && steps.publish.failed) || 0;
       const heldOld = (steps.publish && steps.publish.heldOld) || 0;
+      const heldAlertIds = (steps.publish && steps.publish.heldAlertIds) || [];
       const retryFail = (steps.retry && steps.retry.failed) || 0;
       const selected = (steps.screen && steps.screen.selected) || 0;
       const phaseFail = steps.errors.length;
       const firstErr = phaseFail ? steps.errors[0] : null;
+      let notifyResult = null;
       if (ctx.notify) {
         try {
           if (crawlFail || pubFail || retryFail || phaseFail || heldOld) {
-            const extra = phaseFail ? ' · 阶段失败 ' + phaseFail + (firstErr ? '（' + firstErr.phase + '/' + firstErr.code + '）' : '') : '';
+            let extra = phaseFail ? ' · 阶段失败 ' + phaseFail + (firstErr ? '（' + firstErr.phase + '/' + firstErr.code + '）' : '') : '';
             if (heldOld) extra += ' · 源种超 24h 未完成 ' + heldOld;
-            await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail + ' · 重试失败 ' + retryFail + extra, { steps: steps });
+            notifyResult = await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail + ' · 重试失败 ' + retryFail + extra, { steps: steps });
           } else if (ctx.notify.status().events === 'always') {
-            await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });
+            notifyResult = await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });
           }
         } catch (e2) { console.warn('[seedpod] scheduler notify failed:', e2 && e2.message ? e2.message : e2) }
+      }
+      /* 只有真正发出去才记 heldAlertAt；通知关闭/失败都不算，下次还会再试 */
+      if (heldAlertIds.length && notifyResult && notifyResult.ok && !notifyResult.skipped) {
+        heldAlertIds.forEach(function (id) {
+          try {
+            const row = one('SELECT data FROM queue WHERE id = ?', id);
+            if (!row) return;
+            const d = jparse(row.data) || {};
+            d.heldAlertAt = new Date().toISOString();
+            ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(d), d.heldAlertAt, id);
+          } catch (e) { /* 标记失败不挡本轮 */ }
+        });
       }
       if (ctx.logEvent) {
         steps.errors.forEach(function (x) { ctx.logEvent('error', '调度', '阶段失败 · ' + x.phase + '/' + x.code + ' ' + String(x.message || '').slice(0, 160)); });

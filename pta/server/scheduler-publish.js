@@ -11,9 +11,7 @@ function makePublishPhase(deps) {
           const rows = all("SELECT id, data FROM queue WHERE status = 'approved' ORDER BY updated_at ASC LIMIT " + publishLimit);
           const db = o.db;
           const now = function () { return new Date().toISOString(); };
-          /* 通知关着时不写 heldAlertAt，避免以后打开通知却错过首次告警 */
-          let notifyOn = true;
-          try { notifyOn = !!(o.ctx && o.ctx.notify && o.ctx.notify.status().events !== 'off'); } catch (e) { notifyOn = true; }
+          const heldAlertIds = [];
           let ok = 0, failed = 0, held = 0, heldOld = 0;
           const errors = [];
           const queueRows = rows.slice();
@@ -50,10 +48,7 @@ function makePublishPhase(deps) {
                 /* 同一 held 条目最多每天告警一次，避免每轮调度重复发 */
                 if (ageMs > 24 * 3600 * 1000 && (!alertedAt || Date.now() - alertedAt > 24 * 3600 * 1000)) {
                   heldOld++;
-                  if (notifyOn) {
-                    it.heldAlertAt = now();
-                    if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
-                  }
+                  heldAlertIds.push(row.id);
                 }
                 continue;
               }
@@ -120,7 +115,7 @@ function makePublishPhase(deps) {
           const workers = [];
           for (let i = 0; i < Math.min(conc, rows.length); i++) workers.push(worker());
           await Promise.all(workers);
-          return { checked: rows.length, ok: ok, failed: failed, held: held, heldOld: heldOld, errors: errors, concurrency: conc };
+          return { checked: rows.length, ok: ok, failed: failed, held: held, heldOld: heldOld, heldAlertIds: heldAlertIds, errors: errors, concurrency: conc };
   };
 }
 

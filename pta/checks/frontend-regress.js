@@ -93,6 +93,56 @@ function seedDb() {
       await page.close();
     });
 
+    await check('held 失败分页后选中状态与搜索高亮保持一致', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const items = [];
+      for (let i = 0; i < 21; i++) {
+        const id = 'q_held_' + String(i).padStart(2, '0');
+        items.push({ id: id, title: 'Held Page Row ' + i, status: 'approved', stage: 'source', dead: false,
+          failures: [{ kind: 'source', stage: 'source', code: 'SOURCE_INCOMPLETE', message: '源种未下完', attempts: 0, lastAttemptAt: new Date().toISOString() }] });
+      }
+      await page.route('**/api/failures?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: items.length, counts: {}, byStage: { source: items.length }, retryMax: 2, items: items } }) });
+      });
+      await page.route(/\/api\/queue\/(q_held_\d+)$/, async function (route) {
+        const id = route.request().url().split('/').pop();
+        const hit = items.filter(function (x) { return x.id === id; })[0];
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: Object.assign({}, hit, { targetSite: 'a.example', targets: ['a.example'] }) }) });
+      });
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [], matched: 0, counts: {} } }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(800);
+      await page.locator('#queue-tabs button').filter({ hasText: '失败' }).click();
+      await page.waitForTimeout(500);
+      await page.locator('.qf-pager .pager-link').filter({ hasText: '下一页' }).click();
+      await page.waitForTimeout(200);
+      const row = page.locator('.qf-row').first();
+      const title = await row.locator('.qf-title').innerText();
+      await row.click();
+      await page.waitForTimeout(500);
+      need((await page.locator('.qf-row.on').count()) === 1, '第二页选中态不对');
+      need((await page.locator('.qd-title-row').innerText()).indexOf(title) >= 0, '详情没切到第二页条目');
+      await page.locator('.qf-pager .pager-link').filter({ hasText: '上一页' }).click();
+      await page.waitForTimeout(200);
+      need((await page.locator('.qf-row.on').count()) === 0, '第一页仍错误高亮第二页条目');
+      need((await page.locator('.qd-title-row').innerText()).indexOf(title) >= 0, '翻页后详情丢了');
+      await page.fill('#queue-q', title.split(' ').pop());
+      await page.waitForTimeout(700);
+      need((await page.locator('.qf-row').count()) === 1, '搜索没过滤到一条：' + (await page.locator('.qf-row').count()));
+      need((await page.locator('.qf-row.on').count()) === 1, '搜索后选中项没高亮');
+      await page.close();
+    });
+
     await check('失败队列能读出示意中的 held 源种状态', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.route('**/api/failures?**', async function (route) {
