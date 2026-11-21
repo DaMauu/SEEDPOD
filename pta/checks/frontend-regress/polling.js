@@ -116,7 +116,99 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('未登录不拉顶栏数据，Settings 隐藏时不轮询', async function () {
+    await check('Queue 下载进度轮询会话过期暂停，重登恢复', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.clock.install({ time: new Date() });
+    let polls = 0;
+    const item = { id: 'q_prog', title: 'Progress Poll Row', status: 'pending', stage: 'draft', targetSite: 'a.example', targets: ['a.example'],
+      sourceState: { ok: true, hash: 'a'.repeat(40), progress: 0.2, complete: false, at: '2026-01-01T00:00:00.000Z' } };
+    await page.route('**/api/queue?**', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [item], matched: 1, counts: {} } }) });
+    });
+    await page.route('**/api/queue/q_prog/publish-preview**', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { ready: true } }) });
+    });
+    await page.route('**/api/queue/q_prog/action', async function (route) {
+      polls++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { hash: 'a'.repeat(40), progress: 0.5, complete: false } }) });
+    });
+    await page.route('**/api/queue/q_prog', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item }) });
+    });
+    await page.route('**/api/targets', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'a.example', hasCookie: true }] }) });
+    });
+    await page.route('**/api/sites', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#queue'; });
+    await page.clock.fastForward(1200);
+    await page.waitForTimeout(400);
+    await page.clock.fastForward(8300);
+    await page.waitForTimeout(400);
+    need(polls > 0, '选中条目后没启动进度轮询');
+    await page.evaluate(async function () {
+      await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+      await fetch('/api/session', { credentials: 'same-origin' });
+    });
+    await page.clock.fastForward(1200);
+    await page.waitForTimeout(400);
+    const paused = polls;
+    await page.clock.fastForward(20000);
+    await page.waitForTimeout(400);
+    need(polls === paused, '过期后仍在轮询进度：' + paused + ' -> ' + polls);
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.clock.fastForward(2000);
+    await page.waitForTimeout(400);
+    const resumed = polls;
+    await page.clock.fastForward(8300);
+    await page.waitForTimeout(400);
+    need(polls > resumed, '重登后进度轮询没恢复：' + resumed + ' -> ' + polls);
+    await page.close();
+  });
+
+  await check('App 60 秒会话探测只探会话，不拉受保护数据', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.clock.install({ time: new Date() });
+    let sessionHits = 0, protectedHits = 0, watching = false;
+    page.on('request', function (req) {
+      if (!watching) return;
+      const u = req.url();
+      if (/\/api\/session(\?|$)/.test(u)) sessionHits++;
+      if (/\/api\/(queue|downloaders)(\?|$)/.test(u)) protectedHits++;
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(400);
+    watching = true;
+    await page.clock.fastForward(61000);
+    await page.waitForTimeout(500);
+    need(sessionHits >= 1, '60 秒没探会话');
+    await page.evaluate(async function () {
+      await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+      await fetch('/api/session', { credentials: 'same-origin' });
+    });
+    await page.clock.fastForward(1200);
+    await page.waitForTimeout(300);
+    sessionHits = 0; protectedHits = 0;
+    await page.clock.fastForward(61000);
+    await page.waitForTimeout(500);
+    need(sessionHits >= 1, '过期后不再探会话');
+    need(protectedHits === 0, '过期后会话探测仍拉受保护数据：' + protectedHits);
+    await page.close();
+  });
+
+  await check('未登录不拉顶栏数据，Settings 隐藏时不轮询', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await page.clock.install({ time: new Date() });
     let appQueue = 0, appDl = 0, notifyHits = 0, devHits = 0;

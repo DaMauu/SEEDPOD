@@ -346,6 +346,8 @@ async function select(id) {
     metaBusy.value = false
     metaMsg.value = ''
     await loadPreview()
+    /* 会话恢复后继续盯未完成的下载，不必用户再点一次 */
+    if (sel.value && sel.value.sourceState && !sel.value.sourceState.complete && loggedIn()) startProgressPoll()
   } catch (e) { reportError('Queue', e) }
 }
 function setTab(v) { tab.value = v; page.value = 1; loadQueuePage(1) }
@@ -433,7 +435,7 @@ function qbText() {
 function startProgressPoll() {
   if (progressTimer) return
   progressTimer = setInterval(async function () {
-    if (!sel.value) { clearInterval(progressTimer); progressTimer = null; return }
+    if (!sel.value || !loggedIn()) { clearInterval(progressTimer); progressTimer = null; return }
     const id = sel.value.id
     try {
       /* 重新让服务端查一次 qB 进度；只查已记录的 infohash，不再打源站 */
