@@ -8,6 +8,7 @@ const ROOT = path.resolve(__dirname, '..');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-imagehost-'));
 process.env.PTA_DATA = DATA;
 const imagehost = require(path.join(ROOT, 'server', 'imagehost.js'));
+const ihc = require(path.join(ROOT, 'server', 'imagehost-config.js'));
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
 const results = [];
@@ -178,7 +179,7 @@ async function main() {
 
   await check('远程图片转存图床并替换链接', async function () {
     process.env.PTA_IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
-    const a = 'http://127.0.0.1:' + port + '/mirror/a.png';
+    const a = 'http://localhost:' + port + '/mirror/a.png';
     const b = 'http://127.0.0.1:' + port + '/mirror/b.jpg';
     const desc = '简介\n[img]' + a + '[/img]\n[img]' + b + '[/img]';
     const r = await imagehost.mirrorDescription(desc, { provider: '本地图床', dryRun: false, allowReal: true, retries: 0, delayMs: 0, allowPrivate: true });
@@ -252,7 +253,26 @@ async function main() {
     need(imagehost.isBlacklisted('https://i.ibb.co/x/a.png'), 'ibb 没进黑名单');
     need(imagehost.isBlacklisted('https://imgur.com/a'), 'imgur 没进黑名单');
     need(imagehost.isBlacklisted('https://z4a.net/x.jpg'), 'z4a 没进黑名单');
-    need(!imagehost.isBlacklisted('https://img.pterclub.net/x.jpg'), '猫站图床不该进黑名单');
+    process.env.IMAGE_HOST_PROVIDER = 'chevereto';
+    process.env.IMAGE_HOST_URL = 'http://img.example/api/1/upload';
+    need(!imagehost.isBlacklisted('http://img.example/x.jpg'), '自建图床不该进黑名单');
+    need(imagehost.isOurImageHost('http://img.example/x.jpg'), '自建图床没识别');
+    need(!imagehost.isOurImageHost('http://127.0.0.1/x.jpg'), '回环地址不该当图床');
+    process.env.IMAGE_HOST_PROVIDER = '';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+  });
+
+  await check('图床默认地址不内置真实站点', function () {
+    const keys = ['IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL', 'IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST', 'IMAGE_HOST_PROVIDER', 'PTA_IMAGE_HOST_PROVIDER', 'IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER'];
+    const saved = {};
+    keys.forEach(function (k) { saved[k] = process.env[k]; delete process.env[k]; });
+    try {
+      const cfg = ihc.configFor('chevereto');
+      need(cfg.endpoint === '', 'chevereto 还内置了默认地址：' + cfg.endpoint);
+      need(cfg.ssoHost === '', 'chevereto 还内置了默认 SSO 站点：' + cfg.ssoHost);
+    } finally {
+      keys.forEach(function (k) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; });
+    }
   });
 
   await check('远程图片缓存后不再重复上传', async function () {

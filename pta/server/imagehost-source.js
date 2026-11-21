@@ -43,7 +43,7 @@ function looksDirect(raw) {
   if (!/^https?:$/.test(u.protocol)) return false;
   if (/\.(?:jpe?g|png|gif|webp|avif|bmp)(?:$|[?#])/i.test(u.pathname + u.search)) return true;
   const h = u.hostname.toLowerCase();
-  return /(^|\.)(i\.ibb\.co|i\.imgur\.com|s2\.loli\.net|p\.sda1\.dev|i\.duan\.red|cache\.ubits\.club|img\d*\.pixhost\.to|images\d*\.imgbox\.com|i\.postimg\.cc|img\.pterclub\.net)$/i.test(h);
+  return /(^|\.)(i\.ibb\.co|i\.imgur\.com|s2\.loli\.net|p\.sda1\.dev|i\.duan\.red|cache\.ubits\.club|img\d*\.pixhost\.to|images\d*\.imgbox\.com|i\.postimg\.cc)$/i.test(h);
 }
 
 function ogImageFromHtml(html, baseUrl) {
@@ -174,9 +174,25 @@ function writeMirrorCache(map) {
   } catch (e) { try { h.db.close(); } catch (e2) { /* 忽略：失败不影响主流程 */ } }
 }
 
+function ourImageHosts() {
+  const out = [];
+  function add(u) {
+    try { const x = new URL(String(u || '')); if (x.hostname) out.push(x.hostname.toLowerCase()); } catch (e) { /* 忽略非法地址 */ }
+  }
+  add(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '');
+  try {
+    const cfg = require('./imagehost-config').configFor(require('./imagehost-config').defaultProvider());
+    add(cfg.endpoint || '');
+  } catch (e) { /* 配置没读全也不影响黑名单判断 */ }
+  return out.filter(function (h, i, a) {
+    if (a.indexOf(h) !== i) return false;
+    /* 本地开发时源图和图床都在 127.0.0.1，不能把源图当成“已经在图床上” */
+    return h !== '127.0.0.1' && h !== 'localhost' && h !== '::1';
+  });
+}
 function isOurImageHost(raw) {
   const h = hostOfUrl(raw);
-  return h === 'img.pterclub.net' || h === 's3.pterclub.net';
+  return !!h && ourImageHosts().indexOf(h) >= 0;
 }
 
 function escapeRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }

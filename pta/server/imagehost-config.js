@@ -5,7 +5,7 @@ function providerKey(name) {
   if (s === 'pixhost') return 'pixhost';
   if (s === 'imgbox') return 'imgbox';
   if (s === '本地图床' || s === 'local') return 'local';
-  if (s === 'chevereto' || s === 'pterclub' || s === 's3') return 'chevereto';
+  if (s === 'chevereto' || s === 'chevereto-sso' || s === 's3') return 'chevereto';
   return 'custom';
 }
 
@@ -46,7 +46,7 @@ function defaultProvider() {
 
 function configFor(provider) {
   if (provider === 'chevereto') {
-    const raw = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || 'https://s3.pterclub.net').trim();
+    const raw = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '').trim();
     const url = httpEndpoint(/\/api\/1\/upload/i.test(raw) ? raw : raw.replace(/\/+$/, '') + '/api/1/upload');
     return {
       endpoint: url,
@@ -57,7 +57,7 @@ function configFor(provider) {
       auth: 'chevereto',
       user: String(require('./env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER') || '').trim(),
       pass: String(require('./env').read('IMAGE_HOST_PASS', 'PTA_IMAGE_HOST_PASS') || ''),
-      ssoHost: String(require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || 'pterclub.net').trim()
+      ssoHost: String(require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').trim()
     };
   }
   if (provider === 'custom' || provider === 'local') {

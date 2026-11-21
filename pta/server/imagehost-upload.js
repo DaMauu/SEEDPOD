@@ -65,9 +65,10 @@ function siteCookie(host) {
 async function cheveretoSsoLoginInner(cfg) {
   const base = chevBase(cfg);
   if (!base) throw new Error('没有配置图床地址');
-  const host = String(cfg.ssoHost || require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || 'pterclub.net').toLowerCase();
+  const host = String(cfg.ssoHost || require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').toLowerCase();
+  if (!host) throw new Error('没有配置图床 SSO 站点（IMAGE_HOST_SSO_HOST）');
   const ptcookie = String(cfg.ssoCookie || siteCookie(host) || '');
-  if (!ptcookie) throw new Error('猫站 cookie 不可用，先做一次会话自检');
+  if (!ptcookie) throw new Error('SSO 站点 cookie 不可用，先做一次会话自检');
   const jar = {};
   const ua = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
   let r = await fetch(base + '/connect/goauth', { headers: ua, redirect: 'manual', signal: AbortSignal.timeout(20000) });
@@ -76,12 +77,12 @@ async function cheveretoSsoLoginInner(cfg) {
   if (!url) throw new Error('图床 SSO 没有跳转地址');
   {
     const first = new URL(url, base + '/');
-    if (!urlGuard.matches(host, first.hostname)) throw new Error('图床 SSO 跳转到非授权站点，拒绝发送猫站 cookie');
+    if (!urlGuard.matches(host, first.hostname)) throw new Error('图床 SSO 跳转到非授权站点，拒绝发送来源站 cookie');
     url = first.toString();
   }
   r = await fetch(url, { headers: Object.assign({}, ua, { cookie: ptcookie }), redirect: 'manual', signal: AbortSignal.timeout(25000) });
   url = String(r.headers.get('location') || '');
-  if (!url) throw new Error('猫站 OAuth 没有回调地址，cookie 可能失效');
+  if (!url) throw new Error('SSO OAuth 没有回调地址，cookie 可能失效');
   for (let i = 0; i < 4 && url; i++) {
     const nextUrl = new URL(url, base + '/');
     if (!/^https?:$/.test(nextUrl.protocol) || !urlGuard.matches(new URL(base).hostname, nextUrl.hostname)) {
@@ -96,7 +97,7 @@ async function cheveretoSsoLoginInner(cfg) {
   const home = await fetch(base + '/', { headers: Object.assign({}, ua, { cookie: cookieHeader(jar) }), redirect: 'manual', signal: AbortSignal.timeout(20000) });
   cookieJarFrom(home, jar);
   if (home.status >= 300 && home.status < 400 && /\/login/i.test(String(home.headers.get('location') || ''))) {
-    throw new Error('图床 SSO 登录没成功，猫站 cookie 可能失效');
+    throw new Error('图床 SSO 登录没成功，来源站 cookie 可能失效');
   }
   const html = await home.text().catch(function () { return ''; });
   const token = tokenFromHtml(html);

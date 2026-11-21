@@ -44,7 +44,7 @@ docker compose up -d --build
   ```
 - HTTPS 访问时设 `COOKIE_SECURE=1`。
 - 简介图片转存（可选）：
-  - Chevereto（如 PTerClub 图床）：`IMAGE_HOST_PROVIDER=chevereto`、`IMAGE_HOST_URL=https://s3.pterclub.net`。优先用猫站 cookie 走 SSO 登录，不需要 API key；cookie 失效时可用 `IMAGE_HOST_USER` / `IMAGE_HOST_PASS` 登录。
+  - Chevereto（自建或第三方）：`IMAGE_HOST_PROVIDER=chevereto`、`IMAGE_HOST_URL=https://img.example`。需要 SSO 时设 `IMAGE_HOST_SSO_HOST`，用来源站 cookie 登录；cookie 失效时可用 `IMAGE_HOST_USER` / `IMAGE_HOST_PASS` 登录。
   - 普通图床：`IMAGE_HOST_URL`（multipart 上传接口），可选 `IMAGE_HOST_FIELD`（默认 `file`）、`IMAGE_HOST_TOKEN`（Bearer）。
   - 再在面板里打开 `realImages`；不配就保留源站外链。
 - 目标站请求队列（可选）：`SEARCH_WAIT_SEC`（默认 30）、`UPLOAD_WAIT_SEC`（默认 10）、`WAIT_RANDOM_PERCENT`（默认 20）；旧 `PTA_REQ_*` 仍兼容。

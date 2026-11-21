@@ -108,7 +108,7 @@ node pta/scripts/fetch-douying.js tt7736104 --raw
 - 解析 `[img]` 和 `[img=300x300]`，保留尺寸属性。
 - 图片页（ibb/imgur/imgbox/postimages/pixhost/sm.ms 等）自动解析 `og:image` 拿原图直链。
 - 缩略图（imgbox/imgur/pixhost 等）优先从 `[url=图床页面]` 或缩略图规则还原原图，不转缩略图。
-- 猫站图床黑名单（imgur/imgbb/smms/路过/流浪/Audiences/picgd/Z4A/Ubits/Gifyu）最终简介里不保留；能下载就转存猫站图床，失败则删图。
+- 猫站图床黑名单（imgur/imgbb/smms/路过/流浪/Audiences/picgd/Z4A/Ubits/Gifyu）最终简介里不保留；能下载就转存自建图床，失败则删图。
 - `[url=图床页面][img]…[/img][/url]` 的链接和图片一起替换成新图床地址。
 
 ## 新功能怎么进自动流程

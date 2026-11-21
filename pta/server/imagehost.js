@@ -151,4 +151,4 @@ function mirrorDescription(description, opts) {
   return p;
 }
 
-module.exports = { process: processShots, _ssoLogin: _ssoLogin, _webUpload: _webUpload, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, isBlacklisted: isBlacklisted, looksDirect: looksDirect, isLikelyThumb: isLikelyThumb, originalFromThumb: originalFromThumb, resolveImageSource: resolveImageSource, ogImageFromHtml: ogImageFromHtml, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };
+module.exports = { process: processShots, _ssoLogin: _ssoLogin, _webUpload: _webUpload, replaceDescription: replaceDescription, mirrorDescription: mirrorDescription, extractImages: extractImages, isPrivateUrl: isPrivateUrl, isBlacklisted: isBlacklisted, looksDirect: looksDirect, isLikelyThumb: isLikelyThumb, originalFromThumb: originalFromThumb, isOurImageHost: isOurImageHost, resolveImageSource: resolveImageSource, ogImageFromHtml: ogImageFromHtml, providerKey: providerKey, defaultProvider: defaultProvider, configFor: configFor, dataUrlOf: dataUrlOf };
