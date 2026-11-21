@@ -335,6 +335,25 @@ module.exports = async function run(ctx) {
     fs.rmdirSync(file);
   });
 
+  await check('目标站仅 skipped 的条目允许删除并清缓存', async () => {
+    const h = 'f'.repeat(40);
+    const dir = path.join(DATA, 'torrents');
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, 'source-' + h + '.torrent');
+    fs.writeFileSync(file, 'x');
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Skipped Target Delete 2020', status: 'approved', site: 'demo-a.example', infohash: h,
+        targetResults: { 'a.example': { stage: 'skipped', error: '目标站已有' } } })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
+    need(del.ok && del.data.cleanedFiles === 1, 'skipped 目标没放行或没清缓存：' + JSON.stringify(del));
+    need(!fs.existsSync(file), '缓存还在');
+    const got = await fetchA(BASE + '/api/queue/' + q.data.id);
+    need(got.status === 404, '条目没删');
+  });
+
   await check('退出登录后会话失效', async () => {
     const r = await fetchA(BASE + '/api/logout', { method: 'POST' });
     need(r.ok, '退出失败');

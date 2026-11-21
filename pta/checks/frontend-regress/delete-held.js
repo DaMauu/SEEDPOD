@@ -43,7 +43,44 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('删除按钮按状态提示，已提交目标禁用', async function () {
+    await check('多条缓存清理失败显示数量和首条错误', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    let deleted = false;
+    const item = function () { return { id: 'q_del_multi', title: 'Multi Cleanup Row', status: 'approved', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] }; };
+    await page.route('**/api/queue/q_del_multi', async function (route) {
+      if (route.request().method() === 'DELETE') {
+        deleted = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'q_del_multi', cleanedFiles: 0, cleanupErrors: [{ error: 'EACCES' }, { error: 'EPERM' }] } }) });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+    });
+    await page.route('**/api/queue?**', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: deleted ? [] : [item()], matched: deleted ? 0 : 1, counts: {} } }) });
+    });
+    await page.route('**/api/targets', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+    });
+    await page.route('**/api/sites', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#queue'; });
+    await page.waitForTimeout(900);
+    await page.locator('.q-item').first().click();
+    await page.waitForTimeout(450);
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(700);
+    const t = await page.locator('#toast').innerText();
+    need(t.indexOf('缓存清理失败 2 个') >= 0 && t.indexOf('EACCES') >= 0, '多条清理失败提示不对：' + t);
+    await page.close();
+  });
+
+  await check('删除按钮按状态提示，已提交目标禁用', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       const items = {
         q_failed: { id: 'q_failed', title: 'Delete Failed Row', status: 'failed', stage: 'previewed', targetSite: 'a.example', targets: ['a.example'], targetResults: { 'a.example': { stage: 'failed', error: '目标站拒绝' } } },
