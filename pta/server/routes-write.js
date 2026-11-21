@@ -203,6 +203,11 @@ const catalogSync = require('./catalog-sync');
     }
     it.status = target;
     it.actionAt = now();
+    /* 手动改状态后旧 held 观测失效，避免失败队列继续显示“源种未下完” */
+    delete it.heldSince;
+    delete it.heldAt;
+    delete it.heldReason;
+    delete it.heldAlertAt;
     if (b.action === 'retry') {
       /* 重新排队要把 failed 阶段也退回去，否则失败状态会一直跟着条目 */
       const from = String(it.stageFailedFrom || '');

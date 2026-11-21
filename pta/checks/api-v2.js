@@ -588,6 +588,21 @@ async function main() {
     db2.close();
   });
 
+  await check('单条改状态会清掉 held 观测字段', async () => {
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Held Skip Single 2020', status: 'approved', site: 'demo-a.example',
+        heldSince: '2026-01-01T00:00:00.000Z', heldAt: '2026-01-01T00:00:00.000Z', heldReason: '源种未下完' })
+    })).json();
+    need(q.ok && q.data.id, '建 held 条目失败：' + JSON.stringify(q));
+    const r = await (await fetchA(BASE + '/api/queue/' + q.data.id + '/action', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'skip' })
+    })).json();
+    need(r.ok && r.data.status === 'skipped', '跳过失败：' + JSON.stringify(r));
+    const got = await (await fetchA(BASE + '/api/queue/' + q.data.id)).json();
+    need(got.data.heldSince === undefined && got.data.heldAt === undefined && got.data.heldReason === undefined, '单条改状态没清 held：' + JSON.stringify(got.data));
+  });
+
   await check('驳回后可重新送审：清理由、回待审、不进失败统计', async () => {
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

@@ -1,6 +1,7 @@
 /* held 条目在失败队列：不判死信、不受 30 天保留隐藏、分页正常。 */
 const { DatabaseSync } = require('node:sqlite');
 const { makeFailureQueue } = require('../server/failure-queue');
+const { applyStatus } = require('../server/queue-bulk');
 
 const db = new DatabaseSync(':memory:');
 db.exec('CREATE TABLE queue(id TEXT PRIMARY KEY, status TEXT, title TEXT, data TEXT, updated_at TEXT)');
@@ -40,6 +41,16 @@ check('held 与失败一起分页', function () {
   const p2 = q.list({ limit: 10, offset: 10 });
   need(p1.total >= 25 && p1.items.length === 10 && p2.items.length === 10, '分页不对：' + JSON.stringify({ total: p1.total, a: p1.items.length, b: p2.items.length }));
   need(p2.items.some(function (x) { return x.failures[0].kind === 'source'; }), '第二页没有 held');
+});
+
+check('跳过后清掉 held，不再出现在失败队列', function () {
+  ins.run('q_held_skip', 'approved', 'Held Skip', JSON.stringify({ id: 'q_held_skip', status: 'approved', heldSince: old, heldAt: old, heldReason: '源种未下完', heldAlertAt: old }), new Date().toISOString());
+  const out = applyStatus({ db: db, one: function (s, ...a) { return db.prepare(s).get(...a); }, jparse: function (s) { try { return JSON.parse(s); } catch (e) { return null; } } }, ['q_held_skip'], 'skipped');
+  need(out.changed === 1, '状态没改：' + JSON.stringify(out));
+  const d = JSON.parse(db.prepare('SELECT data FROM queue WHERE id = ?').get('q_held_skip').data);
+  need(d.heldSince === undefined && d.heldAt === undefined && d.heldReason === undefined && d.heldAlertAt === undefined, 'held 字段没清：' + JSON.stringify(d));
+  const r = q.list({ limit: 50 });
+  need(!r.items.some(function (x) { return x.id === 'q_held_skip'; }), '跳过项仍在失败队列');
 });
 
 const pass = results.filter(function (r) { return r[0]; }).length;

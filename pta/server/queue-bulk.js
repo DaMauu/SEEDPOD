@@ -15,6 +15,11 @@ function applyStatus(ctx, ids, target, reason) {
       const it = jparse(row.data) || {};
       it.status = target;
       it.actionAt = now;
+      /* 状态被人为改走（跳过/驳回/批准）后，旧的 held 观测不能继续挂在失败队列 */
+      delete it.heldSince;
+      delete it.heldAt;
+      delete it.heldReason;
+      delete it.heldAlertAt;
       if (target === 'rejected') it.rejectedAt = now;
       /* 批准或退回待审时清掉旧驳回理由 */
       if (target === 'approved' || target === 'pending') { delete it.reason; delete it.rejectedAt; }
