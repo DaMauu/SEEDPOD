@@ -79,10 +79,15 @@ const base = { id: 'q_gate', status: 'pending', stage: 'previewed', title: 'Revi
       need(d.status === 'pending', '拦下后状态变了：' + d.status);
     });
 
-    await check('目标站计划就绪后继续到下载器门禁', async function () {
-      put(Object.assign({}, base, { review: { ok: true, missing: [] }, prepared: { targets: [{ host: 'a.example', target: { ready: true, fields: { type: '1' } } }] } }));
+    await check('重新准备把目标站标为就绪后门禁放行', async function () {
+      put(Object.assign({}, base, { review: { ok: true, missing: [] }, prepared: { targets: [{ host: 'a.example', target: { ready: false } }] } }));
+      const blocked = await publisher.publishItem('q_gate', { dryRun: false });
+      need(blocked.code === 'TARGET_NOT_READY', '首次没拦：' + JSON.stringify(blocked));
+      const d = read('q_gate');
+      d.prepared = { targets: [{ host: 'a.example', target: { ready: true, fields: { type: '1' } } }] };
+      db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(d), new Date().toISOString(), 'q_gate');
       const r = await publisher.publishItem('q_gate', { dryRun: false });
-      need(r.ok === false && r.code === 'NO_DOWNLOADER', '就绪后没继续：' + JSON.stringify(r));
+      need(r.ok === false && r.code === 'NO_DOWNLOADER', '就绪后没放行：' + JSON.stringify(r));
     });
 
     await check('补全终审后可继续到后续门禁', async function () {
