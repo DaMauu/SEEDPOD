@@ -120,6 +120,19 @@ async function main() {
     fs.unlinkSync(ok.path);
   });
 
+  await check('watch 并发写入不留临时文件', async function () {
+    const dir = path.join(DATA, 'watch-concurrent');
+    fs.mkdirSync(dir, { recursive: true });
+    const list = await Promise.all([0, 1, 2, 3, 4].map(function (i) {
+      return Promise.resolve(watch.addTorrent({ dir: dir, buf: TORRENT, filename: 'c' + i + '.torrent' }));
+    }));
+    need(list.every(function (x) { return x.ok; }), '并发写入失败：' + JSON.stringify(list));
+    need(list.every(function (x) { return fs.existsSync(x.path); }), '并发文件缺失');
+    const leftovers = fs.readdirSync(dir).filter(function (f) { return /\.tmp$/.test(f); });
+    need(leftovers.length === 0, '并发后留了临时文件：' + JSON.stringify(leftovers));
+    list.forEach(function (x) { fs.unlinkSync(x.path); });
+  });
+
   await check('创建 watch 下载器并列出', async function () {
     const j = await json(BASE + '/api/downloaders', {
       method: 'POST', headers: { 'content-type': 'application/json' },

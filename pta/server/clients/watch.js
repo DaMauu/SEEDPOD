@@ -2,6 +2,7 @@
    不联网；只做本地文件写入与可写性探测。 */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const env = require('../env');
 
 /* watch 只能写进明确允许的根：WATCH_ROOT、MEDIA_ROOT、DATA_DIR/watch 或 DATA_DIR 本身 */
@@ -65,7 +66,7 @@ function addTorrent(opts) {
   try {
     fs.mkdirSync(d.dir, { recursive: true, mode: 0o700 });
     const out = path.join(d.dir, name);
-    tmp = path.join(d.dir, '.seedpod-' + process.pid + '-' + Date.now() + '.tmp');
+    tmp = path.join(d.dir, '.seedpod-' + process.pid + '-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex') + '.tmp');
     fs.writeFileSync(tmp, buf, { mode: 0o600 });
     fs.renameSync(tmp, out);
     tmp = '';

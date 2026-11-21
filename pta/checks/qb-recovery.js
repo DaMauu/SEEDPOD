@@ -12,6 +12,7 @@ const results = [];
 let sid = 'SID=good';
 let logins = 0;
 let expireNext = false;
+let slowVersion = false;
 const server = http.createServer(function (req, res) {
   const cookie = String(req.headers.cookie || '');
   if (req.method === 'POST' && req.url === '/api/v2/auth/login') {
@@ -29,7 +30,10 @@ const server = http.createServer(function (req, res) {
   if (req.url.indexOf('/api/v2/') === 0) {
     if (expireNext) { expireNext = false; res.writeHead(401); res.end('expired'); return; }
     if (cookie.indexOf(sid.split('=')[1]) < 0) { res.writeHead(401); res.end('Forbidden'); return; }
-    if (req.url === '/api/v2/app/version') { res.writeHead(200); res.end('v4.6.0'); return; }
+    if (req.url === '/api/v2/app/version') {
+      if (slowVersion) { setTimeout(function () { try { res.writeHead(200); res.end('v4.6.0'); } catch (e) { /* 已超时断开 */ } }, 400); return; }
+      res.writeHead(200); res.end('v4.6.0'); return;
+    }
     if (req.url === '/api/v2/sync/maindata') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ server_state: { free_space_on_disk: 12345, save_path: '/dl' } })); return; }
     if (req.url === '/api/v2/torrents/info') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify([{ hash: 'a'.repeat(40), name: 'x', progress: 1, state: 'uploading', save_path: '/dl' }])); return; }
     if (req.url === '/api/v2/torrents/categories') { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{}'); return; }
@@ -63,6 +67,16 @@ const BUF = Buffer.from('d4:infod4:name1:x6:lengthi1eeee');
     const [c1, c2] = await Promise.all([qb2.probeDownloader(probe), qb3.probeDownloader(probe)]);
     if (!(c1.pass === true && c2.pass === true)) throw new Error('并发探测失败：' + JSON.stringify({ c1: c1, c2: c2 }));
     results.push([true, '并发探测各自登录不串会话', '']);
+
+    const prevTimeout = process.env.PTA_DL_TIMEOUT_MS;
+    process.env.PTA_DL_TIMEOUT_MS = '120';
+    const qbFast = makeQb(DATA);
+    slowVersion = true;
+    const slow = await qbFast.probeDownloader(probe);
+    slowVersion = false;
+    if (prevTimeout === undefined) delete process.env.PTA_DL_TIMEOUT_MS; else process.env.PTA_DL_TIMEOUT_MS = prevTimeout;
+    if (slow.pass !== false) throw new Error('超时探测没失败：' + JSON.stringify(slow));
+    results.push([true, '探测超时会明确失败', '']);
 
     const ro = path.join(DATA, 'readonly');
     fs.mkdirSync(ro, { recursive: true, mode: 0o500 });

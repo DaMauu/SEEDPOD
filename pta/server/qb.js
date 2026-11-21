@@ -2,6 +2,7 @@
 const secretbox = require('./secretbox');
 const crypto = require('crypto');
 const path = require('path');
+const env = require('./env');
 function passOf(v, ring) {
   const s = String(v || '');
   if (!s) return '';
@@ -14,7 +15,7 @@ function passOf(v, ring) {
 
 function makeQb(DATA_DIR) {
 const KEYRING = secretbox.loadKey(DATA_DIR);
-const DL_TIMEOUT = 8000;
+const DL_TIMEOUT = Math.max(100, Math.min(60000, Number(env.read('DOWNLOADER_TIMEOUT_MS', 'PTA_DL_TIMEOUT_MS') || 8000)));
 
 function publicDl(d) {
   return { id: d.id, name: d.name || '', url: d.url, user: d.user || '', hasPass: !!d.pass, disableAuth: !!d.disableAuth,
