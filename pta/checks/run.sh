@@ -73,6 +73,7 @@ run failpoint failpoint.js
 run errors errors.js
 run failures failures.js
 run failure-replay failure-replay.js
+run failure-held failure-held.js
 run replay-scheduler replay-scheduler.js
 run dedupe-errors dedupe-errors.js
 run rules-registry rules-registry.js

@@ -29,10 +29,12 @@ const ctx = {
   jparse: function (s) { try { return JSON.parse(s); } catch (e) { return null; } },
   DATA_DIR: DATA,
   allowReal: function (key) { return key === 'realCrawl' || key === 'realPublish'; },
-  logEvent: function () {}
+  logEvent: function (level, tag, msg) { logEvents.push(level + ':' + tag + ':' + msg); }
 };
+const logEvents = [];
+const sends = [];
 let notifyEvents = 'error';
-ctx.notify = { status: function () { return { events: notifyEvents }; }, send: async function () { return { ok: true }; } };
+ctx.notify = { status: function () { return { events: notifyEvents }; }, send: async function () { sends.push(notifyEvents); return { ok: true, skipped: notifyEvents === 'off', reason: notifyEvents === 'off' ? 'off' : '' }; } };
 let crawlDelay = 0;
 let sourceComplete = false;
 const schedDeps = {
@@ -111,13 +113,30 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(qd.heldSince === undefined && qd.heldReason === undefined, '完成后 held 没清：' + JSON.stringify({ s: qd.heldSince, r: qd.heldReason }));
     });
 
+    await check('通知关闭时调度仍写日志和状态，不外部发送', async function () {
+      notifyEvents = 'off';
+      sends.length = 0; logEvents.length = 0;
+      process.env.NODE_ENV = 'test';
+      process.env.SEEDPOD_FAIL_STEP = 'publish';
+      const r = await sched.runNow({ steps: ['publish'] });
+      delete process.env.SEEDPOD_FAIL_STEP;
+      delete process.env.NODE_ENV;
+      need(r.ok === true && r.partial === true, '阶段异常应部分失败：' + JSON.stringify({ ok: r.ok, partial: r.partial }));
+      need(r.steps.errors.some(function (x) { return x.phase === 'publish' && x.code === 'FAILPOINT'; }), '没记录阶段失败：' + JSON.stringify(r.steps.errors));
+      need(logEvents.some(function (x) { return /阶段失败/.test(x); }), '通知关闭时没写日志：' + JSON.stringify(logEvents));
+      const st = sched.status();
+      need(st.lastResult && st.lastResult.errors && st.lastResult.errors.length >= 1, '通知关闭时没落调度状态');
+      need(sends.length >= 1, '调度没尝试通知');
+      notifyEvents = 'error';
+    });
+
     await check('调度状态重启后仍可读', async function () {
       const st1 = sched.status();
       const again = makeScheduler(ctx, schedDeps);
       const st2 = again.status();
       need(st1.lastRunAt > 0, '首轮 lastRunAt 没写');
       need(st2.lastRunAt === st1.lastRunAt, '重启后 lastRunAt 变了：' + JSON.stringify({ a: st1.lastRunAt, b: st2.lastRunAt }));
-      need(st2.lastResult && st2.lastResult.publish && typeof st2.lastResult.publish.held === 'number', '重启后 lastResult 丢了');
+      need(st2.lastResult && typeof st2.lastResult === 'object' && Array.isArray(st2.lastResult.errors), '重启后 lastResult 丢了：' + JSON.stringify(st2.lastResult));
     });
 
     await check('保存异常返回失败后 running 已释放', async function () {

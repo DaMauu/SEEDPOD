@@ -53,7 +53,9 @@ function failuresOf(d) {
 
 function isDead(failures, max) {
   const now = Date.now();
-  return (failures || []).some(function (f) {
+  /* held 只是等源种下载，不算死信；同一条目上的真实失败仍按原规则判断 */
+  const real = (failures || []).filter(function (f) { return f.kind !== 'source'; });
+  return real.some(function (f) {
     const at = Date.parse(f.lastAttemptAt || '') || 0;
     if (max > 0 && f.attempts >= max) return true;
     return at > 0 && now - at > DEAD_AFTER_MS && !f.nextRetryAt;
@@ -87,7 +89,9 @@ function makeFailureQueue(ctx) {
       const d = jparse(row.data) || {};
       const failures = failuresOf(d);
       if (!failures.length) return;
-      if (cutoff > 0) {
+      const held = failures.some(function (f) { return f.kind === 'source'; });
+      /* held 长期未完成也要一直可见，不能被 30 天保留策略藏掉 */
+      if (cutoff > 0 && !held) {
         const times = [];
         failures.forEach(function (f) {
           const at = Date.parse(f.lastAttemptAt || '') || 0;
