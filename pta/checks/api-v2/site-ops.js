@@ -368,9 +368,14 @@ module.exports = async function run(ctx) {
         targetResults: { 'a.example': { stage: 'skipped' } } })
     })).json();
     need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const beforeCat = await (await fetchA(BASE + '/api/catalog?limit=1')).json();
     const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
     need(del.ok && del.data.catalogReset === true, '删除没标 catalogReset：' + JSON.stringify(del));
     const list = await (await fetchA(BASE + '/api/catalog?limit=500')).json();
+    const bs1 = beforeCat.data.byStatus || {};
+    const bs2 = list.data.byStatus || {};
+    need(Number(bs2.new) === Number(bs1.new) + 1, 'new 计数没加一：' + JSON.stringify({ b: bs1.new, a: bs2.new }));
+    need(Number(bs2.selected) === Number(bs1.selected) - 1, 'selected 计数没减一：' + JSON.stringify({ b: bs1.selected, a: bs2.selected }));
     const c = (list.data.items || []).filter(function (x) { return x.id === cid; })[0];
     need(c && c.status === 'new', '词条没回到 new：' + JSON.stringify(c && c.status));
     need(!c.skipReason && !c.skippedAt, '跳过原因没清：' + JSON.stringify({ r: c.skipReason, s: c.skippedAt }));

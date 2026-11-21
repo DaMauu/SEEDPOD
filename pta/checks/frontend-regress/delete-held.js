@@ -58,13 +58,19 @@ module.exports = async function run(ctx) {
 
     await check('删除遇到 401 会提示并弹回登录', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    let calls = 0, deleted = false;
     const item = { id: 'q_del_401', title: 'Delete 401 Row', status: 'approved', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] };
     await page.route('**/api/queue/q_del_401', async function (route) {
-      if (route.request().method() === 'DELETE') return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+      if (route.request().method() === 'DELETE') {
+        calls++;
+        if (calls === 1) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+        deleted = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'q_del_401', cleanedFiles: 0, cleanupErrors: [] } }) });
+      }
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item }) });
     });
     await page.route('**/api/queue?**', async function (route) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [item], matched: 1, counts: {} } }) });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: deleted ? [] : [item], matched: deleted ? 0 : 1, counts: {} } }) });
     });
     await page.route('**/api/targets', async function (route) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
@@ -86,6 +92,18 @@ module.exports = async function run(ctx) {
     await page.waitForTimeout(600);
     need((await page.locator('#toast').innerText()).indexOf('需要登录') >= 0, '401 没提示：' + (await page.locator('#toast').innerText()));
     need((await page.locator('#login-mask').count()) === 1, '401 后没弹登录');
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.waitForTimeout(1100);
+    await page.locator('.q-item').first().click();
+    await page.waitForTimeout(400);
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(800);
+    need(calls === 2, '重新登录后没重试删除：' + calls);
+    need((await page.locator('#toast').innerText()).indexOf('已删除') >= 0, '重新登录后删除没成功：' + (await page.locator('#toast').innerText()));
+    need((await page.locator('.q-item').count()) === 0, '重新登录后列表没刷新');
     await page.close();
   });
 
