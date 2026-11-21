@@ -56,7 +56,7 @@ async function runUpload(C) {
     need(hits.length === 0, '每站种子干跑发了请求：' + hits.length);
     const multi3 = await json(BASE + '/api/queue/' + encodeURIComponent(qid) + '/targets/upload', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64'), targetAnnounces: { '127.0.0.1': 'https://target.example/announce.php?passkey=test' }, dryRun: true })
+      body: JSON.stringify({ targets: ['127.0.0.1'], torrentBase64: torrent.toString('base64'), targetAnnounces: { '127.0.0.1': 'http://127.0.0.1:' + mockPort + '/announce.php?passkey=test' }, dryRun: true })
     });
     need(multi3.status === 200 && multi3.body.ok, '清洗干跑失败：' + multi3.status);
     need(multi3.body.data.targets[0].data.cleaned === true, '清洗标记没出来');
@@ -581,6 +581,21 @@ async function runUpload(C) {
       body: JSON.stringify({ sets: { pub: [[{ t: '上传前清洗 tracker', on: true }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(on.status === 200 && on.body.ok, '恢复清洗失败');
+  });
+
+  await check('手工 announce 只允许目标站域名', async function () {
+    const evil = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: true,
+        cleanAnnounce: 'https://evil.example/announce.php?passkey=evilpass123456' })
+    });
+    need(evil.status === 400 && evil.body && evil.body.error && evil.body.error.code === 'BAD_ANNOUNCE', '外部 announce 没拦住：' + evil.status + ' ' + JSON.stringify(evil.body && evil.body.error));
+    const good = await json(BASE + '/api/targets/127.0.0.1/upload', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ queueId: qid, torrentBase64: torrent.toString('base64'), dryRun: true,
+        cleanAnnounce: 'http://127.0.0.1:' + mockPort + '/announce.php?passkey=okpass1234567890' })
+    });
+    need(good.status === 200 && good.body.ok && good.body.data.cleaned === true, '本站 announce 被误拦：' + good.status + ' ' + JSON.stringify(good.body && good.body.error));
   });
 
   await check('上传前查重：已有资源跳过且不发请求', async function () {

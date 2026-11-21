@@ -8,6 +8,7 @@ const imagehost = require('./imagehost');
 const marks = require('./marks');
 const { dedupeSwitchOn } = require('./target-rules');
 const uploadLock = require('./upload-lock');
+const urlGuard = require('./url-guard');
 
 /* 目标站 announce 候选优先级：passkey > generic > 站点根兜底 */
 function pickAnnounce(list) {
@@ -169,6 +170,12 @@ async function uploadInner(host, body) {
     if (!cleanAnnounce) {
       const tgt = target.resolve(host);
       if (tgt && tgt.base) cleanAnnounce = String(tgt.base).replace(/\/+$/, '') + '/announce.php';
+    }
+    if (cleanAnnounce) {
+      const tgt = target.resolve(host);
+      if (!tgt || !tgt.base || !urlGuard.sameSite(host, tgt.base, cleanAnnounce)) {
+        return { ok: false, code: 'BAD_ANNOUNCE', message: 'announce 不是目标站域名，拒绝写进种子', http: 400 };
+      }
     }
     const sourceAnnounce = torrentClean.announceOf(t.buf) || '';
     const hasSourcePasskey = /passkey=/i.test(sourceAnnounce) || /passkey=/i.test(t.buf.toString('latin1'));

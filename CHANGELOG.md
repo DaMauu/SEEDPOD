@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.633 · 2026-11-25
+
+### 审计一百零三轮 · 上传 announce
+- target-upload 对手工传入的 `cleanAnnounce` / 每站 announce 做同站校验；不是目标站或子域直接 `BAD_ANNOUNCE`，不再写进种子。
+- 夹具 target 41/41：旧用例里跨站 announce 改为本站地址，并新增外部 announce 拒绝、本站 announce 放行。
+- 全量 run.sh 通过。
+
 ## v0.7.632 · 2026-11-25
 
 ### 永久规则更新 · 真实站点探测
