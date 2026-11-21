@@ -1,5 +1,11 @@
 # 更新日志
 
+## v0.7.608 · 2026-11-22
+
+### 审计七十八轮
+- 调度重试退避：retryMax、nextRetryAt 未到期跳过，成功后清重试标记，失败写 retries/nextRetryAt/retryMsg；新增 scheduler-retry-backoff 4/4。
+- 全量 run.sh 通过。
+
 ## v0.7.607 · 2026-11-22
 
 ### 审计七十七轮
