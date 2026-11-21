@@ -148,7 +148,9 @@ function makeTargetService(ctx, target) {
         if (perTarget[host]) one.torrentBase64 = perTarget[host];
         if (perAnnounce[host]) one.cleanAnnounce = perAnnounce[host];
         else if (hosts.length > 1) one.cleanAnnounce = '';
-        const r = await upload(host, one);
+        let r;
+        try { r = await upload(host, one); }
+        catch (e) { r = { ok: false, code: 'UPLOAD_EXCEPTION', message: String(e && e.message || e).slice(0, 160) }; }
         out.push({ host: host, ok: !!r.ok, skipped: !!r.skipped, code: r.code || '', message: r.message || '', data: r.data || null });
       }
     } finally { if (!dryRun) uploadLock.release(item.id, db); }
