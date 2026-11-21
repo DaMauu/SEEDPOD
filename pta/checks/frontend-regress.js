@@ -93,6 +93,48 @@ function seedDb() {
       await page.close();
     });
 
+    await check('删除条目提示缓存清理失败，提交门禁错误可见', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let calls = 0, deleted = false;
+      const item = function () { return { id: 'q_del', title: 'Delete Row', status: 'approved', stage: 'previewed', targetSite: 'test-a.example', targets: ['test-a.example'] }; };
+      await page.route('**/api/queue/q_del', async function (route) {
+        if (route.request().method() !== 'DELETE') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+        calls++;
+        if (calls === 1) return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'TARGET_SUBMITTED', message: '目标站已提交/注入：a.example' } }) });
+        deleted = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'q_del', cleanedFiles: 0, cleanupErrors: [{ hash: 'a'.repeat(40), error: 'EACCES' }] } }) });
+      });
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: deleted ? [] : [item()], matched: deleted ? 0 : 1, counts: {} } }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+      });
+      await page.route('**/api/sites', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(900);
+      await page.locator('.q-item').first().click();
+      await page.waitForTimeout(450);
+      await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(500);
+      need((await page.locator('#toast').innerText()).indexOf('目标站已提交') >= 0, '提交门禁错误没提示：' + (await page.locator('#toast').innerText()));
+      await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(700);
+      const t = await page.locator('#toast').innerText();
+      need(t.indexOf('已删除') >= 0 && t.indexOf('缓存清理失败 1 个') >= 0, '清理失败没提示：' + t);
+      need((await page.locator('.q-item').count()) === 0, '删除后列表没刷新');
+      await page.close();
+    });
+
     await check('held 失败分页后选中状态与搜索高亮保持一致', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       const items = [];

@@ -739,7 +739,7 @@
       "display": "flex",
       "position": "static",
       "width": "336px",
-      "height": "915.891px",
+      "height": "957.891px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -759,7 +759,7 @@
         12,
         221,
         336,
-        916
+        958
       ]
     },
     ".queue-list": {
@@ -820,7 +820,7 @@
       "display": "flex",
       "position": "static",
       "width": "336px",
-      "height": "695.531px",
+      "height": "737.531px",
       "paddingTop": "14px",
       "paddingBottom": "10px",
       "paddingLeft": "12px",
@@ -840,14 +840,14 @@
         12,
         441,
         336,
-        696
+        738
       ]
     },
     ".qd-body": {
       "display": "block",
       "position": "static",
       "width": "312px",
-      "height": "671.531px",
+      "height": "713.531px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -867,14 +867,14 @@
         24,
         455,
         312,
-        672
+        714
       ]
     },
     ".qd-actions": {
       "display": "flex",
       "position": "static",
       "width": "312px",
-      "height": "84px",
+      "height": "126px",
       "paddingTop": "6px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -894,14 +894,14 @@
         24,
         1043,
         312,
-        84
+        126
       ]
     },
     ".main": {
       "display": "flex",
       "position": "static",
       "width": "360px",
-      "height": "1296.69px",
+      "height": "1338.69px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -921,7 +921,7 @@
         0,
         0,
         360,
-        1297
+        1339
       ]
     },
     ".dock": {

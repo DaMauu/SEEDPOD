@@ -144,6 +144,7 @@
           <div class="spacer"></div>
           <input v-model="reason" class="input slim" placeholder="驳回理由（必填）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>
+          <button v-if="sel.status !== 'published'" class="btn ghost slim danger" type="button" :disabled="busy.remove" @click="removeItem">{{ busy.remove ? '删除中…' : '删除' }}</button>
         </div>
       </div>
     </div>
@@ -188,7 +189,7 @@ const sel = ref(null)
 const sites = ref([])
 const reason = ref('')
 const form = reactive({ title: '', cn: '', intro: '', targetSite: '', targets: [], imageHost: '站内', anonymous: false })
-const busy = reactive({ act: false, approve: false, publish: false, target: false })
+const busy = reactive({ act: false, approve: false, publish: false, target: false, remove: false })
 const lock = reactive({ open: false, host: '', hosts: [], targets: [], typed: '', fn: null })
 const prepBusy = ref(false)
 const prepMsg = ref('')
@@ -243,6 +244,24 @@ function verifyOf(item) {
   /* 没有 host 时只有单目标才能沿用旧字段，多目标不能用别人的回查结果 */
   const targets = Array.isArray(item.targets) && item.targets.length ? item.targets : (item.targetSite ? [item.targetSite] : [])
   return targets.length <= 1 ? (item.targetVerify || null) : null
+}
+function removeItem() {
+  if (!sel.value || busy.remove) return
+  const id = sel.value.id
+  const title = sel.value.cn || sel.value.title || id
+  confirmBox('删除条目', '只删面板里的队列记录，不动目标站和下载器里的种子。确定删除「' + title + '」？', async function () {
+    busy.remove = true
+    try {
+      const r = await fetch('/api/queue/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' })
+      const j = await r.json().catch(function () { return null })
+      if (!r.ok || !j || !j.ok) { toast((j && j.error && j.error.message) || '删除失败'); return }
+      const ce = (j.data && j.data.cleanupErrors) || []
+      toast('已删除' + (ce.length ? '，缓存清理失败 ' + ce.length + ' 个' : ''))
+      sel.value = null
+      failReload.value++
+      await loadQueuePage()
+    } catch (e) { reportError('Queue.remove', e); toast('删除请求发不出去') } finally { busy.remove = false }
+  })
 }
 async function retryStage() {
   if (!sel.value) return

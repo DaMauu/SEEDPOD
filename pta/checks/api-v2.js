@@ -614,6 +614,30 @@ async function main() {
     need(fails.ok && (fails.data.items || []).every(function (x) { return x.id !== q.data.id; }), '删除后仍在失败队列');
   });
 
+  await check('部分提交条目 replay 后仍受删除门禁保护', async () => {
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Partial Submit 2020', status: 'approved', stage: 'previewed', site: 'demo-a.example',
+        targetResults: { 'a.example': { stage: 'submitted' }, 'b.example': { stage: 'failed', error: '目标站拒绝', nextRetryAt: '2026-01-01T00:00:00.000Z' } } })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const rep = await (await fetchA(BASE + '/api/failures/' + q.data.id + '/replay', { method: 'POST' })).json();
+    need(rep.ok && rep.data && rep.data.status === 'pending', 'replay 失败：' + JSON.stringify(rep));
+    const got = await (await fetchA(BASE + '/api/queue/' + q.data.id)).json();
+    need(got.data.targetResults['b.example'].stage === 'pending', '失败目标没复位：' + JSON.stringify(got.data.targetResults));
+    need(got.data.targetResults['a.example'].stage === 'submitted', '已提交目标被误改：' + JSON.stringify(got.data.targetResults));
+    const del = await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' });
+    need(del.status === 409, '部分提交还能删：' + del.status);
+    const dj = await del.json();
+    need(dj.error && dj.error.code === 'TARGET_SUBMITTED', '删除错误码不对：' + JSON.stringify(dj.error));
+    const still = await fetchA(BASE + '/api/queue/' + q.data.id);
+    need(still.status === 200, '被拒后条目没了');
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db.prepare('DELETE FROM queue WHERE id = ?').run(q.data.id);
+    db.close();
+  });
+
   await check('单条改状态会清掉 held 观测字段', async () => {
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
