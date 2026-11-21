@@ -150,7 +150,9 @@ function makeScheduler(ctx, deps) {
       if (ctx.notify) {
         try { await ctx.notify.send('scheduler.error', 'SEEDPOD 调度失败：' + msg); } catch (e2) { console.warn('[seedpod] scheduler error notify failed:', e2 && e2.message ? e2.message : e2) }
       }
-      save(Object.assign({}, s, { lastRunAt: Date.now(), lastError: msg }));
+      /* 失败落库本身也可能失败（磁盘/SQLite），不能让它再抛出把 finally 之外的调用方打崩 */
+      try { save(Object.assign({}, s, { lastRunAt: Date.now(), lastError: msg })); }
+      catch (e2) { console.warn('[seedpod] scheduler save failed:', e2 && e2.message ? e2.message : e2); }
       return { ok: false, error: msg, steps: steps };
     } finally {
       running = false;
