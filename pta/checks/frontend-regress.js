@@ -93,6 +93,47 @@ function seedDb() {
       await page.close();
     });
 
+    await check('批量发布被跳过时详情同步显示目标站错误', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let failed = false;
+      const item = function () {
+        return { id: 'q_bulk_skip', title: 'Bulk Skip Row', status: 'approved', stage: 'previewed', targetSite: 'test-a.example', targets: ['test-a.example'],
+          targetResults: failed ? { 'test-a.example': { stage: 'failed', error: '目标站拒绝' } } : {} };
+      };
+      await page.route('**/api/queue/bulk', async function (route) {
+        failed = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { changed: 0, skipped: 1, errors: [{ id: 'q_bulk_skip', code: 'UPLOAD_REJECTED', message: '目标站拒绝' }] } }) });
+      });
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [item()], matched: 1, counts: {} } }) });
+      });
+      await page.route('**/api/queue/q_bulk_skip', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+      });
+      await page.route('**/api/sites', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(900);
+      await page.locator('.q-item').first().click();
+      await page.waitForTimeout(450);
+      need((await page.locator('.qd-target-result').count()) === 0, '初始不该有目标站结果');
+      await page.click('#q-bulkpublish');
+      await page.waitForTimeout(250);
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(800);
+      need((await page.locator('.qd-target-result .qd-stage-err').first().innerText()).indexOf('目标站拒绝') >= 0, '跳过后详情没刷新目标站错误');
+      await page.close();
+    });
+
     await check('批量发布后当前详情同步为已发布', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let published = false;

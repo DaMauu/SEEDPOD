@@ -66,6 +66,7 @@ run crossseed crossseed.js
 run scheduler-crawl scheduler-crawl.js
 run scheduler-dedupe scheduler-dedupe.js
 run scheduler-publish scheduler-publish.js
+run scheduler-publish-gate scheduler-publish-gate.js
 run failpoint failpoint.js
 run errors errors.js
 run failures failures.js

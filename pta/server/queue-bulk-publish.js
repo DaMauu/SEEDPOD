@@ -1,5 +1,7 @@
 /* 队列批量发布：逐条检查源种、补传未完成目标站，再注入下载器。
    单条失败只记 skipped/errors，不回滚已成功的条目；已提交/已注入的目标站不重复上传。 */
+const { targetReady } = require('./release-gates');
+
 async function runBulkPublish(ctx, ids, opts) {
   const { one, jparse, publisher, targetService, hostsOf } = ctx;
   const list = Array.from(new Set((ids || []).map(String))).slice(0, 200);
@@ -20,6 +22,8 @@ async function runBulkPublish(ctx, ids, opts) {
       fail(id, (src && src.code) || 'SOURCE_INCOMPLETE', (src && src.message) || '源种还没下完');
       continue;
     }
+    const gate = targetReady(it);
+    if (!gate.ok) { fail(id, 'TARGET_NOT_READY', gate.message); continue; }
     const hosts = hostsOf(it);
     const trs = it.targetResults || {};
     const need = hosts.filter(function (h) {

@@ -12,7 +12,8 @@ const items = {
   q_e3: { id: 'q_e3', targets: ['a.example'] },
   q_e4: { id: 'q_e4', targets: ['a.example'] },
   q_e5: { id: 'q_e5', targets: ['a.example'] },
-  q_review: { id: 'q_review', targets: ['a.example'], targetResults: {} }
+  q_review: { id: 'q_review', targets: ['a.example'], targetResults: {} },
+  q_notready: { id: 'q_notready', targets: ['a.example'], targetSite: 'a.example', targetResults: {}, prepared: { targets: [{ host: 'a.example', target: { ready: false } }] } }
 };
 const uploads = [];
 const published = [];
@@ -94,6 +95,14 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
     need(r.errors.length === 3, '错误没限量：' + JSON.stringify(r.errors));
     need(published.indexOf('q_ok') >= 0 && published.indexOf('q_inj') >= 0, '成功项没发布：' + JSON.stringify(published));
     need(published.indexOf('q_bad') < 0 && published.indexOf('q_nosrc') < 0 && published.indexOf('q_pubfail') >= 0, '失败项处理不对：' + JSON.stringify(published));
+  });
+
+  await check('目标站未就绪批量发布会在上传前拦下', async function () {
+    uploads.length = 0; published.length = 0;
+    const r = await runBulkPublish(ctx, ['q_notready']);
+    need(r.changed === 0 && r.skipped === 1, '结果不对：' + JSON.stringify(r));
+    need(r.errors.length === 1 && r.errors[0].code === 'TARGET_NOT_READY', '错误码不对：' + JSON.stringify(r.errors));
+    need(uploads.length === 0 && published.length === 0, '未就绪仍继续：' + JSON.stringify({ u: uploads, p: published }));
   });
 
   const pass = results.filter(function (r) { return r[0]; }).length;

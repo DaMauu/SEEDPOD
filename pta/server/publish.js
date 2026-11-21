@@ -8,6 +8,7 @@ const watch = require('./clients/watch');
 const stage = require('./stage');
 const flowConfig = require('./flow-config');
 const { tx } = require('./db');
+const { targetReady } = require('./release-gates');
 const urlGuard = require('./url-guard');
 
 function makePublisher(ctx) {
@@ -148,14 +149,9 @@ function makePublisher(ctx) {
       }
     }
     /* 终审通过但目标站计划没就绪（缺分类/映射/表单）也要在注入前拦下 */
-    if (!dryRun && it.prepared) {
-      const list = Array.isArray(it.prepared.targets) ? it.prepared.targets : [];
-      const want = String(it.targetSite || '').toLowerCase();
-      const hit = list.filter(function (x) { return x && String(x.host || '').toLowerCase() === want; })[0];
-      const tp = hit ? hit.target : (String(it.prepared.targetHost || '').toLowerCase() === want ? it.prepared.target : null);
-      if (!tp || tp.ready === false) {
-        return { ok: false, code: 'TARGET_NOT_READY', message: '目标站还没就绪：先补分类/映射或重跑终审', http: 409 };
-      }
+    if (!dryRun) {
+      const gate = targetReady(it);
+      if (!gate.ok) return { ok: false, code: 'TARGET_NOT_READY', message: gate.message, http: 409 };
     }
     const dl = downloaderOf(b, it);
     if (!dl) return { ok: false, code: 'NO_DOWNLOADER', message: '没有可用下载器，先去流程页添加 qB 或 watch', http: 400 };

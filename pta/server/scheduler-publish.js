@@ -1,4 +1,5 @@
 /* 发布阶段：并发发布 approved 队列，上传目标站后再注入下载器。 */
+const { targetReady } = require('./release-gates');
 function makePublishPhase(deps) {
   return async function runPublishPhase(o) {
     const { one, all, jparse, targetService, crossseed, bumpSiteFail, resetSiteFail, publishLimit } = o;
@@ -16,6 +17,13 @@ function makePublishPhase(deps) {
               const row = queueRows.shift();
               const it = jparse(row.data) || {};
               if (!it.targetSite || !it.downloadUrl) continue;
+              /* 目标站计划没就绪时不碰下载器和目标站，直接记失败等人工补 */
+              const gate = targetReady(it);
+              if (!gate.ok) {
+                failed++;
+                if (errors.length < 3) errors.push({ id: row.id, code: 'TARGET_NOT_READY', message: gate.message });
+                continue;
+              }
               /* 转载流程：源种先进 qB 并下到 100%，没完成就等下一轮，不传目标站 */
               let src = null;
               try { src = await pubDeps.publish.ensureSource(row.id, {}); }
