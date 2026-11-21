@@ -54,8 +54,14 @@ module.exports = async function run(ctx) {
       await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
+    /* 先等 /api/session 落地，再推进假时钟；否则 1.5s 首次轮询可能早于登录态 */
+    for (let i = 0; i < 30; i++) {
+      if (await page.evaluate(function () { return window.__ptaAuthed === true; })) break;
+      await page.waitForTimeout(100);
+    }
     await page.clock.fastForward(2500);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(400);
+    if (!statsHits) { await page.clock.fastForward(2500); await page.waitForTimeout(400); }
     const onDash = statsHits;
     need(onDash > 0, '总览没拉统计');
     await page.locator('.dock-item[data-view="sites"]').click();

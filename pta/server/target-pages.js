@@ -2,6 +2,7 @@
 const adapters = require('./adapters');
 const form = require('./form');
 const { textOf, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
+const urlGuard = require('./url-guard');
 
 function makeTargetPages(deps) {
   const resolve = deps.resolve;
@@ -11,12 +12,20 @@ function makeTargetPages(deps) {
   const qb = deps.qb;
 
   function torrentMeta(buf) { return qb.parseTorrent(buf); }
+  /* 所有目标站外联先用统一 DNS 复检；字面内网地址按显式配置放行。 */
+  async function dnsErr(url) {
+    const g = await urlGuard.assertNoRebind(url);
+    return g.ok ? '' : (g.err || '域名解析到内网地址，拒绝连接');
+  }
 
   async function checkDeletedOnSite(t, id, headers) {
     let deleted = false, checkStatus = 0, hint = '';
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const chk = await fetch(t.base + '/details.php?id=' + encodeURIComponent(id), { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+        const checkUrl = t.base + '/details.php?id=' + encodeURIComponent(id);
+        const dg = await dnsErr(checkUrl);
+        if (dg) return { deleted: false, checkStatus: 0, hint: dg };
+        const chk = await fetch(checkUrl, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
         checkStatus = chk.status;
         const text = await chk.text().catch(function () { return ''; });
         hint = textOf(text).slice(0, 200);
@@ -51,7 +60,10 @@ function makeTargetPages(deps) {
     }
     let edit;
     try {
-      edit = await fetch(t.base + '/edit.php?id=' + encodeURIComponent(id), { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+      const editUrl = t.base + '/edit.php?id=' + encodeURIComponent(id);
+      const dg = await dnsErr(editUrl);
+      if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
+      edit = await fetch(editUrl, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
     } catch (e) {
       return { ok: false, code: 'TARGET_UNREACHABLE', message: '目标站连不上', http: 502 };
     }
@@ -86,6 +98,8 @@ function makeTargetPages(deps) {
     form.submit.forEach(function (b) { if (b.name) body.set(b.name, b.value); });
     let res;
     try {
+      const dg = await dnsErr(actionUrl.toString());
+      if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
       res = await fetch(actionUrl.toString(), {
         method: 'POST', headers: Object.assign({ 'content-type': 'application/x-www-form-urlencoded' }, headers),
         body: body.toString(), redirect: 'manual', signal: AbortSignal.timeout(30000)
@@ -119,8 +133,11 @@ function makeTargetPages(deps) {
     const pageHost = (function () { try { return new URL(pageUrl).hostname.toLowerCase(); } catch (e) { return ''; } })();
     if (!baseHost || (pageHost !== baseHost && !pageHost.endsWith('.' + baseHost))) return { ok: false, code: 'BAD_DETAILS_HOST', message: '详情页域名不一致' };
     let page;
-    try { page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) }); }
-    catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上' }; }
+    try {
+      const dg = await dnsErr(pageUrl);
+      if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
+      page = await fetch(pageUrl, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+    } catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上' }; }
     if (page.status >= 300 && page.status < 400) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页跳转了，cookie 可能已失效', http: 401 };
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status };
     if ((Number(page.headers.get('content-length')) || 0) > 2 * 1024 * 1024) return { ok: false, code: 'DETAILS_TOO_LARGE', message: '详情页超过 2MB' };
@@ -152,7 +169,11 @@ function makeTargetPages(deps) {
     if (!baseHost || (pageHost !== baseHost && !pageHost.endsWith('.' + baseHost))) return { ok: false, code: 'BAD_DETAILS_HOST', message: '详情页域名和站点不一致，为免 cookie 外泄先停下', http: 400 };
     const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
     let page;
-    try { page = await fetch(pageUrl, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) }); }
+    try {
+      const dg = await dnsErr(pageUrl);
+      if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
+      page = await fetch(pageUrl, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
+    }
     catch (e) { return { ok: false, code: 'DETAILS_UNREACHABLE', message: '详情页连不上', http: 502 }; }
     if (page.status >= 300 && page.status < 400) return { ok: false, code: 'LOGIN_REQUIRED', message: '详情页跳转了，cookie 可能已失效', http: 401 };
     if (page.status !== 200) return { ok: false, code: 'DETAILS_HTTP_' + page.status, message: '详情页返回 ' + page.status, http: 502 };
@@ -168,7 +189,11 @@ function makeTargetPages(deps) {
       const dlHost = (function () { try { return new URL(link).hostname.toLowerCase(); } catch (e) { return ''; } })();
       if (dlHost !== baseHost && !dlHost.endsWith('.' + baseHost)) { last = 'BAD_DOWNLOAD_HOST'; continue; }
       let res;
-      try { res = await fetch(link, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(30000) }); }
+      try {
+        const dg = await dnsErr(link);
+        if (dg) { last = 'DNS_BLOCKED'; continue; }
+        res = await fetch(link, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(30000) });
+      }
       catch (e) { last = 'DOWNLOAD_UNREACHABLE'; continue; }
       if (res.status !== 200) { last = 'DOWNLOAD_HTTP_' + res.status; continue; }
       if ((Number(res.headers.get('content-length')) || 0) > 10 * 1024 * 1024) { last = 'TORRENT_TOO_LARGE'; continue; }
@@ -198,6 +223,8 @@ function makeTargetPages(deps) {
     const url = t.base + formPath;
     let res;
     try {
+      const dg = await dnsErr(url);
+      if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
       res = await fetch(url, {
         headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
         redirect: 'manual',
