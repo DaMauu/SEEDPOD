@@ -134,6 +134,8 @@ function makeSubmit(deps) {
     Object.keys(p.data.fields).forEach(function (k) { form.append(k, p.data.fields[k]); });
     form.append(p.data.fileField, new Blob([buf], { type: 'application/x-bittorrent' }), String(item.title || 'upload').slice(0, 60) + '.torrent');
 
+    const submitGate = await urlGuard.assertNoRebind(p.data.url);
+    if (!submitGate.ok) return { ok: false, code: 'DNS_BLOCKED', message: submitGate.err, http: 422 };
     let res;
     try {
       res = await fetch(p.data.url, {
@@ -151,6 +153,12 @@ function makeSubmit(deps) {
     const whereRaw = location || (successText ? detailsFrom(text, origin) : '') || '';
     const where = /^https?:\/\//i.test(whereRaw) ? whereRaw
       : (function () { try { return new URL(whereRaw, origin + '/').toString(); } catch (e) { return ''; } })();
+    if (where && !sameSiteUrl(host, p.data.url, where)) {
+      return { ok: false, code: 'UPLOAD_REDIRECTED', message: '提交跳转到外部域名，停止', http: 502, data: { status: res.status } };
+    }
+    if (res.status >= 300 && res.status < 400 && where && /login|takelogin/i.test(where)) {
+      return { ok: false, code: 'LOGIN_REQUIRED', message: '提交被跳到登录页，cookie 可能失效', http: 401, data: { status: res.status } };
+    }
     const loginHit = /takelogin\.php|name=["']?username|请先登录|not\s+authorized|login/i.test(text) && !/logout|上传成功|success/i.test(text);
     if (res.status >= 400 || loginHit) {
       return { ok: false, code: loginHit ? 'LOGIN_REQUIRED' : 'UPLOAD_REJECTED',
@@ -181,32 +189,45 @@ function makeSubmit(deps) {
     const meta = buf ? torrentMeta(buf) : { hash: '', name: '' };
     const url = (opts && opts.url) || p.data.verifyUrl;
     /* 手工回查地址必须落在目标站，否则会把 cookie 带到外部 host */
+    let targetUrl = '';
     try {
       const base = new URL(p.data.url);
       const u = new URL(url, p.data.url);
       const bh = base.hostname.toLowerCase();
       const uh = u.hostname.toLowerCase();
       if (uh !== bh && !uh.endsWith('.' + bh)) return { ok: false, code: 'BAD_VERIFY_URL', message: '回查地址不是目标站域名', http: 400 };
+      targetUrl = u.toString();
     } catch (e) { return { ok: false, code: 'BAD_VERIFY_URL', message: '回查地址不合法', http: 400 }; }
+    const verifyGate = await urlGuard.assertNoRebind(targetUrl);
+    if (!verifyGate.ok) return { ok: false, code: 'DNS_BLOCKED', message: verifyGate.err, http: 422 };
     let res;
     try {
-      res = await fetch(url, {
+      res = await fetch(targetUrl, {
         headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
         redirect: 'manual', signal: AbortSignal.timeout(20000)
       });
     } catch (e) {
       return { ok: false, code: 'TARGET_UNREACHABLE', message: '目标站连不上', http: 502 };
     }
+    if (res.status >= 300 && res.status < 400) {
+      const loc = String(res.headers.get('location') || '');
+      let locUrl = '';
+      try { locUrl = new URL(loc, targetUrl).toString(); } catch (e) { locUrl = ''; }
+      if (!locUrl || !sameSiteUrl(host, p.data.url, locUrl)) {
+        return { ok: false, code: 'VERIFY_REDIRECTED', message: '回查跳转到外部域名，停止', http: 502 };
+      }
+      return { ok: false, code: 'LOGIN_REQUIRED', message: '回查被跳转，cookie 可能失效', http: 401 };
+    }
     const text = await res.text().catch(function () { return ''; });
     const norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
     const title = norm(item.title);
     const hash = String((opts && opts.hash) || meta.hash || '').toLowerCase();
-    const isDetails = /details\.php\?id=\d+|\/torrents?\/\d+/i.test(url);
+    const isDetails = /details\.php\?id=\d+|\/torrents?\/\d+/i.test(targetUrl);
     /* 同 infohash 被删进回收站时，上传会 302 回旧 ID；详情页仍能打开但带回收站标记，
        不能当成“刚发布成功”，否则会拿旧种子去辅种。 */
     if (res.status === 200 && isDetails && isDeletedPageText(text)) {
       return { ok: true, data: {
-        found: false, deleted: true, url: url, status: res.status, title: '', detailsUrl: '',
+        found: false, deleted: true, url: targetUrl, status: res.status, title: '', detailsUrl: '',
         infohash: meta.hash, rows: 0, mode: 'details',
         message: '目标站同 infohash 的种子已在回收站'
       } };
@@ -229,7 +250,7 @@ function makeSubmit(deps) {
         }
       }
       if (!found) found = !!(title && norm(text).indexOf(title) >= 0) || !!(hash && text.toLowerCase().indexOf(hash) >= 0);
-      if (found) { matchedUrl = url; matchedTitle = String(page.subtitle || page.pageTitle || item.title || '').slice(0, 200); }
+      if (found) { matchedUrl = targetUrl; matchedTitle = String(page.subtitle || page.pageTitle || item.title || '').slice(0, 200); }
     } else if (res.status === 200) {
       const list = adapters.parseList(text, p.data.engine);
       rows = list.length;
@@ -247,7 +268,7 @@ function makeSubmit(deps) {
       matchedUrl = hit && hit.detailsUrl ? String(hit.detailsUrl) : '';
     }
     return { ok: true, data: {
-      found: found, url: url, status: res.status, title: found ? (matchedTitle || item.title) : '', detailsUrl: matchedUrl,
+      found: found, url: targetUrl, status: res.status, title: found ? (matchedTitle || item.title) : '', detailsUrl: matchedUrl,
       infohash: meta.hash, rows: rows, mode: isDetails ? 'details' : 'search',
       message: found ? '目标站列表里找到这个种子' : '目标站列表里没找到这个种子'
     } };
