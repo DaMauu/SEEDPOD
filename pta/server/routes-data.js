@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const secretbox = require('./secretbox');
 const jsonFile = require('./json-file');
+const siteHidden = require('./site-hidden');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -60,8 +61,10 @@ module.exports = function (app, ctx) {
   }
 
   app.get('/api/sites', async () => {
+    const hidden = siteHidden.list(db);
     const seen = {};
     all('SELECT host, data FROM sites').forEach(function (r) {
+      if (hidden.indexOf(String(r.host || '').toLowerCase()) >= 0) return;
       const c = jparse(r.data) || {};
       seen[r.host] = { host: r.host, url: c.url || ('https://' + r.host), arch: c.arch || '?',
         title: c.title || r.host, added: c.base !== true && c.added === true };
@@ -75,7 +78,7 @@ module.exports = function (app, ctx) {
       else if (x.arch === 'OTHER') counts.other++;
       else counts.unknown++;
     });
-    return ok({ counts: counts, sites: merged, status: readStatus() });
+    return ok({ counts: counts, sites: merged, hidden: hidden, status: readStatus() });
   });
 
   /* 面板内添加站点：写 sites 表，不碰 base 清单 */
@@ -95,8 +98,10 @@ module.exports = function (app, ctx) {
       url: u.origin + (u.pathname && u.pathname !== '/' ? u.pathname.replace(/\/+$/, '') : ''),
       arch: arch,
       title: String(b.title || cfg.title || host).slice(0, 80),
-      added: true
+      added: cfg.base === true ? cfg.added === true : true
     });
+    /* 重新添加同一域名等于恢复；基础站的 base 标记保留 */
+    siteHidden.remove(db, host);
     db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
       .run(host, JSON.stringify(next), now());
     logEvent('info', '站点', '添加站点 · ' + host);
@@ -104,25 +109,38 @@ module.exports = function (app, ctx) {
   });
 
   app.delete('/api/sites/:host', async (req, reply) => {
-    const host = req.params.host;
+    const host = String(req.params.host || '').toLowerCase();
     const row = one('SELECT data FROM sites WHERE host = ?', host);
-    const cfg = row ? (jparse(row.data) || {}) : {};
+    if (!row) return bad(reply, 'NOT_FOUND', '站点不存在', 404);
+    const cfg = jparse(row.data) || {};
     if (cfg.base === true) {
-      return bad(reply, 'BASE_SITE', '基础清单里的站点不能删；可以恢复默认配置', 400);
+      /* 基础站随站点包发布，不能硬删；从面板隐藏并清掉凭据，可恢复 */
+      siteHidden.add(db, host);
+      db.prepare('DELETE FROM credentials WHERE host = ?').run(host);
+      logEvent('info', '站点', '移除基础站点（可恢复） · ' + host);
+      return ok(reply, { host: host, hidden: true, soft: true });
     }
     db.prepare('DELETE FROM sites WHERE host = ?').run(host);
     db.prepare('DELETE FROM credentials WHERE host = ?').run(host);
+    siteHidden.remove(db, host);
     logEvent('info', '站点', '移除站点 · ' + host);
-    return ok(reply, { host: host });
+    return ok(reply, { host: host, hidden: false, soft: false });
+  });
+
+  app.post('/api/sites/:host/restore', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const row = one('SELECT data FROM sites WHERE host = ?', host);
+    if (!row) return bad(reply, 'NOT_FOUND', '站点不在面板里，先重新添加', 404);
+    const changed = siteHidden.remove(db, host);
+    if (changed) logEvent('info', '站点', '恢复基础站点 · ' + host);
+    return ok(reply, { host: host, restored: changed });
   });
 
   /* ---- 站点配置 ---- */
   app.get('/api/site-config', async () => {
     const sites = {};
     all('SELECT host, data FROM sites').forEach(function (r) { sites[r.host] = jparse(r.data) || {}; });
-    const metaRow = one("SELECT v FROM meta WHERE k = 'site-config-meta'");
-    const meta = metaRow ? JSON.parse(metaRow.v) : {};
-    return ok({ sites: sites, hidden: meta.hidden || [] });
+    return ok({ sites: sites, hidden: siteHidden.list(db) });
   });
   app.put('/api/site-config/:host', async (req, reply) => {
     const host = req.params.host;

@@ -388,6 +388,51 @@ module.exports = async function run(ctx) {
     db.close();
   });
 
+  await check('基础站点移除是软删除，可恢复且不再计数', async function () {
+    const host = 'basehide.example';
+    const add = await fetchA(BASE + '/api/sites', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'https://' + host + '/index.php', arch: 'NP', title: 'Base Hide' })
+    });
+    need(add.status === 200, '添加站点失败 ' + add.status);
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    const row = db.prepare('SELECT data FROM sites WHERE host = ?').get(host);
+    const d = JSON.parse(row.data);
+    d.base = true;
+    delete d.added;
+    db.prepare('UPDATE sites SET data = ? WHERE host = ?').run(JSON.stringify(d), host);
+    db.prepare('INSERT OR REPLACE INTO credentials(host, cookie, updated_at) VALUES(?, ?, ?)')
+      .run(host, 'v2:fixture', new Date().toISOString());
+    db.close();
+
+    const before = await (await fetchA(BASE + '/api/stats/overview')).json();
+    const beforeTotal = Number(before.data.sites.total) || 0;
+    const del = await (await fetchA(BASE + '/api/sites/' + host, { method: 'DELETE' })).json();
+    need(del.ok && del.data.soft === true && del.data.hidden === true, '基础站没走软删除：' + JSON.stringify(del));
+    const list = await (await fetchA(BASE + '/api/sites')).json();
+    need((list.data.sites || []).every(function (x) { return x.host !== host; }), '移除后列表里还有：' + JSON.stringify(list.data.sites));
+    need((list.data.hidden || []).indexOf(host) >= 0, 'hidden 列表没记录：' + JSON.stringify(list.data.hidden));
+    const cfg = await (await fetchA(BASE + '/api/site-config')).json();
+    need((cfg.data.hidden || []).indexOf(host) >= 0, 'site-config 没记录 hidden');
+    const creds = await (await fetchA(BASE + '/api/credentials')).json();
+    need((creds.data || []).every(function (x) { return x.host !== host; }), '凭据没删');
+    const after = await (await fetchA(BASE + '/api/stats/overview')).json();
+    need(Number(after.data.sites.total) === beforeTotal - 1, '统计没扣掉隐藏站：' + beforeTotal + ' -> ' + after.data.sites.total);
+
+    const restore = await (await fetchA(BASE + '/api/sites/' + host + '/restore', { method: 'POST' })).json();
+    need(restore.ok && restore.data.restored === true, '恢复失败：' + JSON.stringify(restore));
+    const list2 = await (await fetchA(BASE + '/api/sites')).json();
+    const back = (list2.data.sites || []).filter(function (x) { return x.host === host; })[0];
+    need(back && back.added !== true, '恢复后标记不对：' + JSON.stringify(back));
+    need((list2.data.hidden || []).indexOf(host) < 0, '恢复后 hidden 还在');
+
+    const db2 = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db2.prepare('DELETE FROM sites WHERE host = ?').run(host);
+    db2.prepare('DELETE FROM credentials WHERE host = ?').run(host);
+    db2.close();
+  });
+
   await check('退出登录后会话失效', async () => {
     const r = await fetchA(BASE + '/api/logout', { method: 'POST' });
     need(r.ok, '退出失败');

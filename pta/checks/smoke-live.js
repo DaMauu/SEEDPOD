@@ -164,7 +164,12 @@ async function main() {
       const r = await fetch('/api/sites/demo-a.example', { method: 'DELETE' });
       return { status: r.status, body: await r.json() };
     });
-    need(del.status === 400 && del.body.error && del.body.error.code === 'BASE_SITE', '基础站点应该禁止删除：' + del.status);
+    need(del.status === 200 && del.body.data && del.body.data.soft === true && del.body.data.hidden === true, '基础站点应软删除：' + del.status + ' ' + JSON.stringify(del.body));
+    const restored = await page.evaluate(async () => {
+      const r = await fetch('/api/sites/demo-a.example/restore', { method: 'POST' });
+      return { status: r.status, body: await r.json() };
+    });
+    need(restored.status === 200 && restored.body.ok, '基础站点恢复失败：' + JSON.stringify(restored));
     await page.selectOption('#site-arch', 'UNIT3D');
     await page.waitForTimeout(250);
     need(await items.count() === 1, '架构筛选不对：' + await items.count());

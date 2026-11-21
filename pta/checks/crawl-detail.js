@@ -159,6 +159,21 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
       } finally { dns.promises.lookup = pub; }
     });
 
+    await check('已移除站点拒绝抓取且不发请求', async function () {
+      db2.prepare("INSERT INTO meta(k, v) VALUES('site-config-meta', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
+        .run(JSON.stringify({ hidden: [HOST] }));
+      const seen = [];
+      global.fetch = async function (url) { seen.push(String(url)); return new Response(listHtml, { status: 200 }); };
+      try {
+        resetGaps();
+        const r = await core.crawlOnce(HOST, { limit: 10, detail: false });
+        need(r && r.err && r.err.code === 'SITE_HIDDEN', '已移除站点没拦住：' + JSON.stringify(r && r.err));
+        need(seen.length === 0, '拦住后还发了请求：' + seen.join(' , '));
+      } finally {
+        db2.prepare("DELETE FROM meta WHERE k = 'site-config-meta'").run();
+      }
+    });
+
     await check('没有保存类型时拒绝抓取，不静默全分类', async function () {
       fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401'] } } } }, null, 2));
       resetGaps();

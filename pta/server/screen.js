@@ -1,5 +1,6 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
+const siteHidden = require('./site-hidden');
 const marksMod = require('./marks');
 const meta = require('./meta');
 const { tx } = require('./db');
@@ -63,10 +64,14 @@ function screenCatalog(ctx, opts) {
   const norm = (s2) => String(s2 || '').toLowerCase().replace(/[\s\-_.]+/g, '');
   /* 来源站已停用的词条不再送审，避免发布时去抓停用站的种子 */
   const siteOn = {};
+  const hidden = siteHidden.list(db);
   all('SELECT host, data FROM sites').forEach(function (r) {
     const d = jparse(r.data) || {};
-    siteOn[String(r.host).toLowerCase()] = d.enabled !== false;
+    const h = String(r.host).toLowerCase();
+    siteOn[h] = d.enabled !== false && hidden.indexOf(h) < 0;
   });
+  /* 已移除的站点可能不在 sites 视图里，也要显式停用 */
+  hidden.forEach(function (h) { siteOn[h] = false; });
   /* 跨站同片策略：同 infohash / 规范化标题只保留最早一条，后来者记 dupeOf 方便追溯 */
   const seenTitles = new Map();
   const seenHashes = new Map();

@@ -39,6 +39,7 @@
     <button class="btn ghost slim" id="bulk-open" :disabled="!picksCount" title="批量设置选中的站点" @click="emit('bulk')">
       {{ picksCount ? '批量 ' + picksCount : '批量' }}
     </button>
+    <button v-if="hiddenCount" class="btn ghost slim" id="sites-hidden-open" type="button" @click="emit('hidden')">已移除 {{ hiddenCount }}</button>
     <button class="btn ghost slim" id="sites-pack-open" type="button" @click="emit('pack')">站点包</button>
     <button class="btn ghost slim" id="site-selfcheck" :disabled="busySelfcheck || !cookieCount" title="对有 cookie 的站点逐个跑一次会话自检；每个站只发一次 GET" @click="emit('selfcheck')">
       {{ busySelfcheck ? '自检中…' : '自检' }}
@@ -58,9 +59,10 @@ defineProps({
   statusTabs: { type: Array, default: function () { return [] } },
   picksCount: { type: Number, default: 0 },
   cookieCount: { type: Number, default: 0 },
-  busySelfcheck: Boolean
+  busySelfcheck: Boolean,
+  hiddenCount: { type: Number, default: 0 }
 })
-const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'bulk', 'selfcheck', 'add', 'pack'])
+const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'bulk', 'selfcheck', 'add', 'pack', 'hidden'])
 </script>
 
 <style scoped>

@@ -18,7 +18,7 @@ function harness(pages) {
     if (sql.indexOf("k = 'crawl-state'") >= 0) return { v: JSON.stringify(state.box) };
     return null;
   };
-  const db = { prepare: function () { return { run: function (v) { state.box = JSON.parse(v); } }; } };
+  const db = { prepare: function () { return { get: function () { return null; }, run: function (v) { state.box = JSON.parse(v); } }; } };
   const all = function (sql) {
     return sql.indexOf('FROM sites') >= 0 ? [{ host: 'a.example', data: JSON.stringify({ enabled: true }) }] : [];
   };

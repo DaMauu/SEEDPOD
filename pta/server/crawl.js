@@ -9,6 +9,7 @@ const marksMod = require('./marks');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const urlGuard = require('./url-guard');
+const siteHidden = require('./site-hidden');
 const flowConfig = require('./flow-config');
 const { typeOf } = require('./category-policy');
 const configSchema = require('./config-schema');
@@ -96,6 +97,7 @@ function makeCrawl(ctx) {
   }
 
   async function inner(host, opts) {
+    if (siteHidden.has(db, host)) return { err: { code: 'SITE_HIDDEN', message: '站点已从面板移除，先恢复再抓' } };
     const def0 = readDef(host);
     const built = sitePack.siteOf(host) || null;
     if (!def0 && !built) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };

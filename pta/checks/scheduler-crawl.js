@@ -43,6 +43,18 @@ const phase = makeCrawlPhase();
       need(out.failed === 1, '失败站没计入 failed：' + JSON.stringify(out));
       need(out.ok === 9, '成功数把失败站也算进去了：' + JSON.stringify(out));
     });
+    await check('已移除站点不参与调度抓取', async function () {
+      db.prepare('DELETE FROM meta WHERE k = ?').run('crawl-state');
+      db.prepare("INSERT INTO meta(k, v) VALUES('site-config-meta', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
+        .run(JSON.stringify({ hidden: ['crawl-1.example'] }));
+      const seen = [];
+      const crawl = { crawlOnce: async function (host) { seen.push(host); return { added: 0, rows: 0, pageKey: 'p' }; } };
+      const out = await phase({ db: db, one: one, all: all, jparse: jparse, crawl: crawl, allowReal: function () { return true; }, bumpSiteFail: function () {}, resetSiteFail: function () {}, want: function () { return true; }, sleepFn: async function () {}, logEvent: function () {} });
+      need(seen.indexOf('crawl-1.example') < 0, '已移除站点仍被调度：' + seen.join(','));
+      need(seen.length === 10, '可见站点抓取数不对：' + seen.length);
+      need(out.waiting === 1, 'waiting 没扣掉隐藏站点：' + JSON.stringify(out));
+    });
+
   } finally {
     db.close();
     fs.rmSync(DATA, { recursive: true, force: true });

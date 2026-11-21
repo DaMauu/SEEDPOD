@@ -244,8 +244,7 @@
               <button class="btn primary slim" type="button" :disabled="busy.save" @click.stop="saveSite(s)">{{ busy.save ? '保存中…' : '保存设置' }}</button>
               <button class="btn ghost slim" type="button" :disabled="busy.save" @click.stop="resetSite(s)">恢复默认</button>
               <div class="spacer"></div>
-              <button v-if="s.added" class="btn ghost slim danger" type="button" @click.stop="removeSite(s)">移除站点</button>
-              <span v-else class="soft" title="基础清单站点不能移除；可以停用、覆盖间隔或恢复默认">基础站点不可移除</span>
+              <button class="btn ghost slim danger" type="button" title="从面板移除；基础站点可恢复" @click.stop="removeSite(s)">移除站点</button>
             </div>
           </div>
 </template>
@@ -541,7 +540,10 @@ function resetSite(site) {
   })
 }
 function removeSite(site) {
-  confirmBox('移除站点', '会删除面板里添加的站点和凭据；基础清单站点不能删。继续？', async function () {
+  const text = site.added
+    ? '会删除面板里添加的站点和凭据。继续？'
+    : '会把这个基础站点从面板移除并删除凭据；之后可在站点页「已移除」里恢复，恢复后要重新导入 cookie。继续？'
+  confirmBox('移除站点', text, async function () {
     try {
       const j = await (await fetch('/api/sites/' + encodeURIComponent(site.name), { method: 'DELETE', credentials: 'same-origin' })).json()
       if (j && j.ok) { toast('已移除：' + site.name); emit('removed') }

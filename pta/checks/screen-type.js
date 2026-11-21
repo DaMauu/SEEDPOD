@@ -39,6 +39,21 @@ function q(id, title) {
       const qs = all('SELECT data FROM queue').map(function (x) { return jparse(x.data); });
       need(qs.length === 1 && qs[0].catName === '电影', '队列分类不对：' + JSON.stringify(qs));
     });
+    await check('已移除站点不再送审', async function () {
+      db.prepare("INSERT INTO meta(k, v) VALUES('site-config-meta', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
+        .run(JSON.stringify({ hidden: ['source.example'] }));
+      cat('cat_hidden_1', 'Hidden Movie 2024 1080p', 'source.example', '401');
+      try {
+        const r = screenCatalog(ctx, { limit: 20 });
+        need((r.byReason['来源站已停用'] || 0) >= 1, '没按来源站停用跳过：' + JSON.stringify(r.byReason));
+        const row = all("SELECT data FROM catalog WHERE id = 'cat_hidden_1'")[0];
+        const it = jparse(row.data);
+        need(it.status === 'skipped' && it.skipReason === '来源站已停用', '词条状态不对：' + JSON.stringify({ s: it.status, r: it.skipReason }));
+      } finally {
+        db.prepare("DELETE FROM meta WHERE k = 'site-config-meta'").run();
+      }
+    });
+
     await check('前 500 条都跳过时，新条目仍能送审', async function () {
       const base = Date.now();
       for (let i = 0; i < 505; i++) {

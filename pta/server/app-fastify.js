@@ -9,6 +9,7 @@ const Fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
 const { openDB } = require('./db');
 const { makeCrawl } = require('./crawl');
+const siteHidden = require('./site-hidden');
 
 const PORT = Number((require('./env').read('PANEL_PORT','PTA_PORT')) || 8090);
 const DATA_DIR = path.resolve(require('./env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
@@ -262,11 +263,17 @@ async function build() {
     const free = dls.reduce(function (a, d) { return a + Number((d.lastProbe && d.lastProbe.freeSpace) || 0); }, 0);
     const online = dls.filter(function (d) { return d.lastProbe && d.lastProbe.pass; }).length;
 
-    const sites = all('SELECT data FROM sites').map(function (r) { return jparse(r.data) || {}; });
+    const hiddenSites = siteHidden.list(db);
+    const sites = all('SELECT host, data FROM sites').map(function (r) {
+      return Object.assign({}, jparse(r.data) || {}, { host: String(r.host || '').toLowerCase() });
+    }).filter(function (x) { return hiddenSites.indexOf(x.host) < 0; });
     let loginOk = 0, loginFail = 0;
     try {
       const st = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-status.json'), 'utf8')) || {};
-      Object.keys(st).forEach(function (h) { if (st[h] && st[h].pass === true) loginOk++; else if (st[h] && st[h].pass === false) loginFail++; });
+      Object.keys(st).forEach(function (h) {
+        if (hiddenSites.indexOf(String(h).toLowerCase()) >= 0) return;
+        if (st[h] && st[h].pass === true) loginOk++; else if (st[h] && st[h].pass === false) loginFail++;
+      });
     } catch (e) { /* 没自检过就都算未知 */ }
     const enabled = sites.filter(function (x) { return x.enabled !== false; }).length;
     const paused = sites.filter(function (x) { return x.enabled === false && (x.pausedAt || x.pauseReason); }).length;
@@ -276,6 +283,7 @@ async function build() {
     try {
       const st = JSON.parse((one("SELECT v FROM meta WHERE k = 'crawl-state'") || {}).v || 'null') || {};
       Object.keys(st).forEach(function (h) {
+        if (hiddenSites.indexOf(String(h).toLowerCase()) >= 0) return;
         const rec = st[h] || {};
         if (String(rec.day || '') === today) { runsToday += Number(rec.dayCount) || 0; hostsToday++; }
       });

@@ -13,6 +13,7 @@
       :picks-count="picks.length"
       :cookie-count="cookieCount"
       :busy-selfcheck="busy.selfcheck"
+      :hidden-count="hidden.length"
       @update:q="q = $event"
       @update:status-filter="statusFilter = $event"
       @update:arch-filter="archFilter = $event"
@@ -21,6 +22,7 @@
       @update:crawl-filter="crawlFilter = $event"
       @bulk="openBulk"
       @selfcheck="selfcheckAll"
+      @hidden="hiddenOpen = true"
       @add="openAddSite"
       @pack="packOpen = true"
     />
@@ -70,6 +72,24 @@
           </div>
         </div>
       </div>
+      <div v-if="hiddenOpen" class="modal-mask" id="hidden-sites-modal">
+        <div class="modal">
+          <div class="modal-head">
+            <h2>已移除的站点</h2>
+            <button class="btn ghost slim" type="button" @click="hiddenOpen = false">关闭</button>
+          </div>
+          <div class="modal-scroll">
+            <p class="soft hidden-tip">恢复后站点回到列表，cookie 需要重新导入。</p>
+            <div v-for="h in hiddenSites" :key="h.host" class="hidden-row">
+              <b>{{ h.title }}</b>
+              <span class="soft">{{ h.host }}</span>
+              <span class="spacer"></span>
+              <button class="btn ghost slim" type="button" @click="restoreHidden(h.host)">恢复</button>
+            </div>
+            <p v-if="!hiddenSites.length" class="soft hidden-tip">没有已移除的站点</p>
+          </div>
+        </div>
+      </div>
     </Teleport>
   </div>
 </template>
@@ -106,6 +126,7 @@ const page = ref(1)
 const sel = ref(null)
 const detailNonce = ref(0)
 const packOpen = ref(false)
+const hiddenOpen = ref(false)
 const addOpen = ref(false)
 const addForm = reactive({ url: '', arch: '?', title: '' })
 const busy = reactive({ selfcheck: false, bulk: false })
@@ -293,6 +314,23 @@ async function addSite() {
 function clearSelected() { sel.value = null }
 function onSiteRemoved() { sel.value = null; loadAll() }
 
+const hiddenSites = computed(() => hidden.value.map(host => {
+  const c = configs.value[host] || {}
+  return { host: host, title: c.title || c.url || host }
+}))
+
+async function restoreHidden(host) {
+  try {
+    const r = await fetch('/api/sites/' + encodeURIComponent(host) + '/restore', { method: 'POST', credentials: 'same-origin' })
+    const j = await r.json().catch(() => null)
+    if (j && j.ok) {
+      toast('已恢复：' + host)
+      await loadAll()
+      if (!hidden.value.length) hiddenOpen.value = false
+    } else toast((j && j.error && j.error.message) || '恢复失败')
+  } catch (e) { toast('恢复请求发不出去') }
+}
+
 async function selfcheckAll() {
   if (busy.selfcheck) return
   const hosts = sites.value.filter(s => s.cookieSaved).map(s => s.name)
@@ -374,6 +412,9 @@ function onKey(e) {
 .site-item:hover { background: #f7f8fa; }
 .site-item.on .si-txt b { color: var(--accent); }
 .si-txt { flex: 1; min-width: 0; }
+.hidden-tip { margin: 0 0 10px; font-size: 11.5px; }
+.hidden-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 12px; }
+.hidden-row b { font-weight: 600; }
 .si-txt b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .si-txt span { display: block; margin-top: 2px; font-size: 11px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .site-item .site-pick { width: 14px; height: 14px; flex: 0 0 14px; accent-color: var(--accent); cursor: pointer; opacity: .45; transition: opacity .12s; }
