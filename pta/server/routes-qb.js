@@ -107,7 +107,7 @@ module.exports = function (app, ctx) {
     if (!d) return bad(reply, 'NOT_FOUND', '下载器不存在', 404);
     let r;
     if (d.kind === 'watch') r = watch.test({ dir: d.watchPath });
-    else if (d.kind === 'qb' || !d.kind) r = await qb.probeDownloader({ url: d.url, user: d.user, pass: dlPass(d) });
+    else if (d.kind === 'qb' || !d.kind) r = await qb.probeDownloader({ url: d.url, user: d.user, pass: dlPass(d) }, { timeoutMs: req.body && req.body.timeoutMs });
     else return bad(reply, 'UNSUPPORTED_DOWNLOADER', '这个下载器类型已移除，请改成 qB 或 watch', 400);
     d.lastProbe = { at: now(), pass: !!r.pass, version: r.version || '', freeSpace: Number(r.freeSpace) || 0,
       totalSpace: Number(r.totalSpace) || 0, savePath: r.savePath || (d.kind === 'watch' ? d.watchPath : '') || '' };

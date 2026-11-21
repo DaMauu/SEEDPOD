@@ -45,11 +45,21 @@ async function json(url, opts) {
   let out = '';
   child.stdout.on('data', function (d) { out += d; });
   child.stderr.on('data', function (d) { out += d; });
-  let slow = null;
+  let slow = null, qbmock = null;
+  let qbLogins = 0;
   try {
     slow = http.createServer(function (req, res) { setTimeout(function () { try { res.writeHead(200); res.end('v4.6.0'); } catch (e) { /* 已断开 */ } }, 1500); });
     await new Promise(function (r) { slow.listen(0, '127.0.0.1', r); });
     const slowUrl = 'http://127.0.0.1:' + slow.address().port;
+    qbmock = http.createServer(function (req, res) {
+      if (req.method === 'POST' && req.url === '/api/v2/auth/login') { qbLogins++; res.writeHead(200, { 'set-cookie': 'SID=good; Path=/' }); res.end('Ok.'); return; }
+      if (String(req.headers.cookie || '').indexOf('SID=good') < 0) { res.writeHead(401); res.end('Forbidden'); return; }
+      if (req.url === '/api/v2/app/version') { res.writeHead(200); res.end('v4.6.0'); return; }
+      if (req.url === '/api/v2/sync/maindata') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ server_state: { free_space_on_disk: 123, save_path: '/dl' } })); return; }
+      res.writeHead(404); res.end();
+    });
+    await new Promise(function (r) { qbmock.listen(0, '127.0.0.1', r); });
+    const qbUrl = 'http://127.0.0.1:' + qbmock.address().port;
     const end = Date.now() + 8000;
     while (Date.now() < end) {
       try { const r = await fetch(BASE + '/api/health'); if (r.ok) break; } catch (e) { /* 等启动 */ }
@@ -78,6 +88,39 @@ async function json(url, opts) {
       });
       need(r.status === 200 && r.body && r.body.ok, '白名单被拒：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
       need(r.body.data && r.body.data.pass === false, '端口 1 不该探测成功');
+    });
+
+    await check('已存下载器测试会重新登录并记录 lastProbe', async function () {
+      const add = await json(BASE + '/api/downloaders', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'probe-stored', url: qbUrl, user: 'u', pass: 'p' })
+      });
+      need(add.status === 200 && add.body.ok, '建下载器失败：' + JSON.stringify(add.body && add.body.error));
+      const id = add.body.data.id;
+      const r = await json(BASE + '/api/downloaders/' + encodeURIComponent(id) + '/test', { method: 'POST', body: '{}' });
+      need(r.status === 200 && r.body.ok && r.body.data.pass === true, '测试失败：' + JSON.stringify(r.body && r.body.error));
+      need(qbLogins >= 1, '没走登录');
+      const list = await (await fetchA(BASE + '/api/downloaders')).json();
+      const hit = (list.data || []).filter(function (x) { return x.id === id; })[0];
+      need(hit && hit.lastProbe && hit.lastProbe.pass === true, 'lastProbe 没写：' + JSON.stringify(hit && hit.lastProbe));
+    });
+
+    await check('已存下载器测试超时快速失败并记 lastProbe', async function () {
+      const add = await json(BASE + '/api/downloaders', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'probe-slow', url: slowUrl, user: 'u', pass: 'p' })
+      });
+      need(add.status === 200 && add.body && add.body.ok, '建慢下载器失败：' + JSON.stringify(add.body && add.body.error));
+      const id = add.body.data.id;
+      const t = Date.now();
+      const r = await json(BASE + '/api/downloaders/' + encodeURIComponent(id) + '/test', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ timeoutMs: 150 })
+      });
+      need(r.status === 200 && r.body.data.pass === false, '超时测试没失败');
+      need(Date.now() - t < 1200, '超时测试没快速返回：' + (Date.now() - t));
+      const list = await (await fetchA(BASE + '/api/downloaders')).json();
+      const hit = (list.data || []).filter(function (x) { return x.id === id; })[0];
+      need(hit && hit.lastProbe && hit.lastProbe.pass === false, '超时 lastProbe 不对：' + JSON.stringify(hit && hit.lastProbe));
     });
 
     await check('探测超时返回失败且不卡住', async function () {
@@ -115,6 +158,7 @@ async function json(url, opts) {
     });
   } finally {
     if (slow) slow.close();
+    if (qbmock) qbmock.close();
     child.kill('SIGTERM');
     fs.rmSync(DATA, { recursive: true, force: true });
   }

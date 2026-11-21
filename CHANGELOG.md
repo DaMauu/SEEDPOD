@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.619 · 2026-11-23
+
+### 审计八十九轮
+- /api/downloaders/:id/test 支持 timeoutMs，已存配置会重新登录并写 lastProbe；超时快速失败。
+- 已存下载器测试超时后前端按钮恢复、可重试；frontend-regress 48/48，downloader-probe 7/7。
+- 全量 run.sh 通过。
+
 ## v0.7.618 · 2026-11-23
 
 ### 审计八十八轮
