@@ -116,7 +116,68 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('登出后 Nodes/Settings 定时器不再发请求', async function () {
+    await check('hashchange 只在本页触发 Sites/Queue，Nodes 只刷爬取页', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.clock.install({ time: new Date() });
+    let sitesHits = 0, queueHits = 0, dlHits = 0;
+    await page.route('**/api/sites', async function (route) {
+      if (route.request().method() !== 'GET') return route.continue();
+      sitesHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { counts: {}, sites: [], status: {} } }) });
+    });
+    await page.route(/\/api\/queue\?/, async function (route) {
+      const limit = new URL(route.request().url()).searchParams.get('limit');
+      if (limit !== '50') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [], matched: 0, counts: {} } }) });
+      queueHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [], matched: 0, counts: {} } }) });
+    });
+    await page.route('**/api/downloaders', async function (route) {
+      if (route.request().method() !== 'GET') return route.continue();
+      dlHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(300);
+    await page.evaluate(function () { location.hash = '#dashboard'; });
+    await page.waitForTimeout(200);
+    await page.evaluate(function () { location.hash = '#logs'; });
+    await page.waitForTimeout(500);
+    const s0 = sitesHits, q0 = queueHits, d0 = dlHits;
+    await page.clock.fastForward(10000);
+    await page.waitForTimeout(300);
+    need(sitesHits === s0 && queueHits === q0 && dlHits === d0, '非本页 hashchange 触发了请求：' + JSON.stringify({ s: [s0, sitesHits], q: [q0, queueHits], d: [d0, dlHits] }));
+
+    await page.evaluate(function () { location.hash = '#sites'; });
+    await page.waitForTimeout(300);
+    await page.clock.fastForward(500);
+    need(sitesHits > s0, 'Sites 页没加载站点');
+    await page.evaluate(function () { location.hash = '#queue'; });
+    await page.waitForTimeout(300);
+    await page.clock.fastForward(500);
+    need(queueHits > q0, 'Queue 页没加载队列');
+
+    await page.evaluate(function () { location.hash = '#crawl'; });
+    await page.clock.fastForward(1500);
+    await page.waitForTimeout(300);
+    const d1 = dlHits;
+    need(d1 > d0, 'Crawl 页没加载下载器');
+    await page.clock.fastForward(31000);
+    await page.waitForTimeout(300);
+    need(dlHits > d1, 'Crawl 页 30 秒没刷新下载器');
+    await page.evaluate(function () { location.hash = '#dashboard'; });
+    await page.waitForTimeout(300);
+    const d2 = dlHits;
+    await page.clock.fastForward(10000);
+    await page.waitForTimeout(300);
+    need(dlHits === d2, '离开 Crawl 仍刷新下载器：' + d2 + ' -> ' + dlHits);
+    await page.close();
+  });
+
+  await check('登出后 Nodes/Settings 定时器不再发请求', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await page.clock.install({ time: new Date() });
     let dlHits = 0, notifyHits = 0;
