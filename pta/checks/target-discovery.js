@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const dns = require('dns');
 const { makeDiscovery } = require('../server/target-discovery');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-disc-'));
@@ -17,7 +18,7 @@ const server = http.createServer(function (req, res) {
   }
   if (req.url === '/upload.php') {
     res.writeHead(200, { 'content-type': 'text/html' });
-    res.end('<a href="/announce.php?passkey=uploadpass1234567890">announce</a>');
+    res.end('<a href="/announce.php?passkey=uploadpass1234567890">announce</a><a href="http://evil.example/announce.php?passkey=evilpass1234567890">bad</a>');
     return;
   }
   res.writeHead(404); res.end();
@@ -47,7 +48,27 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
       const r = await disc.announceCandidates('target.example');
       need(r.ok && r.data.candidates.length >= 2, '候选没合并：' + JSON.stringify(r.data && r.data.candidates));
       need(r.data.candidates.some(function (x) { return x.kind === 'passkey' && /uploadpass/.test(x.announce); }), '上传页 passkey 没识别');
+      need(!r.data.candidates.some(function (x) { return /evil\.example/.test(x.announce); }), '外部 announce 进了候选：' + JSON.stringify(r.data.candidates));
     });
+    await check('目标站域名解析到内网时不发请求', async function () {
+      const real = dns.promises.lookup;
+      dns.promises.lookup = async function (h) {
+        if (String(h || '').toLowerCase() === 'disc-rebind.example') return [{ address: '10.0.0.9', family: 4 }];
+        return real(h);
+      };
+      const before = seen.length;
+      try {
+        const d2 = makeDiscovery({
+          resolve: function () { return { base: 'http://disc-rebind.example', upload: { formPath: '/upload.php' } }; },
+          cookieOf: function () { return { cookie: 'sid=target' }; },
+          dataDir: DATA
+        });
+        const r = await d2.announceCandidates('disc-rebind.example');
+        need(r.ok === false && r.code === 'NO_ANNOUNCE', '内网解析没拦住：' + JSON.stringify(r));
+        need(seen.length === before, '拦住后仍发了请求：' + (seen.length - before));
+      } finally { dns.promises.lookup = real; }
+    });
+
     await check('没有 cookie 时明确报错', async function () {
       const d2 = makeDiscovery({ resolve: function () { return { base: base, upload: { formPath: '/upload.php' } }; }, cookieOf: function () { return { err: 'no cookie' }; }, dataDir: DATA });
       const r = await d2.announceCandidates('target.example');

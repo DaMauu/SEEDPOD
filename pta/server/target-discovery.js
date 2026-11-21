@@ -2,11 +2,20 @@
 const fs = require('fs');
 const path = require('path');
 const torrentClean = require('./torrent-clean');
+const urlGuard = require('./url-guard');
 
 function makeDiscovery(deps) {
   const resolve = deps.resolve;
   const cookieOf = deps.cookieOf;
   const dataDir = deps.dataDir;
+
+  /* 所有目标站页面请求先做 DNS 复检；手动跟随关闭，失败返回 null 由调用方跳过 */
+  async function safeFetch(url, opts) {
+    const g = await urlGuard.assertNoRebind(url);
+    if (!g.ok) return null;
+    try { return await fetch(url, Object.assign({ redirect: 'manual' }, opts || {})); }
+    catch (e) { return null; }
+  }
 
   async function discoverAnnounce(host) {
     const t = resolve(host);
@@ -18,18 +27,16 @@ function makeDiscovery(deps) {
     const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
     const pages = ['/usercp.php', '/usercp.php?action=personal'];
     let uid = '';
-    try {
-      const idx = await fetch(t.base + '/index.php', { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(15000) });
+    const idx = await safeFetch(t.base + '/index.php', { headers: headers, signal: AbortSignal.timeout(15000) });
+    if (idx && idx.status === 200) {
       const html = await idx.text().catch(function () { return ''; });
       const m = /userdetails\.php\?id=(\d+)/i.exec(html);
       if (m) uid = m[1];
-    } catch (e) { /* 忽略：失败不影响主流程 */ }
+    }
     if (uid) pages.push('/userdetails.php?id=' + uid);
     for (const p of pages) {
-      let res;
-      try { res = await fetch(t.base + p, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(15000) }); }
-      catch (e) { continue; }
-      if (res.status !== 200) continue;
+      const res = await safeFetch(t.base + p, { headers: headers, signal: AbortSignal.timeout(15000) });
+      if (!res || res.status !== 200) continue;
       const html = await res.text().catch(function () { return ''; });
       if (/takelogin\.php|login\.php|请先登录/i.test(html)) continue;
       const safe = html.replace(/&amp;/g, '&');
@@ -51,8 +58,10 @@ function makeDiscovery(deps) {
   function candidateKind(url) {
     return /[?&]passkey=/i.test(String(url || '')) ? 'passkey' : 'generic';
   }
-  function cachedTargetCandidates(host) {
+  function cachedTargetCandidates(host, base) {
     const dir = path.join(dataDir, 'torrents');
+    let baseHost = '';
+    try { baseHost = new URL(String(base || '')).hostname.toLowerCase(); } catch (e) { baseHost = ''; }
     let files;
     try { files = fs.readdirSync(dir); } catch (e) { return []; }
     const prefix = String(host).replace(/[^a-z0-9.-]/gi, '_') + '-';
@@ -63,13 +72,20 @@ function makeDiscovery(deps) {
       .forEach(function (x) {
         try {
           const a = torrentClean.announceOf(fs.readFileSync(path.join(dir, x.f)));
-          if (a) out.push({ source: 'cached-target-torrent', kind: candidateKind(a), hasPasskey: candidateKind(a) === 'passkey', announce: a });
+          if (!a) return;
+          if (baseHost) {
+            const ah = new URL(a).hostname.toLowerCase();
+            if (ah !== baseHost && !ah.endsWith('.' + baseHost)) return;
+          }
+          out.push({ source: 'cached-target-torrent', kind: candidateKind(a), hasPasskey: candidateKind(a) === 'passkey', announce: a });
         } catch (e) { /* 忽略：失败不影响主流程 */ }
       });
     return out;
   }
   function uploadPageCandidates(html, base) {
     const safe = String(html || '').replace(/&amp;/g, '&');
+    let baseHost = '';
+    try { baseHost = new URL(String(base || '')).hostname.toLowerCase(); } catch (e) { baseHost = ''; }
     const raw = [];
     const patterns = [
       /(?:href|src)=["']([^"']*announce[^"']*)["']/gi,
@@ -86,6 +102,8 @@ function makeDiscovery(deps) {
       try {
         const u = new URL(x, base + '/');
         if (!/^https?:$/i.test(u.protocol)) return;
+        /* 上传页里的 announce 只能是本站/子域，避免把 passkey 带到外部 */
+        if (baseHost && u.hostname.toLowerCase() !== baseHost && !u.hostname.toLowerCase().endsWith('.' + baseHost)) return;
         const key = u.toString();
         if (seen[key]) return;
         seen[key] = true;
@@ -102,11 +120,11 @@ function makeDiscovery(deps) {
     if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err, http: 409 };
     const baseHost = (function () { try { return new URL(t.base).hostname.toLowerCase(); } catch (e) { return ''; } })();
     const headers = { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
-    const all = cachedTargetCandidates(host);
+    const all = cachedTargetCandidates(host, t.base);
     const formPath = t.upload.formPath || t.upload.path;
     try {
-      const res = await fetch(t.base + formPath, { headers: headers, redirect: 'manual', signal: AbortSignal.timeout(20000) });
-      if (res.status === 200) {
+      const res = await safeFetch(t.base + formPath, { headers: headers, signal: AbortSignal.timeout(20000) });
+      if (res && res.status === 200) {
         const html = await res.text().catch(function () { return ''; });
         if (!/takelogin\.php|login\.php|请先登录/i.test(html)) {
           uploadPageCandidates(html, t.base).forEach(function (x) {
