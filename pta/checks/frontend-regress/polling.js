@@ -39,7 +39,48 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('会话过期时 Logs 暂停，重登后恢复', async function () {
+    await check('切页后统计轮询不叠加失控，回总览继续刷新', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.clock.install({ time: new Date() });
+    let statsHits = 0;
+    await page.route('**/api/stats/overview', async function (route) {
+      statsHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { queue: { counts: {} }, catalog: { total: 0 }, published: { total: 0, byDay: [] }, failures: { items: 0, reasons: [] } } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.clock.fastForward(2500);
+    await page.waitForTimeout(300);
+    const onDash = statsHits;
+    need(onDash > 0, '总览没拉统计');
+    await page.locator('.dock-item[data-view="sites"]').click();
+    await page.waitForTimeout(300);
+    need((await page.evaluate(function () { return location.hash; })) === '#sites', '没切到 Sites');
+    const vis = await page.evaluate(function () {
+      const d = document.querySelector('[data-view="dashboard"]');
+      const s = document.querySelector('[data-view="sites"]');
+      return { dh: d && d.hidden, sh: s && s.hidden };
+    });
+    need(vis.dh === true && vis.sh === false, '切页后可见性不对：' + JSON.stringify(vis));
+    await page.clock.fastForward(31000);
+    await page.waitForTimeout(300);
+    need(statsHits - onDash <= 1, '离开总览统计请求叠加：' + onDash + ' -> ' + statsHits);
+    await page.locator('.dock-item[data-view="dashboard"]').click();
+    await page.waitForTimeout(300);
+    await page.clock.fastForward(600);
+    await page.waitForTimeout(300);
+    need(statsHits > onDash, '回总览没立即刷新');
+    const back = statsHits;
+    await page.clock.fastForward(31000);
+    await page.waitForTimeout(300);
+    need(statsHits > back, '总览 30 秒轮询没继续');
+    await page.close();
+  });
+
+  await check('会话过期时 Logs 暂停，重登后恢复', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let sseHits = 0;
       await page.route('**/api/logs/stream**', async function (route) {
@@ -75,7 +116,47 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('登出后 Sites/Queue 定时器不再发请求', async function () {
+    await check('登出后 Nodes/Settings 定时器不再发请求', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.clock.install({ time: new Date() });
+    let dlHits = 0, notifyHits = 0;
+    await page.route('**/api/downloaders', async function (route) {
+      if (route.request().method() !== 'GET') return route.continue();
+      dlHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    });
+    await page.route('**/api/notify', async function (route) {
+      if (route.request().method() !== 'GET') return route.continue();
+      notifyHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { telegram: false, webhook: false, events: 'error' } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#crawl'; });
+    await page.clock.fastForward(2600);
+    await page.waitForTimeout(300);
+    need(dlHits > 0, 'Crawl 页没加载下载器');
+    await page.evaluate(function () { location.hash = '#settings'; });
+    await page.clock.fastForward(2600);
+    await page.waitForTimeout(300);
+    need(notifyHits > 0, '设置页没加载通知配置');
+    await page.evaluate(async function () {
+      await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+      await fetch('/api/session', { credentials: 'same-origin' });
+    });
+    await page.clock.fastForward(1200);
+    await page.waitForTimeout(300);
+    const d0 = dlHits, n0 = notifyHits;
+    await page.clock.fastForward(35000);
+    await page.waitForTimeout(300);
+    need(dlHits === d0 && notifyHits === n0, '登出后 Nodes/Settings 仍在请求：' + JSON.stringify({ d: [d0, dlHits], n: [n0, notifyHits] }));
+    await page.close();
+  });
+
+  await check('登出后 Sites/Queue 定时器不再发请求', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let sitesHits = 0, queueHits = 0;
       await page.route('**/api/sites', async function (route) {

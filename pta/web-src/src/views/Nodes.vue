@@ -101,7 +101,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { fmtBytes } from '../utils/format'
 import { reportError } from '../utils/errors'
-import { toast, confirmBox, viewVisible } from '../utils/ui'
+import { toast, confirmBox, viewVisible, loggedIn } from '../utils/ui'
 
 const nodes = ref([])
 const modalOpen = ref(false)
@@ -145,6 +145,7 @@ const meta = computed(() => nodes.value.length
   : '还没有下载器')
 
 async function loadNodes() {
+  if (!loggedIn()) return
   try {
     const j = await (await fetch('/api/downloaders', { credentials: 'same-origin' })).json()
     if (j && j.ok && Array.isArray(j.data)) {
@@ -154,7 +155,7 @@ async function loadNodes() {
     }
   } catch (e) { reportError('Nodes', e) }
 }
-function ensureNodes() { loadNodes() }
+function ensureNodes() { if (viewVisible('crawl') && loggedIn()) loadNodes() }
 function openAddDownloader() {
   editing.value = ''
   Object.assign(form, { kind: 'qb', name: '', url: '', user: '', pass: '', disableAuth: false, watchPath: '' })
@@ -307,8 +308,8 @@ function removeNode() {
 
 onMounted(() => {
   window.addEventListener('hashchange', ensureNodes)
-  timer = setInterval(() => { if (viewVisible('crawl')) loadNodes() }, 30000)
-  loadNodes()
+  timer = setInterval(ensureNodes, 30000)
+  ensureNodes()
 })
 onUnmounted(() => {
   window.removeEventListener('hashchange', ensureNodes)
