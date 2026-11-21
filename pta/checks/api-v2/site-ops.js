@@ -380,6 +380,8 @@ module.exports = async function run(ctx) {
     need(c && c.status === 'new', '词条没回到 new：' + JSON.stringify(c && c.status));
     need(!c.skipReason && !c.skippedAt, '跳过原因没清：' + JSON.stringify({ r: c.skipReason, s: c.skippedAt }));
     need(!c.dupe && !c.dupeTarget && !c.dupeTitle && !c.dupeAt && !c.dupeSizeGB, '旧查重结论没清：' + JSON.stringify(c));
+    const oldHit = await (await fetchA(BASE + '/api/catalog?q=Old%20Dupe&limit=50')).json();
+    need(oldHit.ok && (oldHit.data.items || []).every(function (x) { return x.id !== cid; }), '旧 dupe 标题还能搜到：' + JSON.stringify(oldHit.data.items));
     const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
     db.prepare('DELETE FROM catalog WHERE id = ?').run(cid);

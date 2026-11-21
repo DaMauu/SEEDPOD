@@ -95,9 +95,9 @@ module.exports = async function run(ctx) {
     await page.fill('#login-user', 'admin');
     await page.fill('#login-pass', 'demo-pass');
     await page.click('#login-submit');
-    await page.waitForTimeout(1100);
-    await page.locator('.q-item').first().click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(1200);
+    need((await page.locator('.q-item.on').count()) === 1, '重登后列表选中态没恢复');
+    need((await page.locator('.qd-title-row').innerText()).indexOf('Delete 401 Row') >= 0, '重登后详情没恢复');
     await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
     await page.click('#confirm-yes');
     await page.waitForTimeout(800);
