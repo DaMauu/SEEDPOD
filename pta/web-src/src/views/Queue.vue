@@ -144,7 +144,7 @@
           <div class="spacer"></div>
           <input v-model="reason" class="input slim" placeholder="驳回理由（必填）" style="width:200px">
           <button class="btn ghost slim" type="button" :disabled="busy.act" @click="act('skip')">跳过</button>
-          <button v-if="sel.status !== 'published'" class="btn ghost slim danger" type="button" :disabled="busy.remove" @click="removeItem">{{ busy.remove ? '删除中…' : '删除' }}</button>
+          <button v-if="sel.status !== 'published'" class="btn ghost slim danger" type="button" :disabled="busy.remove || deleteBlocked(sel)" :title="deleteBlocked(sel) ? '目标站已提交/注入，先去目标站和下载器处理' : '只删面板队列记录'" @click="removeItem">{{ busy.remove ? '删除中…' : '删除' }}</button>
         </div>
       </div>
     </div>
@@ -245,18 +245,32 @@ function verifyOf(item) {
   const targets = Array.isArray(item.targets) && item.targets.length ? item.targets : (item.targetSite ? [item.targetSite] : [])
   return targets.length <= 1 ? (item.targetVerify || null) : null
 }
+function deleteBlocked(item) {
+  const trs = (item && item.targetResults) || {}
+  return Object.keys(trs).some(function (h) {
+    const tr = trs[h] || {}
+    return tr.stage === 'submitted' || tr.stage === 'injected' || !!tr.publishedTorrent
+  })
+}
+function deleteText(item) {
+  const bits = ['只删面板里的队列记录，不动目标站和下载器里的种子。']
+  if (item && item.status === 'failed') bits.push('这是失败条目。')
+  else if (item && item.status === 'rejected') bits.push('这是已驳回条目。')
+  return bits.join('') + '确定删除「' + String((item && (item.cn || item.title)) || (item && item.id) || '') + '」？'
+}
 function removeItem() {
   if (!sel.value || busy.remove) return
   const id = sel.value.id
   const title = sel.value.cn || sel.value.title || id
-  confirmBox('删除条目', '只删面板里的队列记录，不动目标站和下载器里的种子。确定删除「' + title + '」？', async function () {
+  confirmBox('删除条目', deleteText(sel.value), async function () {
     busy.remove = true
     try {
       const r = await fetch('/api/queue/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' })
       const j = await r.json().catch(function () { return null })
       if (!r.ok || !j || !j.ok) { toast((j && j.error && j.error.message) || '删除失败'); return }
       const ce = (j.data && j.data.cleanupErrors) || []
-      toast('已删除' + (ce.length ? '，缓存清理失败 ' + ce.length + ' 个' : ''))
+      const first = ce[0] && (ce[0].error || ce[0].hash)
+      toast('已删除' + (ce.length ? '，缓存清理失败 ' + ce.length + ' 个' + (first ? '（' + String(first).slice(0, 40) + '）' : '') : ''))
       sel.value = null
       failReload.value++
       await loadQueuePage()
