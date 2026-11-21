@@ -80,9 +80,11 @@ async function main() {
     let failed = false;
     try { await bad.wait('write'); } catch (e) { failed = true; }
     need(failed, '写库失败没有抛出');
+    clear();
     const t = Date.now();
     await queue.wait('write');
-    need(Date.now() - t >= 0, '失败后队列卡死');
+    await queue.wait('write');
+    need(Date.now() - t >= 25, '失败后队列没恢复串行：' + (Date.now() - t));
   });
 
   await check('旧 PTA_ 名字仍兼容', function () {

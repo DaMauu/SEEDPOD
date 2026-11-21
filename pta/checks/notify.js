@@ -37,6 +37,9 @@ function listen() {
           if (n === 1) { res.writeHead(500); res.end('delay fail'); return; }
           res.writeHead(200); res.end('ok'); return;
         }
+        if (req.url === '/webhook-shared-fail') {
+          res.writeHead(500); res.end('shared fail'); return;
+        }
         if (req.url === '/webhook-always-fail') {
           res.writeHead(500); res.end('fail'); return;
         }
@@ -215,6 +218,24 @@ async function main() {
     need(r2.skipped === true && r2.reason === 'cooldown', '冷却没生效：' + JSON.stringify(r2));
     need(r3.ok === true && r3.channel === 'webhook', '冷却到期没恢复：' + JSON.stringify(r3));
     need(r4.ok === true && r4.skipped !== true, '成功后冷却没清：' + JSON.stringify(r4));
+  });
+
+  await check('同一 webhook 的多个实例共享冷却', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const cfg = ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-shared-fail' });
+    const a = makeNotify(cfg);
+    const b = makeNotify(cfg);
+    const before = hits.length;
+    const r1 = await a.send('publish.failed', 'shared fail', {}, { webhookRetries: 0 });
+    const r2 = await b.send('publish.failed', 'shared cooldown', {}, { webhookRetries: 0 });
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r1.ok === false, '首次应失败');
+    need(r2.skipped === true && r2.reason === 'cooldown', '另一实例没共享冷却：' + JSON.stringify(r2));
+    need(hits.length === before + 1, '共享冷却仍重复请求：' + (hits.length - before));
   });
 
   await check('events=off 全部跳过', async function () {

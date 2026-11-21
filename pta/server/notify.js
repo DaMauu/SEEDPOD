@@ -2,11 +2,13 @@
    token/chat 优先读环境变量；没有就用面板加密保存的配置（token AES-GCM）。
    接口只回是否配置/来源/chat，不回 token。 */
 const secretbox = require('./secretbox');
+const COOLDOWNS = new Map();
+function cooldownKey(t, c) { return String((t && t.api) || '') + '|' + String((t && t.chat) || '') + '|' + String((c && c.webhook) || ''); }
 function makeNotify(ctx) {
   const { one, DATA_DIR } = ctx;
   const KEYRING = secretbox.loadKey(DATA_DIR || require('./env').read('DATA_DIR','PTA_DATA') || '.');
   const now = () => new Date().toISOString();
-  const COOLDOWN = { until: 0, reason: '' };
+  function cooldownOf(key) { if (!COOLDOWNS.has(key)) COOLDOWNS.set(key, { until: 0, reason: '' }); return COOLDOWNS.get(key); }
   const COOLDOWN_MS = Math.max(0, Math.min(600000, Number(require('./env').read('NOTIFY_COOLDOWN_MS', 'PTA_NOTIFY_COOLDOWN_MS') || 60000)));
 
   function rawCfg() {
@@ -59,7 +61,8 @@ function makeNotify(ctx) {
   async function send(event, text, extra, opts) {
     const c = readCfg(), t = creds();
     const force = !!(opts && opts.force);
-    /* 双通道同时失败后短暂冷却，避免调度每轮重复打外部接口 */
+    const COOLDOWN = cooldownOf(cooldownKey(t, c));
+    /* 双通道同时失败后短暂冷却，避免调度每轮重复打外部接口；同配置的实例共享 */
     if (!force && COOLDOWN.until > Date.now()) {
       return { ok: false, skipped: true, reason: 'cooldown', retryAt: new Date(COOLDOWN.until).toISOString(), lastError: COOLDOWN.reason };
     }
