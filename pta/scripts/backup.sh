@@ -42,7 +42,23 @@ for x in .secret site-defs site-pack.json site-maps.json library.json site-searc
   [ -e "$DATA/$x" ] && [ ! -e "$STAGE/$x" ] && cp -a "$DATA/$x" "$STAGE/$x"
 done
 
-tar -czf "$TMPOUT" -C "$STAGE" .
+# 快照必须能通过 SQLite 完整性校验，避免把坏库当备份发出去
+if [ "$SNAPSHOT" = "1" ]; then
+  if ! NODE_NO_WARNINGS=1 node -e '
+const { DatabaseSync } = require("node:sqlite");
+const db = new DatabaseSync(process.argv[1], { readOnly: true });
+try {
+  const r = db.prepare("PRAGMA integrity_check").get();
+  process.exit(r && r.integrity_check === "ok" ? 0 : 1);
+} finally { db.close(); }
+' "$STAGE/seedpod.db" 2>/dev/null; then
+    echo "备份快照校验失败：$STAGE/seedpod.db" >&2
+    exit 1
+  fi
+fi
+
+tar -czf "$TMPOUT" -C "$STAGE" . || { echo "打包失败：$TMPOUT" >&2; exit 1; }
+tar -tzf "$TMPOUT" >/dev/null || { echo "备份包读不出来：$TMPOUT" >&2; exit 1; }
 mv "$TMPOUT" "$OUT"
 chmod 600 "$OUT"
 echo "backup=$OUT files=$(find "$STAGE" -maxdepth 1 -mindepth 1 | wc -l | tr -d ' ')"

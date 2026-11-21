@@ -147,6 +147,59 @@ check('磁盘写入上限触发失败时源库不受影响', function () {
   d.close();
 });
 
+check('坏数据库备份不能覆盖现有数据', function () {
+  const badDir = path.join(TMP, 'bad-db');
+  fs.mkdirSync(badDir, { recursive: true });
+  fs.writeFileSync(path.join(badDir, 'seedpod.db'), 'this is not sqlite');
+  const bad = path.join(TMP, 'bad-db.tar.gz');
+  const mk = spawnSync('tar', ['-czf', bad, '-C', badDir, 'seedpod.db'], { encoding: 'utf8' });
+  need(mk.status === 0, '造坏库失败：' + (mk.stderr || ''));
+  const keep = path.join(TMP, 'keep-db');
+  fs.mkdirSync(keep, { recursive: true });
+  const live2 = new DatabaseSync(path.join(keep, 'seedpod.db'));
+  live2.exec('CREATE TABLE marker (v TEXT)');
+  live2.prepare('INSERT INTO marker(v) VALUES(?)').run('keep-me');
+  live2.close();
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), bad, keep], { encoding: 'utf8', env: Object.assign({}, process.env, { FORCE: '1' }) });
+  need(r.status !== 0, '坏库恢复不该成功');
+  need(/校验失败/.test(r.stderr || r.stdout), '没有提示校验失败：' + (r.stderr || r.stdout));
+  const after = new DatabaseSync(path.join(keep, 'seedpod.db'), { readOnly: true });
+  const row = after.prepare('SELECT v FROM marker').get();
+  after.close();
+  need(row && row.v === 'keep-me', '现有数据被坏库覆盖：' + JSON.stringify(row));
+});
+
+check('带符号链接的备份被拒绝', function () {
+  const linkDir = path.join(TMP, 'link-dir');
+  fs.mkdirSync(linkDir, { recursive: true });
+  const d = new DatabaseSync(path.join(linkDir, 'seedpod.db'));
+  d.exec('CREATE TABLE t (v TEXT)');
+  d.close();
+  fs.symlinkSync('/etc', path.join(linkDir, 'site-defs'));
+  const linkBak = path.join(TMP, 'link.tar.gz');
+  const mk = spawnSync('tar', ['-czf', linkBak, '-C', linkDir, 'seedpod.db', 'site-defs'], { encoding: 'utf8' });
+  need(mk.status === 0, '造链接包失败：' + (mk.stderr || ''));
+  const out = path.join(TMP, 'link-out');
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), linkBak, out], { encoding: 'utf8' });
+  need(r.status !== 0, '带符号链接的备份不该成功');
+  need(/符号链接/.test(r.stderr || r.stdout), '没有提示符号链接：' + (r.stderr || r.stdout));
+});
+
+check('缺 .secret 的备份给出警告但可恢复', function () {
+  const src2 = path.join(TMP, 'src-nosecret');
+  fs.mkdirSync(src2, { recursive: true });
+  const d = new DatabaseSync(path.join(src2, 'seedpod.db'));
+  d.exec('CREATE TABLE t (v TEXT)');
+  d.close();
+  const bak2 = path.join(TMP, 'nosecret.tar.gz');
+  const b = spawnSync('bash', [path.join(ROOT, 'scripts', 'backup.sh'), src2, bak2], { encoding: 'utf8' });
+  need(b.status === 0, '无密钥备份失败：' + (b.stderr || b.stdout));
+  const out = path.join(TMP, 'nosecret-out');
+  const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), bak2, out], { encoding: 'utf8' });
+  need(r.status === 0, '无密钥备份恢复失败：' + (r.stderr || r.stdout));
+  need(/\.secret/.test(r.stderr || ''), '没有提示缺 .secret：' + (r.stderr || r.stdout));
+});
+
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 忽略：失败不影响主流程 */ }
 const pass = results.filter(function (r) { return r[0]; }).length;
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
