@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.589 · 2026-11-22
+
+### 审计五十九轮
+- 删除队列条目时清掉 `data/torrents/source-<hash>.torrent` 源种缓存，返回 `cleanedFiles`；已发布条目仍拒绝删除。
+- replay/改状态都会清 `heldAlertNextAt`；api-v2 49/49、failure-replay 3/3、failure-held 4/4、scheduler-running 5/5。
+- 全量 run.sh 通过。
+
 ## v0.7.588 · 2026-11-22
 
 ### 审计五十八轮

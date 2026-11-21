@@ -1,11 +1,13 @@
 /* 追加到 app-fastify.js 的写接口片段：词条库、队列、流程规则、配置。
    在 build() 内被 require 注入（见 app-fastify.js 末尾 require('./routes-write')(app, ctx)）。 */
+const fs = require('fs');
+const path = require('path');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { hostsOf } = require('./dedupe-item');
 
 module.exports = function (app, ctx) {
-  const { db, one, all, ok, bad, jparse } = ctx;
+  const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
   const targetService = makeTargetService(ctx, makeTarget(ctx));
   const configSchema = require('./config-schema');
@@ -240,7 +242,17 @@ const catalogSync = require('./catalog-sync');
     const it = jparse(row.data) || {};
     db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id);
     catalogSync.reset(ctx, it);
-    return ok(reply, { id: req.params.id, catalogReset: !!it.catalogId });
+    /* 清掉该条目缓存的源种文件；已发布条目上面已拦，不动 published 文件 */
+    let cleanedFiles = 0;
+    const hashes = [it.infohash, it.sourceState && it.sourceState.hash].map(function (x) { return String(x || '').toLowerCase(); })
+      .filter(function (h, i, a) { return /^[a-f0-9]{40}$/.test(h) && a.indexOf(h) === i; });
+    hashes.forEach(function (h) {
+      try {
+        const file = path.join(DATA_DIR, 'torrents', 'source-' + h + '.torrent');
+        if (fs.existsSync(file)) { fs.unlinkSync(file); cleanedFiles++; }
+      } catch (e) { /* 文件清不掉不影响删除 */ }
+    });
+    return ok(reply, { id: req.params.id, catalogReset: !!it.catalogId, cleanedFiles: cleanedFiles });
   });
 
   /* ---- 流程规则 ---- */

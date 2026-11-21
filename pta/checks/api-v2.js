@@ -588,10 +588,15 @@ async function main() {
     db2.close();
   });
 
-  await check('删除 held 条目后队列计数和统计立即一致', async () => {
+  await check('删除 held 条目后计数一致并清掉源种缓存', async () => {
+    const h = 'c'.repeat(40);
+    const cacheDir = path.join(DATA, 'torrents');
+    fs.mkdirSync(cacheDir, { recursive: true });
+    const cacheFile = path.join(cacheDir, 'source-' + h + '.torrent');
+    fs.writeFileSync(cacheFile, 'd4:infod4:name1:x6:lengthi1eeee');
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Held Delete 2020', status: 'approved', site: 'demo-a.example',
+      body: JSON.stringify({ title: 'Held Delete 2020', status: 'approved', site: 'demo-a.example', infohash: h,
         heldSince: '2026-01-01T00:00:00.000Z', heldAt: '2026-01-01T00:00:00.000Z', heldReason: '源种未下完' })
     })).json();
     need(q.ok && q.data.id, '建 held 条目失败：' + JSON.stringify(q));
@@ -599,6 +604,8 @@ async function main() {
     const ov1 = await (await fetchA(BASE + '/api/stats/overview')).json();
     const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
     need(del.ok, '删除失败：' + JSON.stringify(del));
+    need(del.data.cleanedFiles === 1, '源种缓存没清：' + JSON.stringify(del.data));
+    need(!fs.existsSync(cacheFile), '源种缓存文件还在');
     const after = await (await fetchA(BASE + '/api/queue?limit=1')).json();
     const ov2 = await (await fetchA(BASE + '/api/stats/overview')).json();
     need(Number(after.data.counts.approved) === Number(before.data.counts.approved) - 1, 'approved 计数没减：' + JSON.stringify({ b: before.data.counts.approved, a: after.data.counts.approved }));

@@ -44,11 +44,11 @@ check('held 与失败一起分页', function () {
 });
 
 check('跳过后清掉 held，不再出现在失败队列', function () {
-  ins.run('q_held_skip', 'approved', 'Held Skip', JSON.stringify({ id: 'q_held_skip', status: 'approved', heldSince: old, heldAt: old, heldReason: '源种未下完', heldAlertAt: old }), new Date().toISOString());
+  ins.run('q_held_skip', 'approved', 'Held Skip', JSON.stringify({ id: 'q_held_skip', status: 'approved', heldSince: old, heldAt: old, heldReason: '源种未下完', heldAlertAt: old, heldAlertNextAt: new Date(Date.now() + 600000).toISOString() }), new Date().toISOString());
   const out = applyStatus({ db: db, one: function (s, ...a) { return db.prepare(s).get(...a); }, jparse: function (s) { try { return JSON.parse(s); } catch (e) { return null; } } }, ['q_held_skip'], 'skipped');
   need(out.changed === 1, '状态没改：' + JSON.stringify(out));
   const d = JSON.parse(db.prepare('SELECT data FROM queue WHERE id = ?').get('q_held_skip').data);
-  need(d.heldSince === undefined && d.heldAt === undefined && d.heldReason === undefined && d.heldAlertAt === undefined, 'held 字段没清：' + JSON.stringify(d));
+  need(d.heldSince === undefined && d.heldAt === undefined && d.heldReason === undefined && d.heldAlertAt === undefined && d.heldAlertNextAt === undefined, 'held 字段没清：' + JSON.stringify(d));
   const r = q.list({ limit: 50 });
   need(!r.items.some(function (x) { return x.id === 'q_held_skip'; }), '跳过项仍在失败队列');
 });
