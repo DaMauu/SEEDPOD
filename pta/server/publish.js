@@ -9,6 +9,7 @@ const stage = require('./stage');
 const flowConfig = require('./flow-config');
 const { tx } = require('./db');
 const { targetReady } = require('./release-gates');
+const publishLock = require('./upload-lock');
 const urlGuard = require('./url-guard');
 
 function makePublisher(ctx) {
@@ -126,7 +127,7 @@ function makePublisher(ctx) {
     return { buf: buf };
   }
 
-  async function publishItem(id, body) {
+  async function publishItemInner(id, body) {
     const b = body || {};
     const cur = load(id);
     if (!cur) return { ok: false, code: 'NOT_FOUND', message: '条目不存在', http: 404 };
@@ -231,6 +232,18 @@ function makePublisher(ctx) {
     stage.set(it, 'injected', { evidence: { client: 'qb', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' } });
     recordPublished(it);
     return { ok: true, data: { id: it.id, dryRun: false, published: true, qb: { added: true, downloader: { id: dl.id, name: dl.name || '' }, message: add.message || 'Ok.', hash: meta.hash || '', verified: !!chk.found, state: chk.state || '' }, msg: it.pubMsg } };
+  }
+
+  /* 同一队列条目的真发布跨进程互斥；演练不加锁 */
+  async function publishItem(id, body) {
+    const dryRun = !body || body.dryRun !== false;
+    if (dryRun) return publishItemInner(id, body);
+    const key = 'pub:' + String(id || '');
+    if (!publishLock.acquire(key, ctx.db)) {
+      return { ok: false, code: 'PUBLISH_IN_PROGRESS', message: '这个条目正在发布，等这次结束', http: 409 };
+    }
+    try { return await publishItemInner(id, body); }
+    finally { publishLock.release(key, ctx.db); }
   }
 
   /* 转载流程前置：源种先进 qB，进度到 1 才允许发布到目标站 */
