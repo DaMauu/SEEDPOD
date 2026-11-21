@@ -135,7 +135,7 @@ async function main() {
 
   await runCatalog({ check: check, need: need, json: json, BASE: BASE, DATA: DATA, mockPort: mockPort });
   qid = await runUpload({ check: check, need: need, json: json, BASE: BASE, DATA: DATA, torrent: torrent, hash: hash, hits: hits, state: state, mockPort: mockPort, makeTorrent2: makeTorrent2 });
-  await runDeleteVerify({ check: check, need: need, json: json, BASE: BASE, torrent: torrent, hits: hits, state: state, mockPort: mockPort, qid: qid });
+  await runDeleteVerify({ check: check, need: need, json: json, BASE: BASE, DATA: DATA, torrent: torrent, hits: hits, state: state, mockPort: mockPort, qid: qid });
 }
 
 function finish(err) {

@@ -1,6 +1,7 @@
+const path = require('path');
 /* target 删除/回查检查组：删除 dry-run/真删、回收站、回查判定。 */
 async function runDeleteVerify(C) {
-  const { check, need, json, BASE, torrent, hits, state, mockPort, qid } = C;
+  const { check, need, json, BASE, DATA, torrent, hits, state, mockPort, qid } = C;
   await check('删除测试种：dry-run、真删与回查', async function () {
     const dry = await json(BASE + '/api/targets/127.0.0.1/delete', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -122,8 +123,11 @@ async function runDeleteVerify(C) {
       body: JSON.stringify({ sets: { pub: [[{ t: '发布后校验', on: true }, { t: 'BDInfo', on: false }, { t: '截图至少几张', on: false }]] } })
     });
     need(on.status === 200 && on.body.ok, '恢复发布后校验失败');
-    const del = await json(BASE + '/api/queue/' + encodeURIComponent(id), { method: 'DELETE' });
-    need(del.status === 200 && del.body.ok, '清理回查关闭队列失败');
+    /* 已提交条目按新门禁不能走 API 删；夹具直接从库里清，避免影响后续检查 */
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db.prepare('DELETE FROM queue WHERE id = ?').run(id);
+    db.close();
   });
 
   await check('回查接口', async function () {

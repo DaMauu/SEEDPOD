@@ -290,11 +290,57 @@ module.exports = async function run(ctx) {
     need(logs.data.some(function (x) { return x.tag === '调度' && /(完成|部分失败)/.test(x.msg); }), '调度完成日志没写：' + JSON.stringify((logs.data || []).slice(-3)));
   });
 
+  await check('已提交目标站的条目拒绝删除且不清缓存', async () => {
+    const h = 'd'.repeat(40);
+    const dir = path.join(DATA, 'torrents');
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, 'source-' + h + '.torrent');
+    fs.writeFileSync(file, 'x');
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Submitted Delete 2020', status: 'approved', site: 'demo-a.example', infohash: h,
+        targetResults: { 'a.example': { stage: 'submitted' } } })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const del = await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' });
+    need(del.status === 409, '已提交还能删：' + del.status);
+    const dj = await del.json();
+    need(dj.error && dj.error.code === 'TARGET_SUBMITTED', '错误码不对：' + JSON.stringify(dj.error));
+    const got = await fetchA(BASE + '/api/queue/' + q.data.id);
+    need(got.status === 200, '被拒后条目没了');
+    need(fs.existsSync(file), '被拒时缓存被误清');
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    db.prepare('DELETE FROM queue WHERE id = ?').run(q.data.id);
+    db.close();
+    fs.unlinkSync(file);
+  });
+
+  await check('源种缓存清不掉时删除返回 cleanupErrors', async () => {
+    const h = 'e'.repeat(40);
+    const dir = path.join(DATA, 'torrents');
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, 'source-' + h + '.torrent');
+    fs.mkdirSync(file);
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Cleanup Error 2020', status: 'approved', site: 'demo-a.example', infohash: h })
+    })).json();
+    need(q.ok && q.data.id, '建条目失败：' + JSON.stringify(q));
+    const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
+    need(del.ok, '删除失败：' + JSON.stringify(del));
+    need(del.data.cleanedFiles === 0 && del.data.cleanupErrors.length === 1, '清理失败没提示：' + JSON.stringify(del.data));
+    const got = await fetchA(BASE + '/api/queue/' + q.data.id);
+    need(got.status === 404, '条目没删掉');
+    fs.rmdirSync(file);
+  });
+
   await check('退出登录后会话失效', async () => {
     const r = await fetchA(BASE + '/api/logout', { method: 'POST' });
     need(r.ok, '退出失败');
     const s = await fetchA(BASE + '/api/session');
     need(s.status === 401, '退出后还能读会话');
   });
+
 
 };

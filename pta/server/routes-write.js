@@ -240,19 +240,31 @@ const catalogSync = require('./catalog-sync');
       return bad(reply, 'PUBLISHED_LOCKED', '已发布的条目不删；先处理目标站和下载器里的种子', 409);
     }
     const it = jparse(row.data) || {};
+    /* 已提交/已注入目标站的条目不能直接删，否则目标站和 qB 里会留孤儿种子 */
+    const trs = it.targetResults || {};
+    const submitted = Object.keys(trs).filter(function (h) {
+      const tr = trs[h] || {};
+      return tr.stage === 'submitted' || tr.stage === 'injected' || !!tr.publishedTorrent;
+    });
+    if (submitted.length) {
+      return bad(reply, 'TARGET_SUBMITTED', '目标站已提交/注入：' + submitted.join('、') + '；先去目标站和下载器处理再删', 409);
+    }
     db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id);
     catalogSync.reset(ctx, it);
     /* 清掉该条目缓存的源种文件；已发布条目上面已拦，不动 published 文件 */
     let cleanedFiles = 0;
+    const cleanupErrors = [];
     const hashes = [it.infohash, it.sourceState && it.sourceState.hash].map(function (x) { return String(x || '').toLowerCase(); })
       .filter(function (h, i, a) { return /^[a-f0-9]{40}$/.test(h) && a.indexOf(h) === i; });
     hashes.forEach(function (h) {
       try {
         const file = path.join(DATA_DIR, 'torrents', 'source-' + h + '.torrent');
         if (fs.existsSync(file)) { fs.unlinkSync(file); cleanedFiles++; }
-      } catch (e) { /* 文件清不掉不影响删除 */ }
+      } catch (e) {
+        if (cleanupErrors.length < 5) cleanupErrors.push({ hash: h, error: String(e && (e.code || e.message) || e).slice(0, 120) });
+      }
     });
-    return ok(reply, { id: req.params.id, catalogReset: !!it.catalogId, cleanedFiles: cleanedFiles });
+    return ok(reply, { id: req.params.id, catalogReset: !!it.catalogId, cleanedFiles: cleanedFiles, cleanupErrors: cleanupErrors });
   });
 
   /* ---- 流程规则 ---- */
