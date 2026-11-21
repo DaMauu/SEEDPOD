@@ -42,6 +42,8 @@ function reset(ctx, item) {
   cd.queueStatus = '';
   delete cd.skipReason;
   delete cd.skippedAt;
+  /* 队列已删，旧的查重/跳过结论不能继续挂在词条上 */
+  ['dupe', 'dupeUrl', 'dupeTitle', 'dupeSizeGB', 'dupeTarget', 'dupeAt', 'dupeHosts', 'dupeOf', 'dupeSkipped'].forEach(function (k) { delete cd[k]; });
   const at = new Date().toISOString();
   cd.updatedAt = at;
   ctx.db.prepare('UPDATE catalog SET data = ?, status = ?, updated_at = ? WHERE id = ?')

@@ -498,10 +498,11 @@ async function setArch(site, e) {
 async function saveSite(site) {
   if (busy.save) return
   busy.save = true
-  const ok = await patchConfig({
+  const saved = {
     url: form.url, override: !!form.override, ovInterval: form.ovInterval,
     ovDetail: !!form.ovDetail, priority: form.priority
-  })
+  }
+  const ok = await patchConfig(saved)
   if (ok) {
     const cookie = String(form.cookie || '').trim()
     if (cookie) {
@@ -521,6 +522,8 @@ async function saveSite(site) {
     emit('changed')
     await loadDetail(site.name)
     fillForm(s.value)
+    /* 父级刷新可能晚于子组件回填，用刚保存的值兜底，避免表单显示旧 URL */
+    Object.assign(form, saved)
   }
   busy.save = false
 }

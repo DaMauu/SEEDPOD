@@ -358,7 +358,9 @@ module.exports = async function run(ctx) {
     const cid = 'cat_skip_del';
     await fetchA(BASE + '/api/catalog', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ items: [{ id: cid, title: 'Skip Delete Catalog', status: 'selected' }] })
+      body: JSON.stringify({ items: [{ id: cid, title: 'Skip Delete Catalog', status: 'selected',
+        skipReason: '目标站已有', skippedAt: '2026-01-01T00:00:00.000Z', dupe: 'dupe', dupeTarget: 'a.example',
+        dupeTitle: 'Old Dupe', dupeAt: '2026-01-01T00:00:00.000Z', dupeSizeGB: 20 }] })
     });
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -371,6 +373,8 @@ module.exports = async function run(ctx) {
     const list = await (await fetchA(BASE + '/api/catalog?limit=500')).json();
     const c = (list.data.items || []).filter(function (x) { return x.id === cid; })[0];
     need(c && c.status === 'new', '词条没回到 new：' + JSON.stringify(c && c.status));
+    need(!c.skipReason && !c.skippedAt, '跳过原因没清：' + JSON.stringify({ r: c.skipReason, s: c.skippedAt }));
+    need(!c.dupe && !c.dupeTarget && !c.dupeTitle && !c.dupeAt && !c.dupeSizeGB, '旧查重结论没清：' + JSON.stringify(c));
     const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
     db.prepare('DELETE FROM catalog WHERE id = ?').run(cid);
