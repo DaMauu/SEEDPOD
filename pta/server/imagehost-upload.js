@@ -65,6 +65,8 @@ function siteCookie(host) {
 async function cheveretoSsoLoginInner(cfg) {
   const base = chevBase(cfg);
   if (!base) throw new Error('没有配置图床地址');
+  const baseGate = await urlGuard.assertNoRebind(base);
+  if (!baseGate.ok) throw new Error(baseGate.err);
   const host = String(cfg.ssoHost || require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').toLowerCase();
   if (!host) throw new Error('没有配置图床 SSO 站点（IMAGE_HOST_SSO_HOST）');
   const ptcookie = String(cfg.ssoCookie || siteCookie(host) || '');
@@ -79,6 +81,8 @@ async function cheveretoSsoLoginInner(cfg) {
     const first = new URL(url, base + '/');
     if (!urlGuard.matches(host, first.hostname)) throw new Error('图床 SSO 跳转到非授权站点，拒绝发送来源站 cookie');
     url = first.toString();
+    const sourceGate = await urlGuard.assertNoRebind(url);
+    if (!sourceGate.ok) throw new Error(sourceGate.err);
   }
   r = await fetch(url, { headers: Object.assign({}, ua, { cookie: ptcookie }), redirect: 'manual', signal: AbortSignal.timeout(25000) });
   url = String(r.headers.get('location') || '');
@@ -115,6 +119,8 @@ function cheveretoSsoLogin(cfg) {
 async function cheveretoLogin(cfg) {
   const base = chevBase(cfg);
   if (!base) throw new Error('没有配置图床地址');
+  const baseGate = await urlGuard.assertNoRebind(base);
+  if (!baseGate.ok) throw new Error(baseGate.err);
   const user = String(cfg.user || '').trim();
   const pass = String(cfg.pass || '');
   if (!user || !pass) return cheveretoSsoLogin(cfg);
@@ -164,8 +170,9 @@ async function cheveretoWebUpload(buf, mime, name, cfg) {
     const res = await fetch(base + '/json', {
       method: 'POST',
       headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', cookie: sess.cookie, referer: base + '/', origin: base },
-      body: form, signal: AbortSignal.timeout(30000)
+      body: form, redirect: 'manual', signal: AbortSignal.timeout(30000)
     });
+    if (res.status >= 300 && res.status < 400) throw new Error('图床跳转了，停止');
     const text = await res.text().catch(function () { return ''; });
     let j = null;
     try { j = JSON.parse(text); } catch (e) { j = null; }
@@ -207,10 +214,13 @@ async function uploadOne(shot, cfg, opts) {
         form.append('key', cfg.token);
         form.append('format', 'json');
       } else if (cfg.token) headers.authorization = 'Bearer ' + cfg.token;
+      const dg = await urlGuard.assertNoRebind(cfg.endpoint);
+      if (!dg.ok) throw new Error(dg.err);
       const res = await fetch(cfg.endpoint, {
-        method: 'POST', headers: headers, body: form,
+        method: 'POST', headers: headers, body: form, redirect: 'manual',
         signal: AbortSignal.timeout(30000)
       });
+      if (res.status >= 300 && res.status < 400) throw new Error('图床跳转了，停止');
       if (!res.ok) throw new Error('图床返回 HTTP ' + res.status);
       const text = await res.text();
       let url = '';

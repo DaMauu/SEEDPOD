@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const dns = require('dns');
 const ROOT = path.resolve(__dirname, '..');
 /* 独立 DATA：镜像缓存写临时库，不污染仓库 data/seedpod.db */
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-imagehost-'));
@@ -22,6 +23,7 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
 let hits = 0;
 let retryHits = 0;
 let expireHits = 0;
+let redirectTarget = 0;
 const bodies = [];
 const server = http.createServer(function (req, res) {
   const chunks = [];
@@ -106,6 +108,15 @@ const server = http.createServer(function (req, res) {
       res.end(Buffer.from(PNG.split(',')[1], 'base64'));
       return;
     }
+    if (req.url === '/redirect-upload') {
+      res.writeHead(302, { location: '/upload-target' }); res.end(); return;
+    }
+    if (req.url === '/upload-target') {
+      redirectTarget++;
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ data: { url: 'http://127.0.0.1:' + server.address().port + '/target.jpg' } }));
+      return;
+    }
     if (req.url === '/retry' && retryHits++ === 0) {
       res.writeHead(500, { 'content-type': 'text/plain' });
       res.end('first fail');
@@ -168,6 +179,41 @@ async function main() {
     const r = await imagehost.process('本地图床', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true, retries: 0, delayMs: 0 });
     need(!r.ok && r.code === 'IMAGE_UPLOAD_FAILED' && r.failed === 1, '失败结果不对：' + JSON.stringify(r));
     need(/HTTP 500/.test(r.items[0].error || ''), '错误信息不对：' + r.items[0].error);
+  });
+
+  await check('自定义图床 302 不跟随，目标地址不发请求', async function () {
+    process.env.IMAGE_HOST_PROVIDER = 'custom';
+    process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/redirect-upload';
+    process.env.IMAGE_HOST_FIELD = 'file';
+    const before = redirectTarget;
+    try {
+      const r = await imagehost.process('custom', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true, retries: 0, delayMs: 0 });
+      need(!r.ok && /跳转/.test(String(r.items[0].error || '')), '302 没报错：' + JSON.stringify(r));
+      need(redirectTarget === before, '302 之后仍跟到了目标：' + redirectTarget);
+    } finally {
+      process.env.IMAGE_HOST_PROVIDER = '';
+      process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+    }
+  });
+
+  await check('自定义图床域名解析到内网时拒绝且不发请求', async function () {
+    process.env.IMAGE_HOST_PROVIDER = 'custom';
+    process.env.IMAGE_HOST_URL = 'http://img-rebind.example/upload';
+    const real = dns.promises.lookup;
+    dns.promises.lookup = async function (h) {
+      if (String(h || '').toLowerCase() === 'img-rebind.example') return [{ address: '10.0.0.9', family: 4 }];
+      return real(h);
+    };
+    const before = hits;
+    try {
+      const r = await imagehost.process('custom', [{ name: 'shot1.jpg', url: PNG }], { dryRun: false, allowReal: true, retries: 0, delayMs: 0 });
+      need(!r.ok && /内网/.test(String(r.items[0].error || '')), '内网解析没拦住：' + JSON.stringify(r));
+      need(hits === before, '拦住后仍发了请求：' + (hits - before));
+    } finally {
+      dns.promises.lookup = real;
+      process.env.IMAGE_HOST_PROVIDER = '';
+      process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/upload';
+    }
   });
 
   await check('Pixhost / 站内不冒充已上传', async function () {
