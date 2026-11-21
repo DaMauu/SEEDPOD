@@ -82,6 +82,14 @@ function need(c, m) { if (!c) throw new Error(m); }
       real.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(qd), 'q_held');
       const rold = await sched.runNow({ steps: ['publish'] });
       need(rold.steps.publish.heldOld === 1, '超 24h held 没统计：' + JSON.stringify(rold.steps.publish));
+      qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
+      need(typeof qd.heldAlertAt === 'string', '告警时间没落库');
+      const rdup = await sched.runNow({ steps: ['publish'] });
+      need(rdup.steps.publish.heldOld === 0, '同一 held 重复告警：' + JSON.stringify(rdup.steps.publish));
+      qd.heldAlertAt = new Date(Date.now() - 2 * 86400000).toISOString();
+      real.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(qd), 'q_held');
+      const rafter = await sched.runNow({ steps: ['publish'] });
+      need(rafter.steps.publish.heldOld === 1, '超过一天没重新告警：' + JSON.stringify(rafter.steps.publish));
       sourceComplete = true;
       /* 目标站已确认过，跳过真实上传，只验证 held 清零后继续注入 */
       const qrow = real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held');

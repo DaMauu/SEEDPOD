@@ -93,6 +93,36 @@ function seedDb() {
       await page.close();
     });
 
+    await check('失败队列能读出示意中的 held 源种状态', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.route('**/api/failures?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {
+          total: 1, counts: {}, byStage: { source: 1 }, retryMax: 2,
+          items: [{ id: 'q_held_ui', title: 'Held UI Row', status: 'approved', stage: 'source', dead: false,
+            failures: [{ kind: 'source', stage: 'source', code: 'SOURCE_INCOMPLETE', message: '源种未下完', attempts: 0, lastAttemptAt: new Date().toISOString() }] }]
+        } }) });
+      });
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [], matched: 0, counts: {} } }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(800);
+      await page.locator('#queue-tabs button').filter({ hasText: '失败' }).click();
+      await page.waitForTimeout(600);
+      const sum = await page.locator('.qf-sum').first().innerText();
+      need(sum.indexOf('源种') >= 0 && sum.indexOf('源种未下完') >= 0, 'held 没显示成中文：' + sum);
+      need(sum.indexOf('SOURCE_INCOMPLETE') < 0 && sum.indexOf('source') < 0, 'held 还在显示原始码：' + sum);
+      await page.close();
+    });
+
     await check('批量发布被跳过时详情同步显示目标站错误', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let failed = false;

@@ -42,11 +42,18 @@ function makePublishPhase(deps) {
                   it.heldSince = since; it.heldAt = since; it.heldReason = '源种未下完';
                   if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
                 }
-                if (Date.now() - (Date.parse(since) || Date.now()) > 24 * 3600 * 1000) heldOld++;
+                const ageMs = Date.now() - (Date.parse(since) || Date.now());
+                const alertedAt = Date.parse(it.heldAlertAt || '') || 0;
+                /* 同一 held 条目最多每天告警一次，避免每轮调度重复发 */
+                if (ageMs > 24 * 3600 * 1000 && (!alertedAt || Date.now() - alertedAt > 24 * 3600 * 1000)) {
+                  heldOld++;
+                  it.heldAlertAt = now();
+                  if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
+                }
                 continue;
               }
               if (it.heldSince) {
-                delete it.heldSince; delete it.heldAt; delete it.heldReason;
+                delete it.heldSince; delete it.heldAt; delete it.heldReason; delete it.heldAlertAt;
                 if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
               }
               /* 先传到目标站（已传过的站跳过），成功后再注入下载器；两步都算发布 */

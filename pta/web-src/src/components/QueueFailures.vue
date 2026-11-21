@@ -38,7 +38,7 @@ const loading = ref(true)
 const page = ref(1)
 const pageSize = 20
 
-const STAGE_TEXT = { review: '补资料', prepared: '准备', previewed: '预览', submitted: '提交', injected: '注入', publish: '发布', target: '目标站', dedupe: '查重', crawl: '抓取' }
+const STAGE_TEXT = { review: '补资料', prepared: '准备', previewed: '预览', submitted: '提交', injected: '注入', publish: '发布', target: '目标站', dedupe: '查重', crawl: '抓取', source: '源种' }
 function stageText(s) { return STAGE_TEXT[s] || s || '未知' }
 function codeText(code, stage) {
   const c = String(code || '')
@@ -46,6 +46,7 @@ function codeText(code, stage) {
   return ({
     LOGIN_REQUIRED: '登录失效',
     SOURCE_NOT_READY: '源种没下完',
+    SOURCE_INCOMPLETE: '源种未下完',
     NO_COOKIE: '没配 cookie',
     NO_DOWNLOADER: '没配下载器',
     CRAWL_FAILED: '抓取失败',

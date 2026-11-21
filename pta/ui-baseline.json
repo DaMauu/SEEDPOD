@@ -1,11 +1,11 @@
 {
-  "at": "2026-11-21T00:09:15.922Z",
+  "at": "2026-11-21T00:59:48.252Z",
   "files": {
     "App.vue": "fe0896639d16a401",
     "components/CrawlCard.vue": "7a23304c538747c5",
     "components/FlowGates.vue": "3f44c71518d518ff",
     "components/PublishCard.vue": "2949f37316ed09fe",
-    "components/QueueFailures.vue": "621de113b614c33c",
+    "components/QueueFailures.vue": "f442fe6c125a5eb8",
     "components/QueuePreflight.vue": "df63124277f7abbb",
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "ea5e921926989002",
