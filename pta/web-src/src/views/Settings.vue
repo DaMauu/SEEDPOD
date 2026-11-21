@@ -196,7 +196,10 @@ async function testNotify() {
   notify.testing = false
 }
 function ensureSettings() {
-  if (viewVisible('settings') && loggedIn()) loadSettings()
+  const vis = viewVisible('settings') && loggedIn()
+  /* 离开设置页后重置 loaded，下次进来重新拉一次；隐藏期间不发请求 */
+  if (!vis) { loaded = false; return }
+  if (!loaded) loadSettings()
 }
 function logout() {
   confirmBox('退出登录', '会清掉当前浏览器的会话 cookie，下次要重新登录。退出？', () => {
