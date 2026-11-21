@@ -28,12 +28,10 @@ const server = http.createServer(function (req, res) {
     return;
   }
   if (req.url.indexOf('/api/v2/') === 0) {
+    if (req.url === '/api/v2/app/version' && slowVersion) { setTimeout(function () { try { res.writeHead(200); res.end('v4.6.0'); } catch (e) { /* 已断开 */ } }, 400); return; }
     if (expireNext) { expireNext = false; res.writeHead(401); res.end('expired'); return; }
     if (cookie.indexOf(sid.split('=')[1]) < 0) { res.writeHead(401); res.end('Forbidden'); return; }
-    if (req.url === '/api/v2/app/version') {
-      if (slowVersion) { setTimeout(function () { try { res.writeHead(200); res.end('v4.6.0'); } catch (e) { /* 已超时断开 */ } }, 400); return; }
-      res.writeHead(200); res.end('v4.6.0'); return;
-    }
+    if (req.url === '/api/v2/app/version') { res.writeHead(200); res.end('v4.6.0'); return; }
     if (req.url === '/api/v2/sync/maindata') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ server_state: { free_space_on_disk: 12345, save_path: '/dl' } })); return; }
     if (req.url === '/api/v2/torrents/info') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify([{ hash: 'a'.repeat(40), name: 'x', progress: 1, state: 'uploading', save_path: '/dl' }])); return; }
     if (req.url === '/api/v2/torrents/categories') { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{}'); return; }
@@ -67,6 +65,19 @@ const BUF = Buffer.from('d4:infod4:name1:x6:lengthi1eeee');
     const [c1, c2] = await Promise.all([qb2.probeDownloader(probe), qb3.probeDownloader(probe)]);
     if (!(c1.pass === true && c2.pass === true)) throw new Error('并发探测失败：' + JSON.stringify({ c1: c1, c2: c2 }));
     results.push([true, '并发探测各自登录不串会话', '']);
+
+    slowVersion = true;
+    const beforeCancel = logins;
+    const ac = new AbortController();
+    const tCancel = Date.now();
+    const pending = qb.probeDownloader(probe, { signal: ac.signal });
+    setTimeout(function () { ac.abort(); }, 80);
+    const cancelled = await pending;
+    slowVersion = false;
+    if (cancelled.pass !== false) throw new Error('取消后仍成功：' + JSON.stringify(cancelled));
+    if (Date.now() - tCancel > 800) throw new Error('取消没快速返回：' + (Date.now() - tCancel));
+    if (logins !== beforeCancel) throw new Error('取消后仍去登录：' + (logins - beforeCancel));
+    results.push([true, '调用方 AbortSignal 取消快速返回且不登录', '']);
 
     const prevTimeout = process.env.PTA_DL_TIMEOUT_MS;
     process.env.PTA_DL_TIMEOUT_MS = '120';
