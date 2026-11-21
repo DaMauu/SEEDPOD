@@ -636,8 +636,7 @@ async function bulkApprove() {
     })).json()
     toast(j && j.ok ? '已批准 ' + j.data.changed + ' 条' : ((j && j.error && j.error.message) || '批量批准失败'))
     await loadQueuePage()
-  } catch (e) { toast('批量批准请求发不出去') }
-  busy.approve = false
+  } catch (e) { toast('批量批准请求发不出去') } finally { busy.approve = false }
 }
 async function bulkPublish() {
   if (busy.publish) return
@@ -649,10 +648,10 @@ async function bulkPublish() {
         method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'publish', fromStatus: 'approved' })
       })).json()
-      toast(j && j.ok ? '已发布 ' + j.data.changed + ' 条' + (j.data.skipped ? '，跳过 ' + j.data.skipped + ' 条' : '') : ((j && j.error && j.error.message) || '批量发布失败'))
+      const firstErr = j && j.ok && j.data && Array.isArray(j.data.errors) && j.data.errors[0]
+      toast(j && j.ok ? ('已发布 ' + j.data.changed + ' 条' + (j.data.skipped ? '，跳过 ' + j.data.skipped + ' 条' : '') + (firstErr ? '（' + String(firstErr.message || firstErr.code || '有失败').slice(0, 60) + '）' : '')) : ((j && j.error && j.error.message) || '批量发布失败'))
       await refresh()
-    } catch (e) { toast('批量发布请求发不出去') }
-    busy.publish = false
+    } catch (e) { toast('批量发布请求发不出去') } finally { busy.publish = false }
   }
   if (go) go('批量发布', '会把「已通过」的条目逐条走发布链路；真发布关闭时会逐条失败。继续？', fn)
   else fn()

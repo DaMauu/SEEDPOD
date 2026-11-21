@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.575 · 2026-11-22
+
+### 审计四十五轮
+- realPublish 关闭时发布门禁优先返回 `REAL_PUBLISH_DISABLED`，不暴露 review 细节；publish-review-gate 6/6。
+- 批量发布混合结果提示：已发布/跳过数量 + 首条错误，按钮用 finally 复位；frontend-regress 23/23。
+- 全量 run.sh 通过。
+
 ## v0.7.574 · 2026-11-22
 
 ### 审计四十四轮

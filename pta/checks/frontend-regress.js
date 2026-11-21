@@ -93,6 +93,40 @@ function seedDb() {
       await page.close();
     });
 
+    await check('批量发布混合结果提示成功/跳过和首条错误', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.route('**/api/queue/bulk', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+          ok: true, data: { changed: 2, skipped: 3, errors: [{ id: 'q_x', code: 'REVIEW_HOLD', message: '终审未通过：简介' }] }
+        }) });
+      });
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [], matched: 0, counts: {} } }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.route('**/api/sites', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(900);
+      await page.click('#q-bulkpublish');
+      await page.waitForTimeout(250);
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(700);
+      const t = await page.locator('#toast').innerText();
+      need(t.indexOf('已发布 2 条') >= 0 && t.indexOf('跳过 3 条') >= 0, '成功/跳过提示不对：' + t);
+      need(t.indexOf('终审未通过：简介') >= 0, '没带首条错误：' + t);
+      need(!(await page.locator('#q-bulkpublish').isDisabled()), '批量发布按钮没恢复');
+      await page.close();
+    });
+
     await check('失败队列重放后详情自动回待确认', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let replayed = false;

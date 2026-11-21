@@ -135,6 +135,10 @@ function makePublisher(ctx) {
     if (stage.isInjected(it)) return { ok: true, data: { id: it.id, skipped: true, published: true, msg: '已注入过，跳过重复操作' } };
     if (!it.title) return { ok: false, code: 'BAD_ITEM', message: '条目没有标题，发不了', http: 400 };
     if (!it.targetSite) return { ok: false, code: 'NO_TARGET', message: '还没选目标站', http: 400 };
+    /* 配置门禁优先于 review：realPublish 关着时统一提示配置，不暴露 review 细节 */
+    if (!dryRun && !ctx.allowReal('realPublish')) {
+      return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true（或设 ALLOW_REAL=1）再试', http: 409 };
+    }
     /* 终审没过的条目不能真发布；演练仍可看计划。
        ok=false 或 missing 非空任一成立就拦，防止手改出“ok=true + 旧 missing”的矛盾数据。 */
     if (!dryRun && it.review) {
@@ -155,9 +159,6 @@ function makePublisher(ctx) {
       if (!plan.ok) return { ok: false, code: plan.code, message: plan.message, http: 400 };
       it.pubMsg = plan.message;
       return { ok: true, data: { id: it.id, dryRun: true, published: false, inject: plan, qb: { wouldAdd: plan.wouldAdd, downloader: { id: dl.id, name: dl.name || '' } }, msg: plan.message } };
-    }
-    if (!ctx.allowReal('realPublish')) {
-      return { ok: false, code: 'REAL_PUBLISH_DISABLED', message: '真发布还没打开：把配置 realPublish 设为 true（或设 ALLOW_REAL=1）再试', http: 409 };
     }
     if (it.status !== 'pending' && it.status !== 'approved' && it.status !== 'failed') {
       return { ok: false, code: 'BAD_STATE', message: '当前状态 ' + it.status + ' 不能发布', http: 400 };

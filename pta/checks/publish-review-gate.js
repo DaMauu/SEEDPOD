@@ -6,6 +6,7 @@ const { openDB } = require('../server/db');
 const { makePublisher } = require('../server/publish');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-review-gate-'));
+let allow = true;
 const db = openDB(path.join(DATA, 'seedpod.db'));
 const ctx = {
   db: db,
@@ -13,7 +14,7 @@ const ctx = {
   all: function (s, ...a) { return db.prepare(s).all(...a); },
   jparse: function (s) { try { return JSON.parse(s); } catch (e) { return null; } },
   DATA_DIR: DATA,
-  allowReal: function () { return true; }
+  allowReal: function () { return allow; }
 };
 const publisher = makePublisher(ctx);
 const results = [];
@@ -38,6 +39,15 @@ const base = { id: 'q_gate', status: 'pending', stage: 'previewed', title: 'Revi
       need(/简介/.test(r.message), '错误没带缺失项：' + r.message);
       const d = read('q_gate');
       need(d.status === 'pending' && d.stage === 'previewed', '被拦后状态变了：' + JSON.stringify({ s: d.status, g: d.stage }));
+    });
+
+    await check('realPublish 关闭时优先返回配置门禁', async function () {
+      allow = false;
+      put(Object.assign({}, base, { review: { ok: false, missing: ['简介'] } }));
+      const r = await publisher.publishItem('q_gate', { dryRun: false });
+      allow = true;
+      need(r.ok === false && r.code === 'REAL_PUBLISH_DISABLED', '没先报配置门禁：' + JSON.stringify(r));
+      need(!/简介/.test(r.message), '配置门禁泄露了 review 细节：' + r.message);
     });
 
     await check('旧数据没有 review 字段仍可继续', async function () {
