@@ -26,7 +26,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 ## 铁律（违反即为错误，不要协商）
 
 1. 真实站点只读探测按下方《真实站点探测规则》执行；仍不得自己找 cookie、不得复用别人的 cookie 登录、不得压测或绕过限制。抓取默认先干跑或本地夹具，真实探测必须先有计划。旧规则里“不对真实站点做探测”的绝对表述由该规则取代，其余限制继续有效。
-2. 真实站点清单、站名、网址只允许以 AES-256-GCM 加密站点包形式入仓库（`pta/pack/site-pack.enc`），密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，不得与密文同库；聊天回复仍不写站名/网址。凭据、cookie、密码、服务器 IP 仍绝不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
+2. 真实站点网址、host、cookie、密码、passkey、上传 token 只允许以 AES-256-GCM 加密形式存在（站点包 `pta/pack/site-pack.enc`），密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，不得与密文同库；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 可以明文用于预设目录和界面。添加站点只能从预设选择，网址由服务端解密后内部使用，不允许手输网址。聊天回复仍不写网址；凭据、cookie、密码、服务器 IP 绝不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
 4. 站点凭据只存密文：SQLite `data/seedpod.db` 的 credentials 表 + AES-256-GCM，接口只回 `hasCookie`。
 5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
