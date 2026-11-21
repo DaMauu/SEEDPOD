@@ -107,6 +107,116 @@ module.exports = async function run(ctx) {
     await page.close();
   });
 
+  await check('401 重登后待确认页签和选中态保持', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    let calls = 0, deleted = false;
+    const item = { id: 'q_pending_401', title: 'Pending 401 Row', status: 'pending', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] };
+    await page.route('**/api/queue/q_pending_401', async function (route) {
+      if (route.request().method() === 'DELETE') {
+        calls++;
+        if (calls === 1) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+        deleted = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'q_pending_401', cleanedFiles: 0, cleanupErrors: [] } }) });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item }) });
+    });
+    await page.route('**/api/queue?**', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: deleted ? [] : [item], matched: deleted ? 0 : 1, counts: {} } }) });
+    });
+    await page.route('**/api/targets', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+    });
+    await page.route('**/api/sites', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#queue'; });
+    await page.waitForTimeout(900);
+    await page.locator('#queue-tabs button').filter({ hasText: '待确认' }).click();
+    await page.waitForTimeout(500);
+    await page.locator('.q-item').first().click();
+    await page.waitForTimeout(400);
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(600);
+    need((await page.locator('#login-mask').count()) === 1, '401 后没弹登录');
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.waitForTimeout(1200);
+    const activeTab = await page.locator('#queue-tabs button.active').innerText();
+    need(activeTab.indexOf('待确认') >= 0, '重登后页签没保持：' + activeTab);
+    need((await page.locator('.q-item.on').count()) === 1, '重登后选中态没恢复');
+    need((await page.locator('.qd-title-row').innerText()).indexOf('Pending 401 Row') >= 0, '重登后详情没恢复');
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(800);
+    need(calls === 2, '重登后没重试删除：' + calls);
+    need((await page.locator('.q-item').count()) === 0, '删除后列表没刷新');
+    await page.close();
+  });
+
+  await check('401 重登后失败页签和选中态保持', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    let calls = 0, deleted = false;
+    const item = { id: 'q_failed_tab', title: 'Failed Tab Row', status: 'failed', stage: 'failed', targetSite: 'test-a.example', targets: ['test-a.example'],
+      failures: [{ kind: 'stage', stage: 'publish', code: 'TARGET_UNREACHABLE', message: '目标站连不上', attempts: 1 }] };
+    await page.route('**/api/failures?**', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: deleted ? 0 : 1, items: deleted ? [] : [item], counts: {}, byStage: {}, retryMax: 2 } }) });
+    });
+    await page.route('**/api/queue/q_failed_tab', async function (route) {
+      if (route.request().method() === 'DELETE') {
+        calls++;
+        if (calls === 1) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+        deleted = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { id: 'q_failed_tab', cleanedFiles: 0, cleanupErrors: [] } }) });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item }) });
+    });
+    await page.route('**/api/queue?**', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [], matched: 0, counts: {} } }) });
+    });
+    await page.route('**/api/targets', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+    });
+    await page.route('**/api/sites', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#queue'; });
+    await page.waitForTimeout(900);
+    await page.locator('#queue-tabs button').filter({ hasText: '失败' }).click();
+    await page.waitForTimeout(600);
+    await page.locator('.qf-row').first().click();
+    await page.waitForTimeout(450);
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(600);
+    need((await page.locator('#login-mask').count()) === 1, '401 后没弹登录');
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.waitForTimeout(1200);
+    const activeTab = await page.locator('#queue-tabs button.active').innerText();
+    need(activeTab.indexOf('失败') >= 0, '重登后失败页签没保持：' + activeTab);
+    need((await page.locator('.qf-row.on').count()) === 1, '重登后失败行没高亮');
+    need((await page.locator('.qd-title-row').innerText()).indexOf('Failed Tab Row') >= 0, '重登后失败详情没恢复');
+    await page.locator('.qd-actions button').filter({ hasText: '删除' }).click();
+    await page.click('#confirm-yes');
+    await page.waitForTimeout(800);
+    need(calls === 2, '重登后没重试删除：' + calls);
+    need((await page.locator('.qf-row').count()) === 0, '删除后失败列表没刷新');
+    await page.close();
+  });
+
   await check('多条缓存清理失败显示数量和首条错误', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     let deleted = false;

@@ -111,7 +111,38 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('Sources 导出全部页，归档后分页回到 1/1', async function () {
+    await check('Sources 删除后不再显示旧 dupe 结论', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    let cleared = false;
+    await page.route('**/api/site-defs', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+    });
+    await page.route('**/api/credentials', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    });
+    await page.route('**/api/catalog?**', async function (route) {
+      const row = { id: 'cat_dupe_ui', site: 'site-a.example', title: 'Dupe UI Row', status: 'new', cat: '', catName: '' };
+      if (!cleared) Object.assign(row, { dupe: 'dupe', dupeTitle: 'Old Dupe', dupeSizeGB: 20, dupeTarget: 'site-a.example' });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: 1, items: [row] } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#sources'; });
+    await page.waitForTimeout(1600);
+    need((await page.locator('.dl-row').innerText()).indexOf('已有原盘') >= 0, '删除前没显示 dupe');
+    cleared = true;
+    await page.evaluate(function () { location.hash = '#dashboard'; });
+    await page.waitForTimeout(200);
+    await page.evaluate(function () { location.hash = '#sources'; });
+    await page.waitForTimeout(1600);
+    need((await page.locator('.dl-row').innerText()).indexOf('已有原盘') < 0, '删除后还显示旧 dupe');
+    await page.close();
+  });
+
+  await check('Sources 导出全部页，归档后分页回到 1/1', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
       const rows = [];
       for (let i = 0; i < 150; i++) {
