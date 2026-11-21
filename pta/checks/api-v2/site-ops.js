@@ -433,6 +433,28 @@ module.exports = async function run(ctx) {
     db2.close();
   });
 
+  await check('通知 webhook 加密存储且不回明文', async function () {
+    const url = 'https://hooks.example/path?token=secret-fixture';
+    const put = await fetchA(BASE + '/api/notify', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ webhook: url, events: 'error' })
+    });
+    need(put.status === 200, '保存 webhook 失败：' + put.status);
+    const st = await (await fetchA(BASE + '/api/notify')).json();
+    need(st.ok && st.data.webhook === true, 'webhook 状态不对：' + JSON.stringify(st));
+    need(JSON.stringify(st).indexOf('secret-fixture') < 0, '接口回了 webhook 明文');
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
+    const cfg = JSON.parse((db.prepare("SELECT v FROM meta WHERE k = 'config'").get() || {}).v || '{}');
+    db.close();
+    need(!cfg.notifyWebhook, 'config 里还有明文 webhook');
+    need(/^v2:/.test(String(cfg.notifyWebhookEnc || '')), 'webhook 没加密：' + String(cfg.notifyWebhookEnc || '').slice(0, 12));
+    need(JSON.stringify(cfg).indexOf('secret-fixture') < 0, 'config 里还能看到 webhook 明文');
+    await fetchA(BASE + '/api/notify', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ webhook: '' })
+    });
+  });
+
   await check('退出登录后会话失效', async () => {
     const r = await fetchA(BASE + '/api/logout', { method: 'POST' });
     need(r.ok, '退出失败');

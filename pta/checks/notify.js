@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const dns = require('dns');
 
 const ROOT = path.resolve(__dirname, '..');
 const { makeNotify } = require(path.join(ROOT, 'server', 'notify.js'));
@@ -27,6 +28,14 @@ function listen() {
       req.on('data', function (c) { body += c; });
       req.on('end', function () {
         hits.push({ url: req.url, body: body ? JSON.parse(body) : null });
+        if (req.url === '/webhook-redirect') {
+          res.writeHead(302, { location: '/webhook-target' }); res.end(); return;
+        }
+        if (req.url === '/webhook-target') { res.writeHead(200); res.end('ok'); return; }
+        if (req.url.indexOf('/redir/') === 0) {
+          res.writeHead(302, { location: '/telegram-target' }); res.end(); return;
+        }
+        if (req.url === '/telegram-target') { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"ok":true}'); return; }
         if (req.url === '/webhook-delay2') {
           const n = hits.filter(function (x) { return x.url === '/webhook-delay2'; }).length;
           if (n === 1) { res.writeHead(500); res.end('delay2 fail'); return; }
@@ -111,6 +120,61 @@ async function main() {
     if (prev === undefined) delete process.env.PTA_TELEGRAM_API; else process.env.PTA_TELEGRAM_API = prev;
     need(r.ok === true && r.channel === 'webhook', '没走 webhook：' + JSON.stringify(r));
     need(hits[hits.length - 1].body.event === 'publish.failed', 'webhook 事件不对：' + JSON.stringify(hits[hits.length - 1].body));
+  });
+
+  await check('webhook 302 不跟随，目标地址一次都不打', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-redirect' }));
+    const r = await n2.send('publish.failed', 'redirect webhook', {}, { force: true, webhookRetries: 0 });
+    if (token !== undefined) process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat !== undefined) process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r.ok === false && /跳转/.test(String(r.error || '')), '302 没报错：' + JSON.stringify(r));
+    need(hits.filter(function (x) { return x.url === '/webhook-target'; }).length === 0, '302 之后仍跟到了目标');
+  });
+
+  await check('Telegram API 302 不跟随', async function () {
+    const prev = process.env.PTA_TELEGRAM_API;
+    process.env.PTA_TELEGRAM_API = 'http://127.0.0.1:' + port + '/redir';
+    const n2 = makeNotify(ctx({ notifyEvents: 'error' }));
+    const r = await n2.send('publish.failed', 'telegram redirect', {}, { force: true });
+    if (prev === undefined) delete process.env.PTA_TELEGRAM_API; else process.env.PTA_TELEGRAM_API = prev;
+    need(r.ok === false && /跳转/.test(String(r.error || '')), 'Telegram 302 没报错：' + JSON.stringify(r));
+    need(hits.filter(function (x) { return x.url === '/telegram-target'; }).length === 0, 'Telegram 302 之后仍跟到了目标');
+  });
+
+  await check('webhook 域名解析到内网时拒绝且不发请求', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const real = dns.promises.lookup;
+    dns.promises.lookup = async function (h) {
+      if (String(h || '').toLowerCase() === 'notify-internal.example') return [{ address: '10.0.0.9', family: 4 }];
+      return real(h);
+    };
+    const before = hits.length;
+    try {
+      const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://notify-internal.example/hook' }));
+      const r = await n2.send('publish.failed', 'rebind webhook', {}, { force: true, webhookRetries: 0 });
+      need(r.ok === false && /内网/.test(String(r.error || '')), '内网解析没拦住：' + JSON.stringify(r));
+      need(hits.length === before, '拦住后仍发了请求：' + (hits.length - before));
+    } finally {
+      dns.promises.lookup = real;
+      if (token !== undefined) process.env.TELEGRAM_BOT_TOKEN = token;
+      if (chat !== undefined) process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    }
+  });
+
+  await check('webhook 密文配置能正常读取', async function () {
+    const key = secretbox.loadKey(DATA);
+    const url = 'http://127.0.0.1:' + port + '/webhook';
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhookEnc: secretbox.encrypt(url, key.key) }));
+    const cfg = n2.readCfg();
+    need(cfg.webhook === url, '密文 webhook 没解开：' + cfg.webhook);
+    need(n2.status().webhook === true, '密文 webhook 状态不对');
   });
 
   await check('webhook 失败按次数重试', async function () {

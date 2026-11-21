@@ -29,7 +29,14 @@ module.exports = function (app, ctx) {
     if (b.webhook !== undefined) {
       const u = String(b.webhook || '').trim();
       if (u && !/^https?:\/\//i.test(u)) return bad(reply, 'BAD_WEBHOOK', 'webhook 必须是 http/https');
-      cfg.notifyWebhook = u.slice(0, 500);
+      if (u) {
+        if (KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 SECRET_FILE/SECRET', 409);
+        cfg.notifyWebhookEnc = secretbox.encrypt(u.slice(0, 500), KEYRING.key);
+        delete cfg.notifyWebhook;
+      } else {
+        delete cfg.notifyWebhookEnc;
+        delete cfg.notifyWebhook;
+      }
     }
     if (b.clearTelegram) {
       delete cfg.notifyTgToken;
