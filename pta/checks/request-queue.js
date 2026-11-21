@@ -53,6 +53,16 @@ async function main() {
     need(ms >= 55, '三个并发没串行：' + ms);
   });
 
+  await check('多实例并发 wait 仍然串行', async function () {
+    clear();
+    const q1 = makeRequestQueue(ctx);
+    const q2 = makeRequestQueue(ctx);
+    const t0 = Date.now();
+    await Promise.all([q1.wait('write'), q2.wait('write')]);
+    const ms = Date.now() - t0;
+    need(ms >= 25, '多实例没串行：' + ms);
+  });
+
   await check('状态落库，新实例继续等待', async function () {
     clear();
     await queue.wait('write');

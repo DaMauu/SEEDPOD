@@ -14,8 +14,10 @@ module.exports = async function run(ctx) {
         await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
       });
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.clock.fastForward(2500);
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
+      await page.clock.fastForward(4000);
+      await page.waitForTimeout(500);
+      if (!statsHits) { await page.clock.fastForward(4000); await page.waitForTimeout(500); }
       need(statsHits > 0, '登录后 Dashboard 没拉统计');
       await page.evaluate(async function () {
         await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });

@@ -173,6 +173,23 @@ async function main() {
     need(Date.now() - t >= 70, '重试没有退避等待：' + (Date.now() - t));
   });
 
+  await check('双通道失败后进入冷却，不重复打接口', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-always-fail' }));
+    const before = hits.length;
+    const r1 = await n2.send('publish.failed', 'fail once', {}, { webhookRetries: 0 });
+    const afterFirst = hits.length;
+    const r2 = await n2.send('publish.failed', 'fail twice', {}, { webhookRetries: 0 });
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r1.ok === false && afterFirst === before + 1, '首次失败请求数不对：' + JSON.stringify({ r: r1, hits: afterFirst - before }));
+    need(r2.ok === false && r2.skipped === true && r2.reason === 'cooldown', '没进入冷却：' + JSON.stringify(r2));
+    need(hits.length === afterFirst, '冷却期又打了接口：' + (hits.length - afterFirst));
+  });
+
   await check('events=off 全部跳过', async function () {
     events = 'off';
     const before = hits.length;

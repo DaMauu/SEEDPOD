@@ -6,6 +6,7 @@ function makeNotify(ctx) {
   const { one, DATA_DIR } = ctx;
   const KEYRING = secretbox.loadKey(DATA_DIR || require('./env').read('DATA_DIR','PTA_DATA') || '.');
   const now = () => new Date().toISOString();
+  const COOLDOWN = { until: 0, reason: '' };
 
   function rawCfg() {
     try {
@@ -57,6 +58,10 @@ function makeNotify(ctx) {
   async function send(event, text, extra, opts) {
     const c = readCfg(), t = creds();
     const force = !!(opts && opts.force);
+    /* 双通道同时失败后短暂冷却，避免调度每轮重复打外部接口 */
+    if (!force && COOLDOWN.until > Date.now()) {
+      return { ok: false, skipped: true, reason: 'cooldown', retryAt: new Date(COOLDOWN.until).toISOString(), lastError: COOLDOWN.reason };
+    }
     if (!force && c.events === 'off') return { ok: true, skipped: true, reason: 'off' };
     const isError = /fail|error|target\.failed|publish\.failed|scheduler\.error/i.test(String(event)) || event === 'test';
     if (!force && c.events === 'error' && !isError) return { ok: true, skipped: true, reason: 'not_error' };
@@ -70,7 +75,7 @@ function makeNotify(ctx) {
           signal: AbortSignal.timeout(5000)
         });
         const b = await r.json().catch(function () { return null; });
-        if (r.ok && b && b.ok) return { ok: true, channel: 'telegram', status: r.status, skipped: false, error: '' };
+        if (r.ok && b && b.ok) { COOLDOWN.until = 0; return { ok: true, channel: 'telegram', status: r.status, skipped: false, error: '' }; }
         telegramError = { ok: false, channel: 'telegram', status: r.status, skipped: false,
           error: b && b.description ? String(b.description).slice(0, 160) : ('HTTP ' + r.status) };
       } catch (e) {
@@ -88,16 +93,20 @@ function makeNotify(ctx) {
             body: JSON.stringify({ event: event, text: msg, at: now(), source: 'seedpod' }),
             signal: AbortSignal.timeout(5000)
           });
-          if (r.ok) return { ok: true, channel: 'webhook', status: r.status, skipped: false, attempts: attempt + 1 };
+          if (r.ok) { COOLDOWN.until = 0; return { ok: true, channel: 'webhook', status: r.status, skipped: false, attempts: attempt + 1 }; }
           last = { ok: false, channel: 'webhook', status: r.status, skipped: false, error: 'HTTP ' + r.status, attempts: attempt + 1 };
         } catch (e) {
           last = { ok: false, channel: 'webhook', status: 0, skipped: false, error: sanitize(e && e.message || e), attempts: attempt + 1 };
         }
         if (attempt < tries && delay) await new Promise(function (r) { setTimeout(r, delay); });
       }
+      if (!force) { COOLDOWN.until = Date.now() + 60000; COOLDOWN.reason = (last && last.error) || 'webhook failed'; }
       return last;
     }
-    if (telegramError) return telegramError;
+    if (telegramError) {
+      if (!force) { COOLDOWN.until = Date.now() + 60000; COOLDOWN.reason = telegramError.error || 'telegram failed'; }
+      return telegramError;
+    }
     return { ok: true, skipped: true, reason: 'no_channel' };
   }
   return { send: send, status: status, readCfg: readCfg };
