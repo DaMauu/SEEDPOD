@@ -33,6 +33,11 @@ function failuresOf(d) {
       lastAttemptAt: String(tr.at || '')
     });
   });
+  if (d.heldSince) {
+    out.push({ kind: 'source', stage: 'source', code: 'SOURCE_INCOMPLETE',
+      message: String(d.heldReason || '源种未下完'), attempts: 0, nextRetryAt: '',
+      lastAttemptAt: String(d.heldAt || d.heldSince) });
+  }
   if (d.dedupeLastError) {
     out.push({ kind: 'dedupe', stage: 'dedupe', code: errors.normalize(d.dedupeLastErrorCode || 'UNKNOWN'),
       message: String(d.dedupeLastError).slice(0, 300), attempts: Number(d.dedupeAttempts) || 0,
@@ -169,6 +174,9 @@ function makeFailureQueue(ctx) {
     delete d.metaLastAttemptAt;
     delete d.metaNextRetryAt;
     d.metaAttempts = 0;
+    delete d.heldSince;
+    delete d.heldAt;
+    delete d.heldReason;
     d.replayedAt = new Date().toISOString();
     db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(d.status, JSON.stringify(d), d.replayedAt, id);

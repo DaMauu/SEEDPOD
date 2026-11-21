@@ -90,7 +90,7 @@ function makeScheduler(ctx, deps) {
       try {
       failpoint('publish');
       if (want('publish') && ctx.allowReal('realPublish')) {
-        steps.publish = await runPublishPhase({ one: one, all: all, jparse: jparse, deps: deps, targetService: targetService, crossseed: crossseed, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, publishLimit: publishLimit });
+        steps.publish = await runPublishPhase({ one: one, all: all, jparse: jparse, db: ctx.db, deps: deps, targetService: targetService, crossseed: crossseed, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, publishLimit: publishLimit });
       } else {
         steps.publish = { skipped: want('publish') ? 'realPublish off' : 'step not selected' };
       }
@@ -113,14 +113,16 @@ function makeScheduler(ctx, deps) {
 
       const crawlFail = (steps.crawl && steps.crawl.failed) || 0;
       const pubFail = (steps.publish && steps.publish.failed) || 0;
+      const heldOld = (steps.publish && steps.publish.heldOld) || 0;
       const retryFail = (steps.retry && steps.retry.failed) || 0;
       const selected = (steps.screen && steps.screen.selected) || 0;
       const phaseFail = steps.errors.length;
       const firstErr = phaseFail ? steps.errors[0] : null;
       if (ctx.notify) {
         try {
-          if (crawlFail || pubFail || retryFail || phaseFail) {
+          if (crawlFail || pubFail || retryFail || phaseFail || heldOld) {
             const extra = phaseFail ? ' · 阶段失败 ' + phaseFail + (firstErr ? '（' + firstErr.phase + '/' + firstErr.code + '）' : '') : '';
+            if (heldOld) extra += ' · 源种超 24h 未完成 ' + heldOld;
             await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail + ' · 重试失败 ' + retryFail + extra, { steps: steps });
           } else if (ctx.notify.status().events === 'always') {
             await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });

@@ -34,6 +34,7 @@ check('重放把阶段/attempts 归零，失败目标的回查清掉', function 
     id: 'q_replay', status: 'failed', stage: 'failed', stageFailedFrom: 'previewed',
     stageLastError: '提交返回 200，但回查未找到', stageNextRetryAt: '2026-01-01T00:00:00.000Z',
     stageAttempts: 3, stageHistory: [{ stage: 'failed', at: '2026-01-01T00:00:00.000Z', ok: false, error: 'x' }],
+    heldSince: '2026-01-01T00:00:00.000Z', heldAt: '2026-01-01T00:00:00.000Z', heldReason: '源种未下完',
     targetResults: {
       'a.example': { stage: 'failed', error: 'VERIFY_FAILED', nextRetryAt: '2026-01-01T00:00:00.000Z', attempts: 2, verify: { found: false } },
       'b.example': { stage: 'injected', verify: { found: true } }
@@ -49,6 +50,7 @@ check('重放把阶段/attempts 归零，失败目标的回查清掉', function 
   need(!d.stageLastError && !d.stageNextRetryAt, '失败字段没清');
   need(d.stageHistory[d.stageHistory.length - 1].stage === 'previewed', 'history 末条没同步：' + JSON.stringify(d.stageHistory.slice(-1)));
   need(stage.validate(d).length === 0, '重放后 stage 校验不过：' + JSON.stringify(stage.validate(d)));
+  need(d.heldSince === undefined && d.heldReason === undefined, '重放没清 held：' + JSON.stringify({ s: d.heldSince, r: d.heldReason }));
   const a = d.targetResults['a.example'];
   need(a.stage === 'pending' && a.attempts === 0 && !a.error && !a.nextRetryAt && a.verify === undefined, 'a 站没复位：' + JSON.stringify(a));
   const b = d.targetResults['b.example'];

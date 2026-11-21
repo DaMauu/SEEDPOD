@@ -9,7 +9,9 @@ function makePublishPhase(deps) {
           /* 发布并发：默认 1，配置最多 5；每条独立写库，SQLite 同步执行不会交叉 */
           const conc = Math.max(1, Math.min(5, Number(cfg.concurrency) || 1));
           const rows = all("SELECT id, data FROM queue WHERE status = 'approved' ORDER BY updated_at ASC LIMIT " + publishLimit);
-          let ok = 0, failed = 0, held = 0;
+          const db = o.db;
+          const now = function () { return new Date().toISOString(); };
+          let ok = 0, failed = 0, held = 0, heldOld = 0;
           const errors = [];
           const queueRows = rows.slice();
           async function worker() {
@@ -33,7 +35,20 @@ function makePublishPhase(deps) {
                 if (errors.length < 3) errors.push({ id: row.id, code: src.code, message: src.message });
                 continue;
               }
-              if (!src.complete) { held++; continue; }
+              if (!src.complete) {
+                held++;
+                const since = it.heldSince || now();
+                if (!it.heldSince) {
+                  it.heldSince = since; it.heldAt = since; it.heldReason = '源种未下完';
+                  if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
+                }
+                if (Date.now() - (Date.parse(since) || Date.now()) > 24 * 3600 * 1000) heldOld++;
+                continue;
+              }
+              if (it.heldSince) {
+                delete it.heldSince; delete it.heldAt; delete it.heldReason;
+                if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
+              }
               /* 先传到目标站（已传过的站跳过），成功后再注入下载器；两步都算发布 */
               const hosts = [];
               [it.targetSite].concat(Array.isArray(it.targets) ? it.targets : []).forEach(function (h) {
@@ -93,7 +108,7 @@ function makePublishPhase(deps) {
           const workers = [];
           for (let i = 0; i < Math.min(conc, rows.length); i++) workers.push(worker());
           await Promise.all(workers);
-          return { checked: rows.length, ok: ok, failed: failed, held: held, errors: errors, concurrency: conc };
+          return { checked: rows.length, ok: ok, failed: failed, held: held, heldOld: heldOld, errors: errors, concurrency: conc };
   };
 }
 

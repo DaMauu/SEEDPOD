@@ -4,6 +4,7 @@ const os = require('os');
 const path = require('path');
 const { openDB } = require('../server/db');
 const { makeScheduler } = require('../server/scheduler');
+const { makeFailureQueue } = require('../server/failure-queue');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sched-run-'));
 const real = openDB(path.join(DATA, 'seedpod.db'));
@@ -32,14 +33,15 @@ const ctx = {
 };
 let crawlDelay = 0;
 let sourceComplete = false;
-const sched = makeScheduler(ctx, {
+const schedDeps = {
   crawl: { crawlOnce: async function () { if (crawlDelay) await new Promise(function (r) { setTimeout(r, crawlDelay); }); return { added: 0, rows: 0, pageKey: 'p1' }; } },
   publish: {
     ensureSource: async function () { return { ok: true, complete: sourceComplete }; },
     publishItem: async function () { return { ok: true }; }
   },
   release: { prepare: function () { return { ok: true }; } }
-});
+};
+const sched = makeScheduler(ctx, schedDeps);
 const results = [];
 function check(name, fn) {
   return Promise.resolve().then(fn).then(function () { results.push([true, name, '']); })
@@ -71,6 +73,15 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(r1.ok === true && r1.steps.publish.held === 1, '没记 held：' + JSON.stringify(r1.steps && r1.steps.publish));
       const st = sched.status();
       need(st.lastResult && st.lastResult.publish && st.lastResult.publish.held === 1, '状态里看不到 held：' + JSON.stringify(st.lastResult && st.lastResult.publish));
+      let qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
+      need(typeof qd.heldSince === 'string' && qd.heldReason === '源种未下完', 'held 没持久化：' + JSON.stringify({ since: qd.heldSince, reason: qd.heldReason }));
+      const fq = makeFailureQueue(ctx);
+      const fl = fq.list({ limit: 20 });
+      need(fl.items.some(function (x) { return x.id === 'q_held' && x.failures[0].kind === 'source' && x.failures[0].code === 'SOURCE_INCOMPLETE'; }), '失败队列看不到 held：' + JSON.stringify(fl.items));
+      qd.heldSince = new Date(Date.now() - 2 * 86400000).toISOString();
+      real.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(qd), 'q_held');
+      const rold = await sched.runNow({ steps: ['publish'] });
+      need(rold.steps.publish.heldOld === 1, '超 24h held 没统计：' + JSON.stringify(rold.steps.publish));
       sourceComplete = true;
       /* 目标站已确认过，跳过真实上传，只验证 held 清零后继续注入 */
       const qrow = real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held');
@@ -79,6 +90,17 @@ function need(c, m) { if (!c) throw new Error(m); }
       real.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(qdata), new Date().toISOString(), 'q_held');
       const r2 = await sched.runNow({ steps: ['publish'] });
       need(r2.ok === true && r2.steps.publish.ok === 1 && r2.steps.publish.held === 0, '完成后没继续：' + JSON.stringify(r2.steps && r2.steps.publish));
+      qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
+      need(qd.heldSince === undefined && qd.heldReason === undefined, '完成后 held 没清：' + JSON.stringify({ s: qd.heldSince, r: qd.heldReason }));
+    });
+
+    await check('调度状态重启后仍可读', async function () {
+      const st1 = sched.status();
+      const again = makeScheduler(ctx, schedDeps);
+      const st2 = again.status();
+      need(st1.lastRunAt > 0, '首轮 lastRunAt 没写');
+      need(st2.lastRunAt === st1.lastRunAt, '重启后 lastRunAt 变了：' + JSON.stringify({ a: st1.lastRunAt, b: st2.lastRunAt }));
+      need(st2.lastResult && st2.lastResult.publish && typeof st2.lastResult.publish.held === 'number', '重启后 lastResult 丢了');
     });
 
     await check('保存异常返回失败后 running 已释放', async function () {

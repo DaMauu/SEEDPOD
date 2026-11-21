@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.582 · 2026-11-22
+
+### 审计五十二轮
+- held 条目持久化 `heldSince/heldAt/heldReason`，出现在 `/api/failures`（kind=source），超过 24h 计入 `heldOld` 并进调度告警；完成或 replay 时清掉。
+- 调度状态重启后仍能读回 lastRunAt/lastResult；scheduler-running 4/4，failure-replay 3/3。
+- 全量 run.sh 通过。
+
 ## v0.7.581 · 2026-11-22
 
 ### 审计五十一轮
