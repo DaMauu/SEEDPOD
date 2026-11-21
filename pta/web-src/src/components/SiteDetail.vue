@@ -245,7 +245,7 @@
               <button class="btn ghost slim" type="button" :disabled="busy.save" @click.stop="resetSite(s)">恢复默认</button>
               <div class="spacer"></div>
               <button v-if="s.added" class="btn ghost slim danger" type="button" @click.stop="removeSite(s)">移除站点</button>
-              <button v-else class="btn ghost slim danger" type="button" disabled title="基础清单站点不能移除；可恢复默认配置">移除站点</button>
+              <span v-else class="soft" title="基础清单站点不能移除；可以停用、覆盖间隔或恢复默认">基础站点不可移除</span>
             </div>
           </div>
 </template>

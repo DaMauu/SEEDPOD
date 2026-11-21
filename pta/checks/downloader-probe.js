@@ -38,7 +38,8 @@ async function json(url, opts) {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),
       PTA_USER: USER, PTA_PASS: PASS,
       PTA_DOWNLOADER_ALLOW: '127.0.0.1', PTA_DOWNLOADER_DENY: '10.0.0.9',
-      PTA_DOWNLOADER_ALLOW_PRIVATE: ''
+      PTA_DOWNLOADER_ALLOW_PRIVATE: '',
+      PTA_DL_TIMEOUT_MS: '500'
     }),
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -46,16 +47,22 @@ async function json(url, opts) {
   child.stdout.on('data', function (d) { out += d; });
   child.stderr.on('data', function (d) { out += d; });
   let slow = null, qbmock = null;
-  let qbLogins = 0;
+  let qbLogins = 0, qbDlId = '', slowDlId = '';
+  let catsExpire = false, cats403 = false;
   try {
     slow = http.createServer(function (req, res) { setTimeout(function () { try { res.writeHead(200); res.end('v4.6.0'); } catch (e) { /* 已断开 */ } }, 1500); });
     await new Promise(function (r) { slow.listen(0, '127.0.0.1', r); });
     const slowUrl = 'http://127.0.0.1:' + slow.address().port;
     qbmock = http.createServer(function (req, res) {
       if (req.method === 'POST' && req.url === '/api/v2/auth/login') { qbLogins++; res.writeHead(200, { 'set-cookie': 'SID=good; Path=/' }); res.end('Ok.'); return; }
+      if (req.url.indexOf('/api/v2/torrents/categories') === 0 && catsExpire) { catsExpire = false; res.writeHead(401); res.end('expired'); return; }
+      if (req.url.indexOf('/api/v2/torrents/categories') === 0 && cats403) { res.writeHead(403); res.end('forbidden'); return; }
       if (String(req.headers.cookie || '').indexOf('SID=good') < 0) { res.writeHead(401); res.end('Forbidden'); return; }
       if (req.url === '/api/v2/app/version') { res.writeHead(200); res.end('v4.6.0'); return; }
       if (req.url === '/api/v2/sync/maindata') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ server_state: { free_space_on_disk: 123, save_path: '/dl' } })); return; }
+      if (req.url.indexOf('/api/v2/torrents/categories') === 0) {
+        res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ movie: { name: '电影', savePath: '/dl' } })); return;
+      }
       res.writeHead(404); res.end();
     });
     await new Promise(function (r) { qbmock.listen(0, '127.0.0.1', r); });
@@ -103,6 +110,7 @@ async function json(url, opts) {
       const list = await (await fetchA(BASE + '/api/downloaders')).json();
       const hit = (list.data || []).filter(function (x) { return x.id === id; })[0];
       need(hit && hit.lastProbe && hit.lastProbe.pass === true, 'lastProbe 没写：' + JSON.stringify(hit && hit.lastProbe));
+      qbDlId = id;
     });
 
     await check('已存下载器测试超时快速失败并记 lastProbe', async function () {
@@ -112,6 +120,7 @@ async function json(url, opts) {
       });
       need(add.status === 200 && add.body && add.body.ok, '建慢下载器失败：' + JSON.stringify(add.body && add.body.error));
       const id = add.body.data.id;
+      slowDlId = id;
       const t = Date.now();
       const r = await json(BASE + '/api/downloaders/' + encodeURIComponent(id) + '/test', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ timeoutMs: 150 })
@@ -121,6 +130,28 @@ async function json(url, opts) {
       const list = await (await fetchA(BASE + '/api/downloaders')).json();
       const hit = (list.data || []).filter(function (x) { return x.id === id; })[0];
       need(hit && hit.lastProbe && hit.lastProbe.pass === false, '超时 lastProbe 不对：' + JSON.stringify(hit && hit.lastProbe));
+    });
+
+    await check('分类读取会自动重登并返回列表', async function () {
+      const r = await json(BASE + '/api/downloaders/' + encodeURIComponent(qbDlId) + '/cats');
+      need(r.status === 200 && r.body.ok && r.body.data.cats.length === 1, '分类读取失败：' + JSON.stringify(r.body));
+      const before = qbLogins;
+      catsExpire = true;
+      const r2 = await json(BASE + '/api/downloaders/' + encodeURIComponent(qbDlId) + '/cats');
+      need(r2.status === 200 && r2.body.data.cats.length === 1, '过期后分类失败：' + JSON.stringify(r2.body));
+      need(qbLogins > before, '过期后没重登');
+    });
+
+    await check('分类读取 403/404/超时都返回明确错误', async function () {
+      cats403 = true;
+      const r403 = await json(BASE + '/api/downloaders/' + encodeURIComponent(qbDlId) + '/cats');
+      cats403 = false;
+      need(r403.status === 502 && r403.body.error.code === 'QB_CATS_FAILED', '403 错误不对：' + JSON.stringify(r403));
+      const r404 = await json(BASE + '/api/downloaders/no-such-id/cats');
+      need(r404.status === 404, '404 状态不对：' + r404.status);
+      const t = Date.now();
+      const rSlow = await json(BASE + '/api/downloaders/' + encodeURIComponent(slowDlId) + '/cats');
+      need(rSlow.status === 502 && Date.now() - t < 1200, '超时分类没快速失败：' + rSlow.status + ' / ' + (Date.now() - t));
     });
 
     await check('探测超时返回失败且不卡住', async function () {
