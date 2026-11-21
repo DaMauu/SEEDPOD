@@ -650,6 +650,42 @@ function seedDb() {
       await page.close();
     });
 
+    await check('会话过期时 Logs 暂停，重登后恢复', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let sseHits = 0;
+      await page.route('**/api/logs/stream**', async function (route) {
+        sseHits++;
+        return route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'retry: 1000\n\n' });
+      });
+      await page.route('**/api/logs?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+      });
+      await page.goto(BASE + '/#logs', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(2000);
+      need(sseHits === 0, '未登录就开了 SSE：' + sseHits);
+      await page.fill('#login-user', 'admin');
+      await page.fill('#login-pass', 'demo-pass');
+      await page.click('#login-submit');
+      await page.waitForTimeout(2500);
+      const afterLogin = sseHits;
+      need(afterLogin > 0, '登录后没开 SSE');
+      await page.evaluate(async function () {
+        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+        await fetch('/api/session', { credentials: 'same-origin' });
+      });
+      await page.waitForTimeout(1600);
+      need((await page.locator('#login-mask').count()) === 1, '过期后没弹登录');
+      const paused = sseHits;
+      await page.waitForTimeout(3500);
+      need(sseHits === paused, '过期后 SSE 还在重连：' + paused + ' -> ' + sseHits);
+      await page.fill('#login-user', 'admin');
+      await page.fill('#login-pass', 'demo-pass');
+      await page.click('#login-submit');
+      await page.waitForTimeout(3000);
+      need(sseHits > paused, '重登后 SSE 没恢复：' + paused + ' -> ' + sseHits);
+      await page.close();
+    });
+
     await check('直达设置页登录后数据能加载', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.goto(BASE + '/#settings', { waitUntil: 'domcontentloaded' });

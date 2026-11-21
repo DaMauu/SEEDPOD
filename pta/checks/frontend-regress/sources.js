@@ -111,7 +111,54 @@ module.exports = async function run(ctx) {
       await page.close();
     });
 
-    await check('Sources 删除后不再显示旧 dupe 结论', async function () {
+    await check('401 重登后 Sources 搜索/筛选/分页保持', async function () {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const rows = [];
+    for (let i = 0; i < 150; i++) rows.push({ id: 's_' + i, site: 'site-a.example', title: 'Source Row ' + i, status: 'new', cat: '', catName: '' });
+    await page.route('**/api/site-defs', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: {} }) });
+    });
+    await page.route('**/api/credentials', async function (route) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    });
+    await page.route('**/api/catalog/check', async function (route) {
+      return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } }) });
+    });
+    await page.route('**/api/catalog?**', async function (route) {
+      const status = new URL(route.request().url()).searchParams.get('status') || '';
+      const hit = status ? rows.filter(function (x) { return x.status === status; }) : rows;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { total: hit.length, items: hit } }) });
+    });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async function () {
+      await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.evaluate(function () { location.hash = '#sources'; });
+    await page.waitForTimeout(1600);
+    await page.fill('#dl-q', 'Source Row');
+    await page.locator('#dl-site').selectOption('site-a.example');
+    await page.locator('#dl-status').selectOption('new');
+    await page.waitForTimeout(700);
+    await page.click('#dl-next');
+    await page.waitForTimeout(300);
+    need((await page.locator('#dl-page').innerText()).indexOf('2 / 2') >= 0, '初始没到第二页');
+    await page.click('#dl-check');
+    await page.waitForTimeout(700);
+    need((await page.locator('#login-mask').count()) === 1, '401 后没弹登录');
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.waitForTimeout(1300);
+    need((await page.locator('#dl-q').inputValue()) === 'Source Row', '重登后搜索词丢了');
+    need((await page.locator('#dl-site').inputValue()) === 'site-a.example', '重登后站点筛选丢了');
+    need((await page.locator('#dl-status').inputValue()) === 'new', '重登后状态筛选丢了');
+    need((await page.locator('#dl-page').innerText()).indexOf('2 / 2') >= 0, '重登后分页丢了：' + (await page.locator('#dl-page').innerText()));
+    need((await page.locator('#dl-body .dl-row').count()) === 50, '重登后第二页行数不对');
+    await page.close();
+  });
+
+  await check('Sources 删除后不再显示旧 dupe 结论', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     let cleared = false;
     await page.route('**/api/site-defs', async function (route) {
