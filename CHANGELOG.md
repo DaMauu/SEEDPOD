@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.601 · 2026-11-22
+
+### 审计七十一轮
+- 会话过期时 Dashboard 轮询暂停，重登后恢复；frontend-regress 39/39。
+- 登出后 Sites/Queue 定时器不再发请求，重登后 Queue 恢复；frontend-regress 40/40。
+- 全量 run.sh 通过。
+
 ## v0.7.600 · 2026-11-22
 
 ### 审计七十轮
