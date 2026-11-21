@@ -90,7 +90,7 @@ function makeScheduler(ctx, deps) {
       try {
       failpoint('publish');
       if (want('publish') && ctx.allowReal('realPublish')) {
-        steps.publish = await runPublishPhase({ one: one, all: all, jparse: jparse, db: ctx.db, deps: deps, targetService: targetService, crossseed: crossseed, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, publishLimit: publishLimit });
+        steps.publish = await runPublishPhase({ one: one, all: all, jparse: jparse, db: ctx.db, ctx: ctx, deps: deps, targetService: targetService, crossseed: crossseed, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, publishLimit: publishLimit });
       } else {
         steps.publish = { skipped: want('publish') ? 'realPublish off' : 'step not selected' };
       }

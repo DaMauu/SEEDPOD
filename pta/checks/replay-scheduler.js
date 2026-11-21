@@ -47,6 +47,20 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(d.stage === 'previewed', '终审把重放阶段改了：' + d.stage);
     });
 
+    await check('held 条目 replay 后清 held 并回到终审队列', async function () {
+      db.prepare('INSERT INTO queue(id,status,title,data,created_at,updated_at) VALUES(?,?,?,?,?,?)').run(
+        'q_held_replay', 'approved', 'Held Replay Row', JSON.stringify({
+          id: 'q_held_replay', status: 'approved', stage: 'previewed', title: 'Held Replay Row',
+          heldSince: '2026-01-01T00:00:00.000Z', heldAt: '2026-01-01T00:00:00.000Z', heldReason: '源种未下完', heldAlertAt: '2026-01-01T00:00:00.000Z'
+        }), '2026-11-01', '2026-11-01');
+      const rep = fq.replay('q_held_replay');
+      need(rep.ok && rep.status === 'pending' && rep.stage === 'previewed', 'held replay 结果不对：' + JSON.stringify(rep));
+      const d = JSON.parse(one('SELECT data FROM queue WHERE id = ?', 'q_held_replay').data);
+      need(d.heldSince === undefined && d.heldReason === undefined && d.heldAlertAt === undefined, 'replay 没清 held：' + JSON.stringify(d));
+      const r = await review({ want: function () { return true; }, batch: 5, ctx: ctx });
+      need(r.checked >= 1, 'held replay 没进终审：' + JSON.stringify(r));
+    });
+
     await check('调度未选终审时不会处理 pending', async function () {
       const r = await review({ want: function () { return false; }, batch: 5, ctx: ctx });
       need(r.checked === 0 && r.skippedStep === true, '没跳过：' + JSON.stringify(r));

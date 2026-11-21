@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.584 · 2026-11-22
+
+### 审计五十四轮
+- 通知关闭（events=off）时不再写 heldAlertAt，打开通知后仍能首次告警；scheduler-running 4/4。
+- held 条目 replay 清 held/heldAlertAt，回到 pending 并进入下一轮终审；replay-scheduler 3/3、failure-replay 3/3。
+- 全量 run.sh 通过。
+
 ## v0.7.583 · 2026-11-22
 
 ### 审计五十三轮

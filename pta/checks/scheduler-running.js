@@ -31,6 +31,8 @@ const ctx = {
   allowReal: function (key) { return key === 'realCrawl' || key === 'realPublish'; },
   logEvent: function () {}
 };
+let notifyEvents = 'error';
+ctx.notify = { status: function () { return { events: notifyEvents }; }, send: async function () { return { ok: true }; } };
 let crawlDelay = 0;
 let sourceComplete = false;
 const schedDeps = {
@@ -79,9 +81,16 @@ function need(c, m) { if (!c) throw new Error(m); }
       const fl = fq.list({ limit: 20 });
       need(fl.items.some(function (x) { return x.id === 'q_held' && x.failures[0].kind === 'source' && x.failures[0].code === 'SOURCE_INCOMPLETE'; }), '失败队列看不到 held：' + JSON.stringify(fl.items));
       qd.heldSince = new Date(Date.now() - 2 * 86400000).toISOString();
+      delete qd.heldAlertAt;
       real.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(qd), 'q_held');
+      notifyEvents = 'off';
+      const roff = await sched.runNow({ steps: ['publish'] });
+      need(roff.steps.publish.heldOld === 1, '关通知时 heldOld 统计不对：' + JSON.stringify(roff.steps.publish));
+      qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
+      need(qd.heldAlertAt === undefined, '通知关闭却写了 heldAlertAt');
+      notifyEvents = 'error';
       const rold = await sched.runNow({ steps: ['publish'] });
-      need(rold.steps.publish.heldOld === 1, '超 24h held 没统计：' + JSON.stringify(rold.steps.publish));
+      need(rold.steps.publish.heldOld === 1, '打开通知后没告警：' + JSON.stringify(rold.steps.publish));
       qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
       need(typeof qd.heldAlertAt === 'string', '告警时间没落库');
       const rdup = await sched.runNow({ steps: ['publish'] });
