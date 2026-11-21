@@ -24,7 +24,8 @@ const ctx = {
     }
   }
 };
-const config = { retryMax: 2, retryBackoffMin: 15 };
+let config = { retryMax: 2, retryBackoffMin: 15 };
+let crossseedThrow = false;
 const deps = {
   publish: {
     publishItem: async function (id) {
@@ -54,7 +55,7 @@ function o() {
     jparse: function (s) { try { return JSON.parse(s); } catch (e) { return null; } },
     ctx: ctx,
     deps: deps,
-    crossseed: { run: async function () { return { ok: true }; } },
+    crossseed: { run: async function () { if (crossseedThrow) throw new Error('crossseed fixture fail'); return { ok: true }; } },
     bumpSiteFail: function () {},
     resetSiteFail: function () {}
   };
@@ -89,6 +90,36 @@ function o() {
     store.q_fail.retries = 2;
     const r = await phase(o());
     need(r.checked >= 1 && published.indexOf('q_fail') < 0, '超限仍重试：' + JSON.stringify({ r: r, p: published }));
+  });
+
+  await check('retryMax=0 时全部不重试', async function () {
+    config = { retryMax: 0, retryBackoffMin: 15 };
+    published.length = 0;
+    const r = await phase(o());
+    need(r.checked >= 1 && published.length === 0, 'retryMax=0 仍重试：' + JSON.stringify({ r: r, p: published }));
+  });
+
+  await check('退避上限封顶 1440 分钟', async function () {
+    config = { retryMax: 3, retryBackoffMin: 99999 };
+    published.length = 0;
+    store.q_fail.retries = 0;
+    store.q_fail.nextRetryAt = new Date(Date.now() - 1000).toISOString();
+    const r = await phase(o());
+    need(published.indexOf('q_fail') >= 0, 'q_fail 没重试：' + JSON.stringify(published));
+    const at = Date.parse(store.q_fail.nextRetryAt || '') || 0;
+    need(at > Date.now() + 1400 * 60000 && at <= Date.now() + 1441 * 60000, '退避没封顶：' + store.q_fail.nextRetryAt);
+  });
+
+  await check('成功后辅种抛错不影响重试结果', async function () {
+    config = { retryMax: 3, retryBackoffMin: 15 };
+    store.q_cs = { id: 'q_cs', status: 'failed', retries: 0, targetResults: { 'a.example': { publishedTorrent: { path: '/x' } } } };
+    crossseedThrow = true;
+    published.length = 0;
+    let r;
+    try { r = await phase(o()); } finally { crossseedThrow = false; }
+    need(published.indexOf('q_cs') >= 0, 'q_cs 没重试：' + JSON.stringify(published));
+    need(r.ok >= 1, '成功数没保住：' + JSON.stringify(r));
+    need(store.q_cs.targetResults['a.example'].publishedTorrent, '辅助种结果被清掉');
   });
 
   const pass = results.filter(function (r) { return r[0]; }).length;
