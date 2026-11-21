@@ -71,6 +71,20 @@ const base = { id: 'q_gate', status: 'pending', stage: 'previewed', title: 'Revi
       need(r.ok === false && r.code === 'REVIEW_HOLD' && /简介/.test(r.message), '矛盾数据没拦：' + JSON.stringify(r));
     });
 
+    await check('review 通过但目标站未就绪也拦', async function () {
+      put(Object.assign({}, base, { review: { ok: true, missing: [] }, prepared: { targets: [{ host: 'a.example', target: { ready: false } }] } }));
+      const r = await publisher.publishItem('q_gate', { dryRun: false });
+      need(r.ok === false && r.code === 'TARGET_NOT_READY', '未就绪没拦：' + JSON.stringify(r));
+      const d = read('q_gate');
+      need(d.status === 'pending', '拦下后状态变了：' + d.status);
+    });
+
+    await check('目标站计划就绪后继续到下载器门禁', async function () {
+      put(Object.assign({}, base, { review: { ok: true, missing: [] }, prepared: { targets: [{ host: 'a.example', target: { ready: true, fields: { type: '1' } } }] } }));
+      const r = await publisher.publishItem('q_gate', { dryRun: false });
+      need(r.ok === false && r.code === 'NO_DOWNLOADER', '就绪后没继续：' + JSON.stringify(r));
+    });
+
     await check('补全终审后可继续到后续门禁', async function () {
       put(Object.assign({}, base, { review: { ok: true, missing: [] } }));
       const r = await publisher.publishItem('q_gate', { dryRun: false });

@@ -636,6 +636,8 @@ async function bulkApprove() {
     })).json()
     toast(j && j.ok ? '已批准 ' + j.data.changed + ' 条' : ((j && j.error && j.error.message) || '批量批准失败'))
     await loadQueuePage()
+    /* 批量批准会改当前选中条目的状态，详情也要跟着刷新 */
+    if (sel.value) await select(sel.value.id)
   } catch (e) { toast('批量批准请求发不出去') } finally { busy.approve = false }
 }
 async function bulkPublish() {

@@ -93,6 +93,42 @@ function seedDb() {
       await page.close();
     });
 
+    await check('批量批准后当前详情同步为已通过', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let approved = false;
+      const item = function () { return { id: 'q_bulk_ok', title: 'Bulk Approve Row', status: approved ? 'approved' : 'pending', stage: 'draft', targetSite: 'test-a.example', targets: ['test-a.example'] }; };
+      await page.route('**/api/queue/bulk', async function (route) {
+        approved = true;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { changed: 1, status: 'approved' } }) });
+      });
+      await page.route('**/api/queue?**', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { items: [item()], matched: 1, counts: {} } }) });
+      });
+      await page.route('**/api/queue/q_bulk_ok', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: item() }) });
+      });
+      await page.route('**/api/targets', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [{ host: 'test-a.example', hasCookie: true }] }) });
+      });
+      await page.route('**/api/sites', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { sites: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#queue'; });
+      await page.waitForTimeout(900);
+      await page.locator('.q-item').first().click();
+      await page.waitForTimeout(450);
+      need((await page.locator('.qd-title-row .badge').innerText()).indexOf('待确认') >= 0, '初始状态不对');
+      await page.click('#q-bulkapprove');
+      await page.waitForTimeout(800);
+      need((await page.locator('.qd-title-row .badge').innerText()).indexOf('已通过') >= 0, '批量批准后详情没刷新：' + (await page.locator('.qd-title-row .badge').innerText()));
+      await page.close();
+    });
+
     await check('批量发布混合结果提示成功/跳过和首条错误', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.route('**/api/queue/bulk', async function (route) {

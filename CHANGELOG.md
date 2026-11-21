@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.576 · 2026-11-22
+
+### 审计四十六轮
+- 批量批准后当前详情同步刷新为已通过；frontend-regress 24/24。
+- 发布前检查目标站计划：review 通过但 `prepared.targets` 缺目标/ready=false 返回 `TARGET_NOT_READY`；publish-review-gate 8/8。
+- 全量 run.sh 通过。
+
 ## v0.7.575 · 2026-11-22
 
 ### 审计四十五轮
