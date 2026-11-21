@@ -588,6 +588,25 @@ async function main() {
     db2.close();
   });
 
+  await check('删除 held 条目后队列计数和统计立即一致', async () => {
+    const q = await (await fetchA(BASE + '/api/queue', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Held Delete 2020', status: 'approved', site: 'demo-a.example',
+        heldSince: '2026-01-01T00:00:00.000Z', heldAt: '2026-01-01T00:00:00.000Z', heldReason: '源种未下完' })
+    })).json();
+    need(q.ok && q.data.id, '建 held 条目失败：' + JSON.stringify(q));
+    const before = await (await fetchA(BASE + '/api/queue?limit=1')).json();
+    const ov1 = await (await fetchA(BASE + '/api/stats/overview')).json();
+    const del = await (await fetchA(BASE + '/api/queue/' + q.data.id, { method: 'DELETE' })).json();
+    need(del.ok, '删除失败：' + JSON.stringify(del));
+    const after = await (await fetchA(BASE + '/api/queue?limit=1')).json();
+    const ov2 = await (await fetchA(BASE + '/api/stats/overview')).json();
+    need(Number(after.data.counts.approved) === Number(before.data.counts.approved) - 1, 'approved 计数没减：' + JSON.stringify({ b: before.data.counts.approved, a: after.data.counts.approved }));
+    need(Number(ov2.data.queue.total) === Number(ov1.data.queue.total) - 1, '统计 total 没减：' + JSON.stringify({ b: ov1.data.queue.total, a: ov2.data.queue.total }));
+    const fails = await (await fetchA(BASE + '/api/failures?limit=200')).json();
+    need(fails.ok && (fails.data.items || []).every(function (x) { return x.id !== q.data.id; }), '删除后仍在失败队列');
+  });
+
   await check('单条改状态会清掉 held 观测字段', async () => {
     const q = await (await fetchA(BASE + '/api/queue', {
       method: 'POST', headers: { 'content-type': 'application/json' },

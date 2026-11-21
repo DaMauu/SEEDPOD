@@ -120,26 +120,39 @@ function makeScheduler(ctx, deps) {
       const phaseFail = steps.errors.length;
       const firstErr = phaseFail ? steps.errors[0] : null;
       let notifyResult = null;
+      let notifyTried = false;
       if (ctx.notify) {
         try {
           if (crawlFail || pubFail || retryFail || phaseFail || heldOld) {
             let extra = phaseFail ? ' · 阶段失败 ' + phaseFail + (firstErr ? '（' + firstErr.phase + '/' + firstErr.code + '）' : '') : '';
             if (heldOld) extra += ' · 源种超 24h 未完成 ' + heldOld;
+            notifyTried = true;
             notifyResult = await ctx.notify.send('scheduler.error', 'SEEDPOD 调度：抓取失败 ' + crawlFail + ' · 送审入选 ' + selected + ' · 发布失败 ' + pubFail + ' · 重试失败 ' + retryFail + extra, { steps: steps });
           } else if (ctx.notify.status().events === 'always') {
+            notifyTried = true;
             notifyResult = await ctx.notify.send('scheduler.run', 'SEEDPOD 调度完成：送审入选 ' + selected, { steps: steps });
           }
         } catch (e2) { console.warn('[seedpod] scheduler notify failed:', e2 && e2.message ? e2.message : e2) }
       }
-      /* 只有真正发出去才记 heldAlertAt；通知关闭/失败都不算，下次还会再试 */
-      if (heldAlertIds.length && notifyResult && notifyResult.ok && !notifyResult.skipped) {
+      /* 成功才记 heldAlertAt；失败进入 15 分钟冷却；通知关闭则什么都不写 */
+      if (heldAlertIds.length) {
+        const delivered = !!(notifyResult && notifyResult.ok && !notifyResult.skipped);
+        const failed = notifyTried && !(notifyResult && notifyResult.skipped) && !delivered;
+        const at = new Date().toISOString();
         heldAlertIds.forEach(function (id) {
           try {
             const row = one('SELECT data FROM queue WHERE id = ?', id);
             if (!row) return;
             const d = jparse(row.data) || {};
-            d.heldAlertAt = new Date().toISOString();
-            ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(d), d.heldAlertAt, id);
+            if (delivered) {
+              d.heldAlertAt = at;
+              delete d.heldAlertNextAt;
+            } else if (failed) {
+              d.heldAlertNextAt = new Date(Date.now() + 15 * 60000).toISOString();
+            } else {
+              return;
+            }
+            ctx.db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(d), at, id);
           } catch (e) { /* 标记失败不挡本轮 */ }
         });
       }

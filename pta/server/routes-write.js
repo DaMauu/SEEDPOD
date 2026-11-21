@@ -208,6 +208,7 @@ const catalogSync = require('./catalog-sync');
     delete it.heldAt;
     delete it.heldReason;
     delete it.heldAlertAt;
+    delete it.heldAlertNextAt;
     if (b.action === 'retry') {
       /* 重新排队要把 failed 阶段也退回去，否则失败状态会一直跟着条目 */
       const from = String(it.stageFailedFrom || '');

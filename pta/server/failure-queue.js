@@ -182,6 +182,7 @@ function makeFailureQueue(ctx) {
     delete d.heldAt;
     delete d.heldReason;
     delete d.heldAlertAt;
+    delete d.heldAlertNextAt;
     d.replayedAt = new Date().toISOString();
     db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?')
       .run(d.status, JSON.stringify(d), d.replayedAt, id);

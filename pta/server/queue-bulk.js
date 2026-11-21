@@ -20,6 +20,7 @@ function applyStatus(ctx, ids, target, reason) {
       delete it.heldAt;
       delete it.heldReason;
       delete it.heldAlertAt;
+      delete it.heldAlertNextAt;
       if (target === 'rejected') it.rejectedAt = now;
       /* 批准或退回待审时清掉旧驳回理由 */
       if (target === 'approved' || target === 'pending') { delete it.reason; delete it.rejectedAt; }

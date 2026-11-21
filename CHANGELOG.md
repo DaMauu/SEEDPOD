@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.588 · 2026-11-22
+
+### 审计五十八轮
+- 通知发送失败进入 15 分钟冷却（heldAlertNextAt），冷却期内不再重复告警；scheduler-running 5/5。
+- held 删除后队列 approved 计数和统计 total 立即减一，失败队列同步消失；api-v2 49/49。
+- 完成/replay/改状态都会清 heldAlertNextAt。
+- 全量 run.sh 通过。
+
 ## v0.7.587 · 2026-11-22
 
 ### 审计五十七轮

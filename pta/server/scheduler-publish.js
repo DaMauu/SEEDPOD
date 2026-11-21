@@ -45,6 +45,8 @@ function makePublishPhase(deps) {
                 }
                 const ageMs = Date.now() - (Date.parse(since) || Date.now());
                 const alertedAt = Date.parse(it.heldAlertAt || '') || 0;
+                /* 上次通知发送失败后的冷却期内不再重复尝试 */
+                if (Date.parse(it.heldAlertNextAt || '') > Date.now()) continue;
                 /* 同一 held 条目最多每天告警一次，避免每轮调度重复发 */
                 if (ageMs > 24 * 3600 * 1000 && (!alertedAt || Date.now() - alertedAt > 24 * 3600 * 1000)) {
                   heldOld++;
@@ -53,7 +55,7 @@ function makePublishPhase(deps) {
                 continue;
               }
               if (it.heldSince) {
-                delete it.heldSince; delete it.heldAt; delete it.heldReason; delete it.heldAlertAt;
+                delete it.heldSince; delete it.heldAt; delete it.heldReason; delete it.heldAlertAt; delete it.heldAlertNextAt;
                 if (db) db.prepare('UPDATE queue SET data = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(it), now(), row.id);
               }
               /* 先传到目标站（已传过的站跳过），成功后再注入下载器；两步都算发布 */

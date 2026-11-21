@@ -97,9 +97,14 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(rfail.steps.publish.heldOld === 1, '发送失败时 heldOld 统计不对：' + JSON.stringify(rfail.steps.publish));
       qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
       need(qd.heldAlertAt === undefined, '通知发送失败却写了 heldAlertAt');
+      need(typeof qd.heldAlertNextAt === 'string' && Date.parse(qd.heldAlertNextAt) > Date.now(), '失败后没进入冷却：' + JSON.stringify(qd));
       notifyFail = false;
+      const rcold = await sched.runNow({ steps: ['publish'] });
+      need(rcold.steps.publish.heldOld === 0, '冷却期内又告警：' + JSON.stringify(rcold.steps.publish));
+      qd.heldAlertNextAt = new Date(Date.now() - 1000).toISOString();
+      real.prepare('UPDATE queue SET data = ? WHERE id = ?').run(JSON.stringify(qd), 'q_held');
       const rold = await sched.runNow({ steps: ['publish'] });
-      need(rold.steps.publish.heldOld === 1, '打开通知后没告警：' + JSON.stringify(rold.steps.publish));
+      need(rold.steps.publish.heldOld === 1, '冷却结束没重新告警：' + JSON.stringify(rold.steps.publish));
       qd = JSON.parse(real.prepare('SELECT data FROM queue WHERE id = ?').get('q_held').data);
       need(typeof qd.heldAlertAt === 'string', '告警时间没落库');
       const rdup = await sched.runNow({ steps: ['publish'] });
