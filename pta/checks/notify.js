@@ -27,6 +27,11 @@ function listen() {
       req.on('data', function (c) { body += c; });
       req.on('end', function () {
         hits.push({ url: req.url, body: body ? JSON.parse(body) : null });
+        if (req.url === '/webhook-delay') {
+          const n = hits.filter(function (x) { return x.url === '/webhook-delay'; }).length;
+          if (n === 1) { res.writeHead(500); res.end('delay fail'); return; }
+          res.writeHead(200); res.end('ok'); return;
+        }
         if (req.url === '/webhook-always-fail') {
           res.writeHead(500); res.end('fail'); return;
         }
@@ -152,6 +157,20 @@ async function main() {
     if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
     need(r.ok === true && r.channel === 'webhook', '没切到 webhook：' + JSON.stringify(r));
     need(hits.length === before + 1 && hits[hits.length - 1].url === '/webhook', 'webhook 请求不对');
+  });
+
+  await check('webhook 默认重试一次并等待退避', async function () {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chat = process.env.TELEGRAM_ALLOWED_USER_ID;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_ALLOWED_USER_ID;
+    const n2 = makeNotify(ctx({ notifyEvents: 'error', notifyWebhook: 'http://127.0.0.1:' + port + '/webhook-delay' }));
+    const t = Date.now();
+    const r = await n2.send('publish.failed', 'delay retry', {}, { force: true, webhookDelayMs: 80 });
+    if (token === undefined) delete process.env.TELEGRAM_BOT_TOKEN; else process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chat === undefined) delete process.env.TELEGRAM_ALLOWED_USER_ID; else process.env.TELEGRAM_ALLOWED_USER_ID = chat;
+    need(r.ok === true && r.channel === 'webhook' && r.attempts === 2, '默认重试结果不对：' + JSON.stringify(r));
+    need(Date.now() - t >= 70, '重试没有退避等待：' + (Date.now() - t));
   });
 
   await check('events=off 全部跳过', async function () {

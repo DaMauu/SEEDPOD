@@ -87,6 +87,27 @@ async function main() {
     need(st.searchGapMs === 120 && st.writeGapMs === 60, '旧名字没兼容：' + JSON.stringify(st));
   });
 
+  await check('暂停期间 nextAt 不推进', async function () {
+    clear();
+    await queue.wait('write');
+    const a = queue.status().nextAt;
+    await sleep(120);
+    const b = queue.status().nextAt;
+    need(a === b, '暂停期间 nextAt 变了：' + JSON.stringify({ a: a, b: b }));
+  });
+
+  await check('重启后过期 nextAt 立即执行', async function () {
+    clear();
+    db.prepare("INSERT INTO meta(k, v) VALUES('target-req-queue', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
+      .run(JSON.stringify({ nextAt: Date.now() - 1000 }));
+    const q2 = makeRequestQueue(ctx);
+    const t = Date.now();
+    await q2.wait('write');
+    const ms = Date.now() - t;
+    need(ms < 15, '过期 nextAt 还在等：' + ms);
+    need(q2.status().nextAt > Date.now(), '执行后没推进 nextAt');
+  });
+
   await check('状态里能看到两种间隔', function () {
     const st = queue.status();
     need(st.searchGapMs === 80 && st.writeGapMs === 30, '间隔不对：' + JSON.stringify(st));
