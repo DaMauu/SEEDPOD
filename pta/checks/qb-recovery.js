@@ -59,6 +59,11 @@ const BUF = Buffer.from('d4:infod4:name1:x6:lengthi1eeee');
     if (!(r2.pass === true && logins === before + 1)) throw new Error('重启后没重新登录：' + JSON.stringify({ r: r2, logins: logins - before }));
     results.push([true, '模拟重启后新实例重新登录', '']);
 
+    const qb3 = makeQb(DATA);
+    const [c1, c2] = await Promise.all([qb2.probeDownloader(probe), qb3.probeDownloader(probe)]);
+    if (!(c1.pass === true && c2.pass === true)) throw new Error('并发探测失败：' + JSON.stringify({ c1: c1, c2: c2 }));
+    results.push([true, '并发探测各自登录不串会话', '']);
+
     const ro = path.join(DATA, 'readonly');
     fs.mkdirSync(ro, { recursive: true, mode: 0o500 });
     const w = watch.test({ dir: ro });

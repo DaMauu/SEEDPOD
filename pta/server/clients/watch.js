@@ -61,14 +61,18 @@ function addTorrent(opts) {
   const buf = opts && opts.buf;
   if (!Buffer.isBuffer(buf) || !buf.length) return { ok: false, error: 'BAD_TORRENT', message: '种子内容为空' };
   const name = safeName(opts.filename || 'upload.torrent');
+  let tmp = '';
   try {
     fs.mkdirSync(d.dir, { recursive: true, mode: 0o700 });
     const out = path.join(d.dir, name);
-    const tmp = path.join(d.dir, '.seedpod-' + process.pid + '-' + Date.now() + '.tmp');
+    tmp = path.join(d.dir, '.seedpod-' + process.pid + '-' + Date.now() + '.tmp');
     fs.writeFileSync(tmp, buf, { mode: 0o600 });
     fs.renameSync(tmp, out);
+    tmp = '';
     return { ok: true, path: out, name: name, message: '已写入 ' + d.dir };
   } catch (e) {
+    /* 失败不能把临时文件留在 watch 目录 */
+    if (tmp) { try { fs.unlinkSync(tmp); } catch (e2) { /* 已不存在 */ } }
     return { ok: false, error: 'WATCH_WRITE_FAILED', message: String(e && e.message || e).slice(0, 160) };
   }
 }

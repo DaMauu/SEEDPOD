@@ -106,6 +106,20 @@ async function main() {
 
   let dlId = '';
 
+  await check('watch 写入失败不留临时文件，修复后可重试', async function () {
+    const dir = path.join(DATA, 'watch-fail');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(path.join(dir, 'blocked.torrent'));
+    const bad = watch.addTorrent({ dir: dir, buf: TORRENT, filename: 'blocked.torrent' });
+    need(!bad.ok, '冲突目录仍写入成功');
+    const leftovers = fs.readdirSync(dir).filter(function (f) { return /\.tmp$/.test(f); });
+    need(leftovers.length === 0, '失败后留了临时文件：' + JSON.stringify(leftovers));
+    fs.rmdirSync(path.join(dir, 'blocked.torrent'));
+    const ok = watch.addTorrent({ dir: dir, buf: TORRENT, filename: 'blocked.torrent' });
+    need(ok.ok && fs.existsSync(ok.path), '修复后仍写不进');
+    fs.unlinkSync(ok.path);
+  });
+
   await check('创建 watch 下载器并列出', async function () {
     const j = await json(BASE + '/api/downloaders', {
       method: 'POST', headers: { 'content-type': 'application/json' },
