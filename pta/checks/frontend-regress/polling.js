@@ -119,7 +119,7 @@ module.exports = async function run(ctx) {
     await check('未登录不拉顶栏数据，Settings 隐藏时不轮询', async function () {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await page.clock.install({ time: new Date() });
-    let appQueue = 0, appDl = 0, notifyHits = 0;
+    let appQueue = 0, appDl = 0, notifyHits = 0, devHits = 0;
     await page.route(/\/api\/queue\?/, async function (route) {
       const limit = new URL(route.request().url()).searchParams.get('limit');
       if (limit === '1') appQueue++;
@@ -129,6 +129,10 @@ module.exports = async function run(ctx) {
       if (route.request().method() !== 'GET') return route.continue();
       appDl++;
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: [] }) });
+    });
+    await page.route('**/api/dev', async function (route) {
+      devHits++;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { version: 'test', stack: {}, counts: {}, uptime: 1 } }) });
     });
     await page.route('**/api/notify', async function (route) {
       if (route.request().method() !== 'GET') return route.continue();
@@ -153,17 +157,17 @@ module.exports = async function run(ctx) {
     await page.evaluate(function () { location.hash = '#settings'; });
     await page.clock.fastForward(2000);
     await page.waitForTimeout(300);
-    need(notifyHits > 0, '设置页没加载通知');
+    need(notifyHits > 0 && devHits > 0, '设置页没加载通知或版本');
     await page.evaluate(function () { location.hash = '#dashboard'; });
     await page.waitForTimeout(300);
-    const n0 = notifyHits;
+    const n0 = notifyHits, v0 = devHits;
     await page.clock.fastForward(12000);
     await page.waitForTimeout(300);
-    need(notifyHits === n0, '设置隐藏后仍在轮询：' + n0 + ' -> ' + notifyHits);
+    need(notifyHits === n0 && devHits === v0, '设置隐藏后仍在轮询：' + JSON.stringify({ n: [n0, notifyHits], v: [v0, devHits] }));
     await page.evaluate(function () { location.hash = '#settings'; });
     await page.clock.fastForward(3000);
     await page.waitForTimeout(300);
-    need(notifyHits > n0, '回设置页没恢复');
+    need(notifyHits > n0 && devHits > v0, '回设置页没恢复');
 
     await page.evaluate(async function () {
       await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
@@ -175,6 +179,12 @@ module.exports = async function run(ctx) {
     await page.clock.fastForward(35000);
     await page.waitForTimeout(300);
     need(appQueue === q0 && appDl === d0, '过期后顶栏还在拉数据：' + JSON.stringify({ q: [q0, appQueue], d: [d0, appDl] }));
+    await page.fill('#login-user', 'admin');
+    await page.fill('#login-pass', 'demo-pass');
+    await page.click('#login-submit');
+    await page.clock.fastForward(2000);
+    await page.waitForTimeout(300);
+    need(appQueue > q0 && appDl > d0, '重登后顶栏没恢复：' + JSON.stringify({ q: [q0, appQueue], d: [d0, appDl] }));
     await page.close();
   });
 
