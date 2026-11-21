@@ -8,6 +8,7 @@ const adapters = require('./adapters');
 const marksMod = require('./marks');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
+const urlGuard = require('./url-guard');
 const flowConfig = require('./flow-config');
 const { typeOf } = require('./category-policy');
 const configSchema = require('./config-schema');
@@ -176,6 +177,8 @@ function makeCrawl(ctx) {
     const t0 = Date.now();
     let html = '', status = 0;
     try {
+      const dnsGate = await urlGuard.assertNoRebind(url);
+      if (!dnsGate.ok) throw new Error(dnsGate.err);
       const res = await fetch(url, {
         headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
         redirect: 'manual', signal: AbortSignal.timeout(20000)
@@ -331,7 +334,13 @@ function makeCrawl(ctx) {
         if (rec.times.length >= lim.maxPerWindow - 1) { detail.stopped = 'WINDOW_LIMIT'; break; }
         detail.tried++;
         try {
-          const res2 = await fetch(it.detailsUrl, {
+          /* 详情地址可能来自列表页的绝对链接；不是来源站就不带 cookie 去抓 */
+          let detailUrl = String(it.detailsUrl || '');
+          try { detailUrl = new URL(detailUrl, def.base + '/').toString(); } catch (e) { /* 留原样 */ }
+          if (!urlGuard.sameSite(host, def.base, detailUrl)) throw new Error('详情地址不是来源站域名');
+          const dnsGate = await urlGuard.assertNoRebind(detailUrl);
+          if (!dnsGate.ok) throw new Error(dnsGate.err);
+          const res2 = await fetch(detailUrl, {
             headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
             redirect: 'manual', signal: AbortSignal.timeout(15000)
           });
@@ -375,7 +384,8 @@ function makeCrawl(ctx) {
           }
         } catch (e) {
           detail.failed++;
-          it.detailNote = '详情请求失败';
+          const em = String(e && e.message || '');
+          it.detailNote = /不是来源站|内网|不合法|只允许/.test(em) ? em : '详情请求失败';
           it.detailAttempts = (Number(it.detailAttempts) || 0) + 1;
           it.detailFailedAt = nowISO();
           it.detailNextRetryAt = new Date(Date.now() + Math.min(24 * 3600000, 15 * 60000 * it.detailAttempts)).toISOString();

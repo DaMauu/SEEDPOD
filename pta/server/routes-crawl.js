@@ -161,6 +161,8 @@ module.exports = function (app, ctx) {
     const url = def.base.replace(/\/+$/, '') + path0;
     let html = '';
     try {
+      const dnsGate = await urlGuard.assertNoRebind(url);
+      if (!dnsGate.ok) return { ok: false, code: 'DNS_BLOCKED', message: dnsGate.err };
       const r = await fetch(url, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
       if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
       html = await r.text();
@@ -313,6 +315,8 @@ module.exports = function (app, ctx) {
       const url = adapters.buildSearchUrl(def, kw, null);
       const rec = { id: it.id, title: it.title, keyword: kw, url: url, status: 'error', rows: 0 };
       try {
+        const dnsGate = await urlGuard.assertNoRebind(url);
+        if (!dnsGate.ok) throw new Error(dnsGate.err);
         const t0 = Date.now();
         const res = await fetch(url, { headers: { cookie: ck.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(15000) });
         const html = await res.text().catch(function () { return ''; });

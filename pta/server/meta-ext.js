@@ -3,6 +3,7 @@
 const DEFAULT_WIKI = 'https://zh.wikipedia.org/w/api.php';
 const DEFAULT_TMDB = 'https://api.themoviedb.org/3';
 const DEFAULT_DOUBAN = 'https://movie.douban.com';
+const urlGuard = require('./url-guard');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36';
 
 /* 外部接口缓存与礼貌间隔：同一 URL 6 小时内只打一次，同域名请求至少隔 800ms。
@@ -40,7 +41,10 @@ async function getJson(url, timeout, headers) {
   const cached = cacheGet('GET ' + url);
   if (cached) return cached;
   await polite(url);
-  const r = await fetch(url, { headers: Object.assign({ 'user-agent': UA, 'accept-language': 'zh-CN,zh;q=0.9' }, headers || {}), signal: AbortSignal.timeout(timeout || 10000) });
+  const dnsGate = await urlGuard.assertNoRebind(url);
+  if (!dnsGate.ok) throw new Error(dnsGate.err);
+  const r = await fetch(url, { headers: Object.assign({ 'user-agent': UA, 'accept-language': 'zh-CN,zh;q=0.9' }, headers || {}), redirect: 'manual', signal: AbortSignal.timeout(timeout || 10000) });
+  if (r.status >= 300 && r.status < 400) throw new Error('接口跳转了，停止');
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const j = await r.json();
   cacheSet('GET ' + url, j);
@@ -112,14 +116,17 @@ async function postForm(url, fields, timeout) {
   const cached = cacheGet(key);
   if (cached) return cached;
   await polite(url);
+  const dnsGate = await urlGuard.assertNoRebind(url);
+  if (!dnsGate.ok) throw new Error(dnsGate.err);
   const r = await fetch(url, {
-    method: 'POST',
+    method: 'POST', redirect: 'manual',
     headers: {
       'user-agent': UA, referer: douyingBase() + '/', origin: douyingBase(),
       'content-type': 'application/x-www-form-urlencoded;charset=UTF-8', 'x-requested-with': 'XMLHttpRequest'
     },
     body: body.toString(), signal: AbortSignal.timeout(timeout || 20000)
   });
+  if (r.status >= 300 && r.status < 400) throw new Error('接口跳转了，停止');
   const t = await r.text();
   if (!r.ok) throw new Error('HTTP ' + r.status);
   cacheSet(key, t);

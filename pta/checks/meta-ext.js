@@ -3,7 +3,7 @@ const http = require('http');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const { fetchMeta, providers } = require(path.join(ROOT, 'server', 'meta-ext.js'));
+const { fetchMeta, providers, doubanSearch, douying } = require(path.join(ROOT, 'server', 'meta-ext.js'));
 const results = [];
 
 function check(name, fn) {
@@ -19,10 +19,19 @@ function listen(handler) {
   });
 }
 
+let redirectedTo = 0;
+
 async function main() {
   const mock = await listen(function (req, res) {
     const u = new URL(req.url, 'http://127.0.0.1');
     res.setHeader('content-type', 'application/json');
+    if (u.pathname.indexOf('/redirect') === 0) {
+      res.statusCode = 302;
+      res.setHeader('location', '/followed');
+      res.end();
+      return;
+    }
+    if (u.pathname === '/followed') { redirectedTo++; res.end('{}'); return; }
     if (u.pathname.endsWith('/w/api.php')) {
       if (u.searchParams.get('list') === 'search') {
         res.end(JSON.stringify({ query: { search: [{ pageid: 1, title: 'The Matrix' }] } }));
@@ -113,6 +122,25 @@ async function main() {
     need(r.ok && r.data.via === 'douban+wiki', '没回退：' + JSON.stringify({ via: r.data && r.data.via }));
     need(String(r.data.poster).indexOf('img.example/m.jpg') >= 0, '豆瓣海报没拿到');
     need(String(r.data.overview).indexOf('hacker') >= 0, 'Wikipedia 简介没拿到');
+  });
+
+  await check('元数据接口 302 时明确报错且不跟随', async function () {
+    const prevD = process.env.PTA_DOUBAN_API;
+    const prevY = process.env.PTA_DOUYING_API;
+    redirectedTo = 0;
+    process.env.PTA_DOUBAN_API = mock.base + '/redirect';
+    try {
+      let err = '';
+      try { await doubanSearch('The Matrix', 1999); } catch (e) { err = String(e && e.message || e); }
+      need(/跳转/.test(err), '豆瓣 302 没报错：' + err);
+    } finally { process.env.PTA_DOUBAN_API = prevD; }
+    process.env.PTA_DOUYING_API = mock.base + '/redirect';
+    try {
+      let err = '';
+      try { await douying('The Matrix', 1999); } catch (e) { err = String(e && e.message || e); }
+      need(/跳转/.test(err), '豆影 302 没报错：' + err);
+    } finally { process.env.PTA_DOUYING_API = prevY; }
+    need(redirectedTo === 0, '302 之后仍跟了过去：' + redirectedTo);
   });
 
   await check('providers 只回 bool，不回 key', async function () {

@@ -6,6 +6,7 @@ const path = require('path');
 const { openDB } = require('../server/db');
 const { makeCrawl } = require('../server/crawl');
 const secretbox = require('../server/secretbox');
+const dns = require('dns');
 
 const results = [];
 function check(name, fn) {
@@ -23,6 +24,12 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
 (async function () {
   let core = null;
   let realFetch = null;
+  const realLookup = dns.promises.lookup;
+  dns.promises.lookup = async function (h) {
+    const host = String(h || '').toLowerCase();
+    if (host === HOST) return [{ address: '203.0.113.10', family: 4 }];
+    const e = new Error('mock ENOTFOUND'); e.code = 'ENOTFOUND'; throw e;
+  };
   try {
     fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
     fs.writeFileSync(path.join(DATA, 'site-defs', HOST + '.json'), JSON.stringify({
@@ -109,6 +116,49 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
       const st2 = row2 ? JSON.parse(row2.v) : {};
       need(st2[HOST] && st2[HOST].fullDoneAt, '改分类预先把全量标记清掉了');
     });
+    await check('详情地址跨站时不带 cookie 去抓', async function () {
+      db2.prepare('INSERT INTO catalog(id, site, site_id, infohash, title, status, data, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run('ext_detail_1', HOST, '999', '', 'External Detail', 'new', JSON.stringify({
+          site: HOST, siteId: '999', title: 'External Detail', sizeBytes: 1024,
+          detailsUrl: 'https://evil.example/details.php?id=999', downloadUrl: 'https://evil.example/dl.php?id=999'
+        }), new Date().toISOString(), new Date().toISOString());
+      const seen = [];
+      global.fetch = async function (url, opts) {
+        const u = String(url);
+        seen.push({ url: u, cookie: (opts && opts.headers && opts.headers.cookie) || '' });
+        const html = /details\.php/i.test(u) ? detailHtml : listHtml;
+        return new Response(html, { status: 200, headers: { 'content-type': 'text/html' } });
+      };
+      resetGaps();
+      const r = await core.crawlOnce(HOST, { limit: 100, detail: true, detailLimit: 1 });
+      need(r && !r.err, '跨站详情轮次失败：' + JSON.stringify(r && r.err));
+      const evil = seen.filter(function (x) { return x.url.indexOf('evil.example') >= 0; });
+      need(evil.length === 0, '跨站详情被请求了：' + JSON.stringify(evil));
+      const row = one("SELECT data FROM catalog WHERE id = 'ext_detail_1'");
+      const it = jparse(row.data);
+      need(/不是来源站/.test(String(it.detailNote || '')), '跨站详情没记原因：' + it.detailNote);
+      need(r.detail.failed >= 1, '跨站详情没计入失败：' + JSON.stringify(r.detail));
+    });
+
+    await check('列表页域名解析到内网时拒绝抓取', async function () {
+      const seen = [];
+      global.fetch = async function (url) {
+        seen.push(String(url));
+        return new Response(listHtml, { status: 200, headers: { 'content-type': 'text/html' } });
+      };
+      const pub = dns.promises.lookup;
+      dns.promises.lookup = async function (h) {
+        if (String(h || '').toLowerCase() === HOST) return [{ address: '10.0.0.7', family: 4 }];
+        return pub(h);
+      };
+      try {
+        resetGaps();
+        const r = await core.crawlOnce(HOST, { limit: 10, detail: false });
+        need(r && r.err && /内网/.test(String(r.err.message || '')), '内网解析没拦住：' + JSON.stringify(r && r.err));
+        need(seen.length === 0, '拦住后还发了请求：' + seen.join(' , '));
+      } finally { dns.promises.lookup = pub; }
+    });
+
     await check('没有保存类型时拒绝抓取，不静默全分类', async function () {
       fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401'] } } } }, null, 2));
       resetGaps();
@@ -117,6 +167,7 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
       fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { types: ['电影'], cats: { 电影: ['401'] } } } }, null, 2));
     });
   } finally {
+    dns.promises.lookup = realLookup;
     if (global.fetch !== realFetch) global.fetch = realFetch;
     if (global.__detailDb) { try { global.__detailDb.close(); } catch (e) { /* 忽略 */ } }
     try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }
