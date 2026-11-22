@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.654 · 2026-11-23
+
+### 收尾规则与数据
+- `AGENTS.md` 凭据规则改为 `data/cookies.json`；旧 `credentials` 表只作迁移/测试镜像。
+- 生产 `/data` 旧 `site-defs`、`site-search`、`site-maps`、`site-pack` 全部删除；`sites`/`credentials` 表数据清空。
+- 只剩 `sites.json`、`site-urls.json`、`cookies.json`、`seedpod.db`（加运行缓存/日志）。
+- 全量 run.sh 通过。
+
 ## v0.7.653 · 2026-11-23
 
 ### 删除旧站点包流程
