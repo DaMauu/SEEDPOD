@@ -1,4 +1,13 @@
 import registry from '../../shared/rule-registry.json'
+import presets from '../../shared/presets.json'
+
+/* 类型/媒介/分辨率/优惠/限制的选项来自全局预设，不在页面里重复写。 */
+const chipsOf = function (obj) { return Object.keys(obj || {}).map(function (k) { return obj[k] }) };
+const typeChips = chipsOf(presets.types);
+const mediumChips = chipsOf(presets.search && presets.search.medium);
+const resolutionChips = chipsOf(presets.search && presets.search.resolution);
+const discountChips = chipsOf(presets.search && presets.search.discount);
+const restrictionChips = chipsOf(presets.search && presets.search.restriction);
 
 /* 面板的规则表数据：纯数据、无逻辑。改这里不影响渲染代码。
    todo:true 表示服务端未接，界面禁用并标「未接」。 */
@@ -13,53 +22,14 @@ import registry from '../../shared/rule-registry.json'
         "t": "类型",
         "type": "custom",
         "label": "类型",
-        "chips": [
-          "电影",
-          "剧集",
-          "综艺",
-          "动漫",
-          "纪录片",
-          "音乐",
-          "体育",
-          "演唱会",
-          "MV",
-          "有声书",
-          "电子书",
-          "软件",
-          "游戏",
-          "短剧",
-          "舞台演出",
-          "成人",
-          "原盘",
-          "Remux",
-          "压制",
-          "图片",
-          "样品",
-          "预告",
-          "其他"
-        ],
+        "chips": typeChips,
         "sel": [],
         "hint": "先选来源站：类型按站映射到分类 id，只对当前站生效"
       },
       {
         "t": "媒介",
         "type": "custom",
-        "chips": [
-          "原盘(Full Disc)",
-          "UHD 原盘",
-          "3D 原盘",
-          "Remux",
-          "Encode",
-          "Blu-ray",
-          "HDDVD",
-          "DVD",
-          "HDTV",
-          "WEB-DL",
-          "WEBRip",
-          "TVRip",
-          "VHS",
-          "其他"
-        ],
+        "chips": mediumChips,
         "sel": [],
         "hint": "锁到站点的 medium / type 字段",
         "label": "媒介"
@@ -67,15 +37,7 @@ import registry from '../../shared/rule-registry.json'
       {
         "t": "分辨率",
         "type": "custom",
-        "chips": [
-          "480p",
-          "576p",
-          "720p",
-          "1080i",
-          "1080p",
-          "2160p",
-          "4320p/8K"
-        ],
+        "chips": resolutionChips,
         "sel": [],
         "hint": "按分辨率筛搜索结果",
         "label": "分辨率"
@@ -83,23 +45,14 @@ import registry from '../../shared/rule-registry.json'
       {
         "t": "优惠",
         "type": "custom",
-        "chips": [
-          "免费",
-          "2x",
-          "2x 免费",
-          "50%",
-          "2x 50%",
-          "30%",
-          "普通",
-          "置顶精选"
-        ],
+        "chips": discountChips,
         "sel": [],
         "hint": "按站点优惠状态筛，BHD 这类站点没有免费选项时会自动跳过"
       },
       {
         "t": "限制",
         "type": "custom",
-        "chips": ["禁转", "限转", "HR", "独占", "DIY"],
+        "chips": restrictionChips,
         "sel": [],
         "hint": "选中即排除；认标题、列表徽章和已抓详情标签"
       }

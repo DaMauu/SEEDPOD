@@ -174,7 +174,7 @@ function collect(files) {
   let rules = { total: 0, todo: 0, keep: 0 };
   if (ptaScope) try {
     const sb = { window: {} };
-    vm.runInNewContext(read(path.join(ROOT, 'web-src', 'src', 'data', 'rules.js')), sb, { timeout: 1000 });
+    vm.runInNewContext(require('./load-rules').rulesSource(), sb, { timeout: 1000 });
     const R = sb.window.PTA_RULES || {};
     for (const k of Object.keys(R)) for (const g of R[k] || []) for (const r of g.rows || []) {
       if (!r || !r.t || r.type === 'section') continue;

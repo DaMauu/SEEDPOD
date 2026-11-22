@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-24",
+  "types": {
+    "movie": "电影",
+    "tv": "剧集",
+    "variety": "综艺",
+    "anime": "动漫",
+    "documentary": "纪录片",
+    "music": "音乐",
+    "sports": "体育",
+    "concert": "演唱会",
+    "mv": "MV",
+    "audiobook": "有声书",
+    "ebook": "电子书",
+    "software": "软件",
+    "game": "游戏",
+    "short": "短剧",
+    "stage": "舞台演出",
+    "adult": "成人",
+    "full_disc": "原盘",
+    "remux": "Remux",
+    "encode": "压制",
+    "image": "图片",
+    "sample": "样品",
+    "trailer": "预告",
+    "other": "其他"
+  },
+  "search": {
+    "medium": {
+      "full_disc": "原盘(Full Disc)",
+      "uhd_full_disc": "UHD 原盘",
+      "3d_full_disc": "3D 原盘",
+      "remux": "Remux",
+      "encode": "Encode",
+      "bluray": "Blu-ray",
+      "hddvd": "HDDVD",
+      "dvd": "DVD",
+      "hdtv": "HDTV",
+      "webdl": "WEB-DL",
+      "webrip": "WEBRip",
+      "tvrip": "TVRip",
+      "vhs": "VHS",
+      "other": "其他"
+    },
+    "resolution": {
+      "480p": "480p",
+      "576p": "576p",
+      "720p": "720p",
+      "1080i": "1080i",
+      "1080p": "1080p",
+      "2160p": "2160p",
+      "4320p": "4320p/8K"
+    },
+    "discount": {
+      "free": "免费",
+      "2x": "2x",
+      "2x_free": "2x 免费",
+      "half": "50%",
+      "2x_half": "2x 50%",
+      "thirty": "30%",
+      "normal": "普通",
+      "featured": "置顶精选"
+    },
+    "restriction": {
+      "no_repost": "禁转",
+      "limited_repost": "限转",
+      "hr": "HR",
+      "exclusive": "独占",
+      "diy": "DIY"
+    }
+  },
+  "publish": {
+    "fields": {
+      "title": "标题",
+      "subtitle": "副标题",
+      "descr": "简介",
+      "catId": "分类",
+      "team": "制作组",
+      "tags": "标签",
+      "imdb": "IMDB",
+      "douban": "豆瓣",
+      "mediainfo": "MediaInfo",
+      "images": "截图",
+      "torrent": "种子文件",
+      "anonymous": "匿名"
+    }
+  }
+}

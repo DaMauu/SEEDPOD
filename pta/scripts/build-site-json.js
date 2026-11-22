@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-/* 从现有 SQLite sites / site-defs / site-search / site-maps 生成站点 JSON 与网址 JSON。
-   只读源数据；默认写 pta/pack 的 preset，--runtime 才写数据目录的 sites.json。
+/* 站点 JSON 生成器：运行时 sites.json / site-urls.json 是唯一事实源。
+   默认从运行时生成 pta/pack 预设；--runtime 只规范化运行时文件。
+   --check 校验预设与运行时一致；--disable-all 生成预设时全部停用。
    不打印站名/网址/cookie。 */
 const fs = require('fs');
 const path = require('path');
-const { openDB } = require('../server/db');
+const makeSiteStore = require('../server/site-store');
 const jsonFile = require('../server/json-file');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -16,175 +17,94 @@ function arg(name, def) {
 const DATA = path.resolve(arg('--data', require('../server/env').read('DATA_DIR', 'PTA_DATA') || path.join(ROOT, '..', 'data')));
 const OUT = path.resolve(arg('--out', path.join(ROOT, 'pack')));
 const RUNTIME = argv.includes('--runtime');
-const DRY = argv.includes('--dry');
 const CHECK = argv.includes('--check');
+const DRY = argv.includes('--dry');
 const DISABLE_ALL = argv.includes('--disable-all');
+const store = makeSiteStore(DATA);
 
-function b64(s) { return 'b64:' + Buffer.from(String(s || ''), 'utf8').toString('base64'); }
-function decode(v) { const s = String(v || ''); if (!s.startsWith('b64:')) return ''; try { return Buffer.from(s.slice(4), 'base64').toString('utf8'); } catch (e) { return ''; } }
-function readJson(file, fb) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return fb; } }
-function hostOf(x) { return String(x || '').trim().toLowerCase(); }
-function defsOf() {
-  const dir = path.join(DATA, 'site-defs');
+function read(file) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; } }
+function clone(x) { return JSON.parse(JSON.stringify(x || {})); }
+function sortKeys(obj) {
   const out = {};
-  let files = [];
-  try { files = fs.readdirSync(dir).filter(function (f) { return f.endsWith('.json'); }); } catch (e) { return out; }
-  files.forEach(function (f) {
-    const h = f.slice(0, -5).toLowerCase();
-    try { out[h] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) || {}; } catch (e) { /* skip */ }
-  });
+  Object.keys(obj || {}).sort().forEach(function (k) { out[k] = obj[k]; });
   return out;
 }
-function searchOf() {
-  const raw = readJson(path.join(DATA, 'site-search.local.json'), {});
-  return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw || {});
-}
-function mapsOf() {
-  const raw = readJson(path.join(DATA, 'site-maps.json'), {});
-  return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw || {});
-}
-function hiddenOf(db) {
-  try {
-    const row = db.prepare("SELECT v FROM meta WHERE k = 'site-config-meta'").get();
-    const meta = JSON.parse(row ? row.v : '{}') || {};
-    return Array.isArray(meta.hidden) ? meta.hidden.map(hostOf) : [];
-  } catch (e) { return []; }
-}
-function publishOf(def, mp) {
-  const up = def.uploadMap || def.upload || {};
-  const fields = up.fields && typeof up.fields === 'object' ? up.fields : {};
-  const publish = {
-    upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: fields },
-    verify: { path: String((def.verify && def.verify.path) || '') },
-    catMap: {},
-    catLabels: {},
-    tagMap: def.tagMap && typeof def.tagMap === 'object' ? def.tagMap : {},
-    tagValue: String(def.tagValue || 'yes'),
-    baseValueMaps: def.valueMaps && typeof def.valueMaps === 'object' ? def.valueMaps : {},
-    form: (mp && mp.form) || def.form || null,
-    valueMaps: { team: (mp && mp.team) || {} }
-  };
-  const raw = def.catMap;
-  if (Array.isArray(raw)) {
-    raw.forEach(function (x) {
-      if (!x || x.id == null) return;
-      if (x.purpose) publish.catMap[String(x.purpose)] = String(x.id);
-      if (x.label) publish.catLabels[String(x.label)] = String(x.id);
-    });
-  } else if (raw && typeof raw === 'object') {
-    Object.keys(raw).forEach(function (k) {
-      if (raw[k] == null) return;
-      publish.catMap[String(k)] = String(raw[k]);
-      publish.catLabels[String(k)] = String(raw[k]);
-    });
-  }
-  const mcat = (mp && mp.cat && typeof mp.cat === 'object') ? mp.cat : {};
-  Object.keys(mcat).forEach(function (label) {
-    if (mcat[label] == null) return;
-    publish.catLabels[String(label)] = String(mcat[label]);
-    if (!publish.catMap[String(label)]) publish.catMap[String(label)] = String(mcat[label]);
-  });
-  return publish;
-}
-function settingsOf(d, hidden) {
-  const keys = ['enabled', 'interval', 'priority', 'note', 'override', 'ovInterval', 'ovDetail', 'mode', 'queueMode', 'window', 'pages', 'concurrency', 'dupeCheck'];
-  const s = {};
-  keys.forEach(function (k) { if (d[k] !== undefined) s[k] = d[k]; });
-  s.hidden = hidden;
-  return s;
-}
-function main() {
-  const db = openDB(path.join(DATA, 'seedpod.db'));
-  const dbRows = db.prepare('SELECT host, data FROM sites').all();
-  const hidden = hiddenOf(db);
-  db.close();
-  const defs = defsOf();
-  const search = searchOf();
-  const maps = mapsOf();
+function normDoc(doc, opts) {
+  const o = opts || {};
+  const src = clone(doc && doc.sites ? doc.sites : {});
   const sites = {};
-  const urls = {};
-  const cookies = {};
-  let settingsCount = 0, searchCount = 0, publishCount = 0, urlCount = 0;
-  dbRows.forEach(function (r) {
-    const host = hostOf(r.host);
-    if (!host) return;
-    let d = {}; try { d = JSON.parse(r.data) || {}; } catch (e) { d = {}; }
-    const def = defs[host] || {};
-    const se = search[host] || {};
-    const mp = maps[host] || {};
-    const base = String(def.base || d.url || '').replace(/\/+$/, '');
-    const publish = publishOf(def, mp);
-    const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
-    const rec = {
-      name: String(d.title || def.title || host),
-      nameZh: String(d.titleZh || d.cn || ''),
-      engine: String(def.engine || d.engine || '?'),
-      urlRef: 'site-urls.json#' + host,
-      search: {
-        path: String(def.searchPath || '/torrents.php'),
-        params: def.params && typeof def.params === 'object' ? def.params : {},
-        catMode: String(def.catMode || 'single'),
-        catSlot: String(def.catSlot || ''),
-        cats: cats,
-        types: Array.isArray(se.types) ? se.types : [],
-        filters: (mp && mp.filters) || {}
-      },
-      publish: publish,
-      localEdited: false
+  Object.keys(src).sort().forEach(function (host) {
+    const rec = src[host] || {};
+    const out = {
+      name: String(rec.name || host),
+      nameZh: String(rec.nameZh || ''),
+      engine: String(rec.engine || '?'),
+      urlRef: String(rec.urlRef || ('site-urls.json#' + host)),
+      search: Object.assign({}, rec.search || {}),
+      publish: Object.assign({}, rec.publish || {}),
+      localEdited: o.preset ? false : rec.localEdited === true,
+      settings: Object.assign({}, rec.settings || {})
     };
-    if (RUNTIME) {
-      rec.settings = settingsOf(d, hidden.indexOf(host) >= 0);
-      if (DISABLE_ALL) rec.settings.enabled = false;
-      if (Object.keys(rec.settings).length > 1) settingsCount++;
+    out.search = store.canonSearch(out.search);
+    delete out.search.types;
+    out.publish = store.canonPublish(out.publish);
+    if (o.preset) {
+      delete out.settings;
+    } else {
+      out.settings.enabled = DISABLE_ALL ? false : out.settings.enabled !== false;
     }
-    sites[host] = rec;
-    if (base) {
-      urls[host] = { base: b64(base), upload: b64(publish.upload.path), verify: b64(publish.verify.path) };
-      urlCount++;
-    }
-    cookies[host] = { cookie: '' };
-    if (Object.keys(cats).length) searchCount++;
-    if (Object.keys(publish.catMap).length || Object.keys(publish.catLabels).length) publishCount++;
+    sites[host] = out;
   });
-  const summary = { sites: Object.keys(sites).length, urls: urlCount, search: searchCount, publish: publishCount, settings: settingsCount, hidden: hidden.filter(function (h) { return sites[h]; }).length };
-  if (CHECK) {
-    const bad = [];
-    const norm = function (x) { return JSON.stringify(x || {}); };
-    Object.keys(sites).forEach(function (h) {
-      const rec = sites[h];
-      const d = dbRows.filter(function (r) { return hostOf(r.host) === h; })[0] || {};
-      let dbd = {}; try { dbd = JSON.parse(d.data || '{}') || {}; } catch (e) { dbd = {}; }
-      const def = defs[h] || {};
-      const se = search[h] || {};
-      const base = String(def.base || dbd.url || '').replace(/\/+$/, '');
-      if (decode(urls[h] && urls[h].base) !== base) bad.push({ host: h, field: 'base' });
-      if (urls[h] && decode(urls[h].upload) !== String(((def.uploadMap || def.upload || {}).path) || '')) bad.push({ host: h, field: 'upload' });
-      if (urls[h] && decode(urls[h].verify) !== String((def.verify && def.verify.path) || '')) bad.push({ host: h, field: 'verify' });
-      const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
-      if (norm(rec.search.cats) !== norm(cats)) bad.push({ host: h, field: 'search.cats' });
-      if (norm(rec.search.types) !== norm(Array.isArray(se.types) ? se.types : [])) bad.push({ host: h, field: 'search.types' });
-      if (rec.search.catMode !== String(def.catMode || 'single')) bad.push({ host: h, field: 'search.catMode' });
-      if (rec.search.catSlot !== String(def.catSlot || '')) bad.push({ host: h, field: 'search.catSlot' });
-      if (RUNTIME) {
-        const wantEnabled = DISABLE_ALL ? false : dbd.enabled !== false;
-        if (rec.settings.enabled !== wantEnabled) bad.push({ host: h, field: 'settings.enabled' });
-      }
-    });
-    if (bad.length) {
-      try { jsonFile.writeAtomic(path.join(DATA, 'site-json-mismatches.json'), bad, 0o600); } catch (e) { /* 忽略 */ }
-    }
-    console.log(JSON.stringify(Object.assign({ mismatches: bad.length, mismatchFile: bad.length ? path.join(DATA, 'site-json-mismatches.json') : '' }, summary), null, 2));
-    if (bad.length) process.exit(1);
-    return;
-  }
-  if (DRY) { console.log(JSON.stringify(summary, null, 2)); return; }
-  const dir = RUNTIME ? DATA : OUT;
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  const prefix = RUNTIME ? 'sites' : 'sites.preset';
-  const urlPrefix = RUNTIME ? 'site-urls' : 'site-urls.preset';
-  jsonFile.writeAtomic(path.join(dir, prefix + '.json'), { version: 1, generatedAt: new Date().toISOString(), sites: sites }, 0o600);
-  jsonFile.writeAtomic(path.join(dir, urlPrefix + '.json'), { version: 1, generatedAt: new Date().toISOString(), sites: urls }, 0o600);
-  if (!RUNTIME) jsonFile.writeAtomic(path.join(dir, 'cookies.example.json'), { version: 1, cookies: cookies }, 0o600);
-  console.log(JSON.stringify(Object.assign({ out: dir }, summary), null, 2));
+  return { version: 1, presets: 'presets.preset.json', generatedAt: new Date().toISOString(), sites: sites };
 }
-main();
+function urlDocOf(raw) {
+  const src = clone(raw && raw.sites ? raw.sites : {});
+  const sites = {};
+  Object.keys(src).sort().forEach(function (h) { sites[h] = src[h]; });
+  return { version: 1, generatedAt: new Date().toISOString(), sites: sites };
+}
+function count(docs) {
+  const sites = docs.sites.sites || {};
+  const hosts = Object.keys(sites);
+  let search = 0, publish = 0;
+  hosts.forEach(function (h) {
+    if (Object.keys((sites[h].search || {}).cats || {}).length) search++;
+    if (Object.keys((sites[h].publish || {}).catMap || {}).length) publish++;
+  });
+  return { sites: hosts.length, urls: Object.keys((docs.urls.sites) || {}).length, search: search, publish: publish };
+}
+
+store.ensureRuntime();
+const sitesRaw = read(store.FILE) || { version: 1, sites: {} };
+const urlsRaw = read(store.URL_FILE) || { version: 1, sites: {} };
+const runtimeSites = normDoc(sitesRaw, { preset: false });
+const presetSites = normDoc(sitesRaw, { preset: true });
+const runtimeUrls = urlDocOf(urlsRaw);
+const presetUrls = urlDocOf(urlsRaw);
+
+if (CHECK) {
+  const packSites = read(path.join(OUT, 'sites.preset.json')) || { sites: {} };
+  const packUrls = read(path.join(OUT, 'site-urls.preset.json')) || { sites: {} };
+  const same = JSON.stringify(sortKeys(packSites.sites)) === JSON.stringify(sortKeys(presetSites.sites))
+    && JSON.stringify(sortKeys(packUrls.sites)) === JSON.stringify(sortKeys(presetUrls.sites));
+  console.log(JSON.stringify(Object.assign({ ok: same }, count({ sites: runtimeSites, urls: runtimeUrls })), null, 2));
+  if (!same) process.exit(1);
+  return;
+}
+if (DRY) {
+  console.log(JSON.stringify(Object.assign({ dry: true }, count({ sites: runtimeSites, urls: runtimeUrls })), null, 2));
+  return;
+}
+if (RUNTIME) {
+  jsonFile.writeAtomic(store.FILE, runtimeSites, 0o600);
+  jsonFile.writeAtomic(store.URL_FILE, runtimeUrls, 0o600);
+  console.log(JSON.stringify(Object.assign({ out: DATA }, count({ sites: runtimeSites, urls: runtimeUrls })), null, 2));
+  return;
+}
+fs.mkdirSync(OUT, { recursive: true, mode: 0o700 });
+jsonFile.writeAtomic(path.join(OUT, 'sites.preset.json'), presetSites, 0o600);
+jsonFile.writeAtomic(path.join(OUT, 'site-urls.preset.json'), presetUrls, 0o600);
+const cookies = { version: 1, cookies: {} };
+Object.keys(presetSites.sites).forEach(function (h) { cookies.cookies[h] = { cookie: '' }; });
+jsonFile.writeAtomic(path.join(OUT, 'cookies.example.json'), cookies, 0o600);
+console.log(JSON.stringify(Object.assign({ out: OUT }, count({ sites: runtimeSites, urls: runtimeUrls })), null, 2));

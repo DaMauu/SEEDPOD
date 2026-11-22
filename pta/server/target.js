@@ -111,7 +111,7 @@ function makeTarget(ctx) {
       const t = resolveFrom(rec.host, {
         engine: rec.engine, base: rec.url && rec.url.base,
         upload: pub.upload, verify: pub.verify,
-        catMap: Object.assign({}, pub.catMap || {}, pub.catLabels || {}),
+        catMap: Object.assign({}, pub.catMap || {}),
         tagMap: pub.tagMap, tagValue: pub.tagValue,
         form: pub.form, valueMaps: pub.valueMaps
       });

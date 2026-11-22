@@ -1,11 +1,12 @@
 # 站点 JSON（SITE-JSON）
 
-状态：2026-11-22，预设文件已生成；运行时读取切换待下一步。当前运行时仍读 SQLite `sites` + `data/site-defs`，预设文件作为迁移源和分发物。
+状态：2026-11-24，运行时已切到 JSON。站点只保存“全局 key → 站点 ID/值”，中文名、媒介、分辨率、优惠、限制只在全局预设写一份。
 
 ## 文件
 
 ```text
-pta/pack/sites.preset.json       入库：站点定义（站名、search、publish）
+pta/pack/presets.preset.json     入库：全局类型/搜索维度/发布字段
+pta/pack/sites.preset.json       入库：站点定义（只含 key + ID）
 pta/pack/site-urls.preset.json   入库：网址，Base64
 pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 
@@ -14,14 +15,43 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 /data/cookies.json               本地：cookie，AES-GCM 密文
 ```
 
+- `presets.preset.json` 是唯一的中文类型/选项来源；站点 JSON 不写中文类型。
 - `sites.preset.json` / `site-urls.preset.json` 可以进 GitHub。
 - `cookies.example.json` 只能有空值；真实 cookie 永远不进仓库。
 - `site-urls` 是 Base64，不是加密；能解码看到网址。
 - 本地三个文件不进仓库、不进镜像。
 
-## 结构
+## 全局预设
 
-`sites.preset.json`：
+`pta/pack/presets.preset.json`：
+
+```json
+{
+  "version": 1,
+  "types": {
+    "movie": "电影",
+    "tv": "剧集",
+    "documentary": "纪录片",
+    "sports": "体育",
+    "ebook": "电子书"
+  },
+  "search": {
+    "medium": { "full_disc": "原盘(Full Disc)", "remux": "Remux" },
+    "resolution": { "1080p": "1080p", "2160p": "2160p" },
+    "discount": { "normal": "普通", "free": "免费", "2x": "2x" },
+    "restriction": { "no_repost": "禁转", "hr": "HR" }
+  },
+  "publish": {
+    "fields": { "title": "标题", "descr": "简介", "catId": "分类" }
+  }
+}
+```
+
+完整清单在文件里，顺序就是界面选项顺序。
+
+## 站点 JSON
+
+`sites.preset.json` / `data/sites.json` 里的每个站只写 key 和 ID：
 
 ```json
 {
@@ -29,82 +59,87 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
   "sites": {
     "site-a.example": {
       "name": "Site A",
-      "nameZh": "站点甲",
       "engine": "nexusphp",
       "urlRef": "site-urls.json#site-a.example",
       "search": {
         "path": "/torrents.php",
-        "params": {},
-        "cats": { "电影": ["401", "402"] },
-        "types": ["电影"]
+        "params": { "search": "{q}", "cat": "{cats}" },
+        "catMode": "single",
+        "catSlot": "1",
+        "cats": { "movie": ["401"], "tv": ["402", "403"] },
+        "filters": {
+          "values": { "discount": { "normal": "1", "free": "2" } },
+          "selected": { "discount": ["normal", "free"] }
+        }
       },
       "publish": {
-        "upload": { "path": "/takeupload.php", "formPath": "/upload.php", "fileField": "file", "fields": {} },
-        "verify": { "path": "/torrents.php?search={title}" },
-        "catMap": { "movie": "999" },
-        "catLabels": { "电影": "999" }
+        "catMap": { "movie": "402", "tv": "403" }
       },
-      "localEdited": false
+      "settings": { "enabled": false }
     }
   }
 }
 ```
 
-运行时 `sites.json` 多一个 `settings`：
+对应关系：
 
-```json
-"settings": {
-  "enabled": true,
-  "interval": 6,
-  "priority": "normal",
-  "note": "",
-  "hidden": false
-}
+```text
+全局“电影” → key movie → 搜索分类 401；发布分类 402
 ```
 
-不写的字段用默认值。
+规则：
 
-`site-urls.preset.json`：
+- `search.cats`：抓取分类绑定；一个 key 可以对应多个站点分类 ID。
+- `publish.catMap`：发布分类绑定；一个 key 只对应一个 ID。
+- `search.filters.values`：全局选项 key → 站点搜索参数值。
+- `search.filters.selected`：勾选的全局选项 key；没有站点值的选项只做本地标题过滤。
+- 不再保存 `search.types`、`publish.catLabels`；中文名由 `presets.preset.json` 查表补。
+- `settings` 只在本机 `data/sites.json` 出现；预设文件不写，首次启动默认停用。
 
-```json
-{
-  "version": 1,
-  "sites": {
-    "site-a.example": {
-      "base": "b64:aHR0cHM6Ly9zaXRlLWEuZXhhbXBsZQ==",
-      "upload": "b64:L3Rha2V1cGxvYWQucGhw",
-      "verify": "b64:L3RvcnJlbnRzLnBocD9zZWFyY2g9e3RpdGxlfQ=="
-    }
-  }
-}
-```
-
-`cookies.example.json`：
+JSON 写一行不影响识别，空白只是格式：
 
 ```json
-{
-  "version": 1,
-  "cookies": {
-    "site-a.example": { "cookie": "" }
-  }
-}
+"cats": { "movie": ["401"], "tv": ["402", "403"] }
+"catMap": { "movie": "402", "tv": "403" }
 ```
+
+## 迁移旧结构
+
+旧 `sites.json` 里的中文 key、`types`、`catLabels`、`filters.map` 会被自动归一：
+
+```bash
+sudo -u seedpod node pta/scripts/migrate-site-presets.js --data /opt/seedpod/data
+sudo -u seedpod node pta/scripts/migrate-site-presets.js --data /opt/seedpod/data --write
+```
+
+- `电影` → `movie`，`doc` → `documentary`，`sport` → `sports`，`book` → `ebook`。
+- `普通（下载量全计量…）` 这类长选项名只保留 `normal: "1"`，中文名从全局预设取。
+- 只改 `sites.json`，不改 cookie 和网址。
 
 ## 生成 / 更新
 
+运行时 `data/sites.json` 是唯一事实源；仓库预设从它生成：
+
 ```bash
-cd /opt/seedpod-git
-sudo -u seedpod env PTA_DATA=/opt/seedpod/data \
-  node pta/scripts/build-site-json.js --data /opt/seedpod/data --out pta/pack
+sudo -u seedpod node pta/scripts/build-site-json.js --data /opt/seedpod/data --out /tmp/pta-pack
+cp /tmp/pta-pack/sites.preset.json /tmp/pta-pack/site-urls.preset.json \
+   /tmp/pta-pack/cookies.example.json pta/pack/
+chmod 600 pta/pack/*.json
 ```
 
-只读源数据（SQLite `sites`、`site-defs`、`site-search`、`site-maps`），不联网、不打印站名/网址/cookie。
-
-- 默认生成 `sites.preset.json`、`site-urls.preset.json`、`cookies.example.json`。
-- `--runtime` 才写数据目录的 `sites.json` / `site-urls.json`，并带 `settings`。
+- 默认生成 `sites.preset.json`、`site-urls.preset.json`、`cookies.example.json`，预设不带 `settings`。
+- `--runtime` 只规范化运行时文件。
+- `--check` 校验仓库预设与运行时一致。
 - `--dry` 只输出数量。
+- 不打印站名/网址/cookie，不联网。
 
-## 首次启动（待接）
+改全局预设后同步前端：
+
+```bash
+node pta/scripts/gen-presets.js
+```
+
+## 首次启动
 
 ```text
 /data/sites.json 不存在      → 从 sites.preset.json 复制
@@ -112,19 +147,27 @@ sudo -u seedpod env PTA_DATA=/opt/seedpod/data \
 /data/cookies.json 不存在    → 从 cookies.example.json 复制（全空）
 ```
 
-之后面板读写 `/data` 的三个文件，镜像里的 preset 只读。
+之后面板只读写 `/data` 的三个文件；镜像里的 preset 只读。
 
 ## 升级合并（待接）
 
 1. 备份 `/data/sites.json`、`/data/site-urls.json`、`/data/cookies.json`。
 2. 按 host 合并：
-   - 新站：加入。
+   - 新站：加入，默认停用。
    - `localEdited: false`：定义字段可用 preset 更新。
    - `localEdited: true`：保留用户值，只提示。
 3. `settings` 永远以本地为准，preset 不覆盖。
 4. cookie 不合并，继续用本地 `cookies.json`。
 
 ## 检查
+
+`pta/checks/presets.js`：
+
+- 全局类型清单、搜索维度齐全；
+- 中文名/旧 key/英文别名归一；
+- 站点只存 key，读时补中文，写时归一；
+- 旧 `filters.map`/`selectedLabels` 归一成 `values`/`selected`；
+- 仓库预设没有中文类型 key、没有 `types`。
 
 `pta/checks/site-json-preset.js`：
 

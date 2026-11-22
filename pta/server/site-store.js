@@ -6,6 +6,7 @@ const path = require('path');
 const jsonFile = require('./json-file');
 const uploadLock = require('./upload-lock');
 const { openDB } = require('./db');
+const makePresets = require('./presets');
 
 const VERSION = 1;
 const ROOT = path.resolve(__dirname, '..');
@@ -30,6 +31,7 @@ function makeSiteStore(dataDir, opts) {
   const SITES_PRESET = path.join(PRESET, 'sites.preset.json');
   const URLS_PRESET = path.join(PRESET, 'site-urls.preset.json');
   const CACHE = { sites: null, urls: null };
+  const presets = makePresets(DIR);
 
   function readJson(file, fb) {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
@@ -121,12 +123,14 @@ function makeSiteStore(dataDir, opts) {
         const se = search[host] || {};
         const mp = maps[host] || {};
         const base = String(def.base || d.url || '').replace(/\/+$/, '');
-        const publish = legacyPublish(def, mp);
+        const publish = canonPublish(legacyPublish(def, mp));
         const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
+        const searchRec = canonSearch({ path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, filters: (mp && mp.filters) || {} });
+        delete searchRec.types;
         sites.sites[host] = {
           name: String(d.title || def.title || host), nameZh: String(d.titleZh || d.cn || ''),
           engine: String(def.engine || d.engine || '?'), urlRef: 'site-urls.json#' + host,
-          search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, types: Array.isArray(se.types) ? se.types : [], filters: (mp && mp.filters) || {} },
+          search: searchRec,
           publish: publish, localEdited: false,
           settings: (function () {
             const st = normalizeSettings(Object.assign({}, d, { hidden: hidden.indexOf(host) >= 0 }));
@@ -134,7 +138,7 @@ function makeSiteStore(dataDir, opts) {
             return st;
           })()
         };
-        if (base) urls.sites[host] = { base: b64(base), upload: b64(publish.upload.path), verify: b64(publish.verify.path) };
+        if (base) urls.sites[host] = { base: b64(base), upload: b64((publish.upload && publish.upload.path) || ''), verify: b64((publish.verify && publish.verify.path) || '') };
       });
       writeDoc(SITES_FILE, sites);
       writeDoc(URLS_FILE, urls);
@@ -165,6 +169,138 @@ function makeSiteStore(dataDir, opts) {
     const u = (urls.sites || {})[host] || {};
     return { base: unb64(u.base), upload: unb64(u.upload), verify: unb64(u.verify) };
   }
+  /* 站点只存 key；中文名由全局预设补，读的时候派生 types 给现有流程用 */
+  function canonCats(cats) {
+    const out = {};
+    if (!cats || typeof cats !== 'object' || Array.isArray(cats)) return out;
+    Object.keys(cats).forEach(function (k) {
+      const key = presets.keyOf(k) || String(k);
+      const list = Array.isArray(cats[k]) ? cats[k] : (cats[k] == null ? [] : [cats[k]]);
+      list.forEach(function (id) {
+        if (id == null || id === '') return;
+        const v = String(id);
+        if (!out[key]) out[key] = [];
+        if (out[key].indexOf(v) < 0) out[key].push(v);
+      });
+    });
+    return out;
+  }
+  function canonMap(map) {
+    const out = {};
+    if (!map || typeof map !== 'object' || Array.isArray(map)) return out;
+    const all = presets.types();
+    /* 已经是标准 key 的优先，避免中文旧值覆盖新值 */
+    Object.keys(map).forEach(function (k) {
+      if (map[k] == null || map[k] === '' || !all[k]) return;
+      if (out[k] == null) out[k] = String(map[k]);
+    });
+    Object.keys(map).forEach(function (k) {
+      if (map[k] == null || map[k] === '') return;
+      const key = presets.keyOf(k) || String(k);
+      if (out[key] == null) out[key] = String(map[k]);
+    });
+    return out;
+  }
+  function typesOfCats(cats) {
+    const out = [];
+    Object.keys(cats || {}).forEach(function (k) {
+      const zh = presets.labelOf(k);
+      if (zh && out.indexOf(zh) < 0) out.push(zh);
+    });
+    return out;
+  }
+  const FILTER_DIM = { medium: 'medium', standard: 'resolution', resolution: 'resolution', spstate: 'discount', discount: 'discount', restriction: 'restriction' };
+  function canonFilters(flt) {
+    const out = { values: {}, selected: {} };
+    if (!flt || typeof flt !== 'object' || Array.isArray(flt)) return out;
+    function addValue(dim, label, val) {
+      const key = presets.keyOfDim(dim, label);
+      if (!key || val == null || val === '') return;
+      out.values[dim] = out.values[dim] || {};
+      if (out.values[dim][key] == null) out.values[dim][key] = String(val);
+    }
+    function addSel(dim, x) {
+      const key = presets.keyOfDim(dim, x);
+      if (!key) return;
+      out.selected[dim] = out.selected[dim] || [];
+      if (out.selected[dim].indexOf(key) < 0) out.selected[dim].push(key);
+    }
+    /* 新格式：values/selected 都已经是 key */
+    Object.keys(flt.values || {}).forEach(function (d) {
+      const dim = FILTER_DIM[d] || d;
+      Object.keys(flt.values[d] || {}).forEach(function (k) { addValue(dim, k, flt.values[d][k]); });
+    });
+    /* 旧格式：map 是站点选项名 → 值 */
+    Object.keys(flt.map || {}).forEach(function (d) {
+      const dim = FILTER_DIM[d] || d;
+      Object.keys(flt.map[d] || {}).forEach(function (label) { addValue(dim, label, flt.map[d][label]); });
+    });
+    Object.keys(flt.selected || {}).forEach(function (d) {
+      const dim = FILTER_DIM[d] || d;
+      (Array.isArray(flt.selected[d]) ? flt.selected[d] : []).forEach(function (x) { addSel(dim, x); });
+    });
+    Object.keys(flt.selectedLabels || {}).forEach(function (d) {
+      const dim = FILTER_DIM[d] || d;
+      (Array.isArray(flt.selectedLabels[d]) ? flt.selectedLabels[d] : []).forEach(function (x) { addSel(dim, x); });
+    });
+    /* 旧格式只有 selectedValues 时，用 map 反查回 key */
+    Object.keys(flt.selectedValues || {}).forEach(function (d) {
+      const dim = FILTER_DIM[d] || d;
+      const map = (flt.map && flt.map[d]) || {};
+      (Array.isArray(flt.selectedValues[d]) ? flt.selectedValues[d] : []).forEach(function (v) {
+        const label = Object.keys(map).filter(function (l) { return String(map[l]) === String(v); })[0];
+        if (label) addSel(dim, label);
+      });
+    });
+    Object.keys(out.values).forEach(function (d) { if (!Object.keys(out.values[d]).length) delete out.values[d]; });
+    Object.keys(out.selected).forEach(function (d) { if (!out.selected[d].length) delete out.selected[d]; });
+    if (!Object.keys(out.values).length) delete out.values;
+    if (!Object.keys(out.selected).length) delete out.selected;
+    return out;
+  }
+  function canonSearch(search) {
+    const s0 = clone(search || {});
+    s0.cats = canonCats(s0.cats);
+    s0.types = typesOfCats(s0.cats);
+    s0.filters = canonFilters(s0.filters);
+    return s0;
+  }
+  /* 上传表单只留 target-plan 会读的必填下拉，去掉搜索页/样式类噪声 */
+  const FORM_SELECT = /^(type|category|category_id|type_id|source|source_sel|medium|medium_sel|standard|standard_sel|codec|codec_sel|audiocodec|audiocodec_sel|team|team_sel|processing|processing_sel)(\[\d+\])?$/;
+  function compactForm(form) {
+    if (!form || typeof form !== 'object') return null;
+    const out = {};
+    if (form.at) out.at = String(form.at);
+    if (form.catField) out.catField = String(form.catField);
+    if (form.teamField) out.teamField = String(form.teamField);
+    const selects = {};
+    Object.keys(form.selects || {}).forEach(function (k) { if (FORM_SELECT.test(k)) selects[k] = form.selects[k]; });
+    if (Object.keys(selects).length) out.selects = selects;
+    const defaults = {};
+    Object.keys(form.defaults || {}).forEach(function (k) { if (FORM_SELECT.test(k)) defaults[k] = String(form.defaults[k]); });
+    if (Object.keys(defaults).length) out.defaults = defaults;
+    if (!out.selects && !out.defaults) return null;
+    return out;
+  }
+  function compactPublish(p0) {
+    const form = compactForm(p0.form);
+    if (form) p0.form = form; else delete p0.form;
+    if (!p0.tagMap || !Object.keys(p0.tagMap).length) delete p0.tagMap;
+    if (!p0.baseValueMaps || !Object.keys(p0.baseValueMaps).length) delete p0.baseValueMaps;
+    if (p0.valueMaps) {
+      if (!p0.valueMaps.team || !Object.keys(p0.valueMaps.team).length) delete p0.valueMaps.team;
+      if (!Object.keys(p0.valueMaps).length) delete p0.valueMaps;
+    }
+    if (p0.upload && !p0.upload.path && !p0.upload.formPath && !p0.upload.fileField && !Object.keys(p0.upload.fields || {}).length) delete p0.upload;
+    if (p0.verify && !p0.verify.path) delete p0.verify;
+    return p0;
+  }
+  function canonPublish(publish) {
+    const p0 = clone(publish || {});
+    p0.catMap = canonMap(p0.catMap);
+    delete p0.catLabels;
+    return compactPublish(p0);
+  }
   function recordOf(host, sites, urls) {
     const raw = (sites.sites || {})[host];
     if (!raw) return null;
@@ -174,8 +310,8 @@ function makeSiteStore(dataDir, opts) {
       nameZh: String(raw.nameZh || ''),
       engine: String(raw.engine || '?'),
       urlRef: String(raw.urlRef || ('site-urls.json#' + host)),
-      search: clone(raw.search || {}),
-      publish: clone(raw.publish || {}),
+      search: canonSearch(raw.search),
+      publish: canonPublish(raw.publish),
       localEdited: raw.localEdited === true,
       settings: normalizeSettings(raw.settings),
       url: urlOf(host, urls)
@@ -210,11 +346,14 @@ function makeSiteStore(dataDir, opts) {
       if (!urls.sites || typeof urls.sites !== 'object') urls.sites = {};
       const cur = sites.sites[h] || {
         name: h, nameZh: '', engine: '?', urlRef: 'site-urls.json#' + h,
-        search: { path: '', params: {}, cats: {}, types: [] },
-        publish: { upload: { path: '', formPath: '', fileField: '', fields: {} }, verify: { path: '' }, catMap: {}, catLabels: {} },
+        search: { path: '', params: {}, cats: {} },
+        publish: { upload: { path: '', formPath: '', fileField: '', fields: {} }, verify: { path: '' }, catMap: {} },
         settings: defaults(), localEdited: false
       };
-      ['name', 'nameZh', 'engine', 'search', 'publish'].forEach(function (k) { if (p[k] !== undefined) cur[k] = p[k]; });
+      ['name', 'nameZh', 'engine'].forEach(function (k) { if (p[k] !== undefined) cur[k] = p[k]; });
+      cur.search = canonSearch(p.search !== undefined ? p.search : cur.search);
+      delete cur.search.types;
+      cur.publish = canonPublish(p.publish !== undefined ? p.publish : cur.publish);
       if (p.settings !== undefined) cur.settings = normalizeSettings(Object.assign({}, cur.settings, p.settings));
       if (p.localEdited !== undefined) cur.localEdited = p.localEdited === true;
       else cur.localEdited = true;
@@ -259,28 +398,33 @@ function makeSiteStore(dataDir, opts) {
     const s = get(host);
     if (!s) return null;
     const catList = [];
-    Object.keys(s.search.cats || {}).forEach(function (label) {
-      (s.search.cats[label] || []).forEach(function (id) { catList.push({ id: String(id), label: String(label), purpose: String(label) }); });
+    Object.keys(s.search.cats || {}).forEach(function (key) {
+      const label = presets.labelOf(key) || String(key);
+      (s.search.cats[key] || []).forEach(function (id) { catList.push({ id: String(id), label: label, purpose: key }); });
     });
     return {
       host: s.host, engine: s.engine, base: s.url.base,
       searchPath: s.search.path, params: s.search.params || {}, catMode: s.search.catMode || 'single', catSlot: s.search.catSlot || '', filters: s.search.filters || {},
       cats: s.search.cats || {}, catList: catList, types: s.search.types || [],
       upload: s.publish.upload || {}, verify: s.publish.verify || {},
-      catMap: s.publish.catMap || {}, catLabels: s.publish.catLabels || {},
+      catMap: s.publish.catMap || {},
       enabled: s.settings.enabled !== false, hidden: s.settings.hidden === true
     };
   }
   function targetDef(host) {
     const s = get(host);
     if (!s) return null;
+    const catMap = canonMap(s.publish.catMap);
+    Object.keys(catMap).forEach(function (k) {
+      const zh = presets.labelOf(k);
+      if (zh && catMap[zh] == null) catMap[zh] = catMap[k];
+    });
     return {
       host: s.host, engine: s.engine, base: s.url.base,
-      upload: { path: s.publish.upload.path, formPath: s.publish.upload.formPath, fileField: s.publish.upload.fileField, fields: s.publish.upload.fields },
+      upload: Object.assign({ path: '', formPath: '', fileField: '', fields: {} }, s.publish.upload || {}),
       tagMap: s.publish.tagMap || {}, tagValue: s.publish.tagValue || 'yes',
-      verify: { path: s.publish.verify.path },
-      catMap: Object.assign({}, s.publish.catMap || {}, s.publish.catLabels || {}),
-      catLabels: s.publish.catLabels || {},
+      verify: { path: (s.publish.verify && s.publish.verify.path) || '' },
+      catMap: catMap,
       form: s.publish.form || null,
       valueMaps: (function () {
         const base = s.publish.baseValueMaps || {};
@@ -293,6 +437,7 @@ function makeSiteStore(dataDir, opts) {
     FILE: SITES_FILE, URL_FILE: URLS_FILE,
     ensureRuntime: ensureRuntime, migrateLegacy: migrateLegacy, legacyDef: legacyDef, targetDef: targetDef, get: get, list: list, has: has,
     save: save, add: add, remove: remove, setHidden: setHidden,
+    canonCats: canonCats, canonMap: canonMap, typesOfCats: typesOfCats, canonSearch: canonSearch, canonPublish: canonPublish,
     _b64: b64, _unb64: unb64
   };
 }

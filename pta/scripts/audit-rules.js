@@ -15,7 +15,7 @@ const V2_FILES = fs.readdirSync(SERVER)
 
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web-src', 'shared', 'rule-registry.json'), 'utf8'));
 const sandbox = { window: {}, registry: registry };
-vm.runInNewContext(fs.readFileSync(RULES, 'utf8').replace(/^import .*$/m, ''), sandbox);
+vm.runInNewContext(require('./load-rules').rulesSource(), sandbox);
 const R = sandbox.window.PTA_RULES || {};
 const text = V2_FILES.map(f => fs.readFileSync(f, 'utf8')).join('\n');
 

@@ -1,0 +1,130 @@
+/* 全局预设检查：类型/搜索维度只有一份；站点 cats/catMap 只写 key。 */
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const makePresets = require('../server/presets');
+const makeSiteStore = require('../server/site-store');
+
+const ROOT = path.resolve(__dirname, '..');
+const PRESETS = path.join(ROOT, 'pack', 'presets.preset.json');
+const results = [];
+function check(name, fn) {
+  return Promise.resolve().then(fn).then(function () { results.push([true, name, '']); })
+    .catch(function (e) { results.push([false, name, e && e.message ? e.message : String(e)]); });
+}
+function need(c, m) { if (!c) throw new Error(m); }
+function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+
+(async function () {
+  const doc = read(PRESETS);
+  const presets = makePresets();
+
+  await check('全局类型覆盖需求清单且 key 唯一', async function () {
+    const want = ['电影', '剧集', '综艺', '动漫', '纪录片', '音乐', '体育', '演唱会', 'MV', '有声书', '电子书',
+      '软件', '游戏', '短剧', '舞台演出', '成人', '原盘', 'Remux', '压制', '图片', '样品', '预告', '其他'];
+    const got = Object.keys(doc.types || {}).map(function (k) { return doc.types[k]; });
+    need(JSON.stringify(got) === JSON.stringify(want), '类型清单不一致：' + JSON.stringify(got));
+    const keys = Object.keys(doc.types || {});
+    need(keys.length === new Set(keys).size, '类型 key 有重复');
+    keys.forEach(function (k) { need(/^[a-z0-9_]+$/.test(k), '类型 key 不是英文小写：' + k); });
+  });
+
+  await check('搜索维度齐全：媒介/分辨率/优惠/限制', async function () {
+    const s = doc.search || {};
+    need(Object.keys(s.medium || {}).length === 14, '媒介数量不对');
+    need(Object.keys(s.resolution || {}).length === 7, '分辨率数量不对');
+    need(Object.keys(s.discount || {}).length === 8, '优惠数量不对');
+    need(Object.keys(s.restriction || {}).length === 5, '限制数量不对');
+    need(s.medium.full_disc === '原盘(Full Disc)', '媒介缺少原盘');
+    need(s.resolution['4320p'] === '4320p/8K', '分辨率缺少 4320p/8K');
+    need(s.discount['2x_free'] === '2x 免费', '优惠缺少 2x 免费');
+    need(s.restriction.hr === 'HR', '限制缺少 HR');
+  });
+
+  await check('中文名/旧 key/英文别名都能归一到同一个 key', async function () {
+    const cases = [['电影', 'movie'], ['电视剧', 'tv'], ['纪录', 'documentary'], ['体育', 'sports'],
+      ['电子书', 'ebook'], ['动画', 'anime'], ['演唱', 'concert'], ['其它', 'other'], ['doc', 'documentary'], ['sport', 'sports']];
+    cases.forEach(function (c) { need(presets.keyOf(c[0]) === c[1], c[0] + ' 没归一到 ' + c[1] + '：' + presets.keyOf(c[0])); });
+    need(presets.labelOf('movie') === '电影', 'movie 中文名不对');
+  });
+
+  await check('站点只存 key：读取时中文自动补齐，保存时中文自动归一', async function () {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-presets-'));
+    const preset = path.join(dir, 'preset');
+    fs.mkdirSync(preset, { recursive: true });
+    fs.writeFileSync(path.join(preset, 'sites.preset.json'), JSON.stringify({ version: 1, sites: {
+      'a.example': { name: 'A', engine: 'nexusphp', urlRef: 'site-urls.json#a.example',
+        search: { path: '/t', cats: { '电影': ['401'], movie: ['402'], doc: ['403'] }, types: ['电影'] },
+        publish: { catMap: { '电影': '401', movie: '402', doc: '403' }, catLabels: {} } }
+    } }, null, 2));
+    fs.writeFileSync(path.join(preset, 'site-urls.preset.json'), JSON.stringify({ version: 1, sites: {
+      'a.example': { base: 'b64:' + Buffer.from('https://a.example').toString('base64') }
+    } }, null, 2));
+    try {
+      const store = makeSiteStore(dir, { presetDir: preset });
+      const s = store.get('a.example');
+      need(JSON.stringify(Object.keys(s.search.cats)) === JSON.stringify(['movie', 'documentary']), 'cats key 没归一：' + JSON.stringify(s.search.cats));
+      need(JSON.stringify(s.search.cats.movie) === JSON.stringify(['401', '402']), '同类型 ID 没合并');
+      need(JSON.stringify(s.search.types) === JSON.stringify(['电影', '纪录片']), 'types 没派生：' + JSON.stringify(s.search.types));
+      need(s.publish.catMap.movie === '402', '发布映射没保留 key 值：' + JSON.stringify(s.publish.catMap));
+      need(!Object.prototype.hasOwnProperty.call(s.publish.catMap, '电影'), '发布映射还留中文 key');
+      need(store.targetDef('a.example').catMap['电影'] === '402', 'targetDef 没补中文别名');
+      store.save('a.example', { search: Object.assign({}, s.search, { cats: { '剧集': ['501'] } }) });
+      const raw = JSON.parse(fs.readFileSync(store.FILE, 'utf8'));
+      const rec = raw.sites['a.example'];
+      need(JSON.stringify(Object.keys(rec.search.cats)) === JSON.stringify(['tv']), '保存后没写 key：' + JSON.stringify(rec.search.cats));
+      need(rec.search.types === undefined, '保存后不该再存 types');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  await check('旧过滤条件归一到全局 key，长选项名不再进站点 JSON', async function () {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-filters-'));
+    try {
+      fs.writeFileSync(path.join(dir, 'sites.json'), JSON.stringify({ version: 1, sites: {
+        'f.example': { name: 'F', engine: 'nexusphp', urlRef: 'site-urls.json#f.example', publish: { catMap: { '电影': '401', tv: '2' }, catLabels: { '电影': '401' } },
+          search: { path: '/t', cats: { '电影': ['401'] },
+            filters: { map: { spstate: { '普通（下载量全计量 没标记的所谓黑种）': '1', 'Free（下载量不统计）': '2', '2X 50%（上传量2倍统计 下载50%统计）': '6' } },
+              selectedLabels: { spstate: ['普通', '免费'] }, selectedValues: { spstate: ['1', '2'] } } } }
+      } }));
+      fs.writeFileSync(path.join(dir, 'site-urls.json'), JSON.stringify({ version: 1, sites: { 'f.example': { base: 'b64:' + Buffer.from('https://f.example').toString('base64') } } }));
+      const st = makeSiteStore(dir);
+      const r = st.get('f.example');
+      need(!r.publish.catLabels, 'catLabels 没删');
+      need(r.publish.catMap.movie === '401' && r.publish.catMap.tv === '2', '发布 key 没归一');
+      const f = r.search.filters;
+      need(!f.map && !f.selectedLabels && !f.selectedValues, '旧过滤字段没删：' + JSON.stringify(f));
+      need(f.values.discount.normal === '1' && f.values.discount.free === '2' && f.values.discount['2x_half'] === '6', '优惠值没归一：' + JSON.stringify(f.values));
+      need(JSON.stringify(f.selected.discount) === JSON.stringify(['normal', 'free']), '选中项没归一：' + JSON.stringify(f.selected));
+      st.save('f.example', { search: Object.assign({}, r.search, { filters: f }) });
+      const raw = JSON.parse(fs.readFileSync(st.FILE, 'utf8')).sites['f.example'];
+      need(!raw.search.filters.map && raw.search.filters.values.discount.normal === '1', '保存后又写回旧格式');
+      need(!raw.publish.catLabels, '保存后又写回 catLabels');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  await check('仓库预设里没有中文类型 key，也没有 types 字段', async function () {
+    const doc2 = read(path.join(ROOT, 'pack', 'sites.preset.json'));
+    const bad = [];
+    Object.keys(doc2.sites || {}).forEach(function (h) {
+      const rec = doc2.sites[h] || {};
+      if (rec.search && rec.search.types !== undefined) bad.push(h + ':types');
+      Object.keys((rec.search || {}).cats || {}).forEach(function (k) {
+        if (!presets.keyOf(k) || presets.keyOf(k) !== k) bad.push(h + ':cats.' + k);
+      });
+      Object.keys((rec.publish || {}).catMap || {}).forEach(function (k) {
+        if (!presets.keyOf(k) || presets.keyOf(k) !== k) bad.push(h + ':catMap.' + k);
+      });
+    });
+    need(!bad.length, '还有旧 key：' + bad.slice(0, 8).join(' / '));
+  });
+
+  await check('前端预设与全局预设同源', async function () {
+    const web = read(path.join(ROOT, 'web-src', 'shared', 'presets.json'));
+    need(JSON.stringify(web) === JSON.stringify(doc), 'web-src/shared/presets.json 不是最新；跑 node pta/scripts/gen-presets.js');
+  });
+
+  const pass = results.filter(function (r) { return r[0]; }).length;
+  results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
+  console.log('\n' + pass + '/' + results.length + ' 通过');
+  process.exit(pass === results.length ? 0 : 1);
+})();

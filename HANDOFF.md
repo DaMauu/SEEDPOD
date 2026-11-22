@@ -1,6 +1,15 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-24 00:30（当前 v0.7.654 / 收尾）
+最后更新：2026-11-24 12:00（当前 v0.7.655 / 全局预设与 key 绑定）
+
+## 2026-11-24 全局预设与站点 key 绑定（v0.7.655）
+
+- 新增 `pta/pack/presets.preset.json`：类型/媒介/分辨率/优惠/限制/发布字段只写一份。
+- `sites.json` 只存 key + 站点 ID；删除 `search.types`、`publish.catLabels`，旧 `filters.map` 归一成 `values`/`selected`。
+- 生产 306 站已迁移：`sites.json` 从 1.6MB 降到 560KB；52pt 只剩 `cats: {movie:["401"]}` 和 `catMap: {movie:"401"}`。
+- 抓取、发布、映射、初筛、站点详情都按 key 查全局预设补中文；前端 chips 来自同一份预设。
+- `build-site-json.js` 改为从运行时 `sites.json` 生成仓库预设，不再读已删除的旧文件/表。
+- 全量 run.sh 通过；质量审计总体 100。
 
 ## 2026-11-24 收尾（v0.7.654）
 
@@ -2664,37 +2673,15 @@ node pta/scripts/audit-quality.js --project pta --fail
 
 ## 现在是什么状态
 
-前端 7 个页面 + 登录页，全部交互可点（无死按钮，`pta/checks/audit.js` 守着）。
-后端是本机 Node 零依赖服务，已实现：会话登录、配置读写、站点清单、事件日志、SSE、静态托管、
-站点定义与搜索预设、cookie 导入与登录自检、下载器配置与探测（含磁盘余量）、
-**三步流水线**：抓取（单次 GET + 分类轮转 + 页码续抓 + 30 秒/每日 20 次/并发锁）→ 词条库（去重、状态流转、批量归档，统一在数据清单页看）
-→ 筛选（按面板条件 + 本地库/队列/已送审词条判重）→ 待审核 → 发布草稿（标题/副标题/简介/标签/分类建议）→ 发布记账。
-面板上的数字全部来自后端真实数据（`/api/stats/overview`、下载器 `lastProbe`、crawl-state），没有假数据。
-
-线上：源码直跑在测试机 `/opt/seedpod`，systemd 服务 `seedpod`，nginx 反代 + Cloudflare，入口是 pta 开头的那个域名。
-开机自启已配；改完代码 `systemctl restart seedpod` 生效。
-
-测试机上 `/opt/seedpod` **不是 git 仓库**，发版是复制文件（发前先备份到 `/opt/seedpod/backup-时间戳/`）：
-
-22 端口时通时断，用 tar 走 ssh 最省事（发完核对 md5）：
-
-```
-tar czf - package.json pta/server pta/web pta/checks | ssh pta "cd /opt/seedpod && tar xzf - && systemctl restart seedpod && systemctl is-active seedpod"
-md5sum pta/server/app.js pta/web/index.html pta/web/assets/app.js pta/web/assets/app.css
-ssh pta 'md5sum /opt/seedpod/pta/server/app.js /opt/seedpod/pta/web/index.html /opt/seedpod/pta/web/assets/app.js /opt/seedpod/pta/web/assets/app.css'
-```
-
-不要覆盖 `/opt/seedpod/data/`（凭据、词条、队列、日志、真实站点清单都在里面）。换 js 一定要同步改 `pta/web/index.html` 里的 `?v=`，Cloudflare 会缓存。
-
-发版要带上的文件（少一个就起不来或页面白屏）：
-
-- `pta/server/app.js` 与 `pta/server/adapters/nexusphp.js`（少了 adapter 会 MODULE_NOT_FOUND 起不来）
-- `pta/web/index.html`、`pta/web/assets/app.js`、`pta/web/assets/app.css`、`pta/web/assets/data.js`
-- `data/site-defs/<host>.json`（站点定义，按需）
-
-部署到新机器时记得把真实站点清单放进数据目录 `data/sites-data.local.js`（web 根不需要它，服务端也不对外提供）；
-其它别覆盖：`pta/data/site-arch.local.csv` 与 `data/` 下任何文件。
-Cloudflare 会缓存不带版本号的 js，换版本一定同步改 `index.html` 里的 `?v=`。
+- 前端：`pta/web-src` 是 Vite + Vue 3 SFC，七个页面（dashboard/sites/crawl/queue/sources/logs/settings）+ 登录页；构建产物在 `pta/web/dist`。
+- 后端：`pta/server/app-fastify.js`（Fastify + SQLite），数据目录由 `PTA_DATA` / `DEPLOY_DIR` 指定，systemd 服务 `seedpod` 监听 8080。
+- 运行时站点数据只有三个 JSON：`data/sites.json`（定义 + settings）、`data/site-urls.json`（Base64 网址）、`data/cookies.json`（AES-GCM 密文）；SQLite 只存词条、队列、日志、配置等。
+- 生产当前 306 站、306 网址、10 条密文 cookie；306 站全部 `enabled:false`，需要用户到站点页手动开启。
+- 92 站有抓取分类绑定，109 站有发布分类绑定；218 站抓取类型仍为空，开启前要先补类型/分类。
+- 站点 JSON 只写全局 key + 站点 ID（`movie -> 401`）；中文类型、媒介、分辨率、优惠、限制只在 `pta/pack/presets.preset.json` 写一份。
+- 全量 `bash pta/checks/run.sh` 通过，质量审计总体 100。
+- 发版：`git pull --ff-only && DEPLOY_DIR=/opt/seedpod bash deploy.sh`；Docker 部署见 `Dockerfile` / `docker-compose.yml`，数据卷挂 `/data`。
+- 待接：218 站类型补全；镜像升级时把新预设站点自动合并进已有 `/data/sites.json`。
 
 ## 后端接口（已实现）
 

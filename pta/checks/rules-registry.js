@@ -47,7 +47,7 @@ check('注册表是 UI/服务端共享源，key/类型/默认值一致', () => {
   need(/from '\.\.\/\.\.\/shared\/rule-registry\.json'/.test(src), 'UI 没引用共享 JSON');
   const sandbox = { window: {}, registry: shared };
   require('vm').createContext(sandbox);
-  require('vm').runInContext(src.replace(/^import .*$/m, ''), sandbox);
+  require('vm').runInContext(require('../scripts/load-rules').rulesSource(), sandbox);
   const all = [];
   Object.keys(sandbox.window.PTA_RULES || {}).forEach(function (k) {
     (sandbox.window.PTA_RULES[k] || []).forEach(function (g) { (g.rows || []).forEach(function (r) { all.push(r); }); });

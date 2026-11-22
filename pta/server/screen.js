@@ -4,6 +4,7 @@ const marksMod = require('./marks');
 const meta = require('./meta');
 const { tx } = require('./db');
 const { typeOf, selectedTypesOf } = require('./category-policy');
+const makePresets = require('./presets');
 const log = require('./log');
 
 function flowRules(sets, rx) {
@@ -50,6 +51,7 @@ function cnOf(subtitle) {
 function screenCatalog(ctx, opts) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
   const siteStore = require('./site-store')(ctx.DATA_DIR);
+  const presets = makePresets(ctx.DATA_DIR);
   const now = () => new Date().toISOString();
   const b = opts || {};
   const limit = Math.max(1, Math.min(Number(b.limit) || 50, 200));
@@ -89,12 +91,8 @@ function screenCatalog(ctx, opts) {
         const rec = siteStore.get(it.site);
         if (rec) {
           const cats = rec.search.cats || {};
-          let hit = Object.keys(cats).filter(function (k) { return (cats[k] || []).map(String).indexOf(raw) >= 0; })[0];
-          if (!hit) {
-            const labels = rec.publish.catLabels || {};
-            hit = Object.keys(labels).filter(function (k) { return String(labels[k]) === raw; })[0];
-          }
-          if (hit) { label = hit; type = typeOf(hit); }
+          const hit = Object.keys(cats).filter(function (k) { return (cats[k] || []).map(String).indexOf(raw) >= 0; })[0];
+          if (hit) { label = presets.labelOf(hit) || hit; type = typeOf(hit); }
         }
       } catch (e) { log.warn('screen.site-store', e); }
     }

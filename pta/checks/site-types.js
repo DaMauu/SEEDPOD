@@ -3,13 +3,10 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { openDB } = require('../server/db');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitetypes-'));
 process.env.PTA_DATA = DATA;
-const { openDB } = require('../server/db');
-const secretbox = require('../server/secretbox');
-const { collectFromCategories, parseCategories, probeOne, applyTypes } = require('../scripts/site-types');
-const makeSiteStore = require('../server/site-store');
 
 const results = [];
 function check(name, fn) {
@@ -31,25 +28,35 @@ const server = http.createServer(function (req, res) {
 (async function () {
   await new Promise(function (r) { server.listen(0, '127.0.0.1', r); });
   const base = 'http://127.0.0.1:' + server.address().port;
-  fs.mkdirSync(path.join(DATA, 'site-defs'), { recursive: true });
-  fs.writeFileSync(path.join(DATA, 'site-defs', 'probe.example.json'), JSON.stringify({ engine: 'nexusphp', base: base, upload: { formPath: '/upload.php' } }));
-  fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: {
-    'offline.example': { cats: { '电影': ['1'], '纪录片': ['2'] } },
-    'probe.example': {},
-    'nocookie.example': {}
+  const b64 = function (s) { return 'b64:' + Buffer.from(s, 'utf8').toString('base64'); };
+  fs.writeFileSync(path.join(DATA, 'sites.json'), JSON.stringify({ version: 1, sites: {
+    'offline.example': { name: 'Offline', engine: 'nexusphp', urlRef: 'site-urls.json#offline.example',
+      search: { path: '/torrents.php', cats: { '电影': ['1'], documentary: ['2'] } }, publish: { upload: { formPath: '/upload.php' }, catMap: {} }, settings: { enabled: true } },
+    'probe.example': { name: 'Probe', engine: 'nexusphp', urlRef: 'site-urls.json#probe.example',
+      search: { path: '/torrents.php', cats: {} }, publish: { upload: { formPath: '/upload.php' }, catMap: {} }, settings: { enabled: true } },
+    'nocookie.example': { name: 'NoCookie', engine: 'nexusphp', urlRef: 'site-urls.json#nocookie.example',
+      search: { path: '/torrents.php', cats: {} }, publish: { upload: { formPath: '/upload.php' }, catMap: {} }, settings: { enabled: true } }
+  } }, null, 2));
+  fs.writeFileSync(path.join(DATA, 'site-urls.json'), JSON.stringify({ version: 1, sites: {
+    'offline.example': { base: b64(base), upload: b64('/upload.php') },
+    'probe.example': { base: b64(base), upload: b64('/upload.php') },
+    'nocookie.example': { base: b64(base), upload: b64('/upload.php') }
   } }, null, 2));
   const db = openDB(path.join(DATA, 'seedpod.db'));
-  db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?,?,?)').run('probe.example', JSON.stringify({ enabled: true }), new Date().toISOString());
-  db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?,?,?)').run('nocookie.example', JSON.stringify({ enabled: true }), new Date().toISOString());
-  const key = secretbox.loadKey(DATA);
-  db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?,?,?)').run('probe.example', secretbox.encrypt('sid=x', key.key), new Date().toISOString());
-  fs.writeFileSync(path.join(DATA, 'site-defs', 'nocookie.example.json'), JSON.stringify({ engine: 'nexusphp', base: base, upload: { formPath: '/upload.php' } }));
+  db.close();
+
+  const makeSiteStore = require('../server/site-store');
+  const makeCookieStore = require('../server/cookie-store');
+  const { collectFromCategories, parseCategories, probeOne, applyTypes } = require('../scripts/site-types');
+  const store = makeSiteStore(DATA);
+  const cookies = makeCookieStore(DATA);
 
   try {
     await check('离线分类能推出主类型，没分类的留空', async function () {
       const r = collectFromCategories();
       const off = r.records.filter(function (x) { return x.host === 'offline.example'; })[0];
       need(off && off.status === 'ok' && off.proposedTypes[0] === '电影', '离线类型不对：' + JSON.stringify(off));
+      need(JSON.stringify(Object.keys(off.bind).sort()) === JSON.stringify(['documentary', 'movie']), '离线绑定没归一：' + JSON.stringify(off.bind));
       const none = r.records.filter(function (x) { return x.host === 'nocookie.example'; })[0];
       need(none && none.status === 'no_categories', '无分类站不该硬猜：' + JSON.stringify(none));
     });
@@ -61,35 +68,40 @@ const server = http.createServer(function (req, res) {
     });
 
     await check('有 cookie 时只发 1 个请求并回填主类型', async function () {
+      cookies.set('probe.example', 'sid=x');
       hits = 0;
-      const r = await probeOne(db, key, 'probe.example');
+      const r = await probeOne(db, null, 'probe.example');
       need(r.status === 'ok' && r.proposedTypes[0] === '电影' && r.requests === 1, '探测结果不对：' + JSON.stringify(r));
+      need(r.bind.movie && r.bind.movie[0] === '401', '探测没给出分类绑定：' + JSON.stringify(r.bind));
       need(hits === 1, '请求次数不对：' + hits);
     });
 
     await check('没有 cookie 时不发请求', async function () {
       hits = 0;
-      const r = await probeOne(db, key, 'nocookie.example');
+      const r = await probeOne(db, null, 'nocookie.example');
       need(r.status === 'NO_COOKIE' && r.requests === 0, '无 cookie 结果不对：' + JSON.stringify(r));
       need(hits === 0, '无 cookie 仍发了请求');
     });
 
     await check('403 立即标记 RATE_LIMITED', async function () {
-      fs.writeFileSync(path.join(DATA, 'site-defs', 'limited.example.json'), JSON.stringify({ engine: 'nexusphp', base: base, upload: { formPath: '/limited.php' } }));
-      db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?,?,?)').run('limited.example', JSON.stringify({ enabled: true }), new Date().toISOString());
-      db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?,?,?)').run('limited.example', secretbox.encrypt('sid=x', key.key), new Date().toISOString());
-      makeSiteStore(DATA).save('limited.example', { engine: 'nexusphp', url: { base: base }, search: { path: '/limited.php' }, settings: { enabled: true } }, db);
-      const r = await probeOne(db, key, 'limited.example');
+      store.save('limited.example', { name: 'Limited', engine: 'nexusphp', url: { base: base },
+        search: { path: '/limited.php', cats: {} }, publish: { upload: { formPath: '/limited.php' }, catMap: {} }, settings: { enabled: true } });
+      cookies.set('limited.example', 'sid=x');
+      const r = await probeOne(db, null, 'limited.example');
       need(r.status === 'RATE_LIMITED' && r.requests === 1, '403 没停：' + JSON.stringify(r));
     });
 
-    await check('回填只改 types，不动 cats', async function () {
-      const raw = { sites: { 'probe.example': { cats: { '电影': ['401'] } }, 'offline.example': { cats: { '音乐': ['5'] } } } };
-      const out = applyTypes(raw, [{ host: 'probe.example', status: 'ok', proposedTypes: ['电影'] }, { host: 'offline.example', status: 'no_categories', proposedTypes: [] }]);
-      need(out.changed === 1, '回填数量不对：' + out.changed);
-      need(out.doc.sites['probe.example'].types[0] === '电影', 'types 没写');
-      need(out.doc.sites['probe.example'].cats['电影'][0] === '401', 'cats 被改');
-      need(!out.doc.sites['offline.example'].types, '失败项不该写 types');
+    await check('回填写的是 cats key，不再存 types', async function () {
+      const out = applyTypes([
+        { host: 'probe.example', status: 'ok', proposedTypes: ['电影'], bind: { movie: ['401', '403'] } },
+        { host: 'offline.example', status: 'no_categories', proposedTypes: [] }
+      ]);
+      need(out.changed === 1, '回填数量不对：' + JSON.stringify(out));
+      const raw = JSON.parse(fs.readFileSync(path.join(DATA, 'sites.json'), 'utf8'));
+      const probe = raw.sites['probe.example'];
+      need(JSON.stringify(probe.search.cats.movie) === JSON.stringify(['401', '403']), 'cats 没写：' + JSON.stringify(probe.search.cats));
+      need(probe.search.types === undefined, '不该再存 types');
+      need(store.get('offline.example').search.cats.movie[0] === '1', '失败项不该动 cats');
     });
   } finally {
     try { db.close(); } catch (e) { /* 已关 */ }

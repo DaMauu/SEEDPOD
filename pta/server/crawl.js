@@ -125,12 +125,19 @@ function makeCrawl(ctx) {
     let url0 = adapters.buildSearchUrl(def, '', ids);
     try {
       const flt = def.filters || {};
-      const sv = (flt && flt.selectedValues) || {};
-      if (Object.keys(sv).length) {
-        const u = new URL(url0);
-        ['medium', 'standard', 'spstate'].forEach(function (k) {
-          (sv[k] || []).forEach(function (v) { u.searchParams.append(k, String(v)); });
+      const vals = flt.values || {};
+      const sel = flt.selected || {};
+      const PARAM = { medium: 'medium', resolution: 'standard', discount: 'spstate' };
+      const pairs = [];
+      Object.keys(PARAM).forEach(function (dim) {
+        (sel[dim] || []).forEach(function (key) {
+          const v = (vals[dim] || {})[key];
+          if (v != null && v !== '') pairs.push([PARAM[dim], String(v)]);
         });
+      });
+      if (pairs.length) {
+        const u = new URL(url0);
+        pairs.forEach(function (p) { u.searchParams.append(p[0], p[1]); });
         url0 = u.toString();
       }
     } catch (e) { log.warn('crawl.search-filters', e); }
@@ -209,24 +216,24 @@ function makeCrawl(ctx) {
     /* 媒介/分辨率：站点搜索页不支持参数时，抓完按标题本地过滤 */
     try {
       const flt = def.filters || {};
-      const labels = (flt && flt.selectedLabels) || {};
+      const sel = (flt && flt.selected) || {};
       const MEDIA = {
-        '原盘': /full\s*disc|bdmv|blu-?ray\s*iso|\biso\b|原盘/i,
-        'UHD 原盘': /uhd.*(disc|iso)|2160p.*(disc|iso)|4k.*(disc|iso)/i,
-        '3D 原盘': /3d.*(disc|iso|blu-?ray)/i,
-        'Remux': /remux/i,
-        'Encode': /encode|x264|x265|h\.?26[45]/i,
-        'Blu-ray': /blu-?ray/i,
-        'HDDVD': /hddvd/i,
-        'DVD': /\bdvd/i,
-        'HDTV': /hdtv/i,
-        'WEB-DL': /web-?dl/i,
-        'WEBRip': /web-?rip/i,
-        'TVRip': /tvrip/i,
-        'VHS': /vhs/i
+        full_disc: /full\s*disc|bdmv|blu-?ray\s*iso|\biso\b|原盘/i,
+        uhd_full_disc: /uhd.*(disc|iso)|2160p.*(disc|iso)|4k.*(disc|iso)/i,
+        '3d_full_disc': /3d.*(disc|iso|blu-?ray)/i,
+        remux: /remux/i,
+        encode: /encode|x264|x265|h\.?26[45]/i,
+        bluray: /blu-?ray/i,
+        hddvd: /hddvd/i,
+        dvd: /\bdvd/i,
+        hdtv: /hdtv/i,
+        webdl: /web-?dl/i,
+        webrip: /web-?rip/i,
+        tvrip: /tvrip/i,
+        vhs: /vhs/i
       };
-      const medSel = (labels.medium || []).map(function (x) { return MEDIA[x]; }).filter(Boolean);
-      const resSel = (labels.standard || []).map(function (x) { return String(x).toLowerCase(); });
+      const medSel = (sel.medium || []).map(function (k) { return MEDIA[k]; }).filter(Boolean);
+      const resSel = (sel.resolution || []).map(function (k) { return String(k).toLowerCase(); });
       if (medSel.length || resSel.length) {
         const keep = items.filter(function (it) {
           const t = String(it.title || '');

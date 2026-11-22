@@ -175,11 +175,11 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
 
     await check('没有保存类型时拒绝抓取，不静默全分类', async function () {
       const cur = siteStore.get(HOST);
-      siteStore.save(HOST, { search: Object.assign({}, cur.search, { types: [] }) }, db2);
+      siteStore.save(HOST, { search: Object.assign({}, cur.search, { types: [], cats: {} }) }, db2);
       resetGaps();
       const r = await core.crawlOnce(HOST, { limit: 100, detail: false });
       need(r && r.err && r.err.code === 'NO_CATEGORY_TYPES', '缺 types 没拦住：' + JSON.stringify(r));
-      siteStore.save(HOST, { search: Object.assign({}, cur.search, { types: ['电影'] }) }, db2);
+      siteStore.save(HOST, { search: Object.assign({}, cur.search, { cats: { '电影': ['401'] } }) }, db2);
     });
   } finally {
     dns.promises.lookup = realLookup;

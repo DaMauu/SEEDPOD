@@ -29,7 +29,7 @@ function q(id, title) {
 
 (async function () {
   try {
-    fs.writeFileSync(path.join(DATA, 'site-maps.json'), JSON.stringify({ version: 1, sites: { 'source.example': { cat: { '电影': '401', '音乐': '413' } } } }, null, 2));
+    siteStore.save('source.example', { name: 'Source', engine: 'nexusphp', search: { path: '/torrents.php', cats: { '电影': ['401'], '音乐': ['413'] } }, settings: { enabled: true } }, db);
     db.prepare("INSERT INTO meta(k, v) VALUES('flow', ?)").run(JSON.stringify({ sets: { fetch: [[{ t: '类型', sel: ['电影'] }]] } }));
     cat('cat_000001', 'Music Video 2024 1080p', 'source.example', '413');
     cat('cat_000002', 'Movie 2024 1080p', 'source.example', '401');

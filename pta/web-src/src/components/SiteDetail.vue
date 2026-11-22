@@ -255,6 +255,7 @@ import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt, modeTxt } 
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, initialsOf } from '../utils/ui'
+import presets from '../../shared/presets.json'
 
 const props = defineProps({ site: { type: Object, required: true } })
 const emit = defineEmits(['close', 'changed', 'removed'])
@@ -264,12 +265,8 @@ const archOptions = [
   { v: 'NP', label: 'NexusPHP' }, { v: 'UNIT3D', label: 'UNIT3D' }, { v: 'GZ', label: 'Gazelle' },
   { v: 'OTHER', label: '其它' }, { v: '?', label: '未确认' }
 ]
-const catPurposes = [
-  { v: 'movie', label: '电影' }, { v: 'tv', label: '剧集' }, { v: 'doc', label: '纪录片' },
-  { v: 'anime', label: '动漫' }, { v: 'music', label: '音乐' }, { v: 'sport', label: '体育' },
-  { v: 'game', label: '游戏' }, { v: 'book', label: '电子书' }, { v: 'software', label: '软件' },
-  { v: 'adult', label: '成人' }, { v: 'other', label: '其他' }
-]
+/* 分类 key/中文名来自全局预设，站点只保存 key 和 ID */
+const catPurposes = Object.keys(presets.types || {}).map(function (k) { return { v: k, label: presets.types[k] } })
 const s = computed(function () { return props.site || {} })
 const host = computed(function () { return (props.site && props.site.name) || '' })
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
@@ -295,7 +292,7 @@ const catGroups = computed(function () {
   const d = detail.def || {}
   const p = detail.preset || {}
   const groups = (p.cats && Object.keys(p.cats).length ? p.cats : d.cats) || {}
-  return Object.keys(groups).map(function (name) { return { name: name, ids: (groups[name] || []).join(', ') || '—' } })
+  return Object.keys(groups).map(function (name) { return { name: presets.types[name] || name, ids: (groups[name] || []).join(', ') || '—' } })
 })
 const previewUrls = computed(function () {
   const d = detail.def || {}

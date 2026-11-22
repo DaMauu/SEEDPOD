@@ -16,6 +16,7 @@ module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
   const siteStore = require('./site-store')(DATA_DIR);
+  const presets = require('./presets')(DATA_DIR);
   const now = () => new Date().toISOString();
   const readDef = (host) => siteStore.legacyDef(host);
   const readCookie = (host) => {
@@ -117,16 +118,12 @@ module.exports = function (app, ctx) {
   });
 
   function defOf(host) { return readDef(host) || {}; }
-  const FILTER_RULES = {
-    medium: /原盘|remux|encode|blu-?ray|dvd|hdtv|web-?dl|webrip|tvrip|vhs|uhd|3d/i,
-    standard: /480p|576p|720p|1080i|1080p|2160p|4k|8k|4320p/i,
-    spstate: /免费|2x|50%|30%|普通|free/i
-  };
   function filterFieldName(name) {
     const n = String(name || '').toLowerCase();
-    if (/spstate|discount|free|优惠/.test(n)) return 'spstate';
-    if (/standard|resolution|分辨/.test(n)) return 'standard';
+    if (/spstate|discount|free|优惠/.test(n)) return 'discount';
+    if (/standard|resolution|分辨/.test(n)) return 'resolution';
     if (/medium|source|媒介/.test(n)) return 'medium';
+    if (/restriction|limit|禁转|限转|hr/.test(n)) return 'restriction';
     return '';
   }
   async function detectFilters(host) {
@@ -150,27 +147,33 @@ module.exports = function (app, ctx) {
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
     const form = require('./form');
     const forms = form.parse(html);
-    const map = { medium: {}, standard: {}, spstate: {} };
+    const values = { medium: {}, resolution: {}, discount: {}, restriction: {} };
+    const labels = { medium: {}, resolution: {}, discount: {}, restriction: {} };
     for (const f of forms) {
       for (const fld of (f.fields || [])) {
-        const key = filterFieldName(fld.name);
-        if (!key || !Array.isArray(fld.options)) continue;
+        const dim = filterFieldName(fld.name);
+        if (!dim || !Array.isArray(fld.options)) continue;
         for (const o of fld.options) {
           const label = String(o.label || '').trim();
           const val = String(o.value || '').trim();
           if (!label || !val || val === '0' || /请选择|全部|不限|choose|select|all/i.test(label)) continue;
-          if (!map[key][label]) map[key][label] = val;
+          const key = presets.keyOfDim(dim, label);
+          if (!key) continue;
+          if (values[dim][key] == null) { values[dim][key] = val; labels[dim][key] = label; }
         }
       }
     }
-    return { ok: true, data: { host, url, map } };
+    Object.keys(values).forEach(function (d) { if (!Object.keys(values[d]).length) delete values[d]; });
+    return { ok: true, data: { host, url, values, labels } };
   }
 
   app.get('/api/crawl/filters/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
     const rec = siteStore.get(host);
     const f = (rec && rec.search.filters) || null;
-    return ok({ host, filters: f });
+    const selectedLabels = {};
+    Object.keys((f && f.selected) || {}).forEach(function (d) { selectedLabels[d] = presets.labelsOfDim(d, f.selected[d]); });
+    return ok({ host, filters: f, selectedLabels: selectedLabels });
   });
 
   app.post('/api/crawl/filters/:host/detect', async (req, reply) => {
@@ -184,26 +187,25 @@ module.exports = function (app, ctx) {
     const host = String(req.params.host || '').toLowerCase();
     const sel = (req.body && req.body.selected) || {};
     const rec0 = siteStore.get(host);
-    let cur = (rec0 && rec0.search.filters) || null;
-    if (!cur || !cur.map || !Object.keys(cur.map).length) {
+    let cur = (rec0 && rec0.search.filters) || { values: {}, selected: {} };
+    if (!cur.values || !Object.keys(cur.values).length) {
       const d = await detectFilters(host);
-      if (d.ok) cur = { map: d.data.map, selectedLabels: {}, selectedValues: {} };
-      else if (!cur) cur = { map: {}, selectedLabels: {}, selectedValues: {} };
+      if (d.ok) cur = { values: d.data.values, selected: {} };
     }
-    cur.selectedLabels = cur.selectedLabels || {};
-    cur.selectedValues = cur.selectedValues || {};
-    for (const key of ['medium', 'standard', 'spstate']) {
-      const labels = Array.isArray(sel[key]) ? sel[key].map(String) : [];
-      cur.selectedLabels[key] = labels;
-      const vals = [];
-      for (const lab of labels) {
-        const v = (cur.map && cur.map[key] || {})[lab];
-        if (v != null && vals.indexOf(String(v)) < 0) vals.push(String(v));
-      }
-      cur.selectedValues[key] = vals;
+    const values = cur.values || {};
+    const selected = {};
+    for (const dim of ['medium', 'resolution', 'discount']) {
+      const labels = Array.isArray(sel[dim]) ? sel[dim].map(String) : (Array.isArray(sel[{ medium: 'medium', resolution: 'standard', discount: 'spstate' }[dim]]) ? sel[{ medium: 'medium', resolution: 'standard', discount: 'spstate' }[dim]].map(String) : []);
+      labels.forEach(function (x) {
+        const key = presets.keyOfDim(dim, x);
+        if (key) (selected[dim] = selected[dim] || []).push(key);
+      });
     }
-    if (rec0) siteStore.save(host, { search: Object.assign({}, rec0.search, { filters: cur }) }, db);
-    return ok({ host, filters: cur });
+    if (rec0) siteStore.save(host, { search: Object.assign({}, rec0.search, { filters: { values: values, selected: selected } }) }, db);
+    const out = siteStore.get(host);
+    const labels = {};
+    Object.keys(selected).forEach(function (d) { labels[d] = presets.labelsOfDim(d, selected[d]); });
+    return ok({ host, filters: out.search.filters, selectedLabels: labels });
   });
 
   app.get('/api/crawl/cats/:host', async (req, reply) => {
@@ -249,13 +251,17 @@ module.exports = function (app, ctx) {
     const searchUrls = [];
     if (def && def.base) {
       const recF = siteStore.get(host);
-      const flt = (recF && recF.search.filters) || null;
-      const sv = (flt && flt.selectedValues) || {};
+      const flt = (recF && recF.search.filters) || {};
+      const vals = flt.values || {};
+      const sel = flt.selected || {};
       let u = adapters.buildSearchUrl(def, '{q}', allIds);
       try {
         const uu = new URL(u);
-        ['medium', 'standard', 'spstate'].forEach(function (key) {
-          (sv[key] || []).forEach(function (v) { uu.searchParams.append(key, String(v)); });
+        [['medium', 'medium'], ['resolution', 'standard'], ['discount', 'spstate']].forEach(function (p) {
+          (sel[p[0]] || []).forEach(function (k) {
+            const v = (vals[p[0]] || {})[k];
+            if (v != null && v !== '') uu.searchParams.append(p[1], String(v));
+          });
         });
         u = uu.toString();
       } catch (e) { /* 保留原地址 */ }

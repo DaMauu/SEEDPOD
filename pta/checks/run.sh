@@ -15,6 +15,11 @@ run() {
   return 0
 }
 
+if ! node pta/scripts/gen-presets.js --check; then
+  echo "前端预设不是最新：跑 node pta/scripts/gen-presets.js"
+  fail=1
+fi
+
 echo "==== build (Vite) ===="
 if npm run build >/tmp/pta-build.log 2>&1; then
   echo "构建通过"
@@ -48,6 +53,7 @@ run security security.js
 run cookie-file cookie-file.js
 run site-json-preset site-json-preset.js
 run site-store site-store.js
+run presets presets.js
 run url-guard url-guard.js
 run site-types site-types.js
 run secret-rotate secret-rotate.js

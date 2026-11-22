@@ -10,6 +10,7 @@ function makePlan(deps) {
   const ctx = deps.ctx;
   const one = deps.one;
   const cookieStore = require('./cookie-store')(ctx.DATA_DIR);
+  const presets = require('./presets')(ctx.DATA_DIR);
   const TAG_BLOCK = /^(禁转|限转|禁止转载|禁止转发|官方|应求)$/;
 
   function tagList(item) {
@@ -59,19 +60,7 @@ function makePlan(deps) {
     if (!t) return { ok: false, code: 'NO_TARGET_DEF', message: '这个站还没有引擎或私有站点包，提交不了', http: 400 };
     const v = vars(item);
     if (!v.catId) {
-      /* 分类映射以中文为准：movie → 电影 → 本站 401；也允许直接写中文分类 */
-      const ALIAS = {
-        movie: ['电影'], tv: ['剧集', '电视剧'], anime: ['动漫', '动画'], show: ['综艺'],
-        doc: ['纪录', '纪录片'], music: ['音乐', 'MV', '音乐短片', '舞台演出'],
-        sport: ['体育'], book: ['电子书', '书'], software: ['软件'], study: ['学习'],
-        game: ['游戏'], other: ['其他', '其它']
-      };
-      const CN_GENERIC = {
-        '电影': 'movie', '电视剧': 'tv', '剧集': 'tv', '动漫': 'anime', '动画': 'anime', '综艺': 'show',
-        '纪录': 'doc', '纪录片': 'doc', '音乐': 'music', 'MV': 'music', '舞台演出': 'music',
-        '体育': 'sport', '电子书': 'book', '书': 'book', '软件': 'software', '学习': 'study',
-        '游戏': 'game', '其他': 'other', '其它': 'other'
-      };
+      /* 分类映射：全局 key（movie）→ 中文名（电影）→ 本站 401；也允许直接写站点分类 */
       let raw = String(item.cat || item.catName || item.category || '').trim();
       if (!raw && item.catalogId) {
         try {
@@ -84,9 +73,9 @@ function makePlan(deps) {
         try { const p = meta.parseRelease(item.title); raw = String(p.catName || p.category || '').trim(); } catch (e) { raw = ''; }
       }
       const normKey = function (x) { return String(x || '').toLowerCase().replace(/[\s._-]+/g, ''); };
-      const generic = ALIAS[raw.toLowerCase()] ? raw.toLowerCase() : (CN_GENERIC[raw] || '');
+      const generic = presets.keyOf(raw);
       const keys = [raw];
-      if (generic) { keys.push(generic); (ALIAS[generic] || []).forEach(function (x) { keys.push(x); }); }
+      if (generic) keys.push(generic, presets.labelOf(generic));
       const catKeys = Object.keys(t.catMap || {});
       let mapped = null;
       for (const k of keys) {
@@ -199,8 +188,10 @@ function makePlan(deps) {
         const hit = opts.filter(function (o) { return String(o.value) === String(fields[k]); })[0];
         if (hit && hit.label) { labels[k] = String(hit.label); return; }
       }
-      if (k === 'type' || k === 'cat' || k === 'category') labels[k] = reverse(t.catMap, fields[k]);
-      else if (k === 'team_sel') labels[k] = reverse((t.valueMaps && t.valueMaps.team) || {}, fields[k]);
+      if (k === 'type' || k === 'cat' || k === 'category') {
+        const key = reverse(t.catMap, fields[k]);
+        labels[k] = key ? (presets.labelOf(key) || key) : '';
+      } else if (k === 'team_sel') labels[k] = reverse((t.valueMaps && t.valueMaps.team) || {}, fields[k]);
     });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
     const hasCookie = cookieStore.has(t.host);

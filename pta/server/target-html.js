@@ -1,4 +1,5 @@
 /* 目标站文本/HTML 解析与模板字段工具：纯函数，不碰网络和数据库。 */
+const presets = require('./presets')();
 
 function catMapOf(p, def, built) {
   const out = {};
@@ -12,6 +13,11 @@ function catMapOf(p, def, built) {
   } else if (raw && typeof raw === 'object') {
     Object.assign(out, raw);
   }
+  /* 站点只存 key；上传表单如果按中文选项名匹配，这里从全局预设补中文别名 */
+  Object.keys(out).forEach(function (k) {
+    const zh = presets.labelOf(k);
+    if (zh && zh !== k && out[zh] == null) out[zh] = out[k];
+  });
   return out;
 }
 

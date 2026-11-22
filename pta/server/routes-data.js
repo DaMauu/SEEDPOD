@@ -7,12 +7,18 @@ module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
   const siteStore = require('./site-store')(DATA_DIR);
+  const presets = require('./presets')(DATA_DIR);
   function archOf(engine) { const e = String(engine || '').toLowerCase(); return e === 'nexusphp' ? 'NP' : (e === 'unit3d' ? 'UNIT3D' : (e === 'gazelle' ? 'GZ' : '?')); }
   function defOfRecord(rec) {
-    const cats = rec.search.cats || {};
+    const cats = Object.assign({}, rec.search.cats || {});
     const list = [];
-    Object.keys(cats).forEach(function (label) { (cats[label] || []).forEach(function (id) { list.push({ id: String(id), label: String(label), purpose: String(label) }); }); });
-    const catMap = list.length ? list : (rec.publish.catMap || {});
+    Object.keys(cats).forEach(function (key) {
+      (cats[key] || []).forEach(function (id) {
+        list.push({ id: String(id), label: presets.labelOf(key) || String(key), purpose: String(key) });
+      });
+    });
+    /* cats 给界面看中文；catMap 保留 key，编辑时直接写 movie -> 401 */
+    const catMap = list.length ? list : Object.assign({}, rec.publish.catMap || {});
     return { engine: rec.engine, base: rec.url.base, searchPath: rec.search.path, params: rec.search.params || {},
       catMode: rec.search.catMode || 'single', catSlot: rec.search.catSlot || '', cats: cats, catMap: catMap,
       upload: rec.publish.upload || {}, uploadMap: rec.publish.upload || {}, verify: rec.publish.verify || {},
@@ -234,11 +240,18 @@ module.exports = function (app, ctx) {
     });
     if (Array.isArray(b.catMap)) {
       publish.catMap = {};
-      publish.catLabels = {};
-      b.catMap.forEach(function (x) { if (x && x.id != null) { if (x.purpose) publish.catMap[String(x.purpose)] = String(x.id); if (x.label) publish.catLabels[String(x.label)] = String(x.id); } });
+      b.catMap.forEach(function (x) {
+        if (!x || x.id == null) return;
+        const key = presets.keyOf(x.purpose) || presets.keyOf(x.label) || String(x.purpose || x.label || 'other');
+        publish.catMap[key] = String(x.id);
+      });
     } else if (b.catMap && typeof b.catMap === 'object') {
-      publish.catMap = b.catMap;
-      publish.catLabels = b.catMap;
+      const obj = {};
+      Object.keys(b.catMap).forEach(function (k) {
+        if (b.catMap[k] == null) return;
+        obj[presets.keyOf(k) || k] = String(b.catMap[k]);
+      });
+      publish.catMap = obj;
     }
     siteStore.save(host, { engine: b.engine || (cur.engine || '?'), search: search, publish: publish, url: b.base ? { base: b.base } : undefined }, db);
     return ok(reply, { host: host, def: b });

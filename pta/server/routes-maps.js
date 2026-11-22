@@ -62,12 +62,14 @@ module.exports = function (app, ctx) {
   const { DATA_DIR, ok, bad } = ctx;
   const target = require('./target').makeTarget(ctx);
   const siteStore = require('./site-store')(DATA_DIR);
+  const presets = require('./presets')(DATA_DIR);
 
   app.get('/api/maps', async () => {
     const sites = {};
     const summary = {};
     siteStore.list().forEach(function (s) {
-      const cat = s.publish.catLabels || {};
+      const cat = {};
+      Object.keys(s.publish.catMap || {}).forEach(function (k) { cat[presets.labelOf(k) || k] = String(s.publish.catMap[k]); });
       const team = (s.publish.valueMaps && s.publish.valueMaps.team) || {};
       if (Object.keys(cat).length || Object.keys(team).length || s.publish.form) {
         sites[s.host] = { cat: cat, team: team, form: s.publish.form || null };
@@ -87,12 +89,16 @@ module.exports = function (app, ctx) {
       const cur = siteStore.get(host);
       if (cur) {
         const publish = Object.assign({}, cur.publish, {
-          catLabels: saved.cat || {},
           valueMaps: { team: saved.team || {} },
           form: saved.form || null
         });
-        /* catMap 保留 purpose 键，同时补 label 键，发布计划两种都能匹配 */
-        publish.catMap = Object.assign({}, publish.catMap || {}, saved.cat || {});
+        /* 总表里手填的中文分类名先归一成 key，才能覆盖已有映射 */
+        const catMap = Object.assign({}, publish.catMap || {});
+        Object.keys(saved.cat || {}).forEach(function (k) {
+          const key = presets.keyOf(k) || k;
+          catMap[key] = saved.cat[k];
+        });
+        publish.catMap = catMap;
         siteStore.save(host, { publish: publish }, ctx.db);
       }
       return ok({ host: host, map: saved });

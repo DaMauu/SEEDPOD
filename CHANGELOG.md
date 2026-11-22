@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.655 · 2026-11-24
+
+### 全局预设与站点 key 绑定
+- 新增 `pta/pack/presets.preset.json`：类型、媒介、分辨率、优惠、限制、发布字段只定义一份。
+- 站点 JSON 只保存全局 key 和站点 ID，例如 `movie -> 401`；删除 `search.types`、`publish.catLabels`。
+- 旧 `filters.map` / `selectedLabels` / `selectedValues` 自动归一为 `values` / `selected`，长选项名不再进站点 JSON。
+- 抓取、发布、映射、初筛、站点详情统一按 key 查全局预设补中文；前端选项来自同一份预设。
+- `build-site-json.js` 改为从运行时 `sites.json` 生成仓库预设；新增迁移与预设检查。
+- 生产 306 站已迁移，`sites.json` 从 1.6MB 降到约 560KB；全部默认停用。
+- 全量 `run.sh` 通过，质量审计总体 100。
+
 ## v0.7.654 · 2026-11-23
 
 ### 收尾规则与数据
