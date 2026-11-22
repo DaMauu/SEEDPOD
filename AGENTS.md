@@ -13,27 +13,27 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 
 个人 PT 转载/交叉做种面板：Vite + Vue 3 SFC 前端 + Node 后端（生产为 Fastify + SQLite）。
 
-- 前端源码 `pta/web-src`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 已删除，不再保留
+- 前端源码 `pta/web`（Vite + Vue 3 + SFC，页面在 `src/views/`，hash 路由 `#dashboard #sites #crawl #queue #sources #logs #settings`）；线上服务 `pta/web/dist`，`pta/web` 只放构建产物；旧 demo 已删除，不再保留
 - 生产后端 `pta/server/app-fastify.js`（Fastify）+ `pta/server/routes-*.js` + `pta/server/db.js`（SQLite，数据在 `data/seedpod.db`）；适配器 `pta/server/adapters/nexusphp.js`，凭据加密 `pta/server/secretbox.js`
 - 旧零依赖后端已删除，只保留 v2；服务端改动一律进 v2
 - 线上部署目录由 `DEPLOY_DIR` 指定（本地参数放未入库的 `.deploy.env`），systemd 服务 `seedpod`，监听 8080，数据在 `$DEPLOY_DIR/data`
 - 公网入口是一个 pta 开头的域名，经 Cloudflare → nginx 反代到 8080
 - 交付形态：功能完成后必须能用 Docker 部署（`Dockerfile` + `docker-compose.yml`，数据卷挂 `/data`）；换栈先写 `pta/docs/DECISIONS.md`
 - 阶段：七个页面已全部 SFC；登录/路由/顶栏/Toast/Confirm/页脚已搬进 `App.vue`，`src/legacy` 已删除
-- Vite 构建：源码 `pta/web-src`，`npm run build` 输出 `pta/web/dist`；改前端只动 `pta/web-src`
+- Vite 构建：源码 `pta/web`，`npm run build` 输出 `pta/web/dist`；改前端只动 `pta/web`
 - 开发环境：Linux 为准；Windows 用 WSL / Git Bash 跑 `run.sh`
 
 ## 铁律（违反即为错误，不要协商）
 
 1. 真实站点只读探测按下方《真实站点探测规则》执行；仍不得自己找 cookie、不得复用别人的 cookie 登录、不得压测或绕过限制。抓取默认先干跑或本地夹具，真实探测必须先有计划。旧规则里“不对真实站点做探测”的绝对表述由该规则取代，其余限制继续有效。
-2. 真实站点网址用 Base64 存 `pta/pack/site-urls.preset.json` / 运行时 `data/site-urls.json`，可随仓库和镜像分发；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 明文放 `sites.preset.json` / `sites.json`；中文类型/媒介/分辨率/优惠/限制和站点字段模板只放 `presets.preset.json` / `data/presets.json`。Base64 只是遮挡，不是加密。cookie、密码、passkey、上传 token 仍只存 AES-256-GCM 密文，绝不入仓库、不进提交、不写进回复；聊天回复仍不写网址。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
+2. 真实站点网址用 Base64 存 `pta/server/pack/site-urls.preset.json` / 运行时 `data/site-urls.json`，可随仓库和镜像分发；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 明文放 `sites.preset.json` / `sites.json`；中文类型/媒介/分辨率/优惠/限制和站点字段模板只放 `presets.preset.json` / `data/presets.json`。Base64 只是遮挡，不是加密。cookie、密码、passkey、上传 token 仍只存 AES-256-GCM 密文，绝不入仓库、不进提交、不写进回复；聊天回复仍不写网址。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
 4. 站点凭据只存密文：`data/cookies.json` + AES-256-GCM，接口只回 `hasCookie`；SQLite `credentials` 表只作迁移/测试镜像，不再作为运行时事实源。
-5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
+5. 提交前必须 `pta/server/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 已删除，避免同一功能两套实现。
-8. 站点与预设随程序发布：镜像带 `pta/pack/sites.preset.json` / `site-urls.preset.json` / `presets.preset.json` / `cookies.example.json`，首次启动复制到 `/data`；运行时只读写 `data/sites.json`、`site-urls.json`、`presets.json`、`cookies.json`。旧 `site-defs` / `site-pack` 流程已删除。详见 `pta/docs/SITE-JSON.md`。
-9. 质量审计固定进 `pta/checks/run.sh`：全库看 `pta/quality-baseline.json` 防回退；单文件/单功能先跑对应 scope；有「D」先修，不能带「D」提交。详见 `pta/docs/QUALITY.md`。
+8. 站点与预设随程序发布：镜像带 `pta/server/pack/sites.preset.json` / `site-urls.preset.json` / `presets.preset.json` / `cookies.example.json`，首次启动复制到 `/data`；运行时只读写 `data/sites.json`、`site-urls.json`、`presets.json`、`cookies.json`。旧 `site-defs` / `site-pack` 流程已删除。详见 `pta/docs/SITE-JSON.md`。
+9. 质量审计固定进 `pta/server/checks/run.sh`：全库看 `pta/server/checks/baselines/quality.json` 防回退；单文件/单功能先跑对应 scope；有「D」先修，不能带「D」提交。详见 `pta/docs/QUALITY.md`。
 
 ## 真实站点探测规则（2026-11-25 起）
 
@@ -100,9 +100,9 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 - Agent skills（自动/显式均可）：@review 审查 · @build 实现 · @debug 修复 · @refactor 拆分 · @test 测试 · @ui 界面 · @site 站点 · @db 数据层 · @security 安全 · @ship 发版
 
-- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 23 → form 5 → publish 4 → scheduler 5 → detect 5 → target 10 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 质量审计 → 规则体检）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/server/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 23 → form 5 → publish 4 → scheduler 5 → detect 5 → target 10 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 质量审计 → 规则体检）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
-- 改完先跑 `node pta/scripts/audit-quality.js --feature <name>`（单文件用 `--file`）；看「D」项和发现清单，再跑全量 `run.sh`
+- 改完先跑 `node pta/server/scripts/audit-quality.js --feature <name>`（单文件用 `--file`）；看「D」项和发现清单，再跑全量 `run.sh`
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字
 - 少工具步数：一条命令跑多步，先 grep/glob 定位再 read 局部，大输出先截断
 - 前端不引入构建工具；后端运行时依赖只有 Fastify + @fastify/static（已装，写进 package.json），新增依赖先说明理由
@@ -118,7 +118,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 3. 怎么算成功：能验证的现象（某个检查通过、某个接口返回、页面某个状态）
 4. 什么不许动：明确否定项
 
-例：把站点页的登录方式改成只存 cookie，改 `pta/web-src/src/views/Sites.vue` 的登录页签和 `pta/server/routes-data.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
+例：把站点页的登录方式改成只存 cookie，改 `pta/web/src/views/Sites.vue` 的登录页签和 `pta/server/routes-data.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
 
 改主意时直接说「现在以 X 为准」，不要让我从多条里推断哪条是最新的。
 
@@ -139,7 +139,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 - 新增一条规则必须回答：不设会怎样、默认值是什么、用户在哪关掉
 - 一条进一条出：加新条件时必须合并或删掉一条旧的，不允许只加不减
 - 能给默认值就不给开关；能三档预设就不给独立选项
-- 新条件先对照 `pta/docs/RULES-RECONCILIATION.md` / `RULES-TREE.md`，再改 `pta/web-src/src/data/rules.js`，最后跑 `node pta/scripts/gen-rules-tree.js`
+- 新条件先对照 `pta/docs/RULES-RECONCILIATION.md` / `RULES-TREE.md`，再改 `pta/web/src/data/rules.js`，最后跑 `node pta/server/scripts/gen-rules-tree.js`
 
 ## 结构气味（提示，不是验收）
 
@@ -147,7 +147,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 - 单个 SFC 超过 800 行或一个文件被改 3 次以上仍没有模块边界
 - 同一个文件被改过 3 次以上仍没有模块边界
-- 页面上的规则/开关与服务端契约对不上（用 `node pta/scripts/audit-rules.js` 查）
+- 页面上的规则/开关与服务端契约对不上（用 `node pta/server/scripts/audit-rules.js` 查）
 
 ## 交付闸门（真正的验收）
 
@@ -175,10 +175,10 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 ## 设计约束（UI）
 
-**WebUI 已冻结（2026-11-16 用户确认）**：除非用户明确要求改界面，不改 `pta/web-src` 的样式、布局、文案。确需改动时，改完必须跑 `node pta/scripts/ui-freeze.js --update` 更新基线；否则 `run.sh` 的 UI 冻结检查会失败。
+**WebUI 已冻结（2026-11-16 用户确认）**：除非用户明确要求改界面，不改 `pta/web` 的样式、布局、文案。确需改动时，改完必须跑 `node pta/web/scripts/ui-freeze.js --update` 更新基线；否则 `run.sh` 的 UI 冻结检查会失败。
 
 - 先线框后代码：静态 HTML 或截图确认后再改对应 SFC
-- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式放 `pta/web-src/src/styles/index.css`（按级联顺序 import `src/styles/*.css` 模块），页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
+- 只用 `pta/docs/DESIGN.md` 里的变量与组件，不新造样式；共用样式放 `pta/web/src/styles/index.css`（按级联顺序 import `src/styles/*.css` 模块），页面新增样式优先 SFC `<style scoped>`，不再往 `public/assets` 放 CSS
 - 桌面和手机共用一套 Vue 代码；允许组件级换布局，不做独立移动站/两套前端；规范见 `pta/docs/RESPONSIVE.md`
 - 文案：标签用名词，说明 ≤ 20 字，错误说「怎么办」
 - 验收四宽度 360 / 390 / 768 / 1280（新增页面加 1440），无横向滚动，首屏能看到主卡

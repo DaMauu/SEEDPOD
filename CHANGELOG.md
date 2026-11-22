@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.659 · 2026-11-23
+
+### 结构收口：server / web / docs
+- 仓库 `pta/` 下只剩 `server`、`web`、`docs` 三块。
+- 前端源码与构建配置统一进 `pta/web`；构建产物仍为 `pta/web/dist`。
+- 模板、夹具、检查、脚本、CLI、sidecar、开发数据收进 `pta/server`。
+- 检查拆成 `pta/server/checks` 与 `pta/web/checks`；入口统一为 `pta/server/checks/run.sh`。
+- 质量基线与 UI 基线分别收进 `server/checks/baselines`、`web/checks/baselines`。
+- 更新 AGENTS、CHECKLIST、Dockerfile、部署与所有脚本路径；行为未改。
+- 全量 `run.sh` 通过，质量审计总体 100。
+
 ## v0.7.658 · 2026-11-24
 
 ### 结构重排第一步

@@ -10,7 +10,7 @@ const makePresets = require('./presets');
 
 const VERSION = 1;
 const ROOT = path.resolve(__dirname, '..');
-const DEFAULT_PRESET = path.join(ROOT, 'pack');
+const DEFAULT_PRESET = path.join(__dirname, 'pack');
 
 function b64(s) { return 'b64:' + Buffer.from(String(s || ''), 'utf8').toString('base64'); }
 function unb64(v) {

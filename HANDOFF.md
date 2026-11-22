@@ -1,6 +1,11 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-24 18:00（当前 v0.7.658 / 结构重排第一步）
+最后更新：2026-11-23 20:00（当前 v0.7.659 / 目录收口）
+
+## 2026-11-23 目录收口（v0.7.659）
+
+- `pta/` 只剩 `server`、`web`、`docs`；模板/夹具/检查/脚本/CLI 收进 server。
+- 检查入口改为 `pta/server/checks/run.sh`；全量通过。
 
 ## 2026-11-24 站点字段模板（v0.7.657）
 
@@ -9,11 +14,11 @@
 
 ## 2026-11-24 预设可读修正（v0.7.656）
 
-- 部署脚本把 `pta/pack/*.json` 改 644；服务用户可读全局预设。
+- 部署脚本把 `pta/server/pack/*.json` 改 644；服务用户可读全局预设。
 
 ## 2026-11-24 全局预设与站点 key 绑定（v0.7.655）
 
-- 新增 `pta/pack/presets.preset.json`：类型/媒介/分辨率/优惠/限制/发布字段只写一份。
+- 新增 `pta/server/pack/presets.preset.json`：类型/媒介/分辨率/优惠/限制/发布字段只写一份。
 - `sites.json` 只存 key + 站点 ID；删除 `search.types`、`publish.catLabels`，旧 `filters.map` 归一成 `values`/`selected`。
 - 生产 306 站已迁移：`sites.json` 从 1.6MB 降到 560KB；52pt 只剩 `cats: {movie:["401"]}` 和 `catMap: {movie:"401"}`。
 - 抓取、发布、映射、初筛、站点详情都按 key 查全局预设补中文；前端 chips 来自同一份预设。

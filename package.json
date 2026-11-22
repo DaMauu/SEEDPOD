@@ -1,6 +1,6 @@
 {
   "name": "seedpods-panel",
-  "version": "0.7.658",
+  "version": "0.7.659",
   "private": true,
   "description": "PT 原盘转载面板：抓取、查重、准备、发布",
   "engines": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node pta/server/app-fastify.js",
-    "check": "bash pta/checks/run.sh",
+    "check": "bash pta/server/checks/run.sh",
     "dev": "vite --config pta/web/vite.config.js",
     "build": "vite build --config pta/web/vite.config.js",
     "preview": "vite preview --config pta/web/vite.config.js --port 4173",

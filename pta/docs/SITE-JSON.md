@@ -5,10 +5,10 @@
 ## 文件
 
 ```text
-pta/pack/presets.preset.json     入库：全局预设模板（首次启动复制）
-pta/pack/sites.preset.json       入库：站点定义（只含 key + ID）
-pta/pack/site-urls.preset.json   入库：网址，Base64
-pta/pack/cookies.example.json    入库：host → 空 cookie 模板
+pta/server/pack/presets.preset.json     入库：全局预设模板（首次启动复制）
+pta/server/pack/sites.preset.json       入库：站点定义（只含 key + ID）
+pta/server/pack/site-urls.preset.json   入库：网址，Base64
+pta/server/pack/cookies.example.json    入库：host → 空 cookie 模板
 
 /data/presets.json               本地：全局类型/搜索维度/发布字段（用户可改）
 /data/sites.json                 本地：站点定义 + settings
@@ -16,7 +16,7 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 /data/cookies.json               本地：cookie，AES-GCM 密文
 ```
 
-- `data/presets.json` 是运行时唯一的全局预设；首次启动从 `pta/pack/presets.preset.json` 复制，之后用户改的是 data 这份。
+- `data/presets.json` 是运行时唯一的全局预设；首次启动从 `pta/server/pack/presets.preset.json` 复制，之后用户改的是 data 这份。
 - 站点 JSON 不写中文类型；页面选项通过 `GET /api/presets` 读运行时全局预设。
 - `sites.preset.json` / `site-urls.preset.json` 可以进 GitHub。
 - `cookies.example.json` 只能有空值；真实 cookie 永远不进仓库。
@@ -25,7 +25,7 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 
 ## 全局预设
 
-`pta/pack/presets.preset.json`（模板）/ `data/presets.json`（运行时）：
+`pta/server/pack/presets.preset.json`（模板）/ `data/presets.json`（运行时）：
 
 ```json
 {
@@ -150,8 +150,8 @@ sudo -u seedpod node pta/scripts/migrate-site-presets.js --data /opt/seedpod/dat
 ```bash
 sudo -u seedpod node pta/scripts/build-site-json.js --data /opt/seedpod/data --out /tmp/pta-pack
 cp /tmp/pta-pack/sites.preset.json /tmp/pta-pack/site-urls.preset.json \
-   /tmp/pta-pack/cookies.example.json pta/pack/
-chmod 600 pta/pack/*.json
+   /tmp/pta-pack/cookies.example.json pta/server/pack/
+chmod 600 pta/server/pack/*.json
 ```
 
 - 默认生成 `sites.preset.json`、`site-urls.preset.json`、`cookies.example.json`，预设不带 `settings`。
@@ -160,7 +160,7 @@ chmod 600 pta/pack/*.json
 - `--dry` 只输出数量。
 - 不打印站名/网址/cookie，不联网。
 
-改 `pta/pack/presets.preset.json` 模板后同步前端默认值；运行时以 `data/presets.json` 为准：
+改 `pta/server/pack/presets.preset.json` 模板后同步前端默认值；运行时以 `data/presets.json` 为准：
 
 ```bash
 node pta/scripts/gen-presets.js

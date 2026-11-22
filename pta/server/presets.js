@@ -6,7 +6,7 @@ const path = require('path');
 const jsonFile = require('./json-file');
 
 const ROOT = path.resolve(__dirname, '..');
-const DEFAULT_FILE = path.join(ROOT, 'pack', 'presets.preset.json');
+const DEFAULT_FILE = path.join(__dirname, 'pack', 'presets.preset.json');
 
 /* 旧 key、中文名、常见写法都归一到同一套 key */
 const ALIAS = {
