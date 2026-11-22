@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const adapters = require('./src/infra/adapters/index');
 const jsonFile = require('./src/infra/json-file');
-const urlGuard = require('./url-guard');
+const urlGuard = require('./src/infra/url-guard');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;

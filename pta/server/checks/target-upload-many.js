@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeTargetService } = require('../target-service');
+const { makeTargetService } = require('../src/features/publish/target-service');
 const uploadLock = require('../src/infra/upload-lock');
 const { makeTorrent } = require('./target-mock');
 

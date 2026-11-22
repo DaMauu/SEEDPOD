@@ -1,14 +1,14 @@
 /* 单目标站上传编排：门禁、截图/BDInfo、图床、禁转、提交与回查。 */
 const fs = require('fs');
 const path = require('path');
-const stage = require('./src/features/queue/stage');
+const stage = require('../queue/stage');
 const torrentClean = require('./torrent-clean');
-const flowConfig = require('./src/features/settings/flow-config');
-const imagehost = require('./imagehost');
-const marks = require('./src/features/screen/marks');
+const flowConfig = require('../settings/flow-config');
+const imagehost = require('../../../imagehost');
+const marks = require('../screen/marks');
 const { dedupeSwitchOn } = require('./target-rules');
-const uploadLock = require('./src/infra/upload-lock');
-const urlGuard = require('./url-guard');
+const uploadLock = require('../../infra/upload-lock');
+const urlGuard = require('../../infra/url-guard');
 
 /* 目标站 announce 候选优先级：passkey > generic > 站点根兜底 */
 function pickAnnounce(list) {
@@ -108,7 +108,7 @@ async function uploadInner(host, body) {
     if (!dryRun && String(item.data.descrBb || '').trim() && flowConfig.on(flowConfig.read(ctx), '简介图片', true)) {
       {
         const known = (item.data.imageMirror && item.data.imageMirror.map) || {};
-        const provider = String(item.data.imageHost && item.data.imageHost !== '站内' ? item.data.imageHost : require('./imagehost').defaultProvider());
+        const provider = String(item.data.imageHost && item.data.imageHost !== '站内' ? item.data.imageHost : require('../../../imagehost').defaultProvider());
         const allowReal = typeof ctx.allowReal === 'function' ? ctx.allowReal('realImages') : false;
         let mr = null;
         try {

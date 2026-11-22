@@ -3,8 +3,8 @@
    Pixhost / Imgbox 暂只做计划，不拿未验证的接口去真传。 */
 const { providerKey, defaultProvider, configFor, dataUrlOf } = require('./imagehost-config');
 const { processShots, uploadOne, sleep, _ssoLogin, _webUpload } = require('./imagehost-upload');
-const urlGuard = require('./url-guard');
-const { safeFetch } = require('./safe-http');
+const urlGuard = require('./src/infra/url-guard');
+const { safeFetch } = require('./src/infra/safe-http');
 const { isPrivateUrl, isBlacklisted, looksDirect, ogImageFromHtml, resolveImageSource, extractImages, isLikelyThumb, originalFromThumb, readMirrorCache, writeMirrorCache, isOurImageHost, escapeRe, replaceDescription } = require('./imagehost-source');
 
 /* 源站 BBCode 里的远程图片：下载后转存图床，替换成图床链接。

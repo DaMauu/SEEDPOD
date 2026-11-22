@@ -1,5 +1,5 @@
 /* 查重开关语义：重复一律跳过；DIY/原盘/禁转只由对应开关决定例外。 */
-const { _dupeDecision, _dedupeSwitchOn } = require('../target-service');
+const { _dupeDecision, _dedupeSwitchOn } = require('../src/features/publish/target-service');
 
 const results = [];
 function check(name, fn) {

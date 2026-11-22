@@ -3,7 +3,7 @@
    每次抓取受站点间隔与每日上限约束，失败也记时间戳，避免连续重试。 */
 const adapters = require('../../infra/adapters/index');
 const marksMod = require('../screen/marks');
-const urlGuard = require('../../../url-guard');
+const urlGuard = require('../../infra/url-guard');
 const flowConfig = require('../settings/flow-config');
 const { typeOf } = require('./category');
 const configSchema = require('../settings/config-schema');

@@ -3,7 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const dns = require('dns');
-const { makeSubmit } = require('../target-submit');
+const { makeSubmit } = require('../src/features/publish/target-submit');
 const { makeTorrent } = require('./target-mock');
 
 const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexusphp-details.html'), 'utf8');

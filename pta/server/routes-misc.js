@@ -9,8 +9,8 @@ const collage = require('./collage');
 const jsonFile = require('./src/infra/json-file');
 const { makeErrorStats } = require('./src/features/logs/error-stats');
 const { makeFailureQueue } = require('./src/features/logs/failure-queue');
-const { makeTarget } = require('./target');
-const { makeTargetService } = require('./target-service');
+const { makeTarget } = require('./src/features/publish/target');
+const { makeTargetService } = require('./src/features/publish/target-service');
 const { dedupeItem, hostsOf } = require('./src/features/screen/dedupe-item');
 const { tx } = require('./src/infra/db');
 

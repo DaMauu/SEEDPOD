@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const dns = require('dns');
-const { makeTargetPages } = require('../target-pages');
+const { makeTargetPages } = require('../src/features/publish/target-pages');
 
 const results = [];
 function check(name, fn) {

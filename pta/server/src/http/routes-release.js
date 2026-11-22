@@ -2,7 +2,7 @@
    只做本地准备，不发目标站请求；提交仍走 routes-target / routes-publish。 */
 module.exports = function (app, ctx) {
   const { ok, bad } = ctx;
-  const release = require('./release').makeRelease(ctx);
+  const release = require('../features/publish/release').makeRelease(ctx);
 
   function send(reply, r) {
     if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);

@@ -1,10 +1,10 @@
 /* 调度器：按固定间隔跑抓取 → 送审 → 终审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
 const flowConfig = require('./src/features/settings/flow-config');
 const errors = require('./src/shared/errors');
-const { makeCrossseed } = require('./crossseed');
+const { makeCrossseed } = require('./src/features/publish/crossseed');
 const pipeline = require('./src/features/scheduler/pipeline');
-const { makeTarget } = require('./target');
-const { makeTargetService } = require('./target-service');
+const { makeTarget } = require('./src/features/publish/target');
+const { makeTargetService } = require('./src/features/publish/target-service');
 const { makeMetaFill } = require('./meta-fill');
 const { makePublishPhase } = require('./scheduler-publish');
 const { makeRetryPhases } = require('./scheduler-retry');

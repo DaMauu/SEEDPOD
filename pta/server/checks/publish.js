@@ -251,7 +251,7 @@ async function main() {
       all: (s2, ...a) => db.prepare(s2).all(...a),
       jparse: jp
     };
-    const pub = require(path.join(ROOT, 'server', 'publish.js')).makePublisher(ctx);
+    const pub = require(path.join(ROOT, 'server', 'src', 'features', 'publish', 'service.js')).makePublisher(ctx);
     const r = await pub.ensureSource(item.data.id, {});
     need(r.ok, '检查源种失败：' + JSON.stringify(r));
     need(r.complete === false, '进度 0 不该算源种完整：' + JSON.stringify(r));

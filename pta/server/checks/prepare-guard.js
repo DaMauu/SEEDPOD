@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeRelease } = require('../release');
+const { makeRelease } = require('../src/features/publish/release');
 
 const results = [];
 function check(name, fn) {

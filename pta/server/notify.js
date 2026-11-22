@@ -2,7 +2,7 @@
    token/chat 优先读环境变量；没有就用面板加密保存的配置（token AES-GCM）。
    接口只回是否配置/来源/chat，不回 token。 */
 const secretbox = require('./src/infra/secretbox');
-const urlGuard = require('./url-guard');
+const urlGuard = require('./src/infra/url-guard');
 const COOLDOWNS = new Map();
 function cooldownKey(t, c) { return String((t && t.api) || '') + '|' + String((t && t.chat) || '') + '|' + String((c && c.webhook) || ''); }
 function makeNotify(ctx) {

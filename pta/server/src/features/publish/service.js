@@ -2,18 +2,18 @@
    路由与调度器共用，避免两份实现。 */
 const fs = require('fs');
 const path = require('path');
-const { makeQb } = require('./qb');
-const watch = require('./clients/watch');
-const stage = require('./src/features/queue/stage');
-const flowConfig = require('./src/features/settings/flow-config');
-const { tx } = require('./src/infra/db');
+const { makeQb } = require('../../../qb');
+const watch = require('../../../clients/watch');
+const stage = require('../queue/stage');
+const flowConfig = require('../settings/flow-config');
+const { tx } = require('../../infra/db');
 const { targetReady } = require('./release-gates');
-const publishLock = require('./src/infra/upload-lock');
-const urlGuard = require('./url-guard');
+const publishLock = require('../../infra/upload-lock');
+const urlGuard = require('../../infra/url-guard');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
-  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
+  const cookieStore = require('../sites/credentials')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
   const now = () => new Date().toISOString();
 

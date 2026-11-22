@@ -1,13 +1,13 @@
 /* 截图上传与发布（Fastify v2）。发布默认只演练：真发帖要等站点表单适配验证后再开。 */
-const { makePublisher } = require('./publish');
-const imagehost = require('./imagehost');
-const flowConfig = require('./src/features/settings/flow-config');
-const uploadLock = require('./src/infra/upload-lock');
+const { makePublisher } = require('../features/publish/service');
+const imagehost = require('../../imagehost');
+const flowConfig = require('../features/settings/flow-config');
+const uploadLock = require('../infra/upload-lock');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
   const publisher = makePublisher(ctx);
-  const release = require('./release').makeRelease(ctx);
+  const release = require('../features/publish/release').makeRelease(ctx);
   const now = () => new Date().toISOString();
   const MAX_SHOTS = 6;
   const MAX_LEN = 3 * 1024 * 1024;

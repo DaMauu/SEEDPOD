@@ -1,5 +1,5 @@
 /* 查重开关语义：纯函数，服务和上传共用。 */
-const flowConfig = require('./src/features/settings/flow-config');
+const flowConfig = require('../settings/flow-config');
 
 function dupeDecision(kind, restricted, switches) {
   const sw = switches || {};

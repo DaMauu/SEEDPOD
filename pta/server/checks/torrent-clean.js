@@ -1,6 +1,6 @@
 /* 种子清洗夹具：替换 announce/announce-list，info 字节和 infohash 必须不变。 */
 const crypto = require('crypto');
-const clean = require('../torrent-clean');
+const clean = require('../src/features/publish/torrent-clean');
 const { makeQb } = require('../qb');
 const qb = makeQb(require('os').tmpdir());
 const results = [];

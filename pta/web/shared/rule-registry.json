@@ -7,7 +7,7 @@
       "default": true,
       "readers": [
         "meta-fill.js",
-        "release.js",
+        "src/features/publish/release.js",
         "scheduler.js"
       ]
     },
@@ -25,7 +25,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "release.js",
+        "src/features/publish/release.js",
         "scheduler.js"
       ]
     },
@@ -52,7 +52,7 @@
       "default": true,
       "readers": [
         "scheduler.js",
-        "target-upload.js"
+        "src/features/publish/target-upload.js"
       ]
     },
     {
@@ -61,7 +61,7 @@
       "default": true,
       "readers": [
         "scheduler.js",
-        "target-upload.js"
+        "src/features/publish/target-upload.js"
       ]
     },
     {
@@ -77,7 +77,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "target-plan.js"
+        "src/features/publish/target-plan.js"
       ]
     },
     {
@@ -85,7 +85,7 @@
       "type": "switch",
       "default": false,
       "readers": [
-        "target-plan.js"
+        "src/features/publish/target-plan.js"
       ]
     },
     {
@@ -93,8 +93,8 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "target-upload.js",
-        "target-plan.js"
+        "src/features/publish/target-upload.js",
+        "src/features/publish/target-plan.js"
       ]
     },
     {
@@ -102,8 +102,8 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "target-upload.js",
-        "target-plan.js"
+        "src/features/publish/target-upload.js",
+        "src/features/publish/target-plan.js"
       ]
     },
     {
@@ -111,8 +111,8 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "crossseed.js",
-        "target-plan.js"
+        "src/features/publish/crossseed.js",
+        "src/features/publish/target-plan.js"
       ]
     },
     {
@@ -120,7 +120,7 @@
       "type": "switch",
       "default": false,
       "readers": [
-        "publish.js"
+        "src/features/publish/service.js"
       ]
     },
     {
@@ -128,7 +128,7 @@
       "type": "number",
       "default": 2,
       "readers": [
-        "routes-publish.js"
+        "src/http/routes-publish.js"
       ]
     },
     {
@@ -136,8 +136,8 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "release.js",
-        "target-upload.js"
+        "src/features/publish/release.js",
+        "src/features/publish/target-upload.js"
       ]
     },
     {
@@ -145,7 +145,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "release.js"
+        "src/features/publish/release.js"
       ]
     },
     {
@@ -153,7 +153,7 @@
       "type": "text",
       "default": "原盘|Full Disc|BDMV|ISO",
       "readers": [
-        "target-service.js"
+        "src/features/publish/target-service.js"
       ]
     }
   ],

@@ -1,8 +1,8 @@
 /* 图源解析 / 缩略图还原 / 简介替换 / 镜像缓存：不负责上传。 */
 const path = require('path');
 const { openDB } = require('./src/infra/db');
-const urlGuard = require('./url-guard');
-const { safeFetch } = require('./safe-http');
+const urlGuard = require('./src/infra/url-guard');
+const { safeFetch } = require('./src/infra/safe-http');
 
 function isPrivateUrl(raw, allowPrivate) {
   if (allowPrivate) return false;

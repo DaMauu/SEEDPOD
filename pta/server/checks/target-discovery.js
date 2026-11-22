@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const dns = require('dns');
-const { makeDiscovery } = require('../target-discovery');
+const { makeDiscovery } = require('../src/features/publish/target-discovery');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-disc-'));
 const seen = [];

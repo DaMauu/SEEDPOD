@@ -1,8 +1,8 @@
 /* 辅种：把目标站权威种子加进 qB，skip_checking + 复用源种 save path。
    调度和 CLI 共用；不硬链接、不改文件结构。 */
 const fs = require('fs');
-const { makeQb } = require('./qb');
-const flowConfig = require('./src/features/settings/flow-config');
+const { makeQb } = require('../../../qb');
+const flowConfig = require('../settings/flow-config');
 
 function makeCrossseed(ctx) {
   const { one, all, jparse } = ctx;

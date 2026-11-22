@@ -6,9 +6,9 @@ const os = require('os');
 const path = require('path');
 const dns = require('dns');
 const { openDB } = require('../src/infra/db');
-const { makePublisher } = require('../publish');
-const { makeSubmit } = require('../target-submit');
-const guard = require('../url-guard');
+const { makePublisher } = require('../src/features/publish/service');
+const { makeSubmit } = require('../src/features/publish/target-submit');
+const guard = require('../src/infra/url-guard');
 
 const results = [];
 function check(name, fn) {

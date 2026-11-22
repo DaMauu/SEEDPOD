@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const media = require('./media');
 const qb = require('./qb');
-const { makeTarget } = require('./target');
+const { makeTarget } = require('./src/features/publish/target');
 
 module.exports = function (app, ctx) {
   const { DATA_DIR, one, all, jparse, ok, bad } = ctx;

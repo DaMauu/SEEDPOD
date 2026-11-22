@@ -3,7 +3,7 @@
 const DEFAULT_WIKI = 'https://zh.wikipedia.org/w/api.php';
 const DEFAULT_TMDB = 'https://api.themoviedb.org/3';
 const DEFAULT_DOUBAN = 'https://movie.douban.com';
-const urlGuard = require('./url-guard');
+const urlGuard = require('./src/infra/url-guard');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122 Safari/537.36';
 
 /* 外部接口缓存与礼貌间隔：同一 URL 6 小时内只打一次，同域名请求至少隔 800ms。

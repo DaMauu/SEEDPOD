@@ -1,6 +1,6 @@
 /* 队列批量发布：逐条检查源种、补传未完成目标站，再注入下载器。
    单条失败只记 skipped/errors，不回滚已成功的条目；已提交/已注入的目标站不重复上传。 */
-const { targetReady } = require('../../../release-gates');
+const { targetReady } = require('../publish/release-gates');
 
 async function runBulkPublish(ctx, ids, opts) {
   const { one, jparse, publisher, targetService, hostsOf } = ctx;

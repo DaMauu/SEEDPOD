@@ -14,7 +14,7 @@ const makeSiteStore = require('../src/features/sites/store');
 const makeCookieStore = require('../src/features/sites/credentials');
 const makePresets = require('../src/features/presets/store');
 const form = require('../form');
-const urlGuard = require('../url-guard');
+const urlGuard = require('../src/infra/url-guard');
 const { typeOf } = require('../src/features/crawl/category');
 
 const ROOT = path.resolve(__dirname, '..', '..');

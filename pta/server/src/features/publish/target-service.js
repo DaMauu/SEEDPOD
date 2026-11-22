@@ -3,7 +3,7 @@
 const { dupeDecision, dedupeSwitchOn } = require('./target-rules');
 const { makeUpload } = require('./target-upload');
 const { makeServiceCommon } = require('./target-service-common');
-const uploadLock = require('./src/infra/upload-lock');
+const uploadLock = require('../../infra/upload-lock');
 
 /* 查重开关语义：其他重复一律跳过；DIY 开关开=仍可发；原盘/禁转开关开=跳过 */
 

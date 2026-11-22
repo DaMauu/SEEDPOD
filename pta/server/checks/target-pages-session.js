@@ -1,7 +1,7 @@
 /* target-pages 会话失效：200 登录页、302 跳登录、删除后回查被跳登录。
    全部走本地 mock，不发真实站点请求。 */
 const http = require('http');
-const { makeTargetPages } = require('../target-pages');
+const { makeTargetPages } = require('../src/features/publish/target-pages');
 
 const results = [];
 function check(name, fn) {

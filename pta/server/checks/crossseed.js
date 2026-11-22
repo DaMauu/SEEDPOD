@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeCrossseed } = require('../crossseed');
+const { makeCrossseed } = require('../src/features/publish/crossseed');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-crossseed-'));
 const FILE = path.join(DATA, 'target.torrent');

@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.664 · 2026-11-23
+
+### 后端收口：publish / target
+- 发布、release、目标站计划/提交/回查/辅种进 `features/publish`。
+- 请求队列、URL 守卫、安全 HTTP 进 `infra`。
+- 目标/发布/映射路由进 `src/http`；规则读取路径同步。
+- 全量 `run.sh` 通过。
+
 ## v0.7.663 · 2026-11-23
 
 ### 后端收口：queue / catalog / logs / settings

@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const siteMaps = require('../src/features/sites/maps');
-const { _test } = require('../routes-maps');
+const { _test } = require('../src/http/routes-maps');
 const CAT = _test.CAT;
 
 const argv = process.argv.slice(2);

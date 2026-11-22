@@ -3,7 +3,7 @@ const adapters = require('../infra/adapters/index');
 const dupeClassify = require('../features/screen/dupe-classify');
 const { typeOf } = require('../features/crawl/category');
 const configSchema = require('../features/settings/config-schema');
-const urlGuard = require('../../url-guard');
+const urlGuard = require('../infra/url-guard');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();

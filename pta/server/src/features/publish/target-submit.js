@@ -1,7 +1,7 @@
 /* 上传提交与回查：取种、提交、发布后校验。 */
-const adapters = require('./src/infra/adapters/index');
-const match = require('./src/features/screen/match');
-const urlGuard = require('./url-guard');
+const adapters = require('../../infra/adapters/index');
+const match = require('../screen/match');
+const urlGuard = require('../../infra/url-guard');
 
 /* 来源种子下载地址必须落在来源站（含子域）或其 base 域，避免把 cookie 带到外部 host */
 function sameSiteUrl(site, base, raw) {
@@ -24,7 +24,7 @@ function makeSubmit(deps) {
   const cookieOf = deps.cookieOf;
   const one = deps.one;
   const ctx = deps.ctx;
-  const siteStore = ctx && ctx.DATA_DIR ? require('./src/features/sites/store')(ctx.DATA_DIR) : null;
+  const siteStore = ctx && ctx.DATA_DIR ? require('../sites/store')(ctx.DATA_DIR) : null;
   const torrentMeta = deps.torrentMeta;
   const textOf = deps.textOf;
   const downloadLinksFromDetails = deps.downloadLinksFromDetails;

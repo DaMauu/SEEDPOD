@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makePublisher } = require('../publish');
+const { makePublisher } = require('../src/features/publish/service');
 const lock = require('../src/infra/upload-lock');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-publock-'));

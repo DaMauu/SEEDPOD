@@ -1,5 +1,5 @@
 /* 发布阶段：并发发布 approved 队列，上传目标站后再注入下载器。 */
-const { targetReady } = require('./release-gates');
+const { targetReady } = require('./src/features/publish/release-gates');
 function makePublishPhase(deps) {
   return async function runPublishPhase(o) {
     const { one, all, jparse, targetService, crossseed, bumpSiteFail, resetSiteFail, publishLimit } = o;

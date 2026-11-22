@@ -1,13 +1,13 @@
 /* 目标站提交与回查：引擎是代码，站点是数据。
    表单映射优先读 data/site-pack.json 的 upload，其次 data/site-defs/<host>.json 的 uploadMap；
    没有映射就停下，不猜。真提交必须显式打开 realPublish。 */
-const { makeQb } = require('./qb');
+const { makeQb } = require('../../../qb');
 const { makeDiscovery } = require('./target-discovery');
 const { makePlan } = require('./target-plan');
 const { makeSubmit } = require('./target-submit');
 const { makeTargetPages } = require('./target-pages');
-const { makeRequestQueue } = require('./request-queue');
-const urlGuard = require('./url-guard');
+const { makeRequestQueue } = require('../../infra/request-queue');
+const urlGuard = require('../../infra/url-guard');
 const { catMapOf, composeSubtitle, expand, hideContent, stripHide, infoFieldKey, descrFieldKey,
   attrsOf, textOf, isDeletedPageText, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
 
@@ -53,8 +53,8 @@ function safeHost(host) { return /^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''
 
 function makeTarget(ctx) {
   const { DATA_DIR, one, db } = ctx;
-  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
-  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const cookieStore = require('../sites/credentials')(DATA_DIR);
+  const siteStore = require('../sites/store')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
 
   function cookieOf(host) {

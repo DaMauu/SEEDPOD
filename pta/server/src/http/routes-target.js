@@ -2,16 +2,16 @@
    干跑默认；真提交必须 realPublish=true；cookie 只从加密凭据读。 */
 const fs = require('fs');
 const path = require('path');
-const flowConfig = require('./src/features/settings/flow-config');
-const torrentClean = require('./torrent-clean');
-const mediainfo = require('./mediainfo');
-const { failuresOf, isDead } = require('./src/features/logs/failure-queue');
-const { makeTarget } = require('./target');
-const stage = require('./src/features/queue/stage');
-const { makeTargetService } = require('./target-service');
-const { setVerify } = require('./target-upload');
-const { makeCrossseed } = require('./crossseed');
-const uploadLock = require('./src/infra/upload-lock');
+const flowConfig = require('../features/settings/flow-config');
+const torrentClean = require('../features/publish/torrent-clean');
+const mediainfo = require('../../mediainfo');
+const { failuresOf, isDead } = require('../features/logs/failure-queue');
+const { makeTarget } = require('../features/publish/target');
+const stage = require('../features/queue/stage');
+const { makeTargetService } = require('../features/publish/target-service');
+const { setVerify } = require('../features/publish/target-upload');
+const { makeCrossseed } = require('../features/publish/crossseed');
+const uploadLock = require('../infra/upload-lock');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;

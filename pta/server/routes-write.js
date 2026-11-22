@@ -2,8 +2,8 @@
    在 build() 内被 require 注入（见 app-fastify.js 末尾 require('./routes-write')(app, ctx)）。 */
 const fs = require('fs');
 const path = require('path');
-const { makeTarget } = require('./target');
-const { makeTargetService } = require('./target-service');
+const { makeTarget } = require('./src/features/publish/target');
+const { makeTargetService } = require('./src/features/publish/target-service');
 const { hostsOf } = require('./src/features/screen/dedupe-item');
 
 module.exports = function (app, ctx) {

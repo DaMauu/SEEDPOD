@@ -45,7 +45,7 @@ function chevBase(cfg) {
   return String(cfg.endpoint || '').replace(/\/api\/1\/upload\/?$/i, '').replace(/\/+$/, '');
 }
 let SSO_COOKIE_CACHE = { host: '', value: '', at: 0 };
-const urlGuard = require('./url-guard');
+const urlGuard = require('./src/infra/url-guard');
 function siteCookie(host) {
   const h = String(host || '').toLowerCase();
   if (SSO_COOKIE_CACHE.host === h && Date.now() - SSO_COOKIE_CACHE.at < 60000) return SSO_COOKIE_CACHE.value;

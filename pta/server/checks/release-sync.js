@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB, tx } = require('../src/infra/db');
-const { makeRelease } = require('../release');
+const { makeRelease } = require('../src/features/publish/release');
 const catalogSync = require('../src/features/catalog/sync');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-release-'));

@@ -5,7 +5,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 async function runCatalog(C) {
   const { check, need, json, BASE, DATA, mockPort } = C;
   await check('分类标签带空格也能匹配', async function () {
-    const maps = require(path.join(ROOT, 'server', 'routes-maps.js'));
+    const maps = require(path.join(ROOT, 'server', 'src', 'http', 'routes-maps.js'));
     const m = maps._test.matchCats([
       { value: '1', label: '电 影' },
       { value: '2', label: '综 艺' },

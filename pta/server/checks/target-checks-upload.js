@@ -2,9 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 const { infoHash } = require('./target-mock');
-const { pickAnnounce, setVerify, markVerifyFailed } = require('../target-upload');
-const torrentClean = require('../torrent-clean');
-const { sameSiteUrl } = require('../target-submit');
+const { pickAnnounce, setVerify, markVerifyFailed } = require('../src/features/publish/target-upload');
+const torrentClean = require('../src/features/publish/torrent-clean');
+const { sameSiteUrl } = require('../src/features/publish/target-submit');
 async function runUpload(C) {
   const { check, need, json, BASE, DATA, torrent, hash, hits, state, mockPort, makeTorrent2 } = C;
   let qid = '';

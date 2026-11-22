@@ -386,21 +386,21 @@ async function build() {
   require('./src/http/routes-crawl')(app, ctx);
   require('./routes-tasks')(app, ctx);
   require('./routes-misc')(app, ctx);
-  require('./routes-publish')(app, ctx);
-  require('./routes-release')(app, ctx);
-  require('./routes-target')(app, ctx);
-  require('./routes-maps')(app, ctx);
+  require('./src/http/routes-publish')(app, ctx);
+  require('./src/http/routes-release')(app, ctx);
+  require('./src/http/routes-target')(app, ctx);
+  require('./src/http/routes-maps')(app, ctx);
   require('./routes-media')(app, ctx);
   require('./routes-notify')(app, ctx);
   require('./routes-extra')(app, ctx);
 
   require('./src/features/scheduler/pipeline').loadSteps();
-  const publisher = require('./publish').makePublisher(ctx);
+  const publisher = require('./src/features/publish/service').makePublisher(ctx);
   ctx.publisher = publisher;
   ctx.scheduler = require('./scheduler').makeScheduler(ctx, {
     crawl: ctx.crawl,
     screen: require('./src/features/screen/service'),
-    release: require('./release').makeRelease(ctx),
+    release: require('./src/features/publish/release').makeRelease(ctx),
     publish: publisher
   });
   ctx.scheduler.start();

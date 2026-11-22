@@ -1,7 +1,7 @@
 /* 目标站必填默认值夹具：地区按源地区/语言对选项，媒介按标题对选项。
    纯函数夹具，不联网。 */
 const path = require('path');
-const td = require(path.join(__dirname, '..', 'target-defaults.js'));
+const td = require(path.join(__dirname, '..', 'src', 'features', 'publish', 'target-defaults.js'));
 
 const results = [];
 function check(name, fn) {

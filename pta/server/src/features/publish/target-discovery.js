@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const torrentClean = require('./torrent-clean');
-const urlGuard = require('./url-guard');
+const urlGuard = require('../../infra/url-guard');
 
 function makeDiscovery(deps) {
   const resolve = deps.resolve;
