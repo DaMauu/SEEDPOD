@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.667 · 2026-11-23
+
+### 后端目录收尾
+- sidecar Python 脚本进 `server/src/infra/sidecar`。
+- 调度扩展点进 `server/src/features/scheduler/steps`。
+- `server/` 根下只剩 `src`、`pack`、`scripts`、`checks`、`fixtures`、`data`。
+- 全量 `run.sh` 通过。
+
 ## v0.7.666 · 2026-11-23
 
 ### 后端收口完成：入口 / 路由 / core

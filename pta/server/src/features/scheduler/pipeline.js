@@ -35,7 +35,7 @@ async function run(phase, ctx, state) {
 }
 
 function loadSteps() {
-  const dir = path.join(__dirname, '..', '..', '..', 'steps');
+  const dir = path.join(__dirname, 'steps');
   let files = [];
   try { files = fs.readdirSync(dir).filter(f => /\.js$/.test(f)); } catch (e) { return []; }
   files.forEach(function (f) {
