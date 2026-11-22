@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.647 · 2026-11-23
+
+### 生成运行时站点 JSON
+- 修复 `build-site-json.js --runtime` 文件名前缀 bug（生成 `sites.json`，不是 `.json`）。
+- 生产已生成 `/data/sites.json` 和 `/data/site-urls.json`：306 站、306 网址、5 隐藏，全部 `enabled:false`。
+- 运行时读取仍走旧逻辑，下一步切换。
+- 全量 run.sh 通过。
+
 ## v0.7.646 · 2026-11-23
 
 ### site-store 运行时读写

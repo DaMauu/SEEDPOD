@@ -170,7 +170,7 @@ function main() {
   if (DRY) { console.log(JSON.stringify(summary, null, 2)); return; }
   const dir = RUNTIME ? DATA : OUT;
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  const prefix = RUNTIME ? '' : 'sites.preset';
+  const prefix = RUNTIME ? 'sites' : 'sites.preset';
   const urlPrefix = RUNTIME ? 'site-urls' : 'site-urls.preset';
   jsonFile.writeAtomic(path.join(dir, prefix + '.json'), { version: 1, generatedAt: new Date().toISOString(), sites: sites }, 0o600);
   jsonFile.writeAtomic(path.join(dir, urlPrefix + '.json'), { version: 1, generatedAt: new Date().toISOString(), sites: urls }, 0o600);
