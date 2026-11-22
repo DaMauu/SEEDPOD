@@ -1,6 +1,6 @@
 /* 单条词条更新：状态/标记共用，读改写放在事务里，跨进程也不丢更新。 */
-const { tx } = require('./db');
-const env = require('./env');
+const { tx } = require('./src/infra/db');
+const env = require('./src/infra/env');
 
 function sleepSync(ms) {
   try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch (e) { /* 退化为不等待 */ }

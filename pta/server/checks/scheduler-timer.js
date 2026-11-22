@@ -2,7 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { makeScheduler } = require('../scheduler');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sched-timer-'));

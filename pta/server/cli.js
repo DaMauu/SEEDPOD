@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* SEEDPOD CLI：走 v2 HTTP API，不直接碰数据库。
    默认干跑；--real 才真抓/真发。凭据只从环境读，不打印。 */
-const RAW_BASE = String(require('./env').read('PANEL_URL','PTA_BASE') || '').replace(/\/+$/, '');
+const RAW_BASE = String(require('./src/infra/env').read('PANEL_URL','PTA_BASE') || '').replace(/\/+$/, '');
 const USE_HTTP = !!RAW_BASE || process.argv.includes('--http');
 const BASE = RAW_BASE || 'http://127.0.0.1:8080';
 const ENV = process.env;
@@ -10,7 +10,7 @@ function core() {
   if (!CORE) CORE = require('./core').createCore();
   return CORE;
 }
-let cookie = require('./env').read('PANEL_COOKIE','PTA_COOKIE') || '';
+let cookie = require('./src/infra/env').read('PANEL_COOKIE','PTA_COOKIE') || '';
 let logged = false;
 
 function usage() {
@@ -53,8 +53,8 @@ function die(msg, code) {
 async function login() {
   if (!USE_HTTP) return;
   if (cookie || logged) return;
-  const u = require('./env').read('PANEL_USER', 'PTA_USER');
-  const p = require('./env').read('PANEL_PASS', 'PTA_PASS');
+  const u = require('./src/infra/env').read('PANEL_USER', 'PTA_USER');
+  const p = require('./src/infra/env').read('PANEL_PASS', 'PTA_PASS');
   if (!u || !p) die('需要 PANEL_USER / PANEL_PASS（或 PANEL_COOKIE）', 2);
   const r = await fetch(BASE + '/api/login', {
     method: 'POST', headers: { 'content-type': 'application/json' },
@@ -163,7 +163,7 @@ function loadEnvFile(file) {
     if (k && process.env[k] === undefined) process.env[k] = v;
   });
 }
-const ENV_FILE = opts['env-file'] || require('./env').read('ENV_FILE','PTA_ENV_FILE');
+const ENV_FILE = opts['env-file'] || require('./src/infra/env').read('ENV_FILE','PTA_ENV_FILE');
 if (ENV_FILE) loadEnvFile(String(ENV_FILE));
 
 async function main() {

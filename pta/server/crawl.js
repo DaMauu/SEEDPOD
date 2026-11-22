@@ -26,8 +26,8 @@ function catListFromCats(cats) {
 
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
-  const cookieStore = require('./cookie-store')(DATA_DIR);
-  const siteStore = require('./site-store')(DATA_DIR);
+  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(DATA_DIR);
   const cfg = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const readState = () => { const r = one("SELECT v FROM meta WHERE k = 'crawl-state'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const saveState = (st) => { db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st)); };

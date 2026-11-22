@@ -2,7 +2,7 @@
    Fastify 路由仍走同一批模块；后续把剩余路由逐步改为直接调 core。 */
 const fs = require('fs');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { makeCrawl } = require('../crawl');
 const { makeTarget } = require('../target');
 const { makePublisher } = require('../publish');
@@ -15,7 +15,7 @@ const imagehost = require('../imagehost');
 const flowConfig = require('../flow-config');
 const screen = require('../screen');
 const adapters = require('../adapters');
-const secretbox = require('../secretbox');
+const secretbox = require('../src/infra/secretbox');
 const PKG = require('../../../package.json');
 
 function unwrap(r) {
@@ -30,7 +30,7 @@ function unwrap(r) {
 
 function createCore(opts) {
   const o = opts || {};
-  const DATA_DIR = path.resolve(o.dataDir || require('../env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+  const DATA_DIR = path.resolve(o.dataDir || require('../src/infra/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
   const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
   try { db.exec('PRAGMA busy_timeout = 3000'); } catch (e) { console.warn('[seedpod] busy_timeout:', e && e.message ? e.message : e) }
   const one = (sql, ...args) => { try { return db.prepare(sql).get(...args); } catch (e) { return null; } };
@@ -43,7 +43,7 @@ function createCore(opts) {
   const ctx = {
     db, DATA_DIR, one, all, jparse,
     allowReal: function (key) {
-      if (String(require('../env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
+      if (String(require('../src/infra/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
       const r = one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;

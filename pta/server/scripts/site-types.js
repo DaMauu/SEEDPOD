@@ -9,10 +9,10 @@
      node pta/scripts/site-types.js --data /opt/seedpod/data --probe --write
 */
 const path = require('path');
-const jsonFile = require('../json-file');
-const makeSiteStore = require('../site-store');
-const makeCookieStore = require('../cookie-store');
-const makePresets = require('../presets');
+const jsonFile = require('../src/infra/json-file');
+const makeSiteStore = require('../src/features/sites/store');
+const makeCookieStore = require('../src/features/sites/credentials');
+const makePresets = require('../src/features/presets/store');
 const form = require('../form');
 const urlGuard = require('../url-guard');
 const { typeOf } = require('../category-policy');
@@ -23,7 +23,7 @@ function arg(name, def) {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 }
-const DATA = path.resolve(arg('--data', require('../env').read('DATA_DIR', 'PTA_DATA') || path.join(ROOT, '..', 'data')));
+const DATA = path.resolve(arg('--data', require('../src/infra/env').read('DATA_DIR', 'PTA_DATA') || path.join(ROOT, '..', 'data')));
 const PREVIEW = path.resolve(arg('--preview', path.join(DATA, 'site-types.preview.json')));
 const DELAY = Math.max(10000, Number(arg('--delay', 10000)) || 10000);
 const LIMIT = Math.max(1, Math.min(500, Number(arg('--limit', 500)) || 500));

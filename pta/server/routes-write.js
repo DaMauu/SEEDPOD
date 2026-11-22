@@ -13,7 +13,7 @@ module.exports = function (app, ctx) {
   const configSchema = require('./config-schema');
 const catalogBulk = require('./catalog-bulk');
 const catalogItem = require('./catalog-item');
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 const catalogSync = require('./catalog-sync');
 
   function getCatalog(id) {

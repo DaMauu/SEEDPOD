@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.661 · 2026-11-23
+
+### 后端功能收口开始
+- 新增 `server/src/infra`：db、env、json-file、upload-lock、secretbox。
+- 新增 `server/src/features/sites`：站点仓库、隐藏站、凭据、映射。
+- 新增 `server/src/features/presets`：全局预设。
+- 其余模块的 require、检查、脚本路径同步更新；行为未改。
+- 全量 `run.sh` 通过，质量审计总体 100。
+
 ## v0.7.660 · 2026-11-23
 
 ### 部署路径修正

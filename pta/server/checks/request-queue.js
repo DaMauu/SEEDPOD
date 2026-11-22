@@ -2,7 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require(path.join(__dirname, '..', 'db.js'));
+const { openDB } = require(path.join(__dirname, '..', 'src', 'infra', 'db.js'));
 const { makeRequestQueue } = require(path.join(__dirname, '..', 'request-queue.js'));
 
 const results = [];

@@ -241,7 +241,7 @@ async function main() {
     fs.writeFileSync(path.join(DATA, 'site-defs', 'target2.example.json'), JSON.stringify({
       host: 'target2.example', base: 'https://target2.example', engine: 'nexusphp'
     }));
-    const siteStore = require('../site-store')(DATA);
+    const siteStore = require('../src/features/sites/store')(DATA);
     ['target.example', 'target2.example'].forEach(function (h) {
       siteStore.save(h, { engine: 'nexusphp', url: { base: 'https://' + h },
         search: { path: '/torrents.php' },

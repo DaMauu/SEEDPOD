@@ -4,8 +4,8 @@
    用法：node pta/scripts/migrate-site-presets.js --data /path/to/data [--write|--check] */
 const fs = require('fs');
 const path = require('path');
-const makeSiteStore = require('../site-store');
-const jsonFile = require('../json-file');
+const makeSiteStore = require('../src/features/sites/store');
+const jsonFile = require('../src/infra/json-file');
 
 const argv = process.argv.slice(2);
 function arg(name, def) {

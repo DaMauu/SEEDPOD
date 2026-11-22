@@ -2,9 +2,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
-const makeSiteStore = require('../site-store');
-const uploadLock = require('../upload-lock');
+const { openDB } = require('../src/infra/db');
+const makeSiteStore = require('../src/features/sites/store');
+const uploadLock = require('../src/infra/upload-lock');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitestore-'));
 const PRESET = path.join(DATA, 'preset');

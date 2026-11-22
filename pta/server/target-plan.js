@@ -9,8 +9,8 @@ function makePlan(deps) {
   const resolve = deps.resolve;
   const ctx = deps.ctx;
   const one = deps.one;
-  const cookieStore = require('./cookie-store')(ctx.DATA_DIR);
-  const presets = require('./presets')(ctx.DATA_DIR);
+  const cookieStore = require('./src/features/sites/credentials')(ctx.DATA_DIR);
+  const presets = require('./src/features/presets/store')(ctx.DATA_DIR);
   const TAG_BLOCK = /^(禁转|限转|禁止转载|禁止转发|官方|应求)$/;
 
   function tagList(item) {

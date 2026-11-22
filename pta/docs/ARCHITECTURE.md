@@ -2,6 +2,8 @@
 
 状态：2026-11-24 定稿。改结构前先改本文件，并加一条 `DECISIONS.md`。
 
+当前进度：`features/sites`、`features/presets`、`infra` 已收口；其余功能仍在 `server/` 根下，按功能继续搬。
+
 ## 三块
 
 ```text

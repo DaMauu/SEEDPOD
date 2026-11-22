@@ -4,7 +4,7 @@
    WAIT_RANDOM_PERCENT；旧的 PTA_REQ_* 仍兼容。
    队列状态落 meta，进程重启后仍按上一次时间继续排。 */
 let CHAIN = Promise.resolve();
-const env = require('./env');
+const env = require('./src/infra/env');
 
 function gapFromEnv(newName, oldName, defMs) {
   const v = env.read(newName, oldName);

@@ -1,24 +1,24 @@
 /* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
    旧 server/app.js 已删除，只保留 v2。 */
 const path = require('path');
-const secretbox = require('./secretbox');
+const secretbox = require('./src/infra/secretbox');
 const fs = require('fs');
 const crypto = require('crypto');
 const Fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
-const { openDB } = require('./db');
+const { openDB } = require('./src/infra/db');
 const { makeCrawl } = require('./crawl');
-const siteHidden = require('./site-hidden');
+const siteHidden = require('./src/features/sites/hidden');
 
-const PORT = Number((require('./env').read('PANEL_PORT','PTA_PORT')) || 8090);
-const DATA_DIR = path.resolve(require('./env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+const PORT = Number((require('./src/infra/env').read('PANEL_PORT','PTA_PORT')) || 8090);
+const DATA_DIR = path.resolve(require('./src/infra/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
 const WEB_DIR = (function () {
-  const webDir = require('./env').read('WEB_DIR','PTA_WEB');
+  const webDir = require('./src/infra/env').read('WEB_DIR','PTA_WEB');
   if (webDir) return path.resolve(webDir);
   const dist = path.join(__dirname, '..', 'web', 'dist');
   return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', 'web');
 })();
-const siteStore = require('./site-store')(DATA_DIR);
+const siteStore = require('./src/features/sites/store')(DATA_DIR);
 const PKG = require('../../package.json');
 const VERSION = PKG.version;
 const DEV_DATE = '2026-11-14';
@@ -28,18 +28,18 @@ const KEYRING = secretbox.loadKey(DATA_DIR);
 const trimVer = (v) => String(v || '').replace(/^[~^]/, '');
 const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vite) + ' + SFC（构建）';
 const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
-const PTA_USER = require('./env').read('PANEL_USER','PTA_USER') || '';
-const PTA_PASS = require('./env').read('PANEL_PASS','PTA_PASS') || '';
+const PTA_USER = require('./src/infra/env').read('PANEL_USER','PTA_USER') || '';
+const PTA_PASS = require('./src/infra/env').read('PANEL_PASS','PTA_PASS') || '';
 /* 七个页面固定（dashboard/sites/crawl/queue/sources/logs/settings）；接口数按实际注册的路由算 */
 const PAGE_COUNT = 7;
 let ENDPOINT_COUNT = 0;
 
 const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
 /* 旧 credentials 表一次性迁到总 cookie 文件；文件已存在则不覆盖 */
-try { require('./cookie-store')(DATA_DIR).migrateFromDB(db); }
+try { require('./src/features/sites/credentials')(DATA_DIR).migrateFromDB(db); }
 catch (e) { console.warn('[seedpod] cookie 文件迁移失败:', e && e.message ? e.message : e); }
 /* 首次启动把 pack 模板复制成 data/presets.json；之后用户改的是 data 这份 */
-try { require('./presets')(DATA_DIR).ensure(); }
+try { require('./src/features/presets/store')(DATA_DIR).ensure(); }
 catch (e) { console.warn('[seedpod] 全局预设初始化失败:', e && e.message ? e.message : e); }
 const LOGIN_FAILS = new Map();
 const SESSION_TTL = 12 * 3600 * 1000;
@@ -53,7 +53,7 @@ function ok(reply, data) { if (arguments.length === 1) return { ok: true, data: 
 
 function counts() {
   const one2 = (t) => { const r = one('SELECT COUNT(*) AS n FROM ' + t); return r ? r.n : 0; };
-  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: require('./cookie-store')(DATA_DIR).list().length };
+  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: require('./src/features/sites/credentials')(DATA_DIR).list().length };
 }
 
 function parseCookies(req) {
@@ -80,7 +80,7 @@ function sessionOk(req) {
   return true;
 }
 function cookieSecure(req) {
-  return require('./env').read('COOKIE_SECURE','PTA_COOKIE_SECURE') === '1' ||
+  return require('./src/infra/env').read('COOKIE_SECURE','PTA_COOKIE_SECURE') === '1' ||
     String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
 }
 
@@ -158,7 +158,7 @@ async function build() {
 
   /* 外部触发：带 token 才能跑调度；没配 PTA_HOOK_TOKEN 就完全关闭 */
   app.post('/api/hooks/run', async (req, reply) => {
-    const token = String(require('./env').read('HOOK_TOKEN','PTA_HOOK_TOKEN') || '').trim();
+    const token = String(require('./src/infra/env').read('HOOK_TOKEN','PTA_HOOK_TOKEN') || '').trim();
     if (!token) return bad(reply, 'HOOK_DISABLED', '没有配置 HOOK_TOKEN，外部触发关闭', 404);
     const got = String((req.headers && (req.headers['x-hook-token'] || req.headers['x-api-token'])) || (req.body && req.body.token) || '').trim();
     const a = Buffer.from(got), b = Buffer.from(token);
@@ -370,7 +370,7 @@ async function build() {
   /* 写接口：词条库、队列、流程规则、配置 */
   const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR,
     allowReal: function (key) {
-      if (String(require('./env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
+      if (String(require('./src/infra/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
       const r = one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;

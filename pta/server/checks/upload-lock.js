@@ -2,8 +2,8 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
-const lock = require('../upload-lock');
+const { openDB } = require('../src/infra/db');
+const lock = require('../src/infra/upload-lock');
 
 const results = [];
 function check(name, fn) {

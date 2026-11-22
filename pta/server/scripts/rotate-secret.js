@@ -3,8 +3,8 @@
    旧 key 来源：PTA_SECRET_PREVIOUS（逗号/空白分隔）或 data/.secret.previous（一行一个）。 */
 const fs = require('fs');
 const path = require('path');
-const { openDB } = require('../db');
-const secretbox = require('../secretbox');
+const { openDB } = require('../src/infra/db');
+const secretbox = require('../src/infra/secretbox');
 
 function parseArgs(argv) {
   const out = { apply: false };
@@ -88,7 +88,7 @@ function rotate(dataDir, dbFile, apply) {
 
 if (require.main === module) {
   const a = parseArgs(process.argv.slice(2));
-  const dataDir = a.data || process.env.PTA_DATA || require('../env').read('DATA_DIR', 'PTA_DATA') || '.';
+  const dataDir = a.data || process.env.PTA_DATA || require('../src/infra/env').read('DATA_DIR', 'PTA_DATA') || '.';
   try {
     const r = rotate(dataDir, a.db, a.apply);
     console.log((a.apply ? '已轮换' : '预览') + '：凭据 ' + r.credentials + '、下载器 ' + r.downloaders + '、通知 ' + r.notify + '、跳过 ' + r.skipped);

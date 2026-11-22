@@ -2,9 +2,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { makePublisher } = require('../publish');
-const lock = require('../upload-lock');
+const lock = require('../src/infra/upload-lock');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-publock-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

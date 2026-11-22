@@ -4,7 +4,7 @@ const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../../server/db');
+const { openDB } = require('../../server/src/infra/db');
 const { loadPlaywright, launchChromium } = require('./browser');
 
 const ROOT = path.resolve(__dirname, '..', '..');

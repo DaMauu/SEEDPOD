@@ -1,5 +1,5 @@
 /* 词条批量状态：整批一个事务，任何一条写失败都回滚，避免“改了一半”。 */
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 
 function applyBulk(ctx, ids, status) {
   const { db, one, jparse } = ctx;

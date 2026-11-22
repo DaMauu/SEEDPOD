@@ -2,9 +2,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { makeTargetService } = require('../target-service');
-const uploadLock = require('../upload-lock');
+const uploadLock = require('../src/infra/upload-lock');
 const { makeTorrent } = require('./target-mock');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-upmany-'));

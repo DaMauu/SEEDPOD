@@ -3,10 +3,10 @@
    文件 0600，原子写；写入前留 .bak；不打印 cookie。 */
 const fs = require('fs');
 const path = require('path');
-const secretbox = require('./secretbox');
-const jsonFile = require('./json-file');
-const uploadLock = require('./upload-lock');
-const { openDB } = require('./db');
+const secretbox = require('../../infra/secretbox');
+const jsonFile = require('../../infra/json-file');
+const uploadLock = require('../../infra/upload-lock');
+const { openDB } = require('../../infra/db');
 
 const VERSION = 1;
 

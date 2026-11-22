@@ -7,7 +7,7 @@ const flowConfig = require('./flow-config');
 const imagehost = require('./imagehost');
 const marks = require('./marks');
 const { dedupeSwitchOn } = require('./target-rules');
-const uploadLock = require('./upload-lock');
+const uploadLock = require('./src/infra/upload-lock');
 const urlGuard = require('./url-guard');
 
 /* 目标站 announce 候选优先级：passkey > generic > 站点根兜底 */

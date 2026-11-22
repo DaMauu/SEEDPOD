@@ -3,10 +3,10 @@
    可选运行时覆盖：data/presets.json（不复制则不生成）。 */
 const fs = require('fs');
 const path = require('path');
-const jsonFile = require('./json-file');
+const jsonFile = require('../../infra/json-file');
 
 const ROOT = path.resolve(__dirname, '..');
-const DEFAULT_FILE = path.join(__dirname, 'pack', 'presets.preset.json');
+const DEFAULT_FILE = path.join(__dirname, '..', '..', '..', 'pack', 'presets.preset.json');
 
 /* 旧 key、中文名、常见写法都归一到同一套 key */
 const ALIAS = {

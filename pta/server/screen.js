@@ -2,9 +2,9 @@
 const match = require('./match');
 const marksMod = require('./marks');
 const meta = require('./meta');
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 const { typeOf, selectedTypesOf } = require('./category-policy');
-const makePresets = require('./presets');
+const makePresets = require('./src/features/presets/store');
 const log = require('./log');
 
 function flowRules(sets, rx) {
@@ -50,7 +50,7 @@ function cnOf(subtitle) {
 
 function screenCatalog(ctx, opts) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
-  const siteStore = require('./site-store')(ctx.DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(ctx.DATA_DIR);
   const presets = makePresets(ctx.DATA_DIR);
   const now = () => new Date().toISOString();
   const b = opts || {};

@@ -5,8 +5,8 @@
    不打印站名/网址/cookie。 */
 const fs = require('fs');
 const path = require('path');
-const makeSiteStore = require('../site-store');
-const jsonFile = require('../json-file');
+const makeSiteStore = require('../src/features/sites/store');
+const jsonFile = require('../src/infra/json-file');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const argv = process.argv.slice(2);
@@ -14,7 +14,7 @@ function arg(name, def) {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 }
-const DATA = path.resolve(arg('--data', require('../env').read('DATA_DIR', 'PTA_DATA') || path.join(ROOT, '..', 'data')));
+const DATA = path.resolve(arg('--data', require('../src/infra/env').read('DATA_DIR', 'PTA_DATA') || path.join(ROOT, '..', 'data')));
 const OUT = path.resolve(arg('--out', path.join(ROOT, 'server', 'pack')));
 const RUNTIME = argv.includes('--runtime');
 const CHECK = argv.includes('--check');

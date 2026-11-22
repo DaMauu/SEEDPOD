@@ -2,7 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB, tx } = require('../db');
+const { openDB, tx } = require('../src/infra/db');
 const { makeRelease } = require('../release');
 const catalogSync = require('../catalog-sync');
 

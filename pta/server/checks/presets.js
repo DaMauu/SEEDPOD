@@ -2,8 +2,8 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const makePresets = require('../presets');
-const makeSiteStore = require('../site-store');
+const makePresets = require('../src/features/presets/store');
+const makeSiteStore = require('../src/features/sites/store');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const PRESETS = path.join(ROOT, 'server', 'pack', 'presets.preset.json');

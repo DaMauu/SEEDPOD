@@ -2,7 +2,7 @@
 const { makePublisher } = require('./publish');
 const imagehost = require('./imagehost');
 const flowConfig = require('./flow-config');
-const uploadLock = require('./upload-lock');
+const uploadLock = require('./src/infra/upload-lock');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;

@@ -1,13 +1,13 @@
 /* 站点、凭据、日志与站点定义接口（Fastify v2）。 */
 const path = require('path');
 const fs = require('fs');
-const siteHidden = require('./site-hidden');
+const siteHidden = require('./src/features/sites/hidden');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const cookieStore = require('./cookie-store')(DATA_DIR);
-  const siteStore = require('./site-store')(DATA_DIR);
-  const presets = require('./presets')(DATA_DIR);
+  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const presets = require('./src/features/presets/store')(DATA_DIR);
   function archOf(engine) { const e = String(engine || '').toLowerCase(); return e === 'nexusphp' ? 'NP' : (e === 'unit3d' ? 'UNIT3D' : (e === 'gazelle' ? 'GZ' : '?')); }
   function defOfRecord(rec) {
     const cats = Object.assign({}, rec.search.cats || {});

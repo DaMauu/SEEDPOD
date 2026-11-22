@@ -3,7 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitetypes-'));
 process.env.PTA_DATA = DATA;
@@ -45,8 +45,8 @@ const server = http.createServer(function (req, res) {
   const db = openDB(path.join(DATA, 'seedpod.db'));
   db.close();
 
-  const makeSiteStore = require('../site-store');
-  const makeCookieStore = require('../cookie-store');
+  const makeSiteStore = require('../src/features/sites/store');
+  const makeCookieStore = require('../src/features/sites/credentials');
   const { collectFromCategories, parseCategories, probeOne, applyTypes } = require('../scripts/site-types');
   const store = makeSiteStore(DATA);
   const cookies = makeCookieStore(DATA);

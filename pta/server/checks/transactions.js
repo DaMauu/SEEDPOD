@@ -1,6 +1,6 @@
 /* SQLite 事务回滚：多步写失败时不留下半条记录。 */
 const { DatabaseSync } = require('node:sqlite');
-const { tx } = require('../db');
+const { tx } = require('../src/infra/db');
 
 const results = [];
 function check(name, fn) {

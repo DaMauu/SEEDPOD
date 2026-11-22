@@ -3,11 +3,11 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { makeCrawl } = require('../crawl');
-const secretbox = require('../secretbox');
+const secretbox = require('../src/infra/secretbox');
 const dns = require('dns');
-const makeSiteStore = require('../site-store');
+const makeSiteStore = require('../src/features/sites/store');
 
 const results = [];
 function check(name, fn) {

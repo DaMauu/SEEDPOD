@@ -1,6 +1,6 @@
 /* 环境变量命名夹具：新名字优先，旧 PTA_ 名字兜底。 */
 const path = require('path');
-const env = require(path.join(__dirname, '..', 'env.js'));
+const env = require(path.join(__dirname, '..', 'src', 'infra', 'env.js'));
 
 const results = [];
 function check(name, fn) {

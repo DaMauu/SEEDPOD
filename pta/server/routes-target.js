@@ -11,7 +11,7 @@ const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
 const { setVerify } = require('./target-upload');
 const { makeCrossseed } = require('./crossseed');
-const uploadLock = require('./upload-lock');
+const uploadLock = require('./src/infra/upload-lock');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;

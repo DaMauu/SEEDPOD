@@ -12,7 +12,7 @@ function providerKey(name) {
 /* 自定义头只接受普通请求头：不许覆盖 cookie/host/content-length 这类传输头 */
 const HEADER_DENY = { host: 1, cookie: 1, 'set-cookie': 1, 'content-length': 1, 'transfer-encoding': 1, connection: 1, 'content-type': 1 };
 function envHeaders() {
-  const raw = String(require('./env').read('IMAGE_HOST_HEADERS','PTA_IMAGE_HOST_HEADERS') || '').trim();
+  const raw = String(require('./src/infra/env').read('IMAGE_HOST_HEADERS','PTA_IMAGE_HOST_HEADERS') || '').trim();
   if (!raw) return {};
   let j;
   try { j = JSON.parse(raw); } catch (e) { return {}; }
@@ -36,35 +36,35 @@ function httpEndpoint(raw) {
 }
 
 function defaultProvider() {
-  const explicit = require('./env').read('IMAGE_HOST_PROVIDER', 'PTA_IMAGE_HOST_PROVIDER');
+  const explicit = require('./src/infra/env').read('IMAGE_HOST_PROVIDER', 'PTA_IMAGE_HOST_PROVIDER');
   if (explicit) return providerKey(explicit);
-  const url = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '');
+  const url = String(require('./src/infra/env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '');
   if (/\/api\/1\/upload/i.test(url)) return 'chevereto';
-  if (require('./env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER')) return 'chevereto';
+  if (require('./src/infra/env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER')) return 'chevereto';
   return 'custom';
 }
 
 function configFor(provider) {
   if (provider === 'chevereto') {
-    const raw = String(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '').trim();
+    const raw = String(require('./src/infra/env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '').trim();
     const url = httpEndpoint(/\/api\/1\/upload/i.test(raw) ? raw : raw.replace(/\/+$/, '') + '/api/1/upload');
     return {
       endpoint: url,
       field: 'source',
-      token: String(require('./env').read('IMAGE_HOST_TOKEN', 'PTA_IMAGE_HOST_TOKEN') || require('./env').read('IMAGE_HOST_KEY', 'PTA_IMAGE_HOST_KEY') || '').trim(),
+      token: String(require('./src/infra/env').read('IMAGE_HOST_TOKEN', 'PTA_IMAGE_HOST_TOKEN') || require('./src/infra/env').read('IMAGE_HOST_KEY', 'PTA_IMAGE_HOST_KEY') || '').trim(),
       headers: envHeaders(),
       verified: true,
       auth: 'chevereto',
-      user: String(require('./env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER') || '').trim(),
-      pass: String(require('./env').read('IMAGE_HOST_PASS', 'PTA_IMAGE_HOST_PASS') || ''),
-      ssoHost: String(require('./env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').trim()
+      user: String(require('./src/infra/env').read('IMAGE_HOST_USER', 'PTA_IMAGE_HOST_USER') || '').trim(),
+      pass: String(require('./src/infra/env').read('IMAGE_HOST_PASS', 'PTA_IMAGE_HOST_PASS') || ''),
+      ssoHost: String(require('./src/infra/env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').trim()
     };
   }
   if (provider === 'custom' || provider === 'local') {
     return {
-      endpoint: httpEndpoint(require('./env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') || ''),
-      field: String(require('./env').read('IMAGE_HOST_FIELD','PTA_IMAGE_HOST_FIELD') || 'file').trim() || 'file',
-      token: String(require('./env').read('IMAGE_HOST_TOKEN','PTA_IMAGE_HOST_TOKEN') || '').trim(),
+      endpoint: httpEndpoint(require('./src/infra/env').read('IMAGE_HOST_URL','PTA_IMAGE_HOST_URL') || ''),
+      field: String(require('./src/infra/env').read('IMAGE_HOST_FIELD','PTA_IMAGE_HOST_FIELD') || 'file').trim() || 'file',
+      token: String(require('./src/infra/env').read('IMAGE_HOST_TOKEN','PTA_IMAGE_HOST_TOKEN') || '').trim(),
       headers: envHeaders(),
       verified: true
     };

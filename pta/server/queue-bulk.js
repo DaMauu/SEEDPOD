@@ -1,5 +1,5 @@
 /* 队列批量状态：整批一个事务，任一条写失败全部回滚；id 去重并限量。 */
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 const catalogSync = require('./catalog-sync');
 
 function applyStatus(ctx, ids, target, reason) {

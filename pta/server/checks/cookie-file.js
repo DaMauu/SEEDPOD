@@ -2,9 +2,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
-const secretbox = require('../secretbox');
-const makeCookieStore = require('../cookie-store');
+const { openDB } = require('../src/infra/db');
+const secretbox = require('../src/infra/secretbox');
+const makeCookieStore = require('../src/features/sites/credentials');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-cookiefile-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

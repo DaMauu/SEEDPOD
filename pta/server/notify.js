@@ -1,16 +1,16 @@
 /* 通知：Telegram 优先，通用 webhook 兜底。
    token/chat 优先读环境变量；没有就用面板加密保存的配置（token AES-GCM）。
    接口只回是否配置/来源/chat，不回 token。 */
-const secretbox = require('./secretbox');
+const secretbox = require('./src/infra/secretbox');
 const urlGuard = require('./url-guard');
 const COOLDOWNS = new Map();
 function cooldownKey(t, c) { return String((t && t.api) || '') + '|' + String((t && t.chat) || '') + '|' + String((c && c.webhook) || ''); }
 function makeNotify(ctx) {
   const { one, DATA_DIR } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR || require('./env').read('DATA_DIR','PTA_DATA') || '.');
+  const KEYRING = secretbox.loadKey(DATA_DIR || require('./src/infra/env').read('DATA_DIR','PTA_DATA') || '.');
   const now = () => new Date().toISOString();
   function cooldownOf(key) { if (!COOLDOWNS.has(key)) COOLDOWNS.set(key, { until: 0, reason: '' }); return COOLDOWNS.get(key); }
-  const COOLDOWN_MS = Math.max(0, Math.min(600000, Number(require('./env').read('NOTIFY_COOLDOWN_MS', 'PTA_NOTIFY_COOLDOWN_MS') || 60000)));
+  const COOLDOWN_MS = Math.max(0, Math.min(600000, Number(require('./src/infra/env').read('NOTIFY_COOLDOWN_MS', 'PTA_NOTIFY_COOLDOWN_MS') || 60000)));
 
   function rawCfg() {
     try {
@@ -31,7 +31,7 @@ function makeNotify(ctx) {
     const c = rawCfg();
     return {
       events: ['off', 'error', 'always'].indexOf(c.notifyEvents) >= 0 ? c.notifyEvents : 'error',
-      webhook: String(require('./env').read('NOTIFY_WEBHOOK','PTA_NOTIFY_WEBHOOK') || webhookOf(c) || '').trim()
+      webhook: String(require('./src/infra/env').read('NOTIFY_WEBHOOK','PTA_NOTIFY_WEBHOOK') || webhookOf(c) || '').trim()
     };
   }
   function configCreds() {
@@ -43,7 +43,7 @@ function makeNotify(ctx) {
     return { token: token, chat: chat, source: token && chat ? 'config' : '' };
   }
   function creds() {
-    const api = String(require('./env').read('TELEGRAM_API','PTA_TELEGRAM_API') || 'https://api.telegram.org').replace(/\/+$/, '');
+    const api = String(require('./src/infra/env').read('TELEGRAM_API','PTA_TELEGRAM_API') || 'https://api.telegram.org').replace(/\/+$/, '');
     const envToken = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
     const envChat = String(process.env.TELEGRAM_ALLOWED_USER_ID || process.env.TELEGRAM_CHAT_ID || '').trim();
     if (envToken && envChat) return { token: envToken, chat: envChat, source: 'env', api: api };

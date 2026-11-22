@@ -3,8 +3,8 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
-const uploadLock = require('../upload-lock');
+const { openDB } = require('../src/infra/db');
+const uploadLock = require('../src/infra/upload-lock');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const PORT = Number(process.env.PTA_CHECK_PORT || 8099);

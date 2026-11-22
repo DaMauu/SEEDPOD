@@ -6,14 +6,14 @@ const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
 const stage = require('./stage');
 const flowConfig = require('./flow-config');
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 const { targetReady } = require('./release-gates');
-const publishLock = require('./upload-lock');
+const publishLock = require('./src/infra/upload-lock');
 const urlGuard = require('./url-guard');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
-  const cookieStore = require('./cookie-store')(DATA_DIR);
+  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
   const now = () => new Date().toISOString();
 

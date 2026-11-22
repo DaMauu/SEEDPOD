@@ -3,9 +3,9 @@
    node pta/scripts/failures.js --replay q_0001
 */
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { makeFailureQueue } = require('../failure-queue');
-const { read } = require('../env');
+const { read } = require('../src/infra/env');
 
 const dataDir = path.resolve(read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
 const db = openDB(path.join(dataDir, 'seedpod.db'));

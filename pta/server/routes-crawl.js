@@ -14,9 +14,9 @@ function keyword(title) {
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const cookieStore = require('./cookie-store')(DATA_DIR);
-  const siteStore = require('./site-store')(DATA_DIR);
-  const presets = require('./presets')(DATA_DIR);
+  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const presets = require('./src/features/presets/store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const readDef = (host) => siteStore.legacyDef(host);
   const readCookie = (host) => {

@@ -3,8 +3,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const secretbox = require('../secretbox');
-const { openDB } = require('../db');
+const secretbox = require('../src/infra/secretbox');
+const { openDB } = require('../src/infra/db');
 const { rotate } = require('../scripts/rotate-secret');
 
 const results = [];

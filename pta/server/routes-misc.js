@@ -6,19 +6,19 @@ const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
 const collage = require('./collage');
-const jsonFile = require('./json-file');
+const jsonFile = require('./src/infra/json-file');
 const { makeErrorStats } = require('./error-stats');
 const { makeFailureQueue } = require('./failure-queue');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { dedupeItem, hostsOf } = require('./dedupe-item');
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
-  const siteStore = require('./site-store')(DATA_DIR);
-  const presets = require('./presets')(DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const presets = require('./src/features/presets/store')(DATA_DIR);
   const readPreset = () => { const out = {}; siteStore.list().forEach(function (s) { out[s.host] = { engine: s.engine, cats: s.search.cats || {}, types: s.search.types || [], source: 'site-json', confirmed: true }; }); return out; };
   const errorStats = makeErrorStats(ctx);
   const failureQueue = makeFailureQueue(ctx);

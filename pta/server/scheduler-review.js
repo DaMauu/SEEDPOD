@@ -1,7 +1,7 @@
 /* 终审阶段：补齐、查缺、判定 ready/hold，写入 review 状态。 */
 const flowConfig = require('./flow-config');
 function makeReviewPhase(deps) {
-  const siteStore = deps.DATA_DIR ? require('./site-store')(deps.DATA_DIR) : null;
+  const siteStore = deps.DATA_DIR ? require('./src/features/sites/store')(deps.DATA_DIR) : null;
   const { one, all, jparse, target, targetService, metaFill, release } = deps;
   return async function runReviewPhase(o) {
     const { want, batch, ctx } = o;

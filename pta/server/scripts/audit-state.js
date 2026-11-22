@@ -2,7 +2,7 @@
    用法：node pta/scripts/audit-state.js [--data DATA_DIR] [--strict] */
 const fs = require('fs');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const stage = require('../stage');
 
 function parseArgs(argv) {
@@ -34,7 +34,7 @@ function audit(db, opts) {
 
 if (require.main === module) {
   const a = parseArgs(process.argv.slice(2));
-  const dir = a.data || process.env.PTA_DATA || require('../env').read('DATA_DIR', 'PTA_DATA') || '.';
+  const dir = a.data || process.env.PTA_DATA || require('../src/infra/env').read('DATA_DIR', 'PTA_DATA') || '.';
   const file = path.join(dir, 'seedpod.db');
   if (!fs.existsSync(file)) {
     console.error('数据库不存在：' + file);

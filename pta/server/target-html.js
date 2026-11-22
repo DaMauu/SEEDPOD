@@ -1,5 +1,5 @@
 /* 目标站文本/HTML 解析与模板字段工具：纯函数，不碰网络和数据库。 */
-const presets = require('./presets')();
+const presets = require('./src/features/presets/store')();
 
 function catMapOf(p, def, built) {
   const out = {};

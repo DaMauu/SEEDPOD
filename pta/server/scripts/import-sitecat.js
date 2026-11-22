@@ -2,7 +2,7 @@
    不打印站名/网址；只输出站点数和分类数。默认干跑，--write 才写。 */
 const fs = require('fs');
 const path = require('path');
-const siteMaps = require('../site-maps');
+const siteMaps = require('../src/features/sites/maps');
 const { _test } = require('../routes-maps');
 const CAT = _test.CAT;
 

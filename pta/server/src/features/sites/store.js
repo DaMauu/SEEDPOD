@@ -3,14 +3,14 @@
    不再读 site-defs / site-search / site-maps / sites 表。 */
 const fs = require('fs');
 const path = require('path');
-const jsonFile = require('./json-file');
-const uploadLock = require('./upload-lock');
-const { openDB } = require('./db');
-const makePresets = require('./presets');
+const jsonFile = require('../../infra/json-file');
+const uploadLock = require('../../infra/upload-lock');
+const { openDB } = require('../../infra/db');
+const makePresets = require('../presets/store');
 
 const VERSION = 1;
 const ROOT = path.resolve(__dirname, '..');
-const DEFAULT_PRESET = path.join(__dirname, 'pack');
+const DEFAULT_PRESET = path.join(__dirname, '..', '..', '..', 'pack');
 
 function b64(s) { return 'b64:' + Buffer.from(String(s || ''), 'utf8').toString('base64'); }
 function unb64(v) {

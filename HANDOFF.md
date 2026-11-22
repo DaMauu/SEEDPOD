@@ -1,6 +1,11 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-23 20:30（当前 v0.7.660 / 部署路径修正）
+最后更新：2026-11-23 22:00（当前 v0.7.661 / 后端功能收口开始）
+
+## 2026-11-23 后端功能收口开始（v0.7.661）
+
+- `server/src/infra` 与 `features/sites`、`features/presets` 已建立；db/env/secretbox/site-store/presets 已迁入。
+- 其余功能仍在 `server/` 根下，下一步继续按功能搬。
 
 ## 2026-11-23 目录收口（v0.7.659）
 

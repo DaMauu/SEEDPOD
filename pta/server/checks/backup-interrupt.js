@@ -3,7 +3,7 @@ const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-bakint-'));

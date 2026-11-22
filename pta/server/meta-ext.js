@@ -12,8 +12,8 @@ const CACHE = new Map();
 const CACHE_TTL = 6 * 3600 * 1000;
 const CACHE_MAX = 300;
 const HOST_LAST = new Map();
-const MIN_GAP = Math.max(0, Number(require('./env').read('META_MIN_GAP','PTA_META_MIN_GAP') == null ? 800 : require('./env').read('META_MIN_GAP','PTA_META_MIN_GAP')) || 0);
-const CACHE_ON = String(require('./env').read('META_CACHE','PTA_META_CACHE') || '1') !== '0';
+const MIN_GAP = Math.max(0, Number(require('./src/infra/env').read('META_MIN_GAP','PTA_META_MIN_GAP') == null ? 800 : require('./src/infra/env').read('META_MIN_GAP','PTA_META_MIN_GAP')) || 0);
+const CACHE_ON = String(require('./src/infra/env').read('META_CACHE','PTA_META_CACHE') || '1') !== '0';
 
 function cacheGet(key) {
   if (!CACHE_ON) return null;
@@ -51,11 +51,11 @@ async function getJson(url, timeout, headers) {
   return j;
 }
 function tmdbKey(key) { return String(key || process.env.TMDB_API_KEY || '').trim(); }
-function tmdbBase() { return String(require('./env').read('TMDB_API','PTA_TMDB_API') || DEFAULT_TMDB).replace(/\/+$/, ''); }
-function doubanBase() { return String(require('./env').read('DOUBAN_API','PTA_DOUBAN_API') || DEFAULT_DOUBAN).replace(/\/+$/, ''); }
-function douyingBase() { return String(require('./env').read('DOUYING_API','PTA_DOUYING_API') || 'https://doubaninfo.com').replace(/\/+$/, ''); }
+function tmdbBase() { return String(require('./src/infra/env').read('TMDB_API','PTA_TMDB_API') || DEFAULT_TMDB).replace(/\/+$/, ''); }
+function doubanBase() { return String(require('./src/infra/env').read('DOUBAN_API','PTA_DOUBAN_API') || DEFAULT_DOUBAN).replace(/\/+$/, ''); }
+function douyingBase() { return String(require('./src/infra/env').read('DOUYING_API','PTA_DOUYING_API') || 'https://doubaninfo.com').replace(/\/+$/, ''); }
 function wikiBase(lang) {
-  return require('./env').read('WIKI_API','PTA_WIKI_API') || ('https://' + lang + '.wikipedia.org/w/api.php');
+  return require('./src/infra/env').read('WIKI_API','PTA_WIKI_API') || ('https://' + lang + '.wikipedia.org/w/api.php');
 }
 
 async function wikiSearch(title, year, lang, type) {

@@ -24,7 +24,7 @@ function makeSubmit(deps) {
   const cookieOf = deps.cookieOf;
   const one = deps.one;
   const ctx = deps.ctx;
-  const siteStore = ctx && ctx.DATA_DIR ? require('./site-store')(ctx.DATA_DIR) : null;
+  const siteStore = ctx && ctx.DATA_DIR ? require('./src/features/sites/store')(ctx.DATA_DIR) : null;
   const torrentMeta = deps.torrentMeta;
   const textOf = deps.textOf;
   const downloadLinksFromDetails = deps.downloadLinksFromDetails;

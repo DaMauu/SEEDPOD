@@ -53,8 +53,8 @@ function safeHost(host) { return /^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''
 
 function makeTarget(ctx) {
   const { DATA_DIR, one, db } = ctx;
-  const cookieStore = require('./cookie-store')(DATA_DIR);
-  const siteStore = require('./site-store')(DATA_DIR);
+  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
 
   function cookieOf(host) {

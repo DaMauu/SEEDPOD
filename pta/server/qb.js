@@ -1,8 +1,8 @@
 /* qBittorrent 适配：探测、登录（4.x SID / 5.x QBT_SID_端口）、分类读取。从旧服务搬过来复用。 */
-const secretbox = require('./secretbox');
+const secretbox = require('./src/infra/secretbox');
 const crypto = require('crypto');
 const path = require('path');
-const env = require('./env');
+const env = require('./src/infra/env');
 function passOf(v, ring) {
   const s = String(v || '');
   if (!s) return '';

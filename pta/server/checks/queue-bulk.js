@@ -2,7 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { applyStatus } = require('../queue-bulk');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-qbulk-'));

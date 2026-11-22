@@ -5,7 +5,7 @@
      PTA_DOWNLOADER_ALLOW_PRIVATE=1  （开发机临时放开所有内网） */
 const dns = require('dns').promises;
 const net = require('net');
-const env = require('./env');
+const env = require('./src/infra/env');
 
 function listOf(name) {
   return String(env.read(name, name) || '').split(/[,\s]+/).map(function (x) { return x.trim(); }).filter(Boolean);

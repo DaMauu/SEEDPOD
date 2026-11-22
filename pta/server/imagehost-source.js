@@ -1,6 +1,6 @@
 /* 图源解析 / 缩略图还原 / 简介替换 / 镜像缓存：不负责上传。 */
 const path = require('path');
-const { openDB } = require('./db');
+const { openDB } = require('./src/infra/db');
 const urlGuard = require('./url-guard');
 const { safeFetch } = require('./safe-http');
 
@@ -147,7 +147,7 @@ function originalFromThumb(raw) {
 }
 
 function mirrorDb() {
-  const dir = path.resolve(require('./env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+  const dir = path.resolve(require('./src/infra/env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
   try { return { db: openDB(path.join(dir, 'seedpod.db')), dir: dir }; } catch (e) { return null; }
 }
 
@@ -179,7 +179,7 @@ function ourImageHosts() {
   function add(u) {
     try { const x = new URL(String(u || '')); if (x.hostname) out.push(x.hostname.toLowerCase()); } catch (e) { /* 忽略非法地址 */ }
   }
-  add(require('./env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '');
+  add(require('./src/infra/env').read('IMAGE_HOST_URL', 'PTA_IMAGE_HOST_URL') || '');
   try {
     const cfg = require('./imagehost-config').configFor(require('./imagehost-config').defaultProvider());
     add(cfg.endpoint || '');

@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-dbcc-'));
@@ -24,7 +24,7 @@ db.close();
 function worker() {
   return new Promise(function (resolve) {
     const c = spawn(process.execPath, ['-e', code], {
-      env: Object.assign({}, process.env, { PTA_DB_MODULE: path.join(ROOT, 'server', 'db.js'), PTA_DB_FILE: DB }),
+      env: Object.assign({}, process.env, { PTA_DB_MODULE: path.join(ROOT, 'server', 'src', 'infra', 'db.js'), PTA_DB_FILE: DB }),
       stdio: ['ignore', 'pipe', 'pipe']
     });
     let err = '';

@@ -61,8 +61,8 @@ function matchCats(options) {
 module.exports = function (app, ctx) {
   const { DATA_DIR, ok, bad } = ctx;
   const target = require('./target').makeTarget(ctx);
-  const siteStore = require('./site-store')(DATA_DIR);
-  const presets = require('./presets')(DATA_DIR);
+  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const presets = require('./src/features/presets/store')(DATA_DIR);
 
   app.get('/api/maps', async () => {
     const sites = {};

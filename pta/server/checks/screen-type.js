@@ -2,9 +2,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { openDB } = require('../db');
+const { openDB } = require('../src/infra/db');
 const { screenCatalog } = require('../screen');
-const makeSiteStore = require('../site-store');
+const makeSiteStore = require('../src/features/sites/store');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-screen-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

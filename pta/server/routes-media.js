@@ -9,7 +9,7 @@ const { makeTarget } = require('./target');
 module.exports = function (app, ctx) {
   const { DATA_DIR, one, all, jparse, ok, bad } = ctx;
   const target = makeTarget(ctx);
-  const ROOT = path.resolve(require('./env').read('MEDIA_ROOT','PTA_MEDIA_ROOT') || path.join(DATA_DIR, 'media'));
+  const ROOT = path.resolve(require('./src/infra/env').read('MEDIA_ROOT','PTA_MEDIA_ROOT') || path.join(DATA_DIR, 'media'));
   try { fs.mkdirSync(ROOT, { recursive: true, mode: 0o700 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
 
   function safeFile(rel) {

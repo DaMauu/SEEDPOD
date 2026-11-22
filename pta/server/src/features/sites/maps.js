@@ -2,7 +2,7 @@
    文件是事实源，网页只是编辑器；升级不覆盖，能直接手改。 */
 const fs = require('fs');
 const path = require('path');
-const jsonFile = require('./json-file');
+const jsonFile = require('../../infra/json-file');
 
 function fileOf(DATA_DIR) { return path.join(DATA_DIR, 'site-maps.json'); }
 

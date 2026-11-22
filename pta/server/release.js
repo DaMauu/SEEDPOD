@@ -7,7 +7,7 @@ const flowConfig = require('./flow-config');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
-const { tx } = require('./db');
+const { tx } = require('./src/infra/db');
 
 function makeRelease(ctx) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
