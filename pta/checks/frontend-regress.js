@@ -94,6 +94,44 @@ function seedDb() {
       await page.close();
     });
 
+    await check('站点详情可单独删除 Cookie，保留站点配置', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const puts = [];
+      await page.route('**/api/credentials/test-1.example', async function (route) {
+        if (route.request().method() !== 'PUT') return route.continue();
+        puts.push(JSON.parse(route.request().postData() || '{}'));
+        return route.continue();
+      });
+      await page.route('**/api/sites/test-1.example/session-test', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { pass: true } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sites'; });
+      await page.waitForTimeout(700);
+      await page.locator('[data-view="sites"] .site-item').first().click();
+      await page.waitForTimeout(500);
+      const ta = page.locator('#site-detail textarea').first();
+      await ta.fill('sid=ui-cookie-test');
+      await page.locator('#site-detail .sd-form-actions button').filter({ hasText: '保存设置' }).click();
+      await page.waitForTimeout(1000);
+      need(puts.some(function (x) { return x.cookie === 'sid=ui-cookie-test'; }), '保存没发 cookie：' + JSON.stringify(puts));
+      const clear = page.locator('#sd-cookie-clear');
+      need(await clear.count() === 1, '删除 Cookie 按钮缺失');
+      need(!(await clear.isDisabled()), '有 cookie 时删除按钮应可用');
+      await clear.click();
+      await page.waitForTimeout(200);
+      need(await page.locator('#confirm-yes').count() === 1, '确认框没出现');
+      await page.click('#confirm-yes');
+      await page.waitForTimeout(900);
+      need(puts.some(function (x) { return x.cookie === ''; }), '删除没发空 cookie：' + JSON.stringify(puts));
+      need(await clear.isDisabled(), '删除后按钮应禁用');
+      await page.close();
+    });
+
     await require('./frontend-regress/delete-held')({ browser: browser, BASE: BASE, check: check, need: need });
 
     await check('批量发布被跳过时详情同步显示目标站错误', async function () {

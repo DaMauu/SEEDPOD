@@ -82,6 +82,7 @@
                   </div>
                   <div class="sd-cookie-bar">
                     <button class="btn ghost slim" id="sd-cookie-test" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" @click.stop="selfcheckOne(s)">自检</button>
+                    <button class="btn ghost slim danger" id="sd-cookie-clear" type="button" :disabled="busy.cookie || !s.cookieSaved" title="只删除已保存的 cookie，站点配置和其他设置保留" @click.stop="clearCookie(s)">{{ busy.cookie ? '删除中…' : '删除 Cookie' }}</button>
                     <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
                   </div>
                 </div>
@@ -286,7 +287,7 @@ const upSaving = ref(false)
 const upMsg = ref('')
 const detectBusy = ref(false)
 const detectMsg = ref('')
-const busy = reactive({ selfcheck: false, crawl: false, save: false })
+const busy = reactive({ selfcheck: false, crawl: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
 
@@ -525,6 +526,26 @@ async function saveSite(site) {
     Object.assign(form, saved)
   }
   busy.save = false
+}
+function clearCookie(site) {
+  if (busy.cookie) return
+  confirmBox('删除 Cookie', '只清掉这个站已保存的 cookie；站点配置、分类映射和抓取设置都会保留。继续？', async function () {
+    busy.cookie = true
+    try {
+      const j = await (await fetch('/api/credentials/' + encodeURIComponent(site.name), {
+        method: 'PUT', credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: '' })
+      })).json()
+      if (j && j.ok) {
+        form.cookie = ''
+        toast('已删除 cookie：' + site.name)
+        emit('changed')
+        await loadDetail(site.name)
+        fillForm(s.value)
+      } else toast((j && j.error && j.error.message) || '删除 cookie 失败')
+    } catch (e) { toast('删除 cookie 请求发不出去') }
+    busy.cookie = false
+  })
 }
 function resetSite(site) {
   confirmBox('恢复默认', '会清掉「' + site.name + '」的服务端配置，回到站点清单里的默认值。继续？', async function () {

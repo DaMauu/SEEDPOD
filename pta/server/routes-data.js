@@ -178,7 +178,7 @@ module.exports = function (app, ctx) {
       const enc = cookie ? secretbox.encrypt(cookie, KEYRING.key) : null;
       db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET cookie=excluded.cookie, updated_at=excluded.updated_at')
         .run(host, enc, now());
-      logEvent('info', '站点', '保存凭据 · ' + host);
+      logEvent('info', '站点', (cookie ? '保存凭据 · ' : '删除凭据 · ') + host);
     }
     return ok(reply, { host: host, hasCookie: !!b.cookie });
   });
