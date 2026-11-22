@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const jsonFile = require('./json-file');
 const uploadLock = require('./upload-lock');
+const { openDB } = require('./db');
 
 const VERSION = 1;
 const ROOT = path.resolve(__dirname, '..');
@@ -42,11 +43,93 @@ function makeSiteStore(dataDir, opts) {
     try { if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak'); } catch (e) { /* 备份失败不挡写入 */ }
     jsonFile.writeAtomic(file, doc, 0o600);
   }
+  function readLegacyDefs() {
+    const dir = path.join(DIR, 'site-defs');
+    const out = {};
+    let files = [];
+    try { files = fs.readdirSync(dir).filter(function (f) { return f.endsWith('.json'); }); } catch (e) { return out; }
+    files.forEach(function (f) {
+      const h = f.slice(0, -5).toLowerCase();
+      try { out[h] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) || {}; } catch (e) { /* skip */ }
+    });
+    return out;
+  }
+  function readLegacySearch() {
+    const raw = readJson(path.join(DIR, 'site-search.local.json'), {});
+    return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw || {});
+  }
+  function readLegacyMaps() {
+    const raw = readJson(path.join(DIR, 'site-maps.json'), {});
+    return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw || {});
+  }
+  function legacyPublish(def, mp) {
+    const up = def.upload || {};
+    const publish = { upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: up.fields && typeof up.fields === 'object' ? up.fields : {} },
+      verify: { path: String((def.verify && def.verify.path) || '') }, catMap: {}, catLabels: {} };
+    const raw = def.catMap;
+    if (Array.isArray(raw)) raw.forEach(function (x) { if (x && x.id != null) { if (x.purpose) publish.catMap[String(x.purpose)] = String(x.id); if (x.label) publish.catLabels[String(x.label)] = String(x.id); } });
+    else if (raw && typeof raw === 'object') Object.keys(raw).forEach(function (k) { if (raw[k] != null) { publish.catMap[String(k)] = String(raw[k]); publish.catLabels[String(k)] = String(raw[k]); } });
+    const mcat = (mp && mp.cat && typeof mp.cat === 'object') ? mp.cat : {};
+    Object.keys(mcat).forEach(function (label) { if (mcat[label] != null) { publish.catLabels[String(label)] = String(mcat[label]); if (!publish.catMap[String(label)]) publish.catMap[String(label)] = String(mcat[label]); } });
+    return publish;
+  }
+  /* 一次性迁移：只在 sites.json 不存在时调用；之后不再读旧表/旧文件 */
+  function migrateLegacy() {
+    let db = null;
+    try { db = openDB(path.join(DIR, 'seedpod.db')); } catch (e) { return 0; }
+    try {
+      let rows = [];
+      try { rows = db.prepare('SELECT host, data FROM sites').all(); } catch (e) { rows = []; }
+      let hidden = [];
+      try {
+        const mr = db.prepare("SELECT v FROM meta WHERE k = 'site-config-meta'").get();
+        const meta = JSON.parse(mr ? mr.v : '{}') || {};
+        hidden = Array.isArray(meta.hidden) ? meta.hidden.map(cleanHost) : [];
+      } catch (e) { hidden = []; }
+      const defs = readLegacyDefs();
+      const search = readLegacySearch();
+      const maps = readLegacyMaps();
+      const sites = { version: VERSION, sites: {} };
+      const urls = { version: VERSION, sites: {} };
+      rows.forEach(function (r) {
+        const host = cleanHost(r.host);
+        if (!host) return;
+        let d = {}; try { d = JSON.parse(r.data) || {}; } catch (e) { d = {}; }
+        const def = defs[host] || {};
+        const se = search[host] || {};
+        const mp = maps[host] || {};
+        const base = String(def.base || d.url || '').replace(/\/+$/, '');
+        const publish = legacyPublish(def, mp);
+        const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
+        sites.sites[host] = {
+          name: String(d.title || def.title || host), nameZh: String(d.titleZh || d.cn || ''),
+          engine: String(def.engine || d.engine || '?'), urlRef: 'site-urls.json#' + host,
+          search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, cats: cats, types: Array.isArray(se.types) ? se.types : [] },
+          publish: publish, localEdited: false,
+          settings: normalizeSettings(Object.assign({}, d, { hidden: hidden.indexOf(host) >= 0 }))
+        };
+        if (base) urls.sites[host] = { base: b64(base), upload: b64(publish.upload.path), verify: b64(publish.verify.path) };
+      });
+      writeDoc(SITES_FILE, sites);
+      writeDoc(URLS_FILE, urls);
+      return Object.keys(sites.sites).length;
+    } finally { try { db.close(); } catch (e) { /* 已关 */ } }
+  }
   function ensureRuntime() {
-    let changed = false;
-    if (!fs.existsSync(SITES_FILE)) { writeDoc(SITES_FILE, docOf(SITES_FILE, SITES_PRESET)); changed = true; }
-    if (!fs.existsSync(URLS_FILE)) { writeDoc(URLS_FILE, docOf(URLS_FILE, URLS_PRESET)); changed = true; }
-    return changed;
+    const missSites = !fs.existsSync(SITES_FILE);
+    const missUrls = !fs.existsSync(URLS_FILE);
+    if (!missSites && !missUrls) return false;
+    if (missSites && missUrls) {
+      const n = migrateLegacy();
+      if (!n) {
+        writeDoc(SITES_FILE, readJson(SITES_PRESET, null) || { version: VERSION, sites: {} });
+        writeDoc(URLS_FILE, readJson(URLS_PRESET, null) || { version: VERSION, sites: {} });
+      }
+      return true;
+    }
+    if (missSites) writeDoc(SITES_FILE, readJson(SITES_PRESET, null) || { version: VERSION, sites: {} });
+    if (missUrls) writeDoc(URLS_FILE, readJson(URLS_PRESET, null) || { version: VERSION, sites: {} });
+    return true;
   }
   function siteDoc() { ensureRuntime(); return clone(docOf(SITES_FILE, SITES_PRESET)); }
   function urlDoc() { ensureRuntime(); return clone(docOf(URLS_FILE, URLS_PRESET)); }
@@ -146,9 +229,36 @@ function makeSiteStore(dataDir, opts) {
     if (!cur) return { ok: false, code: 'NOT_FOUND', message: '站点不存在' };
     return save(host, { settings: { hidden: !!hidden }, localEdited: true }, db);
   }
+  function legacyDef(host) {
+    const s = get(host);
+    if (!s) return null;
+    const catList = [];
+    Object.keys(s.search.cats || {}).forEach(function (label) {
+      (s.search.cats[label] || []).forEach(function (id) { catList.push({ id: String(id), label: String(label), purpose: String(label) }); });
+    });
+    return {
+      host: s.host, engine: s.engine, base: s.url.base,
+      searchPath: s.search.path, params: s.search.params || {},
+      cats: s.search.cats || {}, catList: catList, types: s.search.types || [],
+      upload: s.publish.upload || {}, verify: s.publish.verify || {},
+      catMap: s.publish.catMap || {}, catLabels: s.publish.catLabels || {},
+      enabled: s.settings.enabled !== false, hidden: s.settings.hidden === true
+    };
+  }
+  function targetDef(host) {
+    const s = get(host);
+    if (!s) return null;
+    return {
+      host: s.host, engine: s.engine, base: s.url.base,
+      upload: { path: s.publish.upload.path, formPath: s.publish.upload.formPath, fileField: s.publish.upload.fileField, fields: s.publish.upload.fields },
+      verify: { path: s.publish.verify.path },
+      catMap: Object.assign({}, s.publish.catMap || {}, s.publish.catLabels || {}),
+      catLabels: s.publish.catLabels || {}
+    };
+  }
   return {
     FILE: SITES_FILE, URL_FILE: URLS_FILE,
-    ensureRuntime: ensureRuntime, get: get, list: list, has: has,
+    ensureRuntime: ensureRuntime, migrateLegacy: migrateLegacy, legacyDef: legacyDef, targetDef: targetDef, get: get, list: list, has: has,
     save: save, add: add, remove: remove, setHidden: setHidden,
     _b64: b64, _unb64: unb64
   };

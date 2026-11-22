@@ -78,6 +78,31 @@ function need(c, m) { if (!c) throw new Error(m); }
       const r = store.save('../bad', {}, db);
       need(r.ok === false && r.code === 'BAD_HOST', '非法 host 没拦住：' + JSON.stringify(r));
     });
+    await check('legacyDef/targetDef 从旧表迁移后可用', async function () {
+      const LEG = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitestore-legacy-'));
+      try {
+        fs.mkdirSync(path.join(LEG, 'site-defs'), { recursive: true });
+        fs.writeFileSync(path.join(LEG, 'site-defs', 'legacy.example.json'), JSON.stringify({
+          engine: 'nexusphp', base: 'https://legacy.example', searchPath: '/torrents.php',
+          cats: { '电影': ['401'] },
+          upload: { path: '/takeupload.php', fileField: 'file', fields: { name: '{title}' } },
+          verify: { path: '/torrents.php?search={title}' },
+          catMap: [{ id: '999', label: '电影', purpose: 'movie' }]
+        }));
+        fs.writeFileSync(path.join(LEG, 'site-search.local.json'), JSON.stringify({ sites: { 'legacy.example': { cats: { '电影': ['401'] }, types: ['电影'] } } }));
+        fs.writeFileSync(path.join(LEG, 'site-maps.json'), JSON.stringify({ sites: { 'legacy.example': { cat: { '电影': '999' } } } }));
+        const ldb = openDB(path.join(LEG, 'seedpod.db'));
+        ldb.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?,?,?)').run('legacy.example', JSON.stringify({ title: 'Legacy', enabled: true, interval: 6 }), new Date().toISOString());
+        const lstore = makeSiteStore(LEG);
+        const def = lstore.legacyDef('legacy.example');
+        need(def && def.base === 'https://legacy.example' && def.types[0] === '电影', 'legacyDef 不对：' + JSON.stringify(def));
+        need(def.catList.some(function (x) { return x.id === '401'; }), 'catList 没生成');
+        const td = lstore.targetDef('legacy.example');
+        need(td && td.upload.path === '/takeupload.php' && td.catMap.movie === '999', 'targetDef 不对：' + JSON.stringify(td));
+        ldb.close();
+      } finally { fs.rmSync(LEG, { recursive: true, force: true }); }
+    });
+
   } finally {
     try { db.close(); } catch (e) { /* 已关 */ }
     try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }

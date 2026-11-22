@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.648 · 2026-11-23
+
+### site-store 迁移适配
+- site-store 增加 `legacyDef` / `targetDef`：把新 JSON 转成抓取/发布旧形状，作为切换前的适配层。
+- 首次缺少 `sites.json` 时从旧 sites/site-defs/site-search/site-maps 一次性迁移；之后不再读旧文件。
+- site-store 夹具 6/6：新增旧数据迁移、legacyDef/targetDef。
+- 抓取读取切换暂时撤回，保持线上旧逻辑可用；下一步按模块切换并补夹具。
+- 全量 run.sh 通过。
+
 ## v0.7.647 · 2026-11-23
 
 ### 生成运行时站点 JSON
