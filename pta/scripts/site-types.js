@@ -12,7 +12,7 @@ const path = require('path');
 const { openDB } = require('../server/db');
 const secretbox = require('../server/secretbox');
 const jsonFile = require('../server/json-file');
-const sitePack = require('../server/site-pack');
+const makeSiteStore = require('../server/site-store');
 const siteHidden = require('../server/site-hidden');
 const form = require('../server/form');
 const urlGuard = require('../server/url-guard');
@@ -58,16 +58,14 @@ function privateDef(host) {
   catch (e) { return null; }
 }
 function defOf(host) {
-  const built = sitePack.siteOf(host) || {};
-  const priv = privateDef(host) || {};
-  return Object.assign({}, built, priv);
+  return makeSiteStore(DATA).legacyDef(host) || {};
 }
 function labelsFromSearch(entry) {
   const cats = entry && entry.cats && typeof entry.cats === 'object' ? entry.cats : {};
   return Object.keys(cats).filter(function (k) { return Array.isArray(cats[k]) && cats[k].length; });
 }
 function labelsFromPack(host) {
-  const def = sitePack.siteOf(host);
+  const def = defOf(host);
   if (!def || !Array.isArray(def.catList)) return [];
   return def.catList.map(function (x) { return String((x && (x.label || x.purpose)) || ''); }).filter(Boolean);
 }

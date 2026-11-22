@@ -6,10 +6,10 @@ const path = require('path');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitetypes-'));
 process.env.PTA_DATA = DATA;
-process.env.PTA_DISABLE_SITE_PACK = '1';
 const { openDB } = require('../server/db');
 const secretbox = require('../server/secretbox');
 const { collectFromCategories, parseCategories, probeOne, applyTypes } = require('../scripts/site-types');
+const makeSiteStore = require('../server/site-store');
 
 const results = [];
 function check(name, fn) {
@@ -78,6 +78,7 @@ const server = http.createServer(function (req, res) {
       fs.writeFileSync(path.join(DATA, 'site-defs', 'limited.example.json'), JSON.stringify({ engine: 'nexusphp', base: base, upload: { formPath: '/limited.php' } }));
       db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?,?,?)').run('limited.example', JSON.stringify({ enabled: true }), new Date().toISOString());
       db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?,?,?)').run('limited.example', secretbox.encrypt('sid=x', key.key), new Date().toISOString());
+      makeSiteStore(DATA).save('limited.example', { engine: 'nexusphp', url: { base: base }, search: { path: '/limited.php' }, settings: { enabled: true } }, db);
       const r = await probeOne(db, key, 'limited.example');
       need(r.status === 'RATE_LIMITED' && r.requests === 1, '403 没停：' + JSON.stringify(r));
     });

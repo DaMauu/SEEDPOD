@@ -26,13 +26,13 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 ## 铁律（违反即为错误，不要协商）
 
 1. 真实站点只读探测按下方《真实站点探测规则》执行；仍不得自己找 cookie、不得复用别人的 cookie 登录、不得压测或绕过限制。抓取默认先干跑或本地夹具，真实探测必须先有计划。旧规则里“不对真实站点做探测”的绝对表述由该规则取代，其余限制继续有效。
-2. 真实站点网址、host、cookie、密码、passkey、上传 token 只允许以 AES-256-GCM 加密形式存在（站点包 `pta/pack/site-pack.enc`），密钥只放部署环境变量 `PTA_SITE_PACK_KEY`，不得与密文同库；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 可以明文用于预设目录和界面。添加站点只能从预设选择，网址由服务端解密后内部使用，不允许手输网址。聊天回复仍不写网址；凭据、cookie、密码、服务器 IP 绝不入仓库、不进提交、不写进回复。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
+2. 真实站点网址用 Base64 存 `pta/pack/site-urls.preset.json` / 运行时 `data/site-urls.json`，可随仓库和镜像分发；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 明文放 `sites.preset.json` / `sites.json`。Base64 只是遮挡，不是加密。cookie、密码、passkey、上传 token 仍只存 AES-256-GCM 密文，绝不入仓库、不进提交、不写进回复；聊天回复仍不写网址。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
 4. 站点凭据只存密文：SQLite `data/seedpod.db` 的 credentials 表 + AES-256-GCM，接口只回 `hasCookie`。
 5. 提交前必须 `pta/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 已删除，避免同一功能两套实现。
-8. 站点包随程序发布，用户不单独下载；私有 `data/site-defs` / `data/site-pack.json` 优先覆盖内置包。详见 `pta/docs/SITE-PACK.md`。
+8. 站点定义随程序发布：镜像带 `pta/pack/sites.preset.json` / `site-urls.preset.json` / `cookies.example.json`，首次启动复制到 `/data`；运行时只读写 `data/sites.json`、`site-urls.json`、`cookies.json`。旧 `site-defs` / `site-pack` 流程已删除。详见 `pta/docs/SITE-JSON.md`。
 9. 质量审计固定进 `pta/checks/run.sh`：全库看 `pta/quality-baseline.json` 防回退；单文件/单功能先跑对应 scope；有「D」先修，不能带「D」提交。详见 `pta/docs/QUALITY.md`。
 
 ## 真实站点探测规则（2026-11-25 起）
@@ -100,7 +100,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 
 - Agent skills（自动/显式均可）：@review 审查 · @build 实现 · @debug 修复 · @refactor 拆分 · @test 测试 · @ui 界面 · @site 站点 · @db 数据层 · @security 安全 · @ship 发版
 
-- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 23 → form 5 → site-pack 5 → publish 4 → scheduler 5 → detect 5 → target 10 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 质量审计 → 规则体检）
+- 开发与运行以 Linux 为准，本机命令用 Bash；检查脚本 `pta/checks/run.sh`（build → smoke-live 21 → adapter 21 → security 3 → api-v2 23 → form 5 → publish 4 → scheduler 5 → detect 5 → target 10 → meta 11 → meta-ext 5 → media 7 → media-api 6 → clients 5 → clients-ext 4 → cli 7 → notify 7 → web 7 → 质量审计 → 规则体检）
 - 改完：跑检查 → 提交（信息用中文一句话，说清做了什么）→ 发版 → 线上探活 → 更新 HANDOFF.md
 - 改完先跑 `node pta/scripts/audit-quality.js --feature <name>`（单文件用 `--file`）；看「D」项和发现清单，再跑全量 `run.sh`
 - 一段工作结束就把 HANDOFF.md 的「现在是什么状态」改成事实，不要留旧数字

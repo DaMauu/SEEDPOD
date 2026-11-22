@@ -1,7 +1,6 @@
 /* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
    旧 server/app.js 已删除，只保留 v2。 */
 const path = require('path');
-const sitePack = require('./site-pack');
 const secretbox = require('./secretbox');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -196,7 +195,6 @@ async function build() {
       version: VERSION, devDate: DEV_DATE, node: process.version,
       stack: { front: FRONT_STACK, back: BACK_STACK },
       counts: Object.assign(counts(), { pages: PAGE_COUNT, endpoints: ENDPOINT_COUNT }),
-      pack: sitePack.status(),
       crypto: secretbox.status(DATA_DIR)
     }
   }));
@@ -385,7 +383,6 @@ async function build() {
   require('./routes-crawl')(app, ctx);
   require('./routes-tasks')(app, ctx);
   require('./routes-misc')(app, ctx);
-  require('./routes-site-pack')(app, ctx);
   require('./routes-publish')(app, ctx);
   require('./routes-release')(app, ctx);
   require('./routes-target')(app, ctx);

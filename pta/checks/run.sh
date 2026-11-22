@@ -56,8 +56,6 @@ run api api-v2.js
 run form form.js
 run catalog-bulk catalog-bulk.js
 run catalog-item catalog-item.js
-run site-pack site-pack.js
-run site-pack-concurrency site-pack-concurrency.js
 run backup backup.js
 run day-boundary day-boundary.js
 run backup-concurrency backup-concurrency.js

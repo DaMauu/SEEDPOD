@@ -25,7 +25,6 @@ live.exec('PRAGMA journal_mode=WAL');
 live.exec('CREATE TABLE queue (id TEXT PRIMARY KEY, title TEXT)');
 live.prepare('INSERT INTO queue(id, title) VALUES(?, ?)').run('q_0001', 'G6 Backup Persist');
 fs.writeFileSync(path.join(SRC, '.secret'), 'test-secret');
-fs.writeFileSync(path.join(SRC, 'site-pack.json'), '{"sites":{"example.org":{"catMap":{"movie":"1"}}}}');
 fs.writeFileSync(path.join(SRC, 'cookies.json'), '{"version":1,"cookies":{"example.org":{"cookie":"v2:fixture"}}}');
 fs.writeFileSync(path.join(SRC, 'site-defs', 'example.org.json'), '{"engine":"nexusphp"}');
 fs.writeFileSync(path.join(SRC, 'events.log'), 'should-not-be-in-backup');
@@ -55,7 +54,6 @@ check('恢复到空目录并校验内容', function () {
   need(row && row.title === 'G6 Backup Persist', 'db/WAL 内容不对：' + JSON.stringify(row));
   need(read(path.join(DST, '.secret')) === 'test-secret', '密钥内容不对');
   need(read(path.join(DST, 'cookies.json')).indexOf('v2:fixture') > 0, 'cookies.json 没恢复');
-  need(read(path.join(DST, 'site-pack.json')).indexOf('example.org') > 0, '私有包内容不对');
   need(read(path.join(DST, 'site-defs', 'example.org.json')).indexOf('nexusphp') > 0, '站点定义内容不对');
   need((fs.statSync(path.join(DST, 'seedpod.db')).mode & 0o777) === 0o600, '恢复后 db 权限不是 0600');
 });

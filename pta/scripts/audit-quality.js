@@ -50,7 +50,6 @@ const FEATURES = {
   metadata: ['pta/server/meta.js', 'pta/server/meta-ext.js', 'pta/server/routes-misc.js'],
   media: ['pta/server/media.js', 'pta/server/routes-media.js'],
   clients: ['pta/server/clients/watch.js', 'pta/server/clients/rtorrent.js', 'pta/server/clients/deluge.js', 'pta/server/routes-qb.js'],
-  'site-pack': ['pta/server/site-pack.js', 'pta/scripts/build-site-pack.js', 'pta/checks/site-pack.js'],
   auth: ['pta/server/app-fastify.js', 'pta/server/routes-data.js', 'pta/server/security.js']
 };
 const PROJECTS = {
@@ -63,7 +62,7 @@ const REQUIRED_DOCS = [
   'AGENTS.md', 'CHECKLIST.md', 'HANDOFF.md', 'CHANGELOG.md',
   'pta/docs/DELIVERY.md', 'pta/docs/DESIGN.md', 'pta/docs/DECISIONS.md',
   'pta/docs/ROADMAP.md', 'pta/docs/RULES-TREE.md', 'pta/docs/RULES-RECONCILIATION.md',
-  'pta/docs/SITE-PACK.md', 'pta/docs/UPSTREAM.md', 'pta/docs/QUALITY.md'
+  'pta/docs/SITE-JSON.md', 'pta/docs/COOKIE-FILE.md', 'pta/docs/UPSTREAM.md', 'pta/docs/QUALITY.md'
 ];
 
 function rel(p) { return path.relative(REPO, p).split(path.sep).join('/'); }

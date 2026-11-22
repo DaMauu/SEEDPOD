@@ -214,20 +214,6 @@ module.exports = async function run(ctx) {
     need(no.status === 422, '没有表单时应返回 422，实际 ' + no.status);
   });
 
-  await check('站点包状态与例外门禁', async () => {
-    const j = await (await fetchA(BASE + '/api/site-pack')).json();
-    need(j.ok && j.data.available === false, '无密钥时应不可用：' + JSON.stringify(j.data && { available: j.data.available, reason: j.data.reason }));
-    need(j.data.reason === 'NO_KEY', '缺密钥原因不对：' + j.data.reason);
-    need(Array.isArray(j.data.purposes) && j.data.purposes.length > 0, '用途列表缺失');
-    const bad = await fetchA(BASE + '/api/site-pack/exception', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ host: '../x', id: '1', purpose: 'movie' })
-    });
-    need(bad.status === 400, '坏 host 状态码是 ' + bad.status);
-    const bj = await bad.json();
-    need(bj.error && bj.error.code === 'BAD_HOST', '坏 host 错误码不对：' + JSON.stringify(bj));
-  });
-
   await check('站点覆盖统计接口', async () => {
     const j = await (await fetchA(BASE + '/api/coverage')).json();
     need(j.ok && typeof j.data.total === 'number', '覆盖接口结构不对：' + JSON.stringify(j));

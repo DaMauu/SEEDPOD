@@ -24,7 +24,6 @@
       @selfcheck="selfcheckAll"
       @hidden="hiddenOpen = true"
       @add="openAddSite"
-      @pack="packOpen = true"
     />
 
     <SitesList
@@ -60,18 +59,6 @@
     />
 
     <Teleport to="body">
-      <div v-if="packOpen" class="modal-mask" id="site-pack-modal">
-        <div class="modal wide">
-          <div class="modal-head">
-            <h2>站点包与覆盖</h2>
-            <button class="btn ghost slim" type="button" @click="packOpen = false">关闭</button>
-          </div>
-          <div class="modal-scroll pack-modal-body">
-            <SitePackPanel />
-            <SiteCoveragePanel />
-          </div>
-        </div>
-      </div>
       <div v-if="hiddenOpen" class="modal-mask" id="hidden-sites-modal">
         <div class="modal">
           <div class="modal-head">
@@ -101,8 +88,6 @@ import SitesStats from '../components/SitesStats.vue'
 import SitesModals from '../components/SitesModals.vue'
 import SitesList from '../components/SitesList.vue'
 import SiteDetail from '../components/SiteDetail.vue'
-import SitePackPanel from '../components/SitePackPanel.vue'
-import SiteCoveragePanel from '../components/SiteCoveragePanel.vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 
@@ -125,7 +110,6 @@ const picks = ref([])
 const page = ref(1)
 const sel = ref(null)
 const detailNonce = ref(0)
-const packOpen = ref(false)
 const hiddenOpen = ref(false)
 const addOpen = ref(false)
 const addForm = reactive({ url: '', arch: '?', title: '' })
@@ -498,7 +482,7 @@ function onKey(e) {
 .sites-panel { flex: 0 0 auto; }
 .sites-rows { flex: 0 0 auto; max-height: none; overflow: visible; }
 }
-.pack-modal-body { display: flex; flex-direction: column; gap: 12px; max-height: 70vh; }
+
 
 /* ===== 右侧站点详情：概览在上、设置在下，占满卡片 ===== */
 .sites-wrap :deep(.sites-detail-pane) { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #fff; }

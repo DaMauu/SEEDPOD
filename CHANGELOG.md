@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.653 · 2026-11-23
+
+### 删除旧站点包流程
+- 删除 `site-pack.enc`、`PTA_SITE_PACK_KEY`、`site-pack.js/admin/routes`、构建脚本、UI 站点包面板、site-pack 检查与文档。
+- 生产 `/data` 已删除 `site-defs/`、`site-search.local.json`、`site-maps.json`、`site-pack.json`；`sites`/`credentials` 表数据清空。
+- 运行时只剩 `sites.json`、`site-urls.json`、`cookies.json`、`seedpod.db`。
+- health 计数改读站点 JSON / cookie 文件；全量 run.sh 通过。
+
 ## v0.7.652 · 2026-11-23
 
 ### 完成站点 JSON 读取切换

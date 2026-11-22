@@ -431,18 +431,6 @@ async function main() {
     await page.waitForTimeout(400);
   });
 
-  await check('站点页站点包入口', async () => {
-    await page.evaluate(() => { location.hash = '#sites'; });
-    await page.waitForTimeout(800);
-    await page.locator('#sites-pack-open').click();
-    await page.waitForTimeout(600);
-    need(await page.locator('#site-pack-modal').isVisible(), '站点包弹窗没打开');
-    const txt = await page.locator('#site-pack-modal').innerText();
-    need(/站点包/.test(txt) && /未解密/.test(txt), '站点包弹窗内容不对：' + txt.slice(0, 200));
-    need(/站点覆盖/.test(txt), '站点覆盖卡不在弹窗里');
-    await page.locator('#site-pack-modal .modal-head button').filter({ hasText: '关闭' }).click();
-  });
-
   await check('调度 API 默认关闭、可开关', async () => {
     const j = await page.evaluate(async () => (await fetch('/api/scheduler')).json());
     need(j.ok && j.data.on === false && j.data.everyMinutes === 60, JSON.stringify(j.data));

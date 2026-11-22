@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-22T03:54:01.931Z",
+  "at": "2026-11-22T09:17:14.200Z",
   "files": {
     "App.vue": "fe0896639d16a401",
     "components/CrawlCard.vue": "7a23304c538747c5",
@@ -10,14 +10,12 @@
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "ea5e921926989002",
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
-    "components/SiteCoveragePanel.vue": "6f9e111efece33e4",
     "components/SiteDetail.vue": "06a60630363227a3",
     "components/SiteMapModal.vue": "9471c276022f55a1",
-    "components/SitePackPanel.vue": "347818fb52855af5",
     "components/SitesList.vue": "e9877741718ad13f",
     "components/SitesModals.vue": "edb19f29bcccb0ff",
     "components/SitesStats.vue": "de6b60ac622f3fdd",
-    "components/SitesToolbar.vue": "ece705e4d7857516",
+    "components/SitesToolbar.vue": "0737d03b2a3b631c",
     "components/TargetPickerModal.vue": "7553c808796e7707",
     "styles/00-base.css": "aa3f1b3c06d06d0e",
     "styles/01-shell.css": "1b08a80168bef1f7",
@@ -39,7 +37,7 @@
     "views/Nodes.vue": "92eff546c133a052",
     "views/Queue.vue": "5460a6850535b2a6",
     "views/Settings.vue": "4936aa145992ed28",
-    "views/Sites.vue": "861532a14dc442e1",
+    "views/Sites.vue": "a726e41d291e5134",
     "views/Sources.vue": "9de40ece3d999682"
   }
 }
