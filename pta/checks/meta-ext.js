@@ -4,6 +4,7 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const { fetchMeta, providers, doubanSearch, douying } = require(path.join(ROOT, 'server', 'meta-ext.js'));
+const { makeMetaFill } = require(path.join(ROOT, 'server', 'meta-fill.js'));
 const results = [];
 
 function check(name, fn) {
@@ -20,6 +21,7 @@ function listen(handler) {
 }
 
 let redirectedTo = 0;
+let imgHits = 0;
 
 async function main() {
   const mock = await listen(function (req, res) {
@@ -32,6 +34,7 @@ async function main() {
       return;
     }
     if (u.pathname === '/followed') { redirectedTo++; res.end('{}'); return; }
+    if (u.pathname.indexOf('/img/') === 0) { imgHits++; res.writeHead(200, { 'content-type': 'image/png' }); res.end('x'); return; }
     if (u.pathname.endsWith('/w/api.php')) {
       if (u.searchParams.get('list') === 'search') {
         res.end(JSON.stringify({ query: { search: [{ pageid: 1, title: 'The Matrix' }] } }));
@@ -141,6 +144,17 @@ async function main() {
       need(/跳转/.test(err), '豆影 302 没报错：' + err);
     } finally { process.env.PTA_DOUYING_API = prevY; }
     need(redirectedTo === 0, '302 之后仍跟了过去：' + redirectedTo);
+  });
+
+  await check('简介回填不抓源简介里的远程图片', async function () {
+    imgHits = 0;
+    const mf = makeMetaFill({ one: function () { return { v: '{}' }; } });
+    const src = '本地简介\n[img]http://127.0.0.1:' + mock.base.split(':').pop() + '/img/keep.png[/img]';
+    const item = { title: 'The Matrix', year: 1999, intro: src, descrBb: src };
+    const r = await mf.fillMeta(item);
+    need(r.ok === true, '简介回填失败：' + JSON.stringify(r));
+    need(item.descrBb.indexOf('/img/keep.png') >= 0, '源截图被丢了');
+    need(imgHits === 0, '简介回填去抓了远程图片：' + imgHits);
   });
 
   await check('providers 只回 bool，不回 key', async function () {

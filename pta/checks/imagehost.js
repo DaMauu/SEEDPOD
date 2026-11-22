@@ -338,6 +338,20 @@ async function main() {
     need(!r.ok && r.failed === 1 && r.uploaded === 0, '内网地址没拦住：' + JSON.stringify({ ok: r.ok, failed: r.failed }));
   });
 
+  await check('图源页面域名解析到内网时不抓', async function () {
+    const real = dns.promises.lookup;
+    dns.promises.lookup = async function (h) {
+      if (String(h || '').toLowerCase() === 'img-rebind.example') return [{ address: '10.0.0.9', family: 4 }];
+      return real(h);
+    };
+    const before = hits;
+    try {
+      const r = await imagehost.resolveImageSource('http://img-rebind.example/page');
+      need(!r.ok && /内网|解析/.test(String(r.err || '')), '内网图源没拦住：' + JSON.stringify(r));
+      need(hits === before, '拦住后仍发了请求：' + (hits - before));
+    } finally { dns.promises.lookup = real; }
+  });
+
   await check('Chevereto 网页登录上传（无 API key）', async function () {
     process.env.IMAGE_HOST_PROVIDER = 'chevereto';
     process.env.IMAGE_HOST_URL = 'http://127.0.0.1:' + port + '/';
