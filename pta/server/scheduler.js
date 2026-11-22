@@ -21,13 +21,13 @@ function makeScheduler(ctx, deps) {
   const metaFill = makeMetaFill(ctx);
   let timer = null;
   let running = false;
-  const schedulerState = makeSchedulerState({ one: one, jparse: jparse, db: ctx.db, isRunning: function () { return running; } });
+  const schedulerState = makeSchedulerState({ one: one, jparse: jparse, db: ctx.db, DATA_DIR: ctx.DATA_DIR, isRunning: function () { return running; } });
   const { read, save, status, set, readFails, saveFails, bumpSiteFail, resetSiteFail } = schedulerState;
 
   const runCrawlPhase = makeCrawlPhase();
   const runScreenPhase = makeScreenPhase();
   const runDedupePhase = makeDedupePhase();
-  const runReviewPhase = makeReviewPhase({ one: one, all: all, jparse: jparse, target: target, targetService: targetService, metaFill: metaFill, release: deps.release });
+  const runReviewPhase = makeReviewPhase({ one: one, all: all, jparse: jparse, target: target, targetService: targetService, metaFill: metaFill, release: deps.release, DATA_DIR: ctx.DATA_DIR });
   const runPublishPhase = makePublishPhase({});
   const { runCrossseedPhase, runRetryPhase } = makeRetryPhases();
   async function runNow(opts) {
@@ -61,7 +61,7 @@ function makeScheduler(ctx, deps) {
     try {
       try {
       failpoint('crawl');
-      steps.crawl = await runCrawlPhase({ db: ctx.db, one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want, logEvent: ctx.logEvent });
+      steps.crawl = await runCrawlPhase({ db: ctx.db, DATA_DIR: ctx.DATA_DIR, one: one, all: all, jparse: jparse, crawl: deps.crawl, allowReal: ctx.allowReal, bumpSiteFail: bumpSiteFail, resetSiteFail: resetSiteFail, want: want, logEvent: ctx.logEvent });
       steps.hooksCrawl = await pipeline.run('crawl', ctx, steps);
       } catch (e) { phaseError('crawl', e); }
 

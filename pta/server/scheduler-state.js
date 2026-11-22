@@ -58,16 +58,10 @@ function bumpSiteFail(host, reason) {
     cur.reason = String(reason || '').slice(0, 200);
     map[host] = cur;
     saveFails(map);
-    if (cur.n >= limit) {
-      const row = one('SELECT data FROM sites WHERE host = ?', host);
-      if (row) {
-        const d = jparse(row.data) || {};
-        if (d.enabled !== false) {
-          d.enabled = false;
-          d.pausedAt = cur.at;
-          d.pauseReason = '连续失败 ' + cur.n + ' 次';
-          db.prepare('UPDATE sites SET data = ?, updated_at = ? WHERE host = ?').run(JSON.stringify(d), cur.at, host);
-        }
+    if (cur.n >= limit && siteStore) {
+      const rec = siteStore.get(host);
+      if (rec && rec.settings.enabled !== false) {
+        siteStore.save(host, { settings: { enabled: false, pausedAt: cur.at, pauseReason: '连续失败 ' + cur.n + ' 次' } }, db);
       }
     }
   }

@@ -1,5 +1,4 @@
 /* 站点映射总表接口：读/写 data/site-maps.json，按上传表单自动识别分类。 */
-const siteMaps = require('./site-maps');
 
 const CAT = [
   ['电影', /电影|movie|film|影片|影\s*片|cinema/i],
@@ -25,6 +24,15 @@ const CAT = [
   ['其他', /其他|其它|other|misc|图片|unknown|待定|uncategorised|all\s*categories|choose|select|^[-—]+$/i]
 ];
 
+function cleanMap(obj, max) {
+  const out = {};
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
+  Object.keys(obj).slice(0, max || 200).forEach(function (k) {
+    const key = String(k || '').trim(); const val = String(obj[k] == null ? '' : obj[k]).trim();
+    if (key && val) out[key] = val;
+  });
+  return out;
+}
 function pickField(fields, names, labelRe) {
   const list = Array.isArray(fields) ? fields : [];
   return list.filter(function (f) {
@@ -72,7 +80,10 @@ module.exports = function (app, ctx) {
   app.put('/api/maps/:host', async (req, reply) => {
     try {
       const host = String(req.params.host || '').toLowerCase();
-      const saved = siteMaps.setHost(DATA_DIR, host, req.body || {});
+      if (!/^[a-z0-9][a-z0-9.-]*$/.test(host)) throw new Error('站点名不合法');
+      const body = req.body || {};
+      const saved = { cat: cleanMap(body.cat), team: cleanMap(body.team) };
+      if (body.form && typeof body.form === 'object') saved.form = body.form;
       const cur = siteStore.get(host);
       if (cur) {
         const publish = Object.assign({}, cur.publish, {

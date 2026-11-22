@@ -8,6 +8,7 @@ const urlGuard = require('./url-guard');
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
+  const siteStore = require('./site-store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const STATUS_FILE = path.join(DATA_DIR, 'site-status.json');
 
@@ -15,7 +16,7 @@ module.exports = function (app, ctx) {
   function writeStatus(host, rec) {
     try { const all2 = readStatus(); all2[host] = rec; jsonFile.writeAtomic(STATUS_FILE, all2, 0o600); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
   }
-  function readDef(host) { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } }
+  function readDef(host) { return siteStore.legacyDef(host); }
   function cred(host) {
     const c = cookieStore.get(host);
     return c.cookie || '';

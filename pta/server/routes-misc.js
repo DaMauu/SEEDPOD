@@ -17,8 +17,8 @@ const { tx } = require('./db');
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
-  const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
-  const readPreset = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
+  const siteStore = require('./site-store')(DATA_DIR);
+  const readPreset = () => { const out = {}; siteStore.list().forEach(function (s) { out[s.host] = { engine: s.engine, cats: s.search.cats || {}, types: s.search.types || [], source: 'site-json', confirmed: true }; }); return out; };
   const errorStats = makeErrorStats(ctx);
   const failureQueue = makeFailureQueue(ctx);
   const targetService = makeTargetService(ctx, makeTarget(ctx));

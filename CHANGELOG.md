@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.652 · 2026-11-23
+
+### 完成站点 JSON 读取切换
+- `routes-crawl`、`routes-probe`、`routes-misc`、`target-submit`、`scheduler-state`、`scheduler-review` 全部改读 `site-store`。
+- 站点分类/类型/筛选写 `sites.json`，不再写 `site-search.local.json`；映射写 `sites.json`，不再写 `site-maps.json`。
+- health 计数改用 `sites.json` / `cookies.json`；`sites`/`credentials` 表不再参与运行时。
+- 生产 `--check` 0 差异；全量 run.sh 通过。
+
 ## v0.7.651 · 2026-11-23
 
 ### 面板与初筛切到站点 JSON

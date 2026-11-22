@@ -1,6 +1,7 @@
 /* 终审阶段：补齐、查缺、判定 ready/hold，写入 review 状态。 */
 const flowConfig = require('./flow-config');
 function makeReviewPhase(deps) {
+  const siteStore = deps.DATA_DIR ? require('./site-store')(deps.DATA_DIR) : null;
   const { one, all, jparse, target, targetService, metaFill, release } = deps;
   return async function runReviewPhase(o) {
     const { want, batch, ctx } = o;
@@ -20,9 +21,8 @@ function makeReviewPhase(deps) {
         const pre = jparse(row.data) || {};
         /* 缺源站 BBCode 简介：回源站详情页取一次，每轮最多 2 条、间隔 6 秒 */
         if (!String(pre.descrBb || '').trim() && pre.detailsUrl && pre.site && detailTries < 2) {
-          const srow = one('SELECT data FROM sites WHERE host = ?', String(pre.site).toLowerCase());
-          const sd = srow ? (jparse(srow.data) || null) : null;
-          if (!sd || sd.enabled !== false) {
+          const rec = siteStore ? siteStore.get(pre.site) : null;
+          if (!rec || (rec.settings.enabled !== false && rec.settings.hidden !== true)) {
             if (detailTries > 0) await new Promise(function (r) { setTimeout(r, 6000); });
             detailTries++;
             let di = null;

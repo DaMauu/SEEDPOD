@@ -124,7 +124,7 @@ function makeCrawl(ctx) {
     const ids = catMap.length ? (hasCat ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : catMap.map(function (x) { return x.id; })) : [];
     let url0 = adapters.buildSearchUrl(def, '', ids);
     try {
-      const flt = {};
+      const flt = def.filters || {};
       const sv = (flt && flt.selectedValues) || {};
       if (Object.keys(sv).length) {
         const u = new URL(url0);
@@ -208,7 +208,7 @@ function makeCrawl(ctx) {
 
     /* 媒介/分辨率：站点搜索页不支持参数时，抓完按标题本地过滤 */
     try {
-      const flt = {};
+      const flt = def.filters || {};
       const labels = (flt && flt.selectedLabels) || {};
       const MEDIA = {
         '原盘': /full\s*disc|bdmv|blu-?ray\s*iso|\biso\b|原盘/i,

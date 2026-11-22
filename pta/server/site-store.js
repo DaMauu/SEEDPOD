@@ -126,7 +126,7 @@ function makeSiteStore(dataDir, opts) {
         sites.sites[host] = {
           name: String(d.title || def.title || host), nameZh: String(d.titleZh || d.cn || ''),
           engine: String(def.engine || d.engine || '?'), urlRef: 'site-urls.json#' + host,
-          search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, types: Array.isArray(se.types) ? se.types : [] },
+          search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, types: Array.isArray(se.types) ? se.types : [], filters: (mp && mp.filters) || {} },
           publish: publish, localEdited: false,
           settings: (function () {
             const st = normalizeSettings(Object.assign({}, d, { hidden: hidden.indexOf(host) >= 0 }));
@@ -264,7 +264,7 @@ function makeSiteStore(dataDir, opts) {
     });
     return {
       host: s.host, engine: s.engine, base: s.url.base,
-      searchPath: s.search.path, params: s.search.params || {}, catMode: s.search.catMode || 'single', catSlot: s.search.catSlot || '',
+      searchPath: s.search.path, params: s.search.params || {}, catMode: s.search.catMode || 'single', catSlot: s.search.catSlot || '', filters: s.search.filters || {},
       cats: s.search.cats || {}, catList: catList, types: s.search.types || [],
       upload: s.publish.upload || {}, verify: s.publish.verify || {},
       catMap: s.publish.catMap || {}, catLabels: s.publish.catLabels || {},

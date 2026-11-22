@@ -126,7 +126,8 @@ function main() {
         catMode: String(def.catMode || 'single'),
         catSlot: String(def.catSlot || ''),
         cats: cats,
-        types: Array.isArray(se.types) ? se.types : []
+        types: Array.isArray(se.types) ? se.types : [],
+        filters: (mp && mp.filters) || {}
       },
       publish: publish,
       localEdited: false

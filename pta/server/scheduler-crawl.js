@@ -15,12 +15,17 @@ function makeCrawlPhase() {
           const stateRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
           const crawlState = JSON.parse(stateRow ? stateRow.v : 'null') || {};
           const nowMs = Date.now();
-          const hidden = siteHidden.list(db);
-          const allSites = all('SELECT host, data FROM sites').map(function (r) { return Object.assign({}, jparse(r.data) || {}, { host: r.host }); })
+          const siteStore = o.DATA_DIR ? require('./site-store')(o.DATA_DIR) : null;
+          const hidden = siteStore ? [] : siteHidden.list(db);
+          const source = siteStore ? siteStore.list().map(function (x) {
+            return { host: x.host, enabled: x.settings.enabled !== false && x.settings.hidden !== true, priority: x.settings.priority || 'normal', data: {} };
+          }) : all('SELECT host, data FROM sites').map(function (r) { return Object.assign({}, jparse(r.data) || {}, { host: r.host }); });
+          const allSites = source
             .filter(function (x) { return x && x.enabled !== false && x.host && hidden.indexOf(String(x.host).toLowerCase()) < 0; })
             .map(function (x) {
               const rec = crawlState[x.host] || {};
-              return Object.assign(x, { lastAt: Number(rec.lastAt) || 0, priority: Number(x.priority) || 0 });
+              const p = x.priority === 'high' ? 2 : (x.priority === 'low' ? 0 : 1);
+              return Object.assign(x, { lastAt: Number(rec.lastAt) || 0, priority: Number(p) || 0 });
             })
             .sort(function (a, b) { return (b.priority - a.priority) || (a.lastAt - b.lastAt) || a.host.localeCompare(b.host); });
           const due = allSites.filter(function (x) { return !x.lastAt || nowMs - x.lastAt >= gapMs; });

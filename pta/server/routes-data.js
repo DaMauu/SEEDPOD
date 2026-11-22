@@ -1,7 +1,6 @@
 /* 站点、凭据、日志与站点定义接口（Fastify v2）。 */
 const path = require('path');
 const fs = require('fs');
-const jsonFile = require('./json-file');
 const siteHidden = require('./site-hidden');
 
 module.exports = function (app, ctx) {
@@ -99,19 +98,16 @@ module.exports = function (app, ctx) {
     try { u = new URL(raw); } catch (e) { return bad(reply, 'BAD_URL', '站点地址格式不对'); }
     const host = u.hostname.replace(/^www\./i, '');
     if (!/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '站点域名不合法');
-    const prev = one('SELECT data FROM sites WHERE host = ?', host);
-    const cfg = prev ? (jparse(prev.data) || {}) : {};
-    const arch = ['NP', 'UNIT3D', 'GZ', 'OTHER', '?'].indexOf(b.arch) >= 0 ? b.arch : (cfg.arch || '?');
-    const next = Object.assign({}, cfg, {
-      url: u.origin + (u.pathname && u.pathname !== '/' ? u.pathname.replace(/\/+$/, '') : ''),
-      arch: arch,
-      title: String(b.title || cfg.title || host).slice(0, 80),
-      added: cfg.base === true ? cfg.added === true : true
-    });
-    /* 重新添加同一域名等于恢复；基础站的 base 标记保留 */
+    const prevRec = siteStore.get(host);
+    const arch = ['NP', 'UNIT3D', 'GZ', 'OTHER', '?'].indexOf(b.arch) >= 0 ? b.arch : archOf(prevRec && prevRec.engine);
+    const next = { url: u.origin + (u.pathname && u.pathname !== '/' ? u.pathname.replace(/\/+$/, '') : ''),
+      arch: arch, title: String(b.title || (prevRec && prevRec.name) || host).slice(0, 80), added: true };
+    /* DB 表只作测试/迁移镜像；运行时以 sites.json 为准 */
     siteHidden.remove(db, host);
-    db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
-      .run(host, JSON.stringify(next), now());
+    try {
+      db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
+        .run(host, JSON.stringify(next), now());
+    } catch (e) { /* 表已删除时忽略 */ }
     if (siteStore.has(host)) {
       siteStore.setHidden(host, false, db);
     } else {
@@ -124,8 +120,7 @@ module.exports = function (app, ctx) {
 
   app.delete('/api/sites/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
-    const row = one('SELECT data FROM sites WHERE host = ?', host);
-    if (!row) return bad(reply, 'NOT_FOUND', '站点不存在', 404);
+    if (!siteStore.has(host)) return bad(reply, 'NOT_FOUND', '站点不存在', 404);
     siteHidden.add(db, host);
     cookieStore.remove(host, db);
     siteStore.setHidden(host, true, db);
@@ -135,8 +130,7 @@ module.exports = function (app, ctx) {
 
   app.post('/api/sites/:host/restore', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
-    const row = one('SELECT data FROM sites WHERE host = ?', host);
-    if (!row) return bad(reply, 'NOT_FOUND', '站点不在面板里，先重新添加', 404);
+    if (!siteStore.has(host)) return bad(reply, 'NOT_FOUND', '站点不在面板里，先重新添加', 404);
     const changed = siteHidden.remove(db, host);
     if (siteStore.has(host)) siteStore.setHidden(host, false, db);
     if (changed) logEvent('info', '站点', '恢复基础站点 · ' + host);
@@ -153,11 +147,16 @@ module.exports = function (app, ctx) {
   app.put('/api/site-config/:host', async (req, reply) => {
     const host = req.params.host;
     if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '站点域名不合法');
-    const cur = one('SELECT data FROM sites WHERE host = ?', host);
-    const prev = cur ? jparse(cur.data) : {};
+    let prev = {};
+    try {
+      const cur = one('SELECT data FROM sites WHERE host = ?', host);
+      prev = cur ? jparse(cur.data) : {};
+    } catch (e) { prev = {}; }
     const next = Object.assign({}, prev, req.body || {});
-    db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
-      .run(host, JSON.stringify(next), now());
+    try {
+      db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
+        .run(host, JSON.stringify(next), now());
+    } catch (e) { /* 表已删除时忽略 */ }
     const sk = ['enabled', 'interval', 'priority', 'note', 'override', 'ovInterval', 'ovDetail', 'mode', 'queueMode', 'window', 'pages', 'concurrency', 'dupeCheck'];
     const settings = {};
     sk.forEach(function (k) { if (next[k] !== undefined) settings[k] = next[k]; });
@@ -166,7 +165,7 @@ module.exports = function (app, ctx) {
     return ok(reply, { host: host, config: next });
   });
   app.delete('/api/site-config/:host', async (req, reply) => {
-    db.prepare('DELETE FROM sites WHERE host = ?').run(req.params.host);
+    try { db.prepare('DELETE FROM sites WHERE host = ?').run(req.params.host); } catch (e) { /* 表已删除时忽略 */ }
     return ok(reply, { host: req.params.host });
   });
 
@@ -188,11 +187,6 @@ module.exports = function (app, ctx) {
   });
 
   /* ---- 站点定义 ---- */
-  const DEF_DIR = path.join(DATA_DIR, 'site-defs');
-  function readDef(host) {
-    if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null;
-    try { return JSON.parse(fs.readFileSync(path.join(DEF_DIR, host + '.json'), 'utf8')); } catch (e) { return null; }
-  }
   app.get('/api/site-def/:host', async (req, reply) => {
     const rec = siteStore.get(req.params.host);
     if (!rec) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
@@ -212,20 +206,23 @@ module.exports = function (app, ctx) {
     if (b.catMode !== undefined && b.catMode !== '' && CAT_MODES.indexOf(String(b.catMode)) < 0) {
       return bad(reply, 'BAD_CAT_MODE', 'catMode 只能是 ' + CAT_MODES.join(' / '));
     }
-    try {
-      fs.mkdirSync(DEF_DIR, { recursive: true, mode: 0o700 });
-      jsonFile.writeAtomic(path.join(DEF_DIR, host + '.json'), b, 0o600);
-    } catch (e) {
-      return bad(reply, 'WRITE_FAILED', '站点定义写入失败', 500);
-    }
     const cur = siteStore.get(host) || { search: {}, publish: {} };
     const up = b.uploadMap || b.upload || {};
+    let cats = b.cats;
+    if (!cats && b.catMap) {
+      cats = {};
+      if (Array.isArray(b.catMap)) {
+        b.catMap.forEach(function (x) { if (x && x.id != null) { const k = String(x.label || x.purpose || 'other'); (cats[k] = cats[k] || []).push(String(x.id)); } });
+      } else if (typeof b.catMap === 'object') {
+        Object.keys(b.catMap).forEach(function (k) { if (b.catMap[k] != null) cats[k] = [String(b.catMap[k])]; });
+      }
+    }
     const search = Object.assign({}, cur.search || {}, {
       path: b.searchPath || (cur.search && cur.search.path) || '/torrents.php',
       params: b.params || (cur.search && cur.search.params) || {},
       catMode: b.catMode || (cur.search && cur.search.catMode) || 'single',
       catSlot: b.catSlot != null ? String(b.catSlot) : ((cur.search && cur.search.catSlot) || ''),
-      cats: b.cats || (cur.search && cur.search.cats) || {}
+      cats: cats || (cur.search && cur.search.cats) || {}
     });
     const publish = Object.assign({}, cur.publish || {}, {
       upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: up.fields || {} },

@@ -51,7 +51,7 @@ function ok(reply, data) { if (arguments.length === 1) return { ok: true, data: 
 
 function counts() {
   const one2 = (t) => { const r = one('SELECT COUNT(*) AS n FROM ' + t); return r ? r.n : 0; };
-  return { catalog: one2('catalog'), queue: one2('queue'), sites: one2('sites'), downloaders: one2('downloaders'), credentials: one2('credentials') };
+  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: require('./cookie-store')(DATA_DIR).list().length };
 }
 
 function parseCookies(req) {

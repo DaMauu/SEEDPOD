@@ -24,6 +24,7 @@ function makeSubmit(deps) {
   const cookieOf = deps.cookieOf;
   const one = deps.one;
   const ctx = deps.ctx;
+  const siteStore = ctx && ctx.DATA_DIR ? require('./site-store')(ctx.DATA_DIR) : null;
   const torrentMeta = deps.torrentMeta;
   const textOf = deps.textOf;
   const downloadLinksFromDetails = deps.downloadLinksFromDetails;
@@ -46,11 +47,9 @@ function makeSubmit(deps) {
       return { err: '下载地址不是来源站域名，拒绝发送 cookie' };
     }
     /* 来源站停用就不抓，避免对停用站发真实请求 */
-    if (item.site) {
-      const row = one('SELECT data FROM sites WHERE host = ?', String(item.site).toLowerCase());
-      let sd = null;
-      if (row) { try { sd = JSON.parse(row.data) || {}; } catch (e) { sd = {}; } }
-      if (sd && sd.enabled === false) return { err: '来源站已停用：' + item.site };
+    if (item.site && siteStore) {
+      const rec = siteStore.get(item.site);
+      if (rec && (rec.settings.enabled === false || rec.settings.hidden === true)) return { err: '来源站已停用：' + item.site };
     }
     const dnsGate = await urlGuard.assertNoRebind(dlUrl);
     if (!dnsGate.ok) return { err: dnsGate.err };

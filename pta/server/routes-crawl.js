@@ -1,13 +1,8 @@
 /* 查重与抓取计划（Fastify v2）。查重会真搜一次目标站，限条数；计划只读本地配置不发请求。 */
-const fs = require('fs');
-const path = require('path');
 const adapters = require('./adapters');
 const dupeClassify = require('./dupe-classify');
-const sitePack = require('./site-pack');
-const siteMaps = require('./site-maps');
 const { typeOf } = require('./category-policy');
 const configSchema = require('./config-schema');
-const jsonFile = require('./json-file');
 const urlGuard = require('./url-guard');
 
 function keyword(title) {
@@ -22,8 +17,7 @@ module.exports = function (app, ctx) {
   const cookieStore = require('./cookie-store')(DATA_DIR);
   const siteStore = require('./site-store')(DATA_DIR);
   const now = () => new Date().toISOString();
-  const readDef = (host) => { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
-  const readPresets = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
+  const readDef = (host) => siteStore.legacyDef(host);
   const readCookie = (host) => {
     const c = cookieStore.get(host);
     if (c.err === 'NO_COOKIE') return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie，查不了' } };
@@ -33,23 +27,17 @@ module.exports = function (app, ctx) {
   const cfgRow = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
 
   function catsOf(host) {
-    const def0 = readDef(host) || {};
-    const built = sitePack.siteOf(host) || {};
-    const def = Object.assign({}, built, def0);
-    let list = [];
-    if (Array.isArray(def.catList)) list = def.catList;
-    else if (Array.isArray(def.catMap)) list = def.catMap.map(function (x) { return { id: x.id, label: x.label || x.purpose || '', purpose: x.purpose }; });
-    else if (def.catMap && typeof def.catMap === 'object') {
-      list = Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k, purpose: k }; });
-    }
-    const maps = siteMaps.getHost(DATA_DIR, host);
-    Object.keys(maps.cat || {}).forEach(function (k) { list.push({ id: maps.cat[k], label: k, purpose: k }); });
+    const def = readDef(host) || {};
+    const list = def.catList || [];
     const seen = {};
     return list.filter(function (x) { return x && x.id != null; })
       .map(function (x) { return { id: String(x.id), label: String(x.label || x.purpose || x.id), purpose: String(x.purpose || '') }; })
       .filter(function (x) { if (seen[x.id]) return false; seen[x.id] = true; return true; });
   }
-  function presetOf(host) { return readPresets()[host] || null; }
+  function presetOf(host) {
+    const rec = siteStore.get(host);
+    return rec ? { types: rec.search.types || [], cats: rec.search.cats || {} } : null;
+  }
   function selectedIds(host) {
     const p = presetOf(host);
     const cats = (p && p.cats) || {};
@@ -92,14 +80,8 @@ module.exports = function (app, ctx) {
         if (!seen.has(id)) { seen.add(id); (cats[t] = cats[t] || []).push(id); }
       });
     });
-    const file = path.join(DATA_DIR, 'site-search.local.json');
-    let raw = {};
-    try { raw = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (e) { raw = {}; }
-    const sites = raw.sites && typeof raw.sites === 'object' ? raw.sites : raw;
-    const prevTypes = Array.isArray((sites[host] || {}).types) ? sites[host].types.map(String) : [];
-    const typesChanged = JSON.stringify(prevTypes) !== JSON.stringify(want);
-    sites[host] = Object.assign({}, sites[host] || {}, { types: want, cats: cats, updatedAt: now() });
-    jsonFile.writeAtomic(file, raw.sites ? raw : { sites: sites }, 0o600);
+    const prevTypes = (siteStore.get(host) && siteStore.get(host).search.types) || [];
+    const typesChanged = JSON.stringify(prevTypes.map(String)) !== JSON.stringify(want);
     const curSite = siteStore.get(host);
     if (curSite) siteStore.save(host, { search: Object.assign({}, curSite.search, { types: want, cats: cats }) }, db);
     /* 类型集合变了：下次抓取按全量重跑；单纯改分类预设仍走增量 */
@@ -134,11 +116,7 @@ module.exports = function (app, ctx) {
     return ok({ host: host, types: want, matched: matched, unmatched: unmatched, ids: seen.size, fullReset: typesChanged, rechecked: rechecked });
   });
 
-  function defOf(host) {
-    const def0 = readDef(host) || {};
-    const built = sitePack.siteOf(host) || {};
-    return Object.assign({}, built, def0);
-  }
+  function defOf(host) { return readDef(host) || {}; }
   const FILTER_RULES = {
     medium: /原盘|remux|encode|blu-?ray|dvd|hdtv|web-?dl|webrip|tvrip|vhs|uhd|3d/i,
     standard: /480p|576p|720p|1080i|1080p|2160p|4k|8k|4320p/i,
@@ -152,9 +130,9 @@ module.exports = function (app, ctx) {
     return '';
   }
   async function detectFilters(host) {
-    const privateDef = readDef(host);
-    if (privateDef && privateDef.base && !urlGuard.baseOk(host, privateDef.base)) {
-      return { ok: false, code: 'BAD_BASE', message: '私有站点定义的 base 不是该站域名' };
+    const rec = siteStore.get(host);
+    if (rec && rec.url.base && !urlGuard.baseOk(host, rec.url.base)) {
+      return { ok: false, code: 'BAD_BASE', message: '站点 base 不是该站域名' };
     }
     const def = defOf(host);
     if (!def.base) return { ok: false, code: 'NO_DEF', message: '没有站点定义' };
@@ -190,7 +168,8 @@ module.exports = function (app, ctx) {
 
   app.get('/api/crawl/filters/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
-    const f = siteMaps.getHost(DATA_DIR, host).filters || null;
+    const rec = siteStore.get(host);
+    const f = (rec && rec.search.filters) || null;
     return ok({ host, filters: f });
   });
 
@@ -204,7 +183,8 @@ module.exports = function (app, ctx) {
   app.put('/api/crawl/filters/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
     const sel = (req.body && req.body.selected) || {};
-    let cur = siteMaps.getHost(DATA_DIR, host).filters || null;
+    const rec0 = siteStore.get(host);
+    let cur = (rec0 && rec0.search.filters) || null;
     if (!cur || !cur.map || !Object.keys(cur.map).length) {
       const d = await detectFilters(host);
       if (d.ok) cur = { map: d.data.map, selectedLabels: {}, selectedValues: {} };
@@ -222,7 +202,7 @@ module.exports = function (app, ctx) {
       }
       cur.selectedValues[key] = vals;
     }
-    siteMaps.setFilters(DATA_DIR, host, cur);
+    if (rec0) siteStore.save(host, { search: Object.assign({}, rec0.search, { filters: cur }) }, db);
     return ok({ host, filters: cur });
   });
 
@@ -246,13 +226,8 @@ module.exports = function (app, ctx) {
       const g = known[id].label || known[id].purpose || '其他';
       (cats[g] = cats[g] || []).push(id);
     });
-    const file = path.join(DATA_DIR, 'site-search.local.json');
-    let raw = {};
-    try { raw = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (e) { raw = {}; }
-    const sites = raw.sites && typeof raw.sites === 'object' ? raw.sites : raw;
-    sites[host] = Object.assign({}, sites[host] || {}, { cats: cats, updatedAt: now() });
-    const out = raw.sites ? raw : { sites: sites };
-    jsonFile.writeAtomic(file, out, 0o600);
+    const rec = siteStore.get(host);
+    if (rec) siteStore.save(host, { search: Object.assign({}, rec.search, { cats: cats }) }, db);
     return ok({ host: host, ids: ids.filter(function (id) { return known[id]; }), groups: Object.keys(cats).length });
   });
 
@@ -262,7 +237,7 @@ module.exports = function (app, ctx) {
     if (!host) return bad(reply, 'BAD_REQUEST', '缺少 host');
     const def = readDef(host);
     const cfg = cfgRow();
-    const preset = readPresets()[host] || null;
+    const preset = presetOf(host);
     const cats = (preset && preset.cats) || {};
     const groups = Object.keys(cats);
     const allIds = [];
@@ -273,7 +248,8 @@ module.exports = function (app, ctx) {
     if (!def) warnings.push('没有站点定义，拼不出搜索 URL');
     const searchUrls = [];
     if (def && def.base) {
-      const flt = siteMaps.getHost(DATA_DIR, host).filters;
+      const recF = siteStore.get(host);
+      const flt = (recF && recF.search.filters) || null;
       const sv = (flt && flt.selectedValues) || {};
       let u = adapters.buildSearchUrl(def, '{q}', allIds);
       try {
