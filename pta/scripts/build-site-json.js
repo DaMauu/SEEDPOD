@@ -35,24 +35,15 @@ function normDoc(doc, opts) {
   const sites = {};
   Object.keys(src).sort().forEach(function (host) {
     const rec = src[host] || {};
-    const out = {
-      name: String(rec.name || host),
-      nameZh: String(rec.nameZh || ''),
-      engine: String(rec.engine || '?'),
-      urlRef: String(rec.urlRef || ('site-urls.json#' + host)),
-      search: Object.assign({}, rec.search || {}),
-      publish: Object.assign({}, rec.publish || {}),
-      localEdited: o.preset ? false : rec.localEdited === true,
-      settings: Object.assign({}, rec.settings || {})
-    };
-    out.search = store.canonSearch(out.search);
-    delete out.search.types;
-    out.publish = store.canonPublish(out.publish);
-    if (o.preset) {
-      delete out.settings;
-    } else {
-      out.settings.enabled = DISABLE_ALL ? false : out.settings.enabled !== false;
-    }
+    /* 未知字段原样保留；全局站点模板补齐 limits/downloadLink/refreshCron 等缺失项 */
+    const out = store.normalizeRecord(rec);
+    out.name = String(rec.name || host);
+    out.nameZh = String(rec.nameZh || '');
+    out.engine = String(rec.engine || '?');
+    out.urlRef = String(rec.urlRef || ('site-urls.json#' + host));
+    out.localEdited = o.preset ? false : rec.localEdited === true;
+    if (o.preset) delete out.settings;
+    else out.settings.enabled = DISABLE_ALL ? false : out.settings.enabled !== false;
     sites[host] = out;
   });
   return { version: 1, presets: 'presets.preset.json', generatedAt: new Date().toISOString(), sites: sites };

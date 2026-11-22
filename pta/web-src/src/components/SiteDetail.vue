@@ -255,7 +255,7 @@ import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt, modeTxt } 
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, initialsOf } from '../utils/ui'
-import presets from '../../shared/presets.json'
+import { loadRuntimePresets, runtimePresets } from '../utils/presets-runtime'
 
 const props = defineProps({ site: { type: Object, required: true } })
 const emit = defineEmits(['close', 'changed', 'removed'])
@@ -266,7 +266,7 @@ const archOptions = [
   { v: 'OTHER', label: '其它' }, { v: '?', label: '未确认' }
 ]
 /* 分类 key/中文名来自全局预设，站点只保存 key 和 ID */
-const catPurposes = Object.keys(presets.types || {}).map(function (k) { return { v: k, label: presets.types[k] } })
+const catPurposes = computed(function () { return Object.keys(runtimePresets.value.types || {}).map(function (k) { return { v: k, label: runtimePresets.value.types[k] } }) })
 const s = computed(function () { return props.site || {} })
 const host = computed(function () { return (props.site && props.site.name) || '' })
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
@@ -292,7 +292,7 @@ const catGroups = computed(function () {
   const d = detail.def || {}
   const p = detail.preset || {}
   const groups = (p.cats && Object.keys(p.cats).length ? p.cats : d.cats) || {}
-  return Object.keys(groups).map(function (name) { return { name: presets.types[name] || name, ids: (groups[name] || []).join(', ') || '—' } })
+  return Object.keys(groups).map(function (name) { return { name: runtimePresets.value.types[name] || name, ids: (groups[name] || []).join(', ') || '—' } })
 })
 const previewUrls = computed(function () {
   const d = detail.def || {}
@@ -635,7 +635,7 @@ async function saveCatMap() {
       if (!r.id || !r.label) { catMsg.value = '站点分类的名称和 ID 都要填'; return }
       if (seen[r.id]) { catMsg.value = '分类 ID 重复：' + r.id; return }
       seen[r.id] = true
-      if (!catPurposes.some(function (p) { return p.v === r.purpose })) r.purpose = 'other'
+      if (!catPurposes.value.some(function (p) { return p.v === r.purpose })) r.purpose = 'other'
     }
     delete def.catList
     def.catMap = rows
@@ -739,6 +739,7 @@ function closeDetail() { emit('close') }
 onMounted(function () {
   fillForm(s.value)
   loadDetail(host.value)
+  loadRuntimePresets()
 })
 watch(host, function (h, old) {
   if (h && h !== old) {

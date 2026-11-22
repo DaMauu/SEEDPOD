@@ -18,6 +18,7 @@ module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
   const siteStore = require('./site-store')(DATA_DIR);
+  const presets = require('./presets')(DATA_DIR);
   const readPreset = () => { const out = {}; siteStore.list().forEach(function (s) { out[s.host] = { engine: s.engine, cats: s.search.cats || {}, types: s.search.types || [], source: 'site-json', confirmed: true }; }); return out; };
   const errorStats = makeErrorStats(ctx);
   const failureQueue = makeFailureQueue(ctx);
@@ -82,6 +83,8 @@ module.exports = function (app, ctx) {
     const preset = readPreset()[host] || null;
     return ok(reply, { host: host, preset: preset });
   });
+
+  app.get('/api/presets', async () => ok(presets.doc()));
 
   app.get('/api/site-search', async () => {
     const sites = readPreset();

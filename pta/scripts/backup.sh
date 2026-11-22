@@ -35,7 +35,7 @@ else
   [ -f "$DATA/seedpod.db-shm" ] && cp -a "$DATA/seedpod.db-shm" "$STAGE/seedpod.db-shm"
 fi
 
-for x in .secret cookies.json site-defs site-maps.json library.json site-search.local.json site-status.json seedpod.db-wal seedpod.db-shm; do
+for x in .secret presets.json sites.json site-urls.json cookies.json library.json site-status.json seedpod.db-wal seedpod.db-shm; do
   case "$x" in
     seedpod.db-wal|seedpod.db-shm) [ "$SNAPSHOT" = "1" ] && continue ;;
   esac

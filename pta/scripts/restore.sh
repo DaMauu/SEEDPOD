@@ -60,7 +60,7 @@ fi
 
 # 旧 WAL/SHM 必须清掉，否则会和恢复的 db 拼出旧状态
 rm -f "$DATA/seedpod.db-wal" "$DATA/seedpod.db-shm"
-for x in seedpod.db .secret cookies.json site-defs site-maps.json library.json site-search.local.json site-status.json seedpod.db-wal seedpod.db-shm; do
+for x in seedpod.db .secret presets.json sites.json site-urls.json cookies.json library.json site-status.json seedpod.db-wal seedpod.db-shm; do
   if [ -e "$tmp/$x" ]; then
     rm -rf "$DATA/$x"
     cp -a "$tmp/$x" "$DATA/$x"

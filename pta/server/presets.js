@@ -3,6 +3,7 @@
    可选运行时覆盖：data/presets.json（不复制则不生成）。 */
 const fs = require('fs');
 const path = require('path');
+const jsonFile = require('./json-file');
 
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_FILE = path.join(ROOT, 'pack', 'presets.preset.json');
@@ -77,32 +78,33 @@ function lower(x) {
 
 function makePresets(dataDir) {
   const dir = dataDir ? path.resolve(dataDir) : '';
-  const override = dir ? path.join(dir, 'presets.json') : '';
+  const runtimeFile = dir ? path.join(dir, 'presets.json') : '';
   let cache = null;
+  let ensured = false;
 
   function readJson(file) {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
   }
+  /* 首次启动：pack 里的模板复制成 data/presets.json；之后只读用户这份 */
+  function ensure() {
+    if (!runtimeFile || ensured) return false;
+    ensured = true;
+    if (fs.existsSync(runtimeFile)) return false;
+    const base = readJson(DEFAULT_FILE);
+    if (!base || typeof base !== 'object' || !base.types) return false;
+    try { jsonFile.writeAtomic(runtimeFile, base, 0o600); cache = null; return true; }
+    catch (e) { return false; }
+  }
   function doc() {
-    const file = override && fs.existsSync(override) ? override : DEFAULT_FILE;
+    ensure();
+    const file = runtimeFile && fs.existsSync(runtimeFile) ? runtimeFile : DEFAULT_FILE;
     let st = null;
     try { st = fs.statSync(file); } catch (e) { st = null; }
     if (cache && st && cache.file === file && cache.mtime === st.mtimeMs && cache.size === st.size) return cache.doc;
-    const base = readJson(DEFAULT_FILE) || {};
-    const over = file === DEFAULT_FILE ? null : readJson(file);
-    const merged = over ? {
-      version: Number(over.version) || Number(base.version) || 1,
-      types: Object.assign({}, base.types || {}, over.types || {}),
-      search: {
-        medium: Object.assign({}, (base.search || {}).medium || {}, ((over.search || {}).medium) || {}),
-        resolution: Object.assign({}, (base.search || {}).resolution || {}, ((over.search || {}).resolution) || {}),
-        discount: Object.assign({}, (base.search || {}).discount || {}, ((over.search || {}).discount) || {}),
-        restriction: Object.assign({}, (base.search || {}).restriction || {}, ((over.search || {}).restriction) || {})
-      },
-      publish: { fields: Object.assign({}, (base.publish || {}).fields || {}, ((over.publish || {}).fields) || {}) }
-    } : base;
-    cache = { file: file, mtime: st ? st.mtimeMs : 0, size: st ? st.size : 0, doc: merged };
-    return merged;
+    const parsed = readJson(file);
+    const base = parsed && typeof parsed === 'object' && parsed.types ? parsed : (readJson(DEFAULT_FILE) || {});
+    cache = { file: file, mtime: st ? st.mtimeMs : 0, size: st ? st.size : 0, doc: base };
+    return base;
   }
 
   function types() { return Object.assign({}, doc().types || {}); }
@@ -167,11 +169,12 @@ function makePresets(dataDir) {
     return (Array.isArray(keys) ? keys : []).map(function (k) { return searchLabel(dim, k); });
   }
   function publishFields() { return Object.assign({}, ((doc().publish || {}).fields) || {}); }
+  function siteDefaults() { return JSON.parse(JSON.stringify((doc() || {}).site || {})); }
 
   return {
-    FILE: DEFAULT_FILE, doc: doc, types: types, typeKeys: typeKeys, keyOf: keyOf, labelOf: labelOf,
+    FILE: DEFAULT_FILE, RUNTIME_FILE: runtimeFile, ensure: ensure, doc: doc, types: types, typeKeys: typeKeys, keyOf: keyOf, labelOf: labelOf,
     keysOfList: keysOfList, searchOptions: searchOptions, searchKeys: searchKeys,
-    searchLabel: searchLabel, keyOfDim: keyOfDim, labelsOfDim: labelsOfDim, publishFields: publishFields
+    searchLabel: searchLabel, keyOfDim: keyOfDim, labelsOfDim: labelsOfDim, publishFields: publishFields, siteDefaults: siteDefaults
   };
 }
 

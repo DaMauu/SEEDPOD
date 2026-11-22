@@ -102,6 +102,55 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   });
 
+  await check('首次启动把 pack 模板复制成 data/presets.json，之后以 data 为准', async function () {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-preset-copy-'));
+    try {
+      const p1 = makePresets(dir);
+      need(p1.types().movie === '电影', '模板没读出来');
+      const file = path.join(dir, 'presets.json');
+      need(fs.existsSync(file), '首次读取没生成 data/presets.json');
+      need((fs.statSync(file).mode & 0o777) === 0o600, '运行时预设权限不是 0600');
+      const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const pack = read(PRESETS);
+      need(JSON.stringify(raw.types) === JSON.stringify(pack.types), '复制内容与 pack 不一致');
+      raw.types.custom = '自定义';
+      fs.writeFileSync(file, JSON.stringify(raw, null, 2));
+      const p2 = makePresets(dir);
+      need(p2.types().custom === '自定义', '用户新增类型没生效');
+      p2.ensure();
+      const after = JSON.parse(fs.readFileSync(file, 'utf8'));
+      need(after.types.custom === '自定义', 'ensure 覆盖了用户文件');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  await check('limits/downloadLink/refreshCron 和未知字段保存时不丢', async function () {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitefields-'));
+    try {
+      fs.writeFileSync(path.join(dir, 'sites.json'), JSON.stringify({ version: 1, sites: {
+        'x.example': { name: 'X', engine: 'nexusphp', urlRef: 'site-urls.json#x.example', search: { path: '/t', cats: {} }, publish: { catMap: {} } }
+      } }));
+      fs.writeFileSync(path.join(dir, 'site-urls.json'), JSON.stringify({ version: 1, sites: { 'x.example': { base: 'b64:' + Buffer.from('https://x.example').toString('base64') } } }));
+      const st = makeSiteStore(dir);
+      const first = st.get('x.example');
+      need(Object.prototype.hasOwnProperty.call(first, 'limits'), '缺 limits');
+      need(first.downloadLink === '' && first.refreshCron === '', '缺 downloadLink/refreshCron 默认值');
+      st.save('x.example', {
+        limits: { perHour: 20, perDay: 100 },
+        downloadLink: '/download.php?id={ID}',
+        refreshCron: '0 */4 * * *',
+        customField: { keep: true }
+      });
+      st.save('x.example', { settings: { note: '改个备注' } });
+      const raw = JSON.parse(fs.readFileSync(st.FILE, 'utf8')).sites['x.example'];
+      need(JSON.stringify(raw.limits) === JSON.stringify({ perHour: 20, perDay: 100 }), 'limits 丢了：' + JSON.stringify(raw.limits));
+      need(raw.downloadLink === '/download.php?id={ID}', 'downloadLink 丢了');
+      need(raw.refreshCron === '0 */4 * * *', 'refreshCron 丢了');
+      need(raw.customField && raw.customField.keep === true, '未知字段丢了');
+      const def = st.legacyDef('x.example');
+      need(def.downloadLink === '/download.php?id={ID}' && def.limits.perHour === 20, 'legacyDef 没带新字段');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+
   await check('仓库预设里没有中文类型 key，也没有 types 字段', async function () {
     const doc2 = read(path.join(ROOT, 'pack', 'sites.preset.json'));
     const bad = [];

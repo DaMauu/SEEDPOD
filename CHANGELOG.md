@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.657 · 2026-11-24
+
+### 站点字段模板与保存不丢字段
+- 全局预设增加 `site` 站点字段模板：`search.path/params`、`limits`、`downloadLink`、`refreshCron`、发布字段、settings 默认值。
+- 首次启动把 `pack/presets.preset.json` 复制成 `data/presets.json`，之后用户改的是 data 这份；前端通过 `/api/presets` 读运行时预设。
+- 站点保存保留未知字段；`limits` / `downloadLink` / `refreshCron` 和自定义字段不会再被覆盖或删除。
+- `limits` 接上抓取限制（窗口/次数/列表与详情间隔）；`downloadLink` 在列表页没给下载链接时按 `{ID}` 模板补。
+- 生产 306 站已补字段；全量 `run.sh` 通过，质量审计总体 100。
+
 ## v0.7.656 · 2026-11-24
 
 ### 部署修正

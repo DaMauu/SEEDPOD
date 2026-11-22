@@ -127,7 +127,7 @@ function makeSiteStore(dataDir, opts) {
         const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
         const searchRec = canonSearch({ path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, filters: (mp && mp.filters) || {} });
         delete searchRec.types;
-        sites.sites[host] = {
+        const rec = normalizeRecord({
           name: String(d.title || def.title || host), nameZh: String(d.titleZh || d.cn || ''),
           engine: String(def.engine || d.engine || '?'), urlRef: 'site-urls.json#' + host,
           search: searchRec,
@@ -137,7 +137,9 @@ function makeSiteStore(dataDir, opts) {
             if (d.enabled === undefined) st.enabled = true;
             return st;
           })()
-        };
+        });
+        delete rec.search.types;
+        sites.sites[host] = rec;
         if (base) urls.sites[host] = { base: b64(base), upload: b64((publish.upload && publish.upload.path) || ''), verify: b64((publish.verify && publish.verify.path) || '') };
       });
       writeDoc(SITES_FILE, sites);
@@ -301,21 +303,40 @@ function makeSiteStore(dataDir, opts) {
     delete p0.catLabels;
     return compactPublish(p0);
   }
+  function isPlain(x) { return !!x && typeof x === 'object' && !Array.isArray(x); }
+  function mergeDefaults(base, def) {
+    const out = clone(base || {});
+    Object.keys(def || {}).forEach(function (k) {
+      if (out[k] === undefined) out[k] = (def[k] && typeof def[k] === 'object') ? clone(def[k]) : def[k];
+      else if (isPlain(out[k]) && isPlain(def[k])) out[k] = mergeDefaults(out[k], def[k]);
+    });
+    return out;
+  }
+  /* 全局站点模板：补齐缺失字段，但不覆盖用户已有值；未知字段原样保留 */
+  function normalizeRecord(raw) {
+    const out = mergeDefaults(raw, presets.siteDefaults());
+    out.search = canonSearch(out.search);
+    delete out.search.types;
+    out.publish = canonPublish(out.publish);
+    out.settings = normalizeSettings(out.settings);
+    out.limits = isPlain(out.limits) ? clone(out.limits) : {};
+    out.downloadLink = String(out.downloadLink || '');
+    out.refreshCron = String(out.refreshCron || '');
+    return out;
+  }
   function recordOf(host, sites, urls) {
     const raw = (sites.sites || {})[host];
     if (!raw) return null;
-    return {
-      host: host,
-      name: String(raw.name || host),
-      nameZh: String(raw.nameZh || ''),
-      engine: String(raw.engine || '?'),
-      urlRef: String(raw.urlRef || ('site-urls.json#' + host)),
-      search: canonSearch(raw.search),
-      publish: canonPublish(raw.publish),
-      localEdited: raw.localEdited === true,
-      settings: normalizeSettings(raw.settings),
-      url: urlOf(host, urls)
-    };
+    const rec = normalizeRecord(raw);
+    rec.search.types = typesOfCats(rec.search.cats);
+    rec.host = host;
+    rec.name = String(raw.name || host);
+    rec.nameZh = String(raw.nameZh || '');
+    rec.engine = String(raw.engine || '?');
+    rec.urlRef = String(raw.urlRef || ('site-urls.json#' + host));
+    rec.localEdited = raw.localEdited === true;
+    rec.url = urlOf(host, urls);
+    return rec;
   }
   function get(host) {
     const h = cleanHost(host);
@@ -344,13 +365,17 @@ function makeSiteStore(dataDir, opts) {
       const urls = urlDoc();
       if (!sites.sites || typeof sites.sites !== 'object') sites.sites = {};
       if (!urls.sites || typeof urls.sites !== 'object') urls.sites = {};
-      const cur = sites.sites[h] || {
+      let cur = normalizeRecord(sites.sites[h] || {
         name: h, nameZh: '', engine: '?', urlRef: 'site-urls.json#' + h,
         search: { path: '', params: {}, cats: {} },
         publish: { upload: { path: '', formPath: '', fileField: '', fields: {} }, verify: { path: '' }, catMap: {} },
         settings: defaults(), localEdited: false
-      };
+      });
       ['name', 'nameZh', 'engine'].forEach(function (k) { if (p[k] !== undefined) cur[k] = p[k]; });
+      /* 站点专有字段（limits/downloadLink/refreshCron 以及以后新增的）原样写回，不丢 */
+      Object.keys(p).forEach(function (k) {
+        if (['name', 'nameZh', 'engine', 'search', 'publish', 'settings', 'localEdited', 'url', 'host'].indexOf(k) < 0) cur[k] = clone(p[k]);
+      });
       cur.search = canonSearch(p.search !== undefined ? p.search : cur.search);
       delete cur.search.types;
       cur.publish = canonPublish(p.publish !== undefined ? p.publish : cur.publish);
@@ -358,6 +383,7 @@ function makeSiteStore(dataDir, opts) {
       if (p.localEdited !== undefined) cur.localEdited = p.localEdited === true;
       else cur.localEdited = true;
       if (!cur.urlRef) cur.urlRef = 'site-urls.json#' + h;
+      cur = normalizeRecord(cur);
       sites.sites[h] = cur;
       if (p.url && typeof p.url === 'object') {
         const old = urls.sites[h] || {};
@@ -406,6 +432,7 @@ function makeSiteStore(dataDir, opts) {
       host: s.host, engine: s.engine, base: s.url.base,
       searchPath: s.search.path, params: s.search.params || {}, catMode: s.search.catMode || 'single', catSlot: s.search.catSlot || '', filters: s.search.filters || {},
       cats: s.search.cats || {}, catList: catList, types: s.search.types || [],
+      limits: s.limits || {}, downloadLink: s.downloadLink || '', refreshCron: s.refreshCron || '',
       upload: s.publish.upload || {}, verify: s.publish.verify || {},
       catMap: s.publish.catMap || {},
       enabled: s.settings.enabled !== false, hidden: s.settings.hidden === true
@@ -421,6 +448,7 @@ function makeSiteStore(dataDir, opts) {
     });
     return {
       host: s.host, engine: s.engine, base: s.url.base,
+      limits: s.limits || {}, downloadLink: s.downloadLink || '', refreshCron: s.refreshCron || '',
       upload: Object.assign({ path: '', formPath: '', fileField: '', fields: {} }, s.publish.upload || {}),
       tagMap: s.publish.tagMap || {}, tagValue: s.publish.tagValue || 'yes',
       verify: { path: (s.publish.verify && s.publish.verify.path) || '' },
@@ -437,7 +465,7 @@ function makeSiteStore(dataDir, opts) {
     FILE: SITES_FILE, URL_FILE: URLS_FILE,
     ensureRuntime: ensureRuntime, migrateLegacy: migrateLegacy, legacyDef: legacyDef, targetDef: targetDef, get: get, list: list, has: has,
     save: save, add: add, remove: remove, setHidden: setHidden,
-    canonCats: canonCats, canonMap: canonMap, typesOfCats: typesOfCats, canonSearch: canonSearch, canonPublish: canonPublish,
+    canonCats: canonCats, canonMap: canonMap, typesOfCats: typesOfCats, canonSearch: canonSearch, canonPublish: canonPublish, normalizeRecord: normalizeRecord,
     _b64: b64, _unb64: unb64
   };
 }

@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { computed, h, reactive, ref } from 'vue'
+import { computed, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, loggedIn, viewVisible, initialsOf } from '../utils/ui'
 import RuleControl from '../components/RuleControl.vue'
@@ -37,6 +37,7 @@ import { useCrawlSites } from '../composables/useCrawlSites'
 import { useCrawlFetchFilters } from '../composables/useCrawlFetchFilters'
 import { useRuleOrSpecial } from '../composables/useRuleOrSpecial'
 import { useCrawlBoot } from '../composables/useCrawlBoot'
+import { applyPresetChips, loadRuntimePresets, runtimePresets } from '../utils/presets-runtime'
 
 const clone = x => JSON.parse(JSON.stringify(x || []))
 const RULES = (typeof window !== 'undefined' && window.PTA_RULES) || {}
@@ -84,6 +85,13 @@ function onSourceHost(v) {
   saveSource()
 }
 useCrawlBoot({ sites: sites, gates: gates, loadSites: loadSites, loadGates: loadGates, loadFlow: loadFlow })
+function refreshChips() { applyPresetChips(rules, runtimePresets.value) }
+onMounted(function () {
+  refreshChips()
+  loadRuntimePresets().then(refreshChips)
+  window.addEventListener('pta-presets', refreshChips)
+})
+onBeforeUnmount(function () { window.removeEventListener('pta-presets', refreshChips) })
 
 const pubGroups = computed(() => (rules.pub || []).map(g => {
   const cells = []

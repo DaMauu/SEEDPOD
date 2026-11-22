@@ -85,5 +85,38 @@
       "torrent": "种子文件",
       "anonymous": "匿名"
     }
+  },
+  "site": {
+    "name": "",
+    "nameZh": "",
+    "engine": "",
+    "urlRef": "",
+    "search": {
+      "path": "",
+      "params": {},
+      "catMode": "single",
+      "catSlot": ""
+    },
+    "limits": {},
+    "downloadLink": "",
+    "refreshCron": "",
+    "publish": {
+      "upload": {
+        "path": "",
+        "formPath": "",
+        "fileField": "",
+        "fields": {}
+      },
+      "verify": {
+        "path": ""
+      },
+      "catMap": {}
+    },
+    "settings": {
+      "enabled": false,
+      "priority": "normal",
+      "note": "",
+      "hidden": false
+    }
   }
 }

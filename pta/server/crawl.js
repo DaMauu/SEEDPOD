@@ -41,12 +41,13 @@ function makeCrawl(ctx) {
   function limitsOf(host) {
     const rec = siteStore.get(host);
     const s = rec ? rec.settings : {};
+    const L = (rec && rec.limits) || {};
     const C = configSchema.readWithDefaults(ctx);
     const OV = { '1 分钟': 60000, '5 分钟': 300000, '15 分钟': 900000, '1 小时': 3600000 };
-    const listGap = Math.max(6, Math.min(Number(C.listInterval) || 10, 60)) * 1000;
-    const detailGap = Math.max(8, Math.min(Number(C.interval) || 600, 600)) * 1000;
-    const winMin = Math.max(1, Math.min(Number(C.windowMinutes) || 60, 1440));
-    const maxWin = Math.max(1, Math.min(Number(C.maxPerWindow) || 20, 1000));
+    const listGap = Math.max(6, Math.min(Number(L.listIntervalSeconds) || Number(C.listInterval) || 10, 60)) * 1000;
+    const detailGap = Math.max(8, Math.min(Number(L.detailIntervalSeconds) || Number(C.interval) || 600, 600)) * 1000;
+    const winMin = Math.max(1, Math.min(Number(L.windowMinutes) || Number(C.windowMinutes) || 60, 1440));
+    const maxWin = Math.max(1, Math.min(Number(L.maxPerWindow) || Number(C.maxPerWindow) || 20, 1000));
     if (!s.override) return { listGapMs: listGap, detailGapMs: detailGap, windowMs: winMin * 60000, maxPerWindow: maxWin };
     const gap = Math.max(listGap, OV[String(s.ovInterval || '')] || 0);
     return { listGapMs: gap, detailGapMs: Math.max(detailGap, gap), windowMs: winMin * 60000, maxPerWindow: maxWin };
@@ -195,10 +196,13 @@ function makeCrawl(ctx) {
       const rawCatName = String(r.catName || '');
       const catId = String(r.catId || (/^\d+$/.test(rawCatName) ? rawCatName : ''));
       const catLabel = catLabelById[catId] || (rawCatName && !/^\d+$/.test(rawCatName) ? rawCatName : '');
+      /* 列表页没给下载链接时，用站点自己的 downloadLink 模板补 */
+      const dlTpl = String(def.downloadLink || '');
+      const dlRaw = r.downloadUrl || (dlTpl ? dlTpl.replace(/\{(?:ID|id|siteId|site_id)\}/g, String(r.id || '')) : '');
       const item = {
         site: host, siteId: String(r.id || ''), title: r.title || '', size: r.size || '',
         sizeBytes: Number(r.sizeBytes) || 0, cat: catId, catName: catLabel,
-        detailsUrl: absUrl(r.detailsUrl), downloadUrl: absUrl(r.downloadUrl), infohash: r.infohash || '',
+        detailsUrl: absUrl(r.detailsUrl), downloadUrl: absUrl(dlRaw), infohash: r.infohash || '',
         seeders: Number(r.seeders) || 0, addedAt: r.addedAt || '',
         tags: Array.isArray(r.tags) ? r.tags.join(',') : String(r.tags || '')
       };

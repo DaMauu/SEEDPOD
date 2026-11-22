@@ -18,15 +18,17 @@ function check(name, fn) {
 }
 function need(cond, msg) { if (!cond) throw new Error(msg); }
 function read(file) { return fs.readFileSync(file, 'utf8'); }
+fs.mkdirSync(SRC, { recursive: true });
 
-fs.mkdirSync(path.join(SRC, 'site-defs'), { recursive: true });
 const live = new DatabaseSync(path.join(SRC, 'seedpod.db'));
 live.exec('PRAGMA journal_mode=WAL');
 live.exec('CREATE TABLE queue (id TEXT PRIMARY KEY, title TEXT)');
 live.prepare('INSERT INTO queue(id, title) VALUES(?, ?)').run('q_0001', 'G6 Backup Persist');
 fs.writeFileSync(path.join(SRC, '.secret'), 'test-secret');
 fs.writeFileSync(path.join(SRC, 'cookies.json'), '{"version":1,"cookies":{"example.org":{"cookie":"v2:fixture"}}}');
-fs.writeFileSync(path.join(SRC, 'site-defs', 'example.org.json'), '{"engine":"nexusphp"}');
+fs.writeFileSync(path.join(SRC, 'presets.json'), '{"version":1,"types":{"movie":"电影"}}');
+fs.writeFileSync(path.join(SRC, 'sites.json'), '{"version":1,"sites":{"example.org":{"name":"Example"}}}');
+fs.writeFileSync(path.join(SRC, 'site-urls.json'), '{"version":1,"sites":{"example.org":{"base":"b64:fixture"}}}');
 fs.writeFileSync(path.join(SRC, 'events.log'), 'should-not-be-in-backup');
 
 check('备份包含 db/密钥/私有站点，不含日志', function () {
@@ -41,7 +43,9 @@ check('备份包含 db/密钥/私有站点，不含日志', function () {
   need(/seedpod\.db/.test(names), '备份缺 seedpod.db');
   need(/\.secret/.test(names), '备份缺 .secret');
   need(/cookies\.json/.test(names), '备份缺 cookies.json');
-  need(/site-defs\/example\.org\.json/.test(names), '备份缺私有站点定义');
+  need(/presets\.json/.test(names), '备份缺 presets.json');
+  need(/sites\.json/.test(names), '备份缺 sites.json');
+  need(/site-urls\.json/.test(names), '备份缺 site-urls.json');
   need(!/events\.log/.test(names), '备份不该带 events.log');
 });
 
@@ -54,7 +58,9 @@ check('恢复到空目录并校验内容', function () {
   need(row && row.title === 'G6 Backup Persist', 'db/WAL 内容不对：' + JSON.stringify(row));
   need(read(path.join(DST, '.secret')) === 'test-secret', '密钥内容不对');
   need(read(path.join(DST, 'cookies.json')).indexOf('v2:fixture') > 0, 'cookies.json 没恢复');
-  need(read(path.join(DST, 'site-defs', 'example.org.json')).indexOf('nexusphp') > 0, '站点定义内容不对');
+  need(read(path.join(DST, 'presets.json')).indexOf('movie') > 0, 'presets.json 没恢复');
+  need(read(path.join(DST, 'sites.json')).indexOf('Example') > 0, 'sites.json 没恢复');
+  need(read(path.join(DST, 'site-urls.json')).indexOf('fixture') > 0, 'site-urls.json 没恢复');
   need((fs.statSync(path.join(DST, 'seedpod.db')).mode & 0o777) === 0o600, '恢复后 db 权限不是 0600');
 });
 
@@ -66,15 +72,14 @@ check('目标已有 db 时默认拒绝覆盖', function () {
 
 check('大文件随备份恢复', function () {
   const big = Buffer.alloc(8 * 1024 * 1024, 7);
-  fs.mkdirSync(path.join(SRC, 'site-defs'), { recursive: true });
-  fs.writeFileSync(path.join(SRC, 'site-defs', 'big.bin'), big);
+  fs.writeFileSync(path.join(SRC, 'library.json'), big);
   const bak2 = path.join(TMP, 'large.tar.gz');
   const dst2 = path.join(TMP, 'large-dst');
   const b = spawnSync('bash', [path.join(ROOT, 'scripts', 'backup.sh'), SRC, bak2], { encoding: 'utf8' });
   need(b.status === 0, '大文件备份失败：' + (b.stderr || b.stdout));
   const r = spawnSync('bash', [path.join(ROOT, 'scripts', 'restore.sh'), bak2, dst2], { encoding: 'utf8' });
   need(r.status === 0, '大文件恢复失败：' + (r.stderr || r.stdout));
-  const got = fs.readFileSync(path.join(dst2, 'site-defs', 'big.bin'));
+  const got = fs.readFileSync(path.join(dst2, 'library.json'));
   need(got.length === big.length && got.equals(big), '大文件内容不一致');
 });
 

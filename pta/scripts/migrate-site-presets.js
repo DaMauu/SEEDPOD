@@ -26,20 +26,14 @@ const sites = doc.sites || {};
 let changed = 0, catsChanged = 0, mapChanged = 0, typesDropped = 0;
 Object.keys(sites).forEach(function (host) {
   const rec = sites[host] || {};
-  let dirty = false;
-  if (rec.search && typeof rec.search === 'object') {
-    const before = JSON.stringify(rec.search);
-    rec.search = store.canonSearch(rec.search);
-    delete rec.search.types;
-    if (JSON.stringify(rec.search) !== before) { catsChanged++; dirty = true; }
-    if (rec.search.types !== undefined) { delete rec.search.types; typesDropped++; dirty = true; }
-  }
-  if (rec.publish && typeof rec.publish === 'object') {
-    const before = JSON.stringify(rec.publish);
-    rec.publish = store.canonPublish(rec.publish);
-    if (JSON.stringify(rec.publish) !== before) { mapChanged++; dirty = true; }
-  }
-  if (dirty) { changed++; sites[host] = rec; }
+  const before = JSON.stringify(rec);
+  const oldCats = JSON.stringify((rec.search || {}).cats || {});
+  const oldMap = JSON.stringify((rec.publish || {}).catMap || {});
+  if ((rec.search || {}).types !== undefined) typesDropped++;
+  const next = store.normalizeRecord(rec);
+  if (JSON.stringify((next.search || {}).cats) !== oldCats) catsChanged++;
+  if (JSON.stringify((next.publish || {}).catMap) !== oldMap) mapChanged++;
+  if (JSON.stringify(next) !== before) { changed++; sites[host] = next; }
 });
 doc.sites = sites;
 doc.presets = 'presets.preset.json';

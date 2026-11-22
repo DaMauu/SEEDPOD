@@ -1,7 +1,7 @@
 {
   "version": 1,
   "presets": "presets.preset.json",
-  "generatedAt": "2026-11-22T11:11:55.288Z",
+  "generatedAt": "2026-11-22T12:01:34.185Z",
   "sites": {
     "52pt.site": {
       "name": "52PT",
@@ -60,7 +60,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "aftershock-tracker.net": {
       "name": "Aftershock",
@@ -82,7 +85,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "agsvpt.com": {
       "name": "AGSV",
@@ -152,7 +158,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "aidoru-online.me": {
       "name": "Aidoru Online",
@@ -182,7 +191,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "aither.cc": {
       "name": "Aither",
@@ -204,7 +216,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "alpharatio.cc": {
       "name": "AlphaRatio",
@@ -375,7 +390,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "animebytes.tv": {
       "name": "AnimeBytes",
@@ -403,7 +421,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "animelayer.ru": {
       "name": "Animelayer",
@@ -425,7 +446,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "animetorrents.me": {
       "name": "AnimeZ",
@@ -447,7 +471,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "anthelion.me": {
       "name": "Anthelion",
@@ -475,7 +502,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "arenabg.com": {
       "name": "ArenaBG",
@@ -497,7 +527,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "arenaelite.eu": {
       "name": "ArenaElite",
@@ -519,7 +552,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "asiandvdclub.org": {
       "name": "Asian DVD Club",
@@ -541,7 +577,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "audiences.me": {
       "name": "观众",
@@ -601,7 +640,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "audionews.org": {
       "name": "AudioNews",
@@ -623,7 +665,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "aura4k.net": {
       "name": "Aura4K",
@@ -645,7 +690,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "avistaz.to": {
       "name": "AvistaZ",
@@ -667,7 +715,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "azusa.wiki": {
       "name": "梓喵",
@@ -706,7 +757,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "back-ups.me": {
       "name": "Back-ups",
@@ -832,7 +886,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bakabt.me": {
       "name": "BakaBT",
@@ -861,7 +918,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bbs.acgrip.com": {
       "name": "ACG.RIP",
@@ -883,7 +943,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "beload.org": {
       "name": "Beload",
@@ -948,7 +1011,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "beyond-hd.me": {
       "name": "BeyondHD",
@@ -1103,7 +1169,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bilibili.download": {
       "name": "RailgunPT",
@@ -1125,7 +1194,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bit-hdtv.com": {
       "name": "Bit-HDTV",
@@ -1147,7 +1219,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bithorlo.info": {
       "name": "Bithorlo",
@@ -1169,7 +1244,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bithumen.be": {
       "name": "BitHumen",
@@ -1242,7 +1320,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bitporn.eu": {
       "name": "BitPorn",
@@ -1264,7 +1345,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bitspyder.net": {
       "name": "BitSpyder",
@@ -1286,7 +1370,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "blutopia.cc": {
       "name": "Blutopia",
@@ -1308,7 +1395,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bolly.wtf": {
       "name": "Bolly",
@@ -1330,7 +1420,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "broadcasthe.net": {
       "name": "BroadcasTheNet",
@@ -1359,7 +1452,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "brokenstones.is": {
       "name": "BrokenStones",
@@ -1390,7 +1486,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "btarg.com.ar": {
       "name": "BTArg",
@@ -1436,7 +1535,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "bwtorrents.tv": {
       "name": "BwTorrents",
@@ -1631,7 +1733,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "byr.pt": {
       "name": "BYR",
@@ -1653,7 +1758,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "cangbao.ge": {
       "name": "藏宝 CBG",
@@ -1675,7 +1783,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "carp-hunter.hu": {
       "name": "HeroBit",
@@ -1697,7 +1808,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "carpt.net": {
       "name": "CarPT",
@@ -2008,7 +2122,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "cathode-ray.tube": {
       "name": "Cathode-Ray.Tube",
@@ -2030,7 +2147,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "cgpeers.to": {
       "name": "CGPeers",
@@ -2052,7 +2172,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "cinemageddon.net": {
       "name": "CineGeddon",
@@ -2115,7 +2238,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "cinemaz.to": {
       "name": "CinemaZ",
@@ -2137,7 +2263,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "concertos.live": {
       "name": "Concertos",
@@ -2306,7 +2435,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "crabpt.vip": {
       "name": "蟹黄堡",
@@ -3120,7 +3252,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "crows-town.com": {
       "name": "CrowsTown",
@@ -3142,7 +3277,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "cyanbug.net": {
       "name": "大青虫",
@@ -3550,7 +3688,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "danishbytes.club": {
       "name": "NordicBytes",
@@ -3572,7 +3713,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "darkland.top": {
       "name": "DarkLand",
@@ -3594,7 +3738,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "datascene.xyz": {
       "name": "DataScene",
@@ -3616,7 +3763,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "demon-asylum.org": {
       "name": "Demon Asylum",
@@ -3638,7 +3788,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "denofsimps.club": {
       "name": "Den of Simps",
@@ -3660,7 +3813,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "dicmusic.com": {
       "name": "DIC Music",
@@ -3701,7 +3857,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "digitalcore.club": {
       "name": "DigitalCore",
@@ -3723,7 +3882,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "dimeadozen.org": {
       "name": "DimeADozen",
@@ -3818,7 +3980,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "discfan.net": {
       "name": "碟粉",
@@ -3997,7 +4162,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "docspedia.world": {
       "name": "DocsPedia",
@@ -4071,7 +4239,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "dreadvault.org": {
       "name": "DreadVault",
@@ -4098,7 +4269,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "dreamingtree.org": {
       "name": "DreamingTree",
@@ -4126,7 +4300,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "dstudio.me": {
       "name": "Depth Studio",
@@ -4181,7 +4358,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "e-hentai.org": {
       "name": "E-Hentai",
@@ -4203,7 +4383,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "eiga.moi": {
       "name": "AsianCinema",
@@ -4225,7 +4408,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ellatza.giize.com": {
       "name": "Ellatza",
@@ -4247,7 +4433,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "emmidtv.top": {
       "name": "EMMID TV",
@@ -4269,7 +4458,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "emparadise.rs": {
       "name": "Emp",
@@ -4491,7 +4683,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "estone.cc": {
       "name": "eStone",
@@ -4513,7 +4708,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "et8.org": {
       "name": "TCCF",
@@ -4918,7 +5116,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "exoticaz.to": {
       "name": "ExoticaZ",
@@ -4940,7 +5141,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "extremlymtorrents.ws": {
       "name": "ExtremlymTorrents",
@@ -5040,7 +5244,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "f1carreras.xyz": {
       "name": "F1Carreras",
@@ -5062,7 +5269,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "fantastiko.space": {
       "name": "Fantastiko",
@@ -5084,7 +5294,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "fappaizuri.me": {
       "name": "Fappaizuri",
@@ -5106,7 +5319,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "filelist.io": {
       "name": "FileList",
@@ -5195,7 +5411,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "filmesp2p.xyz": {
       "name": "FilmesP2P",
@@ -5217,7 +5436,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "fluxzone.org": {
       "name": "FluxZone",
@@ -5239,7 +5461,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "forums.mvgroup.org": {
       "name": "MVGroup",
@@ -5261,7 +5486,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "funfile.org": {
       "name": "FunFile",
@@ -5319,7 +5547,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "fusionmayhem.net": {
       "name": "Fusion Mayhem",
@@ -5341,7 +5572,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "gamegamept.com": {
       "name": "GGPT",
@@ -5379,7 +5613,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "gay-torrents.net": {
       "name": "Gay-Torrents",
@@ -5401,7 +5638,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "gay-torrents.org": {
       "name": "Gay-Torrents",
@@ -5423,7 +5663,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "gaytor.rent": {
       "name": "GayTor.rent",
@@ -5518,7 +5761,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "gazellegames.net": {
       "name": "GazelleGames",
@@ -5540,7 +5786,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "generation-free.org": {
       "name": "GF-FREE",
@@ -5562,7 +5811,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "girotorrent.org": {
       "name": "Girotorrent",
@@ -5584,7 +5836,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "greatposterwall.com": {
       "name": "GPW",
@@ -5720,7 +5975,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "greek-team.eu": {
       "name": "Greek-Team",
@@ -5742,7 +6000,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "h-p2p.cam": {
       "name": "H-P2P",
@@ -5764,7 +6025,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "haidan.cc": {
       "name": "海胆之家",
@@ -5808,7 +6072,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "happyfappy.org": {
       "name": "HappyFappy",
@@ -5830,7 +6097,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hawke.uno": {
       "name": "Hawke",
@@ -5852,7 +6122,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hd-space.org": {
       "name": "HD-Space",
@@ -5992,7 +6265,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdarea.club": {
       "name": "HDArea",
@@ -6456,7 +6732,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdcity.city": {
       "name": "HDCiTY",
@@ -6488,7 +6767,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdf.world": {
       "name": "HD-F",
@@ -6510,7 +6792,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdfans.org": {
       "name": "HDFans",
@@ -7099,7 +7384,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdhome.org": {
       "name": "家园 HDHome",
@@ -7537,7 +7825,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdkyl.in": {
       "name": "HDKylin",
@@ -7591,7 +7882,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdsky.me": {
       "name": "天空 HDSky",
@@ -8074,7 +8368,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdtime.org": {
       "name": "HDTIME",
@@ -8448,7 +8745,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdtlafenice.eu": {
       "name": "HD TLA Fenice",
@@ -8470,7 +8770,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdvideo.top": {
       "name": "HDVIDEO",
@@ -8808,7 +9111,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hdwing.org": {
       "name": "HDWinG",
@@ -9326,7 +9632,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "heavens-hell.info": {
       "name": "Heavens-Hell",
@@ -9348,7 +9657,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hebits.net": {
       "name": "Hebits",
@@ -9370,7 +9682,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hellashut.net": {
       "name": "HellasHut",
@@ -9480,7 +9795,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hhanclub.net": {
       "name": "憨憨 HHCLUB",
@@ -9530,7 +9848,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "hitpt.com": {
       "name": "百川PT",
@@ -9583,7 +9904,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "homiehelpdesk.net": {
       "name": "HomieHelpDesk",
@@ -9605,7 +9929,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "htpt.cc": {
       "name": "海棠PT",
@@ -9634,7 +9961,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "huntorrent.org": {
       "name": "HunTorrent",
@@ -9656,7 +9986,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "immortuos.live": {
       "name": "Immortuos",
@@ -9678,7 +10011,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "infire.si": {
       "name": "Infire",
@@ -9797,7 +10133,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "iptorrents.com": {
       "name": "iPT",
@@ -9819,7 +10158,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "itatorrents.xyz": {
       "name": "ItaTorrents",
@@ -9841,7 +10183,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "jme-reunit3d.de": {
       "name": "JME",
@@ -9863,7 +10208,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "joyhd.net": {
       "name": "JoyHD",
@@ -9885,7 +10233,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "jpopsuki.eu": {
       "name": "JPopSuki",
@@ -9908,7 +10259,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "jptv4.us": {
       "name": "JPTV4",
@@ -9930,7 +10284,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "jungleland.dnsalias.com": {
       "name": "Jungleland",
@@ -9952,7 +10309,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "justanothermusic.site": {
       "name": "J.A.M.",
@@ -9974,7 +10334,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "kamept.com": {
       "name": "KamePT",
@@ -10029,7 +10392,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "kleverig.eu": {
       "name": "Kleverig",
@@ -10051,7 +10417,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "krazyzone.net": {
       "name": "KrazyZone",
@@ -10114,7 +10483,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "kufei.org": {
       "name": "库非",
@@ -10553,7 +10925,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "kufirc.com": {
       "name": "Kufirc",
@@ -10582,7 +10957,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "laidbackmanor.xyz": {
       "name": "LaidbackManor",
@@ -10604,7 +10982,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "last-torrents.org": {
       "name": "LastFiles",
@@ -10626,7 +11007,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "lat-team.com": {
       "name": "Lat-Team",
@@ -10648,7 +11032,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "learnflakes.net": {
       "name": "LearnFlakes",
@@ -10670,7 +11057,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "lesbians4u.org": {
       "name": "Lesbians4U",
@@ -10692,7 +11082,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "libble.me": {
       "name": "Libble",
@@ -10720,7 +11113,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "libranet.org": {
       "name": "LibraNet",
@@ -10780,7 +11176,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "lst.gg": {
       "name": "LST",
@@ -10802,7 +11201,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "lunars.fun": {
       "name": "TermTracker",
@@ -10824,7 +11226,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "lusthive.org": {
       "name": "LustHive",
@@ -10846,7 +11251,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "lztr.me": {
       "name": "LzTr",
@@ -10917,7 +11325,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "m-team.cc": {
       "name": "馒头 M-Team",
@@ -10939,7 +11350,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "majomparade.eu": {
       "name": "MajomParade",
@@ -10961,7 +11375,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "malayabits.cc": {
       "name": "MalayaBits",
@@ -10983,7 +11400,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "masters-tb.com": {
       "name": "Masters-TB",
@@ -11005,7 +11425,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "matrixworld.info": {
       "name": "M.A.T.R.I.X",
@@ -11027,7 +11450,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "megamixtracker.hu": {
       "name": "MegaMix",
@@ -11049,7 +11475,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "mendigosdaweb.cc": {
       "name": "MendigosDaWeb",
@@ -11071,7 +11500,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "metalworks.lol": {
       "name": "MetalWorks",
@@ -11093,7 +11525,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "milkie.cc": {
       "name": "Milkie",
@@ -11115,7 +11550,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "mojblink.si": {
       "name": "Mojblink",
@@ -11137,7 +11575,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "monikadesign.uk": {
       "name": "MonikaDesign",
@@ -11263,7 +11704,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "morethantv.me": {
       "name": "MoreThanTV",
@@ -11285,7 +11729,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "mua.xloli.cc": {
       "name": "萝莉 MUA",
@@ -11697,7 +12144,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "musebootlegs.com": {
       "name": "MuseBootlegs",
@@ -11719,7 +12169,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "musicvibes.ro": {
       "name": "MusicVibes",
@@ -11741,7 +12194,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "myanonamouse.net": {
       "name": "MyAnonaMouse",
@@ -11763,7 +12219,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "nanyangpt.com": {
       "name": "南洋PT",
@@ -11888,7 +12347,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "nebulance.io": {
       "name": "Nebulance",
@@ -11917,7 +12379,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "nethd.org": {
       "name": "NetHD",
@@ -11965,7 +12430,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "newinsane.info": {
       "name": "Insane",
@@ -11987,7 +12455,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "nicept.net": {
       "name": "NicePT",
@@ -12009,7 +12480,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "njtupt.top": {
       "name": "浦园PT",
@@ -12075,7 +12549,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "nordichd.org": {
       "name": "NordicHD",
@@ -12097,7 +12574,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "nordicq.org": {
       "name": "NordicQuality",
@@ -12119,7 +12599,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ntelogo.org": {
       "name": "Ntelogo",
@@ -12141,7 +12624,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "okpt.net": {
       "name": "OKPT",
@@ -12163,7 +12649,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "oldtoons.world": {
       "name": "OldToons",
@@ -12185,7 +12674,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "onlyencodes.cc": {
       "name": "OnlyEncodes",
@@ -12207,7 +12699,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "open.cd": {
       "name": "OpenCD",
@@ -12229,7 +12724,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "orpheus.network": {
       "name": "Orpheus",
@@ -12259,7 +12757,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ostwiki.com": {
       "name": "OSTWiki",
@@ -12281,7 +12782,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "our.kelu.one": {
       "name": "Kelu",
@@ -12333,7 +12837,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ourbits.club": {
       "name": "我堡 OurBits",
@@ -12386,7 +12893,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pandacd.io": {
       "name": "PandaCD",
@@ -12408,7 +12918,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pandapt.net": {
       "name": "熊猫 PANDA",
@@ -12940,7 +13453,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "partis.si": {
       "name": "Partis",
@@ -12962,7 +13478,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "passthepopcorn.me": {
       "name": "PassThePopcorn",
@@ -12990,7 +13509,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "peeratiko.org": {
       "name": "Peeratiko",
@@ -13012,7 +13534,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "piggo.me": {
       "name": "猪猪 PigGo",
@@ -13034,7 +13559,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pixelcove.me": {
       "name": "PixelCove",
@@ -13063,7 +13591,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "plusteca.com": {
       "name": "Plusteca",
@@ -13085,7 +13616,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "polishtorrent.top": {
       "name": "PolishTorrent",
@@ -13107,7 +13641,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pornbay.org": {
       "name": "PornBay",
@@ -13129,7 +13666,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "portugas.org": {
       "name": "Portugas",
@@ -13151,7 +13691,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "privatehd.to": {
       "name": "PrivateHD",
@@ -13173,7 +13716,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.0ff.cc": {
       "name": "农场 Farmm",
@@ -13908,7 +14454,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.521.best": {
       "name": "凤凰PT",
@@ -14125,7 +14674,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.aling.de": {
       "name": "alingPT",
@@ -14371,7 +14923,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.btschool.club": {
       "name": "BTSCHOOL 比特校园",
@@ -14706,7 +15261,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.cdfile.org": {
       "name": "CDFile",
@@ -14728,7 +15286,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.daxiangjiao.org": {
       "name": "大象 DaXiangJiao",
@@ -14782,7 +15343,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.eastgame.org": {
       "name": "TLFBits",
@@ -15198,7 +15762,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.gtk.pw": {
       "name": "PT GTK",
@@ -15510,7 +16077,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.hd4fans.org": {
       "name": "HD4FANS",
@@ -15532,7 +16102,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.itzmx.com": {
       "name": "PT分享站",
@@ -15671,7 +16244,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.keepfrds.com": {
       "name": "朋友 KeepFRDS",
@@ -15745,7 +16321,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.luckpt.de": {
       "name": "LuckPT",
@@ -15767,7 +16346,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.novahd.top": {
       "name": "NovaHD",
@@ -15850,7 +16432,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.sjtu.edu.cn": {
       "name": "葡萄",
@@ -15903,7 +16488,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.soulvoice.club": {
       "name": "聆音Club",
@@ -16083,7 +16671,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.tu88.men": {
       "name": "TU88",
@@ -16142,7 +16733,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.upxin.net": {
       "name": "HDU",
@@ -16505,7 +17099,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pt.xzt.me": {
       "name": "小站",
@@ -16527,7 +17124,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ptcafe.club": {
       "name": "咖啡",
@@ -17050,7 +17650,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ptchdbits.co": {
       "name": "CHDBits",
@@ -17490,7 +18093,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pterclub.net": {
       "name": "猫站 PTer",
@@ -17759,7 +18365,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pthome.net": {
       "name": "家园 PTHome",
@@ -18074,7 +18683,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ptsbao.club": {
       "name": "堡 PTSbao",
@@ -18096,7 +18708,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "punck-tracker.net": {
       "name": "Punk's Horror Tracker",
@@ -18251,7 +18866,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "pwtorrents.net": {
       "name": "PWTorrents",
@@ -18273,7 +18891,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "qingwapt.com": {
       "name": "青蛙PT",
@@ -18630,7 +19251,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "r3vuk.wtf": {
       "name": "R3V",
@@ -18652,7 +19276,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "racing4everyone.eu": {
       "name": "R4E",
@@ -18674,7 +19301,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "raingfh.top": {
       "name": "RainGFH",
@@ -18696,7 +19326,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "rawkbawx.rocks": {
       "name": "RawkBawx",
@@ -18718,7 +19351,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "redacted.sh": {
       "name": "Redacted",
@@ -18790,7 +19426,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "reelflix.xyz": {
       "name": "ReelFliX",
@@ -18812,7 +19451,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "retroflix.club": {
       "name": "Retroflix",
@@ -18834,7 +19476,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "retrotoon.world": {
       "name": "RetroToon",
@@ -18964,7 +19609,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "revolutiontt.me": {
       "name": "RevolutionTT",
@@ -18986,7 +19634,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "rotorrent.ro": {
       "name": "RoTorrent",
@@ -19008,7 +19659,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "rousi.pro": {
       "name": "肉丝 Rousi",
@@ -19030,7 +19684,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "satclubbing.club": {
       "name": "SatClubbing",
@@ -19052,7 +19709,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "scenelinks.me": {
       "name": "SceneLinks",
@@ -19074,7 +19734,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "scenetime.com": {
       "name": "SceneTime",
@@ -19096,7 +19759,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "secret-cinema.pw": {
       "name": "Secret Cinema",
@@ -19118,7 +19784,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "seedfile.io": {
       "name": "SeedFile",
@@ -19191,7 +19860,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "sextorrent.eu": {
       "name": "SexTorrent",
@@ -19213,7 +19885,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "shareisland.org": {
       "name": "ShareIsland",
@@ -19235,7 +19910,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "sharewood.tv": {
       "name": "ShareWood",
@@ -19257,7 +19935,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "si-qi.xyz": {
       "name": "思齐",
@@ -19279,7 +19960,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "skipthecommercials.xyz": {
       "name": "STC",
@@ -19301,7 +19985,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "skipthecommericals.xyz": {
       "name": "STC",
@@ -19323,7 +20010,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "slosoul.net": {
       "name": "SloSoul",
@@ -19345,7 +20035,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "speed.cd": {
       "name": "Speed.CD",
@@ -19367,7 +20060,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "speedapp.io": {
       "name": "SpeedApp",
@@ -19389,7 +20085,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "sportscult.org": {
       "name": "SportsCult",
@@ -19815,7 +20514,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "springsunday.net": {
       "name": "春天",
@@ -19867,7 +20569,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ssl.bootytape.com": {
       "name": "BootyTape",
@@ -19889,7 +20594,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "star-space.net": {
       "name": "星空",
@@ -19911,7 +20619,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "sugoimusic.me": {
       "name": "SugoiMusic",
@@ -19933,7 +20644,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "superbits.org": {
       "name": "SuperBits",
@@ -19955,7 +20669,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "t.ceskeforum.com": {
       "name": "CeskeForum",
@@ -20181,7 +20898,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tapochek.net": {
       "name": "Tapochek",
@@ -20203,7 +20923,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tctg.pm": {
       "name": "TCTG",
@@ -20225,7 +20948,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "teamos.xyz": {
       "name": "TeamOS",
@@ -20247,7 +20973,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "teracod.net": {
       "name": "Teracod",
@@ -20269,7 +20998,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "test.pterclub.net": {
       "name": "猫测试站",
@@ -20539,7 +21271,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tgay.pro": {
       "name": "TGay",
@@ -20561,7 +21296,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "the-new-fun.com": {
       "name": "The-New-Fun",
@@ -20583,7 +21321,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "thecrazyones.hopto.org": {
       "name": "The-Crazy-Ones",
@@ -20605,7 +21346,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "theldu.net": {
       "name": "TheLDU",
@@ -20627,7 +21371,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "theoldschool.cc": {
       "name": "TheOldSchool",
@@ -20649,7 +21396,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "theparadiese.org": {
       "name": "TheParadiese",
@@ -20671,7 +21421,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "thesceneplace.com": {
       "name": "TheScenePlace",
@@ -20693,7 +21446,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tigers-dl.net": {
       "name": "Tigers-DL",
@@ -20715,7 +21471,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tjupt.org": {
       "name": "北洋园PT",
@@ -20845,7 +21604,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tocashare.com": {
       "name": "TocaShare",
@@ -20867,7 +21629,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "toonsfor.me": {
       "name": "ToonsFor",
@@ -20889,7 +21654,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "toptbdev.net": {
       "name": "TopTB",
@@ -20911,7 +21679,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tormac.org": {
       "name": "TorMac",
@@ -20933,7 +21704,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tornado.si": {
       "name": "Tornado",
@@ -20955,7 +21729,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrent-explosiv.me": {
       "name": "Torrent-Explosiv",
@@ -20977,7 +21754,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrent.genesis-movement.org": {
       "name": "Genesis-Movement",
@@ -20999,7 +21779,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrent.janemusic.org": {
       "name": "JaneMusic",
@@ -21033,7 +21816,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrentdd.com": {
       "name": "TorrentDD",
@@ -21055,7 +21841,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrentheaven.org": {
       "name": "TorrentHeaven",
@@ -21077,7 +21866,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrenting.com": {
       "name": "Torrenting",
@@ -21099,7 +21891,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrentland.li": {
       "name": "TorrentLand",
@@ -21121,7 +21916,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrentmasters.org": {
       "name": "TorrentMasters",
@@ -21143,7 +21941,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrents.torrentech.org": {
       "name": "Torrentech",
@@ -21171,7 +21972,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "torrentseeds.org": {
       "name": "TorrentSeeds",
@@ -21193,7 +21997,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "totheglory.im": {
       "name": "TTG",
@@ -21474,7 +22281,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tr.anidub.com": {
       "name": "AniDUB",
@@ -21496,7 +22306,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tribalmixes.com": {
       "name": "TribalMixes",
@@ -21531,7 +22344,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "truegear.net": {
       "name": "TrueGear",
@@ -21553,7 +22369,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "tv-vault.me": {
       "name": "TV-Vault",
@@ -21581,7 +22400,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "twilightsdreams.com": {
       "name": "Twilight's Dreams",
@@ -21603,7 +22425,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "twisted-music.org": {
       "name": "Twisted-Music",
@@ -21625,7 +22450,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "u2.dmhy.org": {
       "name": "U2 分享社",
@@ -21754,7 +22582,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ubits.club": {
       "name": "UBits",
@@ -22138,7 +22969,10 @@
           }
         }
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "uhdbits.org": {
       "name": "UHDBits",
@@ -22160,7 +22994,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "uhddolby.com": {
       "name": "UHDDolby",
@@ -22182,7 +23019,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ultimatewrestlingtorrents.com": {
       "name": "UWT",
@@ -22204,7 +23044,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ultrahd.net": {
       "name": "UltraHD",
@@ -22253,7 +23096,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ultrahd.online": {
       "name": "UltraHD",
@@ -22275,7 +23121,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "uni-track.org": {
       "name": "UniTrack",
@@ -22297,7 +23146,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "unleashthecartoons.world": {
       "name": "UnleashTheCartoons",
@@ -22319,7 +23171,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "upload.cx": {
       "name": "ULCX",
@@ -22341,7 +23196,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "usefultrash.net": {
       "name": "UsefulTrash",
@@ -22363,7 +23221,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "utp.to": {
       "name": "UTP",
@@ -22385,7 +23246,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "vision-hd.org": {
       "name": "VISION",
@@ -22407,7 +23271,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "warezforums.com": {
       "name": "WarezForums",
@@ -22429,7 +23296,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "wukongwendao.top": {
       "name": "悟空问道",
@@ -22451,7 +23321,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "x-ite.me": {
       "name": "x-ite",
@@ -22473,7 +23346,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "xingtan.one": {
       "name": "杏坛",
@@ -22548,7 +23424,10 @@
         },
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "xrel.to": {
       "name": "xREL",
@@ -22570,7 +23449,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "xtremebytes.net": {
       "name": "XtremeBytes",
@@ -22592,7 +23474,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "xwt-classics.net": {
       "name": "XWT-Classics",
@@ -22614,7 +23499,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "yoinked.org": {
       "name": "Yoinked",
@@ -22636,7 +23524,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "yu-scene.net": {
       "name": "YUSCENE",
@@ -22658,7 +23549,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zappateers.com": {
       "name": "Zappateers",
@@ -22680,7 +23574,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zapshare.net": {
       "name": "ZapShare",
@@ -22702,7 +23599,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zelka.org": {
       "name": "Zelka",
@@ -22724,7 +23624,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zeus.hamsters.space": {
       "name": "仓鼠",
@@ -22746,7 +23649,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zhuque.in": {
       "name": "朱雀",
@@ -22768,7 +23674,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zmpt.club": {
       "name": "织梦",
@@ -22790,7 +23699,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "zombtracker.the-zomb.com": {
       "name": "ZombTracker",
@@ -22812,7 +23724,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     },
     "ztracker.cc": {
       "name": "ZTracker",
@@ -22834,7 +23749,10 @@
         "catMap": {},
         "tagValue": "yes"
       },
-      "localEdited": false
+      "localEdited": false,
+      "limits": {},
+      "downloadLink": "",
+      "refreshCron": ""
     }
   }
 }

@@ -68,6 +68,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { loadRuntimePresets } from './utils/presets-runtime'
 import whale from './assets/whale.png'
 import Dashboard from './views/Dashboard.vue'
 import Sites from './views/Sites.vue'
@@ -165,6 +166,7 @@ function submitLogin() {
       window.dispatchEvent(new Event('hashchange'))
       loadStats()
       loadDev()
+      loadRuntimePresets(true)
       return
     }
     login.err = (res.j && res.j.error && res.j.error.message) || '用户名或密码不对'

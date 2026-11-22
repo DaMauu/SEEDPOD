@@ -38,6 +38,9 @@ const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
 /* 旧 credentials 表一次性迁到总 cookie 文件；文件已存在则不覆盖 */
 try { require('./cookie-store')(DATA_DIR).migrateFromDB(db); }
 catch (e) { console.warn('[seedpod] cookie 文件迁移失败:', e && e.message ? e.message : e); }
+/* 首次启动把 pack 模板复制成 data/presets.json；之后用户改的是 data 这份 */
+try { require('./presets')(DATA_DIR).ensure(); }
+catch (e) { console.warn('[seedpod] 全局预设初始化失败:', e && e.message ? e.message : e); }
 const LOGIN_FAILS = new Map();
 const SESSION_TTL = 12 * 3600 * 1000;
 

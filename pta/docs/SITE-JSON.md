@@ -5,17 +5,19 @@
 ## 文件
 
 ```text
-pta/pack/presets.preset.json     入库：全局类型/搜索维度/发布字段
+pta/pack/presets.preset.json     入库：全局预设模板（首次启动复制）
 pta/pack/sites.preset.json       入库：站点定义（只含 key + ID）
 pta/pack/site-urls.preset.json   入库：网址，Base64
 pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 
+/data/presets.json               本地：全局类型/搜索维度/发布字段（用户可改）
 /data/sites.json                 本地：站点定义 + settings
 /data/site-urls.json             本地：网址，Base64
 /data/cookies.json               本地：cookie，AES-GCM 密文
 ```
 
-- `presets.preset.json` 是唯一的中文类型/选项来源；站点 JSON 不写中文类型。
+- `data/presets.json` 是运行时唯一的全局预设；首次启动从 `pta/pack/presets.preset.json` 复制，之后用户改的是 data 这份。
+- 站点 JSON 不写中文类型；页面选项通过 `GET /api/presets` 读运行时全局预设。
 - `sites.preset.json` / `site-urls.preset.json` 可以进 GitHub。
 - `cookies.example.json` 只能有空值；真实 cookie 永远不进仓库。
 - `site-urls` 是 Base64，不是加密；能解码看到网址。
@@ -23,7 +25,7 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 
 ## 全局预设
 
-`pta/pack/presets.preset.json`：
+`pta/pack/presets.preset.json`（模板）/ `data/presets.json`（运行时）：
 
 ```json
 {
@@ -43,11 +45,25 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
   },
   "publish": {
     "fields": { "title": "标题", "descr": "简介", "catId": "分类" }
+  },
+  "site": {
+    "search": { "path": "", "params": {}, "catMode": "single", "catSlot": "" },
+    "limits": {},
+    "downloadLink": "",
+    "refreshCron": "",
+    "publish": {
+      "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} },
+      "verify": { "path": "" },
+      "catMap": {}
+    },
+    "settings": { "enabled": false, "priority": "normal", "note": "", "hidden": false }
   }
 }
 ```
 
 完整清单在文件里，顺序就是界面选项顺序。
+
+`site` 是站点字段模板：新站按它补默认值，老站缺的字段读取时补上，已有值不覆盖；站点里额外的自定义字段也会原样保留，保存时不会丢。
 
 ## 站点 JSON
 
@@ -75,6 +91,12 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
       "publish": {
         "catMap": { "movie": "402", "tv": "403" }
       },
+      "limits": {
+        "windowMinutes": 60,
+        "maxPerWindow": 20
+      },
+      "downloadLink": "/download.php?id={ID}",
+      "refreshCron": "0 */4 * * *",
       "settings": { "enabled": false }
     }
   }
@@ -93,7 +115,12 @@ pta/pack/cookies.example.json    入库：host → 空 cookie 模板
 - `publish.catMap`：发布分类绑定；一个 key 只对应一个 ID。
 - `search.filters.values`：全局选项 key → 站点搜索参数值。
 - `search.filters.selected`：勾选的全局选项 key；没有站点值的选项只做本地标题过滤。
-- 不再保存 `search.types`、`publish.catLabels`；中文名由 `presets.preset.json` 查表补。
+- `searchPath` / `params` 在新格式里就是 `search.path` / `search.params`，不是丢了；旧文件迁移时会自动搬过去。
+- `limits`：站点自己的抓取限制，认 `windowMinutes`、`maxPerWindow`、`listIntervalSeconds`、`detailIntervalSeconds`；不写就用面板全局限制。
+- `downloadLink`：列表页没给下载链接时，用这个模板补，`{ID}` 会替换成站点种子 ID。
+- `refreshCron`：预留的刷新表达式，原样保存；当前调度仍按面板周期跑。
+- 站点里出现的额外字段（包括以后新增的）都会保留，保存和生成预设都不会删。
+- 不再保存 `search.types`、`publish.catLabels`；中文名由 `data/presets.json` 查表补。
 - `settings` 只在本机 `data/sites.json` 出现；预设文件不写，首次启动默认停用。
 
 JSON 写一行不影响识别，空白只是格式：
@@ -133,7 +160,7 @@ chmod 600 pta/pack/*.json
 - `--dry` 只输出数量。
 - 不打印站名/网址/cookie，不联网。
 
-改全局预设后同步前端：
+改 `pta/pack/presets.preset.json` 模板后同步前端默认值；运行时以 `data/presets.json` 为准：
 
 ```bash
 node pta/scripts/gen-presets.js
@@ -142,12 +169,13 @@ node pta/scripts/gen-presets.js
 ## 首次启动
 
 ```text
+/data/presets.json 不存在    → 从 presets.preset.json 复制
 /data/sites.json 不存在      → 从 sites.preset.json 复制
 /data/site-urls.json 不存在  → 从 site-urls.preset.json 复制
 /data/cookies.json 不存在    → 从 cookies.example.json 复制（全空）
 ```
 
-之后面板只读写 `/data` 的三个文件；镜像里的 preset 只读。
+之后面板只读写 `/data` 的四个文件；镜像里的 preset 只读。用户新增类型直接改 `data/presets.json`，重启后界面和抓取都按新表走。
 
 ## 升级合并（待接）
 
@@ -181,4 +209,4 @@ node pta/scripts/gen-presets.js
 - Base64 只能遮挡，不是加密。
 - 真实 cookie 只进 `data/cookies.json`，AES-GCM 密文，0600。
 - 不打印 cookie；日志只记 host 和保存/删除动作。
-- 备份包含三个本地文件；恢复后仍需原密钥解 cookie。
+- 备份包含 `presets.json`、`sites.json`、`site-urls.json`、`cookies.json`；恢复后仍需原密钥解 cookie。
