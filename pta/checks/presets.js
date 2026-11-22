@@ -168,8 +168,8 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   });
 
   await check('前端预设与全局预设同源', async function () {
-    const web = read(path.join(ROOT, 'web-src', 'shared', 'presets.json'));
-    need(JSON.stringify(web) === JSON.stringify(doc), 'web-src/shared/presets.json 不是最新；跑 node pta/scripts/gen-presets.js');
+    const web = read(path.join(ROOT, 'web', 'shared', 'presets.json'));
+    need(JSON.stringify(web) === JSON.stringify(doc), 'web/shared/presets.json 不是最新；跑 node pta/scripts/gen-presets.js');
   });
 
   const pass = results.filter(function (r) { return r[0]; }).length;

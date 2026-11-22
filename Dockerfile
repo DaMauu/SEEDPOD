@@ -4,7 +4,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY pta/web-src ./pta/web-src
+COPY pta/web ./pta/web
 RUN npm run build
 
 FROM node:22-alpine

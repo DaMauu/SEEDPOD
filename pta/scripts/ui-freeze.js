@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const ROOT = path.resolve(__dirname, '..', 'web-src', 'src');
+const ROOT = path.resolve(__dirname, '..', 'web', 'src');
 const BASE = path.resolve(__dirname, '..', 'ui-baseline.json');
 const DIRS = ['styles', 'components', 'views'];
 

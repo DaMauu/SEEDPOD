@@ -5,7 +5,7 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'pack', 'presets.preset.json');
-const OUT = path.join(ROOT, 'web-src', 'shared', 'presets.json');
+const OUT = path.join(ROOT, 'web', 'shared', 'presets.json');
 const CHECK = process.argv.includes('--check');
 
 function read(file) {

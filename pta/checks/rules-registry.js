@@ -43,7 +43,7 @@ check('注册表是 UI/服务端共享源，key/类型/默认值一致', () => {
   need(fs.existsSync(source), '共享源不存在：' + registry.SOURCE);
   const shared = JSON.parse(fs.readFileSync(source, 'utf8'));
   need(shared.version === registry.VERSION, '共享源版本不一致');
-  const src = fs.readFileSync(path.join(ROOT, 'web-src', 'src', 'data', 'rules.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'web', 'src', 'data', 'rules.js'), 'utf8');
   need(/from '\.\.\/\.\.\/shared\/rule-registry\.json'/.test(src), 'UI 没引用共享 JSON');
   const sandbox = { window: {}, registry: shared };
   require('vm').createContext(sandbox);

@@ -7,13 +7,13 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
-const RULES = path.join(ROOT, 'web-src', 'src', 'data', 'rules.js');
+const RULES = path.join(ROOT, 'web', 'src', 'data', 'rules.js');
 const SERVER = path.join(ROOT, 'server');
 const V2_FILES = fs.readdirSync(SERVER)
   .filter(f => f.endsWith('.js') && f !== 'app.js')
   .map(f => path.join(SERVER, f));
 
-const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web-src', 'shared', 'rule-registry.json'), 'utf8'));
+const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web', 'shared', 'rule-registry.json'), 'utf8'));
 const sandbox = { window: {}, registry: registry };
 vm.runInNewContext(require('./load-rules').rulesSource(), sandbox);
 const R = sandbox.window.PTA_RULES || {};

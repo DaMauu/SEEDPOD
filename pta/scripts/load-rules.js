@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const RULES = path.join(ROOT, 'web-src', 'src', 'data', 'rules.js');
-const PRESETS = path.join(ROOT, 'web-src', 'shared', 'presets.json');
+const RULES = path.join(ROOT, 'web', 'src', 'data', 'rules.js');
+const PRESETS = path.join(ROOT, 'web', 'shared', 'presets.json');
 
 function rulesSource() {
   const src = fs.readFileSync(RULES, 'utf8').replace(/^import .*$/gm, '');

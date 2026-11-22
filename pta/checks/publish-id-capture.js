@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const FILE = path.join(__dirname, '..', 'web-src', 'src', 'views', 'Queue.vue');
+const FILE = path.join(__dirname, '..', 'web', 'src', 'views', 'Queue.vue');
 const src = fs.readFileSync(FILE, 'utf8');
 const results = [];
 function check(name, fn) {

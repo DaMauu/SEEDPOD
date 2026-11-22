@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const postcss = require('postcss');
 
-const ROOT = path.resolve(__dirname, '..', 'web-src', 'src');
+const ROOT = path.resolve(__dirname, '..', 'web', 'src');
 const BASE = (function () {
   const i = process.argv.indexOf('--baseline');
   return i >= 0 ? path.resolve(process.argv[i + 1]) : path.resolve(__dirname, '..', 'fixtures', 'css-breakpoint-baseline.json');

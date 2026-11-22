@@ -36,14 +36,14 @@ const DIMENSIONS = [
   ['quality', '质量']
 ];
 const FEATURES = {
-  dashboard: ['pta/web-src/src/views/Dashboard.vue', 'pta/web-src/src/App.vue'],
-  sites: ['pta/web-src/src/views/Sites.vue', 'pta/server/routes-data.js', 'pta/server/routes-probe.js'],
-  crawl: ['pta/web-src/src/views/Crawl.vue', 'pta/server/crawl.js', 'pta/server/routes-crawl.js', 'pta/server/scheduler.js'],
-  queue: ['pta/web-src/src/views/Queue.vue', 'pta/server/routes-write.js', 'pta/server/publish.js', 'pta/server/target.js'],
-  sources: ['pta/web-src/src/views/Sources.vue', 'pta/server/routes-data.js', 'pta/server/media.js'],
-  logs: ['pta/web-src/src/views/Logs.vue', 'pta/server/routes-data.js'],
-  settings: ['pta/web-src/src/views/Settings.vue', 'pta/server/routes-write.js', 'pta/server/notify.js'],
-  changelog: ['pta/web-src/src/views/Changelog.vue'],
+  dashboard: ['pta/web/src/views/Dashboard.vue', 'pta/web/src/App.vue'],
+  sites: ['pta/web/src/views/Sites.vue', 'pta/server/routes-data.js', 'pta/server/routes-probe.js'],
+  crawl: ['pta/web/src/views/Crawl.vue', 'pta/server/crawl.js', 'pta/server/routes-crawl.js', 'pta/server/scheduler.js'],
+  queue: ['pta/web/src/views/Queue.vue', 'pta/server/routes-write.js', 'pta/server/publish.js', 'pta/server/target.js'],
+  sources: ['pta/web/src/views/Sources.vue', 'pta/server/routes-data.js', 'pta/server/media.js'],
+  logs: ['pta/web/src/views/Logs.vue', 'pta/server/routes-data.js'],
+  settings: ['pta/web/src/views/Settings.vue', 'pta/server/routes-write.js', 'pta/server/notify.js'],
+  changelog: ['pta/web/src/views/Changelog.vue'],
   target: ['pta/server/target.js', 'pta/server/routes-target.js'],
   publish: ['pta/server/publish.js', 'pta/server/qb.js', 'pta/server/routes-publish.js'],
   scheduler: ['pta/server/scheduler.js', 'pta/server/routes-misc.js'],
@@ -126,7 +126,7 @@ function collect(files) {
     if (n > maxLines) { maxLines = n; maxFile = rel(f); }
     if (code > maxCodeLines) { maxCodeLines = code; maxCodeFile = rel(f); }
     if (rel(f) !== 'pta/scripts/audit-quality.js') todos += (s.match(/\b(TODO|FIXME|XXX)\b/g) || []).length;
-    const runtimeFile = /\/server\//.test(f) || /\/web-src\/src\//.test(f);
+    const runtimeFile = /\/server\//.test(f) || /\/web\/src\//.test(f);
     if (runtimeFile) {
       consoleLogs += (s.match(/console\.log\s*\(/g) || []).length;
       emptyCatch += (s.match(/catch\s*\([^)]*\)\s*\{\s*\}/g) || []).length;
@@ -158,7 +158,7 @@ function collect(files) {
   const routes = new Set();
   for (const m of serverText.matchAll(/app\.(get|post|put|delete|patch)\(\s*'(\/api\/[^']+)'/g)) routes.add(m[2].replace(/:[A-Za-z_]+/g, '*').replace(/\/+$/, ''));
   const frontCalls = new Set();
-  for (const f of src.filter(x => /\/web-src\//.test(x))) {
+  for (const f of src.filter(x => /\/web\//.test(x))) {
     const s = read(f);
     for (const m of s.matchAll(/['"`]\/api\/([^'"`?]+)/g)) {
       const p = '/api/' + m[1].replace(/\$\{[^}]+\}/g, '*').replace(/:[A-Za-z_]+/g, '*').replace(/\/+$/, '');

@@ -1,12 +1,12 @@
 /* 生成流程页规则树文档：node pta/scripts/gen-rules-tree.js（仓库根执行）
-   只读 pta/web-src/src/data/rules.js，写 pta/docs/RULES-TREE.md，不联网。 */
+   只读 pta/web/src/data/rules.js，写 pta/docs/RULES-TREE.md，不联网。 */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const src = require('./load-rules').rulesSource();
-const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web-src', 'shared', 'rule-registry.json'), 'utf8'));
+const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web', 'shared', 'rule-registry.json'), 'utf8'));
 const sandbox = { window: {}, registry: registry };
 vm.runInNewContext(src, sandbox);
 const R = sandbox.window.PTA_RULES;
@@ -14,7 +14,7 @@ const TITLE = { fetch: '抓取', dedupe: '查重', pub: '发布' };
 const lines = [];
 lines.push('# 流程页规则树（类目 / 手风琴 / 里面的每一条）');
 lines.push('');
-lines.push('由 `pta/web-src/src/data/rules.js` 直接生成：`node pta/scripts/gen-rules-tree.js`。行末的 [类型] 是控件形态，后面是选项或默认值。');
+lines.push('由 `pta/web/src/data/rules.js` 直接生成：`node pta/scripts/gen-rules-tree.js`。行末的 [类型] 是控件形态，后面是选项或默认值。');
 lines.push('');
 Object.keys(TITLE).forEach(function (key) {
   const groups = R[key] || [];

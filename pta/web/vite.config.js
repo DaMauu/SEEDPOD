@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [vue()],
   base: '/',
   build: {
-    outDir: resolve(here, '../web/dist'),
+    outDir: resolve(here, 'dist'),
     emptyOutDir: true,
     assetsDir: 'static'
   },

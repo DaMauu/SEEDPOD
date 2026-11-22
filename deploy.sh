@@ -20,8 +20,8 @@ case "$DEPLOY_DIR" in
   *) echo "DEPLOY_DIR 必须是绝对路径" >&2; exit 2 ;;
 esac
 
-# 前端构建：有 web-src 就先装依赖再出 dist，失败直接停
-if [ -d "$SRC/pta/web-src" ]; then
+# 前端构建：有 web 源码就先装依赖再出 dist，失败直接停
+if [ -d "$SRC/pta/web" ]; then
   ( cd "$SRC" && npm ci --no-audit --no-fund && npm run build )
 fi
 rsync -rc --delete \
