@@ -1,7 +1,7 @@
 /* MediaInfo / BDInfo 解析夹具：纯文本，不联网。覆盖两种格式、内联字段和无法识别。 */
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
-const mi = require(path.join(ROOT, 'server', 'mediainfo.js'));
+const mi = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'mediainfo.js'));
 
 const results = [];
 function check(name, fn) {

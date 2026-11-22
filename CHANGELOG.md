@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.665 · 2026-11-23
+
+### 后端收口：scheduler / downloaders / media / notify
+- 调度各阶段进 `features/scheduler`。
+- qB 与下载器策略进 `features/downloaders`。
+- 媒体、MediaInfo、图床、元数据进 `features/media`。
+- 通知进 `features/notifications`；sidecar、表单解析进 `infra`。
+- 删除无引用 `categories.js`；全量 `run.sh` 通过。
+
 ## v0.7.664 · 2026-11-23
 
 ### 后端收口：publish / target

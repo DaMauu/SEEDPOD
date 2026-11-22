@@ -1,6 +1,6 @@
 /* 查重阶段：逐目标站检查、写 dupeResults、失败记 attempts/nextRetryAt。
    单条逻辑复用 dedupe-item.js，跟送审查重保持同一套语义。 */
-const { dedupeItem, hostsOf } = require('./src/features/screen/dedupe-item');
+const { dedupeItem, hostsOf } = require('../screen/dedupe-item');
 
 function makeDedupePhase(deps) {
   return async function runDedupePhase(o) {

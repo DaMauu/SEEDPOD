@@ -1,7 +1,7 @@
 /* 补齐前端仍在调用的缺口接口：队列批量、抓取执行、更新日志、事件流别名。 */
 const fs = require('fs');
 const path = require('path');
-const form = require('./form');
+const form = require('./src/infra/form');
 const { makeTarget } = require('./src/features/publish/target');
 const { makeTargetService } = require('./src/features/publish/target-service');
 const { hostsOf } = require('./src/features/screen/dedupe-item');
@@ -82,7 +82,7 @@ module.exports = function (app, ctx) {
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
     const title = String(it.title || '').replace(/\s+/g, ' ').trim();
-    const built = require('./meta').buildNames(it);
+    const built = require('./src/features/media/meta').buildNames(it);
     return ok(reply, { id: id, target: it.targetSite || '', title: title,
       subtitle: built.subtitle,
       description: built.description,

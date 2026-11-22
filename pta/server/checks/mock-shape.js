@@ -1,7 +1,7 @@
 /* mock 契约：本地上传表单夹具必须和适配器/提交代码认的字段一致，避免 mock 自己编一套。 */
 const fs = require('fs');
 const path = require('path');
-const form = require('../form');
+const form = require('../src/infra/form');
 
 const results = [];
 function check(name, fn) {

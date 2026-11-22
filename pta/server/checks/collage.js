@@ -1,6 +1,6 @@
 /* 副标题拼贴与豆影简介保留块的纯函数回归。 */
-const collage = require('../collage');
-const metaFill = require('../meta-fill');
+const collage = require('../src/features/media/collage');
+const metaFill = require('../src/features/media/meta-fill');
 
 const results = [];
 function check(name, fn) {

@@ -2,7 +2,7 @@
    路由与调度器共用，避免两份实现。 */
 const fs = require('fs');
 const path = require('path');
-const { makeQb } = require('../../../qb');
+const { makeQb } = require('../downloaders/qb');
 const watch = require('../../../clients/watch');
 const stage = require('../queue/stage');
 const flowConfig = require('../settings/flow-config');

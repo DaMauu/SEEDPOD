@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeScheduler } = require('../scheduler');
+const { makeScheduler } = require('../src/features/scheduler/service');
 const { makeFailureQueue } = require('../src/features/logs/failure-queue');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sched-run-'));

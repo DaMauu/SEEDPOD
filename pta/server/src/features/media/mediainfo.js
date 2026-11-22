@@ -1,7 +1,7 @@
 /* MediaInfo / BDInfo 文本解析：纯函数，不联网，不调用外部工具。
    输入站点详情页里常见的 MediaInfo 或 BDInfo 文本，输出结构化摘要，
    供上传准备生成简介和面板预览。认不出就返回空 kind，不猜。 */
-const sizeLib = require('./src/infra/adapters/size');
+const sizeLib = require('../../infra/adapters/size');
 
 function clean(s) {
   return String(s == null ? '' : s)

@@ -377,11 +377,11 @@ async function build() {
     } };
   require('./src/features/settings/config-schema').ensureAll(ctx);
   ctx.crawl = makeCrawl(ctx);
-  ctx.notify = require('./notify').makeNotify(ctx);
+  ctx.notify = require('./src/features/notifications/service').makeNotify(ctx);
   require('./routes-write')(app, ctx);
   require('./routes-data')(app, ctx);
   logEvent = ctx.logEvent || null;
-  require('./routes-qb')(app, ctx);
+  require('./src/http/routes-qb')(app, ctx);
   require('./routes-probe')(app, ctx);
   require('./src/http/routes-crawl')(app, ctx);
   require('./routes-tasks')(app, ctx);
@@ -390,14 +390,14 @@ async function build() {
   require('./src/http/routes-release')(app, ctx);
   require('./src/http/routes-target')(app, ctx);
   require('./src/http/routes-maps')(app, ctx);
-  require('./routes-media')(app, ctx);
-  require('./routes-notify')(app, ctx);
+  require('./src/http/routes-media')(app, ctx);
+  require('./src/http/routes-notify')(app, ctx);
   require('./routes-extra')(app, ctx);
 
   require('./src/features/scheduler/pipeline').loadSteps();
   const publisher = require('./src/features/publish/service').makePublisher(ctx);
   ctx.publisher = publisher;
-  ctx.scheduler = require('./scheduler').makeScheduler(ctx, {
+  ctx.scheduler = require('./src/features/scheduler/service').makeScheduler(ctx, {
     crawl: ctx.crawl,
     screen: require('./src/features/screen/service'),
     release: require('./src/features/publish/release').makeRelease(ctx),

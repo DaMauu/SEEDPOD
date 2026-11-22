@@ -1,5 +1,5 @@
 /* 调度重试阶段：retryMax、nextRetryAt 退避、成功后清理重试标记。 */
-const { makeRetryPhases } = require('../scheduler-retry');
+const { makeRetryPhases } = require('../src/features/scheduler/retry');
 
 const store = {
   q_ok: { id: 'q_ok', status: 'failed', retries: 0, nextRetryAt: '' },

@@ -4,7 +4,7 @@ const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
 const { makeFailureQueue } = require('../src/features/logs/failure-queue');
-const { makeReviewPhase } = require('../scheduler-review');
+const { makeReviewPhase } = require('../src/features/scheduler/review');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-replay-sched-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

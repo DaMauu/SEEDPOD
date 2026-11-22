@@ -4,7 +4,7 @@
      node pta/scripts/fetch-douying.js --title "鬼网" --year 2017
      node pta/scripts/fetch-douying.js tt7736104 --raw
 */
-const metaExt = require('../meta-ext');
+const metaExt = require('../src/features/media/meta-ext');
 
 const argv = process.argv.slice(2);
 function arg(name, def) {

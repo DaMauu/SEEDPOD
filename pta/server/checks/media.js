@@ -5,8 +5,8 @@ const os = require('os');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const media = require(path.join(ROOT, 'server', 'media.js'));
-const { makeQb } = require(path.join(ROOT, 'server', 'qb.js'));
+const media = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'service.js'));
+const { makeQb } = require(path.join(ROOT, 'server', 'src', 'features', 'downloaders', 'qb.js'));
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-media-'));
 const FILE = path.join(DATA, 'test.mp4');

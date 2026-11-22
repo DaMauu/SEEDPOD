@@ -145,7 +145,7 @@ module.exports = function (app, ctx) {
       if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
       html = await r.text();
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
-    const form = require('../../form');
+    const form = require('../infra/form');
     const forms = form.parse(html);
     const values = { medium: {}, resolution: {}, discount: {}, restriction: {} };
     const labels = { medium: {}, resolution: {}, discount: {}, restriction: {} };

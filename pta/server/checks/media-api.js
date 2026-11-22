@@ -128,7 +128,7 @@ async function main() {
     const d = j.body.data;
     need(/^[0-9a-f]{40}$/.test(d.infohash), 'infohash 不对：' + d.infohash);
     need(d.base64 && d.base64.length > 20, '种子 base64 为空');
-    const { makeQb } = require(path.join(ROOT, 'server', 'qb.js'));
+    const { makeQb } = require(path.join(ROOT, 'server', 'src', 'features', 'downloaders', 'qb.js'));
     const meta = makeQb(DATA).parseTorrent(Buffer.from(d.base64, 'base64'));
     need(meta.hash === d.infohash, 'qb 解析的 hash 不一致');
     need(meta.name === 'test.mp4', 'qb 解析的 name 不对：' + meta.name);

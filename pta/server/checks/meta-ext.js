@@ -3,8 +3,8 @@ const http = require('http');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const { fetchMeta, providers, doubanSearch, douying } = require(path.join(ROOT, 'server', 'meta-ext.js'));
-const { makeMetaFill } = require(path.join(ROOT, 'server', 'meta-fill.js'));
+const { fetchMeta, providers, doubanSearch, douying } = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'meta-ext.js'));
+const { makeMetaFill } = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'meta-fill.js'));
 const results = [];
 
 function check(name, fn) {

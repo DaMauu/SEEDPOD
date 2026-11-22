@@ -1,7 +1,7 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
 const marksMod = require('./marks');
-const meta = require('../../../meta');
+const meta = require('../media/meta');
 const { tx } = require('../../infra/db');
 const { typeOf, selectedTypesOf } = require('../crawl/category');
 const makePresets = require('../presets/store');

@@ -8,8 +8,8 @@ const ROOT = path.resolve(__dirname, '..', '..');
 /* 独立 DATA：镜像缓存写临时库，不污染仓库 data/seedpod.db */
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-imagehost-'));
 process.env.PTA_DATA = DATA;
-const imagehost = require(path.join(ROOT, 'server', 'imagehost.js'));
-const ihc = require(path.join(ROOT, 'server', 'imagehost-config.js'));
+const imagehost = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'imagehost.js'));
+const ihc = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'imagehost-config.js'));
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
 const results = [];
@@ -443,7 +443,7 @@ async function main() {
   });
 
   await check('图床配置：危险头被剔除、非法端点被拒、大 data URL 拒绝', async function () {
-    const cfgMod = require(path.join(ROOT, 'server', 'imagehost-config.js'));
+    const cfgMod = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'imagehost-config.js'));
     const prev = process.env.PTA_IMAGE_HOST_HEADERS;
     process.env.PTA_IMAGE_HOST_HEADERS = JSON.stringify({
       Host: 'evil.example', Cookie: 'sid=leak', 'Content-Length': '1', 'X-Trace': 'ok', 'X-Num': 7,

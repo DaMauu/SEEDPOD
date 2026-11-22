@@ -6,9 +6,9 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "meta-fill.js",
+        "src/features/media/meta-fill.js",
         "src/features/publish/release.js",
-        "scheduler.js"
+        "src/features/scheduler/service.js"
       ]
     },
     {
@@ -16,8 +16,8 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "meta-fill.js",
-        "scheduler.js"
+        "src/features/media/meta-fill.js",
+        "src/features/scheduler/service.js"
       ]
     },
     {
@@ -26,7 +26,7 @@
       "default": true,
       "readers": [
         "src/features/publish/release.js",
-        "scheduler.js"
+        "src/features/scheduler/service.js"
       ]
     },
     {
@@ -35,7 +35,7 @@
       "default": true,
       "readers": [
         "src/features/screen/service.js",
-        "scheduler.js"
+        "src/features/scheduler/service.js"
       ]
     },
     {
@@ -43,7 +43,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "scheduler.js"
+        "src/features/scheduler/service.js"
       ]
     },
     {
@@ -51,7 +51,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "scheduler.js",
+        "src/features/scheduler/service.js",
         "src/features/publish/target-upload.js"
       ]
     },
@@ -60,7 +60,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "scheduler.js",
+        "src/features/scheduler/service.js",
         "src/features/publish/target-upload.js"
       ]
     },
@@ -69,7 +69,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "scheduler.js"
+        "src/features/scheduler/service.js"
       ]
     },
     {

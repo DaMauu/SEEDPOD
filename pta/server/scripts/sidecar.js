@@ -3,7 +3,7 @@
    用法：node pta/scripts/sidecar.js mediainfo --file <txt> [--json]
         cat mediainfo.txt | node pta/scripts/sidecar.js mediainfo --json */
 const fs = require('fs');
-const { run } = require('../sidecar');
+const { run } = require('../src/infra/sidecar');
 
 const argv = process.argv.slice(2);
 const task = argv[0];

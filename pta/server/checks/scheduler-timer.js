@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeScheduler } = require('../scheduler');
+const { makeScheduler } = require('../src/features/scheduler/service');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sched-timer-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

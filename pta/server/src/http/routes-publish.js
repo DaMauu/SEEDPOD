@@ -1,6 +1,6 @@
 /* 截图上传与发布（Fastify v2）。发布默认只演练：真发帖要等站点表单适配验证后再开。 */
 const { makePublisher } = require('../features/publish/service');
-const imagehost = require('../../imagehost');
+const imagehost = require('../features/media/imagehost');
 const flowConfig = require('../features/settings/flow-config');
 const uploadLock = require('../infra/upload-lock');
 

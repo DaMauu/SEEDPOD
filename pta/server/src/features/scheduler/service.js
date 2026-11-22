@@ -1,18 +1,18 @@
 /* 调度器：按固定间隔跑抓取 → 送审 → 终审 → 发布；默认关，真抓/真发仍受各自开关约束。 */
-const flowConfig = require('./src/features/settings/flow-config');
-const errors = require('./src/shared/errors');
-const { makeCrossseed } = require('./src/features/publish/crossseed');
-const pipeline = require('./src/features/scheduler/pipeline');
-const { makeTarget } = require('./src/features/publish/target');
-const { makeTargetService } = require('./src/features/publish/target-service');
-const { makeMetaFill } = require('./meta-fill');
-const { makePublishPhase } = require('./scheduler-publish');
-const { makeRetryPhases } = require('./scheduler-retry');
-const { makeSchedulerState } = require('./scheduler-state');
-const { makeCrawlPhase } = require('./scheduler-crawl');
-const { makeScreenPhase } = require('./scheduler-screen');
-const { makeDedupePhase } = require('./scheduler-dedupe');
-const { makeReviewPhase } = require('./scheduler-review');
+const flowConfig = require('../settings/flow-config');
+const errors = require('../../shared/errors');
+const { makeCrossseed } = require('../publish/crossseed');
+const pipeline = require('./pipeline');
+const { makeTarget } = require('../publish/target');
+const { makeTargetService } = require('../publish/target-service');
+const { makeMetaFill } = require('../media/meta-fill');
+const { makePublishPhase } = require('./publish');
+const { makeRetryPhases } = require('./retry');
+const { makeSchedulerState } = require('./state');
+const { makeCrawlPhase } = require('./crawl');
+const { makeScreenPhase } = require('./screen');
+const { makeDedupePhase } = require('./dedupe');
+const { makeReviewPhase } = require('./review');
 function makeScheduler(ctx, deps) {
   const { one, all, jparse } = ctx;
   const crossseed = makeCrossseed(ctx);

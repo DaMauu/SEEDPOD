@@ -1,7 +1,7 @@
 /* 目标站提交与回查：引擎是代码，站点是数据。
    表单映射优先读 data/site-pack.json 的 upload，其次 data/site-defs/<host>.json 的 uploadMap；
    没有映射就停下，不猜。真提交必须显式打开 realPublish。 */
-const { makeQb } = require('../../../qb');
+const { makeQb } = require('../downloaders/qb');
 const { makeDiscovery } = require('./target-discovery');
 const { makePlan } = require('./target-plan');
 const { makeSubmit } = require('./target-submit');

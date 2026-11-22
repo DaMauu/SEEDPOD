@@ -4,7 +4,7 @@ const path = require('path');
 const stage = require('../queue/stage');
 const torrentClean = require('./torrent-clean');
 const flowConfig = require('../settings/flow-config');
-const imagehost = require('../../../imagehost');
+const imagehost = require('../media/imagehost');
 const marks = require('../screen/marks');
 const { dedupeSwitchOn } = require('./target-rules');
 const uploadLock = require('../../infra/upload-lock');
@@ -108,7 +108,7 @@ async function uploadInner(host, body) {
     if (!dryRun && String(item.data.descrBb || '').trim() && flowConfig.on(flowConfig.read(ctx), '简介图片', true)) {
       {
         const known = (item.data.imageMirror && item.data.imageMirror.map) || {};
-        const provider = String(item.data.imageHost && item.data.imageHost !== '站内' ? item.data.imageHost : require('../../../imagehost').defaultProvider());
+        const provider = String(item.data.imageHost && item.data.imageHost !== '站内' ? item.data.imageHost : require('../media/imagehost').defaultProvider());
         const allowReal = typeof ctx.allowReal === 'function' ? ctx.allowReal('realImages') : false;
         let mr = null;
         try {

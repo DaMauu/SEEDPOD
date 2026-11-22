@@ -45,7 +45,7 @@ check('下载器密码 v2 可读', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-qbpass-'));
   const key = box.loadKey(dir);
   const enc = box.encrypt('qb-pass', key.key);
-  const qb = require('../qb');
+  const qb = require('../src/features/downloaders/qb');
   const got = qb._dlPass({ pass: enc }, dir);
   fs.rmSync(dir, { recursive: true, force: true });
   need(got === 'qb-pass', 'v2 下载器密码读不出：' + got.slice(0, 12));

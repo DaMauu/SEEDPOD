@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 const TASKS = {
-  mediainfo: path.join(__dirname, 'sidecar', 'mediainfo.py')
+  mediainfo: path.join(__dirname, '..', '..', 'sidecar', 'mediainfo.py')
 };
 const MAX_INPUT = 512 * 1024;
 const MAX_OUTPUT = 2 * 1024 * 1024;

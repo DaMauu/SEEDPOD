@@ -1,5 +1,5 @@
 /* 抓取阶段：第一次全量翻到底，之后增量遇到 0 新增就停；用假 crawl 验证。 */
-const { makeCrawlPhase } = require('../scheduler-crawl');
+const { makeCrawlPhase } = require('../src/features/scheduler/crawl');
 
 const results = [];
 function check(name, fn) {

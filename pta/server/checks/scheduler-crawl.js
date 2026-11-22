@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeCrawlPhase } = require('../scheduler-crawl');
+const { makeCrawlPhase } = require('../src/features/scheduler/crawl');
 
 const results = [];
 function check(name, fn) {

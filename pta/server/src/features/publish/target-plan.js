@@ -1,8 +1,8 @@
 /* 上传计划：字段映射、标签、BDInfo/MediaInfo、必填下拉默认值。 */
 const flowConfig = require('../settings/flow-config');
-const meta = require('../../../meta');
+const meta = require('../media/meta');
 const targetDefaults = require('./target-defaults');
-const mediainfo = require('../../../mediainfo');
+const mediainfo = require('../media/mediainfo');
 const { composeSubtitle, expand, hideContent, stripHide, infoFieldKey, descrFieldKey } = require('./target-html');
 
 function makePlan(deps) {

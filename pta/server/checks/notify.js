@@ -6,7 +6,7 @@ const path = require('path');
 const dns = require('dns');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const { makeNotify } = require(path.join(ROOT, 'server', 'notify.js'));
+const { makeNotify } = require(path.join(ROOT, 'server', 'src', 'features', 'notifications', 'service.js'));
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-notify-'));
 const secretbox = require(path.join(ROOT, 'server', 'src', 'infra', 'secretbox.js'));
 const results = [];

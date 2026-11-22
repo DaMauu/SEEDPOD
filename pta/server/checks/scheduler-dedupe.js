@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeDedupePhase } = require('../scheduler-dedupe');
+const { makeDedupePhase } = require('../src/features/scheduler/dedupe');
 
 const results = [];
 function check(name, fn) {

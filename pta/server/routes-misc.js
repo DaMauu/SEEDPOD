@@ -2,10 +2,10 @@
 const fs = require('fs');
 const path = require('path');
 const screen = require('./src/features/screen/service');
-const meta = require('./meta');
-const mediainfo = require('./mediainfo');
-const metaExt = require('./meta-ext');
-const collage = require('./collage');
+const meta = require('./src/features/media/meta');
+const mediainfo = require('./src/features/media/mediainfo');
+const metaExt = require('./src/features/media/meta-ext');
+const collage = require('./src/features/media/collage');
 const jsonFile = require('./src/infra/json-file');
 const { makeErrorStats } = require('./src/features/logs/error-stats');
 const { makeFailureQueue } = require('./src/features/logs/failure-queue');

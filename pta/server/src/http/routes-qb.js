@@ -1,9 +1,9 @@
 /* 下载器接口（Fastify v2）：增删改、探测、分类读取；密码仍是 AES-GCM 密文。 */
 const path = require('path');
-const secretbox = require('./src/infra/secretbox');
-const { makeQb } = require('./qb');
-const watch = require('./clients/watch');
-const dlPolicy = require('./downloader-policy');
+const secretbox = require('../infra/secretbox');
+const { makeQb } = require('../features/downloaders/qb');
+const watch = require('../../clients/watch');
+const dlPolicy = require('../features/downloaders/policy');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;

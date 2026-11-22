@@ -1,5 +1,5 @@
 /* 通知配置与测试。token 只写不读：环境变量优先，或面板加密存 DB。 */
-const secretbox = require('./src/infra/secretbox');
+const secretbox = require('../infra/secretbox');
 
 module.exports = function (app, ctx) {
   const { one, db, ok, bad, DATA_DIR } = ctx;

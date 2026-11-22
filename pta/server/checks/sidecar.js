@@ -3,7 +3,7 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { run } = require('../sidecar');
+const { run } = require('../src/infra/sidecar');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const results = [];

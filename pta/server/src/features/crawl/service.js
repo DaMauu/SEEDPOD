@@ -8,7 +8,7 @@ const flowConfig = require('../settings/flow-config');
 const { typeOf } = require('./category');
 const configSchema = require('../settings/config-schema');
 const log = require('../../infra/log');
-const { makeMetaFill } = require('../../../meta-fill');
+const { makeMetaFill } = require('../media/meta-fill');
 
 const BUSY = new Set();
 

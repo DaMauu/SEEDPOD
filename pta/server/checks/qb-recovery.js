@@ -3,7 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { makeQb } = require('../qb');
+const { makeQb } = require('../src/features/downloaders/qb');
 const watch = require('../clients/watch');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-qbrec-'));

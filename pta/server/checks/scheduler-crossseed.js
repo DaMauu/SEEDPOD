@@ -1,5 +1,5 @@
 /* 已发布条目辅种重试：只处理 targetResults 里已有 publishedTorrent 且未成功的站。 */
-const { makeRetryPhases } = require('../scheduler-retry');
+const { makeRetryPhases } = require('../src/features/scheduler/retry');
 
 const results = [];
 function check(name, fn) {

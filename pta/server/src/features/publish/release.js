@@ -1,10 +1,10 @@
 /* 单 release 准备与阶段推进：纯本地，不发外部请求。
    为 CLI prepare/preview/advance/run 提供同一套逻辑，后续 G7/G8 再扩展提交/注入。 */
-const meta = require('../../../meta');
-const mediainfo = require('../../../mediainfo');
-const imagehost = require('../../../imagehost');
+const meta = require('../media/meta');
+const mediainfo = require('../media/mediainfo');
+const imagehost = require('../media/imagehost');
 const flowConfig = require('../settings/flow-config');
-const { makeQb } = require('../../../qb');
+const { makeQb } = require('../downloaders/qb');
 const { makeTarget } = require('./target');
 const stage = require('../queue/stage');
 const { tx } = require('../../infra/db');

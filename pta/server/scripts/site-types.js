@@ -13,7 +13,7 @@ const jsonFile = require('../src/infra/json-file');
 const makeSiteStore = require('../src/features/sites/store');
 const makeCookieStore = require('../src/features/sites/credentials');
 const makePresets = require('../src/features/presets/store');
-const form = require('../form');
+const form = require('../src/infra/form');
 const urlGuard = require('../src/infra/url-guard');
 const { typeOf } = require('../src/features/crawl/category');
 

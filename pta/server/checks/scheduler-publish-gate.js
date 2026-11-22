@@ -1,5 +1,5 @@
 /* 调度发布：目标站未就绪在碰下载器/目标站之前拦下；重新 prepare 后下一轮恢复；错误最多 3 条。 */
-const { makePublishPhase } = require('../scheduler-publish');
+const { makePublishPhase } = require('../src/features/scheduler/publish');
 
 function row(id, ready) {
   return { id: id, data: JSON.stringify({ id: id, title: id, targetSite: 'a.example', downloadUrl: 'http://a.example/t',

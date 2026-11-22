@@ -1,5 +1,5 @@
 /* 调度发布并发：同一条目只处理一次；held 每轮重新检查，完成后下一轮继续。 */
-const { makePublishPhase } = require('../scheduler-publish');
+const { makePublishPhase } = require('../src/features/scheduler/publish');
 
 const calls = { source: [], upload: [], publish: [] };
 const results = [];

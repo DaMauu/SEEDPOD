@@ -1,7 +1,7 @@
 /* 上传表单解析夹具：只读本地 HTML，不联网。 */
 const fs = require('fs');
 const path = require('path');
-const form = require('../form');
+const form = require('../src/infra/form');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const HTML = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'upload-form.html'), 'utf8');

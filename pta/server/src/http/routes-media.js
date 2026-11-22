@@ -2,14 +2,14 @@
    文件路径限制在 MEDIA_ROOT（默认 data/media），拒绝越界；截图返回 data URL 供队列使用。 */
 const fs = require('fs');
 const path = require('path');
-const media = require('./media');
-const qb = require('./qb');
-const { makeTarget } = require('./src/features/publish/target');
+const media = require('../features/media/service');
+const qb = require('../features/downloaders/qb');
+const { makeTarget } = require('../features/publish/target');
 
 module.exports = function (app, ctx) {
   const { DATA_DIR, one, all, jparse, ok, bad } = ctx;
   const target = makeTarget(ctx);
-  const ROOT = path.resolve(require('./src/infra/env').read('MEDIA_ROOT','PTA_MEDIA_ROOT') || path.join(DATA_DIR, 'media'));
+  const ROOT = path.resolve(require('../infra/env').read('MEDIA_ROOT','PTA_MEDIA_ROOT') || path.join(DATA_DIR, 'media'));
   try { fs.mkdirSync(ROOT, { recursive: true, mode: 0o700 }); } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
 
   function safeFile(rel) {

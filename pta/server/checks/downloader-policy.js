@@ -1,5 +1,5 @@
 /* 下载器探测地址策略：默认拒内网，允许白名单/开发开关，黑名单优先。 */
-const policy = require('../downloader-policy');
+const policy = require('../src/features/downloaders/policy');
 const results = [];
 function check(name, fn) {
   return Promise.resolve().then(fn).then(function () { results.push([true, name, '']); })

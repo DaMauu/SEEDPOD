@@ -1,5 +1,5 @@
 /* 抓取阶段：站点轮转、间隔控制、失败计数；每个站从当前页翻到底或到窗口/失败为止。 */
-const siteHidden = require('./src/features/sites/hidden');
+const siteHidden = require('../sites/hidden');
 function makeCrawlPhase() {
   const sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   return async function runCrawlPhase(o) {
@@ -15,7 +15,7 @@ function makeCrawlPhase() {
           const stateRow = one("SELECT v FROM meta WHERE k = 'crawl-state'");
           const crawlState = JSON.parse(stateRow ? stateRow.v : 'null') || {};
           const nowMs = Date.now();
-          const siteStore = o.DATA_DIR ? require('./src/features/sites/store')(o.DATA_DIR) : null;
+          const siteStore = o.DATA_DIR ? require('../sites/store')(o.DATA_DIR) : null;
           const hidden = siteStore ? [] : siteHidden.list(db);
           const source = siteStore ? siteStore.list().map(function (x) {
             return { host: x.host, enabled: x.settings.enabled !== false && x.settings.hidden !== true, priority: x.settings.priority || 'normal', data: {} };

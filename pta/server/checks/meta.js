@@ -1,7 +1,7 @@
 /* 标题解析夹具：纯文本，不联网。覆盖电影、剧集、动漫、音乐、修复版、年份歧义。 */
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
-const { parseRelease, buildNames } = require(path.join(ROOT, 'server', 'meta.js'));
+const { parseRelease, buildNames } = require(path.join(ROOT, 'server', 'src', 'features', 'media', 'meta.js'));
 
 const results = [];
 function check(name, fn) {

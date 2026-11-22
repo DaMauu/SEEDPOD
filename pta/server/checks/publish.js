@@ -8,7 +8,7 @@ const os = require('os');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const { makeQb } = require(path.join(ROOT, 'server', 'qb.js'));
+const { makeQb } = require(path.join(ROOT, 'server', 'src', 'features', 'downloaders', 'qb.js'));
 const PORT = Number(process.env.PTA_CHECK_PORT || 8095);
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-pub-'));
 const qbMod = makeQb(DATA);

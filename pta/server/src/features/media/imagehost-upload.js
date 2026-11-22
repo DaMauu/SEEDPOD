@@ -45,14 +45,14 @@ function chevBase(cfg) {
   return String(cfg.endpoint || '').replace(/\/api\/1\/upload\/?$/i, '').replace(/\/+$/, '');
 }
 let SSO_COOKIE_CACHE = { host: '', value: '', at: 0 };
-const urlGuard = require('./src/infra/url-guard');
+const urlGuard = require('../../infra/url-guard');
 function siteCookie(host) {
   const h = String(host || '').toLowerCase();
   if (SSO_COOKIE_CACHE.host === h && Date.now() - SSO_COOKIE_CACHE.at < 60000) return SSO_COOKIE_CACHE.value;
-  const dir = path.resolve(require('./src/infra/env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+  const dir = path.resolve(require('../../infra/env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
   let cookie = '';
   try {
-    const c = require('./src/features/sites/credentials')(dir).get(h);
+    const c = require('../sites/credentials')(dir).get(h);
     cookie = c.cookie || '';
   } catch (e) { cookie = ''; }
   SSO_COOKIE_CACHE = { host: h, value: cookie, at: Date.now() };
@@ -63,7 +63,7 @@ async function cheveretoSsoLoginInner(cfg) {
   if (!base) throw new Error('没有配置图床地址');
   const baseGate = await urlGuard.assertNoRebind(base);
   if (!baseGate.ok) throw new Error(baseGate.err);
-  const host = String(cfg.ssoHost || require('./src/infra/env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').toLowerCase();
+  const host = String(cfg.ssoHost || require('../../infra/env').read('IMAGE_HOST_SSO_HOST', 'PTA_IMAGE_HOST_SSO_HOST') || '').toLowerCase();
   if (!host) throw new Error('没有配置图床 SSO 站点（IMAGE_HOST_SSO_HOST）');
   const ptcookie = String(cfg.ssoCookie || siteCookie(host) || '');
   if (!ptcookie) throw new Error('SSO 站点 cookie 不可用，先做一次会话自检');
