@@ -1,6 +1,6 @@
 /* 查重错误语义：目标站不可达/验证失败必须报错，不能当成“没有重复”。 */
 const { makeServiceCommon } = require('../target-service-common');
-const { dedupeItem } = require('../dedupe-item');
+const { dedupeItem } = require('../src/features/screen/dedupe-item');
 
 const results = [];
 function check(name, fn) {

@@ -1,7 +1,7 @@
 /* 站点会话自检与凭据导入（Fastify v2）。 */
 const fs = require('fs');
 const path = require('path');
-const adapters = require('./adapters');
+const adapters = require('./src/infra/adapters/index');
 const jsonFile = require('./src/infra/json-file');
 const urlGuard = require('./url-guard');
 

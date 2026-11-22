@@ -3,7 +3,7 @@
    不打印站名/网址；默认只输出汇总，--verbose 才列文件名。 */
 const fs = require('fs');
 const path = require('path');
-const adapters = require('../adapters');
+const adapters = require('../src/infra/adapters/index');
 
 const argv = process.argv.slice(2);
 function arg(name, def) {

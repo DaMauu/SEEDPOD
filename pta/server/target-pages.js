@@ -1,5 +1,5 @@
 /* 目标站页面类操作：删除、详情/种子、上传页探测、种子元数据。 */
-const adapters = require('./adapters');
+const adapters = require('./src/infra/adapters/index');
 const form = require('./form');
 const { textOf, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
 const urlGuard = require('./url-guard');

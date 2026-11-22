@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.662 · 2026-11-23
+
+### 后端收口：crawl / screen / adapters
+- `crawl`、`cursor`、分类归一进 `server/src/features/crawl`。
+- `screen`、`match`、`marks`、查重规则进 `server/src/features/screen`。
+- 引擎适配器进 `server/src/infra/adapters`。
+- 路由 `routes-crawl` 进 `server/src/http`。
+- 规则审计改为递归扫后端目录；全量 `run.sh` 通过。
+
 ## v0.7.661 · 2026-11-23
 
 ### 后端功能收口开始

@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeCrawl } = require('../crawl');
+const { makeCrawl } = require('../src/features/crawl/service');
 const { makeTarget } = require('../target');
 const { makePublisher } = require('../publish');
 const { makeRelease } = require('../release');
@@ -13,8 +13,8 @@ const watchClient = require('../clients/watch');
 const { makeTargetService } = require('../target-service');
 const imagehost = require('../imagehost');
 const flowConfig = require('../flow-config');
-const screen = require('../screen');
-const adapters = require('../adapters');
+const screen = require('../src/features/screen/service');
+const adapters = require('../src/infra/adapters/index');
 const secretbox = require('../src/infra/secretbox');
 const PKG = require('../../../package.json');
 

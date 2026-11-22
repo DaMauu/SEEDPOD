@@ -15,7 +15,7 @@ const makeCookieStore = require('../src/features/sites/credentials');
 const makePresets = require('../src/features/presets/store');
 const form = require('../form');
 const urlGuard = require('../url-guard');
-const { typeOf } = require('../category-policy');
+const { typeOf } = require('../src/features/crawl/category');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const argv = process.argv.slice(2);

@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { screenCatalog } = require('../screen');
+const { screenCatalog } = require('../src/features/screen/service');
 const makeSiteStore = require('../src/features/sites/store');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-screen-'));

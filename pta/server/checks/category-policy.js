@@ -1,6 +1,6 @@
 /* 分类政策纯函数：类型归一、按类型过滤站点分类。 */
 const path = require('path');
-const cp = require(path.join(__dirname, '..', 'category-policy.js'));
+const cp = require(path.join(__dirname, '..', 'src', 'features', 'crawl', 'category.js'));
 
 const results = [];
 function check(name, fn) {

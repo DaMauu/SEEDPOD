@@ -1,7 +1,7 @@
 /* 种子标记：禁转 / 限转 / HR / 独占 / DIY。
    禁转与限转未满 7 天是硬规则，送审时必须拦；独占/DIY/HR 只打标记。
    列表页的徽章、图标 title/alt、class 由适配器放进 item.tags，这里统一归一。 */
-const textTags = require('./adapters/row-tags').textTags;
+const textTags = require('../../infra/adapters/row-tags').textTags;
 
 const DAY = 86400000;
 

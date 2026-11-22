@@ -4,7 +4,7 @@ const path = require('path');
 const form = require('./form');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
-const { hostsOf } = require('./dedupe-item');
+const { hostsOf } = require('./src/features/screen/dedupe-item');
 const queueBulk = require('./queue-bulk');
 const queueBulkPublish = require('./queue-bulk-publish');
 

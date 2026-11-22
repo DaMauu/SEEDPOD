@@ -34,7 +34,7 @@
       "type": "switch",
       "default": true,
       "readers": [
-        "screen.js",
+        "src/features/screen/service.js",
         "scheduler.js"
       ]
     },

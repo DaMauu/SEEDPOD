@@ -1,7 +1,7 @@
 /* 其余业务接口（Fastify v2）：站点搜索预设、本地查重、按条件送审、已发布、本地库、抓取状态。 */
 const fs = require('fs');
 const path = require('path');
-const screen = require('./screen');
+const screen = require('./src/features/screen/service');
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const metaExt = require('./meta-ext');
@@ -11,7 +11,7 @@ const { makeErrorStats } = require('./error-stats');
 const { makeFailureQueue } = require('./failure-queue');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
-const { dedupeItem, hostsOf } = require('./dedupe-item');
+const { dedupeItem, hostsOf } = require('./src/features/screen/dedupe-item');
 const { tx } = require('./src/infra/db');
 
 module.exports = function (app, ctx) {

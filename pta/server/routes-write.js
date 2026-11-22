@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
-const { hostsOf } = require('./dedupe-item');
+const { hostsOf } = require('./src/features/screen/dedupe-item');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;

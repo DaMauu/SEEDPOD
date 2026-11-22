@@ -1,6 +1,6 @@
 /* 限制芯片逐项回归：禁转 / 限转 / HR / 独占 / DIY 都要能独立命中，互不误伤。 */
-const marks = require('../marks');
-const rowTagLib = require('../adapters/row-tags');
+const marks = require('../src/features/screen/marks');
+const rowTagLib = require('../src/infra/adapters/row-tags');
 const rowTags = rowTagLib.rowTags;
 
 const results = [];

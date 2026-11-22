@@ -1,6 +1,6 @@
 /* 上传提交与回查：取种、提交、发布后校验。 */
-const adapters = require('./adapters');
-const match = require('./match');
+const adapters = require('./src/infra/adapters/index');
+const match = require('./src/features/screen/match');
 const urlGuard = require('./url-guard');
 
 /* 来源种子下载地址必须落在来源站（含子域）或其 base 域，避免把 cookie 带到外部 host */

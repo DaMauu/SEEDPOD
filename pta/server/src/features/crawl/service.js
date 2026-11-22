@@ -1,14 +1,14 @@
 /* 真实抓取：从站点列表页取条目写进 SQLite。
    默认关闭，由 config.realCrawl 或环境变量 ALLOW_REAL=1 打开；
    每次抓取受站点间隔与每日上限约束，失败也记时间戳，避免连续重试。 */
-const adapters = require('./adapters');
-const marksMod = require('./marks');
-const urlGuard = require('./url-guard');
-const flowConfig = require('./flow-config');
-const { typeOf } = require('./category-policy');
-const configSchema = require('./config-schema');
-const log = require('./log');
-const { makeMetaFill } = require('./meta-fill');
+const adapters = require('../../infra/adapters/index');
+const marksMod = require('../screen/marks');
+const urlGuard = require('../../../url-guard');
+const flowConfig = require('../../../flow-config');
+const { typeOf } = require('./category');
+const configSchema = require('../../../config-schema');
+const log = require('../../../log');
+const { makeMetaFill } = require('../../../meta-fill');
 
 const BUSY = new Set();
 
@@ -26,8 +26,8 @@ function catListFromCats(cats) {
 
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
-  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
-  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const cookieStore = require('../sites/credentials')(DATA_DIR);
+  const siteStore = require('../sites/store')(DATA_DIR);
   const cfg = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const readState = () => { const r = one("SELECT v FROM meta WHERE k = 'crawl-state'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const saveState = (st) => { db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st)); };

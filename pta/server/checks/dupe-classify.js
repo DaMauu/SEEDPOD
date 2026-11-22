@@ -1,6 +1,6 @@
 /* 目标站查重判重夹具：体积容差、原盘/DIY、4K 对齐。 */
 const path = require('path');
-const { classify } = require(path.join(__dirname, '..', 'dupe-classify.js'));
+const { classify } = require(path.join(__dirname, '..', 'src', 'features', 'screen', 'dupe-classify.js'));
 
 const results = [];
 function check(name, fn) {

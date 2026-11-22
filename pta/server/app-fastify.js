@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const Fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
 const { openDB } = require('./src/infra/db');
-const { makeCrawl } = require('./crawl');
+const { makeCrawl } = require('./src/features/crawl/service');
 const siteHidden = require('./src/features/sites/hidden');
 
 const PORT = Number((require('./src/infra/env').read('PANEL_PORT','PTA_PORT')) || 8090);
@@ -383,7 +383,7 @@ async function build() {
   logEvent = ctx.logEvent || null;
   require('./routes-qb')(app, ctx);
   require('./routes-probe')(app, ctx);
-  require('./routes-crawl')(app, ctx);
+  require('./src/http/routes-crawl')(app, ctx);
   require('./routes-tasks')(app, ctx);
   require('./routes-misc')(app, ctx);
   require('./routes-publish')(app, ctx);
@@ -399,7 +399,7 @@ async function build() {
   ctx.publisher = publisher;
   ctx.scheduler = require('./scheduler').makeScheduler(ctx, {
     crawl: ctx.crawl,
-    screen: require('./screen'),
+    screen: require('./src/features/screen/service'),
     release: require('./release').makeRelease(ctx),
     publish: publisher
   });

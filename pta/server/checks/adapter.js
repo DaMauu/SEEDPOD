@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
-const adapter = require(path.join(ROOT, 'server', 'adapters', 'nexusphp.js'));
+const adapter = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'nexusphp.js'));
 
 const results = [];
 function check(name, fn) {
@@ -75,9 +75,9 @@ check('解析登录表单', () => {
   need(adapter.parseLoginForm('<html></html>') === null, '没有登录表单时应返回 null');
 });
 
-const unit3d = require(path.join(ROOT, 'server', 'adapters', 'unit3d.js'));
-const gazelle = require(path.join(ROOT, 'server', 'adapters', 'gazelle.js'));
-const adapters = require(path.join(ROOT, 'server', 'adapters', 'index.js'));
+const unit3d = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'unit3d.js'));
+const gazelle = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'gazelle.js'));
+const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'index.js'));
 const u3dHtml = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'unit3d-browse.html'), 'utf8');
 const gzHtml = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'gazelle-browse.html'), 'utf8');
 
@@ -151,7 +151,7 @@ check('反推搜索参数', () => {
 });
 
 check('兜底适配：认不出的 tracker 也能列出条目', () => {
-  const custom = require(path.join(ROOT, 'server', 'adapters', 'generic.js'));
+  const custom = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'generic.js'));
   const gHtml = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'custom-browse.html'), 'utf8');
   need(adapters.detectEngine(gHtml) === 'custom', '兜底引擎没接上：' + adapters.detectEngine(gHtml));
   const rows = custom.parseList(gHtml);
@@ -174,7 +174,7 @@ check('JS 空壳页也能认出引擎', () => {
 });
 
 check('从首页导航里找种子页路径', () => {
-  const nav = require(path.join(ROOT, 'server', 'adapters', 'nav.js'));
+  const nav = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'nav.js'));
   const home = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'home-nav.html'), 'utf8');
   const cands = nav.findTorrentLinks(home);
   need(cands.length > 0, '首页导航里没找到候选');
@@ -190,7 +190,7 @@ check('从首页导航里找种子页路径', () => {
 
 check('解析种子文件：体积、名字、infohash', () => {
   const crypto = require('crypto');
-  const torrent = require(path.join(ROOT, 'server', 'adapters', 'torrent.js'));
+  const torrent = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters', 'torrent.js'));
   const info = 'd6:lengthi1024e4:name8:test.iso12:piece lengthi16384ee';
   const buf = Buffer.from('d8:announce9:http://x/4:info' + info + 'e', 'binary');
   const r = torrent.torrentInfo(buf);
@@ -210,7 +210,7 @@ check('解析种子文件：体积、名字、infohash', () => {
 });
 
 check('判同一个种子：标题/年份/分辨率/体积/infohash', () => {
-  const match = require(path.join(ROOT, 'server', 'match.js'));
+  const match = require(path.join(ROOT, 'server', 'src', 'features', 'screen', 'match.js'));
   const a = { title: 'Some Movie 2020 1080p BluRay AVC-GRP', year: 2020, res: '1080p', size: '22.10 GB' };
   need(match.compare(a, { title: 'Some Movie 2020 1080p Blu-ray x264-OTHER', year: 2020, res: '1080p', size: '22.05 GB' }).same === true, '同片不同发布组应判同');
   need(match.compare(a, { title: 'Some Movie 2020 2160p BluRay x265-GRP', year: 2020, res: '2160p', size: '22.05 GB' }).same === false, '分辨率不同应判不同');
@@ -221,7 +221,7 @@ check('判同一个种子：标题/年份/分辨率/体积/infohash', () => {
 });
 
 check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const dhtml = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'nexusphp-details.html'), 'utf8');
   const d = adapters.parseDetail(dhtml);
   need(d.sizeText === '22.10 GB', '大小文本不对：' + d.sizeText);
@@ -250,7 +250,7 @@ check('解析详情页（大小/分类/媒介/标签/简介/海报/原盘）', (
 });
 
 check('Unit3D 原始 BBCode 与独立 BDInfo/MediaInfo', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const html = fs.readFileSync(path.join(ROOT, 'server', 'fixtures', 'unit3d-details.html'), 'utf8');
   const d = adapters.parseDetail(html);
   need(/\[center\]/.test(d.descrBb) && /\[img\]https:\/\/i\.slow\.pics\/a\.png\[\/img\]/.test(d.descrBb), '没拿到 Unit3D 原始 BBCode：' + String(d.descrBb).slice(0, 160));
@@ -259,7 +259,7 @@ check('Unit3D 原始 BBCode 与独立 BDInfo/MediaInfo', () => {
 });
 
 check('MediaInfo 隐藏块还原成 hide=MediaInfo', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const html = '<html><body><div id="kdescr"><div class="codetop"><a>MediaInfo - Movie.mkv</a></div><div class="hide"><div class="codemain">General<br /> Complete name: Movie.mkv<br /> Format: MPEG-4</div></div></div></body></html>';
   const d = adapters.parseDetail(html);
   need(/\[hide=mediainfo\]/.test(d.descrBb), '没还原 hide=mediainfo：' + String(d.descrBb).slice(0, 200));
@@ -268,7 +268,7 @@ check('MediaInfo 隐藏块还原成 hide=MediaInfo', () => {
 });
 
 check('简介嵌套 div 不截断，pre 变 code', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const html = '<html><body><div id="kdescr"><div class="quote">引用文字</div><p>正文段落</p>'
     + '<table><tr><td>General</td><td>Video</td></tr></table>'
     + '<pre>[img]https://img.example/a.jpg[/img]</pre>'
@@ -281,7 +281,7 @@ check('简介嵌套 div 不截断，pre 变 code', () => {
 });
 
 check('详情页简介转 BBCode 保留图片', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const h = '<html><body><div id="kdescr">第一段<br>第二段<img src="https://img.example/a.jpg"><a href="https://x.example">链接</a></div></body></html>';
   const d = adapters.parseDetail(h);
   need(/\[img\]https:\/\/img\.example\/a\.jpg\[\/img\]/.test(d.descrBb || ''), '图片没转 BBCode：' + String(d.descrBb));
@@ -291,7 +291,7 @@ check('详情页简介转 BBCode 保留图片', () => {
 });
 
 check('简介截图全部转载不截断', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const imgs = Array.from({ length: 12 }, function (_, i) { return '<img src="https://img.example/shot-' + (i + 1) + '.jpg">'; }).join('<br>');
   const d = adapters.parseDetail('<html><body><div id="kdescr">截图：' + imgs + '</div></body></html>');
   const got = (d.descrBb || '').match(/\[img\]/g) || [];
@@ -300,7 +300,7 @@ check('简介截图全部转载不截断', () => {
 });
 
 check('翻页地址拼接', () => {
-  const adapters = require(path.join(ROOT, 'server', 'adapters'));
+  const adapters = require(path.join(ROOT, 'server', 'src', 'infra', 'adapters'));
   const base = 'https://x.example/torrents.php?search=&cat=401';
   need(adapters.withPage(base, 1) === base, '第 1 页不该改地址');
   need(/[?&]page=2$/.test(adapters.withPage(base, 2)), '第 2 页没拼上 page=2：' + adapters.withPage(base, 2));
@@ -308,7 +308,7 @@ check('翻页地址拼接', () => {
 });
 
 check('分类游标会轮转', () => {
-  const { nextCursor } = require(path.join(ROOT, 'server', 'cursor'));
+  const { nextCursor } = require(path.join(ROOT, 'server', 'src', 'features', 'crawl', 'cursor.js'));
   let r = nextCursor({ catCount: 3, catIdx: 0, page: 2, rows: 50 });
   need(r.catIdx === 0 && r.page === 2 && !r.rotated, '有下一页时不该换分类：' + JSON.stringify(r));
   r = nextCursor({ catCount: 3, catIdx: 0, page: 5, rows: 0 });

@@ -1,11 +1,11 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
 const marksMod = require('./marks');
-const meta = require('./meta');
-const { tx } = require('./src/infra/db');
-const { typeOf, selectedTypesOf } = require('./category-policy');
-const makePresets = require('./src/features/presets/store');
-const log = require('./log');
+const meta = require('../../../meta');
+const { tx } = require('../../infra/db');
+const { typeOf, selectedTypesOf } = require('../crawl/category');
+const makePresets = require('../presets/store');
+const log = require('../../../log');
 
 function flowRules(sets, rx) {
   /* 只读 ② 初筛卡（fetch[1]），不跨区域借发布/查重卡的规则 */
@@ -50,7 +50,7 @@ function cnOf(subtitle) {
 
 function screenCatalog(ctx, opts) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
-  const siteStore = require('./src/features/sites/store')(ctx.DATA_DIR);
+  const siteStore = require('../sites/store')(ctx.DATA_DIR);
   const presets = makePresets(ctx.DATA_DIR);
   const now = () => new Date().toISOString();
   const b = opts || {};

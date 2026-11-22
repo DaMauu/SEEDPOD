@@ -1,9 +1,9 @@
 /* 查重与抓取计划（Fastify v2）。查重会真搜一次目标站，限条数；计划只读本地配置不发请求。 */
-const adapters = require('./adapters');
-const dupeClassify = require('./dupe-classify');
-const { typeOf } = require('./category-policy');
-const configSchema = require('./config-schema');
-const urlGuard = require('./url-guard');
+const adapters = require('../infra/adapters/index');
+const dupeClassify = require('../features/screen/dupe-classify');
+const { typeOf } = require('../features/crawl/category');
+const configSchema = require('../../config-schema');
+const urlGuard = require('../../url-guard');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -14,9 +14,9 @@ function keyword(title) {
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
-  const siteStore = require('./src/features/sites/store')(DATA_DIR);
-  const presets = require('./src/features/presets/store')(DATA_DIR);
+  const cookieStore = require('../features/sites/credentials')(DATA_DIR);
+  const siteStore = require('../features/sites/store')(DATA_DIR);
+  const presets = require('../features/presets/store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const readDef = (host) => siteStore.legacyDef(host);
   const readCookie = (host) => {
@@ -145,7 +145,7 @@ module.exports = function (app, ctx) {
       if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
       html = await r.text();
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
-    const form = require('./form');
+    const form = require('../../form');
     const forms = form.parse(html);
     const values = { medium: {}, resolution: {}, discount: {}, restriction: {} };
     const labels = { medium: {}, resolution: {}, discount: {}, restriction: {} };

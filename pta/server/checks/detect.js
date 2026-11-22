@@ -1,7 +1,7 @@
 /* 引擎识别夹具：不联网，用合成 HTML 断言 NexusPHP / UNIT3D / Gazelle / Generic。 */
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
-const { detectEngine } = require(path.join(ROOT, 'server', 'detect.js'));
+const { detectEngine } = require(path.join(ROOT, 'server', 'src', 'features', 'sites', 'detect.js'));
 
 const results = [];
 function check(name, fn) {

@@ -9,9 +9,18 @@ const vm = require('vm');
 const ROOT = path.resolve(__dirname, '..', '..');
 const RULES = path.join(ROOT, 'web', 'src', 'data', 'rules.js');
 const SERVER = path.join(ROOT, 'server');
-const V2_FILES = fs.readdirSync(SERVER)
-  .filter(f => f.endsWith('.js') && f !== 'app.js')
-  .map(f => path.join(SERVER, f));
+function walk(dir, out) {
+  for (const f of fs.readdirSync(dir)) {
+    const p = path.join(dir, f);
+    const st = fs.statSync(p);
+    if (st.isDirectory()) {
+      if (['checks', 'scripts', 'fixtures', 'data', 'pack'].indexOf(f) >= 0) continue;
+      walk(p, out);
+    } else if (f.endsWith('.js') && f !== 'app.js') out.push(p);
+  }
+  return out;
+}
+const V2_FILES = walk(SERVER, []);
 
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, 'web', 'shared', 'rule-registry.json'), 'utf8'));
 const sandbox = { window: {}, registry: registry };
