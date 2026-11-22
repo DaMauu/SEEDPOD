@@ -17,6 +17,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY pta/server ./pta/server
+COPY pta/pack ./pta/pack
+RUN chmod 644 pta/pack/* 2>/dev/null || true
 COPY --from=build /app/pta/web/dist ./pta/web/dist
 COPY CHANGELOG.md /CHANGELOG.md
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

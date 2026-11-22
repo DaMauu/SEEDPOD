@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.644 · 2026-11-22
+
+### 站点 JSON 预设
+- 生成 `pta/pack/sites.preset.json`、`site-urls.preset.json`、`cookies.example.json`：306 个站，网址 Base64，cookie 模板全空。
+- 新增 `pta/scripts/build-site-json.js`：从现有 DB/site-defs/site-search/site-maps 生成预设，支持 --dry / --runtime。
+- 新增 `site-json-preset` 检查 4/4：host 一致、无 settings/明文网址、Base64 可解、cookie 全空。
+- Docker 镜像复制 `pta/pack`；运行时读取切换仍待下一步。
+- 全量 run.sh 通过。
+
 ## v0.7.643 · 2026-11-22
 
 ### 总 Cookie 文件

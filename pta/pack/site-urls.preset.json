@@ -1,0 +1,1536 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-22T05:18:51.192Z",
+  "sites": {
+    "52pt.site": {
+      "base": "b64:aHR0cHM6Ly81MnB0LnNpdGU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "agsvpt.com": {
+      "base": "b64:aHR0cHM6Ly9hZ3N2cHQuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "audiences.me": {
+      "base": "b64:aHR0cHM6Ly9hdWRpZW5jZXMubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "azusa.wiki": {
+      "base": "b64:aHR0cHM6Ly9henVzYS53aWtp",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.btschool.club": {
+      "base": "b64:aHR0cHM6Ly9wdC5idHNjaG9vbC5jbHVi",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "byr.pt": {
+      "base": "b64:aHR0cHM6Ly9ieXIucHQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "carpt.net": {
+      "base": "b64:aHR0cHM6Ly9jYXJwdC5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.cdfile.org": {
+      "base": "b64:aHR0cHM6Ly9wdC5jZGZpbGUub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ptchdbits.co": {
+      "base": "b64:aHR0cHM6Ly9wdGNoZGJpdHMuY28=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "crabpt.vip": {
+      "base": "b64:aHR0cHM6Ly9jcmFicHQudmlw",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "cyanbug.net": {
+      "base": "b64:aHR0cHM6Ly9jeWFuYnVnLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "darkland.top": {
+      "base": "b64:aHR0cHM6Ly9kYXJrbGFuZC50b3A=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "dicmusic.com": {
+      "base": "b64:aHR0cHM6Ly9kaWNtdXNpYy5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "discfan.net": {
+      "base": "b64:aHR0cHM6Ly9kaXNjZmFuLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.0ff.cc": {
+      "base": "b64:aHR0cHM6Ly9wdC4wZmYuY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "gamegamept.com": {
+      "base": "b64:aHR0cHM6Ly9nYW1lZ2FtZXB0LmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "greatposterwall.com": {
+      "base": "b64:aHR0cHM6Ly9ncmVhdHBvc3RlcndhbGwuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "haidan.cc": {
+      "base": "b64:aHR0cHM6Ly9oYWlkYW4uY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.hd4fans.org": {
+      "base": "b64:aHR0cHM6Ly9wdC5oZDRmYW5zLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdarea.club": {
+      "base": "b64:aHR0cHM6Ly9oZGFyZWEuY2x1Yg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdwing.org": {
+      "base": "b64:aHR0cHM6Ly9oZHdpbmcub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdcity.city": {
+      "base": "b64:aHR0cHM6Ly9oZGNpdHkuY2l0eQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "uhddolby.com": {
+      "base": "b64:aHR0cHM6Ly91aGRkb2xieS5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdfans.org": {
+      "base": "b64:aHR0cHM6Ly9oZGZhbnMub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdhome.org": {
+      "base": "b64:aHR0cHM6Ly9oZGhvbWUub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdkyl.in": {
+      "base": "b64:aHR0cHM6Ly9oZGt5bC5pbg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdsky.me": {
+      "base": "b64:aHR0cHM6Ly9oZHNreS5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdtime.org": {
+      "base": "b64:aHR0cHM6Ly9oZHRpbWUub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.upxin.net": {
+      "base": "b64:aHR0cHM6Ly9wdC51cHhpbi5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdvideo.top": {
+      "base": "b64:aHR0cHM6Ly9oZHZpZGVvLnRvcA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hhanclub.net": {
+      "base": "b64:aHR0cHM6Ly9oaGFuY2x1Yi5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hitpt.com": {
+      "base": "b64:aHR0cHM6Ly9oaXRwdC5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "htpt.cc": {
+      "base": "b64:aHR0cHM6Ly9odHB0LmNj",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zeus.hamsters.space": {
+      "base": "b64:aHR0cHM6Ly96ZXVzLmhhbXN0ZXJzLnNwYWNl",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "mua.xloli.cc": {
+      "base": "b64:aHR0cHM6Ly9tdWEueGxvbGkuY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.itzmx.com": {
+      "base": "b64:aHR0cHM6Ly9wdC5pdHpteC5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "joyhd.net": {
+      "base": "b64:aHR0cHM6Ly9qb3loZC5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "kamept.com": {
+      "base": "b64:aHR0cHM6Ly9rYW1lcHQuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.keepfrds.com": {
+      "base": "b64:aHR0cHM6Ly9wdC5rZWVwZnJkcy5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "our.kelu.one": {
+      "base": "b64:aHR0cHM6Ly9vdXIua2VsdS5vbmU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "kufei.org": {
+      "base": "b64:aHR0cHM6Ly9rdWZlaS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "monikadesign.uk": {
+      "base": "b64:aHR0cHM6Ly9tb25pa2FkZXNpZ24udWs=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "m-team.cc": {
+      "base": "b64:aHR0cHM6Ly9tLXRlYW0uY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "nanyangpt.com": {
+      "base": "b64:aHR0cHM6Ly9uYW55YW5ncHQuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "nicept.net": {
+      "base": "b64:aHR0cHM6Ly9uaWNlcHQubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "njtupt.top": {
+      "base": "b64:aHR0cHM6Ly9uanR1cHQudG9w",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "okpt.net": {
+      "base": "b64:aHR0cHM6Ly9va3B0Lm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "open.cd": {
+      "base": "b64:aHR0cHM6Ly9vcGVuLmNk",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ourbits.club": {
+      "base": "b64:aHR0cHM6Ly9vdXJiaXRzLmNsdWI=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pandapt.net": {
+      "base": "b64:aHR0cHM6Ly9wYW5kYXB0Lm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "piggo.me": {
+      "base": "b64:aHR0cHM6Ly9waWdnby5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ptcafe.club": {
+      "base": "b64:aHR0cHM6Ly9wdGNhZmUuY2x1Yg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pterclub.net": {
+      "base": "b64:aHR0cHM6Ly9wdGVyY2x1Yi5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.gtk.pw": {
+      "base": "b64:aHR0cHM6Ly9wdC5ndGsucHc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pthome.net": {
+      "base": "b64:aHR0cHM6Ly9wdGhvbWUubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ptsbao.club": {
+      "base": "b64:aHR0cHM6Ly9wdHNiYW8uY2x1Yg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "rousi.pro": {
+      "base": "b64:aHR0cHM6Ly9yb3VzaS5wcm8=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.sjtu.edu.cn": {
+      "base": "b64:aHR0cHM6Ly9wdC5zanR1LmVkdS5jbg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.soulvoice.club": {
+      "base": "b64:aHR0cHM6Ly9wdC5zb3Vsdm9pY2UuY2x1Yg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "springsunday.net": {
+      "base": "b64:aHR0cHM6Ly9zcHJpbmdzdW5kYXkubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "star-space.net": {
+      "base": "b64:aHR0cHM6Ly9zdGFyLXNwYWNlLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "et8.org": {
+      "base": "b64:aHR0cHM6Ly9ldDgub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tjupt.org": {
+      "base": "b64:aHR0cHM6Ly90anVwdC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.eastgame.org": {
+      "base": "b64:aHR0cHM6Ly9wdC5lYXN0Z2FtZS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "totheglory.im": {
+      "base": "b64:aHR0cHM6Ly90b3RoZWdsb3J5Lmlt",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.tu88.men": {
+      "base": "b64:aHR0cHM6Ly9wdC50dTg4Lm1lbg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "u2.dmhy.org": {
+      "base": "b64:aHR0cHM6Ly91Mi5kbWh5Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ubits.club": {
+      "base": "b64:aHR0cHM6Ly91Yml0cy5jbHVi",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ultrahd.net": {
+      "base": "b64:aHR0cHM6Ly91bHRyYWhkLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "wukongwendao.top": {
+      "base": "b64:aHR0cHM6Ly93dWtvbmd3ZW5kYW8udG9w",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "xingtan.one": {
+      "base": "b64:aHR0cHM6Ly94aW5ndGFuLm9uZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zhuque.in": {
+      "base": "b64:aHR0cHM6Ly96aHVxdWUuaW4=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zmpt.club": {
+      "base": "b64:aHR0cHM6Ly96bXB0LmNsdWI=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "raingfh.top": {
+      "base": "b64:aHR0cHM6Ly9yYWluZ2ZoLnRvcA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bilibili.download": {
+      "base": "b64:aHR0cHM6Ly9iaWxpYmlsaS5kb3dubG9hZA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "si-qi.xyz": {
+      "base": "b64:aHR0cHM6Ly9zaS1xaS54eXo=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "cangbao.ge": {
+      "base": "b64:aHR0cHM6Ly9jYW5nYmFvLmdl",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.luckpt.de": {
+      "base": "b64:aHR0cHM6Ly9wdC5sdWNrcHQuZGU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.xzt.me": {
+      "base": "b64:aHR0cHM6Ly9wdC54enQubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "dstudio.me": {
+      "base": "b64:aHR0cHM6Ly9kc3R1ZGlvLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "qingwapt.com": {
+      "base": "b64:aHR0cHM6Ly9xaW5nd2FwdC5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.novahd.top": {
+      "base": "b64:aHR0cHM6Ly9wdC5ub3ZhaGQudG9w",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.daxiangjiao.org": {
+      "base": "b64:aHR0cHM6Ly9wdC5kYXhpYW5namlhby5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.521.best": {
+      "base": "b64:aHR0cHM6Ly9wdC41MjEuYmVzdA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pt.aling.de": {
+      "base": "b64:aHR0cHM6Ly9wdC5hbGluZy5kZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "usefultrash.net": {
+      "base": "b64:aHR0cHM6Ly91c2VmdWx0cmFzaC5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "aftershock-tracker.net": {
+      "base": "b64:aHR0cHM6Ly9hZnRlcnNob2NrLXRyYWNrZXIubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "aidoru-online.me": {
+      "base": "b64:aHR0cHM6Ly9haWRvcnUtb25saW5lLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "aither.cc": {
+      "base": "b64:aHR0cHM6Ly9haXRoZXIuY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "alpharatio.cc": {
+      "base": "b64:aHR0cHM6Ly9hbHBoYXJhdGlvLmNj",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tr.anidub.com": {
+      "base": "b64:aHR0cHM6Ly90ci5hbmlkdWIuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "animebytes.tv": {
+      "base": "b64:aHR0cHM6Ly9hbmltZWJ5dGVzLnR2",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "animelayer.ru": {
+      "base": "b64:aHR0cHM6Ly9hbmltZWxheWVyLnJ1",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "animetorrents.me": {
+      "base": "b64:aHR0cHM6Ly9hbmltZXRvcnJlbnRzLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "anthelion.me": {
+      "base": "b64:aHR0cHM6Ly9hbnRoZWxpb24ubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "arenabg.com": {
+      "base": "b64:aHR0cHM6Ly9hcmVuYWJnLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "arenaelite.eu": {
+      "base": "b64:aHR0cHM6Ly9hcmVuYWVsaXRlLmV1",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "eiga.moi": {
+      "base": "b64:aHR0cHM6Ly9laWdhLm1vaQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "asiandvdclub.org": {
+      "base": "b64:aHR0cHM6Ly9hc2lhbmR2ZGNsdWIub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "audionews.org": {
+      "base": "b64:aHR0cHM6Ly9hdWRpb25ld3Mub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "avistaz.to": {
+      "base": "b64:aHR0cHM6Ly9hdmlzdGF6LnRv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "back-ups.me": {
+      "base": "b64:aHR0cHM6Ly9iYWNrLXVwcy5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bakabt.me": {
+      "base": "b64:aHR0cHM6Ly9iYWthYnQubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "beload.org": {
+      "base": "b64:aHR0cHM6Ly9iZWxvYWQub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "beyond-hd.me": {
+      "base": "b64:aHR0cHM6Ly9iZXlvbmQtaGQubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bit-hdtv.com": {
+      "base": "b64:aHR0cHM6Ly9iaXQtaGR0di5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bithorlo.info": {
+      "base": "b64:aHR0cHM6Ly9iaXRob3Jsby5pbmZv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bithumen.be": {
+      "base": "b64:aHR0cHM6Ly9iaXRodW1lbi5iZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bitporn.eu": {
+      "base": "b64:aHR0cHM6Ly9iaXRwb3JuLmV1",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bitspyder.net": {
+      "base": "b64:aHR0cHM6Ly9iaXRzcHlkZXIubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "blutopia.cc": {
+      "base": "b64:aHR0cHM6Ly9ibHV0b3BpYS5jYw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bolly.wtf": {
+      "base": "b64:aHR0cHM6Ly9ib2xseS53dGY=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ssl.bootytape.com": {
+      "base": "b64:aHR0cHM6Ly9zc2wuYm9vdHl0YXBlLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "broadcasthe.net": {
+      "base": "b64:aHR0cHM6Ly9icm9hZGNhc3RoZS5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "brokenstones.is": {
+      "base": "b64:aHR0cHM6Ly9icm9rZW5zdG9uZXMuaXM=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "btarg.com.ar": {
+      "base": "b64:aHR0cHM6Ly9idGFyZy5jb20uYXI=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bwtorrents.tv": {
+      "base": "b64:aHR0cHM6Ly9id3RvcnJlbnRzLnR2",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "carp-hunter.hu": {
+      "base": "b64:aHR0cHM6Ly9jYXJwLWh1bnRlci5odQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "cathode-ray.tube": {
+      "base": "b64:aHR0cHM6Ly9jYXRob2RlLXJheS50dWJl",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "cgpeers.to": {
+      "base": "b64:aHR0cHM6Ly9jZ3BlZXJzLnRv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "cinemageddon.net": {
+      "base": "b64:aHR0cHM6Ly9jaW5lbWFnZWRkb24ubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "cinemaz.to": {
+      "base": "b64:aHR0cHM6Ly9jaW5lbWF6LnRv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "concertos.live": {
+      "base": "b64:aHR0cHM6Ly9jb25jZXJ0b3MubGl2ZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "crows-town.com": {
+      "base": "b64:aHR0cHM6Ly9jcm93cy10b3duLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "danishbytes.club": {
+      "base": "b64:aHR0cHM6Ly9kYW5pc2hieXRlcy5jbHVi",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "datascene.xyz": {
+      "base": "b64:aHR0cHM6Ly9kYXRhc2NlbmUueHl6",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "demon-asylum.org": {
+      "base": "b64:aHR0cHM6Ly9kZW1vbi1hc3lsdW0ub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "denofsimps.club": {
+      "base": "b64:aHR0cHM6Ly9kZW5vZnNpbXBzLmNsdWI=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "digitalcore.club": {
+      "base": "b64:aHR0cHM6Ly9kaWdpdGFsY29yZS5jbHVi",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "docspedia.world": {
+      "base": "b64:aHR0cHM6Ly9kb2NzcGVkaWEud29ybGQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "dreamingtree.org": {
+      "base": "b64:aHR0cHM6Ly9kcmVhbWluZ3RyZWUub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "e-hentai.org": {
+      "base": "b64:aHR0cHM6Ly9lLWhlbnRhaS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ellatza.giize.com": {
+      "base": "b64:aHR0cHM6Ly9lbGxhdHphLmdpaXplLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "emmidtv.top": {
+      "base": "b64:aHR0cHM6Ly9lbW1pZHR2LnRvcA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "emparadise.rs": {
+      "base": "b64:aHR0cHM6Ly9lbXBhcmFkaXNlLnJz",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "estone.cc": {
+      "base": "b64:aHR0cHM6Ly9lc3RvbmUuY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "exoticaz.to": {
+      "base": "b64:aHR0cHM6Ly9leG90aWNhei50bw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "extremlymtorrents.ws": {
+      "base": "b64:aHR0cHM6Ly9leHRyZW1seW10b3JyZW50cy53cw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "dimeadozen.org": {
+      "base": "b64:aHR0cHM6Ly9kaW1lYWRvemVuLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "f1carreras.xyz": {
+      "base": "b64:aHR0cHM6Ly9mMWNhcnJlcmFzLnh5eg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "fantastiko.space": {
+      "base": "b64:aHR0cHM6Ly9mYW50YXN0aWtvLnNwYWNl",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "fappaizuri.me": {
+      "base": "b64:aHR0cHM6Ly9mYXBwYWl6dXJpLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "filelist.io": {
+      "base": "b64:aHR0cHM6Ly9maWxlbGlzdC5pbw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "filmesp2p.xyz": {
+      "base": "b64:aHR0cHM6Ly9maWxtZXNwMnAueHl6",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "fluxzone.org": {
+      "base": "b64:aHR0cHM6Ly9mbHV4em9uZS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "funfile.org": {
+      "base": "b64:aHR0cHM6Ly9mdW5maWxlLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "fusionmayhem.net": {
+      "base": "b64:aHR0cHM6Ly9mdXNpb25tYXloZW0ubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "gaytor.rent": {
+      "base": "b64:aHR0cHM6Ly9nYXl0b3IucmVudA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "gay-torrents.net": {
+      "base": "b64:aHR0cHM6Ly9nYXktdG9ycmVudHMubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "gay-torrents.org": {
+      "base": "b64:aHR0cHM6Ly9nYXktdG9ycmVudHMub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "gazellegames.net": {
+      "base": "b64:aHR0cHM6Ly9nYXplbGxlZ2FtZXMubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrent.genesis-movement.org": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50LmdlbmVzaXMtbW92ZW1lbnQub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "generation-free.org": {
+      "base": "b64:aHR0cHM6Ly9nZW5lcmF0aW9uLWZyZWUub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "girotorrent.org": {
+      "base": "b64:aHR0cHM6Ly9naXJvdG9ycmVudC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "greek-team.eu": {
+      "base": "b64:aHR0cHM6Ly9ncmVlay10ZWFtLmV1",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "h-p2p.cam": {
+      "base": "b64:aHR0cHM6Ly9oLXAycC5jYW0=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "happyfappy.org": {
+      "base": "b64:aHR0cHM6Ly9oYXBweWZhcHB5Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hawke.uno": {
+      "base": "b64:aHR0cHM6Ly9oYXdrZS51bm8=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdf.world": {
+      "base": "b64:aHR0cHM6Ly9oZGYud29ybGQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hd-space.org": {
+      "base": "b64:aHR0cHM6Ly9oZC1zcGFjZS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hdtlafenice.eu": {
+      "base": "b64:aHR0cHM6Ly9oZHRsYWZlbmljZS5ldQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "heavens-hell.info": {
+      "base": "b64:aHR0cHM6Ly9oZWF2ZW5zLWhlbGwuaW5mbw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hellashut.net": {
+      "base": "b64:aHR0cHM6Ly9oZWxsYXNodXQubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "immortuos.live": {
+      "base": "b64:aHR0cHM6Ly9pbW1vcnR1b3MubGl2ZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "infire.si": {
+      "base": "b64:aHR0cHM6Ly9pbmZpcmUuc2k=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "newinsane.info": {
+      "base": "b64:aHR0cHM6Ly9uZXdpbnNhbmUuaW5mbw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "iptorrents.com": {
+      "base": "b64:aHR0cHM6Ly9pcHRvcnJlbnRzLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "itatorrents.xyz": {
+      "base": "b64:aHR0cHM6Ly9pdGF0b3JyZW50cy54eXo=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrent.janemusic.org": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50LmphbmVtdXNpYy5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "jme-reunit3d.de": {
+      "base": "b64:aHR0cHM6Ly9qbWUtcmV1bml0M2QuZGU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "jpopsuki.eu": {
+      "base": "b64:aHR0cHM6Ly9qcG9wc3VraS5ldQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "jptv4.us": {
+      "base": "b64:aHR0cHM6Ly9qcHR2NC51cw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "jungleland.dnsalias.com": {
+      "base": "b64:aHR0cHM6Ly9qdW5nbGVsYW5kLmRuc2FsaWFzLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "justanothermusic.site": {
+      "base": "b64:aHR0cHM6Ly9qdXN0YW5vdGhlcm11c2ljLnNpdGU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "kleverig.eu": {
+      "base": "b64:aHR0cHM6Ly9rbGV2ZXJpZy5ldQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "krazyzone.net": {
+      "base": "b64:aHR0cHM6Ly9rcmF6eXpvbmUubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "kufirc.com": {
+      "base": "b64:aHR0cHM6Ly9rdWZpcmMuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "laidbackmanor.xyz": {
+      "base": "b64:aHR0cHM6Ly9sYWlkYmFja21hbm9yLnh5eg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "last-torrents.org": {
+      "base": "b64:aHR0cHM6Ly9sYXN0LXRvcnJlbnRzLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "lat-team.com": {
+      "base": "b64:aHR0cHM6Ly9sYXQtdGVhbS5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "theldu.net": {
+      "base": "b64:aHR0cHM6Ly90aGVsZHUubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "learnflakes.net": {
+      "base": "b64:aHR0cHM6Ly9sZWFybmZsYWtlcy5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "lesbians4u.org": {
+      "base": "b64:aHR0cHM6Ly9sZXNiaWFuczR1Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "libble.me": {
+      "base": "b64:aHR0cHM6Ly9saWJibGUubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "libranet.org": {
+      "base": "b64:aHR0cHM6Ly9saWJyYW5ldC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "homiehelpdesk.net": {
+      "base": "b64:aHR0cHM6Ly9ob21pZWhlbHBkZXNrLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "lst.gg": {
+      "base": "b64:aHR0cHM6Ly9sc3QuZ2c=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "lusthive.org": {
+      "base": "b64:aHR0cHM6Ly9sdXN0aGl2ZS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "lztr.me": {
+      "base": "b64:aHR0cHM6Ly9senRyLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "matrixworld.info": {
+      "base": "b64:aHR0cHM6Ly9tYXRyaXh3b3JsZC5pbmZv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "majomparade.eu": {
+      "base": "b64:aHR0cHM6Ly9tYWpvbXBhcmFkZS5ldQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "malayabits.cc": {
+      "base": "b64:aHR0cHM6Ly9tYWxheWFiaXRzLmNj",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "megamixtracker.hu": {
+      "base": "b64:aHR0cHM6Ly9tZWdhbWl4dHJhY2tlci5odQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "mendigosdaweb.cc": {
+      "base": "b64:aHR0cHM6Ly9tZW5kaWdvc2Rhd2ViLmNj",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "metalworks.lol": {
+      "base": "b64:aHR0cHM6Ly9tZXRhbHdvcmtzLmxvbA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "milkie.cc": {
+      "base": "b64:aHR0cHM6Ly9taWxraWUuY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "mojblink.si": {
+      "base": "b64:aHR0cHM6Ly9tb2pibGluay5zaQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "morethantv.me": {
+      "base": "b64:aHR0cHM6Ly9tb3JldGhhbnR2Lm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "musebootlegs.com": {
+      "base": "b64:aHR0cHM6Ly9tdXNlYm9vdGxlZ3MuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "musicvibes.ro": {
+      "base": "b64:aHR0cHM6Ly9tdXNpY3ZpYmVzLnJv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "forums.mvgroup.org": {
+      "base": "b64:aHR0cHM6Ly9mb3J1bXMubXZncm91cC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "myanonamouse.net": {
+      "base": "b64:aHR0cHM6Ly9teWFub25hbW91c2UubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "nebulance.io": {
+      "base": "b64:aHR0cHM6Ly9uZWJ1bGFuY2UuaW8=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "nethd.org": {
+      "base": "b64:aHR0cHM6Ly9uZXRoZC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "nordichd.org": {
+      "base": "b64:aHR0cHM6Ly9ub3JkaWNoZC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "nordicq.org": {
+      "base": "b64:aHR0cHM6Ly9ub3JkaWNxLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ntelogo.org": {
+      "base": "b64:aHR0cHM6Ly9udGVsb2dvLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "oldtoons.world": {
+      "base": "b64:aHR0cHM6Ly9vbGR0b29ucy53b3JsZA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "onlyencodes.cc": {
+      "base": "b64:aHR0cHM6Ly9vbmx5ZW5jb2Rlcy5jYw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "orpheus.network": {
+      "base": "b64:aHR0cHM6Ly9vcnBoZXVzLm5ldHdvcms=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ostwiki.com": {
+      "base": "b64:aHR0cHM6Ly9vc3R3aWtpLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pandacd.io": {
+      "base": "b64:aHR0cHM6Ly9wYW5kYWNkLmlv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "partis.si": {
+      "base": "b64:aHR0cHM6Ly9wYXJ0aXMuc2k=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "passthepopcorn.me": {
+      "base": "b64:aHR0cHM6Ly9wYXNzdGhlcG9wY29ybi5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "peeratiko.org": {
+      "base": "b64:aHR0cHM6Ly9wZWVyYXRpa28ub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pixelcove.me": {
+      "base": "b64:aHR0cHM6Ly9waXhlbGNvdmUubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "plusteca.com": {
+      "base": "b64:aHR0cHM6Ly9wbHVzdGVjYS5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "polishtorrent.top": {
+      "base": "b64:aHR0cHM6Ly9wb2xpc2h0b3JyZW50LnRvcA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pornbay.org": {
+      "base": "b64:aHR0cHM6Ly9wb3JuYmF5Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "portugas.org": {
+      "base": "b64:aHR0cHM6Ly9wb3J0dWdhcy5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "privatehd.to": {
+      "base": "b64:aHR0cHM6Ly9wcml2YXRlaGQudG8=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "pwtorrents.net": {
+      "base": "b64:aHR0cHM6Ly9wd3RvcnJlbnRzLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "punck-tracker.net": {
+      "base": "b64:aHR0cHM6Ly9wdW5jay10cmFja2VyLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "r3vuk.wtf": {
+      "base": "b64:aHR0cHM6Ly9yM3Z1ay53dGY=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "redacted.sh": {
+      "base": "b64:aHR0cHM6Ly9yZWRhY3RlZC5zaA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "reelflix.xyz": {
+      "base": "b64:aHR0cHM6Ly9yZWVsZmxpeC54eXo=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "retroflix.club": {
+      "base": "b64:aHR0cHM6Ly9yZXRyb2ZsaXguY2x1Yg==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "revolutiontt.me": {
+      "base": "b64:aHR0cHM6Ly9yZXZvbHV0aW9udHQubWU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "rawkbawx.rocks": {
+      "base": "b64:aHR0cHM6Ly9yYXdrYmF3eC5yb2Nrcw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "rotorrent.ro": {
+      "base": "b64:aHR0cHM6Ly9yb3RvcnJlbnQucm8=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "satclubbing.club": {
+      "base": "b64:aHR0cHM6Ly9zYXRjbHViYmluZy5jbHVi",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "scenelinks.me": {
+      "base": "b64:aHR0cHM6Ly9zY2VuZWxpbmtzLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "scenetime.com": {
+      "base": "b64:aHR0cHM6Ly9zY2VuZXRpbWUuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "secret-cinema.pw": {
+      "base": "b64:aHR0cHM6Ly9zZWNyZXQtY2luZW1hLnB3",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "seedfile.io": {
+      "base": "b64:aHR0cHM6Ly9zZWVkZmlsZS5pbw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "sextorrent.eu": {
+      "base": "b64:aHR0cHM6Ly9zZXh0b3JyZW50LmV1",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "shareisland.org": {
+      "base": "b64:aHR0cHM6Ly9zaGFyZWlzbGFuZC5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "sharewood.tv": {
+      "base": "b64:aHR0cHM6Ly9zaGFyZXdvb2QudHY=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "skipthecommericals.xyz": {
+      "base": "b64:aHR0cHM6Ly9za2lwdGhlY29tbWVyaWNhbHMueHl6",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "speed.cd": {
+      "base": "b64:aHR0cHM6Ly9zcGVlZC5jZA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "speedapp.io": {
+      "base": "b64:aHR0cHM6Ly9zcGVlZGFwcC5pbw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "sportscult.org": {
+      "base": "b64:aHR0cHM6Ly9zcG9ydHNjdWx0Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "skipthecommercials.xyz": {
+      "base": "b64:aHR0cHM6Ly9za2lwdGhlY29tbWVyY2lhbHMueHl6",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "sugoimusic.me": {
+      "base": "b64:aHR0cHM6Ly9zdWdvaW11c2ljLm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "superbits.org": {
+      "base": "b64:aHR0cHM6Ly9zdXBlcmJpdHMub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrent-explosiv.me": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50LWV4cGxvc2l2Lm1l",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tapochek.net": {
+      "base": "b64:aHR0cHM6Ly90YXBvY2hlay5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tctg.pm": {
+      "base": "b64:aHR0cHM6Ly90Y3RnLnBt",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "teamos.xyz": {
+      "base": "b64:aHR0cHM6Ly90ZWFtb3MueHl6",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "teracod.net": {
+      "base": "b64:aHR0cHM6Ly90ZXJhY29kLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "lunars.fun": {
+      "base": "b64:aHR0cHM6Ly9sdW5hcnMuZnVu",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tgay.pro": {
+      "base": "b64:aHR0cHM6Ly90Z2F5LnBybw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "theparadiese.org": {
+      "base": "b64:aHR0cHM6Ly90aGVwYXJhZGllc2Uub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "the-new-fun.com": {
+      "base": "b64:aHR0cHM6Ly90aGUtbmV3LWZ1bi5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "thecrazyones.hopto.org": {
+      "base": "b64:aHR0cHM6Ly90aGVjcmF6eW9uZXMuaG9wdG8ub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "theoldschool.cc": {
+      "base": "b64:aHR0cHM6Ly90aGVvbGRzY2hvb2wuY2M=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "thesceneplace.com": {
+      "base": "b64:aHR0cHM6Ly90aGVzY2VuZXBsYWNlLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tigers-dl.net": {
+      "base": "b64:aHR0cHM6Ly90aWdlcnMtZGwubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tocashare.com": {
+      "base": "b64:aHR0cHM6Ly90b2Nhc2hhcmUuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "toonsfor.me": {
+      "base": "b64:aHR0cHM6Ly90b29uc2Zvci5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "toptbdev.net": {
+      "base": "b64:aHR0cHM6Ly90b3B0YmRldi5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tormac.org": {
+      "base": "b64:aHR0cHM6Ly90b3JtYWMub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tornado.si": {
+      "base": "b64:aHR0cHM6Ly90b3JuYWRvLnNp",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrentheaven.org": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50aGVhdmVuLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrentdd.com": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50ZGQuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrents.torrentech.org": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50cy50b3JyZW50ZWNoLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrenting.com": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50aW5nLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrentland.li": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50bGFuZC5saQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrentmasters.org": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50bWFzdGVycy5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "masters-tb.com": {
+      "base": "b64:aHR0cHM6Ly9tYXN0ZXJzLXRiLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "torrentseeds.org": {
+      "base": "b64:aHR0cHM6Ly90b3JyZW50c2VlZHMub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "t.ceskeforum.com": {
+      "base": "b64:aHR0cHM6Ly90LmNlc2tlZm9ydW0uY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tribalmixes.com": {
+      "base": "b64:aHR0cHM6Ly90cmliYWxtaXhlcy5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "truegear.net": {
+      "base": "b64:aHR0cHM6Ly90cnVlZ2Vhci5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "tv-vault.me": {
+      "base": "b64:aHR0cHM6Ly90di12YXVsdC5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "twilightsdreams.com": {
+      "base": "b64:aHR0cHM6Ly90d2lsaWdodHNkcmVhbXMuY29t",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "twisted-music.org": {
+      "base": "b64:aHR0cHM6Ly90d2lzdGVkLW11c2ljLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "uhdbits.org": {
+      "base": "b64:aHR0cHM6Ly91aGRiaXRzLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "upload.cx": {
+      "base": "b64:aHR0cHM6Ly91cGxvYWQuY3g=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ultrahd.online": {
+      "base": "b64:aHR0cHM6Ly91bHRyYWhkLm9ubGluZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "uni-track.org": {
+      "base": "b64:aHR0cHM6Ly91bmktdHJhY2sub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "unleashthecartoons.world": {
+      "base": "b64:aHR0cHM6Ly91bmxlYXNodGhlY2FydG9vbnMud29ybGQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "utp.to": {
+      "base": "b64:aHR0cHM6Ly91dHAudG8=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "vision-hd.org": {
+      "base": "b64:aHR0cHM6Ly92aXNpb24taGQub3Jn",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "warezforums.com": {
+      "base": "b64:aHR0cHM6Ly93YXJlemZvcnVtcy5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "slosoul.net": {
+      "base": "b64:aHR0cHM6Ly9zbG9zb3VsLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ultimatewrestlingtorrents.com": {
+      "base": "b64:aHR0cHM6Ly91bHRpbWF0ZXdyZXN0bGluZ3RvcnJlbnRzLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "x-ite.me": {
+      "base": "b64:aHR0cHM6Ly94LWl0ZS5tZQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "xrel.to": {
+      "base": "b64:aHR0cHM6Ly94cmVsLnRv",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "xtremebytes.net": {
+      "base": "b64:aHR0cHM6Ly94dHJlbWVieXRlcy5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "xwt-classics.net": {
+      "base": "b64:aHR0cHM6Ly94d3QtY2xhc3NpY3MubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "yoinked.org": {
+      "base": "b64:aHR0cHM6Ly95b2lua2VkLm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "yu-scene.net": {
+      "base": "b64:aHR0cHM6Ly95dS1zY2VuZS5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zappateers.com": {
+      "base": "b64:aHR0cHM6Ly96YXBwYXRlZXJzLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zapshare.net": {
+      "base": "b64:aHR0cHM6Ly96YXBzaGFyZS5uZXQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zelka.org": {
+      "base": "b64:aHR0cHM6Ly96ZWxrYS5vcmc=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "zombtracker.the-zomb.com": {
+      "base": "b64:aHR0cHM6Ly96b21idHJhY2tlci50aGUtem9tYi5jb20=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "ztracker.cc": {
+      "base": "b64:aHR0cHM6Ly96dHJhY2tlci5jYw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "hebits.net": {
+      "base": "b64:aHR0cHM6Ly9oZWJpdHMubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "huntorrent.org": {
+      "base": "b64:aHR0cHM6Ly9odW50b3JyZW50Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "racing4everyone.eu": {
+      "base": "b64:aHR0cHM6Ly9yYWNpbmc0ZXZlcnlvbmUuZXU=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "bbs.acgrip.com": {
+      "base": "b64:aHR0cHM6Ly9iYnMuYWNncmlwLmNvbQ==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "aura4k.net": {
+      "base": "b64:aHR0cHM6Ly9hdXJhNGsubmV0",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "retrotoon.world": {
+      "base": "b64:aHR0cHM6Ly9yZXRyb3Rvb24ud29ybGQ=",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "dreadvault.org": {
+      "base": "b64:aHR0cHM6Ly9kcmVhZHZhdWx0Lm9yZw==",
+      "upload": "b64:",
+      "verify": "b64:"
+    },
+    "test.pterclub.net": {
+      "base": "b64:aHR0cHM6Ly90ZXN0LnB0ZXJjbHViLm5ldA==",
+      "upload": "b64:",
+      "verify": "b64:L3RvcnJlbnRzLnBocD9zZWFyY2g9e3RpdGxlfQ=="
+    }
+  }
+}
