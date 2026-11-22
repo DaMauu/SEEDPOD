@@ -31,6 +31,12 @@ check('Dockerfile 多阶段、非 root、数据卷和健康检查', function () 
   need(!/COPY .*\bdata\b/.test(s), '镜像不该复制 data');
 });
 
+check('deploy.sh 按新目录修预设权限', function () {
+  const s = read('deploy.sh');
+  need(/pta\/server\/pack/.test(s), 'deploy.sh 没指向 server/pack');
+  need(!/pta\/pack/.test(s), 'deploy.sh 还留着旧 pta/pack');
+});
+
 check('compose 挂载 /data、限制本机端口、配置账号环境', function () {
   const s = read('docker-compose.yml');
   need(/\.\/data:\/data/.test(s), '没有挂载 data');

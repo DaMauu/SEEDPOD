@@ -33,7 +33,7 @@ rsync -rc --delete \
   "$SRC/pta/" "$DEPLOY_DIR/pta/"
 rsync -c "$SRC/package.json" "$SRC/CHANGELOG.md" "$DEPLOY_DIR/"
 # 预设 JSON 要随镜像分发，服务用户必须可读；data/ 仍保持 600
-find "$DEPLOY_DIR/pta/pack" -maxdepth 1 -type f -name '*.json' -exec chmod 644 {} +
+find "$DEPLOY_DIR/pta/server/pack" -maxdepth 1 -type f -name '*.json' -exec chmod 644 {} +
 sudo -n systemctl restart "$SERVICE_NAME"
 sleep 1
 systemctl is-active "$SERVICE_NAME"
