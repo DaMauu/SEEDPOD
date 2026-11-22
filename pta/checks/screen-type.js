@@ -4,6 +4,7 @@ const os = require('os');
 const path = require('path');
 const { openDB } = require('../server/db');
 const { screenCatalog } = require('../server/screen');
+const makeSiteStore = require('../server/site-store');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-screen-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));
@@ -11,6 +12,7 @@ const one = (sql, ...a) => db.prepare(sql).get(...a);
 const all = (sql, ...a) => db.prepare(sql).all(...a);
 const jparse = (s) => { try { return JSON.parse(s); } catch (e) { return null; } };
 const ctx = { db: db, DATA_DIR: DATA, one: one, all: all, jparse: jparse };
+const siteStore = makeSiteStore(DATA);
 const now = new Date().toISOString();
 const results = [];
 function check(name, fn) { return Promise.resolve().then(fn).then(() => results.push([true, name, ''])).catch(e => results.push([false, name, e && e.message ? e.message : String(e)])); }
@@ -40,8 +42,7 @@ function q(id, title) {
       need(qs.length === 1 && qs[0].catName === '电影', '队列分类不对：' + JSON.stringify(qs));
     });
     await check('已移除站点不再送审', async function () {
-      db.prepare("INSERT INTO meta(k, v) VALUES('site-config-meta', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
-        .run(JSON.stringify({ hidden: ['source.example'] }));
+      siteStore.save('source.example', { name: 'Source', engine: 'nexusphp', search: { path: '/torrents.php', cats: { '电影': ['401'] }, types: ['电影'] }, settings: { enabled: true, hidden: true } }, db);
       cat('cat_hidden_1', 'Hidden Movie 2024 1080p', 'source.example', '401');
       try {
         const r = screenCatalog(ctx, { limit: 20 });
@@ -50,7 +51,7 @@ function q(id, title) {
         const it = jparse(row.data);
         need(it.status === 'skipped' && it.skipReason === '来源站已停用', '词条状态不对：' + JSON.stringify({ s: it.status, r: it.skipReason }));
       } finally {
-        db.prepare("DELETE FROM meta WHERE k = 'site-config-meta'").run();
+        siteStore.setHidden('source.example', false, db);
       }
     });
 

@@ -157,7 +157,7 @@ async function main() {
     await page.evaluate(() => { location.hash = '#sites'; });
     await page.waitForTimeout(800);
     const items = page.locator('.site-item');
-    need(await items.count() === 3, '站点列表数量不对：' + await items.count());
+    need(await items.count() === 4, '站点列表数量不对：' + await items.count());
     need(/Demo A/.test(await page.locator('#sites-list').innerText()), '站点标题没渲染');
 
     const del = await page.evaluate(async () => {
@@ -234,7 +234,7 @@ async function main() {
     await page.locator('#site-add-modal select').selectOption('NP');
     await page.locator('#site-add-modal .modal-foot button').filter({ hasText: '添加' }).click();
     await page.waitForTimeout(800);
-    need(await page.locator('.site-item').count() === 4, '添加后站点数量不对：' + await page.locator('.site-item').count());
+    need(await page.locator('.site-item').count() === 5, '添加后站点数量不对：' + await page.locator('.site-item').count());
     need(/Added Site/.test(await page.locator('#sites-list').innerText()), '添加的站点没出现');
     need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
     need(await page.locator('#site-detail textarea').count() >= 1, '上传配置文本域缺失');

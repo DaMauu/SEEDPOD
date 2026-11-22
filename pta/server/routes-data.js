@@ -8,6 +8,17 @@ module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
   const siteStore = require('./site-store')(DATA_DIR);
+  function archOf(engine) { const e = String(engine || '').toLowerCase(); return e === 'nexusphp' ? 'NP' : (e === 'unit3d' ? 'UNIT3D' : (e === 'gazelle' ? 'GZ' : '?')); }
+  function defOfRecord(rec) {
+    const cats = rec.search.cats || {};
+    const list = [];
+    Object.keys(cats).forEach(function (label) { (cats[label] || []).forEach(function (id) { list.push({ id: String(id), label: String(label), purpose: String(label) }); }); });
+    const catMap = list.length ? list : (rec.publish.catMap || {});
+    return { engine: rec.engine, base: rec.url.base, searchPath: rec.search.path, params: rec.search.params || {},
+      catMode: rec.search.catMode || 'single', catSlot: rec.search.catSlot || '', cats: cats, catMap: catMap,
+      upload: rec.publish.upload || {}, uploadMap: rec.publish.upload || {}, verify: rec.publish.verify || {},
+      tagMap: rec.publish.tagMap || {}, tagValue: rec.publish.tagValue || 'yes' };
+  }
   const SSE = new Set();
   const now = () => new Date().toISOString();
 
@@ -61,15 +72,12 @@ module.exports = function (app, ctx) {
   }
 
   app.get('/api/sites', async () => {
-    const hidden = siteHidden.list(db);
-    const seen = {};
-    all('SELECT host, data FROM sites').forEach(function (r) {
-      if (hidden.indexOf(String(r.host || '').toLowerCase()) >= 0) return;
-      const c = jparse(r.data) || {};
-      seen[r.host] = { host: r.host, url: c.url || ('https://' + r.host), arch: c.arch || '?',
-        title: c.title || r.host, added: c.base !== true && c.added === true };
+    const allSites = siteStore.list();
+    const hidden = allSites.filter(function (x) { return x.settings.hidden === true; }).map(function (x) { return x.host; });
+    const merged = allSites.filter(function (x) { return x.settings.hidden !== true; }).map(function (x) {
+      return { host: x.host, url: x.url.base || ('https://' + x.host), arch: archOf(x.engine),
+        title: x.name || x.host, added: true };
     });
-    const merged = Object.keys(seen).map(function (h) { return seen[h]; });
     const counts = { total: merged.length, np: 0, unit3d: 0, gz: 0, other: 0, unknown: 0 };
     merged.forEach(function (x) {
       if (x.arch === 'NP') counts.np++;
@@ -118,21 +126,11 @@ module.exports = function (app, ctx) {
     const host = String(req.params.host || '').toLowerCase();
     const row = one('SELECT data FROM sites WHERE host = ?', host);
     if (!row) return bad(reply, 'NOT_FOUND', '站点不存在', 404);
-    const cfg = jparse(row.data) || {};
-    if (cfg.base === true) {
-      /* 基础站随站点包发布，不能硬删；从面板隐藏并清掉凭据，可恢复 */
-      siteHidden.add(db, host);
-      siteStore.setHidden(host, true, db);
-      cookieStore.remove(host, db);
-      logEvent('info', '站点', '移除基础站点（可恢复） · ' + host);
-      return ok(reply, { host: host, hidden: true, soft: true });
-    }
-    db.prepare('DELETE FROM sites WHERE host = ?').run(host);
+    siteHidden.add(db, host);
     cookieStore.remove(host, db);
-    siteHidden.remove(db, host);
-    siteStore.remove(host, db);
-    logEvent('info', '站点', '移除站点 · ' + host);
-    return ok(reply, { host: host, hidden: false, soft: false });
+    siteStore.setHidden(host, true, db);
+    logEvent('info', '站点', '移除站点（可恢复） · ' + host);
+    return ok(reply, { host: host, hidden: true, soft: true });
   });
 
   app.post('/api/sites/:host/restore', async (req, reply) => {
@@ -140,7 +138,7 @@ module.exports = function (app, ctx) {
     const row = one('SELECT data FROM sites WHERE host = ?', host);
     if (!row) return bad(reply, 'NOT_FOUND', '站点不在面板里，先重新添加', 404);
     const changed = siteHidden.remove(db, host);
-    siteStore.setHidden(host, false, db);
+    if (siteStore.has(host)) siteStore.setHidden(host, false, db);
     if (changed) logEvent('info', '站点', '恢复基础站点 · ' + host);
     return ok(reply, { host: host, restored: changed });
   });
@@ -148,8 +146,9 @@ module.exports = function (app, ctx) {
   /* ---- 站点配置 ---- */
   app.get('/api/site-config', async () => {
     const sites = {};
-    all('SELECT host, data FROM sites').forEach(function (r) { sites[r.host] = jparse(r.data) || {}; });
-    return ok({ sites: sites, hidden: siteHidden.list(db) });
+    const hidden = [];
+    siteStore.list().forEach(function (s) { sites[s.host] = Object.assign({}, s.settings); if (s.settings.hidden) hidden.push(s.host); });
+    return ok({ sites: sites, hidden: hidden });
   });
   app.put('/api/site-config/:host', async (req, reply) => {
     const host = req.params.host;
@@ -195,9 +194,9 @@ module.exports = function (app, ctx) {
     try { return JSON.parse(fs.readFileSync(path.join(DEF_DIR, host + '.json'), 'utf8')); } catch (e) { return null; }
   }
   app.get('/api/site-def/:host', async (req, reply) => {
-    const def = readDef(req.params.host);
-    if (!def) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
-    return ok(reply, def);
+    const rec = siteStore.get(req.params.host);
+    if (!rec) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
+    return ok(reply, defOfRecord(rec));
   });
   app.put('/api/site-def/:host', async (req, reply) => {
     const host = req.params.host;
@@ -249,17 +248,11 @@ module.exports = function (app, ctx) {
   });
   app.get('/api/site-defs', async () => {
     const out = {};
-    try {
-      fs.readdirSync(DEF_DIR).forEach(function (f) {
-        if (!/\.json$/.test(f)) return;
-        const host = f.replace(/\.json$/, '');
-        const d = readDef(host);
-        if (!d) return;
-        out[host] = { engine: d.engine || '', base: d.base || '', groups: d.cats ? Object.keys(d.cats).length : 0,
-          ids: d.cats ? Object.keys(d.cats).reduce(function (a, k) { return a + (d.cats[k] || []).length; }, 0) : 0,
-          cats: d.cats || {} };
-      });
-    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
+    siteStore.list().forEach(function (s) {
+      const cats = s.search.cats || {};
+      out[s.host] = { engine: s.engine || '', base: s.url.base || '', groups: Object.keys(cats).length,
+        ids: Object.keys(cats).reduce(function (a, k) { return a + (cats[k] || []).length; }, 0), cats: cats };
+    });
     return ok(out);
   });
 };

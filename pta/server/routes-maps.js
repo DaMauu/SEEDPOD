@@ -56,8 +56,17 @@ module.exports = function (app, ctx) {
   const siteStore = require('./site-store')(DATA_DIR);
 
   app.get('/api/maps', async () => {
-    const all = siteMaps.readAll(DATA_DIR);
-    return ok({ sites: all.sites, summary: siteMaps.summary(DATA_DIR) });
+    const sites = {};
+    const summary = {};
+    siteStore.list().forEach(function (s) {
+      const cat = s.publish.catLabels || {};
+      const team = (s.publish.valueMaps && s.publish.valueMaps.team) || {};
+      if (Object.keys(cat).length || Object.keys(team).length || s.publish.form) {
+        sites[s.host] = { cat: cat, team: team, form: s.publish.form || null };
+        summary[s.host] = { cat: Object.keys(cat).length, team: Object.keys(team).length };
+      }
+    });
+    return ok({ sites: sites, summary: summary });
   });
 
   app.put('/api/maps/:host', async (req, reply) => {

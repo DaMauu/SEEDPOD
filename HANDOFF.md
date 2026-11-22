@@ -1,6 +1,10 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-23 18:00（当前 v0.7.650 / 抓取与目标站切 JSON）
+最后更新：2026-11-23 20:00（当前 v0.7.651 / 面板与初筛切 JSON）
+
+## 2026-11-23 面板与初筛切 JSON（v0.7.651）
+
+- sites/site-config/site-def/maps/screen/stats 读 site-store；旧文件待剩余路径切完再删。
 
 ## 2026-11-23 抓取与目标站切 JSON（v0.7.650）
 

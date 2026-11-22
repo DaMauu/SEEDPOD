@@ -1,11 +1,8 @@
 /* 送审：流程规则 + 禁转/限转 + 查重，路由与调度器共用。 */
 const match = require('./match');
-const siteHidden = require('./site-hidden');
 const marksMod = require('./marks');
 const meta = require('./meta');
 const { tx } = require('./db');
-const siteMaps = require('./site-maps');
-const sitePack = require('./site-pack');
 const { typeOf, selectedTypesOf } = require('./category-policy');
 const log = require('./log');
 
@@ -52,6 +49,7 @@ function cnOf(subtitle) {
 
 function screenCatalog(ctx, opts) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
+  const siteStore = require('./site-store')(ctx.DATA_DIR);
   const now = () => new Date().toISOString();
   const b = opts || {};
   const limit = Math.max(1, Math.min(Number(b.limit) || 50, 200));
@@ -64,14 +62,9 @@ function screenCatalog(ctx, opts) {
   const norm = (s2) => String(s2 || '').toLowerCase().replace(/[\s\-_.]+/g, '');
   /* 来源站已停用的词条不再送审，避免发布时去抓停用站的种子 */
   const siteOn = {};
-  const hidden = siteHidden.list(db);
-  all('SELECT host, data FROM sites').forEach(function (r) {
-    const d = jparse(r.data) || {};
-    const h = String(r.host).toLowerCase();
-    siteOn[h] = d.enabled !== false && hidden.indexOf(h) < 0;
+  siteStore.list().forEach(function (s) {
+    siteOn[String(s.host).toLowerCase()] = s.settings.enabled !== false && s.settings.hidden !== true;
   });
-  /* 已移除的站点可能不在 sites 视图里，也要显式停用 */
-  hidden.forEach(function (h) { siteOn[h] = false; });
   /* 跨站同片策略：同 infohash / 规范化标题只保留最早一条，后来者记 dupeOf 方便追溯 */
   const seenTitles = new Map();
   const seenHashes = new Map();
@@ -93,20 +86,17 @@ function screenCatalog(ctx, opts) {
     let type = typeOf(raw);
     if ((!type || /^\d+$/.test(raw)) && it.site) {
       try {
-        const maps = siteMaps.getHost(DATA_DIR, it.site).cat || {};
-        const hit = Object.keys(maps).filter(function (k) { return String(maps[k]) === raw; })[0];
-        if (hit) { label = hit; type = typeOf(hit); }
-      } catch (e) { log.warn('screen.site-maps', e); }
-    }
-    if (!type && it.site) {
-      try {
-        const def = sitePack.siteOf(it.site) || {};
-        const cm = def.catMap;
-        if (cm && typeof cm === 'object') {
-          const hit = Object.keys(cm).filter(function (k) { return String(cm[k]) === raw; })[0];
+        const rec = siteStore.get(it.site);
+        if (rec) {
+          const cats = rec.search.cats || {};
+          let hit = Object.keys(cats).filter(function (k) { return (cats[k] || []).map(String).indexOf(raw) >= 0; })[0];
+          if (!hit) {
+            const labels = rec.publish.catLabels || {};
+            hit = Object.keys(labels).filter(function (k) { return String(labels[k]) === raw; })[0];
+          }
           if (hit) { label = hit; type = typeOf(hit); }
         }
-      } catch (e) { log.warn('screen.site-pack', e); }
+      } catch (e) { log.warn('screen.site-store', e); }
     }
     return { label: label && !/^\d+$/.test(label) ? label : '', type: type || '' };
   }

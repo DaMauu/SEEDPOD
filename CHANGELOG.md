@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.651 · 2026-11-23
+
+### 面板与初筛切到站点 JSON
+- `/api/sites`、`/api/site-config`、`/api/site-def`、`/api/site-defs`、`/api/maps` 改为读 `site-store`；隐藏站从列表过滤。
+- 送审、统计、目标站列表改读 `site-store`；移除站点改为写入 `settings.hidden`，可恢复，凭据删除。
+- target 列表缓存/一次读取，避免 306 站逐条解析；`catMode/catSlot/tagMap/uploadMap` 保留。
+- 夹具：api-v2 56/56、smoke 28/28、target 41/41、crawl-detail 6/6、screen 6/6、responsive 32/32、全量 run.sh 通过。
+- 旧 `site-defs` / `sites` 表仍保留，供剩余读取路径和回滚；下一步继续切剩余路径后删除。
+
 ## v0.7.650 · 2026-11-23
 
 ### 抓取与目标站切到站点 JSON

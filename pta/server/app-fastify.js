@@ -19,6 +19,7 @@ const WEB_DIR = (function () {
   const dist = path.join(__dirname, '..', 'web', 'dist');
   return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', 'web');
 })();
+const siteStore = require('./site-store')(DATA_DIR);
 const PKG = require('../../package.json');
 const VERSION = PKG.version;
 const DEV_DATE = '2026-11-14';
@@ -266,10 +267,9 @@ async function build() {
     const free = dls.reduce(function (a, d) { return a + Number((d.lastProbe && d.lastProbe.freeSpace) || 0); }, 0);
     const online = dls.filter(function (d) { return d.lastProbe && d.lastProbe.pass; }).length;
 
-    const hiddenSites = siteHidden.list(db);
-    const sites = all('SELECT host, data FROM sites').map(function (r) {
-      return Object.assign({}, jparse(r.data) || {}, { host: String(r.host || '').toLowerCase() });
-    }).filter(function (x) { return hiddenSites.indexOf(x.host) < 0; });
+    const siteList = siteStore.list();
+    const hiddenSites = siteList.filter(function (x) { return x.settings.hidden === true; }).map(function (x) { return x.host; });
+    const sites = siteList.filter(function (x) { return x.settings.hidden !== true; }).map(function (x) { return Object.assign({}, x.settings, { host: x.host }); });
     let loginOk = 0, loginFail = 0;
     try {
       const st = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-status.json'), 'utf8')) || {};
