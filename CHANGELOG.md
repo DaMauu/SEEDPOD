@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.649 · 2026-11-23
+
+### 站点 JSON 字段补齐
+- `sites.preset.json` / 运行时 `sites.json` 补 `search.catMode`、`search.catSlot`、`publish.tagMap`、`publish.tagValue`；5 个用 `uploadMap` 的站保留上传映射。
+- `build-site-json --check` 增加 catMode/catSlot/uploadMap 校验，生产 0 差异。
+- `site-store` 旧数据迁移合并 `site-pack.json`，`legacyDef`/`targetDef` 带全字段；夹具 6/6。
+- 抓取/目标站读取切换因夹具未全量更新，暂时撤回；旧逻辑保持可运行。
+- 全量 run.sh 通过。
+
 ## v0.7.648 · 2026-11-23
 
 ### site-store 迁移适配

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-22T05:18:51.186Z",
+  "generatedAt": "2026-11-22T07:02:04.142Z",
   "sites": {
     "52pt.site": {
       "name": "52PT",
@@ -13,6 +13,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "电影": [
             "401"
@@ -63,7 +65,9 @@
           "剧集": "402",
           "动漫": "405",
           "音乐": "406"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -78,6 +82,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "tv": [
             "419",
@@ -159,7 +165,9 @@
           "图片": "418",
           "电子书/有声书": "415",
           "学习资料": "417"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -174,6 +182,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -257,7 +267,9 @@
           "其他": "409",
           "游戏": "410",
           "学习": "412"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -272,6 +284,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "game": [
             "404"
@@ -311,7 +325,9 @@
           "Light Novel": "403",
           "画集": "407",
           "Music": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -326,6 +342,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "405"
@@ -411,7 +429,9 @@
           "体育": "410",
           "游戏": "411",
           "综艺": "412"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -426,6 +446,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -440,7 +462,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -455,6 +479,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "电影": [
             "401"
@@ -466,10 +492,29 @@
       },
       "publish": {
         "upload": {
-          "path": "",
-          "formPath": "",
-          "fileField": "",
-          "fields": {}
+          "path": "/takeupload.php",
+          "formPath": "/upload.php",
+          "fileField": "file",
+          "fields": {
+            "file": "",
+            "name": "{title}",
+            "small_descr": "{subtitle}",
+            "url": "",
+            "pt_gen": "",
+            "nfo": "",
+            "tags[4][]": "",
+            "uplver": "",
+            "descr": "{description}",
+            "color": "",
+            "font": "",
+            "size": "",
+            "type": "{catId}",
+            "medium_sel[4]": "{source}",
+            "codec_sel[4]": "{codec}",
+            "audiocodec_sel[4]": "{codec}",
+            "standard_sel[4]": "",
+            "team_sel[4]": "{team}"
+          }
         },
         "verify": {
           "path": ""
@@ -504,7 +549,9 @@
           "综艺": "405",
           "音乐": "406",
           "其他": "407"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -519,6 +566,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -533,7 +582,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -548,6 +599,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401",
@@ -591,9 +644,9 @@
       },
       "publish": {
         "upload": {
-          "path": "",
-          "formPath": "",
-          "fileField": "",
+          "path": "/takeupload.php",
+          "formPath": "/upload.php",
+          "fileField": "torrentfile",
           "fields": {}
         },
         "verify": {
@@ -638,7 +691,9 @@
           "音乐": "406",
           "体育": "407",
           "游戏": "410"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -653,6 +708,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "电影": [
             "401"
@@ -664,10 +721,41 @@
       },
       "publish": {
         "upload": {
-          "path": "",
-          "formPath": "",
-          "fileField": "",
-          "fields": {}
+          "path": "/takeupload.php",
+          "formPath": "/upload.php",
+          "fileField": "file",
+          "fields": {
+            "file": "",
+            "name": "{title}",
+            "small_descr": "{subtitle}",
+            "url": "",
+            "nfo": "",
+            "price": "",
+            "hr[4]": "",
+            "tags[4][]": "",
+            "hr[6]": "",
+            "tags[6][]": "",
+            "pos_state_until": "",
+            "uplver": "",
+            "descr": "{description}",
+            "technical_info": "",
+            "color": "",
+            "font": "",
+            "size": "",
+            "type": "{catId}",
+            "source_sel[4]": "{source}",
+            "standard_sel[4]": "",
+            "codec_sel[4]": "{codec}",
+            "audiocodec_sel[4]": "{codec}",
+            "team_sel[4]": "{team}",
+            "processing_sel[4]": "",
+            "codec_sel[6]": "{codec}",
+            "audiocodec_sel[6]": "{codec}",
+            "team_sel[6]": "{team}",
+            "processing_sel[6]": "",
+            "pos_state": "",
+            "picktype": ""
+          }
         },
         "verify": {
           "path": ""
@@ -715,7 +803,9 @@
           "动漫": "405",
           "学习": "412",
           "电影": "401"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -730,6 +820,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401",
@@ -760,10 +852,30 @@
       },
       "publish": {
         "upload": {
-          "path": "",
-          "formPath": "",
-          "fileField": "",
-          "fields": {}
+          "path": "/takeupload.php",
+          "formPath": "/upload.php",
+          "fileField": "file",
+          "fields": {
+            "file": "",
+            "name": "{title}",
+            "small_descr": "{subtitle}",
+            "url": "",
+            "pt_gen": "",
+            "nfo": "",
+            "tags[4][]": "",
+            "uplver": "",
+            "descr": "{description}",
+            "technical_info": "",
+            "color": "",
+            "font": "",
+            "size": "",
+            "type": "{catId}",
+            "medium_sel[4]": "{source}",
+            "codec_sel[4]": "{codec}",
+            "audiocodec_sel[4]": "{codec}",
+            "standard_sel[4]": "",
+            "team_sel[4]": "{team}"
+          }
         },
         "verify": {
           "path": ""
@@ -798,7 +910,9 @@
           "电影": "401",
           "剧集": "402",
           "音乐": "408"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -813,6 +927,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "indexed",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -827,7 +943,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -842,6 +960,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "music": [
             "1"
@@ -870,7 +990,9 @@
           "Music": "1",
           "音乐": "18",
           "其他": "7"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -885,6 +1007,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401",
@@ -959,7 +1083,9 @@
           "其他": "0",
           "电影": "401",
           "纪录片": "413"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -974,6 +1100,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "tv": [
             "402",
@@ -1065,7 +1193,9 @@
           "游戏": "411",
           "电子书": "412",
           "学习": "427"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1080,6 +1210,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "game": [
             "401",
@@ -1121,7 +1253,9 @@
           "安卓游戏": "409",
           "游戏书藉": "410",
           "音乐/CG/模拟器": "411"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1136,6 +1270,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -1156,7 +1292,9 @@
         "catLabels": {
           "其他": "1",
           "电影": "6"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1171,6 +1309,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "doc": [
             "404"
@@ -1215,7 +1355,9 @@
           "Animations(动画片)": "405",
           "TV Series(电视剧)": "402",
           "Misc(其他)": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1230,6 +1372,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -1244,7 +1388,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1259,6 +1405,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "300",
@@ -1351,7 +1499,9 @@
           "音乐": "406",
           "体育": "407",
           "其他": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1366,6 +1516,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "20",
@@ -1475,7 +1627,9 @@
           "综艺": "401",
           "电子书": "404",
           "原盘": "410"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1490,6 +1644,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -1524,7 +1680,9 @@
           "体育": "407",
           "成人": "727",
           "软件": "729"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1539,6 +1697,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -1553,7 +1713,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1568,6 +1730,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -1608,7 +1772,9 @@
           "软件": "419",
           "游戏": "421",
           "电子书": "405"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1623,6 +1789,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -1655,7 +1823,9 @@
           "剧集": "432",
           "体育": "442",
           "动漫": "444"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1670,6 +1840,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -1728,7 +1900,9 @@
           "动漫": "405",
           "综艺": "420",
           "电子书": "413"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1743,6 +1917,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401",
@@ -1831,7 +2007,9 @@
           "体育": "407",
           "其他": "409",
           "短剧": "416"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1846,6 +2024,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "409",
@@ -1928,7 +2108,9 @@
           "剧集": "402",
           "电影": "401",
           "Blu-Ray原盘": "424"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -1943,6 +2125,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -2024,7 +2208,9 @@
           "体育": "407",
           "游戏": "410",
           "其他": "411"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2039,6 +2225,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -2104,7 +2292,9 @@
           "音轨": "406",
           "剧集": "402",
           "音乐": "408"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2119,6 +2309,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -2172,7 +2364,9 @@
           "动漫": "405",
           "短剧": "412",
           "cat": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2187,6 +2381,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -2243,7 +2439,9 @@
           "纪录片": "413",
           "综艺": "416",
           "Music Video": "415"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2258,6 +2456,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "book": [
             "4103",
@@ -2284,7 +2484,9 @@
         "catLabels": {
           "有声书": "4103",
           "电子书": "4108"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2299,6 +2501,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -2313,7 +2517,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2328,6 +2534,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "405",
@@ -2401,7 +2609,9 @@
           "动漫": "423",
           "游戏": "428",
           "音乐": "429"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2416,6 +2626,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "anime": [
             "405"
@@ -2485,7 +2697,9 @@
           "剧集": "402",
           "动漫": "404",
           "其他": "414"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2500,6 +2714,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -2514,7 +2730,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2529,6 +2747,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "410",
@@ -2598,7 +2818,9 @@
           "视频音声": "422",
           "去码同人AV": "438",
           "去码男娘": "439"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2613,6 +2835,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -2713,7 +2937,9 @@
           "纪录片": "404",
           "动漫": "405",
           "舞台演出": "421"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2728,6 +2954,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "404",
@@ -2763,7 +2991,9 @@
           "欧美": "405",
           "南亚": "413",
           "中东": "412"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2778,6 +3008,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -2881,7 +3113,9 @@
           "电子书": "411",
           "软件": "412",
           "学习": "413"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2896,6 +3130,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -2924,7 +3160,9 @@
           "游戏": "4",
           "音乐": "9",
           "动漫": "8"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2939,6 +3177,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -2953,7 +3193,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -2968,6 +3210,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -3052,7 +3296,9 @@
           "其它": "411",
           "纪录片": "406",
           "其他": "411"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3067,6 +3313,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3081,7 +3329,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3096,6 +3346,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -3169,7 +3421,9 @@
           "游戏": "425",
           "软件": "428",
           "其他": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3184,6 +3438,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3198,7 +3454,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3213,6 +3471,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3227,7 +3487,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3242,6 +3504,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401",
@@ -3301,7 +3565,9 @@
           "Sports": "415",
           "Music-Video": "414",
           "Music": "416"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3316,6 +3582,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3356,7 +3624,9 @@
           "游戏": "411",
           "软件": "412",
           "短剧": "415"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3371,6 +3641,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3385,7 +3657,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3400,6 +3674,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -3467,7 +3743,9 @@
           "音乐": "406",
           "其他": "409",
           "纪录片": "404"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3482,6 +3760,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "413",
@@ -3575,7 +3855,18 @@
           "压制": "401",
           "游戏": "409",
           "舞台演出": "418"
-        }
+        },
+        "tagMap": {
+          "国语": "guoyu",
+          "国配": "guoyu",
+          "粤语": "yueyu",
+          "中字": "zhongzi",
+          "简繁": "zhongzi",
+          "英字": "ensub",
+          "DIY": "diy",
+          "DIY原盘": "diy"
+        },
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3590,6 +3881,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "book": [
             "412",
@@ -3675,7 +3968,9 @@
           "体育": "407",
           "其他": "409",
           "电子书": "410"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3690,6 +3985,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -3780,7 +4077,9 @@
           "电影": "401",
           "剧集": "402",
           "音乐": "408"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3795,6 +4094,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3809,7 +4110,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3824,6 +4127,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -3838,7 +4143,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3853,6 +4160,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "sport": [
             "432"
@@ -3909,7 +4218,9 @@
           "华语电影": "401",
           "欧美电影": "402",
           "学习": "435"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3924,6 +4235,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "409",
@@ -3981,7 +4294,9 @@
           "电影": "401",
           "教学": "407",
           "电子书": "499"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -3996,6 +4311,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "501"
@@ -4060,7 +4377,9 @@
           "其他": "509",
           "剧集": "502",
           "纪录片": "503"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4075,6 +4394,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4089,7 +4410,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4104,6 +4427,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "622"
@@ -4177,7 +4502,9 @@
           "电子书": "629",
           "其他": "631",
           "动漫": "632"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4192,6 +4519,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -4275,7 +4604,9 @@
           "纪录片": "411",
           "移动视频": "412",
           "其他": "410"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4290,6 +4621,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "438"
@@ -4383,7 +4716,9 @@
           "游戏": "447",
           "软件": "448",
           "其他": "450"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4398,6 +4733,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4434,7 +4771,9 @@
           "音乐": "59",
           "综艺": "60",
           "纪录片": "62"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4449,6 +4788,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4467,7 +4808,9 @@
         },
         "catLabels": {
           "其他": "414"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4482,6 +4825,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "9",
@@ -4553,7 +4898,9 @@
           "动漫": "21",
           "音乐": "30",
           "其他": "40"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4568,6 +4915,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -4638,7 +4987,9 @@
           "短剧": "412",
           "其他": "408",
           "电子书": "415"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4653,6 +5004,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -4704,7 +5057,9 @@
           "Documentaries": "404",
           "Music Video": "416",
           "Others": "417"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4719,6 +5074,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4733,7 +5090,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4748,6 +5107,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "947",
@@ -4860,7 +5221,9 @@
           "经济与金融": "707",
           "西方经济学": "911",
           "政治学理论": "924"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4875,6 +5238,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4889,7 +5254,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4904,6 +5271,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4918,7 +5287,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4933,6 +5304,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4947,7 +5320,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4962,6 +5337,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -4976,7 +5353,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -4991,6 +5370,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5005,7 +5386,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5020,6 +5403,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5034,7 +5419,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5049,6 +5436,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5063,7 +5452,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5078,6 +5469,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5092,7 +5485,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5107,6 +5502,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -5181,7 +5578,9 @@
           "音乐": "406",
           "体育": "407",
           "其他": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5196,6 +5595,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -5265,7 +5666,9 @@
           "音乐": "406",
           "短剧": "412",
           "其他": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5280,6 +5683,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -5369,7 +5774,9 @@
           "动漫": "413",
           "游戏": "414",
           "综艺": "403"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5384,6 +5791,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -5442,7 +5851,9 @@
           "Sports": "407",
           "HQ Audio": "408",
           "Misc": "409"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5457,6 +5868,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -5524,7 +5937,9 @@
           "成人": "408",
           "剧集": "402",
           "其他": "403"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5539,6 +5954,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "anime": [
             "405"
@@ -5584,7 +6001,9 @@
           "纪录片": "404",
           "剧集": "402",
           "动漫": "405"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5599,6 +6018,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5613,7 +6034,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5628,6 +6051,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5642,7 +6067,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5657,6 +6084,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5687,7 +6116,9 @@
           "舞台演出": "4",
           "图片": "7",
           "音乐": "8"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5702,6 +6133,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5716,7 +6149,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5731,6 +6166,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "other": [
             "1"
@@ -5773,7 +6210,9 @@
           "软件": "21",
           "电子书": "26",
           "音乐": "28"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5788,6 +6227,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5802,7 +6243,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5817,6 +6260,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "anime": [
             "1"
@@ -5841,7 +6286,9 @@
         },
         "catLabels": {
           "Anime": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5856,6 +6303,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5870,7 +6319,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5885,6 +6336,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5899,7 +6352,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5914,6 +6369,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "1"
@@ -5938,7 +6395,9 @@
         },
         "catLabels": {
           "Feature Film": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5953,6 +6412,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5967,7 +6428,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -5982,6 +6445,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -5996,7 +6461,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6011,6 +6478,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6025,7 +6494,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6040,6 +6511,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6054,7 +6527,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6069,6 +6544,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6083,7 +6560,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6098,6 +6577,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6112,7 +6593,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6127,6 +6610,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "0",
@@ -6338,7 +6823,9 @@
           "学习": "97",
           "电影": "132",
           "软件": "150"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6353,6 +6840,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6381,7 +6870,9 @@
           "电影": "5",
           "其他": "6",
           "电子书": "7"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6396,6 +6887,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "27",
@@ -6488,7 +6981,9 @@
           "Sorozat/SD/hun": "15",
           "Zene/Eng": "20",
           "Zene/Hun": "19"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6503,6 +6998,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6525,7 +7022,9 @@
           "其他": "1",
           "电影": "1",
           "剧集": "2"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6540,6 +7039,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6554,7 +7055,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6569,6 +7072,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6583,7 +7088,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6598,6 +7105,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "23",
@@ -6709,7 +7218,9 @@
           "其他": "7",
           "电子书": "28",
           "成人": "30"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6724,6 +7235,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6738,7 +7251,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6753,6 +7268,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6767,7 +7284,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6782,6 +7301,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6796,7 +7317,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6811,6 +7334,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6825,7 +7350,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6840,6 +7367,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -6854,7 +7383,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6870,6 +7401,8 @@
           "filter_cat[1]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "tv": [
             "1"
@@ -6892,7 +7425,9 @@
         },
         "catLabels": {
           "Episode": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6907,6 +7442,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "software": [
             "1"
@@ -6941,7 +7478,9 @@
           "游戏": "3",
           "音乐": "5",
           "学习": "6"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -6956,6 +7495,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "01",
@@ -7007,7 +7548,9 @@
           "Video Clips": "08",
           "Musica Arg.": "09",
           "Musica Int.": "0"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7022,6 +7565,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "113",
@@ -7343,7 +7888,9 @@
           "原盘": "114",
           "Remux": "118",
           "电子书": "175"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7358,6 +7905,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7372,7 +7921,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7387,6 +7938,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7401,7 +7954,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7416,6 +7971,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7430,7 +7987,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7445,6 +8004,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "1",
@@ -7537,7 +8098,9 @@
           "剧集": "18",
           "电子书": "19",
           "预告": "22"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7552,6 +8115,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7566,7 +8131,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7581,6 +8148,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7613,7 +8182,9 @@
           "舞台演出": "1",
           "纪录片": "4",
           "原盘": "12"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7628,6 +8199,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7642,7 +8215,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7657,6 +8232,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7671,7 +8248,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7686,6 +8265,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7700,7 +8281,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7715,6 +8298,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7729,7 +8314,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7744,6 +8331,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7758,7 +8347,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7773,6 +8364,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7787,7 +8380,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7803,6 +8398,8 @@
           "cat": "{cats}",
           "cats[]": "{cats}"
         },
+        "catMode": "bracket",
+        "catSlot": "1",
         "cats": {
           "other": [
             "77",
@@ -7905,7 +8502,9 @@
           "Sports/Fitness": "56",
           "Travel": "90",
           "Tutorials": "61"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7920,6 +8519,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "music": [
             "1"
@@ -7944,7 +8545,9 @@
         },
         "catLabels": {
           "Music": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7959,6 +8562,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -7973,7 +8578,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -7988,6 +8595,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8002,7 +8611,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8017,6 +8628,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8031,7 +8644,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8047,6 +8662,8 @@
           "filter_cat[1]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "adult": [
             "1"
@@ -8085,7 +8702,9 @@
           "压制": "22",
           "动漫": "53",
           "音乐": "55"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8100,6 +8719,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8114,7 +8735,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8129,6 +8752,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8143,7 +8768,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8158,6 +8785,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "music": [
             "6",
@@ -8311,7 +8940,9 @@
           "动漫": "28",
           "体育": "39",
           "电子书": "8"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8326,6 +8957,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "1",
@@ -8478,7 +9111,9 @@
           "West Coast": "15",
           "World Music": "16",
           "Zydeco": "56"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8493,6 +9128,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8507,7 +9144,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8522,6 +9161,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8536,7 +9177,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8551,6 +9194,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8565,7 +9210,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8580,6 +9227,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "anime": [
             "24",
@@ -8712,7 +9361,9 @@
           "剧集": "21",
           "动漫": "24",
           "电子书": "29"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8727,6 +9378,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8741,7 +9394,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8756,6 +9411,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8770,7 +9427,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8786,6 +9445,8 @@
           "cat": "{cats}",
           "scat[]": "{cats}"
         },
+        "catMode": "bracket",
+        "catSlot": "1",
         "cats": {
           "anime": [
             "44"
@@ -8850,7 +9511,9 @@
           "Tutorials": "49",
           "TV": "7",
           "(all types)": "0"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8865,6 +9528,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -8879,7 +9544,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -8894,6 +9561,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "69",
@@ -9031,7 +9700,9 @@
           "Voyeur": "51",
           "Wrestling and Sports": "65",
           "Youngblood": "28"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9046,6 +9717,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9060,7 +9733,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9075,6 +9750,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9089,7 +9766,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9104,6 +9783,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9118,7 +9799,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9133,6 +9816,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9147,7 +9832,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9162,6 +9849,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9176,7 +9865,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9191,6 +9882,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9205,7 +9898,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9220,6 +9915,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9234,7 +9931,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9249,6 +9948,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9263,7 +9964,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9278,6 +9981,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9292,7 +9997,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9307,6 +10014,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9321,7 +10030,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9336,6 +10047,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9350,7 +10063,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9365,6 +10080,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9403,7 +10120,9 @@
           "软件": "37",
           "Remux": "40",
           "原盘": "40"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9418,6 +10137,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9432,7 +10153,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9447,6 +10170,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9461,7 +10186,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9476,6 +10203,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "anime": [
             "85",
@@ -9659,7 +10388,9 @@
           "电子书": "52",
           "其他": "56",
           "学习": "79"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9674,6 +10405,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9688,7 +10421,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9704,6 +10439,8 @@
           "cat": "{cats}",
           "category": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "0",
@@ -9897,7 +10634,9 @@
           "音乐": "42",
           "动漫": "56",
           "电影": "95"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9912,6 +10651,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9926,7 +10667,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9941,6 +10684,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9955,7 +10700,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9970,6 +10717,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -9984,7 +10733,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -9999,6 +10750,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "music": [
             "1"
@@ -10032,7 +10785,9 @@
           "(all types)": "0",
           "DVD images": "4",
           "Videos": "3"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10047,6 +10802,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10061,7 +10818,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10077,6 +10836,8 @@
           "categories[0]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10091,7 +10852,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10106,6 +10869,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10120,7 +10885,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10135,6 +10902,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10149,7 +10918,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10164,6 +10935,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10178,7 +10951,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10193,6 +10968,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10207,7 +10984,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10222,6 +11001,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "79",
@@ -10298,7 +11079,9 @@
           "All Anime All Anime": "88",
           "Wallpapers Wallpapers": "91",
           "All Categories": "0"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10314,6 +11097,8 @@
           "filter_cat[1]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "adult": [
             "1"
@@ -10338,7 +11123,9 @@
         },
         "catLabels": {
           "Amateur": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10353,6 +11140,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10367,7 +11156,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10382,6 +11173,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10396,7 +11189,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10411,6 +11206,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10425,7 +11222,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10440,6 +11239,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10454,7 +11255,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10469,6 +11272,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10483,7 +11288,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10498,6 +11305,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10512,7 +11321,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10527,6 +11338,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "music": [
             "1"
@@ -10551,7 +11364,9 @@
         },
         "catLabels": {
           "Music": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10567,6 +11382,8 @@
           "cat": "{cats}",
           "subcat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "0",
@@ -10647,7 +11464,9 @@
           "Vinyl": "31",
           "Vinyl/HD": "35",
           "电影": "50"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10662,6 +11481,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10676,7 +11497,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10691,6 +11514,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10705,7 +11530,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10720,6 +11547,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10734,7 +11563,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10750,6 +11581,8 @@
           "filter_cat[1]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "1"
@@ -10782,7 +11615,9 @@
           "音乐": "156",
           "游戏": "2",
           "动漫": "3"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10797,6 +11632,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10811,7 +11648,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10826,6 +11665,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10840,7 +11681,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10855,6 +11698,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10869,7 +11714,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10884,6 +11731,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10898,7 +11747,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10913,6 +11764,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10927,7 +11780,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10942,6 +11797,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10956,7 +11813,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -10971,6 +11830,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -10985,7 +11846,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11000,6 +11863,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11014,7 +11879,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11029,6 +11896,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11043,7 +11912,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11058,6 +11929,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11072,7 +11945,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11087,6 +11962,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11101,7 +11978,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11116,6 +11995,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11130,7 +12011,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11145,6 +12028,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11159,7 +12044,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11175,6 +12062,8 @@
           "filter_cat[1]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "tv": [
             "1"
@@ -11197,7 +12086,9 @@
         },
         "catLabels": {
           "Episode": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11212,6 +12103,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "0",
@@ -11274,7 +12167,9 @@
           "软件": "404",
           "图片": "405",
           "电子书": "406"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11289,6 +12184,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11303,7 +12200,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11318,6 +12217,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11332,7 +12233,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11347,6 +12250,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11361,7 +12266,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11376,6 +12283,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11390,7 +12299,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11405,6 +12316,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11419,7 +12332,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11434,6 +12349,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11464,7 +12381,9 @@
           "软件": "1",
           "电子书": "2",
           "动漫": "6"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11479,6 +12398,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11493,7 +12414,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11508,6 +12431,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11522,7 +12447,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11537,6 +12464,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11551,7 +12480,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11566,6 +12497,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "1"
@@ -11590,7 +12523,9 @@
         },
         "catLabels": {
           "Feature Film": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11605,6 +12540,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11619,7 +12556,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11635,6 +12574,8 @@
           "filter_cat[1]": "{cats}",
           "search": "{q}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "1"
@@ -11659,7 +12600,9 @@
         },
         "catLabels": {
           "3DS": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11674,6 +12617,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11688,7 +12633,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11703,6 +12650,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11717,7 +12666,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11732,6 +12683,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11746,7 +12699,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11761,6 +12716,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11775,7 +12732,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11790,6 +12749,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11804,7 +12765,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11819,6 +12782,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11833,7 +12798,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11848,6 +12815,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "100",
@@ -11928,7 +12897,9 @@
           "成人": "82",
           "动漫": "89",
           "体育": "0"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11943,6 +12914,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -11957,7 +12930,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -11972,6 +12947,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "music": [
             "1"
@@ -12008,7 +12985,9 @@
           "电子书": "2",
           "动漫": "6",
           "软件": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12023,6 +13002,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12037,7 +13018,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12052,6 +13035,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12066,7 +13051,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12081,6 +13068,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12095,7 +13084,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12110,6 +13101,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12124,7 +13117,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12139,6 +13134,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12153,7 +13150,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12168,6 +13167,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12182,7 +13183,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12197,6 +13200,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12211,7 +13216,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12226,6 +13233,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12240,7 +13249,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12255,6 +13266,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12269,7 +13282,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12284,6 +13299,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "adult": [
             "24"
@@ -12380,7 +13397,9 @@
           "Sport": "22",
           "Video 3D": "36",
           "Video Clip": "23"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12395,6 +13414,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12409,7 +13430,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12424,6 +13447,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12438,7 +13463,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12453,6 +13480,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12467,7 +13496,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12482,6 +13513,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12496,7 +13529,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12511,6 +13546,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12525,7 +13562,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12540,6 +13579,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12554,7 +13595,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12569,6 +13612,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12595,7 +13640,9 @@
           "游戏": "19",
           "纪录片": "31",
           "音乐": "36"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12610,6 +13657,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12624,7 +13673,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12639,6 +13690,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12653,7 +13706,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12668,6 +13723,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12682,7 +13739,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12697,6 +13756,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12711,7 +13772,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12726,6 +13789,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12740,7 +13805,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12755,6 +13822,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12769,7 +13838,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12784,6 +13855,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12798,7 +13871,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12813,6 +13888,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12827,7 +13904,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12842,6 +13921,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12856,7 +13937,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12871,6 +13954,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12885,7 +13970,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12900,6 +13987,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12914,7 +14003,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12929,6 +14020,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12943,7 +14036,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12958,6 +14053,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -12972,7 +14069,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -12987,6 +14086,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13001,7 +14102,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13016,6 +14119,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13030,7 +14135,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13045,6 +14152,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13059,7 +14168,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13074,6 +14185,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13088,7 +14201,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13103,6 +14218,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13117,7 +14234,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13132,6 +14251,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13146,7 +14267,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13161,6 +14284,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13175,7 +14300,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13190,6 +14317,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13204,7 +14333,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13219,6 +14350,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13233,7 +14366,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13248,6 +14383,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13262,7 +14399,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13277,6 +14416,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "1"
@@ -13301,7 +14442,9 @@
         },
         "catLabels": {
           "Film": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13316,6 +14459,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13330,7 +14475,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13345,6 +14492,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13359,7 +14508,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13374,6 +14525,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13388,7 +14541,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13403,6 +14558,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13417,7 +14574,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13432,6 +14591,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13446,7 +14607,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13461,6 +14624,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "movie": [
             "401"
@@ -13517,7 +14682,9 @@
           "电影": "401",
           "体育": "407",
           "软件": "410"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13532,6 +14699,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "14",
@@ -13570,7 +14739,9 @@
           "more deep house": "8",
           "more tribal": "1",
           "more chillout": "3"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13585,6 +14756,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13599,7 +14772,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13614,6 +14789,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {
           "other": [
             "1"
@@ -13638,7 +14815,9 @@
         },
         "catLabels": {
           "Action": "1"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13653,6 +14832,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13667,7 +14848,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13682,6 +14865,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13696,7 +14881,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13711,6 +14898,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13725,7 +14914,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13740,6 +14931,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13754,7 +14947,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13769,6 +14964,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13783,7 +14980,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13798,6 +14997,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13812,7 +15013,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13827,6 +15030,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13841,7 +15046,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13856,6 +15063,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13870,7 +15079,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13885,6 +15096,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13899,7 +15112,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13914,6 +15129,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13928,7 +15145,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13943,6 +15162,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13957,7 +15178,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -13972,6 +15195,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -13986,7 +15211,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14001,6 +15228,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14015,7 +15244,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14030,6 +15261,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14044,7 +15277,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14059,6 +15294,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14073,7 +15310,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14088,6 +15327,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14102,7 +15343,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14117,6 +15360,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14131,7 +15376,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14146,6 +15393,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14160,7 +15409,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14175,6 +15426,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14189,7 +15442,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14204,6 +15459,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14218,7 +15475,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14233,6 +15492,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14247,7 +15508,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14262,6 +15525,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14276,7 +15541,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14291,6 +15558,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14305,7 +15574,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14320,6 +15591,8 @@
           "searchstr": "{q}",
           "filter_cat[1]": "{cats}"
         },
+        "catMode": "multi",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14334,7 +15607,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14349,6 +15624,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14363,7 +15640,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14378,6 +15657,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14392,7 +15673,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14407,6 +15690,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14421,7 +15706,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14436,6 +15723,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14450,7 +15739,9 @@
           "path": ""
         },
         "catMap": {},
-        "catLabels": {}
+        "catLabels": {},
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14465,6 +15756,8 @@
           "search": "{q}",
           "cat": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {
           "other": [
             "15",
@@ -14539,7 +15832,9 @@
           "短剧": "6",
           "成人": "8",
           "音乐": "14"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14554,6 +15849,8 @@
           "name": "{q}",
           "categories[0]": "{cats}"
         },
+        "catMode": "single",
+        "catSlot": "1",
         "cats": {},
         "types": []
       },
@@ -14578,7 +15875,9 @@
           "剧集": "2",
           "电子书": "3",
           "音乐": "4"
-        }
+        },
+        "tagMap": {},
+        "tagValue": "yes"
       },
       "localEdited": false
     },
@@ -14590,15 +15889,45 @@
       "search": {
         "path": "/torrents.php",
         "params": {},
+        "catMode": "single",
+        "catSlot": "",
         "cats": {},
         "types": []
       },
       "publish": {
         "upload": {
-          "path": "",
-          "formPath": "",
-          "fileField": "",
-          "fields": {}
+          "path": "/takeupload.php",
+          "formPath": "/upload.php",
+          "fileField": "file",
+          "fields": {
+            "referid": "",
+            "file": "",
+            "name": "{title}",
+            "small_descr": "{subtitle}",
+            "url": "",
+            "douban": "",
+            "jinzhuan": "",
+            "guanfang": "",
+            "guoyu": "",
+            "yueyu": "",
+            "zhongzi": "",
+            "ensub": "",
+            "yingqiu": "",
+            "diy": "",
+            "pr": "",
+            "bim": "",
+            "mp": "",
+            "uplver": "",
+            "offer": "",
+            "has_allowed_offer": "",
+            "descr": "{description}",
+            "color": "",
+            "font": "",
+            "size": "",
+            "type": "{catId}",
+            "source_sel": "{source}",
+            "team_sel": "{team}"
+          }
         },
         "verify": {
           "path": "/torrents.php?search={title}"
@@ -14642,7 +15971,18 @@
           "其它": "412",
           "短剧": "419",
           "舞台演出": "418"
-        }
+        },
+        "tagMap": {
+          "国语": "guoyu",
+          "国配": "guoyu",
+          "粤语": "yueyu",
+          "中字": "zhongzi",
+          "简繁": "zhongzi",
+          "英字": "ensub",
+          "DIY": "diy",
+          "DIY原盘": "diy"
+        },
+        "tagValue": "yes"
       },
       "localEdited": false
     }

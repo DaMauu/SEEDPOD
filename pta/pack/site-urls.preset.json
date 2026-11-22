@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-22T05:18:51.192Z",
+  "generatedAt": "2026-11-22T07:02:04.148Z",
   "sites": {
     "52pt.site": {
       "base": "b64:aHR0cHM6Ly81MnB0LnNpdGU=",
@@ -34,7 +34,7 @@
     },
     "carpt.net": {
       "base": "b64:aHR0cHM6Ly9jYXJwdC5uZXQ=",
-      "upload": "b64:",
+      "upload": "b64:L3Rha2V1cGxvYWQucGhw",
       "verify": "b64:"
     },
     "pt.cdfile.org": {
@@ -44,17 +44,17 @@
     },
     "ptchdbits.co": {
       "base": "b64:aHR0cHM6Ly9wdGNoZGJpdHMuY28=",
-      "upload": "b64:",
+      "upload": "b64:L3Rha2V1cGxvYWQucGhw",
       "verify": "b64:"
     },
     "crabpt.vip": {
       "base": "b64:aHR0cHM6Ly9jcmFicHQudmlw",
-      "upload": "b64:",
+      "upload": "b64:L3Rha2V1cGxvYWQucGhw",
       "verify": "b64:"
     },
     "cyanbug.net": {
       "base": "b64:aHR0cHM6Ly9jeWFuYnVnLm5ldA==",
-      "upload": "b64:",
+      "upload": "b64:L3Rha2V1cGxvYWQucGhw",
       "verify": "b64:"
     },
     "darkland.top": {
@@ -1529,7 +1529,7 @@
     },
     "test.pterclub.net": {
       "base": "b64:aHR0cHM6Ly90ZXN0LnB0ZXJjbHViLm5ldA==",
-      "upload": "b64:",
+      "upload": "b64:L3Rha2V1cGxvYWQucGhw",
       "verify": "b64:L3RvcnJlbnRzLnBocD9zZWFyY2g9e3RpdGxlfQ=="
     }
   }

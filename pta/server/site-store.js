@@ -58,14 +58,19 @@ function makeSiteStore(dataDir, opts) {
     const raw = readJson(path.join(DIR, 'site-search.local.json'), {});
     return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw || {});
   }
+  function readLegacyPack() {
+    const raw = readJson(path.join(DIR, 'site-pack.json'), {});
+    return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : {};
+  }
   function readLegacyMaps() {
     const raw = readJson(path.join(DIR, 'site-maps.json'), {});
     return raw && raw.sites && typeof raw.sites === 'object' ? raw.sites : (raw || {});
   }
   function legacyPublish(def, mp) {
-    const up = def.upload || {};
+    const up = def.uploadMap || def.upload || {};
     const publish = { upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: up.fields && typeof up.fields === 'object' ? up.fields : {} },
-      verify: { path: String((def.verify && def.verify.path) || '') }, catMap: {}, catLabels: {} };
+      verify: { path: String((def.verify && def.verify.path) || '') }, catMap: {}, catLabels: {},
+      tagMap: def.tagMap && typeof def.tagMap === 'object' ? def.tagMap : {}, tagValue: String(def.tagValue || 'yes') };
     const raw = def.catMap;
     if (Array.isArray(raw)) raw.forEach(function (x) { if (x && x.id != null) { if (x.purpose) publish.catMap[String(x.purpose)] = String(x.id); if (x.label) publish.catLabels[String(x.label)] = String(x.id); } });
     else if (raw && typeof raw === 'object') Object.keys(raw).forEach(function (k) { if (raw[k] != null) { publish.catMap[String(k)] = String(raw[k]); publish.catLabels[String(k)] = String(raw[k]); } });
@@ -87,15 +92,19 @@ function makeSiteStore(dataDir, opts) {
         hidden = Array.isArray(meta.hidden) ? meta.hidden.map(cleanHost) : [];
       } catch (e) { hidden = []; }
       const defs = readLegacyDefs();
+      const pack = readLegacyPack();
       const search = readLegacySearch();
       const maps = readLegacyMaps();
       const sites = { version: VERSION, sites: {} };
       const urls = { version: VERSION, sites: {} };
-      rows.forEach(function (r) {
-        const host = cleanHost(r.host);
+      const rowMap = {};
+      rows.forEach(function (r) { rowMap[cleanHost(r.host)] = r; });
+      const hosts = Array.from(new Set(Object.keys(rowMap).concat(Object.keys(defs), Object.keys(pack), Object.keys(search), Object.keys(maps))));
+      hosts.forEach(function (host) {
+        const r = rowMap[host] || { host: host, data: '{}' };
         if (!host) return;
         let d = {}; try { d = JSON.parse(r.data) || {}; } catch (e) { d = {}; }
-        const def = defs[host] || {};
+        const def = Object.assign({}, defs[host] || {}, pack[host] || {});
         const se = search[host] || {};
         const mp = maps[host] || {};
         const base = String(def.base || d.url || '').replace(/\/+$/, '');
@@ -104,7 +113,7 @@ function makeSiteStore(dataDir, opts) {
         sites.sites[host] = {
           name: String(d.title || def.title || host), nameZh: String(d.titleZh || d.cn || ''),
           engine: String(def.engine || d.engine || '?'), urlRef: 'site-urls.json#' + host,
-          search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, cats: cats, types: Array.isArray(se.types) ? se.types : [] },
+          search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, types: Array.isArray(se.types) ? se.types : [] },
           publish: publish, localEdited: false,
           settings: normalizeSettings(Object.assign({}, d, { hidden: hidden.indexOf(host) >= 0 }))
         };
@@ -238,7 +247,7 @@ function makeSiteStore(dataDir, opts) {
     });
     return {
       host: s.host, engine: s.engine, base: s.url.base,
-      searchPath: s.search.path, params: s.search.params || {},
+      searchPath: s.search.path, params: s.search.params || {}, catMode: s.search.catMode || 'single', catSlot: s.search.catSlot || '',
       cats: s.search.cats || {}, catList: catList, types: s.search.types || [],
       upload: s.publish.upload || {}, verify: s.publish.verify || {},
       catMap: s.publish.catMap || {}, catLabels: s.publish.catLabels || {},
@@ -251,9 +260,11 @@ function makeSiteStore(dataDir, opts) {
     return {
       host: s.host, engine: s.engine, base: s.url.base,
       upload: { path: s.publish.upload.path, formPath: s.publish.upload.formPath, fileField: s.publish.upload.fileField, fields: s.publish.upload.fields },
+      tagMap: s.publish.tagMap || {}, tagValue: s.publish.tagValue || 'yes',
       verify: { path: s.publish.verify.path },
       catMap: Object.assign({}, s.publish.catMap || {}, s.publish.catLabels || {}),
-      catLabels: s.publish.catLabels || {}
+      catLabels: s.publish.catLabels || {},
+      tagMap: s.publish.tagMap || {}, tagValue: s.publish.tagValue || 'yes'
     };
   }
   return {

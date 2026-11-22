@@ -51,13 +51,15 @@ function hiddenOf(db) {
   } catch (e) { return []; }
 }
 function publishOf(def, mp) {
-  const up = def.upload || {};
+  const up = def.uploadMap || def.upload || {};
   const fields = up.fields && typeof up.fields === 'object' ? up.fields : {};
   const publish = {
     upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: fields },
     verify: { path: String((def.verify && def.verify.path) || '') },
     catMap: {},
-    catLabels: {}
+    catLabels: {},
+    tagMap: def.tagMap && typeof def.tagMap === 'object' ? def.tagMap : {},
+    tagValue: String(def.tagValue || 'yes')
   };
   const raw = def.catMap;
   if (Array.isArray(raw)) {
@@ -118,6 +120,8 @@ function main() {
       search: {
         path: String(def.searchPath || '/torrents.php'),
         params: def.params && typeof def.params === 'object' ? def.params : {},
+        catMode: String(def.catMode || 'single'),
+        catSlot: String(def.catSlot || ''),
         cats: cats,
         types: Array.isArray(se.types) ? se.types : []
       },
@@ -150,11 +154,13 @@ function main() {
       const se = search[h] || {};
       const base = String(def.base || dbd.url || '').replace(/\/+$/, '');
       if (decode(urls[h] && urls[h].base) !== base) bad.push({ host: h, field: 'base' });
-      if (urls[h] && decode(urls[h].upload) !== String((def.upload && def.upload.path) || '')) bad.push({ host: h, field: 'upload' });
+      if (urls[h] && decode(urls[h].upload) !== String(((def.uploadMap || def.upload || {}).path) || '')) bad.push({ host: h, field: 'upload' });
       if (urls[h] && decode(urls[h].verify) !== String((def.verify && def.verify.path) || '')) bad.push({ host: h, field: 'verify' });
       const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
       if (norm(rec.search.cats) !== norm(cats)) bad.push({ host: h, field: 'search.cats' });
       if (norm(rec.search.types) !== norm(Array.isArray(se.types) ? se.types : [])) bad.push({ host: h, field: 'search.types' });
+      if (rec.search.catMode !== String(def.catMode || 'single')) bad.push({ host: h, field: 'search.catMode' });
+      if (rec.search.catSlot !== String(def.catSlot || '')) bad.push({ host: h, field: 'search.catSlot' });
       if (RUNTIME) {
         const wantEnabled = DISABLE_ALL ? false : dbd.enabled !== false;
         if (rec.settings.enabled !== wantEnabled) bad.push({ host: h, field: 'settings.enabled' });
