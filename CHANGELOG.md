@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.646 · 2026-11-23
+
+### site-store 运行时读写
+- 新增 `pta/server/site-store.js`：运行时只读 `data/sites.json` + `data/site-urls.json`；首次从 `pta/pack/*.preset.json` 复制。
+- 写入原子写 + SQLite `sites` 锁 + `.bak`；支持 get/list/add/save/remove/setHidden，网址 Base64 解码。
+- 新增 site-store 夹具 5/5：首次复制、网址解码、保存/备份、隐藏/删除、锁冲突、非法 host。
+- 运行时读取切换仍待下一步；旧文件未删。
+- 全量 run.sh 通过。
+
 ## v0.7.645 · 2026-11-23
 
 ### 站点 JSON 迁移校验
