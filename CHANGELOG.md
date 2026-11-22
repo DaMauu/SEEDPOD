@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.639 · 2026-11-22
+
+### 审计一百零八轮 · release 事务与状态同步
+- release 的 prepare/preview/advance 改为同一事务内读改写，避免并发覆盖 stage/evidence。
+- 队列单条改状态、删除条目时，队列写与 catalog-sync 放在同一事务；任一步失败一起回滚。
+- 新增 release-sync 夹具 4/4：阶段顺序、failed 等待、catalog 状态映射、队列+词条事务回滚。
+- 全量 run.sh 通过。
+
 ## v0.7.638 · 2026-11-22
 
 ### 审计一百零七轮 · 图源与简介外联

@@ -7,6 +7,7 @@ const flowConfig = require('./flow-config');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
 const stage = require('./stage');
+const { tx } = require('./db');
 
 function makeRelease(ctx) {
   const { db, one, all, jparse, DATA_DIR } = ctx;
@@ -129,7 +130,7 @@ function makeRelease(ctx) {
       shots: Array.isArray(item.shots) ? item.shots.length : 0
     };
   }
-  function prepare(id, body) {
+  function prepareInner(id, body) {
     body = body || {};
     const cur = load(id);
     if (!cur) return fail('NOT_FOUND', '条目不存在', 404);
@@ -170,12 +171,12 @@ function makeRelease(ctx) {
     save(cur);
     return { ok: true, data: { id: id, stage: 'prepared', prepared: prepared } };
   }
-  function preview(id) {
+  function previewInner(id) {
     const cur = load(id);
     if (!cur) return fail('NOT_FOUND', '条目不存在', 404);
     const it = cur.data;
     if (!it.prepared) {
-      const p = prepare(id, {});
+      const p = prepareInner(id, {});
       if (!p.ok) return p;
       it.prepared = p.data.prepared;
     }
@@ -192,7 +193,7 @@ function makeRelease(ctx) {
     };
     return { ok: true, data: { id: id, stage: 'previewed', prepared: it.prepared, payload: payload } };
   }
-  function advance(id, body) {
+  function advanceInner(id, body) {
     const cur = load(id);
     if (!cur) return fail('NOT_FOUND', '条目不存在', 404);
     const it = cur.data;
@@ -213,10 +214,10 @@ function makeRelease(ctx) {
       stage.set(it, 'draft', { countAttempt: false, evidence: { retryAt: now() } });
       it.stageAttempts = 0;
       save(cur);
-      return prepare(id, body);
+      return prepareInner(id, body);
     }
-    if (curStage === 'draft') return prepare(id, body);
-    if (curStage === 'prepared') return preview(id);
+    if (curStage === 'draft') return prepareInner(id, body);
+    if (curStage === 'prepared') return previewInner(id);
     if (curStage === 'previewed') {
       return { ok: true, data: { id: id, stage: curStage, next: 'target-upload / publish', note: '本地准备完成；提交和注入用 target-upload / publish，默认干跑' } };
     }
@@ -227,6 +228,16 @@ function makeRelease(ctx) {
       return { ok: true, data: { id: id, stage: curStage, next: '', note: '已完成' } };
     }
     return fail('BAD_STAGE', '未知阶段：' + curStage);
+  }
+  /* 读改写放在同一个事务里：prepare/preview/advance 不会互相覆盖 stage/evidence */
+  function prepare(id, body) {
+    return tx(db, function () { return prepareInner(id, body); });
+  }
+  function preview(id) {
+    return tx(db, function () { return previewInner(id); });
+  }
+  function advance(id, body) {
+    return tx(db, function () { return advanceInner(id, body); });
   }
   function run(body) {
     const b = body || {};

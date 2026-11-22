@@ -37,6 +37,7 @@ run category-policy category-policy.js
 run screen-type screen-type.js
 run prepare-guard prepare-guard.js
 run state-consistency state-consistency.js
+run release-sync release-sync.js
 run publish-id-capture publish-id-capture.js
 run marks marks.js
 run dupe-classify dupe-classify.js

@@ -227,9 +227,11 @@ const catalogSync = require('./catalog-sync');
     if (b.action === 'reject') it.rejectedAt = now();
     if (target === 'pending' || target === 'approved') { delete it.reason; delete it.rejectedAt; }
     if (b.reason) it.reason = String(b.reason).slice(0, 500);
-    db.prepare('UPDATE queue SET status = ?, title = ?, data = ?, updated_at = ? WHERE id = ?')
-      .run(target, it.title, JSON.stringify(it), now(), it.id);
-    catalogSync.apply(ctx, it, target, it.reason);
+    tx(db, function () {
+      db.prepare('UPDATE queue SET status = ?, title = ?, data = ?, updated_at = ? WHERE id = ?')
+        .run(target, it.title, JSON.stringify(it), now(), it.id);
+      catalogSync.apply(ctx, it, target, it.reason);
+    });
     return ok(reply, it);
   });
 
@@ -249,8 +251,10 @@ const catalogSync = require('./catalog-sync');
     if (submitted.length) {
       return bad(reply, 'TARGET_SUBMITTED', '目标站已提交/注入：' + submitted.join('、') + '；先去目标站和下载器处理再删', 409);
     }
-    db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id);
-    catalogSync.reset(ctx, it);
+    tx(db, function () {
+      db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id);
+      catalogSync.reset(ctx, it);
+    });
     /* 清掉该条目缓存的源种文件；已发布条目上面已拦，不动 published 文件 */
     let cleanedFiles = 0;
     const cleanupErrors = [];
