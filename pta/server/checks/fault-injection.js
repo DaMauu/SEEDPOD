@@ -4,7 +4,7 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const imagehost = require(path.join(ROOT, 'server', 'imagehost.js'));
-const { makeFailureQueue } = require(path.join(ROOT, 'server', 'failure-queue.js'));
+const { makeFailureQueue } = require(path.join(ROOT, 'server', 'src', 'features', 'logs', 'failure-queue.js'));
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
 const results = [];

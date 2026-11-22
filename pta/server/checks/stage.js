@@ -1,5 +1,5 @@
 /* 发布状态机单元检查：阶段、尝试次数、错误、重试时间、证据、幂等标记。 */
-const stage = require('../stage');
+const stage = require('../src/features/queue/stage');
 const results = [];
 function check(name, fn) {
   try { fn(); results.push([true, name, '']); }

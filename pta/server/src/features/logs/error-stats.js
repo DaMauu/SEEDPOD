@@ -1,6 +1,6 @@
 /* 失败统计：从 queue 的 stage/targetResults 和 scheduler.lastResult.errors 汇总。
    不写库；API 和 CLI 共用。 */
-const errors = require('./errors');
+const errors = require('../../shared/errors');
 
 function makeErrorStats(ctx) {
   const { all, one, jparse } = ctx;

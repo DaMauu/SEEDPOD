@@ -1,7 +1,7 @@
 /* held 条目在失败队列：不判死信、不受 30 天保留隐藏、分页正常。 */
 const { DatabaseSync } = require('node:sqlite');
-const { makeFailureQueue } = require('../failure-queue');
-const { applyStatus } = require('../queue-bulk');
+const { makeFailureQueue } = require('../src/features/logs/failure-queue');
+const { applyStatus } = require('../src/features/queue/bulk');
 
 const db = new DatabaseSync(':memory:');
 db.exec('CREATE TABLE queue(id TEXT PRIMARY KEY, status TEXT, title TEXT, data TEXT, updated_at TEXT)');

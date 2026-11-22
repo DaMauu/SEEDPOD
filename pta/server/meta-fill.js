@@ -2,7 +2,7 @@
    只改传入的 item 对象，落库由调用方负责。
    简介覆盖只替换“电影简介”那一段：源简介里的 hide/quote/code 技术块和截图原样保留。 */
 const metaExt = require('./meta-ext');
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 const collage = require('./collage');
 
 /* 源简介里要保留的技术块和截图：先摘 block，再从剩余文本里取图，避免技术块里的图被重复追加 */

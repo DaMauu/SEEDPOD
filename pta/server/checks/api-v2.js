@@ -176,7 +176,7 @@ async function main() {
     const j = await (await fetchA(BASE + '/api/config')).json();
     need(j.ok && j.data.sys && j.data.user && j.data.limits, '结构不完整');
     need(j.data.sys.audit === true, 'sys.audit 不为 true');
-    const schema = require('../config-schema');
+    const schema = require('../src/features/settings/config-schema');
     Object.keys(schema.DEFAULTS).forEach(function (k) {
       need(j.data.user[k] === schema.DEFAULTS[k], '默认值漂移：' + k + '=' + JSON.stringify(j.data.user[k]));
     });

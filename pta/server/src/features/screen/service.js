@@ -5,7 +5,7 @@ const meta = require('../../../meta');
 const { tx } = require('../../infra/db');
 const { typeOf, selectedTypesOf } = require('../crawl/category');
 const makePresets = require('../presets/store');
-const log = require('../../../log');
+const log = require('../../infra/log');
 
 function flowRules(sets, rx) {
   /* 只读 ② 初筛卡（fetch[1]），不跨区域借发布/查重卡的规则 */

@@ -1,5 +1,5 @@
 /* 队列批量发布：部分成功不回滚成功项，失败限量；已提交/已注入目标站不重复上传。 */
-const { runBulkPublish } = require('../queue-bulk-publish');
+const { runBulkPublish } = require('../src/features/queue/bulk-publish');
 
 const items = {
   q_ok: { id: 'q_ok', targets: ['a.example', 'b.example'], targetResults: { 'a.example': { stage: 'submitted' } } },

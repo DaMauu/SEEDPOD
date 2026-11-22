@@ -1,7 +1,7 @@
 /* 目标站服务公共段：源标题回填、权威种抓取、查重策略。 */
 const fs = require('fs');
 const path = require('path');
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 const { dupeDecision, dedupeSwitchOn } = require('./target-rules');
 
 function makeServiceCommon(deps) {

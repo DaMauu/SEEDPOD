@@ -2,7 +2,7 @@
    调度和 CLI 共用；不硬链接、不改文件结构。 */
 const fs = require('fs');
 const { makeQb } = require('./qb');
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 
 function makeCrossseed(ctx) {
   const { one, all, jparse } = ctx;

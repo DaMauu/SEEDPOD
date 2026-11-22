@@ -4,10 +4,10 @@
 const adapters = require('../../infra/adapters/index');
 const marksMod = require('../screen/marks');
 const urlGuard = require('../../../url-guard');
-const flowConfig = require('../../../flow-config');
+const flowConfig = require('../settings/flow-config');
 const { typeOf } = require('./category');
-const configSchema = require('../../../config-schema');
-const log = require('../../../log');
+const configSchema = require('../settings/config-schema');
+const log = require('../../infra/log');
 const { makeMetaFill } = require('../../../meta-fill');
 
 const BUSY = new Set();

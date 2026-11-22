@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { applyBulk } = require('../catalog-bulk');
+const { applyBulk } = require('../src/features/catalog/bulk');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-catbulk-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

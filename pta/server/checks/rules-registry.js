@@ -1,8 +1,8 @@
 /* 规则注册表：key/类型/默认值/读者齐全，旧 key 能读，服务端调用不飘。 */
 const fs = require('fs');
 const path = require('path');
-const registry = require('../rule-registry');
-const flowConfig = require('../flow-config');
+const registry = require('../src/features/settings/rule-registry');
+const flowConfig = require('../src/features/settings/flow-config');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const SERVER = path.join(ROOT, 'server');

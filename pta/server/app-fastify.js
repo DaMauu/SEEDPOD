@@ -298,7 +298,7 @@ async function build() {
     const bySite = {}, byDay = {};
     let last7 = 0, last30 = 0;
     /* 面板按服务器本地时区算“今天”，否则东八区凌晨发布会算到昨天 */
-    const dayOf = require('./day').dayOf;
+    const dayOf = require('./src/shared/day').dayOf;
     for (let i = 13; i >= 0; i--) byDay[dayOf(nowMs - i * 86400000)] = 0;
     pubRows.forEach(function (r) {
       const p = jparse(r.data) || {};
@@ -375,7 +375,7 @@ async function build() {
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;
     } };
-  require('./config-schema').ensureAll(ctx);
+  require('./src/features/settings/config-schema').ensureAll(ctx);
   ctx.crawl = makeCrawl(ctx);
   ctx.notify = require('./notify').makeNotify(ctx);
   require('./routes-write')(app, ctx);
@@ -394,7 +394,7 @@ async function build() {
   require('./routes-notify')(app, ctx);
   require('./routes-extra')(app, ctx);
 
-  require('./pipeline').loadSteps();
+  require('./src/features/scheduler/pipeline').loadSteps();
   const publisher = require('./publish').makePublisher(ctx);
   ctx.publisher = publisher;
   ctx.scheduler = require('./scheduler').makeScheduler(ctx, {

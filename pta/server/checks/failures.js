@@ -1,6 +1,6 @@
 /* 失败队列：列表、死信、单条重放、已提交幂等。纯内存 DB。 */
 const { DatabaseSync } = require('node:sqlite');
-const { makeFailureQueue } = require('../failure-queue');
+const { makeFailureQueue } = require('../src/features/logs/failure-queue');
 
 const results = [];
 function check(name, fn) {

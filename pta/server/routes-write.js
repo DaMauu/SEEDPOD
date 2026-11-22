@@ -10,11 +10,11 @@ module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
   const targetService = makeTargetService(ctx, makeTarget(ctx));
-  const configSchema = require('./config-schema');
-const catalogBulk = require('./catalog-bulk');
-const catalogItem = require('./catalog-item');
+  const configSchema = require('./src/features/settings/config-schema');
+const catalogBulk = require('./src/features/catalog/bulk');
+const catalogItem = require('./src/features/catalog/item');
 const { tx } = require('./src/infra/db');
-const catalogSync = require('./catalog-sync');
+const catalogSync = require('./src/features/catalog/sync');
 
   function getCatalog(id) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);

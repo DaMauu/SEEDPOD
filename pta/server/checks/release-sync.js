@@ -4,7 +4,7 @@ const os = require('os');
 const path = require('path');
 const { openDB, tx } = require('../src/infra/db');
 const { makeRelease } = require('../release');
-const catalogSync = require('../catalog-sync');
+const catalogSync = require('../src/features/catalog/sync');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-release-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

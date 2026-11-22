@@ -1,6 +1,6 @@
 /* 规则注册表：key、类型、默认值、读者集中在一份共享 JSON。
    UI（web/src/data/rules.js）和服务端都读这个文件；旧 key 通过 aliases 映射。 */
-const data = require('../web/shared/rule-registry.json');
+const data = require('../../../../web/shared/rule-registry.json');
 
 const SOURCE = 'pta/web/shared/rule-registry.json';
 const VERSION = Number(data.version) || 1;

@@ -4,7 +4,7 @@
 */
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeFailureQueue } = require('../failure-queue');
+const { makeFailureQueue } = require('../src/features/logs/failure-queue');
 const { read } = require('../src/infra/env');
 
 const dataDir = path.resolve(read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));

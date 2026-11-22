@@ -1,9 +1,9 @@
 /* 单目标站上传编排：门禁、截图/BDInfo、图床、禁转、提交与回查。 */
 const fs = require('fs');
 const path = require('path');
-const stage = require('./stage');
+const stage = require('./src/features/queue/stage');
 const torrentClean = require('./torrent-clean');
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 const imagehost = require('./imagehost');
 const marks = require('./src/features/screen/marks');
 const { dedupeSwitchOn } = require('./target-rules');

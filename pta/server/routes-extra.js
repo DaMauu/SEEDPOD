@@ -5,8 +5,8 @@ const form = require('./form');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { hostsOf } = require('./src/features/screen/dedupe-item');
-const queueBulk = require('./queue-bulk');
-const queueBulkPublish = require('./queue-bulk-publish');
+const queueBulk = require('./src/features/queue/bulk');
+const queueBulkPublish = require('./src/features/queue/bulk-publish');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;

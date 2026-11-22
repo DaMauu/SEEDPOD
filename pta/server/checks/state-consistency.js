@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const stage = require('../stage');
+const stage = require('../src/features/queue/stage');
 const { audit } = require('../scripts/audit-state');
 
 const results = [];

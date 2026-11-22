@@ -2,7 +2,7 @@
 const adapters = require('../infra/adapters/index');
 const dupeClassify = require('../features/screen/dupe-classify');
 const { typeOf } = require('../features/crawl/category');
-const configSchema = require('../../config-schema');
+const configSchema = require('../features/settings/config-schema');
 const urlGuard = require('../../url-guard');
 
 function keyword(title) {

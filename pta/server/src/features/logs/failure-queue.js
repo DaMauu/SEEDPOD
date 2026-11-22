@@ -1,7 +1,7 @@
 /* 失败队列：列出 queue 里的阶段失败 / 目标站失败 / 待重试，支持单条重放。
    只读写本地 SQLite；不重建队列、不重复上传已提交的条目。 */
-const errors = require('./errors');
-const stage = require('./stage');
+const errors = require('../../shared/errors');
+const stage = require('../queue/stage');
 
 const DEAD_AFTER_MS = 24 * 3600 * 1000;
 const RETENTION_DAYS = 30;

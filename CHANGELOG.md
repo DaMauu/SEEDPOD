@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.663 · 2026-11-23
+
+### 后端收口：queue / catalog / logs / settings
+- 队列批量、阶段、词条批量、同步进 `features/queue` 与 `features/catalog`。
+- 失败队列、错误统计、日志、日期、配置 schema、流程规则进对应模块。
+- 规则注册表进 `features/settings`，调度扩展点进 `features/scheduler`。
+- 全量 `run.sh` 通过。
+
 ## v0.7.662 · 2026-11-23
 
 ### 后端收口：crawl / screen / adapters

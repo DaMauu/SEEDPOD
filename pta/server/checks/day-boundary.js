@@ -3,7 +3,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 function run(tz, iso) {
-  const r = spawnSync(process.execPath, ['-e', 'process.stdout.write(require(process.argv[1]).dayOf(Date.parse(process.argv[2])))', path.join(ROOT, 'server', 'day.js'), iso], {
+  const r = spawnSync(process.execPath, ['-e', 'process.stdout.write(require(process.argv[1]).dayOf(Date.parse(process.argv[2])))', path.join(ROOT, 'server', 'src', 'shared', 'day.js'), iso], {
     encoding: 'utf8', env: Object.assign({}, process.env, { TZ: tz })
   });
   return { code: r.status, out: String(r.stdout || '').trim(), err: String(r.stderr || '').trim() };
@@ -26,7 +26,7 @@ check('UTC 时区同一时刻仍是前一天', function () {
   need(r.out === '2026-11-21', '日期键不对：' + r.out);
 });
 check('非法时间退回当前时间，不抛异常', function () {
-  const r = spawnSync(process.execPath, ['-e', 'const d=require(process.argv[1]);const v=d.dayOf("bad");process.stdout.write(/^\\d{4}-\\d{2}-\\d{2}$/.test(v)?"ok":"bad")', path.join(ROOT, 'server', 'day.js')], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, ['-e', 'const d=require(process.argv[1]);const v=d.dayOf("bad");process.stdout.write(/^\\d{4}-\\d{2}-\\d{2}$/.test(v)?"ok":"bad")', path.join(ROOT, 'server', 'src', 'shared', 'day.js')], { encoding: 'utf8' });
   need(r.status === 0 && /ok/.test(r.stdout), '非法时间没兜底：' + (r.stderr || r.stdout));
 });
 

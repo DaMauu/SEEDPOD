@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeFailureQueue } = require('../failure-queue');
+const { makeFailureQueue } = require('../src/features/logs/failure-queue');
 const { makeReviewPhase } = require('../scheduler-review');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-replay-sched-'));

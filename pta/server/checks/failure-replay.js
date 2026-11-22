@@ -3,8 +3,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeFailureQueue } = require('../failure-queue');
-const stage = require('../stage');
+const { makeFailureQueue } = require('../src/features/logs/failure-queue');
+const stage = require('../src/features/queue/stage');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-replay-'));
 const db = openDB(path.join(DATA, 'seedpod.db'));

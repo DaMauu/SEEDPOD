@@ -1,7 +1,7 @@
 /* 错误码注册表 + 失败统计：纯本地夹具，不联网。 */
 const { DatabaseSync } = require('node:sqlite');
-const errors = require('../errors');
-const { makeErrorStats } = require('../error-stats');
+const errors = require('../src/shared/errors');
+const { makeErrorStats } = require('../src/features/logs/error-stats');
 
 const results = [];
 function check(name, fn) {

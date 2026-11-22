@@ -1,6 +1,6 @@
 /* 流程规则摊平：同名行只取第一条，数字/开关默认值可覆盖。 */
 const path = require('path');
-const fc = require(path.join(__dirname, '..', 'flow-config.js'));
+const fc = require(path.join(__dirname, '..', 'src', 'features', 'settings', 'flow-config.js'));
 
 const results = [];
 function check(name, fn) {

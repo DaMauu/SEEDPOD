@@ -2,12 +2,12 @@
    干跑默认；真提交必须 realPublish=true；cookie 只从加密凭据读。 */
 const fs = require('fs');
 const path = require('path');
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 const torrentClean = require('./torrent-clean');
 const mediainfo = require('./mediainfo');
-const { failuresOf, isDead } = require('./failure-queue');
+const { failuresOf, isDead } = require('./src/features/logs/failure-queue');
 const { makeTarget } = require('./target');
-const stage = require('./stage');
+const stage = require('./src/features/queue/stage');
 const { makeTargetService } = require('./target-service');
 const { setVerify } = require('./target-upload');
 const { makeCrossseed } = require('./crossseed');

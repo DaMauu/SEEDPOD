@@ -1,6 +1,6 @@
 /* meta.config 迁移：旧布尔/大小写归一、未知字段保留、幂等、启动升级。 */
 const { DatabaseSync } = require('node:sqlite');
-const schema = require('../config-schema');
+const schema = require('../src/features/settings/config-schema');
 
 const results = [];
 function check(name, fn) {

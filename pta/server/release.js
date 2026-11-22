@@ -3,10 +3,10 @@
 const meta = require('./meta');
 const mediainfo = require('./mediainfo');
 const imagehost = require('./imagehost');
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 const { makeQb } = require('./qb');
 const { makeTarget } = require('./target');
-const stage = require('./stage');
+const stage = require('./src/features/queue/stage');
 const { tx } = require('./src/infra/db');
 
 function makeRelease(ctx) {

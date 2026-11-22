@@ -1,5 +1,5 @@
 /* 上传计划：字段映射、标签、BDInfo/MediaInfo、必填下拉默认值。 */
-const flowConfig = require('./flow-config');
+const flowConfig = require('./src/features/settings/flow-config');
 const meta = require('./meta');
 const targetDefaults = require('./target-defaults');
 const mediainfo = require('./mediainfo');

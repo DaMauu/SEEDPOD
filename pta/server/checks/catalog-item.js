@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { updCatalog } = require('../catalog-item');
+const { updCatalog } = require('../src/features/catalog/item');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-catitem-'));
@@ -33,7 +33,7 @@ process.exit(r ? 0 : 1);
   return new Promise(function (resolve) {
     const c = spawn(process.execPath, ['-e', code], {
       env: Object.assign({}, process.env, {
-        DBMOD: path.join(ROOT, 'server', 'src', 'infra', 'db.js'), ITEMMOD: path.join(ROOT, 'server', 'catalog-item.js'),
+        DBMOD: path.join(ROOT, 'server', 'src', 'infra', 'db.js'), ITEMMOD: path.join(ROOT, 'server', 'src', 'features', 'catalog', 'item.js'),
         DBFILE: DB, PATCH: JSON.stringify(patch), PTA_CATALOG_TEST_DELAY_MS: '250'
       }),
       stdio: ['ignore', 'pipe', 'pipe']

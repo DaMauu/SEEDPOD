@@ -1,7 +1,7 @@
 /* CLI：按 code/stage 统计失败队列，不启 HTTP。用法：node pta/scripts/error-stats.js [--limit 200] */
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const { makeErrorStats } = require('../error-stats');
+const { makeErrorStats } = require('../src/features/logs/error-stats');
 const { read } = require('../src/infra/env');
 
 const dataDir = path.resolve(read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));

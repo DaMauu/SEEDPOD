@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { openDB } = require('../src/infra/db');
-const stage = require('../stage');
+const stage = require('../src/features/queue/stage');
 
 function parseArgs(argv) {
   const out = { strict: false };
