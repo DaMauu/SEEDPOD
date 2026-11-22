@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.645 · 2026-11-23
+
+### 站点 JSON 迁移校验
+- `build-site-json.js` 新增 `--check`：逐站对比 base/upload/verify、搜索分类/类型、enabled；有差异写 `site-json-mismatches.json` 并退出 1。
+- `--disable-all`：迁移时把所有站默认设为停用。
+- 生产只读校验：306 站、306 网址、92 搜索分类、109 发布映射、5 隐藏，差异 0。
+- 全量 run.sh 通过。
+
 ## v0.7.644 · 2026-11-22
 
 ### 站点 JSON 预设

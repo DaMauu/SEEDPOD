@@ -17,8 +17,11 @@ const DATA = path.resolve(arg('--data', require('../server/env').read('DATA_DIR'
 const OUT = path.resolve(arg('--out', path.join(ROOT, 'pack')));
 const RUNTIME = argv.includes('--runtime');
 const DRY = argv.includes('--dry');
+const CHECK = argv.includes('--check');
+const DISABLE_ALL = argv.includes('--disable-all');
 
 function b64(s) { return 'b64:' + Buffer.from(String(s || ''), 'utf8').toString('base64'); }
+function decode(v) { const s = String(v || ''); if (!s.startsWith('b64:')) return ''; try { return Buffer.from(s.slice(4), 'base64').toString('utf8'); } catch (e) { return ''; } }
 function readJson(file, fb) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return fb; } }
 function hostOf(x) { return String(x || '').trim().toLowerCase(); }
 function defsOf() {
@@ -123,6 +126,7 @@ function main() {
     };
     if (RUNTIME) {
       rec.settings = settingsOf(d, hidden.indexOf(host) >= 0);
+      if (DISABLE_ALL) rec.settings.enabled = false;
       if (Object.keys(rec.settings).length > 1) settingsCount++;
     }
     sites[host] = rec;
@@ -135,6 +139,34 @@ function main() {
     if (Object.keys(publish.catMap).length || Object.keys(publish.catLabels).length) publishCount++;
   });
   const summary = { sites: Object.keys(sites).length, urls: urlCount, search: searchCount, publish: publishCount, settings: settingsCount, hidden: hidden.filter(function (h) { return sites[h]; }).length };
+  if (CHECK) {
+    const bad = [];
+    const norm = function (x) { return JSON.stringify(x || {}); };
+    Object.keys(sites).forEach(function (h) {
+      const rec = sites[h];
+      const d = dbRows.filter(function (r) { return hostOf(r.host) === h; })[0] || {};
+      let dbd = {}; try { dbd = JSON.parse(d.data || '{}') || {}; } catch (e) { dbd = {}; }
+      const def = defs[h] || {};
+      const se = search[h] || {};
+      const base = String(def.base || dbd.url || '').replace(/\/+$/, '');
+      if (decode(urls[h] && urls[h].base) !== base) bad.push({ host: h, field: 'base' });
+      if (urls[h] && decode(urls[h].upload) !== String((def.upload && def.upload.path) || '')) bad.push({ host: h, field: 'upload' });
+      if (urls[h] && decode(urls[h].verify) !== String((def.verify && def.verify.path) || '')) bad.push({ host: h, field: 'verify' });
+      const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
+      if (norm(rec.search.cats) !== norm(cats)) bad.push({ host: h, field: 'search.cats' });
+      if (norm(rec.search.types) !== norm(Array.isArray(se.types) ? se.types : [])) bad.push({ host: h, field: 'search.types' });
+      if (RUNTIME) {
+        const wantEnabled = DISABLE_ALL ? false : dbd.enabled !== false;
+        if (rec.settings.enabled !== wantEnabled) bad.push({ host: h, field: 'settings.enabled' });
+      }
+    });
+    if (bad.length) {
+      try { jsonFile.writeAtomic(path.join(DATA, 'site-json-mismatches.json'), bad, 0o600); } catch (e) { /* 忽略 */ }
+    }
+    console.log(JSON.stringify(Object.assign({ mismatches: bad.length, mismatchFile: bad.length ? path.join(DATA, 'site-json-mismatches.json') : '' }, summary), null, 2));
+    if (bad.length) process.exit(1);
+    return;
+  }
   if (DRY) { console.log(JSON.stringify(summary, null, 2)); return; }
   const dir = RUNTIME ? DATA : OUT;
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
