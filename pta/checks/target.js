@@ -106,6 +106,8 @@ async function main() {
     version: 1,
     sites: { 'labels.example': { form: { selects: { type: [{ value: '401', label: '电影' }], team_sel: [{ value: '8', label: 'CMCT' }] } } } }
   }, null, 2), { mode: 0o600 });
+  /* 夹具迁移到新 JSON：服务器只读 sites.json / site-urls.json */
+  require('../server/site-store')(DATA).migrateLegacy();
 
   child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
     cwd: path.join(ROOT, '..'),

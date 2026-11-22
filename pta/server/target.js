@@ -1,10 +1,6 @@
 /* 目标站提交与回查：引擎是代码，站点是数据。
    表单映射优先读 data/site-pack.json 的 upload，其次 data/site-defs/<host>.json 的 uploadMap；
    没有映射就停下，不猜。真提交必须显式打开 realPublish。 */
-const fs = require('fs');
-const path = require('path');
-const sitePack = require('./site-pack');
-const siteMaps = require('./site-maps');
 const { makeQb } = require('./qb');
 const { makeDiscovery } = require('./target-discovery');
 const { makePlan } = require('./target-plan');
@@ -58,15 +54,8 @@ function safeHost(host) { return /^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''
 function makeTarget(ctx) {
   const { DATA_DIR, one, db } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
+  const siteStore = require('./site-store')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
-  const packPath = path.join(DATA_DIR, 'site-pack.json');
-  const defDir = path.join(DATA_DIR, 'site-defs');
-
-  function readPack() {
-    const p = readJson(packPath);
-    return p && p.sites && typeof p.sites === 'object' ? p : { version: 1, sites: {} };
-  }
-  function readDef(host) { return readJson(path.join(defDir, host + '.json')); }
 
   function cookieOf(host) {
     const c = cookieStore.get(host);
@@ -75,35 +64,29 @@ function makeTarget(ctx) {
     return { cookie: c.cookie };
   }
 
-  function resolve(host) {
-    if (!safeHost(host)) return null;
-    const pack = readPack();
-    const p = (pack.sites || {})[host] || {};
-    const def = readDef(host) || {};
-    const built = sitePack.siteOf(host) || {};
-    const engine = String(p.engine || def.engine || built.engine || '').toLowerCase();
-    const base = String(p.base || def.base || built.base || '').replace(/\/+$/, '');
+  function resolveFrom(host, rec) {
+    if (!rec) return null;
+    const engine = String(rec.engine || '').toLowerCase();
+    const base = String(rec.base || '').replace(/\/+$/, '');
     const e = ENGINES[engine];
     if (!engine || !base || !e) return null;
-    /* 私有 site-defs 可以改 base，但不能把已存 cookie 带到别的域；内置/测试包不强制 */
-    if (def.base && !urlGuard.baseOk(host, def.base)) return null;
-    const pm = p.upload || def.uploadMap || built.upload || {};
+    const baseHost = (function () { try { return new URL(base).hostname.toLowerCase(); } catch (e) { return ''; } })();
+    if (!urlGuard.isLocalHost(baseHost) && !urlGuard.baseOk(host, base)) return null;
+    const pm = rec.upload || {};
     const upload = {
       path: String(pm.path || e.uploadPath),
       formPath: String(pm.formPath || e.formPath || pm.path || e.uploadPath),
       fileField: String(pm.fileField || e.fileField),
-      fields: Object.assign({}, e.fields, (built.upload && built.upload.fields) || {}, pm.fields || {})
+      fields: Object.assign({}, e.fields, pm.fields || {})
     };
-    const verify = Object.assign({ path: e.verifyPath }, built.verify || {}, p.verify || def.verify || {});
-    const maps = siteMaps.getHost(DATA_DIR, host);
-    const valueMaps = Object.assign({}, (built.valueMaps || {}), (p.valueMaps || def.valueMaps || {}));
-    valueMaps.team = Object.assign({}, valueMaps.team || {}, maps.team);
+    const verify = Object.assign({ path: e.verifyPath }, rec.verify || {});
     return { host: host, engine: engine, base: base, upload: upload, verify: verify,
-      catMap: Object.assign({}, catMapOf(p, def, built), maps.cat),
-      tagMap: Object.assign({}, built.tagMap || {}, (p.tagMap || def.tagMap || {})),
-      tagValue: String(p.tagValue || def.tagValue || built.tagValue || 'yes'),
-      form: maps.form || null,
-      valueMaps: valueMaps };
+      catMap: rec.catMap || {}, tagMap: rec.tagMap || {}, tagValue: String(rec.tagValue || 'yes'),
+      form: rec.form || null, valueMaps: rec.valueMaps || {} };
+  }
+  function resolve(host) {
+    if (!safeHost(host)) return null;
+    return resolveFrom(host, siteStore.targetDef(host));
   }
 
   const { discoverAnnounce, announceCandidates } = makeDiscovery({ resolve: resolve, cookieOf: cookieOf, dataDir: DATA_DIR });
@@ -121,30 +104,25 @@ function makeTarget(ctx) {
   }
 
   function list() {
-    const pack = readPack();
-    const hosts = new Set(Object.keys(pack.sites || {}));
-    try {
-      fs.readdirSync(defDir).forEach(function (f) {
-        if (/\.json$/.test(f)) hosts.add(f.replace(/\.json$/, ''));
+    const cookies = {};
+    cookieStore.list().forEach(function (c) { cookies[c.host] = true; });
+    return siteStore.list().map(function (rec) {
+      const pub = rec.publish || {};
+      const t = resolveFrom(rec.host, {
+        engine: rec.engine, base: rec.url && rec.url.base,
+        upload: pub.upload, verify: pub.verify,
+        catMap: Object.assign({}, pub.catMap || {}, pub.catLabels || {}),
+        tagMap: pub.tagMap, tagValue: pub.tagValue,
+        form: pub.form, valueMaps: pub.valueMaps
       });
-    } catch (e) { console.warn('[seedpod] ignored:', e && e.message ? e.message : e) }
-    const bundled = sitePack.load();
-    if (bundled.ok) Object.keys(bundled.pack.sites || {}).forEach(function (h) { hosts.add(h); });
-    const out = [];
-    hosts.forEach(function (host) {
-      const t = resolve(host);
-      if (!t) return;
-      const c = one('SELECT cookie FROM credentials WHERE host = ?', host);
-      const hasCookie = !!(c && c.cookie);
-      const srow = one('SELECT data FROM sites WHERE host = ?', host);
-      let sd = null;
-      if (srow) { try { sd = JSON.parse(srow.data) || {}; } catch (e) { sd = {}; } }
-      out.push({ host: host, engine: t.engine, base: t.base, hasCookie: hasCookie,
-        enabled: !sd || sd.enabled !== false,
+      if (!t) return null;
+      const hasCookie = !!cookies[rec.host];
+      return { host: rec.host, engine: t.engine, base: t.base, hasCookie: hasCookie,
+        enabled: rec.settings.enabled !== false,
+        hidden: rec.settings.hidden === true,
         ready: !!(hasCookie && t.upload.path && t.upload.fields && Object.keys(t.upload.fields).length),
-        uploadPath: t.upload.path, verifyPath: t.verify.path });
-    });
-    return out.sort(function (a, b) { return a.host.localeCompare(b.host); });
+        uploadPath: t.upload.path, verifyPath: t.verify.path };
+    }).filter(Boolean).sort(function (a, b) { return a.host.localeCompare(b.host); });
   }
 
   /* 来源站标签：优先用条目里的 tags；没有就从标题推（国配/粤语/中字/DIY 这类）。

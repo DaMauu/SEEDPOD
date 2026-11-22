@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.650 · 2026-11-23
+
+### 抓取与目标站切到站点 JSON
+- crawl 从 `site-store.legacyDef` 读搜索/类型/设置；目标站从 `site-store.targetDef` 读上传/分类/映射。
+- 面板改站点配置、站点定义、类型、映射时双写 `sites.json` / `site-urls.json`，旧库/旧文件暂时保留兼容。
+- target 列表改为一次读取 + 缓存，避免 306 站逐个解析导致页面卡顿；隐藏站不列。
+- 夹具：crawl-detail 6/6、target 41/41、site-store 6/6、cli 18/18、responsive 32/32、api-v2 57/57、frontend 49/49。
+- 全量 run.sh 通过。
+
 ## v0.7.649 · 2026-11-23
 
 ### 站点 JSON 字段补齐

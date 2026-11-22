@@ -7,6 +7,7 @@ const siteHidden = require('./site-hidden');
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
+  const siteStore = require('./site-store')(DATA_DIR);
   const SSE = new Set();
   const now = () => new Date().toISOString();
 
@@ -103,6 +104,12 @@ module.exports = function (app, ctx) {
     siteHidden.remove(db, host);
     db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
       .run(host, JSON.stringify(next), now());
+    if (siteStore.has(host)) {
+      siteStore.setHidden(host, false, db);
+    } else {
+      const engine = arch === 'NP' ? 'nexusphp' : (arch === 'UNIT3D' ? 'unit3d' : (arch === 'GZ' ? 'gazelle' : '?'));
+      siteStore.add(host, { name: next.title, engine: engine, url: { base: next.url }, settings: { enabled: false } }, db);
+    }
     logEvent('info', '站点', '添加站点 · ' + host);
     return ok(reply, { host: host, url: next.url, arch: next.arch, title: next.title, added: true });
   });
@@ -115,6 +122,7 @@ module.exports = function (app, ctx) {
     if (cfg.base === true) {
       /* 基础站随站点包发布，不能硬删；从面板隐藏并清掉凭据，可恢复 */
       siteHidden.add(db, host);
+      siteStore.setHidden(host, true, db);
       cookieStore.remove(host, db);
       logEvent('info', '站点', '移除基础站点（可恢复） · ' + host);
       return ok(reply, { host: host, hidden: true, soft: true });
@@ -122,6 +130,7 @@ module.exports = function (app, ctx) {
     db.prepare('DELETE FROM sites WHERE host = ?').run(host);
     cookieStore.remove(host, db);
     siteHidden.remove(db, host);
+    siteStore.remove(host, db);
     logEvent('info', '站点', '移除站点 · ' + host);
     return ok(reply, { host: host, hidden: false, soft: false });
   });
@@ -131,6 +140,7 @@ module.exports = function (app, ctx) {
     const row = one('SELECT data FROM sites WHERE host = ?', host);
     if (!row) return bad(reply, 'NOT_FOUND', '站点不在面板里，先重新添加', 404);
     const changed = siteHidden.remove(db, host);
+    siteStore.setHidden(host, false, db);
     if (changed) logEvent('info', '站点', '恢复基础站点 · ' + host);
     return ok(reply, { host: host, restored: changed });
   });
@@ -149,6 +159,10 @@ module.exports = function (app, ctx) {
     const next = Object.assign({}, prev, req.body || {});
     db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
       .run(host, JSON.stringify(next), now());
+    const sk = ['enabled', 'interval', 'priority', 'note', 'override', 'ovInterval', 'ovDetail', 'mode', 'queueMode', 'window', 'pages', 'concurrency', 'dupeCheck'];
+    const settings = {};
+    sk.forEach(function (k) { if (next[k] !== undefined) settings[k] = next[k]; });
+    if (siteStore.has(host)) siteStore.save(host, { settings: settings }, db);
     logEvent('info', '站点', '更新站点配置 · ' + host);
     return ok(reply, { host: host, config: next });
   });
@@ -205,6 +219,32 @@ module.exports = function (app, ctx) {
     } catch (e) {
       return bad(reply, 'WRITE_FAILED', '站点定义写入失败', 500);
     }
+    const cur = siteStore.get(host) || { search: {}, publish: {} };
+    const up = b.uploadMap || b.upload || {};
+    const search = Object.assign({}, cur.search || {}, {
+      path: b.searchPath || (cur.search && cur.search.path) || '/torrents.php',
+      params: b.params || (cur.search && cur.search.params) || {},
+      catMode: b.catMode || (cur.search && cur.search.catMode) || 'single',
+      catSlot: b.catSlot != null ? String(b.catSlot) : ((cur.search && cur.search.catSlot) || ''),
+      cats: b.cats || (cur.search && cur.search.cats) || {}
+    });
+    const publish = Object.assign({}, cur.publish || {}, {
+      upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: up.fields || {} },
+      verify: { path: String((b.verify && b.verify.path) || (cur.publish && cur.publish.verify && cur.publish.verify.path) || '') },
+      tagMap: b.tagMap || (cur.publish && cur.publish.tagMap) || {},
+      tagValue: b.tagValue || (cur.publish && cur.publish.tagValue) || 'yes',
+      baseValueMaps: b.valueMaps || (cur.publish && cur.publish.baseValueMaps) || {},
+      form: b.form || (cur.publish && cur.publish.form) || null
+    });
+    if (Array.isArray(b.catMap)) {
+      publish.catMap = {};
+      publish.catLabels = {};
+      b.catMap.forEach(function (x) { if (x && x.id != null) { if (x.purpose) publish.catMap[String(x.purpose)] = String(x.id); if (x.label) publish.catLabels[String(x.label)] = String(x.id); } });
+    } else if (b.catMap && typeof b.catMap === 'object') {
+      publish.catMap = b.catMap;
+      publish.catLabels = b.catMap;
+    }
+    siteStore.save(host, { engine: b.engine || (cur.engine || '?'), search: search, publish: publish, url: b.base ? { base: b.base } : undefined }, db);
     return ok(reply, { host: host, def: b });
   });
   app.get('/api/site-defs', async () => {

@@ -20,6 +20,7 @@ function keyword(title) {
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
+  const siteStore = require('./site-store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const readDef = (host) => { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
   const readPresets = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
@@ -99,6 +100,8 @@ module.exports = function (app, ctx) {
     const typesChanged = JSON.stringify(prevTypes) !== JSON.stringify(want);
     sites[host] = Object.assign({}, sites[host] || {}, { types: want, cats: cats, updatedAt: now() });
     jsonFile.writeAtomic(file, raw.sites ? raw : { sites: sites }, 0o600);
+    const curSite = siteStore.get(host);
+    if (curSite) siteStore.save(host, { search: Object.assign({}, curSite.search, { types: want, cats: cats }) }, db);
     /* 类型集合变了：下次抓取按全量重跑；单纯改分类预设仍走增量 */
     let rechecked = 0;
     if (typesChanged) {

@@ -36,7 +36,10 @@ function decode(v) {
   });
 
   await check('sites.preset 只有定义，没有 settings 和明文网址', async function () {
-    const raw = JSON.stringify(sitesDoc);
+    /* publish.form 的 option label 里可能有普通网页地址，不是站点 base；检查时排除 */
+    const clone = JSON.parse(JSON.stringify(sitesDoc));
+    Object.keys(clone.sites || {}).forEach(function (h) { if (clone.sites[h].publish) delete clone.sites[h].publish.form; });
+    const raw = JSON.stringify(clone);
     need(raw.indexOf('https://') < 0 && raw.indexOf('http://') < 0, 'sites.preset.json 出现明文网址');
     hosts.forEach(function (h) {
       const s = sites[h] || {};

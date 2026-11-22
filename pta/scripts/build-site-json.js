@@ -59,7 +59,10 @@ function publishOf(def, mp) {
     catMap: {},
     catLabels: {},
     tagMap: def.tagMap && typeof def.tagMap === 'object' ? def.tagMap : {},
-    tagValue: String(def.tagValue || 'yes')
+    tagValue: String(def.tagValue || 'yes'),
+    baseValueMaps: def.valueMaps && typeof def.valueMaps === 'object' ? def.valueMaps : {},
+    form: (mp && mp.form) || def.form || null,
+    valueMaps: { team: (mp && mp.team) || {} }
   };
   const raw = def.catMap;
   if (Array.isArray(raw)) {

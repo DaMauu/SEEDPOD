@@ -7,6 +7,7 @@ const { openDB } = require('../server/db');
 const { makeCrawl } = require('../server/crawl');
 const secretbox = require('../server/secretbox');
 const dns = require('dns');
+const makeSiteStore = require('../server/site-store');
 
 const results = [];
 function check(name, fn) {
@@ -24,6 +25,7 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
 (async function () {
   let core = null;
   let realFetch = null;
+  const siteStore = makeSiteStore(DATA);
   const realLookup = dns.promises.lookup;
   dns.promises.lookup = async function (h) {
     const host = String(h || '').toLowerCase();
@@ -160,26 +162,24 @@ const detailHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexus
     });
 
     await check('已移除站点拒绝抓取且不发请求', async function () {
-      db2.prepare("INSERT INTO meta(k, v) VALUES('site-config-meta', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")
-        .run(JSON.stringify({ hidden: [HOST] }));
       const seen = [];
       global.fetch = async function (url) { seen.push(String(url)); return new Response(listHtml, { status: 200 }); };
+      siteStore.setHidden(HOST, true, db2);
       try {
         resetGaps();
         const r = await core.crawlOnce(HOST, { limit: 10, detail: false });
         need(r && r.err && r.err.code === 'SITE_HIDDEN', '已移除站点没拦住：' + JSON.stringify(r && r.err));
         need(seen.length === 0, '拦住后还发了请求：' + seen.join(' , '));
-      } finally {
-        db2.prepare("DELETE FROM meta WHERE k = 'site-config-meta'").run();
-      }
+      } finally { siteStore.setHidden(HOST, false, db2); }
     });
 
     await check('没有保存类型时拒绝抓取，不静默全分类', async function () {
-      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { cats: { 电影: ['401'] } } } }, null, 2));
+      const cur = siteStore.get(HOST);
+      siteStore.save(HOST, { search: Object.assign({}, cur.search, { types: [] }) }, db2);
       resetGaps();
       const r = await core.crawlOnce(HOST, { limit: 100, detail: false });
       need(r && r.err && r.err.code === 'NO_CATEGORY_TYPES', '缺 types 没拦住：' + JSON.stringify(r));
-      fs.writeFileSync(path.join(DATA, 'site-search.local.json'), JSON.stringify({ sites: { [HOST]: { types: ['电影'], cats: { 电影: ['401'] } } } }, null, 2));
+      siteStore.save(HOST, { search: Object.assign({}, cur.search, { types: ['电影'] }) }, db2);
     });
   } finally {
     dns.promises.lookup = realLookup;

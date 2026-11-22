@@ -126,7 +126,7 @@ module.exports = function (app, ctx) {
     const targetHost = String(cfg.targetHost || '').toLowerCase();
     const list = target.list().filter(function (t) {
       if (cfg.testOnly !== false && !/^(test[.-]|127\.0\.0\.1$|localhost$)/i.test(String(t.host || ''))) return false;
-      return t.enabled !== false || t.host === targetHost;
+      return t.hidden !== true;
     });
     return ok(list);
   });

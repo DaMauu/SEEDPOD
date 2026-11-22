@@ -179,7 +179,7 @@ async function run() {
         const b = [...document.querySelectorAll('[data-view="queue"] .seg-tabs button')].find(x => x.textContent.trim() === l)
         if (b) b.click()
       }, label)
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(1200)
     }
 
     const checkQueue = async (where, empty) => {

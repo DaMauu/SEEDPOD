@@ -241,6 +241,12 @@ async function main() {
     fs.writeFileSync(path.join(DATA, 'site-defs', 'target2.example.json'), JSON.stringify({
       host: 'target2.example', base: 'https://target2.example', engine: 'nexusphp'
     }));
+    const siteStore = require('../server/site-store')(DATA);
+    ['target.example', 'target2.example'].forEach(function (h) {
+      siteStore.save(h, { engine: 'nexusphp', url: { base: 'https://' + h },
+        search: { path: '/torrents.php' },
+        publish: { upload: { path: '/takeupload.php', fields: {} }, verify: { path: '/torrents.php?search={title}' } } });
+    });
     const torrent = tinyTorrent(path.join(DATA, 'tiny.torrent'));
     const prep = parse(await cliLocal(['prepare', queueId2, '--targets', 'target.example,target2.example,bad.example', '--json']));
     const ann = 'target.example=https://target.example/announce.php?passkey=a,target2.example=https://target2.example/announce.php?passkey=b';

@@ -1,14 +1,9 @@
 /* 真实抓取：从站点列表页取条目写进 SQLite。
    默认关闭，由 config.realCrawl 或环境变量 ALLOW_REAL=1 打开；
    每次抓取受站点间隔与每日上限约束，失败也记时间戳，避免连续重试。 */
-const fs = require('fs');
-const path = require('path');
 const adapters = require('./adapters');
 const marksMod = require('./marks');
-const sitePack = require('./site-pack');
-const siteMaps = require('./site-maps');
 const urlGuard = require('./url-guard');
-const siteHidden = require('./site-hidden');
 const flowConfig = require('./flow-config');
 const { typeOf } = require('./category-policy');
 const configSchema = require('./config-schema');
@@ -32,8 +27,7 @@ function catListFromCats(cats) {
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
   const cookieStore = require('./cookie-store')(DATA_DIR);
-  const DEF_DIR = path.join(DATA_DIR, 'site-defs');
-  const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DEF_DIR, host + '.json'), 'utf8')); } catch (e) { return null; } };
+  const siteStore = require('./site-store')(DATA_DIR);
   const cfg = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const readState = () => { const r = one("SELECT v FROM meta WHERE k = 'crawl-state'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const saveState = (st) => { db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st)); };
@@ -45,8 +39,8 @@ function makeCrawl(ctx) {
   const metaFill = makeMetaFill(ctx);
 
   function limitsOf(host) {
-    const siteCfg = one('SELECT data FROM sites WHERE host = ?', host);
-    const s = siteCfg ? (jparse(siteCfg.data) || {}) : {};
+    const rec = siteStore.get(host);
+    const s = rec ? rec.settings : {};
     const C = configSchema.readWithDefaults(ctx);
     const OV = { '1 分钟': 60000, '5 分钟': 300000, '15 分钟': 900000, '1 小时': 3600000 };
     const listGap = Math.max(6, Math.min(Number(C.listInterval) || 10, 60)) * 1000;
@@ -95,12 +89,11 @@ function makeCrawl(ctx) {
   }
 
   async function inner(host, opts) {
-    if (siteHidden.has(db, host)) return { err: { code: 'SITE_HIDDEN', message: '站点已从面板移除，先恢复再抓' } };
-    const def0 = readDef(host);
-    const built = sitePack.siteOf(host) || null;
-    if (!def0 && !built) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
-    const def = Object.assign({}, built || {}, def0 || {});
-    if (!def.engine) return { err: { code: 'NO_ENGINE', message: '这个站还没识别出引擎' } };
+    const def = siteStore.legacyDef(host);
+    if (!def) return { err: { code: 'NO_DEF', message: '这个站还没有站点定义' } };
+    if (def.hidden) return { err: { code: 'SITE_HIDDEN', message: '站点已从面板移除，先恢复再抓' } };
+    if (def.enabled === false) return { err: { code: 'SITE_DISABLED', message: '站点已停用，先启用再抓' } };
+    if (!def.engine || def.engine === '?') return { err: { code: 'NO_ENGINE', message: '这个站还没识别出引擎' } };
     const cookie = cookieOf(host);
     if (!cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie' } };
     let catMap = Array.isArray(def.catList) ? def.catList
@@ -108,25 +101,10 @@ function makeCrawl(ctx) {
         : (def.catMap && typeof def.catMap === 'object'
           ? Object.keys(def.catMap).map(function (k) { return { id: def.catMap[k], label: k }; })
           : catListFromCats(def.cats)));
-    /* 站点映射总表也补进 catMap，保证只有 site-maps 标签的站也能做类型过滤 */
-    try {
-      const maps = siteMaps.getHost(DATA_DIR, host).cat || {};
-      Object.keys(maps).forEach(function (k) { catMap.push({ id: String(maps[k]), label: k, purpose: k }); });
-    } catch (e) { log.warn('crawl.site-maps', e); }
     const seenCat = {};
     catMap = catMap.filter(function (x) { if (!x || x.id == null) return false; const k = String(x.id); if (seenCat[k]) return false; seenCat[k] = true; return true; });
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
-    let siteTypes = [];
-    try {
-      const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {};
-      const sites = raw.sites || raw;
-      const entry = sites[host] || {};
-      const cats = entry.cats || {};
-      const sel = [];
-      Object.keys(cats).forEach(function (k) { (cats[k] || []).forEach(function (id) { sel.push(String(id)); }); });
-      if (sel.length) catMap = catMap.filter(function (x) { return sel.indexOf(String(x.id)) >= 0; });
-      siteTypes = Array.isArray(entry.types) ? entry.types.map(String).filter(Boolean) : [];
-    } catch (e) { log.warn('crawl.preset', e); }
+    let siteTypes = Array.isArray(def.types) ? def.types.map(String).filter(Boolean) : [];
     /* 类型是硬闸门：没保存类型就停，保存过类型就只抓对应分类 */
     if (!siteTypes.length) {
       return { err: { code: 'NO_CATEGORY_TYPES', message: '这个站还没保存抓取类型；先在流程页选来源站和类型并保存' } };
@@ -146,7 +124,7 @@ function makeCrawl(ctx) {
     const ids = catMap.length ? (hasCat ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : catMap.map(function (x) { return x.id; })) : [];
     let url0 = adapters.buildSearchUrl(def, '', ids);
     try {
-      const flt = siteMaps.getHost(DATA_DIR, host).filters;
+      const flt = {};
       const sv = (flt && flt.selectedValues) || {};
       if (Object.keys(sv).length) {
         const u = new URL(url0);
@@ -230,7 +208,7 @@ function makeCrawl(ctx) {
 
     /* 媒介/分辨率：站点搜索页不支持参数时，抓完按标题本地过滤 */
     try {
-      const flt = siteMaps.getHost(DATA_DIR, host).filters;
+      const flt = {};
       const labels = (flt && flt.selectedLabels) || {};
       const MEDIA = {
         '原盘': /full\s*disc|bdmv|blu-?ray\s*iso|\biso\b|原盘/i,
@@ -285,8 +263,8 @@ function makeCrawl(ctx) {
     const out = items.length ? upsertCatalog(items) : { added: 0, updated: 0, skipped: 0, ids: {} };
 
     /* 详情：当前页优先，其余预算补 catalog 里最久缺详情的，保证每条最终都能轮到 */
-    const siteRow = one('SELECT data FROM sites WHERE host = ?', host);
-    const site = siteRow ? (jparse(siteRow.data) || {}) : {};
+    const siteRec = siteStore.get(host);
+    const site = siteRec ? siteRec.settings : {};
     let wantDetail = !!(cfg() && cfg().detail);
     if (opts.detail === true) wantDetail = true;
     else if (opts.detail === false) wantDetail = false;

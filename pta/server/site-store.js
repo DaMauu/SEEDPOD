@@ -29,19 +29,29 @@ function makeSiteStore(dataDir, opts) {
   const URLS_FILE = path.join(DIR, 'site-urls.json');
   const SITES_PRESET = path.join(PRESET, 'sites.preset.json');
   const URLS_PRESET = path.join(PRESET, 'site-urls.preset.json');
+  const CACHE = { sites: null, urls: null };
 
   function readJson(file, fb) {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
   }
-  function docOf(file, presetFile) {
+  function cachedDoc(key, file, presetFile) {
+    let st = null;
+    try { st = fs.statSync(file); } catch (e) { st = null; }
+    if (st && CACHE[key] && CACHE[key].mtime === st.mtimeMs && CACHE[key].size === st.size) return CACHE[key].doc;
     let d = readJson(file, null);
-    if (d && typeof d === 'object') return d;
-    d = readJson(presetFile, null);
-    return d && typeof d === 'object' ? d : { version: VERSION, sites: {} };
+    if (!d || typeof d !== 'object') d = readJson(presetFile, null);
+    if (!d || typeof d !== 'object') d = { version: VERSION, sites: {} };
+    if (st) CACHE[key] = { mtime: st.mtimeMs, size: st.size, doc: d };
+    return d;
+  }
+  function docOf(file, presetFile) {
+    return file === SITES_FILE ? cachedDoc('sites', file, presetFile) : cachedDoc('urls', file, presetFile);
   }
   function writeDoc(file, doc) {
     try { if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak'); } catch (e) { /* 备份失败不挡写入 */ }
     jsonFile.writeAtomic(file, doc, 0o600);
+    if (file === SITES_FILE) CACHE.sites = null;
+    if (file === URLS_FILE) CACHE.urls = null;
   }
   function readLegacyDefs() {
     const dir = path.join(DIR, 'site-defs');
@@ -70,7 +80,10 @@ function makeSiteStore(dataDir, opts) {
     const up = def.uploadMap || def.upload || {};
     const publish = { upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: up.fields && typeof up.fields === 'object' ? up.fields : {} },
       verify: { path: String((def.verify && def.verify.path) || '') }, catMap: {}, catLabels: {},
-      tagMap: def.tagMap && typeof def.tagMap === 'object' ? def.tagMap : {}, tagValue: String(def.tagValue || 'yes') };
+      tagMap: def.tagMap && typeof def.tagMap === 'object' ? def.tagMap : {}, tagValue: String(def.tagValue || 'yes'),
+      form: (mp && mp.form) || def.form || null,
+      baseValueMaps: def.valueMaps && typeof def.valueMaps === 'object' ? def.valueMaps : {},
+      valueMaps: Object.assign({}, (mp && mp.valueMaps) || {}, { team: (mp && mp.team) || {} }) };
     const raw = def.catMap;
     if (Array.isArray(raw)) raw.forEach(function (x) { if (x && x.id != null) { if (x.purpose) publish.catMap[String(x.purpose)] = String(x.id); if (x.label) publish.catLabels[String(x.label)] = String(x.id); } });
     else if (raw && typeof raw === 'object') Object.keys(raw).forEach(function (k) { if (raw[k] != null) { publish.catMap[String(k)] = String(raw[k]); publish.catLabels[String(k)] = String(raw[k]); } });
@@ -115,7 +128,11 @@ function makeSiteStore(dataDir, opts) {
           engine: String(def.engine || d.engine || '?'), urlRef: 'site-urls.json#' + host,
           search: { path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, types: Array.isArray(se.types) ? se.types : [] },
           publish: publish, localEdited: false,
-          settings: normalizeSettings(Object.assign({}, d, { hidden: hidden.indexOf(host) >= 0 }))
+          settings: (function () {
+            const st = normalizeSettings(Object.assign({}, d, { hidden: hidden.indexOf(host) >= 0 }));
+            if (d.enabled === undefined) st.enabled = true;
+            return st;
+          })()
         };
         if (base) urls.sites[host] = { base: b64(base), upload: b64(publish.upload.path), verify: b64(publish.verify.path) };
       });
@@ -264,7 +281,12 @@ function makeSiteStore(dataDir, opts) {
       verify: { path: s.publish.verify.path },
       catMap: Object.assign({}, s.publish.catMap || {}, s.publish.catLabels || {}),
       catLabels: s.publish.catLabels || {},
-      tagMap: s.publish.tagMap || {}, tagValue: s.publish.tagValue || 'yes'
+      form: s.publish.form || null,
+      valueMaps: (function () {
+        const base = s.publish.baseValueMaps || {};
+        const over = s.publish.valueMaps || {};
+        return Object.assign({}, base, over, { team: Object.assign({}, base.team || {}, over.team || {}) });
+      })()
     };
   }
   return {

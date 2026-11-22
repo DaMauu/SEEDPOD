@@ -53,6 +53,7 @@ function matchCats(options) {
 module.exports = function (app, ctx) {
   const { DATA_DIR, ok, bad } = ctx;
   const target = require('./target').makeTarget(ctx);
+  const siteStore = require('./site-store')(DATA_DIR);
 
   app.get('/api/maps', async () => {
     const all = siteMaps.readAll(DATA_DIR);
@@ -61,8 +62,20 @@ module.exports = function (app, ctx) {
 
   app.put('/api/maps/:host', async (req, reply) => {
     try {
-      const saved = siteMaps.setHost(DATA_DIR, req.params.host, req.body || {});
-      return ok({ host: String(req.params.host).toLowerCase(), map: saved });
+      const host = String(req.params.host || '').toLowerCase();
+      const saved = siteMaps.setHost(DATA_DIR, host, req.body || {});
+      const cur = siteStore.get(host);
+      if (cur) {
+        const publish = Object.assign({}, cur.publish, {
+          catLabels: saved.cat || {},
+          valueMaps: { team: saved.team || {} },
+          form: saved.form || null
+        });
+        /* catMap 保留 purpose 键，同时补 label 键，发布计划两种都能匹配 */
+        publish.catMap = Object.assign({}, publish.catMap || {}, saved.cat || {});
+        siteStore.save(host, { publish: publish }, ctx.db);
+      }
+      return ok({ host: host, map: saved });
     } catch (e) {
       return bad(reply, 'BAD_HOST', String(e && e.message || e).slice(0, 120), 400);
     }
