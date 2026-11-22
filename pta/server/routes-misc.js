@@ -12,6 +12,7 @@ const { makeFailureQueue } = require('./failure-queue');
 const { makeTarget } = require('./target');
 const { makeTargetService } = require('./target-service');
 const { dedupeItem, hostsOf } = require('./dedupe-item');
+const { tx } = require('./db');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -147,17 +148,19 @@ module.exports = function (app, ctx) {
       if (r.allSkipped) {
         it.status = 'skipped';
         it.dupeSkipped = { at: now(), hosts: hosts };
-        db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?').run('skipped', JSON.stringify(it), now(), id);
-        if (it.catalogId) {
-          const crow = one('SELECT data FROM catalog WHERE id = ?', it.catalogId);
-          const cd = jparse(crow && crow.data) || {};
-          cd.status = 'skipped';
-          cd.dupe = 'dupe';
-          cd.dupeTarget = String(hosts[0] || '').slice(0, 200);
-          cd.dupeHosts = hosts;
-          cd.dupeAt = now();
-          db.prepare('UPDATE catalog SET status = ?, data = ?, updated_at = ? WHERE id = ?').run('skipped', JSON.stringify(cd), now(), it.catalogId);
-        }
+        tx(db, function () {
+          db.prepare('UPDATE queue SET status = ?, data = ?, updated_at = ? WHERE id = ?').run('skipped', JSON.stringify(it), now(), id);
+          if (it.catalogId) {
+            const crow = one('SELECT data FROM catalog WHERE id = ?', it.catalogId);
+            const cd = jparse(crow && crow.data) || {};
+            cd.status = 'skipped';
+            cd.dupe = 'dupe';
+            cd.dupeTarget = String(hosts[0] || '').slice(0, 200);
+            cd.dupeHosts = hosts;
+            cd.dupeAt = now();
+            db.prepare('UPDATE catalog SET status = ?, data = ?, updated_at = ? WHERE id = ?').run('skipped', JSON.stringify(cd), now(), it.catalogId);
+          }
+        });
         out.selected--;
         out.skipped++;
         out.byReason['目标站已有'] = (out.byReason['目标站已有'] || 0) + 1;

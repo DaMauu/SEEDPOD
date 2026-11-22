@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.640 · 2026-11-22
+
+### 审计一百零九轮 · 送审与词条状态
+- `/api/catalog/screen` 查重命中跳过时，队列状态和来源词条放在同一事务，避免一边 skipped 一边 selected。
+- 删除未使用的 JSON 词条库 `pta/server/catalog.js`；SQLite 是唯一事实源，避免两套状态实现。
+- release-sync 夹具保持 4/4；全量 run.sh 通过。
+
 ## v0.7.639 · 2026-11-22
 
 ### 审计一百零八轮 · release 事务与状态同步
