@@ -11,6 +11,7 @@ const stage = require('./stage');
 const { makeTargetService } = require('./target-service');
 const { setVerify } = require('./target-upload');
 const { makeCrossseed } = require('./crossseed');
+const uploadLock = require('./upload-lock');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
@@ -42,14 +43,20 @@ module.exports = function (app, ctx) {
     if (!hosts || !hosts.length) return;
     const item = loadQueue(id);
     if (!item) return;
-    for (const host of hosts) {
-      try {
-        const r = await crossseed.run({ id: item.id, data: item.data }, host, {});
-        if (ctx.logEvent) ctx.logEvent(r.ok ? 'info' : 'warn', '目标站', '辅种' + (r.ok ? '完成' : '待重试') + ' · ' + host + ' · queue ' + id + (r.error ? ' · ' + r.error : ''));
-      } catch (e) {
-        if (ctx.logEvent) ctx.logEvent('warn', '目标站', '辅种异常 · ' + host + ' · queue ' + id + ' · ' + String(e && e.message || e).slice(0, 120));
-      }
+    if (!uploadLock.acquire(item.id, db)) {
+      if (ctx.logEvent) ctx.logEvent('warn', '目标站', '辅种跳过：条目正在提交 · queue ' + id);
+      return;
     }
+    try {
+      for (const host of hosts) {
+        try {
+          const r = await crossseed.run({ id: item.id, data: item.data }, host, {});
+          if (ctx.logEvent) ctx.logEvent(r.ok ? 'info' : 'warn', '目标站', '辅种' + (r.ok ? '完成' : '待重试') + ' · ' + host + ' · queue ' + id + (r.error ? ' · ' + r.error : ''));
+        } catch (e) {
+          if (ctx.logEvent) ctx.logEvent('warn', '目标站', '辅种异常 · ' + host + ' · queue ' + id + ' · ' + String(e && e.message || e).slice(0, 120));
+        }
+      }
+    } finally { uploadLock.release(item.id, db); }
   }
   function realGate(item, hosts, body) {
     if (!body || body.dryRun !== false) return null;
@@ -188,9 +195,13 @@ module.exports = function (app, ctx) {
 
   /* 源资源标题：发布 name 用源种原名；这里提供回填接口（规则：源资源标题） */
   app.post('/api/queue/:id/fill-source-title', async (req, reply) => {
-    const row = one('SELECT id, data FROM queue WHERE id = ?', req.params.id);
+    let row = one('SELECT id, data FROM queue WHERE id = ?', req.params.id);
     if (!row) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
-    const it = jparse(row.data) || {};
+    if (!uploadLock.acquire(row.id, db)) return bad(reply, 'UPLOAD_IN_PROGRESS', '这个条目正在提交，等这次结束', 409);
+    try {
+      row = one('SELECT id, data FROM queue WHERE id = ?', req.params.id);
+      if (!row) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
+      const it = jparse(row.data) || {};
     let name = '';
     try {
       const t = it.targetResults && it.targetResults[String(it.targetSite || '').toLowerCase()];
@@ -206,13 +217,14 @@ module.exports = function (app, ctx) {
       const meta = target.torrentMeta(f.buf);
       name = (meta && meta.name) || '';
     }
-    if (!name) return bad(reply, 'NO_TORRENT_NAME', '源种里没有标题', 422);
-    it.title = String(name).slice(0, 300);
-    it.sourceTitle = it.title;
-    it.sourceTitleAt = new Date().toISOString();
-    db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
-      .run(it.title, JSON.stringify(it), new Date().toISOString(), row.id);
-    return ok(reply, { id: row.id, title: it.title });
+      if (!name) return bad(reply, 'NO_TORRENT_NAME', '源种里没有标题', 422);
+      it.title = String(name).slice(0, 300);
+      it.sourceTitle = it.title;
+      it.sourceTitleAt = new Date().toISOString();
+      db.prepare('UPDATE queue SET title = ?, data = ?, updated_at = ? WHERE id = ?')
+        .run(it.title, JSON.stringify(it), new Date().toISOString(), row.id);
+      return ok(reply, { id: row.id, title: it.title });
+    } finally { uploadLock.release(row.id, db); }
   });
 
   app.post('/api/targets/:host/plan', async (req, reply) => {
@@ -372,16 +384,24 @@ module.exports = function (app, ctx) {
 
   app.post('/api/targets/:host/verify', async (req, reply) => {
     const b = req.body || {};
-    const item = loadQueue(b.queueId);
+    let item = loadQueue(b.queueId);
     if (!item) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
     const mism = checkHost(item.data, req.params.host);
     if (mism) return bad(reply, mism.code, mism.message, 400);
-    const t = await torrentFor(b, item.data);
-    if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
-    const r = await target.verify(req.params.host, item.data, t.buf, { url: b.url });
-    if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
-    setVerify(item.data, req.params.host, r.data);
-    saveQueue(item.data);
-    return ok(reply, r.data);
+    /* 回查和提交共用一把锁：回查期间不允许另一路提交覆盖 targetResults */
+    if (!uploadLock.acquire(item.id, db)) return bad(reply, 'UPLOAD_IN_PROGRESS', '这个条目正在提交，等这次结束', 409);
+    try {
+      item = loadQueue(b.queueId);
+      if (!item) return bad(reply, 'NOT_FOUND', '队列条目不存在', 404);
+      const mism2 = checkHost(item.data, req.params.host);
+      if (mism2) return bad(reply, mism2.code, mism2.message, 400);
+      const t = await torrentFor(b, item.data);
+      if (t.err) return bad(reply, 'TORRENT_UNAVAILABLE', t.err, 400);
+      const r = await target.verify(req.params.host, item.data, t.buf, { url: b.url });
+      if (!r.ok) return bad(reply, r.code, r.message, r.http || 400);
+      setVerify(item.data, req.params.host, r.data);
+      saveQueue(item.data);
+      return ok(reply, r.data);
+    } finally { uploadLock.release(item.id, db); }
   });
 };

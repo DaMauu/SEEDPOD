@@ -2,6 +2,7 @@
 const { makePublisher } = require('./publish');
 const imagehost = require('./imagehost');
 const flowConfig = require('./flow-config');
+const uploadLock = require('./upload-lock');
 
 module.exports = function (app, ctx) {
   const { db, one, ok, bad, jparse } = ctx;
@@ -53,10 +54,10 @@ module.exports = function (app, ctx) {
 
   /* 图床：默认演练；真上传要 realImages 开关，且只接受已验证的 custom/local 接口 */
   app.post('/api/queue/:id/images', async (req, reply) => {
-    const cur = load(req.params.id);
+    let cur = load(req.params.id);
     if (!cur) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const b = req.body || {};
-    const shots = Array.isArray(cur.data.shots) ? cur.data.shots : [];
+    let shots = Array.isArray(cur.data.shots) ? cur.data.shots : [];
     if (!shots.length) return bad(reply, 'NO_SHOTS', '还没有截图', 400);
     const picked = String(b.imageHost || cur.data.imageHost || '').trim();
     const provider = picked && picked !== '站内' ? picked : imagehost.defaultProvider();
@@ -66,27 +67,35 @@ module.exports = function (app, ctx) {
       return bad(reply, 'REAL_IMAGES_DISABLED', '图床真上传没打开：把配置 realImages 设为 true（或设 ALLOW_REAL=1）再试', 409);
     }
     const retries = b.retries !== undefined ? b.retries : flowConfig.number(flowConfig.read(ctx), '图片上传重试', 2);
-    let r;
+    const lockId = cur.id;
+    if (!uploadLock.acquire(lockId, db)) return bad(reply, 'UPLOAD_IN_PROGRESS', '这个条目正在提交，等这次结束', 409);
     try {
-      r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: allowReal, retries: retries, delayMs: b.delayMs });
-    } catch (e) {
-      return bad(reply, 'IMAGE_HOST_FAILED', String(e && e.message || e).slice(0, 240), 502);
-    }
-    cur.data.imagePlan = { at: now(), provider: r.provider, dryRun: r.dryRun, total: r.total, uploaded: r.uploaded, failed: r.failed, code: r.code, message: r.message };
-    if (dryRun || r.code === 'IMAGE_HOST_MANUAL') {
+      cur = load(req.params.id);
+      if (!cur) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
+      shots = Array.isArray(cur.data.shots) ? cur.data.shots : [];
+      if (!shots.length) return bad(reply, 'NO_SHOTS', '还没有截图', 400);
+      let r;
+      try {
+        r = await imagehost.process(provider, shots, { dryRun: dryRun, allowReal: allowReal, retries: retries, delayMs: b.delayMs });
+      } catch (e) {
+        return bad(reply, 'IMAGE_HOST_FAILED', String(e && e.message || e).slice(0, 240), 502);
+      }
+      cur.data.imagePlan = { at: now(), provider: r.provider, dryRun: r.dryRun, total: r.total, uploaded: r.uploaded, failed: r.failed, code: r.code, message: r.message };
+      if (dryRun || r.code === 'IMAGE_HOST_MANUAL') {
+        save(cur.data);
+        return ok(reply, r);
+      }
+      if (!r.items.some(function (x) { return x.ok; })) {
+        save(cur.data);
+        return bad(reply, r.code, r.message, r.http || 502);
+      }
+      cur.data.imageHost = provider;
+      cur.data.imageLinks = r.items.filter(function (x) { return x.ok && x.url; }).map(function (x) { return { name: x.name, url: x.url }; });
       save(cur.data);
-      return ok(reply, r);
-    }
-    if (!r.items.some(function (x) { return x.ok; })) {
-      save(cur.data);
-      return bad(reply, r.code, r.message, r.http || 502);
-    }
-    cur.data.imageHost = provider;
-    cur.data.imageLinks = r.items.filter(function (x) { return x.ok && x.url; }).map(function (x) { return { name: x.name, url: x.url }; });
-    save(cur.data);
-    const prep = release.prepare(req.params.id, {});
-    if (!prep.ok) return ok(reply, Object.assign({}, r, { preparedError: prep.message }));
-    return ok(reply, Object.assign({}, r, { prepared: prep.data.prepared }));
+      const prep = release.prepare(req.params.id, {});
+      if (!prep.ok) return ok(reply, Object.assign({}, r, { preparedError: prep.message }));
+      return ok(reply, Object.assign({}, r, { prepared: prep.data.prepared }));
+    } finally { uploadLock.release(lockId, db); }
   });
 
   /* 客户端注入：默认演练；真注入复用 publishItem 的取种/加种/回查链路 */

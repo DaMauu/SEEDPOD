@@ -3,6 +3,8 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { openDB } = require('../server/db');
+const uploadLock = require('../server/upload-lock');
 
 const ROOT = path.resolve(__dirname, '..');
 const PORT = Number(process.env.PTA_CHECK_PORT || 8099);
@@ -58,6 +60,25 @@ function fetchA(url, opts) {
       const j = await r.json().catch(function () { return null; });
       return { status: r.status, body: j };
     }
+
+    await check('提交锁被占用时回查/补标题都返回 409', async function () {
+      const id = await mk('Lock Verify 2026 1080p', '127.0.0.1');
+      const db = openDB(path.join(DATA, 'seedpod.db'));
+      need(uploadLock.acquire(id, db) === true, '预占锁失败');
+      try {
+        const v = await fetchA(BASE + '/api/targets/127.0.0.1/verify', {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id })
+        });
+        const vj = await v.json().catch(function () { return null; });
+        need(v.status === 409 && vj && vj.error && vj.error.code === 'UPLOAD_IN_PROGRESS', '回查没被锁拦住：' + v.status + ' ' + JSON.stringify(vj));
+        const f = await fetchA(BASE + '/api/queue/' + encodeURIComponent(id) + '/fill-source-title', { method: 'POST' });
+        const fj = await f.json().catch(function () { return null; });
+        need(f.status === 409 && fj && fj.error && fj.error.code === 'UPLOAD_IN_PROGRESS', '补标题没被锁拦住：' + f.status + ' ' + JSON.stringify(fj));
+      } finally {
+        uploadLock.release(id, db);
+        db.close();
+      }
+    });
 
     await check('标题像测试种子 → 403 TEST_ITEM_BLOCKED', async function () {
       const id = await mk('Sample 2026 720p', 'test.example');
