@@ -2684,10 +2684,11 @@ node pta/scripts/audit-quality.js --project pta --fail
 
 - 前端：`pta/web-src` 是 Vite + Vue 3 SFC，七个页面（dashboard/sites/crawl/queue/sources/logs/settings）+ 登录页；构建产物在 `pta/web/dist`。
 - 后端：`pta/server/app-fastify.js`（Fastify + SQLite），数据目录由 `PTA_DATA` / `DEPLOY_DIR` 指定，systemd 服务 `seedpod` 监听 8080。
-- 运行时站点数据只有三个 JSON：`data/sites.json`（定义 + settings）、`data/site-urls.json`（Base64 网址）、`data/cookies.json`（AES-GCM 密文）；SQLite 只存词条、队列、日志、配置等。
+- 运行时站点数据是四个 JSON：`data/sites.json`（定义 + settings）、`data/site-urls.json`（Base64 网址）、`data/presets.json`（全局类型/站点字段模板）、`data/cookies.json`（AES-GCM 密文）；SQLite 只存词条、队列、日志、配置等。
 - 生产当前 306 站、306 网址、10 条密文 cookie；306 站全部 `enabled:false`，需要用户到站点页手动开启。
 - 92 站有抓取分类绑定，109 站有发布分类绑定；218 站抓取类型仍为空，开启前要先补类型/分类。
-- 站点 JSON 只写全局 key + 站点 ID（`movie -> 401`）；中文类型、媒介、分辨率、优惠、限制只在 `pta/pack/presets.preset.json` 写一份。
+- 站点 JSON 只写全局 key + 站点 ID（`movie -> 401`）；中文类型、媒介、分辨率、优惠、限制和站点字段模板只在 `data/presets.json` 写一份，首次启动从 pack 复制。
+- 站点保存保留 `limits`、`downloadLink`、`refreshCron` 和未知字段；`limits`、`downloadLink` 已接抓取。
 - 全量 `bash pta/checks/run.sh` 通过，质量审计总体 100。
 - 发版：`git pull --ff-only && DEPLOY_DIR=/opt/seedpod bash deploy.sh`；Docker 部署见 `Dockerfile` / `docker-compose.yml`，数据卷挂 `/data`。
 - 待接：218 站类型补全；镜像升级时把新预设站点自动合并进已有 `/data/sites.json`。
