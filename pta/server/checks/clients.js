@@ -15,7 +15,7 @@ const BASE = 'http://127.0.0.1:' + PORT;
 const USER = 'check';
 const PASS = 'check-pass';
 process.env.PTA_DATA = DATA;
-const watch = require(path.join(ROOT, 'server', 'clients', 'watch.js'));
+const watch = require(path.join(ROOT, 'server', 'src', 'infra', 'clients', 'watch.js'));
 const { makeQb } = require(path.join(ROOT, 'server', 'src', 'features', 'downloaders', 'qb.js'));
 const qb = makeQb(DATA);
 const INFO = Buffer.from('d4:name4:test6:lengthi1ee');
@@ -82,7 +82,7 @@ async function main() {
     res.writeHead(404); res.end('');
   });
 
-  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
+  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'src', 'main.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),

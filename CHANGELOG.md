@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.666 · 2026-11-23
+
+### 后端收口完成：入口 / 路由 / core
+- 入口迁到 `server/src/main.js`，CLI 迁到 `server/src/cli.js`。
+- 剩余 routes 全部进 `server/src/http`。
+- `clients`、`core` 进 `server/src`；`server/` 根下不再有 JS 文件。
+- systemd、Docker、package.json、检查统一新入口；全量 `run.sh` 通过。
+
 ## v0.7.665 · 2026-11-23
 
 ### 后端收口：scheduler / downloaders / media / notify

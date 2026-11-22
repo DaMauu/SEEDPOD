@@ -65,7 +65,7 @@ async function main() {
   });
   await new Promise(function (resolve) { imageServer.listen(0, '127.0.0.1', resolve); });
   const imagePort = imageServer.address().port;
-  const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
+  const child = spawn(process.env.PTA_NODE || process.execPath, [path.join(ROOT, 'server', 'src', 'main.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),

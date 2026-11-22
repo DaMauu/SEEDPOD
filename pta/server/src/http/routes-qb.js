@@ -2,7 +2,7 @@
 const path = require('path');
 const secretbox = require('../infra/secretbox');
 const { makeQb } = require('../features/downloaders/qb');
-const watch = require('../../clients/watch');
+const watch = require('../infra/clients/watch');
 const dlPolicy = require('../features/downloaders/policy');
 
 module.exports = function (app, ctx) {

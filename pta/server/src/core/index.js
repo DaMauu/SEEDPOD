@@ -2,21 +2,21 @@
    Fastify 路由仍走同一批模块；后续把剩余路由逐步改为直接调 core。 */
 const fs = require('fs');
 const path = require('path');
-const { openDB } = require('../src/infra/db');
-const { makeCrawl } = require('../src/features/crawl/service');
-const { makeTarget } = require('../src/features/publish/target');
-const { makePublisher } = require('../src/features/publish/service');
-const { makeRelease } = require('../src/features/publish/release');
-const { makeScheduler } = require('../src/features/scheduler/service');
-const { makeQb } = require('../src/features/downloaders/qb');
-const watchClient = require('../clients/watch');
-const { makeTargetService } = require('../src/features/publish/target-service');
-const imagehost = require('../src/features/media/imagehost');
-const flowConfig = require('../src/features/settings/flow-config');
-const screen = require('../src/features/screen/service');
-const adapters = require('../src/infra/adapters/index');
-const secretbox = require('../src/infra/secretbox');
-const PKG = require('../../../package.json');
+const { openDB } = require('../infra/db');
+const { makeCrawl } = require('../features/crawl/service');
+const { makeTarget } = require('../features/publish/target');
+const { makePublisher } = require('../features/publish/service');
+const { makeRelease } = require('../features/publish/release');
+const { makeScheduler } = require('../features/scheduler/service');
+const { makeQb } = require('../features/downloaders/qb');
+const watchClient = require('../infra/clients/watch');
+const { makeTargetService } = require('../features/publish/target-service');
+const imagehost = require('../features/media/imagehost');
+const flowConfig = require('../features/settings/flow-config');
+const screen = require('../features/screen/service');
+const adapters = require('../infra/adapters/index');
+const secretbox = require('../infra/secretbox');
+const PKG = require('../../../../package.json');
 
 function unwrap(r) {
   if (!r || !r.ok) {
@@ -30,7 +30,7 @@ function unwrap(r) {
 
 function createCore(opts) {
   const o = opts || {};
-  const DATA_DIR = path.resolve(o.dataDir || require('../src/infra/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+  const DATA_DIR = path.resolve(o.dataDir || require('../infra/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', '..', 'data'));
   const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
   try { db.exec('PRAGMA busy_timeout = 3000'); } catch (e) { console.warn('[seedpod] busy_timeout:', e && e.message ? e.message : e) }
   const one = (sql, ...args) => { try { return db.prepare(sql).get(...args); } catch (e) { return null; } };
@@ -43,7 +43,7 @@ function createCore(opts) {
   const ctx = {
     db, DATA_DIR, one, all, jparse,
     allowReal: function (key) {
-      if (String(require('../src/infra/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
+      if (String(require('../infra/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
       const r = one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;

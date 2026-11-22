@@ -1,14 +1,14 @@
 /* 站点会话自检与凭据导入（Fastify v2）。 */
 const fs = require('fs');
 const path = require('path');
-const adapters = require('./src/infra/adapters/index');
-const jsonFile = require('./src/infra/json-file');
-const urlGuard = require('./src/infra/url-guard');
+const adapters = require('../infra/adapters/index');
+const jsonFile = require('../infra/json-file');
+const urlGuard = require('../infra/url-guard');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
-  const siteStore = require('./src/features/sites/store')(DATA_DIR);
+  const cookieStore = require('../features/sites/credentials')(DATA_DIR);
+  const siteStore = require('../features/sites/store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const STATUS_FILE = path.join(DATA_DIR, 'site-status.json');
 

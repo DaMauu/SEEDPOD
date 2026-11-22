@@ -2,19 +2,19 @@
    在 build() 内被 require 注入（见 app-fastify.js 末尾 require('./routes-write')(app, ctx)）。 */
 const fs = require('fs');
 const path = require('path');
-const { makeTarget } = require('./src/features/publish/target');
-const { makeTargetService } = require('./src/features/publish/target-service');
-const { hostsOf } = require('./src/features/screen/dedupe-item');
+const { makeTarget } = require('../features/publish/target');
+const { makeTargetService } = require('../features/publish/target-service');
+const { hostsOf } = require('../features/screen/dedupe-item');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
   const now = () => new Date().toISOString();
   const targetService = makeTargetService(ctx, makeTarget(ctx));
-  const configSchema = require('./src/features/settings/config-schema');
-const catalogBulk = require('./src/features/catalog/bulk');
-const catalogItem = require('./src/features/catalog/item');
-const { tx } = require('./src/infra/db');
-const catalogSync = require('./src/features/catalog/sync');
+  const configSchema = require('../features/settings/config-schema');
+const catalogBulk = require('../features/catalog/bulk');
+const catalogItem = require('../features/catalog/item');
+const { tx } = require('../infra/db');
+const catalogSync = require('../features/catalog/sync');
 
   function getCatalog(id) {
     const row = one('SELECT data FROM catalog WHERE id = ?', id);

@@ -6,7 +6,7 @@ module.exports = function (app, ctx) {
     const row = one('SELECT data FROM queue WHERE id = ?', id);
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
-    const built = require('./src/features/media/meta').buildNames(it);
+    const built = require('../features/media/meta').buildNames(it);
     return ok(reply, { id: id, target: it.targetSite || '', title: built.title,
       subtitle: built.subtitle, description: built.description, shots: (it.shots || []).length });
   });

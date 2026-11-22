@@ -31,7 +31,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 4. 站点凭据只存密文：`data/cookies.json` + AES-256-GCM，接口只回 `hasCookie`；SQLite `credentials` 表只作迁移/测试镜像，不再作为运行时事实源。
 5. 提交前必须 `pta/server/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
-7. 生产后端只有 v2：服务端改动只进 `app-fastify.js` / `routes-*.js` / `db.js`，旧 `app.js` 已删除，避免同一功能两套实现。
+7. 生产后端只有 v2：入口 `src/main.js`，路由 `src/http/routes-*.js`，数据层 `src/infra/db.js`；旧 `app.js` 已删除，避免同一功能两套实现。
 8. 站点与预设随程序发布：镜像带 `pta/server/pack/sites.preset.json` / `site-urls.preset.json` / `presets.preset.json` / `cookies.example.json`，首次启动复制到 `/data`；运行时只读写 `data/sites.json`、`site-urls.json`、`presets.json`、`cookies.json`。旧 `site-defs` / `site-pack` 流程已删除。详见 `pta/docs/SITE-JSON.md`。
 9. 质量审计固定进 `pta/server/checks/run.sh`：全库看 `pta/server/checks/baselines/quality.json` 防回退；单文件/单功能先跑对应 scope；有「D」先修，不能带「D」提交。详见 `pta/docs/QUALITY.md`。
 

@@ -1,24 +1,24 @@
 /* 其余业务接口（Fastify v2）：站点搜索预设、本地查重、按条件送审、已发布、本地库、抓取状态。 */
 const fs = require('fs');
 const path = require('path');
-const screen = require('./src/features/screen/service');
-const meta = require('./src/features/media/meta');
-const mediainfo = require('./src/features/media/mediainfo');
-const metaExt = require('./src/features/media/meta-ext');
-const collage = require('./src/features/media/collage');
-const jsonFile = require('./src/infra/json-file');
-const { makeErrorStats } = require('./src/features/logs/error-stats');
-const { makeFailureQueue } = require('./src/features/logs/failure-queue');
-const { makeTarget } = require('./src/features/publish/target');
-const { makeTargetService } = require('./src/features/publish/target-service');
-const { dedupeItem, hostsOf } = require('./src/features/screen/dedupe-item');
-const { tx } = require('./src/infra/db');
+const screen = require('../features/screen/service');
+const meta = require('../features/media/meta');
+const mediainfo = require('../features/media/mediainfo');
+const metaExt = require('../features/media/meta-ext');
+const collage = require('../features/media/collage');
+const jsonFile = require('../infra/json-file');
+const { makeErrorStats } = require('../features/logs/error-stats');
+const { makeFailureQueue } = require('../features/logs/failure-queue');
+const { makeTarget } = require('../features/publish/target');
+const { makeTargetService } = require('../features/publish/target-service');
+const { dedupeItem, hostsOf } = require('../features/screen/dedupe-item');
+const { tx } = require('../infra/db');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
   const now = () => new Date().toISOString();
-  const siteStore = require('./src/features/sites/store')(DATA_DIR);
-  const presets = require('./src/features/presets/store')(DATA_DIR);
+  const siteStore = require('../features/sites/store')(DATA_DIR);
+  const presets = require('../features/presets/store')(DATA_DIR);
   const readPreset = () => { const out = {}; siteStore.list().forEach(function (s) { out[s.host] = { engine: s.engine, cats: s.search.cats || {}, types: s.search.types || [], source: 'site-json', confirmed: true }; }); return out; };
   const errorStats = makeErrorStats(ctx);
   const failureQueue = makeFailureQueue(ctx);

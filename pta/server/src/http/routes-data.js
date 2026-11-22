@@ -1,13 +1,13 @@
 /* 站点、凭据、日志与站点定义接口（Fastify v2）。 */
 const path = require('path');
 const fs = require('fs');
-const siteHidden = require('./src/features/sites/hidden');
+const siteHidden = require('../features/sites/hidden');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const cookieStore = require('./src/features/sites/credentials')(DATA_DIR);
-  const siteStore = require('./src/features/sites/store')(DATA_DIR);
-  const presets = require('./src/features/presets/store')(DATA_DIR);
+  const cookieStore = require('../features/sites/credentials')(DATA_DIR);
+  const siteStore = require('../features/sites/store')(DATA_DIR);
+  const presets = require('../features/presets/store')(DATA_DIR);
   function archOf(engine) { const e = String(engine || '').toLowerCase(); return e === 'nexusphp' ? 'NP' : (e === 'unit3d' ? 'UNIT3D' : (e === 'gazelle' ? 'GZ' : '?')); }
   function defOfRecord(rec) {
     const cats = Object.assign({}, rec.search.cats || {});
@@ -205,7 +205,7 @@ module.exports = function (app, ctx) {
     if (!b || typeof b !== 'object' || Array.isArray(b)) return bad(reply, 'BAD_DEF', '站点定义必须是 JSON 对象');
     const text = JSON.stringify(b);
     if (text.length > 200 * 1024) return bad(reply, 'TOO_LARGE', '站点定义超过 200KB');
-    if (b.base && !require('./src/infra/url-guard').baseOk(host, b.base)) {
+    if (b.base && !require('../infra/url-guard').baseOk(host, b.base)) {
       return bad(reply, 'BAD_BASE', '站点 base 必须是该站域名或其子域，且非本机站点要用 https');
     }
     const CAT_MODES = ['single', 'multi', 'bracket', 'indexed'];

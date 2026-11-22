@@ -1,25 +1,25 @@
 /* SEEDPOD 后端 v2：Node + Fastify + SQLite，线上唯一后端。
    旧 server/app.js 已删除，只保留 v2。 */
 const path = require('path');
-const secretbox = require('./src/infra/secretbox');
+const secretbox = require('./infra/secretbox');
 const fs = require('fs');
 const crypto = require('crypto');
 const Fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
-const { openDB } = require('./src/infra/db');
-const { makeCrawl } = require('./src/features/crawl/service');
-const siteHidden = require('./src/features/sites/hidden');
+const { openDB } = require('./infra/db');
+const { makeCrawl } = require('./features/crawl/service');
+const siteHidden = require('./features/sites/hidden');
 
-const PORT = Number((require('./src/infra/env').read('PANEL_PORT','PTA_PORT')) || 8090);
-const DATA_DIR = path.resolve(require('./src/infra/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
+const PORT = Number((require('./infra/env').read('PANEL_PORT','PTA_PORT')) || 8090);
+const DATA_DIR = path.resolve(require('./infra/env').read('DATA_DIR','PTA_DATA') || path.join(__dirname, '..', '..', '..', 'data'));
 const WEB_DIR = (function () {
-  const webDir = require('./src/infra/env').read('WEB_DIR','PTA_WEB');
+  const webDir = require('./infra/env').read('WEB_DIR','PTA_WEB');
   if (webDir) return path.resolve(webDir);
-  const dist = path.join(__dirname, '..', 'web', 'dist');
-  return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', 'web');
+  const dist = path.join(__dirname, '..', '..', 'web', 'dist');
+  return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', '..', 'web');
 })();
-const siteStore = require('./src/features/sites/store')(DATA_DIR);
-const PKG = require('../../package.json');
+const siteStore = require('./features/sites/store')(DATA_DIR);
+const PKG = require('../../../package.json');
 const VERSION = PKG.version;
 const DEV_DATE = '2026-11-14';
 const DEP = PKG.dependencies || {};
@@ -28,18 +28,18 @@ const KEYRING = secretbox.loadKey(DATA_DIR);
 const trimVer = (v) => String(v || '').replace(/^[~^]/, '');
 const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vite) + ' + SFC（构建）';
 const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
-const PTA_USER = require('./src/infra/env').read('PANEL_USER','PTA_USER') || '';
-const PTA_PASS = require('./src/infra/env').read('PANEL_PASS','PTA_PASS') || '';
+const PTA_USER = require('./infra/env').read('PANEL_USER','PTA_USER') || '';
+const PTA_PASS = require('./infra/env').read('PANEL_PASS','PTA_PASS') || '';
 /* 七个页面固定（dashboard/sites/crawl/queue/sources/logs/settings）；接口数按实际注册的路由算 */
 const PAGE_COUNT = 7;
 let ENDPOINT_COUNT = 0;
 
 const db = openDB(path.join(DATA_DIR, 'seedpod.db'));
 /* 旧 credentials 表一次性迁到总 cookie 文件；文件已存在则不覆盖 */
-try { require('./src/features/sites/credentials')(DATA_DIR).migrateFromDB(db); }
+try { require('./features/sites/credentials')(DATA_DIR).migrateFromDB(db); }
 catch (e) { console.warn('[seedpod] cookie 文件迁移失败:', e && e.message ? e.message : e); }
 /* 首次启动把 pack 模板复制成 data/presets.json；之后用户改的是 data 这份 */
-try { require('./src/features/presets/store')(DATA_DIR).ensure(); }
+try { require('./features/presets/store')(DATA_DIR).ensure(); }
 catch (e) { console.warn('[seedpod] 全局预设初始化失败:', e && e.message ? e.message : e); }
 const LOGIN_FAILS = new Map();
 const SESSION_TTL = 12 * 3600 * 1000;
@@ -53,7 +53,7 @@ function ok(reply, data) { if (arguments.length === 1) return { ok: true, data: 
 
 function counts() {
   const one2 = (t) => { const r = one('SELECT COUNT(*) AS n FROM ' + t); return r ? r.n : 0; };
-  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: require('./src/features/sites/credentials')(DATA_DIR).list().length };
+  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: require('./features/sites/credentials')(DATA_DIR).list().length };
 }
 
 function parseCookies(req) {
@@ -80,7 +80,7 @@ function sessionOk(req) {
   return true;
 }
 function cookieSecure(req) {
-  return require('./src/infra/env').read('COOKIE_SECURE','PTA_COOKIE_SECURE') === '1' ||
+  return require('./infra/env').read('COOKIE_SECURE','PTA_COOKIE_SECURE') === '1' ||
     String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
 }
 
@@ -158,7 +158,7 @@ async function build() {
 
   /* 外部触发：带 token 才能跑调度；没配 PTA_HOOK_TOKEN 就完全关闭 */
   app.post('/api/hooks/run', async (req, reply) => {
-    const token = String(require('./src/infra/env').read('HOOK_TOKEN','PTA_HOOK_TOKEN') || '').trim();
+    const token = String(require('./infra/env').read('HOOK_TOKEN','PTA_HOOK_TOKEN') || '').trim();
     if (!token) return bad(reply, 'HOOK_DISABLED', '没有配置 HOOK_TOKEN，外部触发关闭', 404);
     const got = String((req.headers && (req.headers['x-hook-token'] || req.headers['x-api-token'])) || (req.body && req.body.token) || '').trim();
     const a = Buffer.from(got), b = Buffer.from(token);
@@ -298,7 +298,7 @@ async function build() {
     const bySite = {}, byDay = {};
     let last7 = 0, last30 = 0;
     /* 面板按服务器本地时区算“今天”，否则东八区凌晨发布会算到昨天 */
-    const dayOf = require('./src/shared/day').dayOf;
+    const dayOf = require('./shared/day').dayOf;
     for (let i = 13; i >= 0; i--) byDay[dayOf(nowMs - i * 86400000)] = 0;
     pubRows.forEach(function (r) {
       const p = jparse(r.data) || {};
@@ -370,37 +370,37 @@ async function build() {
   /* 写接口：词条库、队列、流程规则、配置 */
   const ctx = { db: db, one: one, all: all, ok: ok, bad: bad, jparse: jparse, DATA_DIR: DATA_DIR, WEB_DIR: WEB_DIR,
     allowReal: function (key) {
-      if (String(require('./src/infra/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
+      if (String(require('./infra/env').read('ALLOW_REAL','PTA_ALLOW_REAL') || '') === '1') return true;
       const r = one("SELECT v FROM meta WHERE k = 'config'");
       const cfg = JSON.parse(r ? r.v : 'null') || {};
       return cfg[key] === true;
     } };
-  require('./src/features/settings/config-schema').ensureAll(ctx);
+  require('./features/settings/config-schema').ensureAll(ctx);
   ctx.crawl = makeCrawl(ctx);
-  ctx.notify = require('./src/features/notifications/service').makeNotify(ctx);
-  require('./routes-write')(app, ctx);
-  require('./routes-data')(app, ctx);
+  ctx.notify = require('./features/notifications/service').makeNotify(ctx);
+  require('./http/routes-write')(app, ctx);
+  require('./http/routes-data')(app, ctx);
   logEvent = ctx.logEvent || null;
-  require('./src/http/routes-qb')(app, ctx);
-  require('./routes-probe')(app, ctx);
-  require('./src/http/routes-crawl')(app, ctx);
-  require('./routes-tasks')(app, ctx);
-  require('./routes-misc')(app, ctx);
-  require('./src/http/routes-publish')(app, ctx);
-  require('./src/http/routes-release')(app, ctx);
-  require('./src/http/routes-target')(app, ctx);
-  require('./src/http/routes-maps')(app, ctx);
-  require('./src/http/routes-media')(app, ctx);
-  require('./src/http/routes-notify')(app, ctx);
-  require('./routes-extra')(app, ctx);
+  require('./http/routes-qb')(app, ctx);
+  require('./http/routes-probe')(app, ctx);
+  require('./http/routes-crawl')(app, ctx);
+  require('./http/routes-tasks')(app, ctx);
+  require('./http/routes-misc')(app, ctx);
+  require('./http/routes-publish')(app, ctx);
+  require('./http/routes-release')(app, ctx);
+  require('./http/routes-target')(app, ctx);
+  require('./http/routes-maps')(app, ctx);
+  require('./http/routes-media')(app, ctx);
+  require('./http/routes-notify')(app, ctx);
+  require('./http/routes-extra')(app, ctx);
 
-  require('./src/features/scheduler/pipeline').loadSteps();
-  const publisher = require('./src/features/publish/service').makePublisher(ctx);
+  require('./features/scheduler/pipeline').loadSteps();
+  const publisher = require('./features/publish/service').makePublisher(ctx);
   ctx.publisher = publisher;
-  ctx.scheduler = require('./src/features/scheduler/service').makeScheduler(ctx, {
+  ctx.scheduler = require('./features/scheduler/service').makeScheduler(ctx, {
     crawl: ctx.crawl,
-    screen: require('./src/features/screen/service'),
-    release: require('./src/features/publish/release').makeRelease(ctx),
+    screen: require('./features/screen/service'),
+    release: require('./features/publish/release').makeRelease(ctx),
     publish: publisher
   });
   ctx.scheduler.start();

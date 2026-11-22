@@ -1,13 +1,13 @@
 {
   "name": "seedpods-panel",
-  "version": "0.7.665",
+  "version": "0.7.666",
   "private": true,
   "description": "PT 原盘转载面板：抓取、查重、准备、发布",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "start": "node pta/server/app-fastify.js",
+    "start": "node pta/server/src/main.js",
     "check": "bash pta/server/checks/run.sh",
     "dev": "vite --config pta/web/vite.config.js",
     "build": "vite build --config pta/web/vite.config.js",

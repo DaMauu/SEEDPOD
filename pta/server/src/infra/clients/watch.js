@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const env = require('../src/infra/env');
+const env = require('../env');
 
 /* watch 只能写进明确允许的根：WATCH_ROOT、MEDIA_ROOT、DATA_DIR/watch 或 DATA_DIR 本身 */
 function allowedRoots() {

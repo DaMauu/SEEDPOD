@@ -2,7 +2,7 @@
 
 状态：2026-11-24 定稿。改结构前先改本文件，并加一条 `DECISIONS.md`。
 
-当前进度：`features/sites`、`features/presets`、`features/crawl`、`features/screen`、`features/queue`、`features/catalog`、`features/publish`、`features/scheduler`、`features/downloaders`、`features/media`、`features/notifications`、`features/logs`、`features/settings`、`infra` 已收口；其余功能仍在 `server/` 根下，按功能继续搬。
+当前进度：后端已全部收进 `server/src`；`features/*`、`infra`、`http`、`shared`、`core` 已落地，`server/` 根下不再有 JS 文件。
 
 ## 三块
 

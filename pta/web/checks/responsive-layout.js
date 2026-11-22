@@ -71,7 +71,7 @@ async function run() {
     console.error('没有 dist，先 npm run build')
     process.exit(2)
   }
-  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
+  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'src', 'main.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: dist,

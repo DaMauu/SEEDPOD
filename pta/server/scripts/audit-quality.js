@@ -50,7 +50,7 @@ const FEATURES = {
   metadata: ['pta/server/meta.js', 'pta/server/meta-ext.js', 'pta/server/routes-misc.js'],
   media: ['pta/server/media.js', 'pta/server/routes-media.js'],
   clients: ['pta/server/clients/watch.js', 'pta/server/clients/rtorrent.js', 'pta/server/clients/deluge.js', 'pta/server/routes-qb.js'],
-  auth: ['pta/server/app-fastify.js', 'pta/server/routes-data.js', 'pta/server/security.js']
+  auth: ['pta/server/src/main.js', 'pta/server/src/http/routes-data.js']
 };
 const PROJECTS = {
   pta: ['pta'],
@@ -126,7 +126,7 @@ function collect(files) {
     if (n > maxLines) { maxLines = n; maxFile = rel(f); }
     if (code > maxCodeLines) { maxCodeLines = code; maxCodeFile = rel(f); }
     if (rel(f) !== 'pta/server/scripts/audit-quality.js') todos += (s.match(/\b(TODO|FIXME|XXX)\b/g) || []).length;
-    const runtimeFile = (/\/server\//.test(f) && !/\/server\/(checks|scripts|fixtures|data)\//.test(f) && !/\/server\/cli\.js$/.test(f)) || /\/web\/src\//.test(f);
+    const runtimeFile = (/\/server\//.test(f) && !/\/server\/(checks|scripts|fixtures|data)\//.test(f) && !/\/server\/(src\/)?cli\.js$/.test(f)) || /\/web\/src\//.test(f);
     if (runtimeFile) {
       consoleLogs += (s.match(/console\.log\s*\(/g) || []).length;
       emptyCatch += (s.match(/catch\s*\([^)]*\)\s*\{\s*\}/g) || []).length;

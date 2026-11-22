@@ -34,7 +34,7 @@ async function waitUp() {
   throw new Error('临时后端没起来');
 }
 async function main() {
-  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
+  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'src', 'main.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       NODE_ENV: 'test', SEEDPOD_FAIL_STEP: 'screen',

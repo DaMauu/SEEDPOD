@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { makeQb } = require('../downloaders/qb');
-const watch = require('../../../clients/watch');
+const watch = require('../../infra/clients/watch');
 const stage = require('../queue/stage');
 const flowConfig = require('../settings/flow-config');
 const { tx } = require('../../infra/db');

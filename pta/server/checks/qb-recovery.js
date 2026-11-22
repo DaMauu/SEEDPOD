@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { makeQb } = require('../src/features/downloaders/qb');
-const watch = require('../clients/watch');
+const watch = require('../src/infra/clients/watch');
 
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-qbrec-'));
 const qb = makeQb(DATA);

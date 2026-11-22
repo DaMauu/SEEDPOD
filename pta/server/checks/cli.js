@@ -36,7 +36,7 @@ async function json(url, opts) {
 }
 function cli(args) {
   return new Promise(function (resolve) {
-    execFile(process.execPath, [path.join(ROOT, 'server', 'cli.js')].concat(args), {
+    execFile(process.execPath, [path.join(ROOT, 'server', 'src', 'cli.js')].concat(args), {
       env: Object.assign({}, process.env, { PANEL_URL: BASE, PANEL_USER: USER, PANEL_PASS: PASS }),
       timeout: 20000
     }, function (err, stdout, stderr) {
@@ -51,7 +51,7 @@ function cliLocal(args, dataDir, extraEnv) {
   delete env.PANEL_URL; delete env.PANEL_USER; delete env.PANEL_PASS; delete env.ALLOW_REAL;
   delete env.PTA_BASE; delete env.PTA_USER; delete env.PTA_PASS; delete env.PTA_ALLOW_REAL;
   return new Promise(function (resolve) {
-    execFile(process.execPath, [path.join(ROOT, 'server', 'cli.js')].concat(args), { env, timeout: 60000 }, function (err, stdout, stderr) {
+    execFile(process.execPath, [path.join(ROOT, 'server', 'src', 'cli.js')].concat(args), { env, timeout: 60000 }, function (err, stdout, stderr) {
       resolve({ code: err ? (typeof err.code === 'number' ? err.code : 1) : 0,
         stdout: String(stdout || ''), stderr: String(stderr || '') });
     });
@@ -91,7 +91,7 @@ async function waitUp() {
 }
 
 async function main() {
-  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
+  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'src', 'main.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       PANEL_PORT: String(PORT), DATA_DIR: DATA, WEB_DIR: path.join(ROOT, 'web', 'dist'),

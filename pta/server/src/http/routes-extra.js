@@ -1,12 +1,12 @@
 /* 补齐前端仍在调用的缺口接口：队列批量、抓取执行、更新日志、事件流别名。 */
 const fs = require('fs');
 const path = require('path');
-const form = require('./src/infra/form');
-const { makeTarget } = require('./src/features/publish/target');
-const { makeTargetService } = require('./src/features/publish/target-service');
-const { hostsOf } = require('./src/features/screen/dedupe-item');
-const queueBulk = require('./src/features/queue/bulk');
-const queueBulkPublish = require('./src/features/queue/bulk-publish');
+const form = require('../infra/form');
+const { makeTarget } = require('../features/publish/target');
+const { makeTargetService } = require('../features/publish/target-service');
+const { hostsOf } = require('../features/screen/dedupe-item');
+const queueBulk = require('../features/queue/bulk');
+const queueBulkPublish = require('../features/queue/bulk-publish');
 
 module.exports = function (app, ctx) {
   const { db, one, all, ok, bad, jparse, DATA_DIR } = ctx;
@@ -70,7 +70,7 @@ module.exports = function (app, ctx) {
     const p = path.join(DATA_DIR, '..', 'CHANGELOG.md');
     let text = '';
     try { text = fs.readFileSync(p, 'utf8'); } catch (e) { return bad(reply, 'NO_CHANGELOG', '读不到 CHANGELOG.md', 500); }
-    const version = (one('SELECT 1 AS x') && require('../../package.json').version) || '';
+    const version = (one('SELECT 1 AS x') && require('../../../../package.json').version) || '';
     return ok(reply, { version: version, text: text.slice(0, 200000) });
   });
 
@@ -82,7 +82,7 @@ module.exports = function (app, ctx) {
     if (!row) return bad(reply, 'NOT_FOUND', '条目不存在', 404);
     const it = jparse(row.data) || {};
     const title = String(it.title || '').replace(/\s+/g, ' ').trim();
-    const built = require('./src/features/media/meta').buildNames(it);
+    const built = require('../features/media/meta').buildNames(it);
     return ok(reply, { id: id, target: it.targetSite || '', title: title,
       subtitle: built.subtitle,
       description: built.description,

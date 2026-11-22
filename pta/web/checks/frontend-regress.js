@@ -37,7 +37,7 @@ function seedDb() {
 
 (async function () {
   seedDb();
-  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'app-fastify.js')], {
+  const child = spawn(process.execPath, [path.join(ROOT, 'server', 'src', 'main.js')], {
     cwd: path.join(ROOT, '..'),
     env: Object.assign({}, process.env, {
       PTA_PORT: String(PORT), PTA_DATA: DATA, PTA_WEB: path.join(ROOT, 'web', 'dist'),

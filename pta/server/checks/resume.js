@@ -17,7 +17,7 @@ function check(name, fn) {
 function need(cond, msg) { if (!cond) throw new Error(msg); }
 function run(args) {
   return new Promise(function (resolve) {
-    execFile(process.execPath, [path.join(ROOT, 'server', 'cli.js')].concat(args), {
+    execFile(process.execPath, [path.join(ROOT, 'server', 'src', 'cli.js')].concat(args), {
       env: Object.assign({}, process.env, { DATA_DIR: DATA, PTA_DATA: DATA }),
       timeout: 60000
     }, function (err, stdout, stderr) {
