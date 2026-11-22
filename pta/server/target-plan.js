@@ -9,6 +9,7 @@ function makePlan(deps) {
   const resolve = deps.resolve;
   const ctx = deps.ctx;
   const one = deps.one;
+  const cookieStore = require('./cookie-store')(ctx.DATA_DIR);
   const TAG_BLOCK = /^(禁转|限转|禁止转载|禁止转发|官方|应求)$/;
 
   function tagList(item) {
@@ -202,8 +203,7 @@ function makePlan(deps) {
       else if (k === 'team_sel') labels[k] = reverse((t.valueMaps && t.valueMaps.team) || {}, fields[k]);
     });
     const uv = Object.assign({}, v, { title: encodeURIComponent(v.title) });
-    const c = one('SELECT cookie FROM credentials WHERE host = ?', t.host);
-    const hasCookie = !!(c && c.cookie);
+    const hasCookie = cookieStore.has(t.host);
     const fieldCount = Object.keys(fields).length;
     if (!hasCookie) warnings.push('目标站没有 cookie');
     if (!t.upload.path) warnings.push('目标站没有上传地址');

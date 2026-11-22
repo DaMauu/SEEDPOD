@@ -1,14 +1,13 @@
 /* 站点会话自检与凭据导入（Fastify v2）。 */
 const fs = require('fs');
 const path = require('path');
-const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const jsonFile = require('./json-file');
 const urlGuard = require('./url-guard');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR);
+  const cookieStore = require('./cookie-store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const STATUS_FILE = path.join(DATA_DIR, 'site-status.json');
 
@@ -18,9 +17,8 @@ module.exports = function (app, ctx) {
   }
   function readDef(host) { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } }
   function cred(host) {
-    const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
-    if (!r || !r.cookie) return '';
-    try { return secretbox.decrypt(r.cookie, KEYRING); } catch (e) { return ''; }
+    const c = cookieStore.get(host);
+    return c.cookie || '';
   }
 
   app.post('/api/sites/:host/session-test', async (req, reply) => {
@@ -57,17 +55,8 @@ module.exports = function (app, ctx) {
     const b = req.body || {};
     const items = Array.isArray(b.items) ? b.items : [];
     if (!items.length) return bad(reply, 'BAD_REQUEST', 'items 不能为空');
-    if (KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 SECRET_FILE/SECRET', 409);
-    let saved = 0, skipped = 0;
-    for (const it of items.slice(0, 200)) {
-      const host = String((it && it.host) || '').trim();
-      const cookie = String((it && it.cookie) || '').trim();
-      if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host) || !cookie || cookie.length > 4096) { skipped++; continue; }
-      const enc = secretbox.encrypt(cookie, KEYRING.key);
-      db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET cookie=excluded.cookie, updated_at=excluded.updated_at')
-        .run(host, enc, now());
-      saved++;
-    }
-    return ok(reply, { saved: saved, skipped: skipped });
+    const r = cookieStore.importMany(items, db);
+    if (r.saved === 0 && r.skipped) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用或数据不合法', 409);
+    return ok(reply, { saved: r.saved, skipped: r.skipped });
   });
 };

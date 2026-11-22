@@ -1,7 +1,5 @@
 /* 图床上传引擎：Chevereto 会话登录/网页上传 + 通用上传 + 批量 process。 */
 const path = require('path');
-const { openDB } = require('./db');
-const secretbox = require('./secretbox');
 const { providerKey, configFor, dataUrlOf } = require('./imagehost-config');
 
 function findUrl(value, depth) {
@@ -54,10 +52,8 @@ function siteCookie(host) {
   const dir = path.resolve(require('./env').read('DATA_DIR', 'PTA_DATA') || path.join(__dirname, '..', '..', 'data'));
   let cookie = '';
   try {
-    const db = openDB(path.join(dir, 'seedpod.db'));
-    const row = db.prepare('SELECT cookie FROM credentials WHERE host = ?').get(h);
-    db.close();
-    if (row && row.cookie) cookie = secretbox.decrypt(row.cookie, secretbox.loadKey(dir));
+    const c = require('./cookie-store')(dir).get(h);
+    cookie = c.cookie || '';
   } catch (e) { cookie = ''; }
   SSO_COOKIE_CACHE = { host: h, value: cookie, at: Date.now() };
   return cookie;

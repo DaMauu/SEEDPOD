@@ -258,14 +258,14 @@ module.exports = async function run(ctx) {
     need(del.ok && del.data.hasCookie === false, '删除 cookie 失败：' + JSON.stringify(del));
     const list = await (await fetchA(BASE + '/api/credentials')).json();
     const rec = (list.data || []).filter(function (x) { return x.host === host; })[0];
-    need(rec && rec.hasCookie === false, '删除后应回 hasCookie:false：' + JSON.stringify(rec));
-    need(rec.cookie === undefined, '删除后列表回了 cookie 字段');
+    need(!rec || rec.hasCookie === false, '删除后应无 cookie：' + JSON.stringify(rec));
+    need(!rec || rec.cookie === undefined, '删除后列表回了 cookie 字段');
     const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(path.join(DATA, 'seedpod.db'));
     const row = db.prepare('SELECT cookie FROM credentials WHERE host = ?').get(host);
     db.prepare('DELETE FROM credentials WHERE host = ?').run(host);
     db.close();
-    need(row && row.cookie == null, '数据库里还留着 cookie：' + JSON.stringify(row));
+    need(!row || row.cookie == null, '数据库里还留着 cookie：' + JSON.stringify(row));
   });
 
   await check('下载器密码不回显', async () => {

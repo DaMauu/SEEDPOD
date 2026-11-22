@@ -3,7 +3,6 @@
    每次抓取受站点间隔与每日上限约束，失败也记时间戳，避免连续重试。 */
 const fs = require('fs');
 const path = require('path');
-const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const marksMod = require('./marks');
 const sitePack = require('./site-pack');
@@ -32,16 +31,15 @@ function catListFromCats(cats) {
 
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR);
+  const cookieStore = require('./cookie-store')(DATA_DIR);
   const DEF_DIR = path.join(DATA_DIR, 'site-defs');
   const readDef = (host) => { try { return JSON.parse(fs.readFileSync(path.join(DEF_DIR, host + '.json'), 'utf8')); } catch (e) { return null; } };
   const cfg = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const readState = () => { const r = one("SELECT v FROM meta WHERE k = 'crawl-state'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const saveState = (st) => { db.prepare("INSERT INTO meta(k, v) VALUES('crawl-state', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(JSON.stringify(st)); };
   const cookieOf = (host) => {
-    const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
-    if (!r || !r.cookie) return '';
-    try { return secretbox.decrypt(r.cookie, KEYRING); } catch (e) { return ''; }
+    const c = cookieStore.get(host);
+    return c.cookie || '';
   };
 
   const metaFill = makeMetaFill(ctx);

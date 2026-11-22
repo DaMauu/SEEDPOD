@@ -1,7 +1,6 @@
 /* 查重与抓取计划（Fastify v2）。查重会真搜一次目标站，限条数；计划只读本地配置不发请求。 */
 const fs = require('fs');
 const path = require('path');
-const secretbox = require('./secretbox');
 const adapters = require('./adapters');
 const dupeClassify = require('./dupe-classify');
 const sitePack = require('./site-pack');
@@ -20,14 +19,15 @@ function keyword(title) {
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR);
+  const cookieStore = require('./cookie-store')(DATA_DIR);
   const now = () => new Date().toISOString();
   const readDef = (host) => { if (!/^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''))) return null; try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-defs', host + '.json'), 'utf8')); } catch (e) { return null; } };
   const readPresets = () => { try { const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-search.local.json'), 'utf8')) || {}; return raw.sites || raw; } catch (e) { return {}; } };
   const readCookie = (host) => {
-    const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
-    if (!r || !r.cookie) return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie，查不了' } };
-    try { return { cookie: secretbox.decrypt(r.cookie, KEYRING) }; } catch (e) { return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } }; }
+    const c = cookieStore.get(host);
+    if (c.err === 'NO_COOKIE') return { err: { code: 'NO_COOKIE', message: '这个站还没导入 cookie，查不了' } };
+    if (c.err) return { err: { code: 'NO_COOKIE', message: 'cookie 解不开，请重新导入' } };
+    return { cookie: c.cookie };
   };
   const cfgRow = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
 

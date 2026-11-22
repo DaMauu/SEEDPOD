@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.643 · 2026-11-22
+
+### 总 Cookie 文件
+- 新增 `data/cookies.json`：一 host 一条，AES-256-GCM 密文，0600，原子写并留 `.bak`；SQLite credentials 只作迁移回退。
+- 抓取、发布、目标站、会话自检、图床 SSO、批量导入统一走 cookie-store；面板保存/删除 cookie 直接写文件。
+- 旧 credentials 启动时自动迁移；备份/恢复包含 `cookies.json`。
+- 新增 `pta/docs/COOKIE-FILE.md`：面板操作、接口、CLI 导入、备份恢复、故障处理。
+- cookie-file 4/4、api-v2 57/57、frontend-regress 49/49、backup 13/13；全量 run.sh 通过。
+
 ## v0.7.642 · 2026-11-22
 
 ### 站点 Cookie 可单独删除

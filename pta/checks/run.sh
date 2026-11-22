@@ -45,6 +45,7 @@ run dupe-policy dupe-policy.js
 run collage collage.js
 run flow-config flow-config.js
 run security security.js
+run cookie-file cookie-file.js
 run url-guard url-guard.js
 run site-types site-types.js
 run secret-rotate secret-rotate.js

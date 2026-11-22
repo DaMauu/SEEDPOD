@@ -2,7 +2,6 @@
    路由与调度器共用，避免两份实现。 */
 const fs = require('fs');
 const path = require('path');
-const secretbox = require('./secretbox');
 const { makeQb } = require('./qb');
 const watch = require('./clients/watch');
 const stage = require('./stage');
@@ -14,7 +13,7 @@ const urlGuard = require('./url-guard');
 
 function makePublisher(ctx) {
   const { db, one, all, DATA_DIR, jparse } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR);
+  const cookieStore = require('./cookie-store')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
   const now = () => new Date().toISOString();
 
@@ -43,9 +42,8 @@ function makePublisher(ctx) {
     });
   }
   function cookieOf(host) {
-    const r = one('SELECT cookie FROM credentials WHERE host = ?', String(host || ''));
-    if (!r || !r.cookie) return '';
-    try { return secretbox.decrypt(r.cookie, KEYRING); } catch (e) { return ''; }
+    const c = cookieStore.get(host);
+    return c.cookie || '';
   }
   function downloaderOf(body, it) {
     const want = String((body && body.downloaderId) || it.downloaderId || '');

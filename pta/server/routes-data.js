@@ -1,13 +1,12 @@
 /* 站点、凭据、日志与站点定义接口（Fastify v2）。 */
 const path = require('path');
 const fs = require('fs');
-const secretbox = require('./secretbox');
 const jsonFile = require('./json-file');
 const siteHidden = require('./site-hidden');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR);
+  const cookieStore = require('./cookie-store')(DATA_DIR);
   const SSE = new Set();
   const now = () => new Date().toISOString();
 
@@ -116,12 +115,12 @@ module.exports = function (app, ctx) {
     if (cfg.base === true) {
       /* 基础站随站点包发布，不能硬删；从面板隐藏并清掉凭据，可恢复 */
       siteHidden.add(db, host);
-      db.prepare('DELETE FROM credentials WHERE host = ?').run(host);
+      cookieStore.remove(host, db);
       logEvent('info', '站点', '移除基础站点（可恢复） · ' + host);
       return ok(reply, { host: host, hidden: true, soft: true });
     }
     db.prepare('DELETE FROM sites WHERE host = ?').run(host);
-    db.prepare('DELETE FROM credentials WHERE host = ?').run(host);
+    cookieStore.remove(host, db);
     siteHidden.remove(db, host);
     logEvent('info', '站点', '移除站点 · ' + host);
     return ok(reply, { host: host, hidden: false, soft: false });
@@ -160,27 +159,19 @@ module.exports = function (app, ctx) {
 
   /* ---- 凭据：只回 hasCookie，不回明文 ---- */
   app.get('/api/credentials', async () => {
-    const rows = all('SELECT host, cookie, updated_at FROM credentials');
-    return ok(rows.map(function (r) {
-      let readable = false;
-      if (r.cookie) { try { readable = !!secretbox.decrypt(r.cookie, KEYRING); } catch (e) { readable = false; } }
-      return { host: r.host, hasCookie: !!r.cookie, readable: readable, updatedAt: r.updated_at || null };
-    }));
+    return ok(cookieStore.list());
   });
   app.put('/api/credentials/:host', async (req, reply) => {
     const host = req.params.host;
     if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '站点域名不合法');
     const b = req.body || {};
     if (b.cookie !== undefined) {
-      const cookie = String(b.cookie || '');
-      if (cookie && KEYRING.ok === false) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用：检查 SECRET_FILE/SECRET，再保存 cookie', 409);
-      if (cookie.length > 4096) return bad(reply, 'BAD_REQUEST', 'cookie 太长');
-      const enc = cookie ? secretbox.encrypt(cookie, KEYRING.key) : null;
-      db.prepare('INSERT INTO credentials(host, cookie, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET cookie=excluded.cookie, updated_at=excluded.updated_at')
-        .run(host, enc, now());
-      logEvent('info', '站点', (cookie ? '保存凭据 · ' : '删除凭据 · ') + host);
+      const r = cookieStore.set(host, String(b.cookie || ''), db);
+      if (!r.ok) return bad(reply, r.code, r.message, r.code === 'CRYPTO_UNAVAILABLE' ? 409 : 400);
+      logEvent('info', '站点', (r.hasCookie ? '保存凭据 · ' : '删除凭据 · ') + host);
+      return ok(reply, { host: host, hasCookie: r.hasCookie });
     }
-    return ok(reply, { host: host, hasCookie: !!b.cookie });
+    return ok(reply, { host: host, hasCookie: cookieStore.has(host) });
   });
 
   /* ---- 站点定义 ---- */

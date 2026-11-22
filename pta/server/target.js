@@ -3,7 +3,6 @@
    没有映射就停下，不猜。真提交必须显式打开 realPublish。 */
 const fs = require('fs');
 const path = require('path');
-const secretbox = require('./secretbox');
 const sitePack = require('./site-pack');
 const siteMaps = require('./site-maps');
 const { makeQb } = require('./qb');
@@ -58,7 +57,7 @@ function safeHost(host) { return /^[a-z0-9][a-z0-9.-]*$/i.test(String(host || ''
 
 function makeTarget(ctx) {
   const { DATA_DIR, one, db } = ctx;
-  const KEYRING = secretbox.loadKey(DATA_DIR);
+  const cookieStore = require('./cookie-store')(DATA_DIR);
   const qb = makeQb(DATA_DIR);
   const packPath = path.join(DATA_DIR, 'site-pack.json');
   const defDir = path.join(DATA_DIR, 'site-defs');
@@ -70,10 +69,10 @@ function makeTarget(ctx) {
   function readDef(host) { return readJson(path.join(defDir, host + '.json')); }
 
   function cookieOf(host) {
-    const r = one('SELECT cookie FROM credentials WHERE host = ?', host);
-    if (!r || !r.cookie) return { err: '这个站还没有 cookie，先在站点页导入' };
-    try { return { cookie: secretbox.decrypt(r.cookie, KEYRING) }; }
-    catch (e) { return { err: 'cookie 解不开，请重新导入' }; }
+    const c = cookieStore.get(host);
+    if (c.err === 'NO_COOKIE') return { err: '这个站还没有 cookie，先在站点页导入' };
+    if (c.err) return { err: 'cookie 解不开，请重新导入' };
+    return { cookie: c.cookie };
   }
 
   function resolve(host) {
