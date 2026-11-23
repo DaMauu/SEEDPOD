@@ -99,7 +99,7 @@ const server = http.createServer(function (req, res) {
       need(out.changed === 1, '回填数量不对：' + JSON.stringify(out));
       const raw = JSON.parse(fs.readFileSync(path.join(DATA, 'sites.json'), 'utf8'));
       const probe = raw.sites['probe.example'];
-      need(JSON.stringify(probe.search.cats.movie) === JSON.stringify(['401', '403']), 'cats 没写：' + JSON.stringify(probe.search.cats));
+      need(JSON.stringify(probe.search.type.movie) === JSON.stringify(['401', '403']), 'type 没写：' + JSON.stringify(probe.search.type));
       need(probe.search.types === undefined, '不该再存 types');
       need(store.get('offline.example').search.cats.movie[0] === '1', '失败项不该动 cats');
     });

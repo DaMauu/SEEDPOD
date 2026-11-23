@@ -167,6 +167,11 @@ function makePresets(dataDir) {
     }
     return '';
   }
+  function parentOf(dim, key) {
+    const groups = (doc().groups || {})[dim] || {};
+    const hit = Object.keys(groups).filter(function (g) { return (groups[g] || []).indexOf(key) >= 0; })[0];
+    return hit || key;
+  }
   function expandDim(dim, key) {
     const g = ((doc().groups || {})[dim] || {})[key];
     return Array.isArray(g) && g.length ? g.slice() : [key];
@@ -185,7 +190,7 @@ function makePresets(dataDir) {
   return {
     FILE: DEFAULT_FILE, RUNTIME_FILE: runtimeFile, ensure: ensure, doc: doc, types: types, typeKeys: typeKeys, keyOf: keyOf, labelOf: labelOf,
     keysOfList: keysOfList, searchOptions: searchOptions, searchKeys: searchKeys,
-    searchLabel: searchLabel, keyOfDim: keyOfDim, labelsOfDim: labelsOfDim, expandDim: expandDim, expandDims: expandDims, publishFields: publishFields, siteDefaults: siteDefaults
+    searchLabel: searchLabel, keyOfDim: keyOfDim, labelsOfDim: labelsOfDim, parentOf: parentOf, expandDim: expandDim, expandDims: expandDims, publishFields: publishFields, siteDefaults: siteDefaults
   };
 }
 

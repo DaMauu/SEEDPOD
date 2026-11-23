@@ -57,6 +57,19 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(again.settings.enabled === true && again.url.base === 'https://new.example', '重新读不对：' + JSON.stringify(again));
     });
 
+    await check('sites.json 是新结构且块状排版', async function () {
+      const { formatSitesDoc } = require('../src/features/sites/format');
+      const text = fs.readFileSync(store.FILE, 'utf8');
+      const doc = JSON.parse(text);
+      const site = doc.sites['site-a.example'] || {};
+      need(!!site.meta && site.meta.name === 'Site A', '缺 meta：' + JSON.stringify(site));
+      need(site.search && site.search.type && site.search.type.movie && site.search.type.movie[0] === '401', 'search.type 不对：' + JSON.stringify(site.search));
+      need(site.publish && site.publish.type && site.publish.type.movie === '999', 'publish.type 不对：' + JSON.stringify(site.publish));
+      need(site.settings && site.settings.enabled === true, 'settings 没写到站点块');
+      need(site.name === undefined && site.cats === undefined && site.catMap === undefined, '还残留旧字段');
+      need(text === formatSitesDoc(doc), 'sites.json 不是块状格式');
+    });
+
     await check('新增/隐藏/删除站点', async function () {
       const a = store.add('site-b.example', { name: 'Site B', engine: 'unit3d', url: { base: 'https://site-b.example' } }, db);
       need(a.ok && store.has('site-b.example'), '新增失败：' + JSON.stringify(a));

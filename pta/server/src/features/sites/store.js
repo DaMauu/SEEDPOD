@@ -7,10 +7,20 @@ const jsonFile = require('../../infra/json-file');
 const uploadLock = require('../../infra/upload-lock');
 const { openDB } = require('../../infra/db');
 const makePresets = require('../presets/store');
+const fmt = require('./format');
 
 const VERSION = 1;
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_PRESET = path.join(__dirname, '..', '..', '..', 'pack');
+const SEARCH_DIMS = ['medium', 'resolution', 'discount', 'restriction', 'codec', 'audio', 'team'];
+const ALWAYS_DIM = ['medium', 'resolution', 'discount', 'restriction'];
+const SEARCH_KNOWN = ['path', 'params', 'catMode', 'catSlot', 'type', 'medium', 'codec', 'audio',
+  'resolution', 'discount', 'restriction', 'team', 'selected', 'labels', 'limits', 'downloadLink', 'refreshCron'];
+const PUBLISH_KNOWN = ['upload', 'verify', 'type', 'medium', 'codec', 'audio', 'resolution', 'discount',
+  'restriction', 'team', 'tagMap', 'tagValue', 'form', 'valueMaps', 'baseValueMaps'];
+const TOP_KNOWN = ['name', 'nameZh', 'engine', 'urlRef', 'search', 'publish', 'settings', 'localEdited',
+  'limits', 'downloadLink', 'refreshCron'];
+const DEFAULT_PARAM = { medium: 'medium', resolution: 'standard', discount: 'spstate', restriction: 'limit', codec: 'codec', audio: 'audiocodec', team: 'team' };
 
 function b64(s) { return 'b64:' + Buffer.from(String(s || ''), 'utf8').toString('base64'); }
 function unb64(v) {
@@ -33,6 +43,228 @@ function makeSiteStore(dataDir, opts) {
   const CACHE = { sites: null, urls: null };
   const presets = makePresets(DIR);
 
+  /* ---------- 新结构 <-> 内部旧结构 ----------
+     文件只写 meta / search / publish / settings(+extra)；
+     程序内部继续用 name / cats / catMap / filters，避免抓取和发布改一遍。 */
+  function uploadOf(u0) {
+    const u = u0 && typeof u0 === 'object' ? u0 : {};
+    const out = {
+      path: String(u.path || ''),
+      formPath: String(u.formPath || ''),
+      fileField: String(u.fileField || ''),
+      fields: u.fields && typeof u.fields === 'object' ? clone(u.fields) : {}
+    };
+    Object.keys(u).forEach(function (k) {
+      if (['path', 'formPath', 'fileField', 'fields'].indexOf(k) < 0) out[k] = clone(u[k]);
+    });
+    return out;
+  }
+  function paramOf(pv, key, dim) {    const def = DEFAULT_PARAM[dim] || dim;
+    if (pv && typeof pv === 'object' && !Array.isArray(pv)) {
+      if (pv[key] !== undefined && pv[key] !== '') return String(pv[key]);
+      if (pv['*'] !== undefined && pv['*'] !== '') return String(pv['*']);
+      return def;
+    }
+    return pv != null && pv !== '' ? String(pv) : def;
+  }
+  function searchFromPersisted(s0) {
+    const s = s0 && typeof s0 === 'object' ? s0 : {};
+    const out = {
+      path: String(s.path || ''),
+      params: s.params && typeof s.params === 'object' && !Array.isArray(s.params) ? clone(s.params) : {},
+      catMode: String(s.catMode || 'single'),
+      catSlot: String(s.catSlot || ''),
+      cats: canonCats(s.type || s.cats),
+      filters: {}
+    };
+    const values = {}, params = {}, selected = {}, labels = {};
+    SEARCH_DIMS.forEach(function (dim) {
+      const src = s[dim];
+      if (!src || typeof src !== 'object' || Array.isArray(src)) return;
+      Object.keys(src).forEach(function (group) {
+        const list = Array.isArray(src[group]) ? src[group] : [src[group]];
+        list.forEach(function (entry) {
+          if (entry == null || entry === '') return;
+          let key = group, param = DEFAULT_PARAM[dim] || dim, value = '';
+          if (entry && typeof entry === 'object') {
+            key = entry.key || group;
+            param = entry.param || param;
+            value = entry.value == null ? '' : String(entry.value);
+          } else {
+            const o = fmt.parseSearchOption(entry, dim === 'medium');
+            if (dim === 'medium' && o.key) key = o.key;
+            param = o.param || param;
+            value = o.value;
+          }
+          if (value === '') return;
+          (values[dim] = values[dim] || {})[key] = value;
+          (params[dim] = params[dim] || {})[key] = param;
+          if (s.labels && s.labels[dim] && s.labels[dim][key] != null) {
+            (labels[dim] = labels[dim] || {})[key] = String(s.labels[dim][key]);
+          }
+        });
+      });
+    });
+    Object.keys(s.selected || {}).forEach(function (dim) {
+      const v = s.selected[dim];
+      if (Array.isArray(v) && v.length) selected[dim] = v.map(String);
+    });
+    if (Object.keys(values).length) out.filters.values = values;
+    if (Object.keys(params).length) out.filters.params = params;
+    if (Object.keys(selected).length) out.filters.selected = selected;
+    if (Object.keys(labels).length || (s.labels && typeof s.labels === 'object')) out.filters.labels = Object.assign({}, s.labels || {}, labels);
+    out.limits = s.limits && typeof s.limits === 'object' && !Array.isArray(s.limits) ? clone(s.limits) : {};
+    out.downloadLink = String(s.downloadLink || '');
+    out.refreshCron = String(s.refreshCron || '');
+    Object.keys(s).forEach(function (k) {
+      if (SEARCH_KNOWN.indexOf(k) < 0) out[k] = clone(s[k]);
+    });
+    return out;
+  }
+  function publishFromPersisted(p0) {
+    const p = p0 && typeof p0 === 'object' ? p0 : {};
+    const out = {
+      upload: uploadOf(p.upload),
+      verify: p.verify && typeof p.verify === 'object' ? clone(p.verify) : { path: '' },
+      catMap: canonMap(p.type || p.catMap),
+      tagMap: p.tagMap && typeof p.tagMap === 'object' ? clone(p.tagMap) : {},
+      tagValue: String(p.tagValue || 'yes'),
+      form: p.form || null,
+      valueMaps: p.valueMaps && typeof p.valueMaps === 'object' ? clone(p.valueMaps) : {}
+    };
+    if (p.baseValueMaps && typeof p.baseValueMaps === 'object') out.baseValueMaps = clone(p.baseValueMaps);
+    SEARCH_DIMS.forEach(function (dim) {
+      if (p[dim] !== undefined && p[dim] !== null) out[dim] = clone(p[dim]);
+    });
+    Object.keys(p).forEach(function (k) {
+      if (PUBLISH_KNOWN.indexOf(k) < 0 && k !== 'catMap' && k !== 'catLabels') out[k] = clone(p[k]);
+    });
+    return out;
+  }
+  function fromPersistedSite(raw, host) {
+    const r = raw && typeof raw === 'object' ? raw : {};
+    if (!r.meta || typeof r.meta !== 'object' || Array.isArray(r.meta)) return clone(r);
+    const meta = r.meta;
+    const search = searchFromPersisted(r.search);
+    const rec = {
+      name: meta.name !== undefined && meta.name !== '' ? String(meta.name) : host,
+      nameZh: String(meta.nameZh || ''),
+      engine: String(meta.engine || '?'),
+      urlRef: String(meta.urlRef || ('site-urls.json#' + host)),
+      search: search,
+      publish: publishFromPersisted(r.publish),
+      settings: normalizeSettings(r.settings),
+      localEdited: meta.localEdited === true,
+      limits: clone(search.limits || {}),
+      downloadLink: String(search.downloadLink || ''),
+      refreshCron: String(search.refreshCron || '')
+    };
+    delete search.limits;
+    delete search.downloadLink;
+    delete search.refreshCron;
+    if (r.extra && typeof r.extra === 'object' && !Array.isArray(r.extra)) {
+      Object.keys(r.extra).forEach(function (k) { if (rec[k] === undefined) rec[k] = clone(r.extra[k]); });
+    }
+    return rec;
+  }
+  function searchToPersisted(rec) {
+    const s = rec.search || {};
+    const flt = s.filters || {};
+    const values = flt.values || {};
+    const params = flt.params || {};
+    const out = {
+      path: String(s.path || ''),
+      params: s.params && typeof s.params === 'object' && !Array.isArray(s.params) ? clone(s.params) : {},
+      catMode: String(s.catMode || 'single'),
+      catSlot: String(s.catSlot || ''),
+      type: canonCats(s.cats)
+    };
+    ALWAYS_DIM.forEach(function (dim) { out[dim] = {}; });
+    SEARCH_DIMS.forEach(function (dim) {
+      const src = values[dim];
+      if (!src || typeof src !== 'object' || Array.isArray(src)) return;
+      const dst = out[dim] || {};
+      Object.keys(src).forEach(function (key) {
+        const v = src[key];
+        if (v == null || v === '') return;
+        const group = presets.parentOf(dim, key);
+        (dst[group] = dst[group] || []).push(fmt.formatSearchOption(key, paramOf(params[dim], key, dim), String(v), dim === 'medium'));
+      });
+      if (Object.keys(dst).length) {
+        if (dim !== 'medium') {
+          Object.keys(dst).forEach(function (g) { if (dst[g].length === 1) dst[g] = dst[g][0]; });
+        }
+        out[dim] = dst;
+      }
+    });
+    const selected = {};
+    Object.keys(flt.selected || {}).forEach(function (dim) {
+      if (Array.isArray(flt.selected[dim]) && flt.selected[dim].length) selected[dim] = flt.selected[dim].map(String);
+    });
+    if (Object.keys(selected).length) out.selected = selected;
+    if (flt.labels && typeof flt.labels === 'object' && Object.keys(flt.labels).length) out.labels = clone(flt.labels);
+    out.limits = rec.limits && typeof rec.limits === 'object' && !Array.isArray(rec.limits) ? clone(rec.limits) : {};
+    out.downloadLink = String(rec.downloadLink || '');
+    out.refreshCron = String(rec.refreshCron || '');
+    Object.keys(s).forEach(function (k) {
+      if (SEARCH_KNOWN.indexOf(k) < 0 && k !== 'types' && k !== 'cats' && k !== 'filters') out[k] = clone(s[k]);
+    });
+    return out;
+  }
+  function publishToPersisted(rec) {
+    const p = rec.publish || {};
+    const out = {
+      upload: uploadOf(p.upload),
+      verify: p.verify && typeof p.verify === 'object' ? clone(p.verify) : { path: '' },
+      type: canonMap(p.catMap)
+    };
+    ALWAYS_DIM.forEach(function (dim) {
+      out[dim] = p[dim] && typeof p[dim] === 'object' && !Array.isArray(p[dim]) ? clone(p[dim]) : {};
+    });
+    ['codec', 'audio', 'team'].forEach(function (dim) {
+      if (p[dim] && typeof p[dim] === 'object' && Object.keys(p[dim]).length) out[dim] = clone(p[dim]);
+    });
+    out.tagMap = p.tagMap && typeof p.tagMap === 'object' ? clone(p.tagMap) : {};
+    out.tagValue = String(p.tagValue || 'yes');
+    out.form = p.form || null;
+    out.valueMaps = p.valueMaps && typeof p.valueMaps === 'object' ? clone(p.valueMaps) : {};
+    if (p.baseValueMaps && typeof p.baseValueMaps === 'object' && Object.keys(p.baseValueMaps).length) out.baseValueMaps = clone(p.baseValueMaps);
+    Object.keys(p).forEach(function (k) {
+      if (PUBLISH_KNOWN.indexOf(k) < 0 && k !== 'catMap' && k !== 'catLabels') out[k] = clone(p[k]);
+    });
+    return out;
+  }
+  function toPersistedSite(raw, host) {
+    const src = raw && raw.meta && typeof raw.meta === 'object' && !Array.isArray(raw.meta)
+      ? fromPersistedSite(raw, host)
+      : raw;
+    const rec = normalizeRecord(src || {});
+    const meta = {
+      name: String(rec.name || host),
+      nameZh: String(rec.nameZh || ''),
+      engine: String(rec.engine || '?'),
+      urlRef: String(rec.urlRef || ('site-urls.json#' + host))
+    };
+    if (rec.localEdited === true) meta.localEdited = true;
+    const out = { meta: meta, search: searchToPersisted(rec), publish: publishToPersisted(rec) };
+    out.settings = normalizeSettings(rec.settings);
+    const extra = {};
+    Object.keys(rec).forEach(function (k) {
+      if (TOP_KNOWN.indexOf(k) < 0 && k !== 'host' && k !== 'url') extra[k] = clone(rec[k]);
+    });
+    if (Object.keys(extra).length) out.extra = extra;
+    return out;
+  }
+  function toPersistedDoc(doc) {
+    const d = doc && typeof doc === 'object' ? doc : {};
+    const sites = d.sites && typeof d.sites === 'object' ? d.sites : {};
+    const out = {};
+    Object.keys(d).forEach(function (k) { if (k !== 'sites') out[k] = clone(d[k]); });
+    out.sites = {};
+    Object.keys(sites).forEach(function (h) { out.sites[h] = toPersistedSite(sites[h], h); });
+    return out;
+  }
+
   function readJson(file, fb) {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return null; }
   }
@@ -51,9 +283,13 @@ function makeSiteStore(dataDir, opts) {
   }
   function writeDoc(file, doc) {
     try { if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak'); } catch (e) { /* 备份失败不挡写入 */ }
-    jsonFile.writeAtomic(file, doc, 0o600);
-    if (file === SITES_FILE) CACHE.sites = null;
-    if (file === URLS_FILE) CACHE.urls = null;
+    if (file === SITES_FILE) {
+      jsonFile.writeAtomicText(file, fmt.formatSitesDoc(toPersistedDoc(doc)), 0o600);
+      CACHE.sites = null;
+    } else {
+      jsonFile.writeAtomic(file, doc, 0o600);
+      CACHE.urls = null;
+    }
   }
   function readLegacyDefs() {
     const dir = path.join(DIR, 'site-defs');
@@ -147,23 +383,43 @@ function makeSiteStore(dataDir, opts) {
       return Object.keys(sites.sites).length;
     } finally { try { db.close(); } catch (e) { /* 已关 */ } }
   }
+  let verified = false;
   function ensureRuntime() {
     const missSites = !fs.existsSync(SITES_FILE);
     const missUrls = !fs.existsSync(URLS_FILE);
-    if (!missSites && !missUrls) return false;
-    if (missSites && missUrls) {
-      const n = migrateLegacy();
-      if (!n) {
-        writeDoc(SITES_FILE, readJson(SITES_PRESET, null) || { version: VERSION, sites: {} });
-        writeDoc(URLS_FILE, readJson(URLS_PRESET, null) || { version: VERSION, sites: {} });
+    if (missSites || missUrls) {
+      if (missSites && missUrls) {
+        const n = migrateLegacy();
+        if (!n) {
+          writeDoc(SITES_FILE, readJson(SITES_PRESET, null) || { version: VERSION, sites: {} });
+          writeDoc(URLS_FILE, readJson(URLS_PRESET, null) || { version: VERSION, sites: {} });
+        }
+      } else {
+        if (missSites) writeDoc(SITES_FILE, readJson(SITES_PRESET, null) || { version: VERSION, sites: {} });
+        if (missUrls) writeDoc(URLS_FILE, readJson(URLS_PRESET, null) || { version: VERSION, sites: {} });
       }
-      return true;
     }
-    if (missSites) writeDoc(SITES_FILE, readJson(SITES_PRESET, null) || { version: VERSION, sites: {} });
-    if (missUrls) writeDoc(URLS_FILE, readJson(URLS_PRESET, null) || { version: VERSION, sites: {} });
-    return true;
+    /* 旧结构或普通缩进：启动后第一次读就迁成块状格式，只写一次 */
+    if (!verified) {
+      verified = true;
+      try {
+        const text = fs.readFileSync(SITES_FILE, 'utf8');
+        const raw = JSON.parse(text);
+        const want = fmt.formatSitesDoc(toPersistedDoc(raw));
+        if (text !== want) writeDoc(SITES_FILE, raw);
+      } catch (e) { /* 文件坏了先不覆盖，留给上层报错 */ }
+    }
+    return missSites || missUrls;
   }
-  function siteDoc() { ensureRuntime(); return clone(docOf(SITES_FILE, SITES_PRESET)); }
+  function siteDoc() {
+    ensureRuntime();
+    const raw = docOf(SITES_FILE, SITES_PRESET);
+    const out = {};
+    Object.keys(raw).forEach(function (k) { if (k !== 'sites') out[k] = clone(raw[k]); });
+    out.sites = {};
+    Object.keys(raw.sites || {}).forEach(function (h) { out.sites[h] = fromPersistedSite(raw.sites[h], h); });
+    return out;
+  }
   function urlDoc() { ensureRuntime(); return clone(docOf(URLS_FILE, URLS_PRESET)); }
   function defaults() { return { enabled: false, interval: null, priority: 'normal', note: '', hidden: false }; }
   function normalizeSettings(s) { return Object.assign(defaults(), s && typeof s === 'object' ? s : {}); }
@@ -480,6 +736,7 @@ function makeSiteStore(dataDir, opts) {
     ensureRuntime: ensureRuntime, migrateLegacy: migrateLegacy, legacyDef: legacyDef, targetDef: targetDef, get: get, list: list, has: has,
     save: save, add: add, remove: remove, setHidden: setHidden,
     canonCats: canonCats, canonMap: canonMap, typesOfCats: typesOfCats, canonSearch: canonSearch, canonPublish: canonPublish, normalizeRecord: normalizeRecord,
+    fromPersisted: fromPersistedSite, toPersisted: toPersistedSite, toPersistedDoc: toPersistedDoc,
     _b64: b64, _unb64: unb64
   };
 }

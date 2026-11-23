@@ -10,4 +10,12 @@ function writeAtomic(file, data, mode) {
   fs.renameSync(tmp, target);
   try { fs.chmodSync(target, mode || 0o600); } catch (e) { /* 尽力而为 */ }
 }
-module.exports = { writeAtomic };
+function writeAtomicText(file, text, mode) {
+  const target = path.resolve(file);
+  fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+  const tmp = target + '.tmp-' + process.pid + '-' + Date.now();
+  fs.writeFileSync(tmp, String(text), { mode: mode || 0o600 });
+  fs.renameSync(tmp, target);
+  try { fs.chmodSync(target, mode || 0o600); } catch (e) { /* 尽力而为 */ }
+}
+module.exports = { writeAtomic, writeAtomicText };

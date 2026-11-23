@@ -43,7 +43,12 @@ function decode(v) {
     need(raw.indexOf('https://') < 0 && raw.indexOf('http://') < 0, 'sites.preset.json 出现明文网址');
     hosts.forEach(function (h) {
       const s = sites[h] || {};
-      need(s.urlRef === 'site-urls.json#' + h, 'urlRef 不对：' + h);
+      const meta = s.meta || {};
+      need(meta.urlRef === 'site-urls.json#' + h, 'meta.urlRef 不对：' + h);
+      need(meta.name, 'meta.name 为空：' + h);
+      need(!!s.search && typeof s.search === 'object', '缺 search：' + h);
+      need(!!s.publish && typeof s.publish === 'object', '缺 publish：' + h);
+      need(s.name === undefined && s.search.cats === undefined && s.publish.catMap === undefined, '还残留旧字段：' + h);
       need(!s.settings, '预设不该带 settings：' + h);
       need(!s.cookie && !s.cookies, '预设不该带 cookie 字段：' + h);
     });

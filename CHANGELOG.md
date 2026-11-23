@@ -1,5 +1,16 @@
 # 更新日志
 
+## v0.7.669 · 2026-11-24
+
+### 站点 JSON 块状格式
+- `sites.json` / `sites.preset.json` 改成每站 `meta / search / publish / settings` 四块；`meta` 一行、`search` 四行、`publish` 四行、`settings` 一行。
+- `search` 五维直接放 `type / medium / resolution / discount / restriction`；媒介选项写成 `bluray = medium1 = 1`，其他维度写成 `standard = 1`。
+- 搜索分类 `search.type` 与上传分类 `publish.type` 分开；`limits / downloadLink / refreshCron` 收进 `search`。
+- 所有写入统一走 `formatSitesDoc`；新增 `sites-format` 检查，排版被改回普通缩进会失败。
+- 旧结构读取时自动迁移，写回新结构并留 `.bak`；生产 `sites.json` 部署后第一次读取自动迁移。
+- `sites.preset.json` 重新生成，306 站语义校验 0 差异，1610 条搜索 URL 对照 0 差异。
+- 全量 `run.sh` 通过，质量审计总体 100。
+
 ## v0.7.668 · 2026-11-23
 
 ### 搜索预设识别与大分类向下匹配

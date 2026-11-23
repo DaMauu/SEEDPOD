@@ -1,6 +1,6 @@
 # 站点 JSON（SITE-JSON）
 
-状态：2026-11-24，运行时已切到 JSON。站点只保存“全局 key → 站点 ID/值”，中文名、媒介、分辨率、优惠、限制只在全局预设写一份。
+状态：2026-11-24，`sites.json` / `sites.preset.json` 已改成每站四块的块状格式。站点只保存“全局 key → 站点 ID/值”，中文名、媒介、分辨率、优惠、限制只在全局预设写一份。
 
 ## 文件
 
@@ -23,148 +23,211 @@ pta/server/pack/cookies.example.json    入库：host → 空 cookie 模板
 - `site-urls` 是 Base64，不是加密；能解码看到网址。
 - 本地三个文件不进仓库、不进镜像。
 
-## 全局预设
+## 块状格式
 
-`pta/server/pack/presets.preset.json`（模板）/ `data/presets.json`（运行时）：
+每个站固定四块，顺序固定：
 
-```json
-{
-  "version": 1,
-  "types": {
-    "movie": "电影",
-    "tv": "剧集",
-    "documentary": "纪录片",
-    "sports": "体育",
-    "ebook": "电子书"
-  },
-  "search": {
-    "medium": { "full_disc": "原盘(Full Disc)", "remux": "Remux", "bluray": "Blu-ray", "uhd_full_disc": "UHD 原盘" },
-    "codec": { "h264": "H.264/AVC/x264", "h265": "H.265/HEVC/x265" },
-    "audio": { "dts_hd": "DTS-HD/DTS", "ac3": "AC3" },
-    "resolution": { "1080p": "1080p", "2160p": "2160p" },
-    "discount": { "normal": "普通", "free": "免费", "2x": "2x" },
-    "restriction": { "no_repost": "禁转", "hr": "HR" }
-  },
-  "groups": {
-    "medium": { "full_disc": ["full_disc", "bluray", "uhd_full_disc", "3d_full_disc"] }
-  },
-  "publish": {
-    "fields": { "title": "标题", "descr": "简介", "catId": "分类" }
-  },
-  "site": {
-    "search": { "path": "", "params": {}, "catMode": "single", "catSlot": "" },
-    "limits": {},
-    "downloadLink": "",
-    "refreshCron": "",
-    "publish": {
-      "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} },
-      "verify": { "path": "" },
-      "catMap": {}
-    },
-    "settings": { "enabled": false, "priority": "normal", "note": "", "hidden": false }
-  }
-}
+```text
+meta      一行
+search    四行
+publish   四行
+settings  一行
 ```
 
-完整清单在文件里，顺序就是界面选项顺序。
+- 站与站之间空一行。
+- `meta`、`settings` 短，各占一行。
+- `search` / `publish` 只拆到四行，不把每个字段拆开。
+- 空对象、空字符串保留，不删字段。
+- 最后一个站不留尾逗号。
+- 预设文件不写 `settings`；`settings` 只在运行时 `data/sites.json` 出现。
 
-`site` 是站点字段模板：新站按它补默认值，老站缺的字段读取时补上，已有值不覆盖；站点里额外的自定义字段也会原样保留，保存时不会丢。
-
-## 站点 JSON
-
-`sites.preset.json` / `data/sites.json` 里的每个站只写 key 和 ID：
+完整示例：
 
 ```json
 {
   "version": 1,
   "sites": {
+
     "site-a.example": {
-      "name": "Site A",
-      "engine": "nexusphp",
-      "urlRef": "site-urls.json#site-a.example",
+      "meta": { "name": "Site A", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#site-a.example" },
       "search": {
-        "path": "/torrents.php",
-        "params": { "search": "{q}", "cat": "{cats}" },
-        "catMode": "single",
-        "catSlot": "1",
-        "cats": { "movie": ["401"], "tv": ["402", "403"] },
-        "filters": {
-          "values": { "discount": { "normal": "1", "free": "2" } },
-          "selected": { "discount": ["normal", "free"] }
-        }
+        "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "key", "catSlot": "1",
+        "type": { "movie": ["401"] }, "medium": { "full_disc": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] },
+        "resolution": { "1080p": "standard = 1" }, "discount": { "free": "spstate = 2" }, "restriction": {},
+        "selected": { "medium": ["full_disc"], "discount": ["free"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
       },
       "publish": {
-        "catMap": { "movie": "402", "tv": "403" }
+        "upload": { "path": "/takeupload.php", "formPath": "/upload.php", "fileField": "torrent", "fields": {} }, "verify": { "path": "/torrents.php?search={title}" },
+        "type": { "movie": "402", "tv": "403" }, "medium": { "full_disc": "1" },
+        "resolution": {}, "discount": {}, "restriction": {},
+        "tagMap": {}, "tagValue": "yes", "form": null, "valueMaps": {}
       },
-      "limits": {
-        "windowMinutes": 60,
-        "maxPerWindow": 20
-      },
-      "downloadLink": "/download.php?id={ID}",
-      "refreshCron": "0 */4 * * *",
-      "settings": { "enabled": false }
+      "settings": { "enabled": false, "interval": null, "priority": "normal", "note": "", "hidden": false }
     }
   }
 }
 ```
 
-对应关系：
+读法：
 
 ```text
-全局“电影” → key movie → 搜索分类 401；发布分类 402
+meta.name             站点显示名
+search.type.movie     搜索页电影分类 ID = 401
+search.medium         原盘 = Blu-ray(medium1=1) + Blu-rayUHD(medium12=1)
+search.selected       流程页勾了原盘和免费
+publish.type.movie    上传页电影分类 ID = 402
+settings.enabled      本机是否启用
 ```
 
-规则：
+## 字段
 
-- `search.cats`：抓取分类绑定；一个 key 可以对应多个站点分类 ID。
-- `publish.catMap`：发布分类绑定；一个 key 只对应一个 ID。
-- `search.filters.values`：全局选项 key → 站点搜索参数值。
-- `search.filters.selected`：勾选的全局选项 key；没有站点值的选项只做本地标题过滤。
-- `searchPath` / `params` 在新格式里就是 `search.path` / `search.params`，不是丢了；旧文件迁移时会自动搬过去。
-- `catMode: "key"` 表示 NexusPHP 的 `cat401=1`、`cat402=1` 写法；`single` 是 `cat=401`，`bracket` 是 `cat[]=401`。
-- `filters.params` 存站点搜索参数名，例如 `{ "medium": "medium11" }`；抓取时用 `medium11=<值>`，不再按标题二次误杀。
-- NexusPHP 的 `incldead=0` 是“包括断种”，`1=活种`，`2=断种`；默认带 `incldead=0`，避免漏断种资源。
+### meta
+
+```text
+name       显示名
+nameZh     中文名，可空
+engine     nexusphp / unit3d / gazelle / ?
+urlRef     site-urls.json#<host>
+localEdited 本地改过才写 true；默认不写
+```
+
+### search
+
+```text
+path         搜索页路径，例如 /torrents.php
+params       固定查询参数，例如 { "search": "{q}", "cat": "{cats}" }
+catMode      分类参数写法：single / multi / bracket / indexed / key
+catSlot      固定参数名，可空
+type         抓取分类：大分类 key → 站点分类 ID 数组
+medium       媒介选项：大分类 key → 站点子项数组
+resolution   分辨率选项：大分类 key → 参数名/值
+discount     优惠选项：大分类 key → 参数名/值
+restriction  限制选项：大分类 key → 参数名/值
+codec/audio/team  可选，存在才写
+selected     已勾选的大分类 key；只影响 URL 拼装
+labels       可选，站点原始选项文字
+limits       站点自己的抓取限制
+downloadLink 列表页没给下载链接时的模板，{ID} 会替换
+refreshCron  预留的刷新表达式，原样保存
+```
+
+`search.type` 是**抓取分类**，`publish.type` 是**上传分类**，两者分开，不放进同一个数组。
+
+选项字符串规则：
+
+```text
+medium:       "bluray = medium1 = 1"        子项 = 参数名 = 值
+其他维度:     "standard = 1"                 参数名 = 值
+```
+
+- `medium` 的 `bluray`、`uhd_full_disc` 是站点子项，`medium1`、`medium12` 是该子项的参数名。
+- 一个维度有多个参数时写成数组：
+  ```json
+  "medium": { "full_disc": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] }
+  ```
 - `groups.medium.full_disc` 是向下匹配：选“原盘”会同时使用站点的 Blu-ray / Blu-rayUHD / 3D 原盘 选项。
+- NexusPHP 的 `incldead=0` 是“包括断种”，`1=活种`，`2=断种`；默认带 `incldead=0`，避免漏断种资源。
+- `catMode: "key"` 表示 NexusPHP 的 `cat401=1`、`cat402=1` 写法；`single` 是 `cat=401`，`bracket` 是 `cat[]=401`。
 - `POST /api/crawl/preset/:host/detect`：读一次搜索页，识别分类 ID、媒介/编码/音频/分辨率/制作组和参数名，合并写回站点预设。
-- `limits`：站点自己的抓取限制，认 `windowMinutes`、`maxPerWindow`、`listIntervalSeconds`、`detailIntervalSeconds`；不写就用面板全局限制。
-- `downloadLink`：列表页没给下载链接时，用这个模板补，`{ID}` 会替换成站点种子 ID。
-- `refreshCron`：预留的刷新表达式，原样保存；当前调度仍按面板周期跑。
-- 站点里出现的额外字段（包括以后新增的）都会保留，保存和生成预设都不会删。
-- 不再保存 `search.types`、`publish.catLabels`；中文名由 `data/presets.json` 查表补。
-- `settings` 只在本机 `data/sites.json` 出现；预设文件不写，首次启动默认停用。
 
-JSON 写一行不影响识别，空白只是格式：
+### publish
+
+```text
+upload       上传地址、表单地址、文件字段、固定字段
+verify       回查地址
+type         上传分类：大分类 key → 站点分类 ID
+medium/resolution/discount/restriction  上传维度，存在才写
+codec/audio/team  可选
+tagMap       标签 → 上传字段
+tagValue     标签字段值，默认 yes
+form         上传表单选项缓存
+valueMaps    值映射；team 单独一层
+baseValueMaps 站点包自带的值映射
+```
+
+发布维度用大分类 key，不用站点小 key：
 
 ```json
-"cats": { "movie": ["401"], "tv": ["402", "403"] }
-"catMap": { "movie": "402", "tv": "403" }
+"medium": { "full_disc": "1" }
+```
+
+有多个子项时：
+
+```json
+"medium": { "full_disc": ["bluray = 1", "uhd_full_disc = 12"] }
+```
+
+### settings
+
+只在本机 `data/sites.json` 出现；预设文件不写，首次启动默认停用。
+
+```text
+enabled   启停
+interval  抓取间隔，可空
+priority  优先级
+note      备注
+hidden    是否从面板移除
+```
+
+`settings` 允许出现抓取覆盖项（`override`、`ovInterval`、`ovDetail`、`mode`、`queueMode`、`window`、`pages`、`concurrency`、`dupeCheck`），保存时原样保留。
+
+### extra
+
+站点里出现的未知顶层字段放 `extra`，保存和生成预设都不会删：
+
+```json
+"extra": { "customField": { "keep": true } }
+```
+
+## 格式化
+
+所有写入 `sites.json` / `sites.preset.json` 的地方都走同一个出口：
+
+```text
+pta/server/src/features/sites/format.js
+```
+
+它只负责排版，不改字段。面板保存、抓取填分类、识别预设、生成 pack、迁移旧数据，最后都调用 `formatSitesDoc`。
+
+不要在编辑器里用 Prettier 格式化这两个文件；会被格式检查拦住。手工改完跑一次：
+
+```bash
+node pta/server/scripts/build-site-json.js --data <数据目录> --out <输出目录>
 ```
 
 ## 迁移旧结构
 
-旧 `sites.json` 里的中文 key、`types`、`catLabels`、`filters.map` 会被自动归一：
+旧 `sites.json` 里的 `name/engine/urlRef`、`search.cats`、`search.filters`、`publish.catMap`、顶层 `limits/downloadLink/refreshCron` 会被自动迁移：
 
-```bash
-sudo -u seedpod node pta/scripts/migrate-site-presets.js --data /opt/seedpod/data
-sudo -u seedpod node pta/scripts/migrate-site-presets.js --data /opt/seedpod/data --write
+```text
+name/nameZh/engine/urlRef  → meta
+search.cats                → search.type
+filters.values/params      → search.medium/resolution/discount/restriction
+filters.selected           → search.selected
+publish.catMap             → publish.type
+limits/downloadLink/refreshCron → search.limits/downloadLink/refreshCron
 ```
 
-- `电影` → `movie`，`doc` → `documentary`，`sport` → `sports`，`book` → `ebook`。
-- `普通（下载量全计量…）` 这类长选项名只保留 `normal: "1"`，中文名从全局预设取。
-- 只改 `sites.json`，不改 cookie 和网址。
+- 读取时兼容旧结构；第一次写入时改回新结构，并留 `.bak`。
+- 生产 `data/sites.json` 部署后第一次读取会自动迁移，不需要手工改文件。
+- 中文 key、`types`、`catLabels`、`filters.map` 会自动归一。
+- 旧的一次性迁移脚本仍保留，但检测到新结构会直接退出：
+  ```bash
+  node pta/server/scripts/migrate-site-presets.js --data <数据目录> --write
+  ```
 
 ## 生成 / 更新
 
 运行时 `data/sites.json` 是唯一事实源；仓库预设从它生成：
 
 ```bash
-sudo -u seedpod node pta/scripts/build-site-json.js --data /opt/seedpod/data --out /tmp/pta-pack
-cp /tmp/pta-pack/sites.preset.json /tmp/pta-pack/site-urls.preset.json \
-   /tmp/pta-pack/cookies.example.json pta/server/pack/
-chmod 600 pta/server/pack/*.json
+node pta/server/scripts/build-site-json.js --data /opt/seedpod/data --out /tmp/pta-pack
+cp /tmp/pta-pack/sites.preset.json pta/server/pack/sites.preset.json
+chmod 644 pta/server/pack/sites.preset.json
 ```
 
 - 默认生成 `sites.preset.json`、`site-urls.preset.json`、`cookies.example.json`，预设不带 `settings`。
+- 输出 `sites.preset.json` 也是块状格式。
 - `--runtime` 只规范化运行时文件。
 - `--check` 校验仓库预设与运行时一致。
 - `--dry` 只输出数量。
@@ -173,8 +236,10 @@ chmod 600 pta/server/pack/*.json
 改 `pta/server/pack/presets.preset.json` 模板后同步前端默认值；运行时以 `data/presets.json` 为准：
 
 ```bash
-node pta/scripts/gen-presets.js
+node pta/server/scripts/gen-presets.js
 ```
+
+`presets.preset.json` 的 `site` 段是站点字段模板（内部结构），保存时会转成块状格式，不是站点文件示例。
 
 ## 首次启动
 
@@ -199,7 +264,15 @@ node pta/scripts/gen-presets.js
 
 ## 检查
 
-`pta/checks/presets.js`：
+`pta/server/checks/sites-format.js`：
+
+- `sites.preset.json` 和运行时 `sites.json` 必须是块状格式；
+- 每个站必须有 `meta/search/publish`，运行时还要有 `settings`；
+- `search` / `publish` 五维必须存在；
+- 出现旧字段 `name/cats/filters/catMap` 直接失败；
+- 排版被改回普通缩进也失败。
+
+`pta/server/checks/presets.js`：
 
 - 全局类型清单、搜索维度齐全；
 - 中文名/旧 key/英文别名归一；
@@ -207,7 +280,7 @@ node pta/scripts/gen-presets.js
 - 旧 `filters.map`/`selectedLabels` 归一成 `values`/`selected`；
 - 仓库预设没有中文类型 key、没有 `types`。
 
-`pta/checks/site-json-preset.js`：
+`pta/server/checks/site-json-preset.js`：
 
 - 三个预设文件 host 一致；
 - `sites.preset` 没有 `settings`、没有明文网址；
@@ -218,5 +291,3 @@ node pta/scripts/gen-presets.js
 
 - Base64 只能遮挡，不是加密。
 - 真实 cookie 只进 `data/cookies.json`，AES-GCM 密文，0600。
-- 不打印 cookie；日志只记 host 和保存/删除动作。
-- 备份包含 `presets.json`、`sites.json`、`site-urls.json`、`cookies.json`；恢复后仍需原密钥解 cookie。

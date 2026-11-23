@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const makeSiteStore = require('../src/features/sites/store');
+const { formatSitesDoc } = require('../src/features/sites/format');
 const jsonFile = require('../src/infra/json-file');
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -34,7 +35,7 @@ function normDoc(doc, opts) {
   const src = clone(doc && doc.sites ? doc.sites : {});
   const sites = {};
   Object.keys(src).sort().forEach(function (host) {
-    const rec = src[host] || {};
+    const rec = store.fromPersisted(src[host] || {}, host);
     /* 未知字段原样保留；全局站点模板补齐 limits/downloadLink/refreshCron 等缺失项 */
     const out = store.normalizeRecord(rec);
     out.name = String(rec.name || host);
@@ -44,7 +45,9 @@ function normDoc(doc, opts) {
     out.localEdited = o.preset ? false : rec.localEdited === true;
     if (o.preset) delete out.settings;
     else out.settings.enabled = DISABLE_ALL ? false : out.settings.enabled !== false;
-    sites[host] = out;
+    const saved = store.toPersisted(out, host);
+    if (o.preset) delete saved.settings;
+    sites[host] = saved;
   });
   return { version: 1, presets: 'presets.preset.json', generatedAt: new Date().toISOString(), sites: sites };
 }
@@ -59,8 +62,8 @@ function count(docs) {
   const hosts = Object.keys(sites);
   let search = 0, publish = 0;
   hosts.forEach(function (h) {
-    if (Object.keys((sites[h].search || {}).cats || {}).length) search++;
-    if (Object.keys((sites[h].publish || {}).catMap || {}).length) publish++;
+    if (Object.keys((sites[h].search || {}).type || {}).length) search++;
+    if (Object.keys((sites[h].publish || {}).type || {}).length) publish++;
   });
   return { sites: hosts.length, urls: Object.keys((docs.urls.sites) || {}).length, search: search, publish: publish };
 }
@@ -87,13 +90,13 @@ if (DRY) {
   return;
 }
 if (RUNTIME) {
-  jsonFile.writeAtomic(store.FILE, runtimeSites, 0o600);
+  jsonFile.writeAtomicText(store.FILE, formatSitesDoc(runtimeSites), 0o600);
   jsonFile.writeAtomic(store.URL_FILE, runtimeUrls, 0o600);
   console.log(JSON.stringify(Object.assign({ out: DATA }, count({ sites: runtimeSites, urls: runtimeUrls })), null, 2));
   return;
 }
 fs.mkdirSync(OUT, { recursive: true, mode: 0o700 });
-jsonFile.writeAtomic(path.join(OUT, 'sites.preset.json'), presetSites, 0o600);
+jsonFile.writeAtomicText(path.join(OUT, 'sites.preset.json'), formatSitesDoc(presetSites), 0o600);
 jsonFile.writeAtomic(path.join(OUT, 'site-urls.preset.json'), presetUrls, 0o600);
 const cookies = { version: 1, cookies: {} };
 Object.keys(presetSites.sites).forEach(function (h) { cookies.cookies[h] = { cookie: '' }; });

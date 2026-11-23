@@ -62,6 +62,7 @@ run security security.js
 run cookie-file cookie-file.js
 run site-json-preset site-json-preset.js
 run site-store site-store.js
+run sites-format sites-format.js
 run presets presets.js
 run search-preset search-preset.js
 run url-guard url-guard.js

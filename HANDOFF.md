@@ -1,6 +1,15 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-23 23:59（当前 v0.7.668 / 搜索预设识别）
+最后更新：2026-11-24 01:47（当前 v0.7.669 / 站点 JSON 块状格式）
+
+## 2026-11-24 站点 JSON 块状格式（v0.7.669）
+
+- `sites.json` / `sites.preset.json` 改成每站 `meta / search / publish / settings` 四块；`meta` 一行、`search` 四行、`publish` 四行、`settings` 一行。
+- `search` 五维直接放 `type / medium / resolution / discount / restriction`；`medium` 选项写成 `bluray = medium1 = 1`，其他维度写成 `standard = 1`。
+- `search.type` 是抓取分类，`publish.type` 是上传分类，分开存；`limits / downloadLink / refreshCron` 收进 `search`。
+- 所有写入走 `pta/server/src/features/sites/format.js`；新增 `pta/server/checks/sites-format.js`，排版被改回普通缩进会失败。
+- 旧结构读取时自动迁移，写回新结构并留 `.bak`；生产 `sites.json` 部署后第一次读取自动迁移。
+- `pta/server/pack/sites.preset.json` 已重新生成；全量 `run.sh` 通过。
 
 ## 2026-11-23 后端功能收口开始（v0.7.661）
 

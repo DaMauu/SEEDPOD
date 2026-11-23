@@ -23,6 +23,11 @@ try { doc = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) {
   process.exit(1);
 }
 const sites = doc.sites || {};
+const firstHost = Object.keys(sites)[0];
+if (firstHost && sites[firstHost] && sites[firstHost].meta) {
+  console.log(JSON.stringify({ alreadyNewSchema: true, sites: Object.keys(sites).length }, null, 2));
+  process.exit(0);
+}
 let changed = 0, catsChanged = 0, mapChanged = 0, typesDropped = 0;
 Object.keys(sites).forEach(function (host) {
   const rec = sites[host] || {};

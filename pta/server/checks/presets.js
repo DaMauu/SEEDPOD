@@ -72,8 +72,9 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
       store.save('a.example', { search: Object.assign({}, s.search, { cats: { '剧集': ['501'] } }) });
       const raw = JSON.parse(fs.readFileSync(store.FILE, 'utf8'));
       const rec = raw.sites['a.example'];
-      need(JSON.stringify(Object.keys(rec.search.cats)) === JSON.stringify(['tv']), '保存后没写 key：' + JSON.stringify(rec.search.cats));
+      need(JSON.stringify(Object.keys(rec.search.type)) === JSON.stringify(['tv']), '保存后没写 key：' + JSON.stringify(rec.search.type));
       need(rec.search.types === undefined, '保存后不该再存 types');
+      need(rec.meta && rec.meta.name === 'A', '保存后缺 meta');
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   });
 
@@ -97,8 +98,9 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
       need(JSON.stringify(f.selected.discount) === JSON.stringify(['normal', 'free']), '选中项没归一：' + JSON.stringify(f.selected));
       st.save('f.example', { search: Object.assign({}, r.search, { filters: f }) });
       const raw = JSON.parse(fs.readFileSync(st.FILE, 'utf8')).sites['f.example'];
-      need(!raw.search.filters.map && raw.search.filters.values.discount.normal === '1', '保存后又写回旧格式');
-      need(!raw.publish.catLabels, '保存后又写回 catLabels');
+      need(raw.search.discount.normal === 'spstate = 1' && raw.search.discount.free === 'spstate = 2', '优惠没写进 search.discount：' + JSON.stringify(raw.search.discount));
+      need(raw.search.type.movie[0] === '401' && raw.publish.type.movie === '401', '分类没写进 type');
+      need(!raw.publish.catLabels && !raw.search.cats, '保存后又写回旧字段');
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   });
 
@@ -142,10 +144,10 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
       });
       st.save('x.example', { settings: { note: '改个备注' } });
       const raw = JSON.parse(fs.readFileSync(st.FILE, 'utf8')).sites['x.example'];
-      need(JSON.stringify(raw.limits) === JSON.stringify({ perHour: 20, perDay: 100 }), 'limits 丢了：' + JSON.stringify(raw.limits));
-      need(raw.downloadLink === '/download.php?id={ID}', 'downloadLink 丢了');
-      need(raw.refreshCron === '0 */4 * * *', 'refreshCron 丢了');
-      need(raw.customField && raw.customField.keep === true, '未知字段丢了');
+      need(JSON.stringify(raw.search.limits) === JSON.stringify({ perHour: 20, perDay: 100 }), 'limits 丢了：' + JSON.stringify(raw.search.limits));
+      need(raw.search.downloadLink === '/download.php?id={ID}', 'downloadLink 丢了');
+      need(raw.search.refreshCron === '0 */4 * * *', 'refreshCron 丢了');
+      need(raw.extra && raw.extra.customField && raw.extra.customField.keep === true, '未知字段丢了');
       const def = st.legacyDef('x.example');
       need(def.downloadLink === '/download.php?id={ID}' && def.limits.perHour === 20, 'legacyDef 没带新字段');
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
