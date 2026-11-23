@@ -5,7 +5,9 @@ const adapters = require('../../infra/adapters/index');
 const marksMod = require('../screen/marks');
 const urlGuard = require('../../infra/url-guard');
 const flowConfig = require('../settings/flow-config');
-const { typeOf } = require('./category');
+const { typeOf, selectedTypesOf } = require('./category');
+const makePresets = require('../presets/store');
+const { buildSiteSearchUrl } = require('../sites/search-url');
 const configSchema = require('../settings/config-schema');
 const log = require('../../infra/log');
 const { makeMetaFill } = require('../media/meta-fill');
@@ -27,6 +29,7 @@ function catListFromCats(cats) {
 function makeCrawl(ctx) {
   const { db, DATA_DIR, one, all, jparse } = ctx;
   const cookieStore = require('../sites/credentials')(DATA_DIR);
+  const presets = makePresets(DATA_DIR);
   const siteStore = require('../sites/store')(DATA_DIR);
   const cfg = () => { const r = one("SELECT v FROM meta WHERE k = 'config'"); return JSON.parse(r ? r.v : 'null') || {}; };
   const readState = () => { const r = one("SELECT v FROM meta WHERE k = 'crawl-state'"); return JSON.parse(r ? r.v : 'null') || {}; };
@@ -106,9 +109,13 @@ function makeCrawl(ctx) {
     catMap = catMap.filter(function (x) { if (!x || x.id == null) return false; const k = String(x.id); if (seenCat[k]) return false; seenCat[k] = true; return true; });
     /* 流程页勾选的分类：只抓选中的 id；没选过就全抓 */
     let siteTypes = Array.isArray(def.types) ? def.types.map(String).filter(Boolean) : [];
+    /* 流程页勾选的类型优先；站点里绑了全部分类，也不能绕过预选 */
+    const flow = flowConfig.read(ctx);
+    const wanted = selectedTypesOf(flow);
+    if (wanted.length) siteTypes = siteTypes.filter(function (t) { return wanted.indexOf(t) >= 0; });
     /* 类型是硬闸门：没保存类型就停，保存过类型就只抓对应分类 */
     if (!siteTypes.length) {
-      return { err: { code: 'NO_CATEGORY_TYPES', message: '这个站还没保存抓取类型；先在流程页选来源站和类型并保存' } };
+      return { err: { code: 'NO_CATEGORY_TYPES', message: '流程页选的类型和这个站没有交集；先选类型并保存' } };
     }
     {
       const filtered = catMap.filter(function (x) { return siteTypes.indexOf(typeOf(x.label)) >= 0 || siteTypes.indexOf(String(x.label)) >= 0; });
@@ -123,25 +130,7 @@ function makeCrawl(ctx) {
     const hasCat = opts.catIdx !== undefined && opts.catIdx !== '' && Number(opts.catIdx) >= 0;
     const catIdx = hasCat ? Math.max(0, Number(opts.catIdx) || 0) : 0;
     const ids = catMap.length ? (hasCat ? [catMap[Math.max(0, Math.min(catMap.length - 1, catIdx))].id] : catMap.map(function (x) { return x.id; })) : [];
-    let url0 = adapters.buildSearchUrl(def, '', ids);
-    try {
-      const flt = def.filters || {};
-      const vals = flt.values || {};
-      const sel = flt.selected || {};
-      const PARAM = { medium: 'medium', resolution: 'standard', discount: 'spstate' };
-      const pairs = [];
-      Object.keys(PARAM).forEach(function (dim) {
-        (sel[dim] || []).forEach(function (key) {
-          const v = (vals[dim] || {})[key];
-          if (v != null && v !== '') pairs.push([PARAM[dim], String(v)]);
-        });
-      });
-      if (pairs.length) {
-        const u = new URL(url0);
-        pairs.forEach(function (p) { u.searchParams.append(p[0], p[1]); });
-        url0 = u.toString();
-      }
-    } catch (e) { log.warn('crawl.search-filters', e); }
+    let url0 = buildSiteSearchUrl(def, ids, '', presets);
     const lim = limitsOf(host);
     const state = readState();
     const today = new Date().toISOString().slice(0, 10);
@@ -220,9 +209,10 @@ function makeCrawl(ctx) {
     /* 媒介/分辨率：站点搜索页不支持参数时，抓完按标题本地过滤 */
     try {
       const flt = def.filters || {};
+      const vals = (flt && flt.values) || {};
       const sel = (flt && flt.selected) || {};
       const MEDIA = {
-        full_disc: /full\s*disc|bdmv|blu-?ray\s*iso|\biso\b|原盘/i,
+        full_disc: /full\s*disc|bdmv|blu-?ray|\buhd\b|\biso\b|原盘/i,
         uhd_full_disc: /uhd.*(disc|iso)|2160p.*(disc|iso)|4k.*(disc|iso)/i,
         '3d_full_disc': /3d.*(disc|iso|blu-?ray)/i,
         remux: /remux/i,
@@ -236,8 +226,10 @@ function makeCrawl(ctx) {
         tvrip: /tvrip/i,
         vhs: /vhs/i
       };
-      const medSel = (sel.medium || []).map(function (k) { return MEDIA[k]; }).filter(Boolean);
-      const resSel = (sel.resolution || []).map(function (k) { return String(k).toLowerCase(); });
+      /* 站点搜索已经带了这个维度的值，就不再按标题二次过滤，否则会把正常结果误杀 */
+      const hasSite = function (dim) { return presets.expandDims(dim, sel[dim]).some(function (k) { return (vals[dim] || {})[k] != null; }); };
+      const medSel = hasSite('medium') ? [] : presets.expandDims('medium', sel.medium).map(function (k) { return MEDIA[k]; }).filter(Boolean);
+      const resSel = hasSite('resolution') ? [] : presets.expandDims('resolution', sel.resolution).map(function (k) { return String(k).toLowerCase(); });
       if (medSel.length || resSel.length) {
         const keep = items.filter(function (it) {
           const t = String(it.title || '');

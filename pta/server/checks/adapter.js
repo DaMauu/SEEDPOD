@@ -62,6 +62,13 @@ check('拼搜索 URL', () => {
 
   const none = adapter.buildSearchUrl(def, 'x', []);
   need(none.indexOf('cat=') < 0, '没有分类时不该带 cat：' + none);
+
+  /* NexusPHP 的 cat401=1 写法；空 params 也要补默认 search/cat 和 incldead=0 */
+  const key = adapter.buildSearchUrl({ base: 'https://example.org', searchPath: '/torrents.php', params: { cat: '{cats}' }, catMode: 'key' }, '', ['401', '402']);
+  need(/cat401=1/.test(key) && /cat402=1/.test(key), 'key 分类拼法不对：' + key);
+  need(/incldead=0/.test(key), '默认没带 incldead=0：' + key);
+  const empty = adapter.buildSearchUrl({ base: 'https://example.org', searchPath: '/torrents.php', params: {}, catMode: 'single' }, '', ['401']);
+  need(/cat=401/.test(empty) && /incldead=0/.test(empty), '空 params 默认值不对：' + empty);
 });
 
 check('解析登录表单', () => {

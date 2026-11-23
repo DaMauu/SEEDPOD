@@ -68,6 +68,25 @@
       "hr": "HR",
       "exclusive": "独占",
       "diy": "DIY"
+    },
+    "codec": {
+      "h264": "H.264/AVC/x264",
+      "h265": "H.265/HEVC/x265",
+      "mpeg2": "MPEG-2",
+      "vc1": "VC-1",
+      "xvid": "Xvid",
+      "other": "Other"
+    },
+    "audio": {
+      "truehd": "TrueHD",
+      "dts_hd": "DTS-HD/DTS",
+      "ac3": "AC3",
+      "lpcm": "LPCM",
+      "flac": "FLAC",
+      "mp3": "MP3",
+      "aac": "AAC",
+      "ape": "APE",
+      "other": "Other"
     }
   },
   "publish": {
@@ -117,6 +136,16 @@
       "priority": "normal",
       "note": "",
       "hidden": false
+    }
+  },
+  "groups": {
+    "medium": {
+      "full_disc": [
+        "full_disc",
+        "bluray",
+        "uhd_full_disc",
+        "3d_full_disc"
+      ]
     }
   }
 }

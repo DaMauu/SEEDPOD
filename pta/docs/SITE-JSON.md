@@ -38,10 +38,15 @@ pta/server/pack/cookies.example.json    入库：host → 空 cookie 模板
     "ebook": "电子书"
   },
   "search": {
-    "medium": { "full_disc": "原盘(Full Disc)", "remux": "Remux" },
+    "medium": { "full_disc": "原盘(Full Disc)", "remux": "Remux", "bluray": "Blu-ray", "uhd_full_disc": "UHD 原盘" },
+    "codec": { "h264": "H.264/AVC/x264", "h265": "H.265/HEVC/x265" },
+    "audio": { "dts_hd": "DTS-HD/DTS", "ac3": "AC3" },
     "resolution": { "1080p": "1080p", "2160p": "2160p" },
     "discount": { "normal": "普通", "free": "免费", "2x": "2x" },
     "restriction": { "no_repost": "禁转", "hr": "HR" }
+  },
+  "groups": {
+    "medium": { "full_disc": ["full_disc", "bluray", "uhd_full_disc", "3d_full_disc"] }
   },
   "publish": {
     "fields": { "title": "标题", "descr": "简介", "catId": "分类" }
@@ -116,6 +121,11 @@ pta/server/pack/cookies.example.json    入库：host → 空 cookie 模板
 - `search.filters.values`：全局选项 key → 站点搜索参数值。
 - `search.filters.selected`：勾选的全局选项 key；没有站点值的选项只做本地标题过滤。
 - `searchPath` / `params` 在新格式里就是 `search.path` / `search.params`，不是丢了；旧文件迁移时会自动搬过去。
+- `catMode: "key"` 表示 NexusPHP 的 `cat401=1`、`cat402=1` 写法；`single` 是 `cat=401`，`bracket` 是 `cat[]=401`。
+- `filters.params` 存站点搜索参数名，例如 `{ "medium": "medium11" }`；抓取时用 `medium11=<值>`，不再按标题二次误杀。
+- NexusPHP 的 `incldead=0` 是“包括断种”，`1=活种`，`2=断种`；默认带 `incldead=0`，避免漏断种资源。
+- `groups.medium.full_disc` 是向下匹配：选“原盘”会同时使用站点的 Blu-ray / Blu-rayUHD / 3D 原盘 选项。
+- `POST /api/crawl/preset/:host/detect`：读一次搜索页，识别分类 ID、媒介/编码/音频/分辨率/制作组和参数名，合并写回站点预设。
 - `limits`：站点自己的抓取限制，认 `windowMinutes`、`maxPerWindow`、`listIntervalSeconds`、`detailIntervalSeconds`；不写就用面板全局限制。
 - `downloadLink`：列表页没给下载链接时，用这个模板补，`{ID}` 会替换成站点种子 ID。
 - `refreshCron`：预留的刷新表达式，原样保存；当前调度仍按面板周期跑。

@@ -215,6 +215,20 @@ function makeSiteStore(dataDir, opts) {
   function canonFilters(flt) {
     const out = { values: {}, selected: {} };
     if (!flt || typeof flt !== 'object' || Array.isArray(flt)) return out;
+    if (flt.params && typeof flt.params === 'object' && !Array.isArray(flt.params)) {
+      const pm = {};
+      Object.keys(flt.params).forEach(function (d) {
+        const dim = FILTER_DIM[d] || d;
+        const v = flt.params[d];
+        if (!v) return;
+        if (typeof v === 'object' && !Array.isArray(v)) {
+          const one = {};
+          Object.keys(v).forEach(function (k) { if (v[k]) one[k] = String(v[k]); });
+          if (Object.keys(one).length) pm[dim] = one;
+        } else pm[dim] = String(v);
+      });
+      if (Object.keys(pm).length) out.params = pm;
+    }
     function addValue(dim, label, val) {
       const key = presets.keyOfDim(dim, label);
       if (!key || val == null || val === '') return;

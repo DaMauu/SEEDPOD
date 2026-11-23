@@ -145,26 +145,9 @@ module.exports = function (app, ctx) {
       if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
       html = await r.text();
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
-    const form = require('../infra/form');
-    const forms = form.parse(html);
-    const values = { medium: {}, resolution: {}, discount: {}, restriction: {} };
-    const labels = { medium: {}, resolution: {}, discount: {}, restriction: {} };
-    for (const f of forms) {
-      for (const fld of (f.fields || [])) {
-        const dim = filterFieldName(fld.name);
-        if (!dim || !Array.isArray(fld.options)) continue;
-        for (const o of fld.options) {
-          const label = String(o.label || '').trim();
-          const val = String(o.value || '').trim();
-          if (!label || !val || val === '0' || /请选择|全部|不限|choose|select|all/i.test(label)) continue;
-          const key = presets.keyOfDim(dim, label);
-          if (!key) continue;
-          if (values[dim][key] == null) { values[dim][key] = val; labels[dim][key] = label; }
-        }
-      }
-    }
-    Object.keys(values).forEach(function (d) { if (!Object.keys(values[d]).length) delete values[d]; });
-    return { ok: true, data: { host, url, values, labels } };
+    const parsed = require('../features/sites/search-preset').parseSearchPreset(html, presets);
+    return { ok: true, data: Object.assign({ host, url }, parsed) };
+
   }
 
   app.get('/api/crawl/filters/:host', async (req, reply) => {
@@ -183,6 +166,34 @@ module.exports = function (app, ctx) {
     return ok(r.data);
   });
 
+  /* 一次 GET 搜索页，识别分类 ID + 各维度选项，直接写回站点预设 */
+  app.post('/api/crawl/preset/:host/detect', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const rec = siteStore.get(host);
+    if (!rec) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
+    const r = await detectFilters(host);
+    if (!r.ok) return bad(reply, r.code, r.message);
+    const d = r.data || {};
+    const search = Object.assign({}, rec.search);
+    const cats = Object.assign({}, search.cats || {});
+    Object.keys(d.cats || {}).forEach(function (k) {
+      const list = (cats[k] = cats[k] || []);
+      (d.cats[k] || []).forEach(function (id) { if (list.indexOf(String(id)) < 0) list.push(String(id)); });
+    });
+    search.cats = cats;
+    if (d.catMode) search.catMode = d.catMode;
+    const oldF = search.filters || {};
+    const values = Object.assign({}, oldF.values || {});
+    const params = Object.assign({}, oldF.params || {});
+    Object.keys(d.values || {}).forEach(function (dim) {
+      values[dim] = Object.assign({}, values[dim] || {}, d.values[dim] || {});
+      if (d.params && d.params[dim]) params[dim] = Object.assign({}, (typeof params[dim] === 'object' ? params[dim] : {}), d.params[dim]);
+    });
+    search.filters = Object.assign({}, oldF, { values: values, params: params, selected: oldF.selected || {} });
+    siteStore.save(host, { search: search }, db);
+    return ok({ host: host, search: siteStore.get(host).search, detected: d });
+  });
+
   app.put('/api/crawl/filters/:host', async (req, reply) => {
     const host = String(req.params.host || '').toLowerCase();
     const sel = (req.body && req.body.selected) || {};
@@ -190,9 +201,10 @@ module.exports = function (app, ctx) {
     let cur = (rec0 && rec0.search.filters) || { values: {}, selected: {} };
     if (!cur.values || !Object.keys(cur.values).length) {
       const d = await detectFilters(host);
-      if (d.ok) cur = { values: d.data.values, selected: {} };
+      if (d.ok) cur = { values: d.data.values, selected: {}, params: d.data.params || {} };
     }
     const values = cur.values || {};
+    const params = cur.params || {};
     const selected = {};
     for (const dim of ['medium', 'resolution', 'discount']) {
       const labels = Array.isArray(sel[dim]) ? sel[dim].map(String) : (Array.isArray(sel[{ medium: 'medium', resolution: 'standard', discount: 'spstate' }[dim]]) ? sel[{ medium: 'medium', resolution: 'standard', discount: 'spstate' }[dim]].map(String) : []);
@@ -201,7 +213,7 @@ module.exports = function (app, ctx) {
         if (key) (selected[dim] = selected[dim] || []).push(key);
       });
     }
-    if (rec0) siteStore.save(host, { search: Object.assign({}, rec0.search, { filters: { values: values, selected: selected } }) }, db);
+    if (rec0) siteStore.save(host, { search: Object.assign({}, rec0.search, { filters: { values: values, selected: selected, params: params } }) }, db);
     const out = siteStore.get(host);
     const labels = {};
     Object.keys(selected).forEach(function (d) { labels[d] = presets.labelsOfDim(d, selected[d]); });

@@ -1,0 +1,32 @@
+<html><body>
+<form action="torrents.php" method="get">
+  <select name="cat">
+    <option value="0">请选择</option>
+    <option value="401">电影/Movies</option>
+    <option value="405">电影/Movies</option>
+    <option value="406">剧集/TV-Series</option>
+  </select>
+  <input type="checkbox" name="medium1" value="1" checked> Blu-ray
+  <input type="checkbox" name="medium12" value="1"> Blu-rayUHD
+  <select name="standard">
+    <option value="0">请选择</option>
+    <option value="1">1080p/i</option>
+    <option value="5">4K_UHD</option>
+  </select>
+  <select name="codec">
+    <option value="1">H.264/AVC/x264</option>
+    <option value="10">H.265/HEVC/x265</option>
+  </select>
+  <select name="audiocodec">
+    <option value="3">DTS-HD/DTS</option>
+    <option value="10">AC3</option>
+  </select>
+  <select name="team">
+    <option value="1">BTSCHOOL</option>
+    <option value="2">WiKi</option>
+  </select>
+</form>
+<a href="/torrents.php?cat401=1">电影</a>
+<a href="/torrents.php?cat405=1">电影</a>
+<a href="/torrents.php?cat406=1">剧集</a>
+</body></html>

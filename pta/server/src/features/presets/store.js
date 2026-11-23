@@ -39,7 +39,7 @@ const ALIAS = {
 const DIM_ALIAS = {
   medium: {
     '原盘': 'full_disc', 'full disc': 'full_disc', fulldisc: 'full_disc', bdmv: 'full_disc', iso: 'full_disc',
-    uhd: 'uhd_full_disc', 'uhd原盘': 'uhd_full_disc', '4k原盘': 'uhd_full_disc',
+    uhd: 'uhd_full_disc', 'uhd原盘': 'uhd_full_disc', '4k原盘': 'uhd_full_disc', 'blu-rayuhd': 'uhd_full_disc', blurayuhd: 'uhd_full_disc', '4kuhd': 'uhd_full_disc',
     '3d': '3d_full_disc', '3d原盘': '3d_full_disc',
     encode: 'encode', '压制': 'encode',
     'blu-ray': 'bluray', bluray: 'bluray', bd: 'bluray', bdrip: 'bluray',
@@ -47,6 +47,8 @@ const DIM_ALIAS = {
     'web-dl': 'webdl', webdl: 'webdl', web: 'webdl', webrip: 'webrip', tvrip: 'tvrip', vhs: 'vhs', '其他': 'other'
   },
   resolution: { '4k': '2160p', '8k': '4320p' },
+  codec: { h264: 'h264', 'h.264/avc/x264': 'h264', 'h264/avc/x264': 'h264', 'h.265/hevc/x265': 'h265', h265: 'h265', 'mpeg-2': 'mpeg2', mpeg2: 'mpeg2', 'vc-1': 'vc1', vc1: 'vc1', xvid: 'xvid', '其他': 'other', other: 'other' },
+  audio: { 'dts-hd/dts': 'dts_hd', dtshd: 'dts_hd', dts: 'dts_hd', truehd: 'truehd', ac3: 'ac3', lpcm: 'lpcm', flac: 'flac', mp3: 'mp3', aac: 'aac', ape: 'ape', '其他': 'other', other: 'other' },
   discount: {
     '2x 50%': '2x_half', '2x50%': '2x_half', '2x50': '2x_half', '2x_half': '2x_half',
     '2x free': '2x_free', '2x免费': '2x_free', '2x 免费': '2x_free',
@@ -159,11 +161,20 @@ function makePresets(dataDir) {
     if (hits.length) return aliases[hits[0]];
     if (dim === 'resolution') {
       const m = /(480|576|720|1080)[pi]/i.exec(raw);
-      if (m) return m[1].toLowerCase() + m[2].toLowerCase();
+      if (m) return m[0].toLowerCase();
       if (/2160|\b4k\b|uhd/i.test(raw)) return '2160p';
       if (/4320|\b8k\b/i.test(raw)) return '4320p';
     }
     return '';
+  }
+  function expandDim(dim, key) {
+    const g = ((doc().groups || {})[dim] || {})[key];
+    return Array.isArray(g) && g.length ? g.slice() : [key];
+  }
+  function expandDims(dim, keys) {
+    const out = [];
+    (Array.isArray(keys) ? keys : []).forEach(function (k) { expandDim(dim, k).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); });
+    return out;
   }
   function labelsOfDim(dim, keys) {
     return (Array.isArray(keys) ? keys : []).map(function (k) { return searchLabel(dim, k); });
@@ -174,7 +185,7 @@ function makePresets(dataDir) {
   return {
     FILE: DEFAULT_FILE, RUNTIME_FILE: runtimeFile, ensure: ensure, doc: doc, types: types, typeKeys: typeKeys, keyOf: keyOf, labelOf: labelOf,
     keysOfList: keysOfList, searchOptions: searchOptions, searchKeys: searchKeys,
-    searchLabel: searchLabel, keyOfDim: keyOfDim, labelsOfDim: labelsOfDim, publishFields: publishFields, siteDefaults: siteDefaults
+    searchLabel: searchLabel, keyOfDim: keyOfDim, labelsOfDim: labelsOfDim, expandDim: expandDim, expandDims: expandDims, publishFields: publishFields, siteDefaults: siteDefaults
   };
 }
 

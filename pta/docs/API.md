@@ -52,7 +52,8 @@
 | PUT | `/api/crawl/cats/:host` | `{ids: []}` 保存分类 |
 | GET | `/api/crawl/filters/:host` | 搜索筛选 |
 | PUT | `/api/crawl/filters/:host` | `{selected: {medium, resolution, discount}}` |
-| POST | `/api/crawl/filters/:host/detect` | 探测搜索页下拉 |
+| POST | `/api/crawl/filters/:host/detect` | 探测搜索页下拉（只读） |
+| POST | `/api/crawl/preset/:host/detect` | 识别并写回搜索预设（分类 ID、媒介、编码、音频、分辨率、制作组） |
 | GET | `/api/crawl/plan` | 只读抓取计划 |
 | GET | `/api/crawl/status` | 抓取状态 |
 | POST | `/api/crawl/run` | 跑一轮抓取 |

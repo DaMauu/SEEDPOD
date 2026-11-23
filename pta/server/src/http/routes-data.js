@@ -2,6 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const siteHidden = require('../features/sites/hidden');
+const { buildSiteSearchUrl } = require('../features/sites/search-url');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -19,8 +20,14 @@ module.exports = function (app, ctx) {
     });
     /* cats 给界面看中文；catMap 保留 key，编辑时直接写 movie -> 401 */
     const catMap = list.length ? list : Object.assign({}, rec.publish.catMap || {});
+    const previewUrls = Object.keys(cats).map(function (key) {
+      const id = (cats[key] || [])[0];
+      if (id == null) return null;
+      return { key: key, label: presets.labelOf(key) || key, id: String(id), url: buildSiteSearchUrl(rec, [String(id)], '', presets) };
+    }).filter(Boolean);
     return { engine: rec.engine, base: rec.url.base, searchPath: rec.search.path, params: rec.search.params || {},
       catMode: rec.search.catMode || 'single', catSlot: rec.search.catSlot || '', cats: cats, catMap: catMap,
+      filters: rec.search.filters || {}, previewUrls: previewUrls,
       upload: rec.publish.upload || {}, uploadMap: rec.publish.upload || {}, verify: rec.publish.verify || {},
       tagMap: rec.publish.tagMap || {}, tagValue: rec.publish.tagValue || 'yes' };
   }
@@ -208,7 +215,7 @@ module.exports = function (app, ctx) {
     if (b.base && !require('../infra/url-guard').baseOk(host, b.base)) {
       return bad(reply, 'BAD_BASE', '站点 base 必须是该站域名或其子域，且非本机站点要用 https');
     }
-    const CAT_MODES = ['single', 'multi', 'bracket', 'indexed'];
+    const CAT_MODES = ['single', 'multi', 'bracket', 'indexed', 'key'];
     if (b.catMode !== undefined && b.catMode !== '' && CAT_MODES.indexOf(String(b.catMode)) < 0) {
       return bad(reply, 'BAD_CAT_MODE', 'catMode 只能是 ' + CAT_MODES.join(' / '));
     }

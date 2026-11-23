@@ -201,7 +201,10 @@ function parseList(html) {
 function buildSearchUrl(def, q, cats) {
   const base = String(def.base || '').replace(/\/+$/, '');
   const path = String(def.searchPath || '/torrents.php');
-  const params = def.params || { search: '{q}', cat: '{cats}' };
+  const supplied = def.params && typeof def.params === 'object' && !Array.isArray(def.params) ? def.params : {};
+  const params = Object.keys(supplied).length ? Object.assign({}, supplied) : { search: '{q}', cat: '{cats}' };
+  /* NexusPHP: incldead=0 是“包括断种”，1=活种，2=断种；抓取默认包括断种，避免漏资源 */
+  if (params.incldead === undefined) params.incldead = '0';
   const mode = def.catMode || 'single';
   const ids = (cats || []).map(String).filter(Boolean);
   const parts = [];
@@ -209,7 +212,11 @@ function buildSearchUrl(def, q, cats) {
     const tpl = params[k];
     if (tpl === '{cats}') {
       if (!ids.length) return;
-      if (mode === 'multi') ids.forEach(function (id) { parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(id)); });
+      /* NexusPHP 的另一种分类参数：cat401=1、cat402=1，而不是 cat=401 */
+      if (mode === 'key') {
+        const base = String(k).replace(/\[.*$/, '') || 'cat';
+        ids.forEach(function (id) { parts.push(encodeURIComponent(base + id) + '=1'); });
+      } else if (mode === 'multi') ids.forEach(function (id) { parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(id)); });
       else if (mode === 'bracket') ids.forEach(function (id) { parts.push(encodeURIComponent(k + '[]') + '=' + encodeURIComponent(id)); });
       else if (mode === 'indexed') ids.forEach(function (id, i) {
         const key = /\[\d+\]/.test(k) ? k.replace(/\[\d+\]/, '[' + i + ']') : k + '[' + i + ']';

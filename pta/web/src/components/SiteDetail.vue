@@ -105,6 +105,16 @@
                       <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
                     </div>
                   </div>
+                  <div class="set-fields">
+                    <div class="sd-block">
+                      <h4>搜索预设识别</h4>
+                      <p class="set-desc">从站点搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，保存到站点 JSON。</p>
+                      <div class="cm-actions">
+                        <button class="btn ghost slim" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
+                        <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
+                      </div>
+                    </div>
+                  </div>
                   <div v-if="previewUrls.length" class="set-fields">
                     <div class="sd-block">
                       <h4>搜索链接预览</h4>
@@ -284,6 +294,8 @@ const upSaving = ref(false)
 const upMsg = ref('')
 const detectBusy = ref(false)
 const detectMsg = ref('')
+const searchPresetBusy = ref(false)
+const searchPresetMsg = ref('')
 const busy = reactive({ selfcheck: false, crawl: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
@@ -296,6 +308,11 @@ const catGroups = computed(function () {
 })
 const previewUrls = computed(function () {
   const d = detail.def || {}
+  if (Array.isArray(d.previewUrls) && d.previewUrls.length) {
+    return d.previewUrls.slice(0, 6).map(function (u) {
+      return { tag: u.label || u.key, url: u.url, short: String(u.url || '').replace(/^https?:\/\//, '') }
+    })
+  }
   const p = detail.preset || {}
   const groups = (p.cats && Object.keys(p.cats).length ? p.cats : d.cats) || {}
   const params = d.params || {}
@@ -708,6 +725,20 @@ async function saveUpForm() {
   } catch (e) { upMsg.value = '保存请求发不出去'; toast(upMsg.value) }
   upSaving.value = false
 }
+async function detectSearchPreset() {
+  if (!host.value || searchPresetBusy.value) return
+  searchPresetBusy.value = true
+  searchPresetMsg.value = '识别中…'
+  try {
+    const r = await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
+    const j = await r.json().catch(() => null)
+    if (!j || !j.ok) { searchPresetMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
+    searchPresetMsg.value = '已保存：' + Object.keys((j.data.search && j.data.search.cats) || {}).length + ' 类分类'
+    await loadDetail(host.value)
+  } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
+  finally { searchPresetBusy.value = false }
+}
+
 function detectRemote() {
   if (!host.value || detectBusy.value) return
   const h = host.value
