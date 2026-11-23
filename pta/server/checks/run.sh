@@ -65,6 +65,7 @@ run site-store site-store.js
 run sites-format sites-format.js
 run presets presets.js
 run search-preset search-preset.js
+run search-preset-batch search-preset-batch.js
 run url-guard url-guard.js
 run site-types site-types.js
 run secret-rotate secret-rotate.js

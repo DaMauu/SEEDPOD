@@ -129,6 +129,7 @@ medium:       "bluray = medium1 = 1"        子项 = 参数名 = 值
 - NexusPHP 的 `incldead=0` 是“包括断种”，`1=活种`，`2=断种`；默认带 `incldead=0`，避免漏断种资源。
 - `catMode: "key"` 表示 NexusPHP 的 `cat401=1`、`cat402=1` 写法；`single` 是 `cat=401`，`bracket` 是 `cat[]=401`。
 - `POST /api/crawl/preset/:host/detect`：读一次搜索页，识别分类 ID、媒介/编码/音频/分辨率/制作组和参数名，合并写回站点预设。
+- 批量识别：`node pta/server/scripts/detect-search-presets.js --data <数据目录> --run [--write] [--limit 5]`；默认只数站，`--run` 才请求，每站 1 次、间隔 10 秒，失败即停；同一 ID 识别成多个大分类时跳过不写。
 
 ### publish
 

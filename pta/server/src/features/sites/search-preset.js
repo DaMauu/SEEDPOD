@@ -50,6 +50,7 @@ function mapDim(dim, label, presets) {
 
 function parseSearchPreset(html, presets) {
   const cats = {};
+  const catLabels = {};
   const values = {};
   const params = {};
   const labels = {};
@@ -59,6 +60,7 @@ function parseSearchPreset(html, presets) {
     if (!key || id == null || id === '') return;
     cats[key] = cats[key] || [];
     if (cats[key].indexOf(String(id)) < 0) cats[key].push(String(id));
+    if (catLabels[String(id)] == null) catLabels[String(id)] = String(label || '');
   }
   function addOpt(dim, fieldName, label, val) {
     const key = mapDim(dim, label, presets);
@@ -116,7 +118,7 @@ function parseSearchPreset(html, presets) {
     catMode = 'key';
   }
 
-  return { cats: cats, catMode: catMode, values: values, params: params, labels: labels };
+  return { cats: cats, catLabels: catLabels, catMode: catMode, values: values, params: params, labels: labels };
 }
 
 module.exports = { parseSearchPreset, dimOf, isCatField, mapType, mapDim, textOf };
