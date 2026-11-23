@@ -10,6 +10,7 @@
 - 所有写入走 `pta/server/src/features/sites/format.js`；新增 `pta/server/checks/sites-format.js`，排版被改回普通缩进会失败。
 - 旧结构读取时自动迁移，写回新结构并留 `.bak`；生产 `sites.json` 部署后第一次读取自动迁移。
 - `pta/server/pack/sites.preset.json` 已重新生成；全量 `run.sh` 通过。
+- 已部署 v0.7.669：生产 `sites.json` 首次读取自动迁移为块状格式，306 站格式检查通过；旧文件保留为 `sites.json.bak`。
 
 ## 2026-11-23 后端功能收口开始（v0.7.661）
 
