@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-25 00:50（当前 v0.7.682 / 站点识别覆盖；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-25 01:20（当前 v0.7.683 / 跨引擎识别回归；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-25 跨引擎识别回归（v0.7.683）
+
+- 新增 `recognize-matrix`：四个夹具同时验架构和分类结果。
+- 夹具补真实结构：NexusPHP 复选框、Unit3D/Livewire、Gazelle `filter_cat/media/codec/audioformat`。
+- 全量 `run.sh` 通过。
 
 ## 2026-11-25 站点识别覆盖（v0.7.682）
 

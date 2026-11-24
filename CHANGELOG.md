@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.683 · 2026-11-25
+
+### 跨引擎识别回归
+- 新增 `recognize-matrix` 检查：NexusPHP、Unit3D 复选框、Unit3D Livewire、Gazelle 四个夹具同时验架构判定和分类/维度结果。
+- 夹具补齐真实结构：`catNNN=1` + `img alt`、`categories[0][]`、`wire:model.live="categoryIds"`、`filter_cat/media/codec/audioformat`。
+- 全量 `run.sh` 通过。
+
 ## v0.7.682 · 2026-11-25
 
 ### 站点识别覆盖
