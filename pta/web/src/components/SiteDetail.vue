@@ -742,6 +742,16 @@ async function saveUpForm() {
   } catch (e) { upMsg.value = '保存请求发不出去'; toast(upMsg.value) }
   upSaving.value = false
 }
+function typeLabelOf(key) {
+  const t = runtimePresets.value && runtimePresets.value.types
+  return (t && t[key]) || key
+}
+function diffText(diff) {
+  const add = ((diff && diff.added) || []).map(function (x) { return typeLabelOf(x.type) })
+  const rem = ((diff && diff.removed) || []).map(function (x) { return typeLabelOf(x.type) })
+  const fmt = function (label, list) { return list.length ? label + ' ' + list.slice(0, 5).join('/') + (list.length > 5 ? ' 等' : '') : '' }
+  return [fmt('新增', add), fmt('移除', rem)].filter(Boolean).join('；')
+}
 async function detectSearchPreset() {
   if (!host.value || searchPresetBusy.value) return
   searchPresetBusy.value = true
@@ -756,7 +766,8 @@ async function detectSearchPreset() {
     const eng = (j.data && j.data.engine && j.data.engine !== 'generic') ? j.data.engine : '未定'
     if (!n) { searchPresetMsg.value = '没识别到分类 · 架构 ' + eng + (un ? ' · ' + un + ' 个未识别标签' : ''); return }
     const warn = (j.data && j.data.confidence && j.data.confidence !== 'high') ? '（置信度 ' + j.data.confidence + '）' : ''
-    const extra = ' · 架构 ' + eng + (amb ? ' · ' + amb + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
+    const diff = diffText(j.data.diff)
+    const extra = ' · 架构 ' + eng + (diff ? ' · ' + diff : '') + (amb ? ' · ' + amb + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
     searchPresetMsg.value = '识别到 ' + n + ' 类' + extra + '，等确认'
     confirmBox('识别搜索预设', '识别到 ' + n + ' 类分类' + extra + warn + '。保存到站点？', async function () {
       searchPresetBusy.value = true
@@ -771,7 +782,8 @@ async function detectSearchPreset() {
           const saved = Object.keys((a.data.search && a.data.search.cats) || {}).length
           const left = ((a.data && a.data.ambiguous) || []).length
           const un = ((a.data && a.data.unmatched) || []).length
-          searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (left ? ' · ' + left + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
+          const dTxt = diffText(a.data && a.data.diff)
+          searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (dTxt ? ' · ' + dTxt : '') + (left ? ' · ' + left + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
           await loadDetail(host.value)
         } else searchPresetMsg.value = (a && a.error && a.error.message) || '保存失败'
       } catch (e) { searchPresetMsg.value = '保存请求发不出去' }

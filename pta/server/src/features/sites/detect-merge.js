@@ -97,6 +97,24 @@ function applyOverrides(detected, overrides, opts) {
   return d;
 }
 
+/* 识别前后分类差异：写之前告诉用户会新增/移除哪些 type。 */
+function diffCats(current, next) {
+  const a = current || {};
+  const b = next || {};
+  const types = Array.from(new Set(Object.keys(a).concat(Object.keys(b))));
+  const added = [];
+  const removed = [];
+  types.forEach(function (t) {
+    const oldIds = (a[t] || []).map(String);
+    const newIds = (b[t] || []).map(String);
+    const add = newIds.filter(function (id) { return oldIds.indexOf(id) < 0; });
+    const rem = oldIds.filter(function (id) { return newIds.indexOf(id) < 0; });
+    if (add.length) added.push({ type: t, ids: add });
+    if (rem.length) removed.push({ type: t, ids: rem });
+  });
+  return { added: added, removed: removed };
+}
+
 /* 合并后再应用一次覆盖：skip/map 也要能清掉已保存的旧分类，而不是只清检测结果。 */
 function mergeWithOverrides(current, detected, overrides, opts) {
   const d = applyOverrides(detected, overrides, opts);
@@ -107,4 +125,4 @@ function mergeWithOverrides(current, detected, overrides, opts) {
   return { merged: merged, detected: d };
 }
 
-module.exports = { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides };
+module.exports = { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides, diffCats };

@@ -4,7 +4,7 @@ const path = require('path');
 const makePresets = require('../src/features/presets/store');
 const { parseSearchPreset } = require('../src/features/sites/search-preset');
 const { summarizeDetection, mergeDetection } = require('../scripts/detect-search-presets');
-const { applyOverrides, mergeWithOverrides } = require('../src/features/sites/detect-merge');
+const { applyOverrides, mergeWithOverrides, diffCats } = require('../src/features/sites/detect-merge');
 
 const presets = makePresets();
 const html = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'search-preset.html'), 'utf8');
@@ -68,6 +68,12 @@ check('站点覆盖：skip / map / engine', function () {
   need(forced.engine === 'unit3d' && forced.engineConfidence === 1, 'engine 没生效：' + JSON.stringify(forced));
   const cleaned = mergeWithOverrides({ cats: { music: ['408'] }, filters: {} }, d, { skip: ['408'] }, { keyOf: presets.keyOf });
   need(!(cleaned.merged.search.cats.music || []).length, 'skip 没清掉已保存的旧分类：' + JSON.stringify(cleaned.merged.search.cats));
+});
+
+check('识别前后差异能报新增/移除', function () {
+  const d = diffCats({ movie: ['401'], tv: ['402'] }, { movie: ['401', '408'] });
+  need(JSON.stringify(d.added) === JSON.stringify([{ type: 'movie', ids: ['408'] }]), '新增不对：' + JSON.stringify(d));
+  need(JSON.stringify(d.removed) === JSON.stringify([{ type: 'tv', ids: ['402'] }]), '移除不对：' + JSON.stringify(d));
 });
 
 check('force 只替换识别到的维度和分类', function () {

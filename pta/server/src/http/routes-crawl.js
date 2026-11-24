@@ -4,7 +4,7 @@ const dupeClassify = require('../features/screen/dupe-classify');
 const { typeOf } = require('../features/crawl/category');
 const configSchema = require('../features/settings/config-schema');
 const urlGuard = require('../infra/url-guard');
-const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides } = require('../features/sites/detect-merge');
+const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides, diffCats } = require('../features/sites/detect-merge');
 const { detectEngine } = require('../features/sites/detect');
 
 function keyword(title) {
@@ -179,12 +179,13 @@ module.exports = function (app, ctx) {
     const d = applyOverrides(r.data || {}, rec.search && rec.search.detect, { keyOf: presets.keyOf });
     const summary = summarizeDetection(d);
     const merged = mergeWithOverrides(rec.search, d, rec.search && rec.search.detect, { keyOf: presets.keyOf }).merged;
+    const diff = diffCats(rec.search.cats, merged.search.cats);
     const nextEngine = (!rec.engine || rec.engine === '?') && d.engine && d.engine !== 'generic' && Number(d.engineConfidence) >= 0.6 ? d.engine : rec.engine;
     if (String(req.query && req.query.preview || '') === '1') {
-      return ok({ host: host, preview: true, search: merged.search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
+      return ok({ host: host, preview: true, search: merged.search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, diff: diff, changed: merged.changed });
     }
     siteStore.save(host, { search: merged.search, engine: nextEngine }, db);
-    return ok({ host: host, search: siteStore.get(host).search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
+    return ok({ host: host, search: siteStore.get(host).search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, diff: diff, changed: merged.changed });
   });
 
   /* 预览后确认保存：用预览返回的 detected，不再请求站点 */
@@ -199,10 +200,11 @@ module.exports = function (app, ctx) {
     const withOverride = overridden.detected;
     const summary = summarizeDetection(withOverride);
     const merged = overridden.merged;
+    const diff = diffCats(rec.search.cats, merged.search.cats);
     const nextEngine = (!rec.engine || rec.engine === '?') && withOverride.engine && withOverride.engine !== 'generic' && Number(withOverride.engineConfidence) >= 0.6 ? withOverride.engine : rec.engine;
     const saved = siteStore.save(host, { search: merged.search, engine: nextEngine }, db);
     if (!saved || !saved.ok) return bad(reply, (saved && saved.code) || 'SAVE_FAILED', (saved && saved.message) || '保存失败', 500);
-    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: withOverride.engineConfidence, changed: merged.changed });
+    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: withOverride.engineConfidence, diff: diff, changed: merged.changed });
   });
 
   app.put('/api/crawl/preset/:host/override', async (req, reply) => {
