@@ -7,6 +7,7 @@
 - 新增 `recognize-matrix`：四个夹具同时验架构和分类结果。
 - 夹具补真实结构：NexusPHP 复选框、Unit3D/Livewire、Gazelle `filter_cat/media/codec/audioformat`。
 - 全量 `run.sh` 通过。
+- 已部署 v0.7.683；四引擎识别矩阵已进 `run.sh`，52PT 仍为 `music:408`/`mv:406`。
 
 ## 2026-11-25 站点识别覆盖（v0.7.682）
 
