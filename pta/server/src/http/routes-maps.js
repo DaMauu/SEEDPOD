@@ -1,27 +1,24 @@
-/* 站点映射总表接口：读/写 data/site-maps.json，按上传表单自动识别分类。 */
+/* 站点映射总表接口：读/写站点 publish.catMap，按上传表单自动识别大分类。 */
 
 const CAT = [
   ['电影', /电影|movie|film|影片|影\s*片|cinema/i],
   ['剧集', /剧集|电视剧|^电视$|tv\s*series|series|tv\s*packs?|^tv$|drama|star\s*plus|zee\s*tv|sab\s*tv|&tv|life\s*ok|dangal|star\s*bharat|ishara|shemaroo|jio\s*tv|colors|sony|mtv/i],
-  ['动漫', /动漫|动画|anime|animation|漫画|comics?|manga|\bova\b/i],
   ['综艺', /综艺|tv\s*show|variety/i],
+  ['动漫', /动漫|动画|anime|animation|漫画|comics?|manga|\bova\b/i],
   ['纪录片', /纪录|documentary|docu|\bdoc\b|docs/i],
-  ['音乐', /音乐|music|音乐短片|演唱会?|音频|音轨|专辑|原声|单曲|精选|混音|访谈|样带|重混音|\bmv\b|\bep\b|\balbum\b|\bsingle\b|\bremix\b|\bost\b|soundtrack|\blive\s*album\b|bootleg|compilation|interview|\bflac\b|\bmp3\b|mixtape|\bdemo\b|hq\s*audio|\baudio\b|classical|ghazal|instrumental|muzica|manele|videoclip|klipek|lossless|dance/i],
+  ['演唱会', /演唱会|concert/i],
+  ['音乐短片', /music\s*video|音乐短片|\bmv\b/i],
+  ['音乐', /音乐|music|音频|音轨|专辑|原声|单曲|精选|混音|访谈|样带|重混音|\balbum\b|\bsingle\b|\bremix\b|\bost\b|soundtrack|\blive\s*album\b|bootleg|compilation|interview|\bflac\b|\bmp3\b|mixtape|\bdemo\b|hq\s*audio|\baudio\b|classical|ghazal|instrumental|muzica|manele|videoclip|klipek|lossless|dance/i],
   ['体育', /体育|sport|nba|nfl|mlb|nhl|ufc|mma|f1|formula|soccer|basket|football|tennis|golf|rugby|cricket|hockey|wrestling|boxing|cycling|racing|motogp|nascar|volleyball|handball|snooker|billiard|bowling|chess|darts|gymnastic|athletic|swimming|weightlifting|climbing|crossfit|baseball|softball|sailing|surfing|skate|ski|archery|fencing|rowing|equestrian|league|derby|cup|open/i],
-  ['电子书', /电子书|ebook|e-book|book|有声书|audiobook/i],
-  ['软件', /软件|software|app|program|programok|programe|linux|mac|windows|android|mobile|0day/i],
-  ['学习', /学习|study|教育|tutorial|教\s*学/i],
-  ['短剧', /短剧|short/i],
-  ['舞台演出', /舞台|stage|perf\b|concert/i],
   ['游戏', /游戏|game|playstation|ps[2-5]\b|xbox|nintendo|wii|rom\s*packs?|jocuri|játékok/i],
+  ['软件', /软件|software|app|program|programok|programe|linux|mac|windows|android|mobile|0day/i],
+  ['有声书', /有声书|audiobook|audio\s*book/i],
+  ['电子书', /电子书|ebook|e-book|book|书籍|小说/i],
+  ['短剧', /短剧|short/i],
+  ['舞台演出', /舞台|stage|perf\b|戏曲|曲艺|opera/i],
   ['成人', /xxx|adult|softcore|18\+|erotic|hentai|porn/i],
-  ['原盘', /untouched|full\s*disc|blu-?ray\s*iso|bd\/dvd\s*iso|\biso\b|4k\s*ultra\s*hd|\bbdmv\b|\b(?:bd|dvd)\s*iso\b/i],
-  ['Remux', /remux/i],
-  ['压制', /encode|x264|x265|hdtv|webrip|web-rips?|dvdrip|rips?\b|sdrips|divx|xvid|upscaled/i],
   ['图片', /image|imagini|pics|pictures|wallpaper/i],
-  ['样品', /sample|sampler/i],
-  ['预告', /trailer|preview|teaser/i],
-  ['其他', /其他|其它|other|misc|图片|unknown|待定|uncategorised|all\s*categories|choose|select|^[-—]+$/i]
+  ['其他', /其他|其它|other|misc|unknown|待定|uncategorised|all\s*categories|choose|select|^[-—]+$/i]
 ];
 
 function cleanMap(obj, max) {
@@ -96,6 +93,7 @@ module.exports = function (app, ctx) {
         const catMap = Object.assign({}, publish.catMap || {});
         Object.keys(saved.cat || {}).forEach(function (k) {
           const key = presets.keyOf(k) || k;
+          if (!presets.types()[key]) return;
           catMap[key] = saved.cat[k];
         });
         publish.catMap = catMap;

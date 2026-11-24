@@ -10,12 +10,15 @@ async function runCatalog(C) {
       { value: '1', label: '电 影' },
       { value: '2', label: '综 艺' },
       { value: '3', label: '其 它' },
-      { value: '4', label: 'BDMV' }
+      { value: '4', label: 'BDMV' },
+      { value: '5', label: '有声书' },
+      { value: '6', label: '音乐短片' }
     ]);
     need(m['电影'] === '1', '「电 影」没匹配：' + JSON.stringify(m));
     need(m['综艺'] === '2', '「综 艺」没匹配');
     need(m['其他'] === '3', '「其 它」没匹配');
-    need(m['原盘'] === '4', 'BDMV 没归原盘');
+    need(!m['原盘'], 'BDMV 不该再当内容类型：' + JSON.stringify(m));
+    need(m['有声书'] === '5' && m['音乐短片'] === '6', '新类型没匹配：' + JSON.stringify(m));
   });
 
   await check('私有包目标站列表与 cookie 就绪', async function () {

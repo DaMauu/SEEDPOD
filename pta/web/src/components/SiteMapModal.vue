@@ -89,7 +89,7 @@ async function saveMap() {
   try {
     const r = await fetch('/api/maps/' + encodeURIComponent(host.value), { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cat, team, form: form.value }) })
     const j = await r.json().catch(() => null)
-    msg.value = j && j.ok ? '已保存到 data/site-maps.json' : ((j && j.error && j.error.message) || '保存失败')
+    msg.value = j && j.ok ? '已保存到站点分类映射' : ((j && j.error && j.error.message) || '保存失败')
   } catch (e) { msg.value = '保存请求发不出去' }
 }
 
