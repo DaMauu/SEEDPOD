@@ -46,6 +46,11 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
       ['电子书', 'ebook'], ['动画', 'anime'], ['演唱', 'concert'], ['其它', 'other'], ['doc', 'documentary'], ['sport', 'sports']];
     cases.forEach(function (c) { need(presets.keyOf(c[0]) === c[1], c[0] + ' 没归一到 ' + c[1] + '：' + presets.keyOf(c[0])); });
     need(presets.labelOf('movie') === '电影', 'movie 中文名不对');
+    need(presets.keyOfDim('medium', 'TVRip') === 'hdtv', 'TVRip 应归 HDTV：' + presets.keyOfDim('medium', 'TVRip'));
+    need(presets.keyOfDim('medium', 'LaserDisc') === 'other', 'LaserDisc 应归 Other：' + presets.keyOfDim('medium', 'LaserDisc'));
+    need(presets.keyOfDim('audio', 'DTSMA') === 'dts_hd', 'DTSMA 应归 DTS-HD：' + presets.keyOfDim('audio', 'DTSMA'));
+    need(presets.keyOfDim('audio', 'PCM') === 'lpcm', 'PCM 应归 LPCM：' + presets.keyOfDim('audio', 'PCM'));
+    need(presets.keyOfDim('resolution', 'SD') === '480p', 'SD 应归 480p：' + presets.keyOfDim('resolution', 'SD'));
   });
 
   await check('站点只存 key：读取时中文自动补齐，保存时中文自动归一', async function () {

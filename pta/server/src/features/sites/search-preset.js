@@ -80,6 +80,8 @@ function labelFromNearLink(html, start, len) {
   return a ? textOf(a[1]) : '';
 }
 function mapType(label, presets) {
+  /* 样品/预告已不是内容类型，站点分类里出现时并到“其他” */
+  if (/^(?:样品|sample|预告|trailers?)(?:\b|\s|\/|$)/i.test(String(label || '').trim())) return presets.keyOf('其他') || 'other';
   /* Unit3D 的单独 “TV Shows” 是剧集；带中文“综艺”的仍按综艺走 */
   if (/^tv\s*shows?$/i.test(String(label || '').trim())) return presets.keyOf('剧集') || 'tv';
   const t = typeOf(label);

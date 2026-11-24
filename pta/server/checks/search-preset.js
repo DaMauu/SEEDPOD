@@ -24,6 +24,8 @@ check('分类 ID 和分类模式能识别', function () {
 check('原盘/Remux 不再当内容类型', function () {
   need(mapType('原盘', presets) === '', '原盘不该是内容类型：' + mapType('原盘', presets));
   need(mapType('Remux', presets) === '', 'Remux 不该是内容类型：' + mapType('Remux', presets));
+  need(mapType('样品', presets) === 'other', '样品应归 Other：' + mapType('样品', presets));
+  need(mapType('Trailer', presets) === 'other', 'Trailer 应归 Other：' + mapType('Trailer', presets));
 });
 
 check('Unit3D checkbox 分类能识别', function () {
@@ -83,9 +85,9 @@ check('Gazelle 搜索表单 media/codec/audioformat 能识别', function () {
   const html = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'gazelle-search-form.html'), 'utf8');
   const r = parseSearchPreset(html, presets);
   need(r.values.medium.bluray === 'BluRay' && r.params.medium.bluray === 'media', 'media 没识别：' + JSON.stringify(r));
-  need(r.values.medium.webdl === 'WEB' && r.values.medium.laserdisc === 'LaserDisc', 'media 选项没归一：' + JSON.stringify(r.values.medium));
+  need(r.values.medium.webdl === 'WEB' && r.values.medium.other === 'LaserDisc', 'media 选项没归一：' + JSON.stringify(r.values.medium));
   need(r.values.codec.av1 === 'AV1' && r.values.codec.mpeg1 === 'MPEG1', 'codec 没识别：' + JSON.stringify(r.values.codec));
-  need(r.values.audio.dtsma === 'DTSMA' && r.values.audio.eac3 === 'EAC3' && r.values.audio.pcm === 'PCM', 'audioformat 没识别：' + JSON.stringify(r.values.audio));
+  need(r.values.audio.dts_hd === 'DTSMA' && r.values.audio.eac3 === 'EAC3' && r.values.audio.lpcm === 'PCM', 'audioformat 没识别：' + JSON.stringify(r.values.audio));
   need(r.values.resolution['1080p'] === '1080p' && r.values.resolution['2160p'] === '2160p', 'resolution 没识别');
 });
 
