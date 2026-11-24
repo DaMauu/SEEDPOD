@@ -8,6 +8,7 @@
 - 复合媒介：Blu-ray Remux、4K UHD Remux 归 Remux；Blu-ray DIY 归 Blu-ray；2K原盘中字归原盘。
 - 新增 API 检查：应用识别结果、冲突 ID 报告。
 - 全量 `run.sh` 通过。
+- 已部署 v0.7.680；识别改为预览确认；52PT 当前 `music:408`、`mv:406`，无 `concert:408`，预览不带 `medium11`。
 
 ## 2026-11-24 52PT 408 归音乐（v0.7.679）
 
