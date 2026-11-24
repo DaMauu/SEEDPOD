@@ -125,6 +125,14 @@
                       </div>
                     </div>
                   </div>
+                  <div v-if="presetPreview" class="set-fields">
+                    <div class="sd-block">
+                      <h4>识别明细（未保存）</h4>
+                      <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                      <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
+                      <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
+                    </div>
+                  </div>
                   <div v-if="previewUrls.length" class="set-fields">
                     <div class="sd-block">
                       <h4>搜索链接预览</h4>
@@ -306,12 +314,24 @@ const detectBusy = ref(false)
 const detectMsg = ref('')
 const searchPresetBusy = ref(false)
 const searchPresetMsg = ref('')
+const presetPreview = ref(null)
 const overrideText = ref('')
 const overrideMsg = ref('')
 const overrideBusy = ref(false)
 const busy = reactive({ selfcheck: false, crawl: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
+
+const previewGroups = computed(() => {
+  const p = presetPreview.value
+  if (!p) return []
+  const labels = p.labels || {}
+  return Object.keys(p.cats || {}).map(function (k) {
+    return { key: k, name: typeLabelOf(k), ids: (p.cats[k] || []).map(function (id) { return id + (labels[id] ? ' ' + labels[id] : '') }).join('、') }
+  })
+})
+const previewUnmatched = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).slice(0, 10).map(function (x) { return x.label }).join('、'))
+const previewAmbiguous = computed(() => ((presetPreview.value && presetPreview.value.ambiguous) || []).join('、'))
 
 const catGroups = computed(function () {
   const d = detail.def || {}
@@ -474,6 +494,7 @@ async function loadDetail(target) {
   defMsg.value = ''
   overrideText.value = ''
   overrideMsg.value = ''
+  presetPreview.value = null
   try {
     const rs = await Promise.all([
       fetch('/api/site-def/' + encodeURIComponent(h), { credentials: 'same-origin' }).then(function (r) {
@@ -763,6 +784,7 @@ async function detectSearchPreset() {
     const n = Object.keys((j.data.search && j.data.search.cats) || {}).length
     const amb = ((j.data && j.data.ambiguous) || []).length
     const un = ((j.data && j.data.unmatched) || []).length
+    presetPreview.value = { cats: (j.data.search && j.data.search.cats) || {}, labels: (j.data.detected && j.data.detected.catLabels) || {}, ambiguous: (j.data && j.data.ambiguous) || [], unmatched: (j.data && j.data.unmatched) || [] }
     const eng = (j.data && j.data.engine && j.data.engine !== 'generic') ? j.data.engine : '未定'
     if (!n) { searchPresetMsg.value = '没识别到分类 · 架构 ' + eng + (un ? ' · ' + un + ' 个未识别标签' : ''); return }
     const warn = (j.data && j.data.confidence && j.data.confidence !== 'high') ? '（置信度 ' + j.data.confidence + '）' : ''
@@ -784,6 +806,7 @@ async function detectSearchPreset() {
           const un = ((a.data && a.data.unmatched) || []).length
           const dTxt = diffText(a.data && a.data.diff)
           searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (dTxt ? ' · ' + dTxt : '') + (left ? ' · ' + left + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
+          presetPreview.value = null
           await loadDetail(host.value)
         } else searchPresetMsg.value = (a && a.error && a.error.message) || '保存失败'
       } catch (e) { searchPresetMsg.value = '保存请求发不出去' }
