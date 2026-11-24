@@ -145,6 +145,11 @@ function makePresets(dataDir) {
   function keyOfDim(dim, x) {
     const raw = norm(x);
     if (!raw) return '';
+    /* 复合媒介先按最强词判：Blu-ray Remux 归 Remux，不能先被 Blu-ray 抓走 */
+    if (dim === 'medium') {
+      if (/remux/i.test(raw)) return 'remux';
+      if (/encode|压制|x264|x265|hevc/i.test(raw)) return 'encode';
+    }
     const opts = searchOptions(dim);
     if (opts[raw]) return raw;
     const low = raw.toLowerCase();

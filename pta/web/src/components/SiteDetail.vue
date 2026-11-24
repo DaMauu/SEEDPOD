@@ -730,13 +730,32 @@ async function detectSearchPreset() {
   searchPresetBusy.value = true
   searchPresetMsg.value = '识别中…'
   try {
-    const r = await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
+    const r = await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect?preview=1', { method: 'POST', credentials: 'same-origin' })
     const j = await r.json().catch(() => null)
     if (!j || !j.ok) { searchPresetMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
     const n = Object.keys((j.data.search && j.data.search.cats) || {}).length
     const amb = ((j.data && j.data.ambiguous) || []).length
-    searchPresetMsg.value = '已保存：' + n + ' 类分类' + (amb ? ' · ' + amb + ' 个冲突未写' : '')
-    await loadDetail(host.value)
+    if (!n) { searchPresetMsg.value = '没识别到分类'; return }
+    const warn = (j.data && j.data.confidence && j.data.confidence !== 'high') ? '（置信度 ' + j.data.confidence + '）' : ''
+    searchPresetMsg.value = '识别到 ' + n + ' 类' + (amb ? ' · ' + amb + ' 个冲突未写' : '') + '，等确认'
+    confirmBox('识别搜索预设', '识别到 ' + n + ' 类分类' + (amb ? '，' + amb + ' 个冲突未写' : '') + warn + '。保存到站点？', async function () {
+      searchPresetBusy.value = true
+      searchPresetMsg.value = '保存中…'
+      try {
+        const a = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/apply', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ detected: j.data.detected })
+        })).json()
+        if (a && a.ok) {
+          const saved = Object.keys((a.data.search && a.data.search.cats) || {}).length
+          const left = ((a.data && a.data.ambiguous) || []).length
+          searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (left ? ' · ' + left + ' 个冲突未写' : '')
+          await loadDetail(host.value)
+        } else searchPresetMsg.value = (a && a.error && a.error.message) || '保存失败'
+      } catch (e) { searchPresetMsg.value = '保存请求发不出去' }
+      finally { searchPresetBusy.value = false }
+    })
   } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
   finally { searchPresetBusy.value = false }
 }

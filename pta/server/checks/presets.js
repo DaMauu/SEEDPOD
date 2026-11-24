@@ -51,6 +51,10 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
     need(presets.keyOfDim('audio', 'DTSMA') === 'dts_hd', 'DTSMA 应归 DTS-HD：' + presets.keyOfDim('audio', 'DTSMA'));
     need(presets.keyOfDim('audio', 'PCM') === 'lpcm', 'PCM 应归 LPCM：' + presets.keyOfDim('audio', 'PCM'));
     need(presets.keyOfDim('resolution', 'SD') === '480p', 'SD 应归 480p：' + presets.keyOfDim('resolution', 'SD'));
+    need(presets.keyOfDim('medium', 'Blu-ray Remux') === 'remux', 'Blu-ray Remux 应归 Remux：' + presets.keyOfDim('medium', 'Blu-ray Remux'));
+    need(presets.keyOfDim('medium', '4K UHD Remux') === 'remux', '4K UHD Remux 应归 Remux：' + presets.keyOfDim('medium', '4K UHD Remux'));
+    need(presets.keyOfDim('medium', 'Blu-ray DIY') === 'bluray', 'Blu-ray DIY 应归 Blu-ray：' + presets.keyOfDim('medium', 'Blu-ray DIY'));
+    need(presets.keyOfDim('medium', '2K原盘中字（国粤语）') === 'full_disc', '2K原盘中字应归原盘：' + presets.keyOfDim('medium', '2K原盘中字（国粤语）'));
   });
 
   await check('站点只存 key：读取时中文自动补齐，保存时中文自动归一', async function () {

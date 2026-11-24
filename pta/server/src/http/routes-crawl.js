@@ -177,8 +177,26 @@ module.exports = function (app, ctx) {
     const d = r.data || {};
     const summary = summarizeDetection(d);
     const merged = mergeDetection(rec.search, d, {});
+    if (String(req.query && req.query.preview || '') === '1') {
+      return ok({ host: host, preview: true, search: merged.search, detected: d, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
+    }
     siteStore.save(host, { search: merged.search }, db);
     return ok({ host: host, search: siteStore.get(host).search, detected: d, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
+  });
+
+  /* 预览后确认保存：用预览返回的 detected，不再请求站点 */
+  app.post('/api/crawl/preset/:host/apply', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const rec = siteStore.get(host);
+    if (!rec) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
+    const d = req.body && req.body.detected;
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return bad(reply, 'BAD_DETECTED', 'detected 必须是对象');
+    if (JSON.stringify(d).length > 1024 * 1024) return bad(reply, 'TOO_LARGE', '识别结果超过 1MB');
+    const summary = summarizeDetection(d);
+    const merged = mergeDetection(rec.search, d, {});
+    const saved = siteStore.save(host, { search: merged.search }, db);
+    if (!saved || !saved.ok) return bad(reply, (saved && saved.code) || 'SAVE_FAILED', (saved && saved.message) || '保存失败', 500);
+    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
   });
 
   app.put('/api/crawl/filters/:host', async (req, reply) => {

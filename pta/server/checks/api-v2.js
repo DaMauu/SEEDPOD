@@ -760,6 +760,19 @@ async function main() {
     fs.writeFileSync(path.join(DATA, 'site-status.json'), JSON.stringify({
       'added.example': { pass: true, at: new Date().toISOString() }
     }), { mode: 0o600 });
+    const apply = await fetchA(BASE + '/api/crawl/preset/added.example/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detected: { cats: { movie: ['401'], tv: ['402'] }, catMode: 'key', values: {}, params: {}, labels: {} } })
+    });
+    need(apply.status === 200, '应用识别结果失败 ' + apply.status);
+    const defAfter = await (await fetchA(BASE + '/api/site-def/added.example')).json();
+    need(defAfter.ok && defAfter.data.cats.movie && defAfter.data.cats.movie[0] === '401', '识别分类没写入：' + JSON.stringify(defAfter.data && defAfter.data.cats));
+    const amb = await fetchA(BASE + '/api/crawl/preset/added.example/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detected: { cats: { movie: ['408'], music: ['408'] }, catMode: 'key', values: {}, params: {}, labels: {} } })
+    });
+    const ambBody = await amb.json();
+    need(ambBody.ok && ambBody.data.ambiguous.indexOf('408') >= 0, '冲突 ID 没报：' + JSON.stringify(ambBody));
     const setC = await fetchA(BASE + '/api/credentials/added.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=echo-check' })
     });
