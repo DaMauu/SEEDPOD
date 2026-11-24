@@ -2,8 +2,8 @@
    只做纯映射，不发请求；抓取和流程页共用，避免两边规则不一致。 */
 const TYPE_RULES = [
   ['电影', /电影|movie|film/i],
-  ['剧集', /剧集|电视剧|tv\s*series|series|episode/i],
-  ['综艺', /综艺|tv\s*show|variety/i],
+  ['剧集', /剧集|电视剧|tv\s*series|tv\s*shows?|series|episode/i],
+  ['综艺', /综艺|variety/i],
   ['动漫', /动漫|动画|anime|animation/i],
   ['纪录片', /纪录|documentary|docu/i],
   ['演唱会', /演唱会|concert/i],

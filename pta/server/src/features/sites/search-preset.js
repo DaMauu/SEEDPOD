@@ -33,6 +33,20 @@ function inputLabel(html, name) {
   const after = html.slice(m.index + m[0].length, m.index + m[0].length + 80).split('<')[0];
   return after.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
 }
+function attrMap(raw) {
+  const out = {};
+  String(raw || '').replace(/([a-zA-Z0-9_:-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g, function (_, k, _q, a, b, c) {
+    out[String(k).toLowerCase()] = a !== undefined ? a : (b !== undefined ? b : (c || ''));
+    return '';
+  });
+  return out;
+}
+function labelFor(html, id) {
+  const n = String(id || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('<label[^>]*for=["\']' + n + '["\'][^>]*>([\\s\\S]*?)<\\/label>', 'i');
+  const m = re.exec(html);
+  return m ? textOf(m[1]) : '';
+}
 function mapType(label, presets) {
   const t = typeOf(label);
   return presets.keyOf(t) || presets.keyOf(label) || '';
@@ -90,6 +104,17 @@ function parseSearchPreset(html, presets) {
         });
         continue;
       }
+      /* Unit3D: <input type=checkbox name="categories[0][]" value="1"> + <label>Movies</label> */
+      if (!opts.length && /checkbox|radio/i.test(String(fld.type || '')) && isCatField(name + ' ' + String(fld.label || ''))) {
+        const label = String(fld.label || '').trim();
+        const val = String(fld.value || '').trim();
+        if (label && val && val !== '0' && !/请选择|全部|不限|choose|select|all/i.test(label)) {
+          addCat(label, val);
+          if (/\[\]/.test(name)) catMode = catMode === 'key' ? catMode : 'bracket';
+          else if (!catMode) catMode = 'single';
+        }
+        continue;
+      }
       const dim = dimOf(name + ' ' + String(fld.label || ''));
       if (!dim) continue;
       if (!opts.length) {
@@ -116,6 +141,24 @@ function parseSearchPreset(html, presets) {
     if (!label) continue;
     addCat(label, m[1]);
     catMode = 'key';
+  }
+
+  /* Unit3D 等复选框分类：name="categories[0][]" value="1" + <label for="cat_1">Movies</label>。
+     form.parse 会把同名复选框合并成一个，这里直接扫 input 才能拿全。 */
+  const inputs = /<input\b([^>]*)>/gi;
+  while ((m = inputs.exec(html))) {
+    const a = attrMap(m[1]);
+    const type = String(a.type || '').toLowerCase();
+    if (type !== 'checkbox' && type !== 'radio') continue;
+    const name = String(a.name || '');
+    if (!isCatField(name)) continue;
+    const val = String(a.value || '').trim();
+    if (!val || val === '0') continue;
+    const label = (a.id ? labelFor(html, a.id) : '') || inputLabel(html, name);
+    if (!label || /请选择|全部|不限|choose|select|all/i.test(label)) continue;
+    addCat(label, val);
+    if (/\[\]/.test(name) && catMode !== 'key') catMode = 'bracket';
+    else if (!catMode) catMode = 'single';
   }
 
   return { cats: cats, catLabels: catLabels, catMode: catMode, values: values, params: params, labels: labels };

@@ -20,6 +20,14 @@ check('分类 ID 和分类模式能识别', function () {
   need(r.catMode === 'key', '分类模式应为 key：' + r.catMode);
 });
 
+check('Unit3D checkbox 分类能识别', function () {
+  const u3 = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'unit3d-browse.html'), 'utf8');
+  const r = parseSearchPreset(u3, presets);
+  need(Array.isArray(r.cats.movie) && r.cats.movie[0] === '1', 'Unit3D 电影分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.tv) && r.cats.tv[0] === '2', 'Unit3D 剧集分类不对：' + JSON.stringify(r.cats));
+  need(r.catMode === 'bracket', 'Unit3D catMode 应为 bracket：' + r.catMode);
+});
+
 check('媒介向下匹配：Blu-ray / Blu-rayUHD 参数名分开存', function () {
   const r = parseSearchPreset(html, presets);
   need(r.values.medium.bluray === '1', 'Blu-ray 值不对：' + JSON.stringify(r.values.medium));
