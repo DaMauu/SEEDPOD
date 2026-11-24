@@ -14,6 +14,7 @@
 - 面板按用户要求回显 cookie：列表仍只回 `hasCookie`，单站详情 `GET /api/credentials/:host` 回明文，`no-store`、不写日志。
 - 预设确认状态改为“有分类 ID 即已确认”，清掉 `site-search.local.json` 旧提示；上传表单失败提示不再重复。
 - 全量 `run.sh` 通过。
+- 已部署 v0.7.674；health `credentials=1`，首页统计 `loginOk=1`、`enabled=1`、`loginUnknown=300`，旧 10 条“可用”状态已清。
 
 ## 2026-11-24 面板 cookie 保存回归（v0.7.673）
 
