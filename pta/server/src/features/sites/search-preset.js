@@ -170,13 +170,17 @@ function parseSearchPreset(html, presets) {
     }
   }
 
-  /* NexusPHP 常见分类链接：?cat401=1，文字就是分类名 */
-  const re = /<a\b[^>]*href=["'][^"']*[?&]cat(\d+)=1[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+  /* NexusPHP 常见分类链接：?cat401=1，文字就是分类名。
+     组合链接（?cat406=1&cat408=1）是站点预设，不是单个分类，跳过。 */
+  const re = /<a\b[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let m;
   while ((m = re.exec(html))) {
+    const href = String(m[1] || '').replace(/&amp;/gi, '&');
+    const ids = Array.from(href.matchAll(/[?&]cat(\d+)=1/gi)).map(function (x) { return x[1]; });
+    if (ids.length !== 1) continue;
     const label = textOf(m[2]);
     if (!label) continue;
-    addCat(label, m[1]);
+    addCat(label, ids[0]);
     catMode = 'key';
   }
 

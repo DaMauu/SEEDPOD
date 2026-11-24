@@ -44,6 +44,8 @@ check('NexusPHP 分类复选框按 img alt 识别', function () {
   need(Array.isArray(r.cats.anime) && r.cats.anime[0] === '405', '动漫分类不对：' + JSON.stringify(r.cats));
   need(Array.isArray(r.cats.music) && r.cats.music[0] === '408', '音乐分类不对：' + JSON.stringify(r.cats));
   need(Array.isArray(r.cats.adult) && r.cats.adult[0] === '411', '成人分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.music) && r.cats.music[0] === '408', '408 应归音乐：' + JSON.stringify(r.cats));
+  need(!r.cats.concert, '组合链接不该产生 concert：' + JSON.stringify(r.cats));
   need(r.catMode === 'key', 'catMode 应为 key：' + r.catMode);
 });
 
