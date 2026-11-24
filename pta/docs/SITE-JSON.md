@@ -112,6 +112,7 @@ resolution   分辨率选项：大分类 key → 参数名/值
 discount     优惠选项：大分类 key → 参数名/值
 restriction  限制选项：大分类 key → 参数名/值
 codec/audio/team  可选，存在才写
+detect       可选：识别覆盖（engine 强制架构；skip 跳过的分类 ID；map 标签/ID → 大分类 key）
 selected     已勾选的大分类 key；只影响 URL 拼装
 labels       可选，站点原始选项文字
 limits       站点自己的抓取限制

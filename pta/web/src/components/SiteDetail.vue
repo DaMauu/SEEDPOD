@@ -114,6 +114,17 @@
                       </div>
                     </div>
                   </div>
+                  <div class="set-fields">
+                    <div class="sd-block">
+                      <h4>识别覆盖（可选）</h4>
+                      <p class="set-desc">只在识别不准时用：skip 跳过分类 ID，map 把标签或 ID 固定到大分类，engine 强制架构。</p>
+                      <textarea v-model="overrideText" class="input sd-note" rows="4" placeholder='{"skip":["408"],"map":{"Foo":"music"}}'></textarea>
+                      <div class="cm-actions">
+                        <button class="btn ghost slim" type="button" :disabled="overrideBusy" @click.stop="saveOverride">{{ overrideBusy ? '保存中…' : '保存覆盖' }}</button>
+                        <span class="sd-cookie-res">{{ overrideMsg }}</span>
+                      </div>
+                    </div>
+                  </div>
                   <div v-if="previewUrls.length" class="set-fields">
                     <div class="sd-block">
                       <h4>搜索链接预览</h4>
@@ -295,6 +306,9 @@ const detectBusy = ref(false)
 const detectMsg = ref('')
 const searchPresetBusy = ref(false)
 const searchPresetMsg = ref('')
+const overrideText = ref('')
+const overrideMsg = ref('')
+const overrideBusy = ref(false)
 const busy = reactive({ selfcheck: false, crawl: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
@@ -458,6 +472,8 @@ async function loadDetail(target) {
   detail.catalog = null
   detail.items = []
   defMsg.value = ''
+  overrideText.value = ''
+  overrideMsg.value = ''
   try {
     const rs = await Promise.all([
       fetch('/api/site-def/' + encodeURIComponent(h), { credentials: 'same-origin' }).then(function (r) {
@@ -474,6 +490,7 @@ async function loadDetail(target) {
     if (dj && dj.body && dj.body.ok && dj.body.data) {
       detail.def = dj.body.data
       defText.value = JSON.stringify(dj.body.data, null, 2)
+      overrideText.value = dj.body.data.detect && Object.keys(dj.body.data.detect).length ? JSON.stringify(dj.body.data.detect, null, 2) : ''
       syncCatRows(dj.body.data)
       syncUpForm(dj.body.data)
       defReady.value = true
@@ -762,6 +779,28 @@ async function detectSearchPreset() {
     })
   } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
   finally { searchPresetBusy.value = false }
+}
+
+async function saveOverride() {
+  if (!host.value || overrideBusy.value) return
+  let detect = {}
+  const text = String(overrideText.value || '').trim()
+  if (text) {
+    try { detect = JSON.parse(text) } catch (e) { overrideMsg.value = 'JSON 格式不对'; return }
+  }
+  if (!detect || typeof detect !== 'object' || Array.isArray(detect)) { overrideMsg.value = '覆盖必须是 JSON 对象'; return }
+  overrideBusy.value = true
+  overrideMsg.value = '保存中…'
+  try {
+    const j = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/override', {
+      method: 'PUT', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detect: detect })
+    })).json()
+    if (j && j.ok) { overrideMsg.value = '已保存'; toast('识别覆盖已保存') }
+    else overrideMsg.value = (j && j.error && j.error.message) || '保存失败'
+  } catch (e) { overrideMsg.value = '保存请求发不出去' }
+  finally { overrideBusy.value = false }
 }
 
 function detectRemote() {

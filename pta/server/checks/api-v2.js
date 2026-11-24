@@ -787,6 +787,30 @@ async function main() {
     const engDef = await (await fetchA(BASE + '/api/site-def/engine.example')).json();
     need(engDef.ok && engDef.data.engine === 'unit3d', '架构没写回：' + JSON.stringify(engDef.data && engDef.data.engine));
     await fetchA(BASE + '/api/sites/engine.example', { method: 'DELETE' });
+    const ov = await fetchA(BASE + '/api/crawl/preset/added.example/override', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detect: { map: { Foo: 'music' } } })
+    });
+    need(ov.status === 200, '识别覆盖保存失败');
+    const mapped = await fetchA(BASE + '/api/crawl/preset/added.example/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detected: { cats: { movie: ['408'] }, catLabels: { '408': 'Foo' }, catMode: 'key', values: {}, params: {}, labels: {} } })
+    });
+    const mappedBody = await mapped.json();
+    need(mappedBody.ok && (mappedBody.data.search.cats.music || []).indexOf('408') >= 0, '覆盖 map 没生效：' + JSON.stringify(mappedBody));
+    need((mappedBody.data.search.cats.movie || []).indexOf('408') < 0, '覆盖后 movie 还留着 408');
+    const ovDef = await (await fetchA(BASE + '/api/site-def/added.example')).json();
+    need(ovDef.ok && ovDef.data.detect && ovDef.data.detect.map && ovDef.data.detect.map.Foo === 'music', '识别覆盖没存进站点：' + JSON.stringify(ovDef.data && ovDef.data.detect));
+    await fetchA(BASE + '/api/crawl/preset/added.example/override', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detect: { skip: ['408'] } })
+    });
+    const skipped = await fetchA(BASE + '/api/crawl/preset/added.example/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detected: { cats: { music: ['408'] }, catLabels: {}, catMode: 'key', values: {}, params: {}, labels: {} } })
+    });
+    const skippedBody = await skipped.json();
+    need(skippedBody.ok && (skippedBody.data.search.cats.music || []).indexOf('408') < 0, '覆盖 skip 没生效：' + JSON.stringify(skippedBody));
     const setC = await fetchA(BASE + '/api/credentials/added.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=echo-check' })
     });

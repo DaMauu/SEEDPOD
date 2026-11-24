@@ -4,6 +4,7 @@ const path = require('path');
 const makePresets = require('../src/features/presets/store');
 const { parseSearchPreset } = require('../src/features/sites/search-preset');
 const { summarizeDetection, mergeDetection } = require('../scripts/detect-search-presets');
+const { applyOverrides, mergeWithOverrides } = require('../src/features/sites/detect-merge');
 
 const presets = makePresets();
 const html = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'search-preset.html'), 'utf8');
@@ -55,6 +56,18 @@ check('同一个站点 ID 被识别成多个分类时不写', function () {
   const r = mergeDetection({ cats: {}, filters: {} }, amb, {});
   need(!r.search.cats.movie && !r.search.cats.audiobook, '冲突 ID 被写进去了：' + JSON.stringify(r.search.cats));
   need(JSON.stringify(r.search.cats.concert) === JSON.stringify(['408']), '不冲突的分类没写');
+});
+
+check('站点覆盖：skip / map / engine', function () {
+  const d = { cats: { movie: ['408'] }, catLabels: { '408': 'Foo' }, catMode: 'key', values: {}, params: {}, labels: {} };
+  const skipped = applyOverrides(d, { skip: ['408'] }, { keyOf: presets.keyOf });
+  need(!skipped.cats.movie, 'skip 没生效：' + JSON.stringify(skipped.cats));
+  const mapped = applyOverrides(d, { map: { Foo: 'music' } }, { keyOf: presets.keyOf });
+  need(JSON.stringify(mapped.cats.music) === JSON.stringify(['408']) && !mapped.cats.movie, 'map 没生效：' + JSON.stringify(mapped.cats));
+  const forced = applyOverrides(d, { engine: 'unit3d' }, { keyOf: presets.keyOf });
+  need(forced.engine === 'unit3d' && forced.engineConfidence === 1, 'engine 没生效：' + JSON.stringify(forced));
+  const cleaned = mergeWithOverrides({ cats: { music: ['408'] }, filters: {} }, d, { skip: ['408'] }, { keyOf: presets.keyOf });
+  need(!(cleaned.merged.search.cats.music || []).length, 'skip 没清掉已保存的旧分类：' + JSON.stringify(cleaned.merged.search.cats));
 });
 
 check('force 只替换识别到的维度和分类', function () {

@@ -10,7 +10,7 @@ const makeSiteStore = require('../src/features/sites/store');
 const makeCookieStore = require('../src/features/sites/credentials');
 const makePresets = require('../src/features/presets/store');
 const { parseSearchPreset } = require('../src/features/sites/search-preset');
-const { summarizeDetection, mergeDetection } = require('../src/features/sites/detect-merge');
+const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides } = require('../src/features/sites/detect-merge');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const argv = process.argv.slice(2);
@@ -99,7 +99,7 @@ async function runBatch(opts) {
     }
     if (got.status !== 200) { row.status = 'HTTP_' + got.status; results.push(row); continue; }
     let detected;
-    try { detected = parseSearchPreset(html, presets); }
+    try { detected = applyOverrides(parseSearchPreset(html, presets), rec.search && rec.search.detect, { keyOf: presets.keyOf }); }
     catch (e) { row.status = 'PARSE_FAILED'; row.error = String(e && e.message || e).slice(0, 120); results.push(row); continue; }
     const sum = summarizeDetection(detected);
     row.status = 'OK';
@@ -110,7 +110,7 @@ async function runBatch(opts) {
     row.dims = sum.dims;
     row.detected = { cats: detected.cats, catLabels: detected.catLabels || {}, catMode: detected.catMode, values: detected.values, params: detected.params };
     if (o.write) {
-      const merged = mergeDetection(rec.search, detected, { force: force });
+      const merged = mergeWithOverrides(rec.search, detected, rec.search && rec.search.detect, { keyOf: presets.keyOf, force: force }).merged;
       row.changed = merged.changed;
       if (merged.changed && sum.confidence === 'high') {
         const saved = store.save(host, { search: merged.search }, null);

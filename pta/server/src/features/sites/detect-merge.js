@@ -63,4 +63,48 @@ function mergeDetection(current, detected, opts) {
   return { search: next, changed: changed };
 }
 
-module.exports = { summarizeDetection, mergeDetection };
+/* 站点级识别覆盖：skip 跳过分类 ID；map 把标签或 ID 固定到某个大分类；engine 强制架构。
+   只改识别结果，不改站点里的其他配置。 */
+function applyOverrides(detected, overrides, opts) {
+  const d = clone(detected || {});
+  const o = overrides && typeof overrides === 'object' ? overrides : {};
+  const keyOf = (opts && opts.keyOf) || function (x) { return String(x || ''); };
+  const skip = (Array.isArray(o.skip) ? o.skip : []).map(String);
+  const skipSet = {};
+  skip.forEach(function (id) { skipSet[id] = true; });
+  d.cats = d.cats || {};
+  Object.keys(d.cats).forEach(function (t) {
+    d.cats[t] = (d.cats[t] || []).filter(function (id) { return !skipSet[String(id)]; });
+    if (!d.cats[t].length) delete d.cats[t];
+  });
+  const map = o.map && typeof o.map === 'object' && !Array.isArray(o.map) ? o.map : {};
+  Object.keys(map).forEach(function (k) {
+    const target = keyOf(map[k]);
+    if (!target) return;
+    const ids = [];
+    if (/^\d+$/.test(String(k))) ids.push(String(k));
+    else Object.keys(d.catLabels || {}).forEach(function (id) { if (String(d.catLabels[id]) === String(k)) ids.push(String(id)); });
+    ids.forEach(function (id) {
+      Object.keys(d.cats).forEach(function (t) {
+        d.cats[t] = (d.cats[t] || []).filter(function (x) { return String(x) !== id; });
+        if (!d.cats[t].length) delete d.cats[t];
+      });
+      d.cats[target] = d.cats[target] || [];
+      if (d.cats[target].indexOf(id) < 0) d.cats[target].push(id);
+    });
+  });
+  if (o.engine) { d.engine = String(o.engine); d.engineConfidence = 1; }
+  return d;
+}
+
+/* 合并后再应用一次覆盖：skip/map 也要能清掉已保存的旧分类，而不是只清检测结果。 */
+function mergeWithOverrides(current, detected, overrides, opts) {
+  const d = applyOverrides(detected, overrides, opts);
+  const merged = mergeDetection(current, d, { force: !!(opts && opts.force) });
+  const cleaned = applyOverrides({ cats: merged.search.cats || {}, catLabels: d.catLabels || {} }, overrides, opts);
+  merged.search.cats = cleaned.cats || {};
+  if (JSON.stringify((current && current.cats) || {}) !== JSON.stringify(merged.search.cats)) merged.changed = true;
+  return { merged: merged, detected: d };
+}
+
+module.exports = { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides };

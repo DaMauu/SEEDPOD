@@ -37,7 +37,7 @@ module.exports = function (app, ctx) {
     }).filter(Boolean);
     return { engine: rec.engine, base: rec.url.base, searchPath: rec.search.path, params: rec.search.params || {},
       catMode: rec.search.catMode || 'single', catSlot: rec.search.catSlot || '', cats: cats, catMap: catMap,
-      filters: rec.search.filters || {}, previewUrls: previewUrls,
+      filters: rec.search.filters || {}, detect: rec.search.detect || {}, previewUrls: previewUrls,
       upload: rec.publish.upload || {}, uploadMap: rec.publish.upload || {}, verify: rec.publish.verify || {},
       tagMap: rec.publish.tagMap || {}, tagValue: rec.publish.tagValue || 'yes' };
   }
@@ -251,12 +251,16 @@ module.exports = function (app, ctx) {
         Object.keys(b.catMap).forEach(function (k) { if (b.catMap[k] != null) cats[k] = [String(b.catMap[k])]; });
       }
     }
+    if (b.detect !== undefined && b.detect !== null && (typeof b.detect !== 'object' || Array.isArray(b.detect))) {
+      return bad(reply, 'BAD_DETECT', 'detect 必须是对象');
+    }
     const search = Object.assign({}, cur.search || {}, {
       path: b.searchPath || (cur.search && cur.search.path) || '/torrents.php',
       params: b.params || (cur.search && cur.search.params) || {},
       catMode: b.catMode || (cur.search && cur.search.catMode) || 'single',
       catSlot: b.catSlot != null ? String(b.catSlot) : ((cur.search && cur.search.catSlot) || ''),
-      cats: cats || (cur.search && cur.search.cats) || {}
+      cats: cats || (cur.search && cur.search.cats) || {},
+      detect: b.detect !== undefined ? (b.detect || {}) : ((cur.search && cur.search.detect) || {})
     });
     const publish = Object.assign({}, cur.publish || {}, {
       upload: { path: String(up.path || ''), formPath: String(up.formPath || ''), fileField: String(up.fileField || ''), fields: up.fields || {} },

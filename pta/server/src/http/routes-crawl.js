@@ -4,7 +4,7 @@ const dupeClassify = require('../features/screen/dupe-classify');
 const { typeOf } = require('../features/crawl/category');
 const configSchema = require('../features/settings/config-schema');
 const urlGuard = require('../infra/url-guard');
-const { summarizeDetection, mergeDetection } = require('../features/sites/detect-merge');
+const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides } = require('../features/sites/detect-merge');
 const { detectEngine } = require('../features/sites/detect');
 
 function keyword(title) {
@@ -176,9 +176,9 @@ module.exports = function (app, ctx) {
     if (!rec) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
     const r = await detectFilters(host);
     if (!r.ok) return bad(reply, r.code, r.message);
-    const d = r.data || {};
+    const d = applyOverrides(r.data || {}, rec.search && rec.search.detect, { keyOf: presets.keyOf });
     const summary = summarizeDetection(d);
-    const merged = mergeDetection(rec.search, d, {});
+    const merged = mergeWithOverrides(rec.search, d, rec.search && rec.search.detect, { keyOf: presets.keyOf }).merged;
     const nextEngine = (!rec.engine || rec.engine === '?') && d.engine && d.engine !== 'generic' && Number(d.engineConfidence) >= 0.6 ? d.engine : rec.engine;
     if (String(req.query && req.query.preview || '') === '1') {
       return ok({ host: host, preview: true, search: merged.search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
@@ -195,12 +195,26 @@ module.exports = function (app, ctx) {
     const d = req.body && req.body.detected;
     if (!d || typeof d !== 'object' || Array.isArray(d)) return bad(reply, 'BAD_DETECTED', 'detected 必须是对象');
     if (JSON.stringify(d).length > 1024 * 1024) return bad(reply, 'TOO_LARGE', '识别结果超过 1MB');
-    const summary = summarizeDetection(d);
-    const merged = mergeDetection(rec.search, d, {});
-    const nextEngine = (!rec.engine || rec.engine === '?') && d.engine && d.engine !== 'generic' && Number(d.engineConfidence) >= 0.6 ? d.engine : rec.engine;
+    const overridden = mergeWithOverrides(rec.search, d, rec.search && rec.search.detect, { keyOf: presets.keyOf });
+    const withOverride = overridden.detected;
+    const summary = summarizeDetection(withOverride);
+    const merged = overridden.merged;
+    const nextEngine = (!rec.engine || rec.engine === '?') && withOverride.engine && withOverride.engine !== 'generic' && Number(withOverride.engineConfidence) >= 0.6 ? withOverride.engine : rec.engine;
     const saved = siteStore.save(host, { search: merged.search, engine: nextEngine }, db);
     if (!saved || !saved.ok) return bad(reply, (saved && saved.code) || 'SAVE_FAILED', (saved && saved.message) || '保存失败', 500);
-    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
+    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: withOverride.engineConfidence, changed: merged.changed });
+  });
+
+  app.put('/api/crawl/preset/:host/override', async (req, reply) => {
+    const host = String(req.params.host || '').toLowerCase();
+    const rec = siteStore.get(host);
+    if (!rec) return bad(reply, 'NOT_FOUND', '没有这个站的定义', 404);
+    const detect = req.body && req.body.detect;
+    if (detect !== null && (typeof detect !== 'object' || Array.isArray(detect))) return bad(reply, 'BAD_DETECT', 'detect 必须是对象');
+    if (JSON.stringify(detect || {}).length > 64 * 1024) return bad(reply, 'TOO_LARGE', '识别覆盖超过 64KB');
+    const saved = siteStore.save(host, { search: Object.assign({}, rec.search, { detect: detect || {} }) }, db);
+    if (!saved || !saved.ok) return bad(reply, (saved && saved.code) || 'SAVE_FAILED', (saved && saved.message) || '保存失败', 500);
+    return ok({ host: host, detect: siteStore.get(host).search.detect || {} });
   });
 
   app.put('/api/crawl/filters/:host', async (req, reply) => {
