@@ -8,6 +8,7 @@
 - 媒介只留 10 个；原盘/UHD/3D 统一由 `groups.medium.bluray` 覆盖，UI 只显示 Blu-ray。
 - 旧类型归 `other`，旧媒介归 `bluray`；生产 `sites.json` 已无旧 key，pack 已重新生成。
 - 全量 `run.sh` 通过。
+- 已部署 v0.7.675；线上 presets 18 类型/10 媒介，旧类型/媒介 key 均为 0，`medium.bluray` 正常。
 
 ## 2026-11-24 52PT 分类与 cookie 回显（v0.7.674）
 
