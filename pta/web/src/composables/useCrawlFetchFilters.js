@@ -25,7 +25,7 @@ async function loadFilters() {
   const vals = (j && j.ok && j.data && j.data.filters && j.data.filters.values) || {}
   const rows = (rules.fetch[0] && rules.fetch[0].rows) || []
   const byName = { '媒介': 'medium', '编码': 'codec', '音频编码': 'audio', '分辨率': 'resolution', '制作组': 'team', '优惠': 'discount' }
-  const MEDIA_MERGE = ['原盘(Full Disc)', 'UHD 原盘', '3D 原盘', 'Blu-ray']
+  const MEDIA_MERGE = ['原盘(Full Disc)', 'UHD 原盘', '3D 原盘', 'Blu-ray', 'full_disc', 'uhd_full_disc', '3d_full_disc', 'bluray']
   Object.keys(byName).forEach(name => {
     const r = rows.find(x => x.t === name)
     if (!r) return

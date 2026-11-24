@@ -52,13 +52,13 @@ settings  一行
       "meta": { "name": "Site A", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#site-a.example" },
       "search": {
         "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "key", "catSlot": "1",
-        "type": { "movie": ["401"] }, "medium": { "full_disc": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] },
+        "type": { "movie": ["401"] }, "medium": { "bluray": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] },
         "resolution": { "1080p": "standard = 1" }, "discount": { "free": "spstate = 2" }, "restriction": {},
-        "selected": { "medium": ["full_disc"], "discount": ["free"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
+        "selected": { "medium": ["bluray"], "discount": ["free"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
       },
       "publish": {
         "upload": { "path": "/takeupload.php", "formPath": "/upload.php", "fileField": "torrent", "fields": {} }, "verify": { "path": "/torrents.php?search={title}" },
-        "type": { "movie": "402", "tv": "403" }, "medium": { "full_disc": "1" },
+        "type": { "movie": "402", "tv": "403" }, "medium": { "bluray": "1" },
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": null, "valueMaps": {}
       },
@@ -73,11 +73,19 @@ settings  一行
 ```text
 meta.name             站点显示名
 search.type.movie     搜索页电影分类 ID = 401
-search.medium         原盘 = Blu-ray(medium1=1) + Blu-rayUHD(medium12=1)
-search.selected       流程页勾了原盘和免费
+search.medium.bluray  Blu-ray = 原盘/Blu-ray(medium1=1) + Blu-rayUHD(medium12=1)
+search.selected       流程页勾了 Blu-ray 和免费
 publish.type.movie    上传页电影分类 ID = 402
 settings.enabled      本机是否启用
 ```
+
+## 大分类
+
+内容类型只留 18 个：`movie / tv / variety / anime / documentary / music / concert / mv / sports / game / software / ebook / audiobook / short / stage / adult / image / other`。
+
+媒介只留 10 个：`bluray / remux / encode / webdl / webrip / hdtv / dvd / hddvd / vhs / other`。`full_disc`、`uhd_full_disc`、`3d_full_disc` 是 `bluray` 组里的站点子项，不再作为独立大分类显示。
+
+旧站点里的内容类型 `full_disc / remux / encode / sample / trailer` 会自动归到 `other`；旧媒介 `full_disc / uhd_full_disc / 3d_full_disc` 会归到 `bluray` 组。
 
 ## 字段
 
@@ -123,7 +131,7 @@ medium:       "bluray = medium1 = 1"        子项 = 参数名 = 值
 - `medium` 的 `bluray`、`uhd_full_disc` 是站点子项，`medium1`、`medium12` 是该子项的参数名。
 - 一个维度有多个参数时写成数组：
   ```json
-  "medium": { "full_disc": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] }
+  "medium": { "bluray": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] }
   ```
 - UI 的“Blu-ray”大分类 = 原盘(Full Disc) / UHD 原盘 / 3D 原盘 / Blu-ray；站点只有 Blu-ray 时就用它，有 Blu-rayUHD/3D 时一并带上。
 - Gazelle 的 `media` / `codec` / `audioformat` / `resolution` 下拉会映射到媒介/编码/音频/分辨率；`media=BluRay` 归到 Blu-ray 组。
@@ -150,13 +158,13 @@ baseValueMaps 站点包自带的值映射
 发布维度用大分类 key，不用站点小 key：
 
 ```json
-"medium": { "full_disc": "1" }
+"medium": { "bluray": "1" }
 ```
 
 有多个子项时：
 
 ```json
-"medium": { "full_disc": ["bluray = 1", "uhd_full_disc = 12"] }
+"medium": { "bluray": ["bluray = 1", "uhd_full_disc = 12"] }
 ```
 
 ### settings

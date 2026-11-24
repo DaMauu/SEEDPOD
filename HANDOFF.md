@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-24 17:10（当前 v0.7.674 / 52PT 分类与 cookie 回显；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-24 19:30（当前 v0.7.675 / 内容类型与媒介拆开；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-24 内容类型与媒介拆开（v0.7.675）
+
+- 内容类型只留 18 个；Remux/Encode/原盘/样品/预告不再当内容类型。
+- 媒介只留 10 个；原盘/UHD/3D 统一由 `groups.medium.bluray` 覆盖，UI 只显示 Blu-ray。
+- 旧类型归 `other`，旧媒介归 `bluray`；生产 `sites.json` 已无旧 key，pack 已重新生成。
+- 全量 `run.sh` 通过。
 
 ## 2026-11-24 52PT 分类与 cookie 回显（v0.7.674）
 

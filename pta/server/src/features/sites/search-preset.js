@@ -83,7 +83,8 @@ function mapType(label, presets) {
   /* Unit3D 的单独 “TV Shows” 是剧集；带中文“综艺”的仍按综艺走 */
   if (/^tv\s*shows?$/i.test(String(label || '').trim())) return presets.keyOf('剧集') || 'tv';
   const t = typeOf(label);
-  return presets.keyOf(t) || presets.keyOf(label) || '';
+  const key = presets.keyOf(t) || presets.keyOf(label) || '';
+  return key && presets.types()[key] ? key : '';
 }
 function mapDim(dim, label, presets) {
   const k = presets.keyOfDim(dim, label);

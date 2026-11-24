@@ -467,7 +467,7 @@
       "display": "flex",
       "position": "static",
       "width": "336px",
-      "height": "3710.89px",
+      "height": "3570.89px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -487,14 +487,14 @@
         12,
         89,
         336,
-        3711
+        3571
       ]
     },
     ".crawl-card": {
       "display": "flex",
       "position": "relative",
       "width": "336px",
-      "height": "1440.06px",
+      "height": "1300.06px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -514,7 +514,7 @@
         12,
         437,
         336,
-        1440
+        1300
       ]
     },
     ".screen-card": {
@@ -539,7 +539,7 @@
       "backgroundColor": "rgb(255, 255, 255)",
       "rect": [
         12,
-        1889,
+        1749,
         336,
         674
       ]
@@ -575,7 +575,7 @@
       "display": "grid",
       "position": "static",
       "width": "290px",
-      "height": "290px",
+      "height": "234px",
       "paddingTop": "7px",
       "paddingBottom": "7px",
       "paddingLeft": "0px",
@@ -595,7 +595,7 @@
         35,
         570,
         290,
-        290
+        234
       ]
     },
     ".crawl-foot": {
@@ -620,7 +620,7 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         35,
-        1845,
+        1705,
         290,
         21
       ]
@@ -629,7 +629,7 @@
       "display": "flex",
       "position": "static",
       "width": "360px",
-      "height": "3959.69px",
+      "height": "3819.69px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -649,7 +649,7 @@
         0,
         0,
         360,
-        3960
+        3820
       ]
     },
     ".dock": {
@@ -2047,7 +2047,7 @@
       "display": "flex",
       "position": "static",
       "width": "366px",
-      "height": "3418.92px",
+      "height": "3278.92px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -2067,14 +2067,14 @@
         12,
         89,
         366,
-        3419
+        3279
       ]
     },
     ".crawl-card": {
       "display": "flex",
       "position": "relative",
       "width": "366px",
-      "height": "1244.06px",
+      "height": "1104.06px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -2094,7 +2094,7 @@
         12,
         437,
         366,
-        1244
+        1104
       ]
     },
     ".screen-card": {
@@ -2119,7 +2119,7 @@
       "backgroundColor": "rgb(255, 255, 255)",
       "rect": [
         12,
-        1693,
+        1553,
         366,
         605
       ]
@@ -2155,7 +2155,7 @@
       "display": "grid",
       "position": "static",
       "width": "320px",
-      "height": "234px",
+      "height": "178px",
       "paddingTop": "7px",
       "paddingBottom": "7px",
       "paddingLeft": "0px",
@@ -2175,7 +2175,7 @@
         35,
         570,
         320,
-        234
+        178
       ]
     },
     ".crawl-foot": {
@@ -2200,7 +2200,7 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         35,
-        1649,
+        1509,
         320,
         21
       ]
@@ -2209,7 +2209,7 @@
       "display": "flex",
       "position": "static",
       "width": "390px",
-      "height": "3667.72px",
+      "height": "3527.72px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -2229,7 +2229,7 @@
         0,
         0,
         390,
-        3668
+        3528
       ]
     },
     ".dock": {
@@ -3627,7 +3627,7 @@
       "display": "flex",
       "position": "static",
       "width": "744px",
-      "height": "2393.59px",
+      "height": "2365.59px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -3647,14 +3647,14 @@
         12,
         89,
         744,
-        2394
+        2366
       ]
     },
     ".crawl-card": {
       "display": "flex",
       "position": "relative",
       "width": "744px",
-      "height": "628.062px",
+      "height": "600.062px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -3674,7 +3674,7 @@
         12,
         340,
         744,
-        628
+        600
       ]
     },
     ".screen-card": {
@@ -3699,7 +3699,7 @@
       "backgroundColor": "rgb(255, 255, 255)",
       "rect": [
         12,
-        980,
+        952,
         744,
         502
       ]
@@ -3735,7 +3735,7 @@
       "display": "grid",
       "position": "static",
       "width": "698px",
-      "height": "94px",
+      "height": "66px",
       "paddingTop": "7px",
       "paddingBottom": "7px",
       "paddingLeft": "0px",
@@ -3755,7 +3755,7 @@
         35,
         473,
         698,
-        94
+        66
       ]
     },
     ".crawl-foot": {
@@ -3780,7 +3780,7 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         35,
-        936,
+        908,
         698,
         21
       ]
@@ -3789,7 +3789,7 @@
       "display": "flex",
       "position": "static",
       "width": "768px",
-      "height": "2642.39px",
+      "height": "2614.39px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -3809,7 +3809,7 @@
         0,
         0,
         768,
-        2642
+        2614
       ]
     },
     ".dock": {
@@ -5207,7 +5207,7 @@
       "display": "flex",
       "position": "static",
       "width": "1166px",
-      "height": "1395.36px",
+      "height": "1367.36px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -5227,14 +5227,14 @@
         57,
         74,
         1166,
-        1395
+        1367
       ]
     },
     ".crawl-card": {
       "display": "flex",
       "position": "relative",
       "width": "1166px",
-      "height": "441.672px",
+      "height": "413.672px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -5254,7 +5254,7 @@
         57,
         199,
         1166,
-        442
+        414
       ]
     },
     ".screen-card": {
@@ -5279,7 +5279,7 @@
       "backgroundColor": "rgb(255, 255, 255)",
       "rect": [
         57,
-        652,
+        624,
         1166,
         292
       ]
@@ -5315,7 +5315,7 @@
       "display": "grid",
       "position": "static",
       "width": "1120px",
-      "height": "66px",
+      "height": "38px",
       "paddingTop": "7px",
       "paddingBottom": "7px",
       "paddingLeft": "0px",
@@ -5335,7 +5335,7 @@
         80,
         257,
         1120,
-        66
+        38
       ]
     },
     ".crawl-foot": {
@@ -5360,7 +5360,7 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         80,
-        609,
+        581,
         1120,
         21
       ]
@@ -5369,7 +5369,7 @@
       "display": "flex",
       "position": "static",
       "width": "1230px",
-      "height": "1569.36px",
+      "height": "1541.36px",
       "paddingTop": "30px",
       "paddingBottom": "36px",
       "paddingLeft": "32px",
@@ -5389,7 +5389,7 @@
         25,
         0,
         1230,
-        1569
+        1541
       ]
     },
     ".dock": {

@@ -70,6 +70,23 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(text === formatSitesDoc(doc), 'sites.json 不是块状格式');
     });
 
+    await check('旧内容类型/媒介归到新大分类', async function () {
+      const rec = store.normalizeRecord({
+        name: 'Legacy', engine: 'nexusphp',
+        search: {
+          path: '/t',
+          cats: { full_disc: ['401'], remux: ['402'], sample: ['403'] },
+          filters: { values: { medium: { full_disc: '1', uhd_full_disc: '1' } }, params: { medium: { full_disc: 'medium11', uhd_full_disc: 'medium12' } } }
+        },
+        publish: { catMap: { encode: '404' } }
+      });
+      need(rec.search.cats.other && rec.search.cats.other.indexOf('401') >= 0 && rec.search.cats.other.indexOf('403') >= 0, '旧类型没归到 other：' + JSON.stringify(rec.search.cats));
+      need(!rec.search.cats.full_disc && !rec.search.cats.remux, '旧类型 key 还在：' + JSON.stringify(rec.search.cats));
+      need(rec.publish.catMap.other === '404', '旧发布类型没归到 other：' + JSON.stringify(rec.publish.catMap));
+      const p = store.toPersisted(rec, 'legacy.example');
+      need(p.search.medium.bluray && p.search.medium.bluray.length === 2, '媒介没归到 bluray：' + JSON.stringify(p.search.medium));
+    });
+
     await check('制作组过滤条件保存不丢', async function () {
       const cur = store.get('site-a.example');
       const search = Object.assign({}, cur.search, {

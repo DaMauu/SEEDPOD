@@ -21,9 +21,6 @@ const TYPE_RULES = [
   ['图片', /图片|picture|image|photo/i],
   ['样品', /样品|sample/i],
   ['预告', /预告|trailer/i],
-  ['原盘', /原盘|full\s*disc|bdmv/i],
-  ['Remux', /remux/i],
-  ['压制', /压制|encode/i],
   ['其他', /其他|其它|other|misc/i]
 ];
 

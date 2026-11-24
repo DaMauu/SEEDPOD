@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.675 · 2026-11-24
+
+### 内容类型与媒介拆开
+- 内容类型只留 18 个：电影/剧集/综艺/动漫/纪录片/音乐/演唱会/音乐短片/体育/游戏/软件/电子书/有声书/短剧/舞台/成人/图片/其他。
+- 媒介只留 10 个：Blu-ray/Remux/Encode/WEB-DL/WEBRip/HDTV/DVD/HDDVD/VHS/其他。
+- 原盘(Full Disc)、UHD 原盘、3D 原盘统一归到 Blu-ray 大分类；站点只有 Blu-ray 时也用它。
+- 旧内容类型 `full_disc/remux/encode/sample/trailer` 归到 `other`；旧媒介归到 `bluray` 组。
+- 全量 `run.sh` 通过。
+
 ## v0.7.674 · 2026-11-24
 
 ### 站点预设识别修正

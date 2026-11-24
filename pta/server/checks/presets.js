@@ -20,8 +20,8 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   const presets = makePresets();
 
   await check('全局类型覆盖需求清单且 key 唯一', async function () {
-    const want = ['电影', '剧集', '综艺', '动漫', '纪录片', '音乐', '体育', '演唱会', 'MV', '有声书', '电子书',
-      '软件', '游戏', '短剧', '舞台演出', '成人', '原盘', 'Remux', '压制', '图片', '样品', '预告', '其他'];
+    const want = ['电影', '剧集', '综艺', '动漫', '纪录片', '音乐', '演唱会', '音乐短片', '体育', '游戏',
+      '软件', '电子书', '有声书', '短剧', '舞台演出', '成人', '图片', '其他'];
     const got = Object.keys(doc.types || {}).map(function (k) { return doc.types[k]; });
     need(JSON.stringify(got) === JSON.stringify(want), '类型清单不一致：' + JSON.stringify(got));
     const keys = Object.keys(doc.types || {});
@@ -31,11 +31,11 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 
   await check('搜索维度齐全：媒介/分辨率/优惠/限制', async function () {
     const s = doc.search || {};
-    need(Object.keys(s.medium || {}).length === 15, '媒介数量不对');
+    need(Object.keys(s.medium || {}).length === 10, '媒介数量不对');
     need(Object.keys(s.resolution || {}).length === 7, '分辨率数量不对');
     need(Object.keys(s.discount || {}).length === 8, '优惠数量不对');
     need(Object.keys(s.restriction || {}).length === 5, '限制数量不对');
-    need(s.medium.full_disc === '原盘(Full Disc)', '媒介缺少原盘');
+    need(s.medium.bluray === 'Blu-ray', '媒介缺少 Blu-ray');
     need(s.resolution['4320p'] === '4320p/8K', '分辨率缺少 4320p/8K');
     need(s.discount['2x_free'] === '2x 免费', '优惠缺少 2x 免费');
     need(s.restriction.hr === 'HR', '限制缺少 HR');

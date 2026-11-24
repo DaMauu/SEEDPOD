@@ -38,6 +38,7 @@ const ALIAS = {
 
 const DIM_ALIAS = {
   medium: {
+    full_disc: 'full_disc', uhd_full_disc: 'uhd_full_disc', '3d_full_disc': '3d_full_disc', laserdisc: 'laserdisc', tvrip: 'tvrip',
     '原盘': 'full_disc', 'full disc': 'full_disc', fulldisc: 'full_disc', bdmv: 'full_disc', iso: 'full_disc',
     uhd: 'uhd_full_disc', 'uhd原盘': 'uhd_full_disc', '4k原盘': 'uhd_full_disc', 'blu-rayuhd': 'uhd_full_disc', blurayuhd: 'uhd_full_disc', '4kuhd': 'uhd_full_disc',
     '3d': '3d_full_disc', '3d原盘': '3d_full_disc',

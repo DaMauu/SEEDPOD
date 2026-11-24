@@ -1,14 +1,14 @@
 {
   "version": 1,
   "presets": "presets.preset.json",
-  "generatedAt": "2026-11-24T05:28:24.547Z",
+  "generatedAt": "2026-11-24T08:41:43.094Z",
   "sites": {
 
     "52pt.site": {
       "meta": { "name": "52PT", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#52pt.site" },
       "search": {
         "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}", "incldead": "0", "inclbookmarked": "0", "search_area": "0", "search_mode": "0", "spstate": "0" }, "catMode": "key", "catSlot": "1",
-        "type": { "movie": ["401"], "concert": ["408"], "documentary": ["404"], "anime": ["405"], "tv": ["402"], "sports": ["407"], "other": ["409"], "adult": ["411"], "variety": ["403"], "mv": ["406"], "stage": ["410"] }, "medium": { "full_disc": ["full_disc = medium11 = 1"] },
+        "type": { "movie": ["401"], "concert": ["408"], "documentary": ["404"], "anime": ["405"], "tv": ["402"], "sports": ["407"], "other": ["409"], "adult": ["411"], "variety": ["403"], "mv": ["406"], "stage": ["410"] }, "medium": { "bluray": ["full_disc = medium11 = 1"] },
         "resolution": {}, "discount": { "thirty": "spstate = 7", "half": "spstate = 5", "normal": "spstate = 1", "free": "spstate = 2", "2x": "spstate = 3", "2x_half": "spstate = 6", "2x_free": "spstate = 4" }, "restriction": {},
         "selected": { "medium": ["full_disc"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
       },
@@ -62,7 +62,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "12", "full_disc": "1", "encode": "2", "tv": "3", "stage": "4", "image": "7", "music": "8" }, "medium": {},
+        "type": { "other": "12", "tv": "3", "stage": "4", "image": "7", "music": "8" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": null, "valueMaps": {}
       }
@@ -94,7 +94,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "1", "encode": "3", "tv": "4", "movie": "7", "anime": "15", "game": "17", "software": "21", "ebook": "26", "music": "28" }, "medium": {},
+        "type": { "other": "1", "tv": "4", "movie": "7", "anime": "15", "game": "17", "software": "21", "ebook": "26", "music": "28" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.784Z", "catField": "type", "selects": { "type": [{ "value": "-1", "label": "Select a category" }, { "value": "0", "label": "TvSD" }, { "value": "1", "label": "TvHD" }, { "value": "2", "label": "TvUHD" }, { "value": "3", "label": "TvDVDRip" }, { "value": "4", "label": "TvPackSD" }, { "value": "5", "label": "TvPackHD" }, { "value": "6", "label": "TvPackUHD" }, { "value": "7", "label": "MovieSD" }, { "value": "8", "label": "MovieHD" }, { "value": "9", "label": "MovieUHD" }, { "value": "10", "label": "MoviePackSD" }, { "value": "11", "label": "MoviePackHD" }, { "value": "12", "label": "MoviePackUHD" }, { "value": "13", "label": "MovieXXX" }, { "value": "14", "label": "Bluray" }, { "value": "15", "label": "AnimeSD" }, { "value": "16", "label": "AnimeHD" }, { "value": "17", "label": "GamesPC" }, { "value": "18", "label": "GamesxBox" }, { "value": "19", "label": "GamesPS" }, { "value": "20", "label": "GamesNin" }, { "value": "21", "label": "AppsWindows" }, { "value": "22", "label": "AppsMAC" }, { "value": "23", "label": "AppsLinux" }, { "value": "24", "label": "AppsMobile" }, { "value": "25", "label": "0dayXXX" }, { "value": "26", "label": "eBook" }, { "value": "27", "label": "AudioBook" }, { "value": "28", "label": "Music" }, { "value": "29", "label": "Misc" }] }, "defaults": { "type": "-1" } }, "valueMaps": {}
       }
@@ -558,7 +558,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "0", "ebook": "175", "movie": "2", "tv": "11", "music": "108", "game": "16", "anime": "9", "software": "21", "sports": "10", "documentary": "20", "adult": "12", "image": "21", "encode": "101", "full_disc": "114", "remux": "118" }, "medium": {},
+        "type": { "other": "0", "ebook": "175", "movie": "2", "tv": "11", "music": "108", "game": "16", "anime": "9", "software": "21", "sports": "10", "documentary": "20", "adult": "12", "image": "21" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": null, "valueMaps": {}
       }
@@ -670,7 +670,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "0", "documentary": "15", "ebook": "19", "music": "11", "adult": "12", "tv": "18", "trailer": "22" }, "medium": {},
+        "type": { "other": "0", "documentary": "15", "ebook": "19", "music": "11", "adult": "12", "tv": "18" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": null, "valueMaps": {}
       }
@@ -702,7 +702,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "1", "music": "8", "tv": "11", "remux": "12", "encode": "25", "stage": "1", "documentary": "4", "full_disc": "12" }, "medium": {},
+        "type": { "other": "1", "music": "8", "tv": "11", "stage": "1", "documentary": "4" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.784Z", "catField": "category_id", "selects": { "category_id": [{ "value": "", "label": "" }, { "value": "1", "label": "Live Concert" }, { "value": "2", "label": "Music Video" }, { "value": "4", "label": "Music Documentary" }, { "value": "11", "label": "Music TV Series" }, { "value": "8", "label": "Musical" }, { "value": "7", "label": "Opera" }, { "value": "5", "label": "Pure Audio" }, { "value": "9", "label": "Podcast" }, { "value": "10", "label": "Educational" }], "type_id": [{ "value": "", "label": "" }, { "value": "1", "label": "UHD-100" }, { "value": "2", "label": "UHD-66" }, { "value": "3", "label": "UHD-50" }, { "value": "12", "label": "UHD-Remux" }, { "value": "4", "label": "BD50" }, { "value": "5", "label": "BD25" }, { "value": "24", "label": "HD-DVD" }, { "value": "7", "label": "HD-Remux" }, { "value": "25", "label": "WEB-DL / WEBrip" }, { "value": "30", "label": "ProRes" }, { "value": "27", "label": "HDTV" }, { "value": "29", "label": "SDTV" }, { "value": "26", "label": "Encode" }, { "value": "18", "label": "DVD9" }, { "value": "19", "label": "DVD5" }, { "value": "20", "label": "SD-Remux" }, { "value": "21", "label": "LaserDisc" }, { "value": "22", "label": "Lossless Audio" }, { "value": "23", "label": "Lossy Audio" }, { "value": "28", "label": "Unknown" }] }, "defaults": { "category_id": "1", "type_id": "1" } }, "valueMaps": {}
       }
@@ -1038,7 +1038,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "adult": "1", "other": "29", "software": "13", "image": "21", "encode": "22", "anime": "53", "music": "55" }, "medium": {},
+        "type": { "adult": "1", "other": "29", "software": "13", "image": "21", "anime": "53", "music": "55" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.785Z", "catField": "category", "selects": { "category": [{ "value": "0", "label": "---" }, { "value": "1", "label": "Amateur" }, { "value": "2", "label": "Anal" }, { "value": "5", "label": "Asian" }, { "value": "6", "label": "BBW" }, { "value": "30", "label": "BDSM" }, { "value": "36", "label": "Big Ass" }, { "value": "8", "label": "Big Tits" }, { "value": "7", "label": "Black" }, { "value": "9", "label": "Classic" }, { "value": "37", "label": "Creampie" }, { "value": "10", "label": "Cumshot" }, { "value": "12", "label": "Fetish" }, { "value": "14", "label": "Gang Bang / Orgy" }, { "value": "39", "label": "Gay / Bi" }, { "value": "56", "label": "Hairy" }, { "value": "35", "label": "Hardcore" }, { "value": "3", "label": "Hentai / 3D" }, { "value": "25", "label": "Homemade" }, { "value": "43", "label": "Interracial" }, { "value": "16", "label": "Latina" }, { "value": "23", "label": "Lesbian" }, { "value": "52", "label": "Lingerie" }, { "value": "27", "label": "Magazines" }, { "value": "53", "label": "Manga / Comic" }, { "value": "18", "label": "Masturbation" }, { "value": "26", "label": "Mature" }, { "value": "40", "label": "Megapack" }, { "value": "41", "label": "Natural Tits" }, { "value": "17", "label": "Oral" }, { "value": "29", "label": "Other" }, { "value": "47", "label": "Parody" }, { "value": "21", "label": "Pictures / Images" }, { "value": "50", "label": "Piss" }, { "value": "55", "label": "Porn Music Videos" }, { "value": "46", "label": "Pregnant / Preggo" }, { "value": "51", "label": "Scat/Puke" }, { "value": "22", "label": "Siterip" }, { "value": "20", "label": "Softcore" }, { "value": "49", "label": "Squirt" }, { "value": "19", "label": "Teen" }, { "value": "15", "label": "Transgender" }, { "value": "45", "label": "Voyeur" }, { "value": "13", "label": "XXX Games / Apps" }] }, "defaults": { "category": "1" } }, "valueMaps": {}
       }
@@ -1470,7 +1470,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "38", "movie": "18", "encode": "21", "documentary": "24", "anime": "27", "music": "31", "adult": "33", "trailer": "36", "software": "37", "remux": "40", "full_disc": "40" }, "medium": {},
+        "type": { "other": "38", "movie": "18", "documentary": "24", "anime": "27", "music": "31", "adult": "33", "software": "37" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.785Z", "selects": { "category": [{ "value": "0", "label": "----" }, { "value": "15", "label": "Blu-Ray" }, { "value": "40", "label": "Remux" }, { "value": "18", "label": "Movies 720p" }, { "value": "19", "label": "Movies 1080" }, { "value": "46", "label": "Movies 2160" }, { "value": "41", "label": "4K UHD" }, { "value": "21", "label": "HDTV 720p" }, { "value": "22", "label": "HDTV 1080" }, { "value": "45", "label": "HDTV 2160" }, { "value": "24", "label": "Doc 720p" }, { "value": "25", "label": "Doc 1080" }, { "value": "47", "label": "Doc 2160" }, { "value": "27", "label": "Animation 720p" }, { "value": "28", "label": "Animation 1080" }, { "value": "48", "label": "Animation 2160" }, { "value": "30", "label": "HQ Audio" }, { "value": "31", "label": "Music Videos" }, { "value": "33", "label": "XXX 720p" }, { "value": "34", "label": "XXX 1080" }, { "value": "49", "label": "XXX 2160" }, { "value": "36", "label": "Trailers" }, { "value": "37", "label": "Software" }, { "value": "38", "label": "Other" }] }, "defaults": { "category": "15" } }, "valueMaps": {}
       }
@@ -1646,7 +1646,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "other": "412", "movie": "410", "tv": "401", "documentary": "5", "sports": "15", "anime": "14", "music": "19", "ebook": "404", "variety": "401", "full_disc": "410" }, "medium": {},
+        "type": { "other": "412", "movie": "410", "tv": "401", "documentary": "5", "sports": "15", "anime": "14", "music": "19", "ebook": "404", "variety": "401" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.785Z", "catField": "type", "teamField": "team_sel", "selects": { "type": [{ "value": "0", "label": "--- 请选择 ---" }, { "value": "20", "label": "原盘(Full BD)" }, { "value": "17", "label": "电影Movie(1080p)" }, { "value": "16", "label": "电影Movie(1080i)" }, { "value": "9", "label": "电影Movie(720p)" }, { "value": "13", "label": "欧美剧(EU/US TV series)" }, { "value": "25", "label": "中港台剧集(Chinese TV series)" }, { "value": "26", "label": "韩剧(Kor Drama)" }, { "value": "24", "label": "日剧(Jpn Drama)" }, { "value": "21", "label": "欧美剧集包(EU/US TV series pack)" }, { "value": "22", "label": "中港台剧集包(Chinese TV series pack)" }, { "value": "23", "label": "日韩剧集包(JPN/KOR drama pack)" }, { "value": "27", "label": "iPad视频(iPad Video)" }, { "value": "5", "label": "纪录片(Documentary)" }, { "value": "15", "label": "体育节目(Sports)" }, { "value": "14", "label": "动画片(Animation)" }, { "value": "401", "label": "综艺(TV Shows)" }, { "value": "402", "label": "演唱会(Vocal Concert)" }, { "value": "406", "label": "MV(Music Video)" }, { "value": "408", "label": "音乐(Music)" }, { "value": "19", "label": "补充音轨(Audio Track)" }, { "value": "405", "label": "戏剧(Drama)" }, { "value": "404", "label": "书籍(Book)" }, { "value": "409", "label": "其他(Other)" }, { "value": "410", "label": "4K UltraHD" }, { "value": "411", "label": "旅游(Travel)" }, { "value": "412", "label": "饮食(Food)" }], "standard_sel": [{ "value": "0", "label": "请选择" }, { "value": "19", "label": "8K" }, { "value": "17", "label": "4K" }, { "value": "18", "label": "2K" }, { "value": "11", "label": "1080P" }, { "value": "12", "label": "1080I" }, { "value": "13", "label": "720P" }, { "value": "15", "label": "SD" }, { "value": "10", "label": "其它(Other)" }], "medium_sel": [{ "value": "0", "label": "请选择" }, { "value": "11", "label": "Blu-ray" }, { "value": "12", "label": "HD DVD" }, { "value": "6", "label": "Remux" }, { "value": "19", "label": "Blu-spec" }, { "value": "2", "label": "MiniBD" }, { "value": "5", "label": "Encode" }, { "value": "13", "label": "HDTV" }, { "value": "21", "label": "WEB-DL" }, { "value": "14", "label": "DVD" }, { "value": "4", "label": "DVDR" }, { "value": "10", "label": "DAT" }, { "value": "1", "label": "CD" }, { "value": "15", "label": "Other" }], "codec_sel": [{ "value": "0", "label": "请选择" }, { "value": "1", "label": "H.264/AVC" }, { "value": "2", "label": "VC-1" }, { "value": "4", "label": "MPEG-2" }, { "value": "6", "label": "x264" }, { "value": "10", "label": "x265/HEVC" }, { "value": "3", "label": "Xvid" }, { "value": "11", "label": "AVS" }, { "value": "5", "label": "Other" }], "audiocodec_sel": [{ "value": "0", "label": "请选择" }, { "value": "14", "label": "DTS X" }, { "value": "15", "label": "Atmos" }, { "value": "12", "label": "DTS-HDMA" }, { "value": "13", "label": "True-HD" }, { "value": "11", "label": "LPCM" }, { "value": "3", "label": "DTS" }, { "value": "8", "label": "AC3" }, { "value": "9", "label": "WAVE" }, { "value": "1", "label": "FLAC" }, { "value": "2", "label": "APE" }, { "value": "6", "label": "AAC" }, { "value": "5", "label": "OGG" }, { "value": "10", "label": "TTA" }, { "value": "4", "label": "MP2/3" }, { "value": "7", "label": "Other" }], "team_sel": [{ "value": "0", "label": "请选择" }, { "value": "12", "label": "iHD" }, { "value": "17", "label": "KiSHD" }, { "value": "7", "label": "OpenMV" }, { "value": "22", "label": "HDC" }, { "value": "23", "label": "DIY" }, { "value": "6", "label": "KHQ" }, { "value": "30", "label": "ExREN" }, { "value": "26", "label": "JOMA" }, { "value": "25", "label": "Anonymous" }, { "value": "24", "label": "CrsS" }, { "value": "18", "label": "Ebp" }, { "value": "19", "label": "DON" }, { "value": "20", "label": "ESiR" }, { "value": "29", "label": "TrollHD" }, { "value": "9", "label": "WiKi" }, { "value": "4", "label": "beAst" }, { "value": "2", "label": "CMCT" }, { "value": "8", "label": "NGB" }, { "value": "21", "label": "LU9998" }, { "value": "28", "label": "TAiCHi" }, { "value": "27", "label": "U2" }, { "value": "5", "label": "其他(Other)" }] }, "defaults": { "type": "20", "standard_sel": "19", "medium_sel": "11", "codec_sel": "1", "audiocodec_sel": "14", "team_sel": "12" } }, "valueMaps": { "team": { "iHD": "12", "KiSHD": "17", "OpenMV": "7", "HDC": "22", "DIY": "23", "KHQ": "6", "ExREN": "30", "JOMA": "26", "Anonymous": "25", "CrsS": "24", "Ebp": "18", "DON": "19", "ESiR": "20", "TrollHD": "29", "WiKi": "9", "beAst": "4", "CMCT": "2", "NGB": "8", "LU9998": "21", "TAiCHi": "28", "U2": "27", "其他(Other)": "5" } }
       }
@@ -2366,7 +2366,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "movie": "1", "tv": "2", "encode": "3", "game": "4", "music": "9", "anime": "8" }, "medium": {},
+        "type": { "movie": "1", "tv": "2", "game": "4", "music": "9", "anime": "8", "other": "3" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.785Z", "selects": { "category_id": [{ "value": "", "label": "" }, { "value": "8", "label": "Anime TV" }, { "value": "6", "label": "Anime Movie" }, { "value": "2", "label": "TV" }, { "value": "1", "label": "Movie" }, { "value": "9", "label": "Music of TV" }, { "value": "3", "label": "Music of Movie" }, { "value": "7", "label": "Anime Live" }, { "value": "5", "label": "Action Live" }, { "value": "4", "label": "Game" }], "type_id": [{ "value": "", "label": "" }, { "value": "1", "label": "Full Disc" }, { "value": "2", "label": "Remux" }, { "value": "3", "label": "Encode" }, { "value": "4", "label": "WEB-DL" }, { "value": "5", "label": "WEBRip" }, { "value": "6", "label": "HDTV" }, { "value": "7", "label": "ALBUM" }, { "value": "14", "label": "SINGLE" }, { "value": "15", "label": "OST" }, { "value": "16", "label": "DRAMA" }] }, "defaults": { "category_id": "8", "type_id": "1" } }, "valueMaps": {}
       }
@@ -2670,7 +2670,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "music": "1", "other": "8", "sample": "8", "stage": "18", "software": "1", "ebook": "2", "anime": "6" }, "medium": {},
+        "type": { "music": "1", "other": "8", "stage": "18", "software": "1", "ebook": "2", "anime": "6" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": null, "valueMaps": {}
       }
@@ -2968,7 +2968,7 @@
       "meta": { "name": "BTSCHOOL 比特校园", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#pt.btschool.club" },
       "search": {
         "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}", "incldead": "0" }, "catMode": "key", "catSlot": "1",
-        "type": { "movie": ["405"], "tv": ["406", "412"], "anime": ["407"], "documentary": ["408"], "other": ["404", "402", "410", "415"], "game": ["411"], "music": ["409"] }, "medium": { "full_disc": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"], "remux": ["remux = medium3 = 1"], "encode": ["encode = medium7 = 1"], "webdl": ["webdl = medium10 = 1"], "hdtv": ["hdtv = medium5 = 1"], "dvd": ["dvd = medium6 = 1"] },
+        "type": { "movie": ["405"], "tv": ["406", "412"], "anime": ["407"], "documentary": ["408"], "other": ["404", "402", "410", "415"], "game": ["411"], "music": ["409"] }, "medium": { "bluray": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"], "remux": ["remux = medium3 = 1"], "encode": ["encode = medium7 = 1"], "webdl": ["webdl = medium10 = 1"], "hdtv": ["hdtv = medium5 = 1"], "dvd": ["dvd = medium6 = 1"] },
         "resolution": {}, "discount": {}, "restriction": {},
         "selected": { "medium": ["full_disc"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
       },
@@ -3246,7 +3246,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "movie": "401", "tv": "404", "anime": "403", "variety": "405", "music": "406", "mv": "413", "documentary": "402", "sports": "407", "ebook": "408", "software": "410", "other": "411", "short": "419", "encode": "401", "game": "409", "stage": "418" }, "medium": {},
+        "type": { "movie": "401", "tv": "404", "anime": "403", "variety": "405", "music": "406", "mv": "413", "documentary": "402", "sports": "407", "ebook": "408", "software": "410", "other": "411", "short": "419", "game": "409", "stage": "418" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": { "国语": "guoyu", "国配": "guoyu", "粤语": "yueyu", "中字": "zhongzi", "简繁": "zhongzi", "英字": "ensub", "DIY": "diy", "DIY原盘": "diy" }, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.786Z", "catField": "type", "teamField": "team_sel", "selects": { "type": [{ "value": "0", "label": "请选择" }, { "value": "401", "label": "电影 (Movie)" }, { "value": "404", "label": "电视剧 (TV Series)" }, { "value": "403", "label": "动画 (Animation)" }, { "value": "405", "label": "综艺 (TV Show)" }, { "value": "413", "label": "音乐短片 (MV)" }, { "value": "406", "label": "音乐 (Music)" }, { "value": "418", "label": "舞台演出(Stage Performance)" }, { "value": "402", "label": "纪录片 (Documentary)" }, { "value": "407", "label": "体育 (Sport)" }, { "value": "408", "label": "电子书 (Ebook)" }, { "value": "410", "label": "软件 (Software)" }, { "value": "411", "label": "学习 (Study)" }, { "value": "412", "label": "其它 (Other)" }], "source_sel": [{ "value": "0", "label": "请选择" }, { "value": "1", "label": "UHD Discs" }, { "value": "2", "label": "BD Discs" }, { "value": "3", "label": "Remux" }, { "value": "4", "label": "HDTV" }, { "value": "5", "label": "WEB-DL" }, { "value": "6", "label": "Encode" }, { "value": "7", "label": "DVD Discs" }, { "value": "8", "label": "FLAC" }, { "value": "9", "label": "WAV" }, { "value": "10", "label": "ISO" }, { "value": "11", "label": "PDF" }, { "value": "12", "label": "PUB" }, { "value": "13", "label": "AZW" }, { "value": "14", "label": "MOBI" }, { "value": "15", "label": "Other" }], "team_sel": [{ "value": "0", "label": "请选择" }, { "value": "1", "label": "大陆 (Mainland,CHN)" }, { "value": "2", "label": "香港 (HKG,CHN)" }, { "value": "3", "label": "台湾 (TWN,CHN)" }, { "value": "4", "label": "欧美 (Western)" }, { "value": "5", "label": "韩国 (KOR)" }, { "value": "6", "label": "日本 (JPN)" }, { "value": "7", "label": "印度 (IND)" }, { "value": "8", "label": "其它 (Other)" }] }, "defaults": { "type": "401", "source_sel": "1", "team_sel": "1" } }, "valueMaps": { "team": { "大陆 (Mainland,CHN)": "1", "香港 (HKG,CHN)": "2", "台湾 (TWN,CHN)": "3", "欧美 (Western)": "4", "韩国 (KOR)": "5", "日本 (JPN)": "6", "印度 (IND)": "7", "其它 (Other)": "8" } }
       }
@@ -4430,7 +4430,7 @@
       },
       "publish": {
         "upload": { "path": "", "formPath": "", "fileField": "", "fields": {} }, "verify": { "path": "" },
-        "type": { "movie": "17", "other": "40", "music": "30", "ebook": "22", "encode": "9", "full_disc": "15", "anime": "21" }, "medium": {},
+        "type": { "movie": "17", "other": "40", "music": "30", "ebook": "22", "anime": "21" }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "tagMap": {}, "tagValue": "yes", "form": { "at": "2026-11-16T14:28:43.786Z", "catField": "type", "selects": { "type": [{ "value": "0", "label": "请选择…" }, { "value": "9", "label": "U2-Rip" }, { "value": "411", "label": "U2-RBD" }, { "value": "413", "label": "Web" }, { "value": "12", "label": "BDRip" }, { "value": "13", "label": "DVDRip" }, { "value": "14", "label": "HDTV" }, { "value": "15", "label": "DVDISO" }, { "value": "16", "label": "BDMV" }, { "value": "17", "label": "LQRip" }, { "value": "410", "label": "外挂结构" }, { "value": "412", "label": "加流重灌" }, { "value": "21", "label": "原版漫画" }, { "value": "22", "label": "翻译漫画" }, { "value": "30", "label": "Lossless Music" }, { "value": "40", "label": "Other" }] }, "defaults": { "type": "9" } }, "valueMaps": {}
       }

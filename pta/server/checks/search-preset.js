@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const makePresets = require('../src/features/presets/store');
-const { parseSearchPreset, dimOf, isCatField } = require('../src/features/sites/search-preset');
+const { parseSearchPreset, dimOf, isCatField, mapType } = require('../src/features/sites/search-preset');
 const { buildSiteSearchUrl } = require('../src/features/sites/search-url');
 
 const presets = makePresets();
@@ -19,6 +19,11 @@ check('分类 ID 和分类模式能识别', function () {
   need(Array.isArray(r.cats.movie) && r.cats.movie.indexOf('401') >= 0 && r.cats.movie.indexOf('405') >= 0, '电影分类不对：' + JSON.stringify(r.cats));
   need(Array.isArray(r.cats.tv) && r.cats.tv[0] === '406', '剧集分类不对：' + JSON.stringify(r.cats));
   need(r.catMode === 'key', '分类模式应为 key：' + r.catMode);
+});
+
+check('原盘/Remux 不再当内容类型', function () {
+  need(mapType('原盘', presets) === '', '原盘不该是内容类型：' + mapType('原盘', presets));
+  need(mapType('Remux', presets) === '', 'Remux 不该是内容类型：' + mapType('Remux', presets));
 });
 
 check('Unit3D checkbox 分类能识别', function () {

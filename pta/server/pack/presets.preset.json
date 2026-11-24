@@ -8,41 +8,31 @@
     "anime": "动漫",
     "documentary": "纪录片",
     "music": "音乐",
-    "sports": "体育",
     "concert": "演唱会",
-    "mv": "MV",
-    "audiobook": "有声书",
-    "ebook": "电子书",
-    "software": "软件",
+    "mv": "音乐短片",
+    "sports": "体育",
     "game": "游戏",
+    "software": "软件",
+    "ebook": "电子书",
+    "audiobook": "有声书",
     "short": "短剧",
     "stage": "舞台演出",
     "adult": "成人",
-    "full_disc": "原盘",
-    "remux": "Remux",
-    "encode": "压制",
     "image": "图片",
-    "sample": "样品",
-    "trailer": "预告",
     "other": "其他"
   },
   "search": {
     "medium": {
-      "full_disc": "原盘(Full Disc)",
-      "uhd_full_disc": "UHD 原盘",
-      "3d_full_disc": "3D 原盘",
+      "bluray": "Blu-ray",
       "remux": "Remux",
       "encode": "Encode",
-      "bluray": "Blu-ray",
-      "hddvd": "HDDVD",
-      "dvd": "DVD",
-      "hdtv": "HDTV",
       "webdl": "WEB-DL",
       "webrip": "WEBRip",
-      "tvrip": "TVRip",
+      "hdtv": "HDTV",
+      "dvd": "DVD",
+      "hddvd": "HDDVD",
       "vhs": "VHS",
-      "other": "其他",
-      "laserdisc": "LaserDisc"
+      "other": "其他"
     },
     "resolution": {
       "480p": "480p",
@@ -150,15 +140,15 @@
   },
   "groups": {
     "medium": {
-      "full_disc": [
-        "full_disc",
-        "bluray",
-        "uhd_full_disc",
-        "3d_full_disc"
-      ],
       "bluray": [
         "bluray",
         "full_disc",
+        "uhd_full_disc",
+        "3d_full_disc"
+      ],
+      "full_disc": [
+        "full_disc",
+        "bluray",
         "uhd_full_disc",
         "3d_full_disc"
       ]

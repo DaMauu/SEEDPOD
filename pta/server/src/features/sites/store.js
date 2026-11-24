@@ -429,11 +429,13 @@ function makeSiteStore(dataDir, opts) {
     return { base: unb64(u.base), upload: unb64(u.upload), verify: unb64(u.verify) };
   }
   /* 站点只存 key；中文名由全局预设补，读的时候派生 types 给现有流程用 */
+  const TYPE_MOVE = { full_disc: 'other', remux: 'other', encode: 'other', sample: 'other', trailer: 'other' };
+  function typeKey(k) { const key = presets.keyOf(k) || String(k); return TYPE_MOVE[key] || key; }
   function canonCats(cats) {
     const out = {};
     if (!cats || typeof cats !== 'object' || Array.isArray(cats)) return out;
     Object.keys(cats).forEach(function (k) {
-      const key = presets.keyOf(k) || String(k);
+      const key = typeKey(k);
       const list = Array.isArray(cats[k]) ? cats[k] : (cats[k] == null ? [] : [cats[k]]);
       list.forEach(function (id) {
         if (id == null || id === '') return;
@@ -455,7 +457,7 @@ function makeSiteStore(dataDir, opts) {
     });
     Object.keys(map).forEach(function (k) {
       if (map[k] == null || map[k] === '') return;
-      const key = presets.keyOf(k) || String(k);
+      const key = typeKey(k);
       if (out[key] == null) out[key] = String(map[k]);
     });
     return out;

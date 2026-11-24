@@ -230,3 +230,12 @@
 定了：凭据列表 `/api/credentials` 仍只回 `hasCookie`；单站详情 `GET /api/credentials/:host` 返回明文，面板打开站点时回显；接口需登录、`Cache-Control: no-store`、不写日志。
 为什么：用户明确要求像 Vertex 一样保存后可见，接受登录后的 XSS/浏览器扩展/截图风险。
 代价：会话被拿到或页面被注入时，攻击者可直接读站点 cookie；面板安全边界从“只写”降为“可读”。
+
+## 2026-11-24 内容类型与媒介拆开
+
+定了：内容类型只留 18 个（电影/剧集/综艺/动漫/纪录片/音乐/演唱会/音乐短片/体育/游戏/软件/电子书/有声书/短剧/舞台/成人/图片/其他）；媒介只留 10 个（Blu-ray/Remux/Encode/WEB-DL/WEBRip/HDTV/DVD/HDDVD/VHS/其他）。
+- 原盘(Full Disc)、UHD 原盘、3D 原盘、Blu-ray 统一由 `groups.medium.bluray` 覆盖，UI 只显示一个 Blu-ray。
+- 旧内容类型 `full_disc/remux/encode/sample/trailer` → `other`；旧媒介 `full_disc/uhd_full_disc/3d_full_disc` → `bluray` 组。
+
+为什么：站点把“原盘/Remux/压制”当分类名，和内容类型混在一起，抓取和勾选都会串；拆开后内容类型只管题材，媒介只管片源。
+代价：旧站点里这些分类会并到 `other`，需要人工确认一次；站点只有 Blu-ray 时用 Blu-ray 大分类，不再单列 UHD/3D。
