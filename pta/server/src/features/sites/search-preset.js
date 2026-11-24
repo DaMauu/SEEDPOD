@@ -35,7 +35,7 @@ function inputLabel(html, name) {
 }
 function attrMap(raw) {
   const out = {};
-  String(raw || '').replace(/([a-zA-Z0-9_:-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g, function (_, k, _q, a, b, c) {
+  String(raw || '').replace(/([a-zA-Z0-9_:.\-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g, function (_, k, _q, a, b, c) {
     out[String(k).toLowerCase()] = a !== undefined ? a : (b !== undefined ? b : (c || ''));
     return '';
   });
@@ -46,6 +46,30 @@ function labelFor(html, id) {
   const re = new RegExp('<label[^>]*for=["\']' + n + '["\'][^>]*>([\\s\\S]*?)<\\/label>', 'i');
   const m = re.exec(html);
   return m ? textOf(m[1]) : '';
+}
+/* 复选框的标签可能在前面、后面，或把 input 包在 label 里 */
+function labelNear(html, start, len, attrs) {
+  if (attrs && attrs.id) {
+    const l = labelFor(html, attrs.id);
+    if (l) return l;
+  }
+  const after = html.slice(start + len, start + len + 400);
+  const m1 = /^\s*<label\b[^>]*>([\s\S]*?)<\/label>/i.exec(after);
+  if (m1 && !/<input\b/i.test(m1[1])) return textOf(m1[1]);
+  const before = html.slice(Math.max(0, start - 400), start);
+  const labels = Array.from(before.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi));
+  if (labels.length) {
+    const last = labels[labels.length - 1];
+    const tail = before.slice(last.index + last[0].length);
+    if (!tail.trim()) return textOf(last[1]);
+  }
+  const open = html.lastIndexOf('<label', start);
+  const close = html.lastIndexOf('</label>', start);
+  if (open > close) {
+    const end = html.indexOf('</label>', start);
+    if (end > start) return textOf(html.slice(open, end).replace(/<input\b[^>]*>/gi, ' '));
+  }
+  return after.split('<')[0].replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
 }
 function mapType(label, presets) {
   const t = typeOf(label);
@@ -151,13 +175,14 @@ function parseSearchPreset(html, presets) {
     const type = String(a.type || '').toLowerCase();
     if (type !== 'checkbox' && type !== 'radio') continue;
     const name = String(a.name || '');
-    if (!isCatField(name)) continue;
+    const live = String(a['wire:model.live'] || a['wire:model'] || '');
+    if (!isCatField(name) && !/categoryIds|category_ids/i.test(live)) continue;
     const val = String(a.value || '').trim();
     if (!val || val === '0') continue;
-    const label = (a.id ? labelFor(html, a.id) : '') || inputLabel(html, name);
+    const label = labelNear(html, m.index, m[0].length, a) || inputLabel(html, name);
     if (!label || /请选择|全部|不限|choose|select|all/i.test(label)) continue;
     addCat(label, val);
-    if (/\[\]/.test(name) && catMode !== 'key') catMode = 'bracket';
+    if ((/\[\]/.test(name) || /categoryIds|category_ids/i.test(live)) && catMode !== 'key') catMode = 'bracket';
     else if (!catMode) catMode = 'single';
   }
 

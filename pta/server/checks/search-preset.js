@@ -28,6 +28,16 @@ check('Unit3D checkbox 分类能识别', function () {
   need(r.catMode === 'bracket', 'Unit3D catMode 应为 bracket：' + r.catMode);
 });
 
+check('Unit3D Livewire 复选框分类能识别', function () {
+  const lw = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'unit3d-livewire.html'), 'utf8');
+  const r = parseSearchPreset(lw, presets);
+  need(Array.isArray(r.cats.movie) && r.cats.movie[0] === '1', 'Livewire 电影分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.tv) && r.cats.tv[0] === '2', 'Livewire 剧集分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.music) && r.cats.music[0] === '3', 'Livewire 音乐分类不对：' + JSON.stringify(r.cats));
+  need(!r.cats.other || r.cats.other.indexOf('99') < 0, 'typeIds 不该当分类：' + JSON.stringify(r.cats));
+  need(r.catMode === 'bracket', 'Livewire catMode 应为 bracket：' + r.catMode);
+});
+
 check('媒介向下匹配：Blu-ray / Blu-rayUHD 参数名分开存', function () {
   const r = parseSearchPreset(html, presets);
   need(r.values.medium.bluray === '1', 'Blu-ray 值不对：' + JSON.stringify(r.values.medium));

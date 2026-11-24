@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.672 · 2026-11-24
+
+### Unit3D Livewire 搜索预设
+- 识别 `wire:model.live="categoryIds"` 复选框；这类 input 没有 `name`，之前会被跳过。
+- 标签支持在复选框前、后、或把 input 包在 `<label>` 里三种结构。
+- 新增 Livewire 夹具；真实 Unit3D 页面已确认是这套结构，按探测规则未再复测。
+
 ## v0.7.671 · 2026-11-24
 
 ### 搜索预设识别补 Unit3D

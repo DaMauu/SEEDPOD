@@ -1,0 +1,12 @@
+<form method="get" action="/torrents">
+  <input type="checkbox" class="form__checkbox" value="1" wire:model.live="categoryIds">
+  <label class="form__label">Movies</label>
+
+  <label class="form__label">TV Shows</label>
+  <input type="checkbox" class="form__checkbox" value="2" wire:model.live="categoryIds">
+
+  <label class="form__label"><input type="checkbox" class="form__checkbox" value="3" wire:model.live="categoryIds"> Music</label>
+
+  <input type="checkbox" class="form__checkbox" value="99" wire:model.live="typeIds">
+  <label class="form__label">Not A Category</label>
+</form>
