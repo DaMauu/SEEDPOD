@@ -735,10 +735,13 @@ async function detectSearchPreset() {
     if (!j || !j.ok) { searchPresetMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
     const n = Object.keys((j.data.search && j.data.search.cats) || {}).length
     const amb = ((j.data && j.data.ambiguous) || []).length
-    if (!n) { searchPresetMsg.value = '没识别到分类'; return }
+    const un = ((j.data && j.data.unmatched) || []).length
+    const eng = (j.data && j.data.engine && j.data.engine !== 'generic') ? j.data.engine : '未定'
+    if (!n) { searchPresetMsg.value = '没识别到分类 · 架构 ' + eng + (un ? ' · ' + un + ' 个未识别标签' : ''); return }
     const warn = (j.data && j.data.confidence && j.data.confidence !== 'high') ? '（置信度 ' + j.data.confidence + '）' : ''
-    searchPresetMsg.value = '识别到 ' + n + ' 类' + (amb ? ' · ' + amb + ' 个冲突未写' : '') + '，等确认'
-    confirmBox('识别搜索预设', '识别到 ' + n + ' 类分类' + (amb ? '，' + amb + ' 个冲突未写' : '') + warn + '。保存到站点？', async function () {
+    const extra = ' · 架构 ' + eng + (amb ? ' · ' + amb + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
+    searchPresetMsg.value = '识别到 ' + n + ' 类' + extra + '，等确认'
+    confirmBox('识别搜索预设', '识别到 ' + n + ' 类分类' + extra + warn + '。保存到站点？', async function () {
       searchPresetBusy.value = true
       searchPresetMsg.value = '保存中…'
       try {
@@ -750,7 +753,8 @@ async function detectSearchPreset() {
         if (a && a.ok) {
           const saved = Object.keys((a.data.search && a.data.search.cats) || {}).length
           const left = ((a.data && a.data.ambiguous) || []).length
-          searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (left ? ' · ' + left + ' 个冲突未写' : '')
+          const un = ((a.data && a.data.unmatched) || []).length
+          searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (left ? ' · ' + left + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
           await loadDetail(host.value)
         } else searchPresetMsg.value = (a && a.error && a.error.message) || '保存失败'
       } catch (e) { searchPresetMsg.value = '保存请求发不出去' }

@@ -773,6 +773,20 @@ async function main() {
     });
     const ambBody = await amb.json();
     need(ambBody.ok && ambBody.data.ambiguous.indexOf('408') >= 0, '冲突 ID 没报：' + JSON.stringify(ambBody));
+    const addEng = await fetchA(BASE + '/api/sites', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'https://engine.example/index.php', arch: '?', title: 'Engine Check' })
+    });
+    need(addEng.status === 200, '未知架构站点添加失败');
+    const applyEng = await fetchA(BASE + '/api/crawl/preset/engine.example/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ detected: { engine: 'unit3d', engineConfidence: 0.8, cats: { movie: ['401'] }, catMode: 'key', values: {}, params: {}, labels: {} } })
+    });
+    const applyEngBody = await applyEng.json();
+    need(applyEngBody.ok, '架构应用失败：' + JSON.stringify(applyEngBody));
+    const engDef = await (await fetchA(BASE + '/api/site-def/engine.example')).json();
+    need(engDef.ok && engDef.data.engine === 'unit3d', '架构没写回：' + JSON.stringify(engDef.data && engDef.data.engine));
+    await fetchA(BASE + '/api/sites/engine.example', { method: 'DELETE' });
     const setC = await fetchA(BASE + '/api/credentials/added.example', {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=echo-check' })
     });

@@ -105,17 +105,26 @@ function parseSearchPreset(html, presets) {
   const values = {};
   const params = {};
   const labels = {};
+  const unmatched = [];
   let catMode = '';
+  function addUnmatched(dim, label, value) {
+    const text = String(label || '').trim();
+    if (!text) return;
+    if (unmatched.some(function (x) { return x.dim === dim && x.label === text; })) return;
+    unmatched.push({ dim: dim, label: text, value: value == null ? '' : String(value) });
+  }
   function addCat(label, id) {
     const key = mapType(label, presets);
-    if (!key || id == null || id === '') return;
+    if (!key) { addUnmatched('type', label, id); return; }
+    if (id == null || id === '') return;
     cats[key] = cats[key] || [];
     if (cats[key].indexOf(String(id)) < 0) cats[key].push(String(id));
     if (catLabels[String(id)] == null) catLabels[String(id)] = String(label || '');
   }
   function addOpt(dim, fieldName, label, val) {
     const key = mapDim(dim, label, presets);
-    if (!key || val == null || val === '') return;
+    if (!key) { addUnmatched(dim, label, val); return; }
+    if (val == null || val === '') return;
     values[dim] = values[dim] || {};
     params[dim] = params[dim] || {};
     labels[dim] = labels[dim] || {};
@@ -205,7 +214,7 @@ function parseSearchPreset(html, presets) {
     else if (!catMode) catMode = 'single';
   }
 
-  return { cats: cats, catLabels: catLabels, catMode: catMode, values: values, params: params, labels: labels };
+  return { cats: cats, catLabels: catLabels, catMode: catMode, values: values, params: params, labels: labels, unmatched: unmatched };
 }
 
 module.exports = { parseSearchPreset, dimOf, isCatField, mapType, mapDim, textOf };

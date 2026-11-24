@@ -5,6 +5,7 @@ const { typeOf } = require('../features/crawl/category');
 const configSchema = require('../features/settings/config-schema');
 const urlGuard = require('../infra/url-guard');
 const { summarizeDetection, mergeDetection } = require('../features/sites/detect-merge');
+const { detectEngine } = require('../features/sites/detect');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -147,7 +148,8 @@ module.exports = function (app, ctx) {
       html = await r.text();
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
     const parsed = require('../features/sites/search-preset').parseSearchPreset(html, presets);
-    return { ok: true, data: Object.assign({ host, url }, parsed) };
+    const det = detectEngine(html, url);
+    return { ok: true, data: Object.assign({ host, url, engine: det.engine, engineConfidence: det.confidence, engineHits: det.hits }, parsed) };
 
   }
 
@@ -177,11 +179,12 @@ module.exports = function (app, ctx) {
     const d = r.data || {};
     const summary = summarizeDetection(d);
     const merged = mergeDetection(rec.search, d, {});
+    const nextEngine = (!rec.engine || rec.engine === '?') && d.engine && d.engine !== 'generic' && Number(d.engineConfidence) >= 0.6 ? d.engine : rec.engine;
     if (String(req.query && req.query.preview || '') === '1') {
-      return ok({ host: host, preview: true, search: merged.search, detected: d, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
+      return ok({ host: host, preview: true, search: merged.search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
     }
-    siteStore.save(host, { search: merged.search }, db);
-    return ok({ host: host, search: siteStore.get(host).search, detected: d, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
+    siteStore.save(host, { search: merged.search, engine: nextEngine }, db);
+    return ok({ host: host, search: siteStore.get(host).search, detected: d, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
   });
 
   /* 预览后确认保存：用预览返回的 detected，不再请求站点 */
@@ -194,9 +197,10 @@ module.exports = function (app, ctx) {
     if (JSON.stringify(d).length > 1024 * 1024) return bad(reply, 'TOO_LARGE', '识别结果超过 1MB');
     const summary = summarizeDetection(d);
     const merged = mergeDetection(rec.search, d, {});
-    const saved = siteStore.save(host, { search: merged.search }, db);
+    const nextEngine = (!rec.engine || rec.engine === '?') && d.engine && d.engine !== 'generic' && Number(d.engineConfidence) >= 0.6 ? d.engine : rec.engine;
+    const saved = siteStore.save(host, { search: merged.search, engine: nextEngine }, db);
     if (!saved || !saved.ok) return bad(reply, (saved && saved.code) || 'SAVE_FAILED', (saved && saved.message) || '保存失败', 500);
-    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
+    return ok({ host: host, search: siteStore.get(host).search, ambiguous: summary.ambiguous, unmatched: summary.unmatched, confidence: summary.confidence, engine: nextEngine, engineConfidence: d.engineConfidence, changed: merged.changed });
   });
 
   app.put('/api/crawl/filters/:host', async (req, reply) => {

@@ -16,6 +16,7 @@ function summarizeDetection(d) {
     types: types,
     typeCount: types.reduce(function (n, k) { return n + ((d.cats[k] || []).length); }, 0),
     ambiguous: ambiguous,
+    unmatched: Array.isArray(d && d.unmatched) ? d.unmatched : [],
     dims: dims,
     hasDims: Object.keys(dims.values).length > 0,
     confidence: confidence
