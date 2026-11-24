@@ -1,6 +1,6 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-24 04:05（当前 v0.7.672 / Unit3D Livewire）
+最后更新：2026-11-24 04:20（当前 v0.7.672 / Unit3D Livewire；开发清单见 `pta/docs/ROADMAP.md` 顶部）
 
 ## 2026-11-24 Unit3D Livewire 搜索预设（v0.7.672）
 

@@ -1,6 +1,29 @@
 # 路线图：问题 / 需求 / 未来 / 待做
 
-基于 0.7.161 的代码走查与线上实测。问题明细见 `pta/docs/history/PROBLEMS.md`，验收标准见 `DELIVERY.md`。
+最后更新：2026-11-24（v0.7.672）。当前清单只看这一节；下面是 0.7.161 的历史路线图。
+
+## 当前开发清单（2026-11-24）
+
+### P0 · 现在能推进
+
+- [ ] 生成站点覆盖报告：每站 cookie / `search.type` / `publish.type` / `enabled`，输出本地 JSON，不打印站名。
+- [ ] 文档收口：加 `pta/docs/INDEX.md`，分“现行 / 历史 / 自动生成”；历史报告移 `pta/docs/history/`。
+- [ ] 批量识别补真实 Unit3D 站：等有 cookie 的 U3D 站，跑 `--run --write` 验证 `wire:model.live="categoryIds"` 识别。
+
+### P1 · 需要数据或权限
+
+- [ ] 补 cookie：297 站没有 cookie；补一批，跑一批批量识别。
+- [ ] 手工补分类：5 个搜索页无可用分类 + 2 个 Unit3D 站。
+- [ ] 真实抓取回归：52PT / BTSCHOOL 各抓 1 页，确认新 `sites.json` 下 URL 和分类仍对。
+
+### P2 · 需要拍板
+
+- [ ] 面板按新结构显示/编辑：`/api/site-def` 现在仍回旧 `cats/catMap`；改成 `meta/search/publish/settings` 会动 `SiteDetail.vue` 和接口，需明确是否解冻 UI。
+- [ ] 调度/发布主流程：G12 仍 60%，缺有上传权限的目标站和真实 cookie。
+
+---
+
+## 历史路线图（基于 0.7.161）
 
 ## 一、问题（现在存在的）
 
