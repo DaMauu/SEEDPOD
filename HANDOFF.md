@@ -1,6 +1,14 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-24 04:20（当前 v0.7.672 / Unit3D Livewire；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-24 12:05（当前 v0.7.673 / cookie 保存回归；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-24 面板 cookie 保存回归（v0.7.673）
+
+- 按用户要求清空生产 cookie（9 → 0）；备份在 `/opt/seedpod/data/cookies.json.bak-manual-20261124-120307`（0600），SQLite `credentials` 也清空。
+- `smoke-live` 增加面板保存/清除 cookie 的检查；27/27 通过。
+- 站点列表绿点改为“有 cookie 且自检通过”才绿；清空 cookie 后不再显示旧状态。
+- 没有 cookie 时隐藏“连接自检”“自检”两个按钮；“删除 Cookie”保持禁用。
+- 已发版 0.7.673。
 
 ## 2026-11-24 Unit3D Livewire 搜索预设（v0.7.672）
 

@@ -44,6 +44,10 @@ async function main() {
     seedSite.run(x[0], JSON.stringify({ url: x[1], arch: x[2], title: x[3], base: true }), new Date().toISOString());
   });
   seedDb.close();
+  /* 故意留一条“自检通过”的历史状态：没有 cookie 时列表绿点必须仍是灰的 */
+  fs.writeFileSync(path.join(DATA, 'site-status.json'), JSON.stringify({
+    'added.example': { pass: true, at: new Date().toISOString() }
+  }), { mode: 0o600 });
   fs.writeFileSync(path.join(DATA, 'site-pack.json'), JSON.stringify({
     version: 1,
     sites: {
@@ -236,8 +240,23 @@ async function main() {
     await page.waitForTimeout(800);
     need(await page.locator('.site-item').count() === 5, '添加后站点数量不对：' + await page.locator('.site-item').count());
     need(/Added Site/.test(await page.locator('#sites-list').innerText()), '添加的站点没出现');
+    const staleDot = await page.locator('.site-item').filter({ hasText: 'Added Site' }).locator('.st').getAttribute('class');
+    need(!/\bok\b/.test(staleDot || ''), '没有 cookie 却显示绿色状态：' + staleDot);
     need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
     need(await page.locator('#site-detail textarea').count() >= 1, '上传配置文本域缺失');
+    /* 面板保存 cookie：填 → 保存设置 → 接口回 hasCookie → 清掉 */
+    await page.locator('#site-detail textarea[rows="3"]').fill('sid=smoke-cookie');
+    await page.locator('#site-detail button').filter({ hasText: '保存设置' }).first().click();
+    await page.waitForTimeout(1500);
+    const ck = await page.evaluate(async () => (await fetch('/api/credentials')).json());
+    const ckRow = (ck.data || []).find(function (x) { return x.host === 'added.example'; });
+    need(ckRow && ckRow.hasCookie === true, '面板保存 cookie 没生效：' + JSON.stringify(ck));
+    await page.evaluate(async () => {
+      await fetch('/api/credentials/added.example', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: '' }) });
+    });
+    const ck2 = await page.evaluate(async () => (await fetch('/api/credentials')).json());
+    const ckRow2 = (ck2.data || []).find(function (x) { return x.host === 'added.example'; });
+    need(!ckRow2 || ckRow2.hasCookie !== true, 'cookie 没清掉：' + JSON.stringify(ck2));
     await page.locator('#site-detail .cm-actions button').filter({ hasText: '加一条' }).click();
     await page.waitForTimeout(200);
     const cm = page.locator('#site-detail .cm-row').last();

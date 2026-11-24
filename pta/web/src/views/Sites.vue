@@ -144,7 +144,12 @@ const sites = computed(() => baseSites.value
       cookieSaved: !!(cd && cd.hasCookie),
       cookieReadable: !!(cd && cd.readable),
       cookieUpdatedAt: (cd && cd.updatedAt) || '',
-      login: st ? (st.pass ? 'ok' : 'fail') : 'none',
+      login: (function () {
+        if (!(cd && cd.hasCookie)) return 'none';
+        if (!cd.readable) return 'fail';
+        if (!st) return 'none';
+        return st.pass ? 'ok' : 'fail';
+      })(),
       loginAt: st ? st.at : '',
       lastAt: Number(cr.lastAt) || 0,
       todayCount: Number(cr.dayCount) || 0,

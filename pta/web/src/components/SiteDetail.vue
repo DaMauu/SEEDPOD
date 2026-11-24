@@ -14,7 +14,7 @@
                 <select class="select slim sd-arch-sel" id="sd-arch" :value="s.arch" title="站点架构" @click.stop @change="setArch(s, $event)">
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
-                <button class="btn slim" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
+                <button v-if="s.cookieSaved && s.cookieReadable !== false" class="btn slim" type="button" :disabled="busy.selfcheck" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
               </div>
               <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeDetail">✕</button>
             </div>
@@ -81,7 +81,6 @@
                     </div>
                   </div>
                   <div class="sd-cookie-bar">
-                    <button class="btn ghost slim" id="sd-cookie-test" type="button" :disabled="busy.selfcheck || !s.cookieSaved || s.cookieReadable === false" @click.stop="selfcheckOne(s)">自检</button>
                     <button class="btn ghost slim danger" id="sd-cookie-clear" type="button" :disabled="busy.cookie || !s.cookieSaved" title="只删除已保存的 cookie，站点配置和其他设置保留" @click.stop="clearCookie(s)">{{ busy.cookie ? '删除中…' : '删除 Cookie' }}</button>
                     <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
                   </div>
