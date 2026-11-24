@@ -76,7 +76,7 @@
                     <div class="set-field">
                       <div class="lbl"><span>Cookie（{{ s.cookieSaved ? (s.cookieReadable ? '已保存' + cookieWhen(s) : '已保存但解不开') : '未保存' }}）</span></div>
                       <div class="ctl">
-                        <textarea v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 不回显；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
+                        <textarea v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 直接显示；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
                       </div>
                     </div>
                   </div>
@@ -122,7 +122,7 @@
                     </div>
                   </div>
                   <div class="sd-cookie-bar">
-                    <span class="sd-cookie-res">预设确认入口未接：这里只读；确认状态来自私有包 site-search.local.json。</span>
+                    <span class="sd-cookie-res">预设来自当前 sites.json；有分类 ID 即视为已确认，点上面的搜索链接人工核对。</span>
                   </div>
                 </div>
 
@@ -390,7 +390,6 @@ function catMapTxt() {
 function fillForm(site) {
   if (!site) return
   form.url = site.url
-  form.cookie = ''
   form.override = site.override
   form.ovInterval = site.ovInterval
   form.ovDetail = site.ovDetail
@@ -453,6 +452,7 @@ function loadDefFallback(h) {
 async function loadDetail(target) {
   const h = String(target || host.value || '')
   if (!h) return
+  form.cookie = ''
   detail.def = null
   detail.preset = null
   detail.catalog = null
@@ -464,10 +464,12 @@ async function loadDetail(target) {
         return r.json().catch(function () { return null }).then(function (body) { return { status: r.status, body: body } })
       }).catch(function () { return { status: 0, body: null } }),
       fetch('/api/sites/' + encodeURIComponent(h) + '/search', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null }),
-      fetch('/api/catalog?site=' + encodeURIComponent(h) + '&limit=6', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null })
+      fetch('/api/catalog?site=' + encodeURIComponent(h) + '&limit=6', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null }),
+      fetch('/api/credentials/' + encodeURIComponent(h), { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null }).catch(function () { return null })
     ])
     if (host.value !== h) return
-    const dj = rs[0], pj = rs[1], cj = rs[2]
+    const dj = rs[0], pj = rs[1], cj = rs[2], ckj = rs[3]
+    if (ckj && ckj.ok && ckj.data) form.cookie = ckj.data.hasCookie ? String(ckj.data.cookie || '') : ''
     defReady.value = false
     if (dj && dj.body && dj.body.ok && dj.body.data) {
       detail.def = dj.body.data
@@ -525,7 +527,6 @@ async function saveSite(site) {
           headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: cookie })
         })).json()
         if (j && j.ok) {
-          form.cookie = ''
           toast('设置与 cookie 都已保存，正在自检…')
           emit('changed')
           await selfcheckHost(site.name)
@@ -749,7 +750,8 @@ function detectRemote() {
         method: 'POST', credentials: 'same-origin'
       })).json()
       if (!j || !j.ok) {
-        detectMsg.value = ((j && j.error && j.error.message) || '识别失败') + '；可以继续手工编辑字段表'
+        const why = String((j && j.error && j.error.message) || '识别失败')
+        detectMsg.value = /手工编辑|继续手工/.test(why) ? why : why + '；可以继续手工编辑字段表'
         detectBusy.value = false
         return
       }

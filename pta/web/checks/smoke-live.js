@@ -251,6 +251,8 @@ async function main() {
     const ck = await page.evaluate(async () => (await fetch('/api/credentials')).json());
     const ckRow = (ck.data || []).find(function (x) { return x.host === 'added.example'; });
     need(ckRow && ckRow.hasCookie === true, '面板保存 cookie 没生效：' + JSON.stringify(ck));
+    const echoed = await page.locator('#site-detail textarea[rows="3"]').inputValue();
+    need(echoed === 'sid=smoke-cookie', '保存后 cookie 没回显：' + echoed);
     await page.evaluate(async () => {
       await fetch('/api/credentials/added.example', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: '' }) });
     });
@@ -323,6 +325,8 @@ async function main() {
       return 2 + (R.pub || []).length;
     });
     need(groupCount === expectedGroups, '规则组数量不对：' + groupCount + '/' + expectedGroups);
+    const fetchRows = await page.evaluate(() => ((window.PTA_RULES || {}).fetch?.[0]?.rows || []).map(r => r.t));
+    need(fetchRows.slice(0, 6).join('|') === '类型|媒介|编码|音频编码|分辨率|制作组', '抓取卡顺序不对：' + fetchRows.join('|'));
     need(await page.locator('#sched-bar .sb-num').count() === 6, '调度条请求限制输入数量不对');
     need(await page.locator('#flow-gates').count() === 1, '没有发布闸门');
     need(!/\bon\b/.test(await page.locator('#gate-publish').getAttribute('class') || ''), '自动发布默认应为关');

@@ -58,6 +58,15 @@ module.exports = function (app, ctx) {
     if (!items.length) return bad(reply, 'BAD_REQUEST', 'items 不能为空');
     const r = cookieStore.importMany(items, db);
     if (r.saved === 0 && r.skipped) return bad(reply, 'CRYPTO_UNAVAILABLE', '凭据密钥不可用或数据不合法', 409);
+    try {
+      const st = readStatus();
+      let dirty = false;
+      items.forEach(function (it) {
+        const h = String((it && it.host) || '').trim().toLowerCase();
+        if (h && st[h] !== undefined) { delete st[h]; dirty = true; }
+      });
+      if (dirty) jsonFile.writeAtomic(STATUS_FILE, st, 0o600);
+    } catch (e) { /* 状态文件坏了不挡导入 */ }
     return ok(reply, { saved: r.saved, skipped: r.skipped });
   });
 };

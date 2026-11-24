@@ -743,7 +743,10 @@ async function main() {
     const list = await (await fetchA(BASE + '/api/sites')).json();
     const hit = (list.data.sites || []).filter(x => x.host === 'added.example')[0];
     need(hit && hit.added === true, '列表没出现面板添加的站点');
+    const pre = await (await fetchA(BASE + '/api/site-search')).json();
+    need(pre.ok && pre.data['added.example'] && pre.data['added.example'].confirmed === false, '空预设不该是已确认：' + JSON.stringify(pre.data['added.example']));
     const def = { engine: 'nexusphp', base: 'https://added.example',
+      catMap: { movie: '401' },
       uploadMap: { path: '/takeupload.php', fileField: 'file', fields: { name: '{title}' } },
       verify: { path: '/torrents.php?search={title}' } };
     const put = await fetchA(BASE + '/api/site-def/added.example', {
@@ -752,6 +755,24 @@ async function main() {
     need(put.status === 200, '保存站点定义失败 ' + put.status);
     const got = await (await fetchA(BASE + '/api/site-def/added.example')).json();
     need(got.ok && got.data.engine === 'nexusphp', '站点定义没读到');
+    const post = await (await fetchA(BASE + '/api/site-search')).json();
+    need(post.ok && post.data['added.example'] && post.data['added.example'].confirmed === true, '有分类 ID 应算已确认：' + JSON.stringify(post.data['added.example']));
+    fs.writeFileSync(path.join(DATA, 'site-status.json'), JSON.stringify({
+      'added.example': { pass: true, at: new Date().toISOString() }
+    }), { mode: 0o600 });
+    const setC = await fetchA(BASE + '/api/credentials/added.example', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=echo-check' })
+    });
+    need(setC.status === 200, '保存 cookie 失败 ' + setC.status);
+    const reveal = await (await fetchA(BASE + '/api/credentials/added.example')).json();
+    need(reveal.ok && reveal.data.cookie === 'sid=echo-check', 'cookie 没回显：' + JSON.stringify(reveal));
+    const st = await (await fetchA(BASE + '/api/site-status')).json();
+    need(!st.data['added.example'] || st.data['added.example'].pass !== true, '保存 cookie 后旧自检状态没清：' + JSON.stringify(st.data['added.example']));
+    const listC = await (await fetchA(BASE + '/api/credentials')).json();
+    need(!JSON.stringify(listC.data).includes('sid=echo-check'), '凭据列表泄露明文 cookie');
+    await fetchA(BASE + '/api/credentials/added.example', {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: '' })
+    });
     const del = await fetchA(BASE + '/api/sites/added.example', { method: 'DELETE' });
     need(del.status === 200, '移除站点失败 ' + del.status);
     const list2 = await (await fetchA(BASE + '/api/sites')).json();

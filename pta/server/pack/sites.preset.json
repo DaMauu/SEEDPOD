@@ -1,15 +1,15 @@
 {
   "version": 1,
   "presets": "presets.preset.json",
-  "generatedAt": "2026-11-23T17:16:35.778Z",
+  "generatedAt": "2026-11-24T05:28:24.547Z",
   "sites": {
 
     "52pt.site": {
       "meta": { "name": "52PT", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#52pt.site" },
       "search": {
         "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}", "incldead": "0", "inclbookmarked": "0", "search_area": "0", "search_mode": "0", "spstate": "0" }, "catMode": "key", "catSlot": "1",
-        "type": { "movie": ["401"] }, "medium": { "full_disc": ["full_disc = medium11 = 1"] },
-        "resolution": {}, "discount": { "thirty": "spstate = 7", "half": "spstate = 5", "normal": "spstate = 1", "free": "spstate = 2", "2x": "spstate = 3", "2x_half": "spstate = 6" }, "restriction": {},
+        "type": { "movie": ["401"], "concert": ["408"], "documentary": ["404"], "anime": ["405"], "tv": ["402"], "sports": ["407"], "other": ["409"], "adult": ["411"], "variety": ["403"], "mv": ["406"], "stage": ["410"] }, "medium": { "full_disc": ["full_disc = medium11 = 1"] },
+        "resolution": {}, "discount": { "thirty": "spstate = 7", "half": "spstate = 5", "normal": "spstate = 1", "free": "spstate = 2", "2x": "spstate = 3", "2x_half": "spstate = 6", "2x_free": "spstate = 4" }, "restriction": {},
         "selected": { "medium": ["full_disc"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
       },
       "publish": {
@@ -711,9 +711,9 @@
     "crabpt.vip": {
       "meta": { "name": "蟹黄堡", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#crabpt.vip" },
       "search": {
-        "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "single", "catSlot": "1",
+        "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "key", "catSlot": "1",
         "type": { "movie": ["401"] }, "medium": {},
-        "resolution": {}, "discount": { "thirty": "spstate = 7", "half": "spstate = 5", "normal": "spstate = 1", "free": "spstate = 2", "2x": "spstate = 3", "2x_half": "spstate = 6" }, "restriction": {},
+        "resolution": {}, "discount": { "thirty": "spstate = 7", "half": "spstate = 5", "normal": "spstate = 1", "free": "spstate = 2", "2x": "spstate = 3", "2x_half": "spstate = 6", "2x_free": "spstate = 4" }, "restriction": {},
         "selected": { "medium": ["full_disc"], "discount": ["normal", "free", "2x", "half", "2x_half", "thirty"] }, "limits": {}, "downloadLink": "", "refreshCron": ""
       },
       "publish": {
@@ -3224,7 +3224,7 @@
       "meta": { "name": "CHDBits", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#ptchdbits.co" },
       "search": {
         "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "single", "catSlot": "1",
-        "type": { "movie": ["401"], "tv": ["402", "403"], "documentary": ["404"], "other": ["405", "407", "409", "404", "401", "402", "403"], "music": ["406", "408"], "game": ["410"] }, "medium": {},
+        "type": { "movie": ["401"], "tv": ["402", "403"], "documentary": ["404"], "other": ["405", "407", "409"], "music": ["406", "408"], "game": ["410"] }, "medium": {},
         "resolution": {}, "discount": {}, "restriction": {},
         "limits": {}, "downloadLink": "", "refreshCron": ""
       },
@@ -3239,9 +3239,9 @@
     "pterclub.net": {
       "meta": { "name": "猫站 PTer", "nameZh": "", "engine": "nexusphp", "urlRef": "site-urls.json#pterclub.net" },
       "search": {
-        "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "single", "catSlot": "1",
+        "path": "/torrents.php", "params": { "search": "{q}", "cat": "{cats}" }, "catMode": "key", "catSlot": "1",
         "type": { "other": ["413", "418", "412"], "game": ["409"], "movie": ["401"], "tv": ["404", "405"], "anime": ["403"], "music": ["406"], "documentary": ["402"], "sports": ["407"], "ebook": ["408", "411"], "software": ["410"] }, "medium": {},
-        "resolution": {}, "discount": {}, "restriction": {},
+        "resolution": {}, "discount": { "normal": "spstate = 1", "free": "spstate = 2", "2x": "spstate = 3", "2x_free": "spstate = 4", "half": "spstate = 5", "2x_half": "spstate = 6", "thirty": "spstate = 7" }, "restriction": {},
         "limits": {}, "downloadLink": "", "refreshCron": ""
       },
       "publish": {

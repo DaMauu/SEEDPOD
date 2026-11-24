@@ -1,6 +1,19 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-24 12:05（当前 v0.7.673 / cookie 保存回归；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-24 17:10（当前 v0.7.674 / 52PT 分类与 cookie 回显；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-24 52PT 分类与 cookie 回显（v0.7.674）
+
+- NexusPHP 分类复选框按 `catNNN` + 旁边 `img alt` 识别；52PT 从 2 类补到 11 类（movie/tv/variety/anime/documentary/music?/mv/concert/sports/stage/other/adult）。
+- `TV Shows/综艺` 归综艺；音乐 MV 归 MV；戏曲/曲艺归舞台演出；408 音乐/演唱会冲突保留 concert。
+- 抓取卡改为 类型/媒介/编码/音频编码/分辨率/制作组；编码、音频、制作组已接搜索 URL 和保存。
+- UI 把原盘/UHD 原盘/3D 原盘合并成“Blu-ray”大分类；站点只有 Blu-ray 时就用它。
+- Gazelle `media`/`codec`/`audioformat`/`resolution` 能识别；补齐 MPEG1/AV1、EAC3/DTS-HD MA/PCM/Opus/MP2/MP1/无音频、LaserDisc。
+- 仪表盘 cookie 可用只算仍有 cookie 的站；保存/删除/导入 cookie 清旧自检状态。
+- `/api/*` 加 `no-store`；首页统计 10 秒刷新，窗口聚焦也刷新；文案“共启用”改“站点启用”。
+- 面板按用户要求回显 cookie：列表仍只回 `hasCookie`，单站详情 `GET /api/credentials/:host` 回明文，`no-store`、不写日志。
+- 预设确认状态改为“有分类 ID 即已确认”，清掉 `site-search.local.json` 旧提示；上传表单失败提示不再重复。
+- 全量 `run.sh` 通过。
 
 ## 2026-11-24 面板 cookie 保存回归（v0.7.673）
 

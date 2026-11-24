@@ -14,7 +14,7 @@ function buildSiteSearchUrl(site, ids, q, presets) {
   const vals = flt.values || {};
   const sel = flt.selected || {};
   const names = flt.params || {};
-  const PARAM = { medium: 'medium', resolution: 'standard', discount: 'spstate' };
+  const PARAM = { medium: 'medium', codec: 'codec', audio: 'audiocodec', resolution: 'standard', discount: 'spstate', team: 'team' };
   try {
     const u = new URL(url0);
     Object.keys(PARAM).forEach(function (dim) {

@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const makePresets = require('../src/features/presets/store');
 const { parseSearchPreset, dimOf, isCatField } = require('../src/features/sites/search-preset');
+const { buildSiteSearchUrl } = require('../src/features/sites/search-url');
 
 const presets = makePresets();
 const html = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'search-preset.html'), 'utf8');
@@ -26,6 +27,17 @@ check('Unit3D checkbox 分类能识别', function () {
   need(Array.isArray(r.cats.movie) && r.cats.movie[0] === '1', 'Unit3D 电影分类不对：' + JSON.stringify(r.cats));
   need(Array.isArray(r.cats.tv) && r.cats.tv[0] === '2', 'Unit3D 剧集分类不对：' + JSON.stringify(r.cats));
   need(r.catMode === 'bracket', 'Unit3D catMode 应为 bracket：' + r.catMode);
+});
+
+check('NexusPHP 分类复选框按 img alt 识别', function () {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'nexusphp-cat-checkbox.html'), 'utf8');
+  const r = parseSearchPreset(html, presets);
+  need(Array.isArray(r.cats.movie) && r.cats.movie[0] === '401', '电影分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.tv) && r.cats.tv[0] === '402', '剧集分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.anime) && r.cats.anime[0] === '405', '动漫分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.music) && r.cats.music[0] === '408', '音乐分类不对：' + JSON.stringify(r.cats));
+  need(Array.isArray(r.cats.adult) && r.cats.adult[0] === '411', '成人分类不对：' + JSON.stringify(r.cats));
+  need(r.catMode === 'key', 'catMode 应为 key：' + r.catMode);
 });
 
 check('Unit3D Livewire 复选框分类能识别', function () {
@@ -60,6 +72,38 @@ check('字段归类不把 medium/codec 误认成分类', function () {
   need(dimOf('audiocodec') === 'audio', 'audiocodec 没归到音频');
   need(isCatField('cat') === true, 'cat 没认成分类');
   need(isCatField('medium1') === false, 'medium1 被误认成分类');
+});
+
+check('Gazelle 搜索表单 media/codec/audioformat 能识别', function () {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'gazelle-search-form.html'), 'utf8');
+  const r = parseSearchPreset(html, presets);
+  need(r.values.medium.bluray === 'BluRay' && r.params.medium.bluray === 'media', 'media 没识别：' + JSON.stringify(r));
+  need(r.values.medium.webdl === 'WEB' && r.values.medium.laserdisc === 'LaserDisc', 'media 选项没归一：' + JSON.stringify(r.values.medium));
+  need(r.values.codec.av1 === 'AV1' && r.values.codec.mpeg1 === 'MPEG1', 'codec 没识别：' + JSON.stringify(r.values.codec));
+  need(r.values.audio.dtsma === 'DTSMA' && r.values.audio.eac3 === 'EAC3' && r.values.audio.pcm === 'PCM', 'audioformat 没识别：' + JSON.stringify(r.values.audio));
+  need(r.values.resolution['1080p'] === '1080p' && r.values.resolution['2160p'] === '2160p', 'resolution 没识别');
+});
+
+check('搜索 URL 带媒介/编码/音频/分辨率/制作组', function () {
+  const site = {
+    url: { base: 'https://x.example' },
+    search: {
+      path: '/torrents.php', params: { search: '{q}', cat: '{cats}' }, catMode: 'single', catSlot: '',
+      cats: { movie: ['401'] },
+      filters: {
+        values: { medium: { bluray: '1' }, codec: { h264: '1' }, audio: { dts_hd: '3' }, resolution: { '1080p': '1' }, team: { BTSCHOOL: '1' } },
+        params: { medium: { bluray: 'medium1' }, codec: { h264: 'codec' }, audio: { dts_hd: 'audiocodec' }, resolution: { '1080p': 'standard' }, team: { BTSCHOOL: 'team1' } },
+        selected: { medium: ['bluray'], codec: ['h264'], audio: ['dts_hd'], resolution: ['1080p'], team: ['BTSCHOOL'] }
+      }
+    }
+  };
+  need(presets.expandDims('medium', ['bluray']).indexOf('full_disc') >= 0, 'Blu-ray 大分类没包含原盘');
+  const url = buildSiteSearchUrl(site, ['401'], '', presets);
+  need(url.indexOf('medium1=1') >= 0, '缺媒介：' + url);
+  need(url.indexOf('codec=1') >= 0, '缺编码：' + url);
+  need(url.indexOf('audiocodec=3') >= 0, '缺音频：' + url);
+  need(url.indexOf('standard=1') >= 0, '缺分辨率：' + url);
+  need(url.indexOf('team1=1') >= 0, '缺制作组：' + url);
 });
 
 const pass = results.filter(function (r) { return r[0]; }).length;

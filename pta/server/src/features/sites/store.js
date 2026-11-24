@@ -91,8 +91,9 @@ function makeSiteStore(dataDir, opts) {
             param = entry.param || param;
             value = entry.value == null ? '' : String(entry.value);
           } else {
-            const o = fmt.parseSearchOption(entry, dim === 'medium');
-            if (dim === 'medium' && o.key) key = o.key;
+            const withKey = dim === 'medium' || dim === 'team';
+            const o = fmt.parseSearchOption(entry, withKey);
+            if (withKey && o.key) key = o.key;
             param = o.param || param;
             value = o.value;
           }
@@ -188,7 +189,7 @@ function makeSiteStore(dataDir, opts) {
         const v = src[key];
         if (v == null || v === '') return;
         const group = presets.parentOf(dim, key);
-        (dst[group] = dst[group] || []).push(fmt.formatSearchOption(key, paramOf(params[dim], key, dim), String(v), dim === 'medium'));
+        (dst[group] = dst[group] || []).push(fmt.formatSearchOption(key, paramOf(params[dim], key, dim), String(v), dim === 'medium' || dim === 'team'));
       });
       if (Object.keys(dst).length) {
         if (dim !== 'medium') {
@@ -486,13 +487,13 @@ function makeSiteStore(dataDir, opts) {
       if (Object.keys(pm).length) out.params = pm;
     }
     function addValue(dim, label, val) {
-      const key = presets.keyOfDim(dim, label);
+      const key = dim === 'team' ? String(label || '').trim() : presets.keyOfDim(dim, label);
       if (!key || val == null || val === '') return;
       out.values[dim] = out.values[dim] || {};
       if (out.values[dim][key] == null) out.values[dim][key] = String(val);
     }
     function addSel(dim, x) {
-      const key = presets.keyOfDim(dim, x);
+      const key = dim === 'team' ? String(x || '').trim() : presets.keyOfDim(dim, x);
       if (!key) return;
       out.selected[dim] = out.selected[dim] || [];
       if (out.selected[dim].indexOf(key) < 0) out.selected[dim].push(key);

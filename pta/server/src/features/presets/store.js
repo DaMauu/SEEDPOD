@@ -44,11 +44,11 @@ const DIM_ALIAS = {
     encode: 'encode', '压制': 'encode',
     'blu-ray': 'bluray', bluray: 'bluray', bd: 'bluray', bdrip: 'bluray',
     hddvd: 'hddvd', dvd: 'dvd', dvdrip: 'dvd', hdtv: 'hdtv',
-    'web-dl': 'webdl', webdl: 'webdl', web: 'webdl', webrip: 'webrip', tvrip: 'tvrip', vhs: 'vhs', '其他': 'other'
+    'web-dl': 'webdl', webdl: 'webdl', web: 'webdl', webrip: 'webrip', tvrip: 'tvrip', vhs: 'vhs', laserdisc: 'laserdisc', 'laser disc': 'laserdisc', tv: 'hdtv', unknown: 'other', '其他': 'other'
   },
   resolution: { '4k': '2160p', '8k': '4320p' },
-  codec: { h264: 'h264', 'h.264/avc/x264': 'h264', 'h264/avc/x264': 'h264', 'h.265/hevc/x265': 'h265', h265: 'h265', 'mpeg-2': 'mpeg2', mpeg2: 'mpeg2', 'vc-1': 'vc1', vc1: 'vc1', xvid: 'xvid', '其他': 'other', other: 'other' },
-  audio: { 'dts-hd/dts': 'dts_hd', dtshd: 'dts_hd', dts: 'dts_hd', truehd: 'truehd', ac3: 'ac3', lpcm: 'lpcm', flac: 'flac', mp3: 'mp3', aac: 'aac', ape: 'ape', '其他': 'other', other: 'other' },
+  codec: { h264: 'h264', 'h.264/avc/x264': 'h264', 'h264/avc/x264': 'h264', 'h.265/hevc/x265': 'h265', h265: 'h265', 'mpeg-2': 'mpeg2', mpeg2: 'mpeg2', mpeg1: 'mpeg1', 'mpeg-1': 'mpeg1', av1: 'av1', 'vc-1': 'vc1', vc1: 'vc1', xvid: 'xvid', '其他': 'other', other: 'other' },
+  audio: { 'dts-hd/dts': 'dts_hd', dtshd: 'dts_hd', dts: 'dts_hd', dtsma: 'dtsma', 'dts-hd ma': 'dtsma', truehd: 'truehd', ac3: 'ac3', eac3: 'eac3', lpcm: 'lpcm', pcm: 'pcm', flac: 'flac', opus: 'opus', mp3: 'mp3', mp2: 'mp2', mp1: 'mp1', aac: 'aac', ape: 'ape', noaudio: 'noaudio', 'no audio': 'noaudio', '其他': 'other', other: 'other' },
   discount: {
     '2x 50%': '2x_half', '2x50%': '2x_half', '2x50': '2x_half', '2x_half': '2x_half',
     '2x free': '2x_free', '2x免费': '2x_free', '2x 免费': '2x_free',

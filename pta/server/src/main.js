@@ -19,6 +19,7 @@ const WEB_DIR = (function () {
   return fs.existsSync(path.join(dist, 'index.html')) ? dist : path.join(__dirname, '..', '..', 'web');
 })();
 const siteStore = require('./features/sites/store')(DATA_DIR);
+const cookieStore = require('./features/sites/credentials')(DATA_DIR);
 const PKG = require('../../../package.json');
 const VERSION = PKG.version;
 const DEV_DATE = '2026-11-14';
@@ -53,7 +54,7 @@ function ok(reply, data) { if (arguments.length === 1) return { ok: true, data: 
 
 function counts() {
   const one2 = (t) => { const r = one('SELECT COUNT(*) AS n FROM ' + t); return r ? r.n : 0; };
-  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: require('./features/sites/credentials')(DATA_DIR).list().length };
+  return { catalog: one2('catalog'), queue: one2('queue'), sites: siteStore.list().length, downloaders: one2('downloaders'), credentials: cookieStore.list().length };
 }
 
 function parseCookies(req) {
@@ -102,6 +103,7 @@ async function build() {
 
   /* 与旧后端一致的静态安全头；CSP 放行 Cloudflare 分析脚本 */
   app.addHook('onSend', async (req, reply, payload) => {
+    if (String(req.raw.url || '').indexOf('/api/') === 0) reply.header('Cache-Control', 'no-store');
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('X-Frame-Options', 'DENY');
     reply.header('Referrer-Policy', 'no-referrer');
@@ -274,8 +276,11 @@ async function build() {
     let loginOk = 0, loginFail = 0;
     try {
       const st = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'site-status.json'), 'utf8')) || {};
+      const withCookie = {};
+      cookieStore.list().forEach(function (c) { withCookie[c.host] = true; });
       Object.keys(st).forEach(function (h) {
         if (hiddenSites.indexOf(String(h).toLowerCase()) >= 0) return;
+        if (!withCookie[h]) return;
         if (st[h] && st[h].pass === true) loginOk++; else if (st[h] && st[h].pass === false) loginFail++;
       });
     } catch (e) { /* 没自检过就都算未知 */ }

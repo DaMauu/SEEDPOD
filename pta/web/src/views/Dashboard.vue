@@ -33,7 +33,7 @@
         <div class="status-hero">
           <span>cookie 可用</span>
           <b :class="{ warn: health.loginFail > 0 }">{{ health.loginOk }}</b>
-          <i>共启用 {{ health.enabled }} 个{{ ov ? '' : '（未连接后端）' }}</i>
+          <i>站点启用 {{ health.enabled }} 个{{ ov ? '' : '（未连接后端）' }}</i>
           <div class="hero-sub"><span>今日抓取</span><b>{{ health.crawlTxt }}</b></div>
         </div>
         <div class="status-list">
@@ -146,11 +146,13 @@ function ensureDashboard() {
 onMounted(() => {
   window.addEventListener('hashchange', ensureDashboard)
   bootTimer = setInterval(() => { if (!loaded) ensureDashboard() }, 1500)
-  refreshTimer = setInterval(() => { if (viewVisible('dashboard')) loadDashboard() }, 30000)
+  refreshTimer = setInterval(() => { if (viewVisible('dashboard')) loadDashboard() }, 10000)
+  window.addEventListener('focus', ensureDashboard)
   ensureDashboard()
 })
 onUnmounted(() => {
   window.removeEventListener('hashchange', ensureDashboard)
+  window.removeEventListener('focus', ensureDashboard)
   if (bootTimer) clearInterval(bootTimer)
   if (refreshTimer) clearInterval(refreshTimer)
 })

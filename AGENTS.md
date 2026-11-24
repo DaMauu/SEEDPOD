@@ -28,7 +28,7 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 1. 真实站点只读探测按下方《真实站点探测规则》执行；仍不得自己找 cookie、不得复用别人的 cookie 登录、不得压测或绕过限制。抓取默认先干跑或本地夹具，真实探测必须先有计划。旧规则里“不对真实站点做探测”的绝对表述由该规则取代，其余限制继续有效。
 2. 真实站点网址用 Base64 存 `pta/server/pack/site-urls.preset.json` / 运行时 `data/site-urls.json`，可随仓库和镜像分发；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 明文放 `sites.preset.json` / `sites.json`；中文类型/媒介/分辨率/优惠/限制和站点字段模板只放 `presets.preset.json` / `data/presets.json`。Base64 只是遮挡，不是加密。cookie、密码、passkey、上传 token 仍只存 AES-256-GCM 密文，绝不入仓库、不进提交、不写进回复；聊天回复仍不写网址。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
 3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
-4. 站点凭据只存密文：`data/cookies.json` + AES-256-GCM，接口只回 `hasCookie`；SQLite `credentials` 表只作迁移/测试镜像，不再作为运行时事实源。
+4. 站点凭据只存密文：`data/cookies.json` + AES-256-GCM；凭据列表只回 `hasCookie`，单站详情按用户要求回显明文（需登录、`no-store`、不写日志）；SQLite `credentials` 表只作迁移/测试镜像，不再作为运行时事实源。
 5. 提交前必须 `pta/server/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
 6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
 7. 生产后端只有 v2：入口 `src/main.js`，路由 `src/http/routes-*.js`，数据层 `src/infra/db.js`；旧 `app.js` 已删除，避免同一功能两套实现。
@@ -116,6 +116,14 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 3. 只有“以后还要遵守”的规则才进 `AGENTS.md`；一次性选择进 `DECISIONS.md`；用户可见变化进 `CHANGELOG.md`。
 4. 不靠聊天记忆；没写进文件的，视为没定。
 
+## 前后端契约（永久规则）
+
+1. WebUI 是需求的落点：页面上的每个按钮、开关、输入，都要对应一个后端接口或服务端读者。
+2. 后端是功能实现：接口负责真实请求、匹配、校验，返回页面能直接用的结构化数据；前端不写死业务结果。
+3. 点“识别分类”就必须走后端真实抓取/解析；失败返回可读原因，不用假数据糊弄。
+4. 新增或修改 UI 控件，先定接口契约：入参、返回字段、错误码；再做页面。
+5. 没有后端读者的控件不上线：删掉、禁用或标“未接”。
+
 ## 用户写需求的最低要求（四要素）
 
 有效提需求的形状，缺一项我就得猜：
@@ -125,7 +133,7 @@ Telegram bot token / webhook 只放环境变量或面板加密配置；不入库
 3. 怎么算成功：能验证的现象（某个检查通过、某个接口返回、页面某个状态）
 4. 什么不许动：明确否定项
 
-例：把站点页的登录方式改成只存 cookie，改 `pta/web/src/views/Sites.vue` 的登录页签和 `pta/server/routes-data.js` 的凭据接口；成功标准是保存后只回 hasCookie 且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
+例：把站点页的登录方式改成只存 cookie，改 `pta/web/src/views/Sites.vue` 的登录页签和 `pta/server/routes-data.js` 的凭据接口；成功标准是列表只回 hasCookie、单站详情可回显且自检能出结论；不要动面板账号密码登录，不要再加 2FA。
 
 改主意时直接说「现在以 X 为准」，不要让我从多条里推断哪条是最新的。
 

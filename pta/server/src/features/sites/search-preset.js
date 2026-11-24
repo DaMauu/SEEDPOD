@@ -11,7 +11,7 @@ function token(x) {
 }
 function dimOf(name) {
   const n = String(name || '').toLowerCase();
-  if (/medium|source|媒介|片源/.test(n)) return 'medium';
+  if (/medium|source|media|媒介|片源/.test(n)) return 'medium';
   if (/standard|resolution|分辨/.test(n)) return 'resolution';
   if (/spstate|discount|free|优惠/.test(n)) return 'discount';
   if (/restriction|limit|禁转|限转|\bhr\b/.test(n)) return 'restriction';
@@ -71,7 +71,17 @@ function labelNear(html, start, len, attrs) {
   }
   return after.split('<')[0].replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
 }
+/* NexusPHP 分类复选框：<input name="cat401"> 旁边是 <a href="?cat=401"><img alt="Movies/电影"></a> */
+function labelFromNearLink(html, start, len) {
+  const after = html.slice(start + len, start + len + 500);
+  const img = /<img\b[^>]*(?:alt|title)=["']([^"']+)["'][^>]*>/i.exec(after);
+  if (img) return textOf(img[1]);
+  const a = /<a\b[^>]*>([\s\S]*?)<\/a>/i.exec(after);
+  return a ? textOf(a[1]) : '';
+}
 function mapType(label, presets) {
+  /* Unit3D 的单独 “TV Shows” 是剧集；带中文“综艺”的仍按综艺走 */
+  if (/^tv\s*shows?$/i.test(String(label || '').trim())) return presets.keyOf('剧集') || 'tv';
   const t = typeOf(label);
   return presets.keyOf(t) || presets.keyOf(label) || '';
 }
@@ -179,10 +189,12 @@ function parseSearchPreset(html, presets) {
     if (!isCatField(name) && !/categoryIds|category_ids/i.test(live)) continue;
     const val = String(a.value || '').trim();
     if (!val || val === '0') continue;
-    const label = labelNear(html, m.index, m[0].length, a) || inputLabel(html, name);
+    const label = labelNear(html, m.index, m[0].length, a) || inputLabel(html, name) || labelFromNearLink(html, m.index, m[0].length);
     if (!label || /请选择|全部|不限|choose|select|all/i.test(label)) continue;
-    addCat(label, val);
-    if ((/\[\]/.test(name) || /categoryIds|category_ids/i.test(live)) && catMode !== 'key') catMode = 'bracket';
+    const catId = (/^cat(\d+)$/i.exec(name) || [])[1] || val;
+    addCat(label, catId);
+    if (/^cat\d+$/i.test(name)) catMode = 'key';
+    else if ((/\[\]/.test(name) || /categoryIds|category_ids/i.test(live)) && catMode !== 'key') catMode = 'bracket';
     else if (!catMode) catMode = 'single';
   }
 

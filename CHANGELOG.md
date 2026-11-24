@@ -1,5 +1,24 @@
 # 更新日志
 
+## v0.7.674 · 2026-11-24
+
+### 站点预设识别修正
+- NexusPHP 分类复选框（`cat401=1`）按旁边 `<img alt="Movies/电影">` 识别；52PT 从 2 类补到 11 类。
+- `TV Shows/综艺` 归综艺，音乐 MV 归 MV，戏曲/曲艺归舞台演出。
+- 抓取卡按“类型/媒介/编码/音频编码/分辨率/制作组”排序；编码、音频、制作组接入搜索 URL 和保存。
+- UI 把“原盘 / UHD 原盘 / 3D 原盘”合并成一个“Blu-ray”大分类，覆盖站点 full_disc / bluray / uhd / 3d 子项。
+- Gazelle 搜索表单 `media` / `codec` / `audioformat` / `resolution` 能识别；新增 MPEG1/AV1、EAC3/DTS-HD MA/PCM/Opus/MP2/MP1/无音频、LaserDisc 选项。
+- 制作组按站点选项保存，不再被全局 key 过滤掉；原盘向下匹配到站点唯一 Blu-ray 的情况有 URL 测试。
+- 仪表盘“cookie 可用”只统计仍有 cookie 的站；保存/删除/导入 cookie 会清旧自检状态，避免清空后还显示可用。
+- `/api/*` 响应加 `Cache-Control: no-store`；首页统计 10 秒刷新并在窗口聚焦时刷新。
+- 预设确认状态改为“有分类 ID 即已确认”，清掉 `site-search.local.json` 旧提示。
+- 修复上传表单识别失败提示重复。
+
+### 面板 cookie 回显
+- 单站详情回显已保存 cookie；凭据列表仍只回 `hasCookie`。
+- `GET /api/credentials/:host` 需登录、`Cache-Control: no-store`、不写日志。
+- 保存后不再清空输入框，cookie 立即显示。
+
 ## v0.7.673 · 2026-11-24
 
 ### 面板 cookie 保存回归

@@ -4,8 +4,11 @@ import presets from '../../shared/presets.json'
 /* 类型/媒介/分辨率/优惠/限制的选项来自全局预设，不在页面里重复写。 */
 const chipsOf = function (obj) { return Object.keys(obj || {}).map(function (k) { return obj[k] }) };
 const typeChips = chipsOf(presets.types);
-const mediumChips = chipsOf(presets.search && presets.search.medium);
+const MEDIA_MERGE = ['原盘(Full Disc)', 'UHD 原盘', '3D 原盘'];
+const mediumChips = ['Blu-ray'].concat(chipsOf(presets.search && presets.search.medium).filter(function (x) { return x !== 'Blu-ray' && MEDIA_MERGE.indexOf(x) < 0; }));
 const resolutionChips = chipsOf(presets.search && presets.search.resolution);
+const codecChips = chipsOf(presets.search && presets.search.codec);
+const audioChips = chipsOf(presets.search && presets.search.audio);
 const discountChips = chipsOf(presets.search && presets.search.discount);
 const restrictionChips = chipsOf(presets.search && presets.search.restriction);
 
@@ -35,12 +38,36 @@ const restrictionChips = chipsOf(presets.search && presets.search.restriction);
         "label": "媒介"
       },
       {
+        "t": "编码",
+        "type": "custom",
+        "chips": codecChips,
+        "sel": [],
+        "hint": "按站点编码字段筛；站点没有这个字段就跳过",
+        "label": "编码"
+      },
+      {
+        "t": "音频编码",
+        "type": "custom",
+        "chips": audioChips,
+        "sel": [],
+        "hint": "按站点音频字段筛；站点没有这个字段就跳过",
+        "label": "音频编码"
+      },
+      {
         "t": "分辨率",
         "type": "custom",
         "chips": resolutionChips,
         "sel": [],
         "hint": "按分辨率筛搜索结果",
         "label": "分辨率"
+      },
+      {
+        "t": "制作组",
+        "type": "custom",
+        "chips": [],
+        "sel": [],
+        "hint": "先从来源站识别制作组；没有选项时跳过",
+        "label": "制作组"
       },
       {
         "t": "优惠",

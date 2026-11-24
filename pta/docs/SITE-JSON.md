@@ -125,7 +125,8 @@ medium:       "bluray = medium1 = 1"        子项 = 参数名 = 值
   ```json
   "medium": { "full_disc": ["bluray = medium1 = 1", "uhd_full_disc = medium12 = 1"] }
   ```
-- `groups.medium.full_disc` 是向下匹配：选“原盘”会同时使用站点的 Blu-ray / Blu-rayUHD / 3D 原盘 选项。
+- UI 的“Blu-ray”大分类 = 原盘(Full Disc) / UHD 原盘 / 3D 原盘 / Blu-ray；站点只有 Blu-ray 时就用它，有 Blu-rayUHD/3D 时一并带上。
+- Gazelle 的 `media` / `codec` / `audioformat` / `resolution` 下拉会映射到媒介/编码/音频/分辨率；`media=BluRay` 归到 Blu-ray 组。
 - NexusPHP 的 `incldead=0` 是“包括断种”，`1=活种`，`2=断种`；默认带 `incldead=0`，避免漏断种资源。
 - `catMode: "key"` 表示 NexusPHP 的 `cat401=1`、`cat402=1` 写法；`single` 是 `cat=401`，`bracket` 是 `cat[]=401`。
 - `POST /api/crawl/preset/:host/detect`：读一次搜索页，识别分类 ID、媒介/编码/音频/分辨率/制作组和参数名，合并写回站点预设。

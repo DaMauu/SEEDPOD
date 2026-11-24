@@ -2,6 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const siteHidden = require('../features/sites/hidden');
+const jsonFile = require('../infra/json-file');
 const { buildSiteSearchUrl } = require('../features/sites/search-url');
 
 module.exports = function (app, ctx) {
@@ -9,6 +10,15 @@ module.exports = function (app, ctx) {
   const cookieStore = require('../features/sites/credentials')(DATA_DIR);
   const siteStore = require('../features/sites/store')(DATA_DIR);
   const presets = require('../features/presets/store')(DATA_DIR);
+  function clearSiteStatus(host) {
+    const file = path.join(DATA_DIR, 'site-status.json');
+    try {
+      const st = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+      if (st[host] === undefined) return;
+      delete st[host];
+      jsonFile.writeAtomic(file, st, 0o600);
+    } catch (e) { /* 没有状态文件时忽略 */ }
+  }
   function archOf(engine) { const e = String(engine || '').toLowerCase(); return e === 'nexusphp' ? 'NP' : (e === 'unit3d' ? 'UNIT3D' : (e === 'gazelle' ? 'GZ' : '?')); }
   function defOfRecord(rec) {
     const cats = Object.assign({}, rec.search.cats || {});
@@ -117,6 +127,7 @@ module.exports = function (app, ctx) {
       arch: arch, title: String(b.title || (prevRec && prevRec.name) || host).slice(0, 80), added: true };
     /* DB 表只作测试/迁移镜像；运行时以 sites.json 为准 */
     siteHidden.remove(db, host);
+    clearSiteStatus(host);
     try {
       db.prepare('INSERT INTO sites(host, data, updated_at) VALUES(?, ?, ?) ON CONFLICT(host) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at')
         .run(host, JSON.stringify(next), now());
@@ -136,6 +147,7 @@ module.exports = function (app, ctx) {
     if (!siteStore.has(host)) return bad(reply, 'NOT_FOUND', '站点不存在', 404);
     siteHidden.add(db, host);
     cookieStore.remove(host, db);
+    clearSiteStatus(host);
     siteStore.setHidden(host, true, db);
     logEvent('info', '站点', '移除站点（可恢复） · ' + host);
     return ok(reply, { host: host, hidden: true, soft: true });
@@ -145,6 +157,7 @@ module.exports = function (app, ctx) {
     const host = String(req.params.host || '').toLowerCase();
     if (!siteStore.has(host)) return bad(reply, 'NOT_FOUND', '站点不在面板里，先重新添加', 404);
     const changed = siteHidden.remove(db, host);
+    clearSiteStatus(host);
     if (siteStore.has(host)) siteStore.setHidden(host, false, db);
     if (changed) logEvent('info', '站点', '恢复基础站点 · ' + host);
     return ok(reply, { host: host, restored: changed });
@@ -186,6 +199,13 @@ module.exports = function (app, ctx) {
   app.get('/api/credentials', async () => {
     return ok(cookieStore.list());
   });
+  app.get('/api/credentials/:host', async (req, reply) => {
+    const host = req.params.host;
+    if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '站点域名不合法');
+    const c = cookieStore.get(host);
+    reply.header('cache-control', 'no-store');
+    return ok(reply, { host: host, hasCookie: !!c.cookie, readable: !c.err, cookie: c.cookie || '' });
+  });
   app.put('/api/credentials/:host', async (req, reply) => {
     const host = req.params.host;
     if (!host || !/^[a-z0-9][a-z0-9.-]*$/i.test(host)) return bad(reply, 'BAD_HOST', '站点域名不合法');
@@ -193,6 +213,7 @@ module.exports = function (app, ctx) {
     if (b.cookie !== undefined) {
       const r = cookieStore.set(host, String(b.cookie || ''), db);
       if (!r.ok) return bad(reply, r.code, r.message, r.code === 'CRYPTO_UNAVAILABLE' ? 409 : 400);
+      clearSiteStatus(host);
       logEvent('info', '站点', (r.hasCookie ? '保存凭据 · ' : '删除凭据 · ') + host);
       return ok(reply, { host: host, hasCookie: r.hasCookie });
     }

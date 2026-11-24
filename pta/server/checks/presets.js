@@ -31,7 +31,7 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 
   await check('搜索维度齐全：媒介/分辨率/优惠/限制', async function () {
     const s = doc.search || {};
-    need(Object.keys(s.medium || {}).length === 14, '媒介数量不对');
+    need(Object.keys(s.medium || {}).length === 15, '媒介数量不对');
     need(Object.keys(s.resolution || {}).length === 7, '分辨率数量不对');
     need(Object.keys(s.discount || {}).length === 8, '优惠数量不对');
     need(Object.keys(s.restriction || {}).length === 5, '限制数量不对');

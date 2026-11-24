@@ -70,6 +70,23 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(text === formatSitesDoc(doc), 'sites.json 不是块状格式');
     });
 
+    await check('制作组过滤条件保存不丢', async function () {
+      const cur = store.get('site-a.example');
+      const search = Object.assign({}, cur.search, {
+        filters: {
+          values: { team: { BTS: '1' } },
+          params: { team: { BTS: 'team1' } },
+          selected: { team: ['BTS'] }
+        }
+      });
+      const r = store.save('site-a.example', { search: search }, db);
+      need(r.ok, '保存失败：' + JSON.stringify(r));
+      const again = store.get('site-a.example');
+      need(again.search.filters.values.team.BTS === '1', 'team 值丢了：' + JSON.stringify(again.search.filters));
+      need(again.search.filters.params.team.BTS === 'team1', 'team 参数名丢了：' + JSON.stringify(again.search.filters));
+      need(JSON.stringify(again.search.filters.selected.team) === JSON.stringify(['BTS']), 'team 选中项丢了：' + JSON.stringify(again.search.filters));
+    });
+
     await check('新增/隐藏/删除站点', async function () {
       const a = store.add('site-b.example', { name: 'Site B', engine: 'unit3d', url: { base: 'https://site-b.example' } }, db);
       need(a.ok && store.has('site-b.example'), '新增失败：' + JSON.stringify(a));

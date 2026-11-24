@@ -22,11 +22,19 @@ async function loadFilters() {
   if (!sourceHost.value) return
   const j = await getJson('/api/crawl/filters/' + encodeURIComponent(sourceHost.value))
   const labels = (j && j.ok && j.data && j.data.selectedLabels) || {}
+  const vals = (j && j.ok && j.data && j.data.filters && j.data.filters.values) || {}
   const rows = (rules.fetch[0] && rules.fetch[0].rows) || []
-  const byName = { '媒介': 'medium', '分辨率': 'resolution', '优惠': 'discount' }
+  const byName = { '媒介': 'medium', '编码': 'codec', '音频编码': 'audio', '分辨率': 'resolution', '制作组': 'team', '优惠': 'discount' }
+  const MEDIA_MERGE = ['原盘(Full Disc)', 'UHD 原盘', '3D 原盘', 'Blu-ray']
   Object.keys(byName).forEach(name => {
     const r = rows.find(x => x.t === name)
-    if (r) r.sel = labels[byName[name]] || []
+    if (!r) return
+    r.sel = labels[byName[name]] || []
+    if (name === '媒介') {
+      const seen = []
+      r.sel = r.sel.map(function (x) { return MEDIA_MERGE.indexOf(x) >= 0 ? 'Blu-ray' : x; }).filter(function (x) { if (seen.indexOf(x) >= 0) return false; seen.push(x); return true; })
+    }
+    if (name === '制作组') r.chips = Object.keys(vals.team || {})
   })
 }
 
@@ -57,7 +65,7 @@ async function saveFilters() {
     const r = ((rules.fetch[0] && rules.fetch[0].rows) || []).find(x => x.t === t)
     return (r && r.sel) || []
   }
-  const body = { selected: { medium: get('媒介'), resolution: get('分辨率'), discount: get('优惠') } }
+  const body = { selected: { medium: get('媒介'), codec: get('编码'), audio: get('音频编码'), resolution: get('分辨率'), team: get('制作组'), discount: get('优惠') } }
   const r = await fetch('/api/crawl/filters/' + encodeURIComponent(sourceHost.value), {
     method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body)

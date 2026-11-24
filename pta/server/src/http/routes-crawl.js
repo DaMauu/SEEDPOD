@@ -206,10 +206,11 @@ module.exports = function (app, ctx) {
     const values = cur.values || {};
     const params = cur.params || {};
     const selected = {};
-    for (const dim of ['medium', 'resolution', 'discount']) {
-      const labels = Array.isArray(sel[dim]) ? sel[dim].map(String) : (Array.isArray(sel[{ medium: 'medium', resolution: 'standard', discount: 'spstate' }[dim]]) ? sel[{ medium: 'medium', resolution: 'standard', discount: 'spstate' }[dim]].map(String) : []);
+    for (const dim of ['medium', 'codec', 'audio', 'resolution', 'team', 'discount']) {
+      const alias = { medium: 'medium', codec: 'codec', audio: 'audio', resolution: 'standard', team: 'team', discount: 'spstate' }[dim];
+      const labels = Array.isArray(sel[dim]) ? sel[dim].map(String) : (Array.isArray(sel[alias]) ? sel[alias].map(String) : []);
       labels.forEach(function (x) {
-        const key = presets.keyOfDim(dim, x);
+        const key = dim === 'team' ? String(x).trim() : presets.keyOfDim(dim, x);
         if (key) (selected[dim] = selected[dim] || []).push(key);
       });
     }

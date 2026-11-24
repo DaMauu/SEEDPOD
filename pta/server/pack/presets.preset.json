@@ -41,7 +41,8 @@
       "webrip": "WEBRip",
       "tvrip": "TVRip",
       "vhs": "VHS",
-      "other": "其他"
+      "other": "其他",
+      "laserdisc": "LaserDisc"
     },
     "resolution": {
       "480p": "480p",
@@ -75,7 +76,9 @@
       "mpeg2": "MPEG-2",
       "vc1": "VC-1",
       "xvid": "Xvid",
-      "other": "Other"
+      "other": "Other",
+      "mpeg1": "MPEG1",
+      "av1": "AV1"
     },
     "audio": {
       "truehd": "TrueHD",
@@ -86,7 +89,14 @@
       "mp3": "MP3",
       "aac": "AAC",
       "ape": "APE",
-      "other": "Other"
+      "other": "Other",
+      "eac3": "EAC3",
+      "dtsma": "DTS-HD MA",
+      "pcm": "PCM",
+      "opus": "Opus",
+      "mp2": "MP2",
+      "mp1": "MP1",
+      "noaudio": "无音频"
     }
   },
   "publish": {
@@ -143,6 +153,12 @@
       "full_disc": [
         "full_disc",
         "bluray",
+        "uhd_full_disc",
+        "3d_full_disc"
+      ],
+      "bluray": [
+        "bluray",
+        "full_disc",
         "uhd_full_disc",
         "3d_full_disc"
       ]

@@ -12,6 +12,9 @@ function need(cond, msg) { if (!cond) throw new Error(msg); }
 check('类型归一：电影/剧集/音乐/MV/有声书', () => {
   need(cp.typeOf('电影 (Movie)') === '电影', '电影：' + cp.typeOf('电影 (Movie)'));
   need(cp.typeOf('电视剧 (TV Series)') === '剧集', '剧集：' + cp.typeOf('电视剧 (TV Series)'));
+  need(cp.typeOf('TV Shows/综艺') === '综艺', 'TV Shows/综艺 应归综艺：' + cp.typeOf('TV Shows/综艺'));
+  need(cp.typeOf('Music Videos/音乐MV(演唱会)') === 'MV', '音乐MV 应优先归 MV：' + cp.typeOf('Music Videos/音乐MV(演唱会)'));
+  need(cp.typeOf('Opera/戏曲 曲艺') === '舞台演出', '戏曲 曲艺 应归舞台演出：' + cp.typeOf('Opera/戏曲 曲艺'));
   need(cp.typeOf('音乐') === '音乐', '音乐：' + cp.typeOf('音乐'));
   need(cp.typeOf('MV') === 'MV', 'MV：' + cp.typeOf('MV'));
   need(cp.typeOf('音乐短片') === 'MV', '音乐短片：' + cp.typeOf('音乐短片'));
