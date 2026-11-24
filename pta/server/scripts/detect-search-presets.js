@@ -10,6 +10,7 @@ const makeSiteStore = require('../src/features/sites/store');
 const makeCookieStore = require('../src/features/sites/credentials');
 const makePresets = require('../src/features/presets/store');
 const { parseSearchPreset } = require('../src/features/sites/search-preset');
+const { summarizeDetection, mergeDetection } = require('../src/features/sites/detect-merge');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const argv = process.argv.slice(2);
@@ -20,67 +21,6 @@ function arg(name, def) {
 function has(name) { return argv.indexOf(name) >= 0; }
 function clone(x) { return JSON.parse(JSON.stringify(x || {})); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
-
-function summarizeDetection(d) {
-  const types = Object.keys((d && d.cats) || {});
-  const idTypes = {};
-  types.forEach(function (t) { ((d.cats[t]) || []).forEach(function (id) { const v = String(id); (idTypes[v] = idTypes[v] || []).push(t); }); });
-  const ambiguous = Object.keys(idTypes).filter(function (id) { return idTypes[id].length > 1; });
-  const dims = {};
-  ['values', 'params', 'labels'].forEach(function (sec) {
-    dims[sec] = Object.keys((d && d[sec]) || {});
-  });
-  const hasDims = Object.keys(dims.values).length > 0;
-  const confidence = types.length && d && d.catMode ? 'high' : (types.length ? 'medium' : 'low');
-  return {
-    types: types,
-    typeCount: types.reduce(function (n, k) { return n + ((d.cats[k] || []).length); }, 0),
-    ambiguous: ambiguous,
-    dims: dims,
-    hasDims: hasDims,
-    confidence: confidence
-  };
-}
-
-/* 把识别结果并进当前站点定义；默认只补缺失，不覆盖手工值；--force 才替换分类和维度值。
-   selected 永远保留，识别不替用户勾选。 */
-function mergeDetection(current, detected, opts) {
-  const force = !!(opts && opts.force);
-  const cur = current || {};
-  const d = detected || {};
-  const cats = (force && Object.keys(d.cats || {}).length) ? {} : clone(cur.cats || {});
-  /* 同一个站点 ID 被识别成多个大分类时，宁可先不写，避免把电影塞进有声书 */
-  const idTypes = {};
-  Object.keys(d.cats || {}).forEach(function (t) { (d.cats[t] || []).forEach(function (id) { const v = String(id); (idTypes[v] = idTypes[v] || []).push(t); }); });
-  const existingTypes = {};
-  Object.keys(cur.cats || {}).forEach(function (t) { (cur.cats[t] || []).forEach(function (id) { const v = String(id); (existingTypes[v] = existingTypes[v] || []).push(t); }); });
-  Object.keys(d.cats || {}).forEach(function (k) {
-    (d.cats[k] || []).forEach(function (id) {
-      const v = String(id);
-      if ((idTypes[v] || []).length > 1) return;
-      if (existingTypes[v] && existingTypes[v].indexOf(k) < 0) return;
-      const list = cats[k] || (cats[k] = []);
-      if (list.indexOf(v) < 0) list.push(v);
-    });
-  });
-  const filters = clone(cur.filters || {});
-  ['values', 'params', 'labels'].forEach(function (sec) {
-    filters[sec] = clone(filters[sec] || {});
-    Object.keys(d[sec] || {}).forEach(function (dim) {
-      filters[sec][dim] = force ? {} : (filters[sec][dim] || {});
-      Object.keys(d[sec][dim] || {}).forEach(function (k) {
-        filters[sec][dim][k] = String(d[sec][dim][k]);
-      });
-    });
-  });
-  filters.selected = clone((cur.filters && cur.filters.selected) || {});
-  let catMode = cur.catMode || 'single';
-  if (d.catMode && (force || !cur.catMode || cur.catMode === 'single')) catMode = d.catMode;
-  const next = Object.assign({}, cur, { cats: cats, catMode: catMode, filters: filters });
-  const changed = JSON.stringify({ cats: cur.cats || {}, catMode: cur.catMode || '', filters: cur.filters || {} })
-    !== JSON.stringify({ cats: cats, catMode: catMode, filters: filters });
-  return { search: next, changed: changed };
-}
 
 function eligibleHosts(store, cookies) {
   const withCookie = {};

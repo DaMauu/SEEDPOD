@@ -4,6 +4,7 @@ const dupeClassify = require('../features/screen/dupe-classify');
 const { typeOf } = require('../features/crawl/category');
 const configSchema = require('../features/settings/config-schema');
 const urlGuard = require('../infra/url-guard');
+const { summarizeDetection, mergeDetection } = require('../features/sites/detect-merge');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -174,24 +175,10 @@ module.exports = function (app, ctx) {
     const r = await detectFilters(host);
     if (!r.ok) return bad(reply, r.code, r.message);
     const d = r.data || {};
-    const search = Object.assign({}, rec.search);
-    const cats = Object.assign({}, search.cats || {});
-    Object.keys(d.cats || {}).forEach(function (k) {
-      const list = (cats[k] = cats[k] || []);
-      (d.cats[k] || []).forEach(function (id) { if (list.indexOf(String(id)) < 0) list.push(String(id)); });
-    });
-    search.cats = cats;
-    if (d.catMode) search.catMode = d.catMode;
-    const oldF = search.filters || {};
-    const values = Object.assign({}, oldF.values || {});
-    const params = Object.assign({}, oldF.params || {});
-    Object.keys(d.values || {}).forEach(function (dim) {
-      values[dim] = Object.assign({}, values[dim] || {}, d.values[dim] || {});
-      if (d.params && d.params[dim]) params[dim] = Object.assign({}, (typeof params[dim] === 'object' ? params[dim] : {}), d.params[dim]);
-    });
-    search.filters = Object.assign({}, oldF, { values: values, params: params, selected: oldF.selected || {} });
-    siteStore.save(host, { search: search }, db);
-    return ok({ host: host, search: siteStore.get(host).search, detected: d });
+    const summary = summarizeDetection(d);
+    const merged = mergeDetection(rec.search, d, {});
+    siteStore.save(host, { search: merged.search }, db);
+    return ok({ host: host, search: siteStore.get(host).search, detected: d, ambiguous: summary.ambiguous, confidence: summary.confidence, changed: merged.changed });
   });
 
   app.put('/api/crawl/filters/:host', async (req, reply) => {

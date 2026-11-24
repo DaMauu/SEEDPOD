@@ -733,7 +733,9 @@ async function detectSearchPreset() {
     const r = await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
     const j = await r.json().catch(() => null)
     if (!j || !j.ok) { searchPresetMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
-    searchPresetMsg.value = '已保存：' + Object.keys((j.data.search && j.data.search.cats) || {}).length + ' 类分类'
+    const n = Object.keys((j.data.search && j.data.search.cats) || {}).length
+    const amb = ((j.data && j.data.ambiguous) || []).length
+    searchPresetMsg.value = '已保存：' + n + ' 类分类' + (amb ? ' · ' + amb + ' 个冲突未写' : '')
     await loadDetail(host.value)
   } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
   finally { searchPresetBusy.value = false }
