@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.691 · 2026-11-25
+
+### 分类归一修复
+- 有声书（Audiobook / Audio Book）优先归“有声书”，不再被“音乐”规则先匹配。
+- Soundtrack / 原声归“音乐”，上传分类识别能覆盖原声类别。
+- DreadVault 搜索分类修正为 movie/tv/ebook/audiobook；发布映射补 audiobook=5，保留 music=4。
+- 全量 `run.sh` 通过。
+
 ## v0.7.690 · 2026-11-25
 
 ### 识别与缓存修复

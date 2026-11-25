@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-25 16:40（当前 v0.7.690 / 识别与缓存修复；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-25 16:55（当前 v0.7.691 / 分类归一修复；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-25 分类归一修复（v0.7.691）
+
+- 有声书 `Audiobook` / `Audio Book` 优先归“有声书”，不再先命中“音乐”的 audio 规则。
+- `Soundtrack` / 原声归“音乐”；DreadVault 搜索修正为 movie/tv/ebook/audiobook，发布映射补 audiobook=5。
+- 检查补 category-policy 中英文用例；全量 `run.sh` 通过。
 
 ## 2026-11-25 识别与缓存修复（v0.7.690）
 

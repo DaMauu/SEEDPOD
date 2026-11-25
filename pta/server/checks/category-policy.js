@@ -20,6 +20,9 @@ check('类型归一：电影/剧集/音乐/MV/有声书', () => {
   need(cp.typeOf('MV') === 'MV', 'MV：' + cp.typeOf('MV'));
   need(cp.typeOf('音乐短片') === 'MV', '音乐短片：' + cp.typeOf('音乐短片'));
   need(cp.typeOf('有声书') === '有声书', '有声书：' + cp.typeOf('有声书'));
+  need(cp.typeOf('Audiobook') === '有声书', 'Audiobook 应归有声书：' + cp.typeOf('Audiobook'));
+  need(cp.typeOf('Audio Book') === '有声书', 'Audio Book 应归有声书：' + cp.typeOf('Audio Book'));
+  need(cp.typeOf('Soundtrack') === '音乐', 'Soundtrack 应归音乐：' + cp.typeOf('Soundtrack'));
   need(cp.typeOf('电子书') === '电子书', '电子书：' + cp.typeOf('电子书'));
   need(cp.typeOf('其他') === '其他', '其他：' + cp.typeOf('其他'));
 });
