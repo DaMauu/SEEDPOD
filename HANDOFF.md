@@ -6,7 +6,7 @@
 
 - 有声书 `Audiobook` / `Audio Book` 优先归“有声书”，不再先命中“音乐”的 audio 规则。
 - `Soundtrack` / 原声归“音乐”；DreadVault 搜索修正为 movie/tv/ebook/audiobook，发布映射补 audiobook=5。
-- 检查补 category-policy 中英文用例；全量 `run.sh` 通过。
+- 检查补 category-policy 中英文用例；全量 `run.sh` 通过；已部署 v0.7.691，GitHub 同步。
 
 ## 2026-11-25 识别与缓存修复（v0.7.690）
 
