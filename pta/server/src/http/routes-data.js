@@ -37,6 +37,7 @@ module.exports = function (app, ctx) {
     }).filter(Boolean);
     return { engine: rec.engine, base: rec.url.base, searchPath: rec.search.path, params: rec.search.params || {},
       catMode: rec.search.catMode || 'single', catSlot: rec.search.catSlot || '', cats: cats, catMap: catMap,
+      publishCatMap: Object.assign({}, rec.publish.catMap || {}),
       filters: rec.search.filters || {}, detect: rec.search.detect || {}, previewUrls: previewUrls,
       upload: rec.publish.upload || {}, uploadMap: rec.publish.upload || {}, verify: rec.publish.verify || {},
       tagMap: rec.publish.tagMap || {}, tagValue: rec.publish.tagValue || 'yes' };

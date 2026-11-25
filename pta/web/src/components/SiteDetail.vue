@@ -101,32 +101,12 @@
                   <div class="set-fields">
                     <div class="sd-block cm-block">
                       <h4>分类映射</h4>
-                      <p class="set-desc">{{ catKind === 'array' ? '站点分类 → 库内分类；保存后抓取轮转按这张表。' : '库内分类 → 目标站分类 ID；保存后发种按这张表填分类。' }}</p>
-                      <div v-if="catRows.length" class="cm-list">
-                        <div class="cm-row cm-head">
-                          <span>{{ catKind === 'array' ? '站点分类' : '库内分类' }}</span>
-                          <span>{{ catKind === 'array' ? '库内分类' : '目标站分类 ID' }}</span>
-                          <span></span>
-                        </div>
-                        <div v-for="(r, i) in catRows" :key="i" class="cm-row">
-                          <div v-if="catKind === 'array'" class="cm-src">
-                            <input v-model="r.label" class="input" placeholder="分类名称">
-                            <input v-model="r.id" class="input num" placeholder="ID">
-                          </div>
-                          <div v-else class="cm-src">
-                            <input v-model="r.key" class="input" placeholder="库内分类，如 movie">
-                          </div>
-                          <select v-if="catKind === 'array'" v-model="r.purpose" class="select">
-                            <option v-for="p in catPurposes" :key="p.v" :value="p.v">{{ p.label }}</option>
-                          </select>
-                          <input v-else v-model="r.id" class="input" placeholder="目标站分类 ID">
-                          <button class="btn ghost slim cm-del" type="button" @click.stop="removeCatRow(i)">删除</button>
-                        </div>
-                      </div>
-                      <div v-else class="sites-empty">这个站还没有分类映射；点「加一条」开始。</div>
+                      <p class="set-desc">库内分类 → 目标站分类 ID；识别后自动保存，发种按这张表填分类。</p>
+                      <template v-if="publishGroups.length">
+                        <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                      </template>
+                      <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
                       <div class="cm-actions">
-                        <button class="btn ghost slim" type="button" @click.stop="addCatRow">加一条</button>
-                        <button class="btn primary slim" type="button" :disabled="catSaving" @click.stop="saveCatMap">{{ catSaving ? '保存中…' : '保存映射' }}</button>
                         <button class="btn ghost slim" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
                         <span class="sd-cookie-res">{{ catMsg }}</span>
                       </div>
@@ -263,6 +243,25 @@ const previewGroups = computed(() => {
 const previewUnmatched = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).slice(0, 10).map(function (x) { return x.label }).join('、'))
 const previewAmbiguous = computed(() => ((presetPreview.value && presetPreview.value.ambiguous) || []).join('、'))
 
+const publishGroups = computed(function () {
+  const d = detail.def || {}
+  const cm = Object.prototype.hasOwnProperty.call(d, 'publishCatMap') ? d.publishCatMap : d.catMap
+  const types = runtimePresets.value.types || {}
+  if (Array.isArray(cm)) {
+    return cm.map(function (r) {
+      const id = String((r && r.id) || '')
+      const label = String((r && r.label) || id || '未命名')
+      const purpose = String((r && r.purpose) || 'other')
+      return { name: label + (id && label !== id ? ' (' + id + ')' : ''), ids: types[purpose] || purpose }
+    })
+  }
+  if (cm && typeof cm === 'object') {
+    return Object.keys(cm).map(function (k) {
+      return { name: types[k] || k, ids: String(cm[k] == null ? '' : cm[k]) || '—' }
+    })
+  }
+  return []
+})
 const uploadStats = computed(function () {
   const d = detail.def || {}
   const u = d.uploadMap || d.upload || {}
@@ -351,7 +350,8 @@ function catRangeTxt(site) {
   return groups ? groups + ' 组分类' : '还没有分类'
 }
 function catMapTxt() {
-  const cm = detail.def && detail.def.catMap
+  const d = detail.def || {}
+  const cm = Object.prototype.hasOwnProperty.call(d, 'publishCatMap') ? d.publishCatMap : d.catMap
   const n = Array.isArray(cm) ? cm.length : (cm && typeof cm === 'object' ? Object.keys(cm).length : 0)
   return n ? '已配 ' + n + ' 条' : '未配置'
 }
@@ -391,11 +391,6 @@ function syncCatRows(def) {
   catRows.value = r.rows
   catMsg.value = ''
 }
-function addCatRow() {
-  if (catKind.value === 'array') catRows.value.push({ id: '', label: '', purpose: 'other' })
-  else catRows.value.push({ key: '', id: '' })
-}
-function removeCatRow(i) { catRows.value.splice(i, 1) }
 function syncUpForm(def) {
   const um = (def && def.uploadMap) || {}
   upForm.path = String(um.path || '')
@@ -613,7 +608,7 @@ async function saveCatMap() {
   if (!host.value || catSaving.value) return
   if (!defReady.value) { catMsg.value = '站点定义没加载成功，先刷新重试'; return }
   let def
-  try { def = JSON.parse(defText.value) } catch (e) { catMsg.value = '上面的 JSON 格式不对，先修好再保存映射'; return }
+  try { def = JSON.parse(defText.value) } catch (e) { catMsg.value = '站点定义数据异常，先刷新重试'; return }
   if (!def || typeof def !== 'object' || Array.isArray(def)) { catMsg.value = '站点定义必须是 JSON 对象'; return }
   const rows = catRows.value.map(function (r) { return Object.assign({}, r) })
   if (catKind.value === 'array') {

@@ -186,6 +186,7 @@ module.exports = async function run(ctx) {
     const got = await (await fetchA(BASE + '/api/site-def/' + host)).json();
     need(got.ok && Array.isArray(got.data.catMap) && got.data.catMap.length === 2, '数组映射没读回');
     need(got.data.catMap[0].purpose === 'movie' && got.data.catMap[1].id === '402', '数组映射内容不对');
+    need(got.data.publishCatMap && got.data.publishCatMap.movie === '401', '发布映射没单独回读：' + JSON.stringify(got.data.publishCatMap));
     const list = await (await fetchA(BASE + '/api/site-defs')).json();
     need(list.ok && list.data[host] && list.data[host].groups === 2 && list.data[host].ids === 2, 'site-defs 分类统计不对：' + JSON.stringify(list.data[host]));
     const obj = { engine: 'nexusphp', base: 'https://map.example', catMap: { movie: '401', tv: '402' } };
@@ -197,6 +198,7 @@ module.exports = async function run(ctx) {
     const cm2 = got2.data.catMap;
     const objOk = Array.isArray(cm2) ? cm2.some(function (x) { return x.id === '401'; }) : (cm2 && cm2.movie === '401' && cm2.tv === '402');
     need(got2.ok && objOk, '对象映射没读回：' + JSON.stringify(cm2));
+    need(got2.data.publishCatMap && got2.data.publishCatMap.movie === '401' && got2.data.publishCatMap.tv === '402', '对象发布映射没单独回读：' + JSON.stringify(got2.data.publishCatMap));
   });
 
   await check('上传表单 HTML 识别接口', async () => {
