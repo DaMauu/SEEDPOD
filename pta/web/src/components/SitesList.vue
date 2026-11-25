@@ -3,7 +3,7 @@
     <section class="sites-list">
       <div class="st-head">
         <span class="st-all"><input type="checkbox" id="site-all" aria-label="全选本站点" :checked="allPicked" :indeterminate.prop="somePicked" @change="emit('toggle-all', $event.target.checked)"></span>
-        <span>架构</span><span>站点</span><span></span>
+        <span>架构</span><span>站点</span>
       </div>
       <div class="sites-rows" id="sites-list">
         <div v-for="s in pageRows" :key="s.name" class="site-item" :class="{ on: sel === s.name }" @click="emit('open', s.name)">
@@ -15,7 +15,6 @@
               <em v-for="r in readyChips(s.ready)" :key="r.short" class="rd" :class="r.state" :title="r.label">{{ r.short }}</em>
             </span>
           </span>
-          <span class="st" :class="dotCls(s)"><i></i></span>
           <span class="si-mode">{{ modeTxt(s) }}</span>
           <span class="si-last">{{ lastCrawlTxt(s) }}</span>
         </div>
@@ -38,7 +37,7 @@
 
 
 <script setup>
-import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt, modeTxt } from '../utils/siteFormat'
+import { ARCH, fmtWhen, archOf, archCls, archLabel, modeTxt } from '../utils/siteFormat'
 const ENG_CODE = { nexusphp: 'NP', unit3d: 'U3D', gazelle: 'GZ' }
 
 const props = defineProps({
@@ -61,7 +60,7 @@ function presetTxt(s) {
 function lastCrawlTxt(s) { return s.lastAt ? fmtWhen(s.lastAt) : '未抓取' }
 function readyChips(r) {
   return [
-    { short: '登录', state: r.cookie.state, label: r.cookie.label },
+    { short: '登录', state: r.cookie.state, label: r.cookie.label + (r.cookie.at ? ' · ' + fmtWhen(r.cookie.at) : '') },
     { short: '搜索', state: r.search.state, label: r.search.label },
     { short: '发布', state: r.publish.state, label: r.publish.label },
     { short: '上传', state: r.upload.state, label: r.upload.label }
@@ -149,10 +148,7 @@ function go(n) {
 .st-all input { width: 14px; height: 14px; accent-color: var(--accent); }
 .si-preset{flex:0 0 58px;font-size:10px;color:#aeb4c2;text-align:center;letter-spacing:.02em}
 .si-preset.on{color:var(--accent);font-weight:600}
-.site-item .st{flex:0 0 8px;width:8px;justify-content:center}
-.site-item .st i{width:7px;height:7px}
 .st-head, .site-item{grid-template-columns:26px 84px minmax(0,1fr) 10px 56px 92px;gap:12px}
-.site-item .st{justify-self:start}
 .sites-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 0; font-size: 12px; color: var(--muted); }
 @media (max-width: 900px) {
 .st-head { display: none; }
@@ -181,8 +177,8 @@ function go(n) {
 /* ===== 站点列 + 右侧详情：布满卡片 ===== */
 .sites-work { flex: 1; min-height: 0; display: flex; background: #fff; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .sites-work .sites-list { width: clamp(280px, 30%, 400px); flex: 0 0 clamp(280px, 30%, 400px); min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: #fff; }
-.sites-work .st-head { grid-template-columns: 24px 64px minmax(0, 1fr) 10px; gap: 10px; padding: 0 16px; height: 34px; }
-.sites-work .site-item { grid-template-columns: 24px 64px minmax(0, 1fr) 10px; gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
+.sites-work .st-head { grid-template-columns: 24px 64px minmax(0, 1fr); gap: 10px; padding: 0 16px; height: 34px; }
+.sites-work .site-item { grid-template-columns: 24px 64px minmax(0, 1fr); gap: 10px; padding: 4px 16px; height: auto; min-height: 42px; }
 .sites-work .si-txt b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; }
 .sites-work .si-mode, .sites-work .si-last { display: none; }
 .sites-work .sites-rows { flex: 1; min-height: 0; max-height: none; overflow: hidden; }

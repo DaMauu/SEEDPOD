@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-25T17:30:57.614Z",
+  "at": "2026-11-25T18:10:49.664Z",
   "files": {
     "App.vue": "053200a5aab1fe81",
     "components/CrawlCard.vue": "7a23304c538747c5",
@@ -12,7 +12,7 @@
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
     "components/SiteDetail.vue": "14074fc0de49b61a",
     "components/SiteMapModal.vue": "f40fcd6586728036",
-    "components/SitesList.vue": "96fa1f07643ece85",
+    "components/SitesList.vue": "39ead7aa6311c71a",
     "components/SitesModals.vue": "edb19f29bcccb0ff",
     "components/SitesStats.vue": "de6b60ac622f3fdd",
     "components/SitesToolbar.vue": "0737d03b2a3b631c",
@@ -37,7 +37,7 @@
     "views/Nodes.vue": "92eff546c133a052",
     "views/Queue.vue": "5460a6850535b2a6",
     "views/Settings.vue": "4936aa145992ed28",
-    "views/Sites.vue": "0e261a570afa0412",
+    "views/Sites.vue": "ddc549845d1c43b9",
     "views/Sources.vue": "9de40ece3d999682"
   }
 }

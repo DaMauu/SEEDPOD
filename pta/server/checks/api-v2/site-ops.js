@@ -193,6 +193,21 @@ module.exports = async function run(ctx) {
     const rd = list.data[host].ready;
     need(rd && rd.search.state === 'ok' && rd.publish.state === 'ok', '就绪度搜索/发布不对：' + JSON.stringify(rd));
     need(rd.upload.state === 'warn' && rd.cookie.state === 'missing', '就绪度上传/登录不对：' + JSON.stringify(rd));
+    const sf = path.join(DATA, 'site-status.json');
+    const prevStatus = fs.existsSync(sf) ? fs.readFileSync(sf, 'utf8') : null;
+    try {
+      const setCk = await fetchA(BASE + '/api/credentials/' + host, {
+        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'sid=fixture' })
+      });
+      need(setCk.status === 200, '就绪度测试 cookie 保存失败 ' + setCk.status);
+      fs.writeFileSync(sf, JSON.stringify({ [host]: { at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), pass: true, status: 200 } }));
+      const rr = await (await fetchA(BASE + '/api/sites/readiness')).json();
+      need(rr.ok && rr.data.at && rr.data.sites[host].cookie.state === 'warn', '超过 2 小时没降级：' + JSON.stringify(rr.data && rr.data.sites && rr.data.sites[host]));
+    } finally {
+      if (prevStatus === null) { try { fs.unlinkSync(sf); } catch (e) { /* 没有状态文件 */ } }
+      else fs.writeFileSync(sf, prevStatus);
+      await fetchA(BASE + '/api/credentials/' + host, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: '' }) });
+    }
     const obj = { engine: 'nexusphp', base: 'https://map.example', catMap: { movie: '401', tv: '402' } };
     const put2 = await fetchA(BASE + '/api/site-def/' + host, {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(obj)

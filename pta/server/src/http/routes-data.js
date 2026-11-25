@@ -21,6 +21,33 @@ module.exports = function (app, ctx) {
     } catch (e) { /* 没有状态文件时忽略 */ }
   }
   function archOf(engine) { const e = String(engine || '').toLowerCase(); return e === 'nexusphp' ? 'NP' : (e === 'unit3d' ? 'UNIT3D' : (e === 'gazelle' ? 'GZ' : '?')); }
+  /* 登录绿点最多信 2 小时；超过就降成待复检，避免拿上次记录冒充当前状态。 */
+  const READY_TTL_MS = 2 * 60 * 60 * 1000;
+  function readinessOf(s, c, st) {
+    const cats = s.search.cats || {};
+    const groups = Object.keys(cats).length;
+    const ed = ENGINES[String(s.engine || '').toLowerCase()] || {};
+    const defaultFields = Object.keys(ed.fields || {}).length;
+    const uploadFields = Object.keys((s.publish.upload && s.publish.upload.fields) || {}).length;
+    const pcount = Object.keys(s.publish.catMap || {}).length;
+    const checked = st && st.at ? Date.parse(st.at) : 0;
+    let cookie = { state: 'missing', label: '未导入 cookie', at: '' };
+    if (c) {
+      if (!c.readable) cookie = { state: 'bad', label: 'cookie 解不开', at: c.updatedAt || '' };
+      else if (st && st.pass === false) cookie = { state: 'bad', label: '登录失败', at: st.at || '' };
+      else if (st && st.pass === true && checked && Date.now() - checked <= READY_TTL_MS) cookie = { state: 'ok', label: '登录已就绪', at: st.at || '' };
+      else cookie = { state: 'warn', label: st && st.pass === true ? '登录待复检（超过 2 小时）' : '登录待验证', at: st && st.at || c.updatedAt || '' };
+    }
+    const search = groups ? { state: 'ok', label: '搜索 ' + groups + ' 类' } : { state: 'missing', label: '缺搜索分类' };
+    const publish = pcount ? { state: 'ok', label: '发布 ' + pcount + ' 类' } : { state: 'missing', label: '缺发布分类' };
+    const upload = uploadFields ? { state: 'ok', label: '上传 ' + uploadFields + ' 字段' }
+      : (defaultFields ? { state: 'warn', label: '引擎默认 ' + defaultFields + ' 字段' } : { state: 'missing', label: '缺上传字段' });
+    const enabled = s.settings.enabled !== false;
+    const engineOk = !!s.engine && s.engine !== '?';
+    return { cookie: cookie, search: search, publish: publish, upload: upload,
+      crawlReady: enabled && engineOk && cookie.state !== 'missing' && cookie.state !== 'bad' && search.state === 'ok',
+      publishReady: enabled && engineOk && cookie.state !== 'missing' && cookie.state !== 'bad' && publish.state === 'ok' && upload.state !== 'missing' };
+  }
   function defOfRecord(rec) {
     const cats = Object.assign({}, rec.search.cats || {});
     const list = [];
@@ -301,30 +328,17 @@ module.exports = function (app, ctx) {
       const cats = s.search.cats || {};
       const groups = Object.keys(cats).length;
       const ids = Object.keys(cats).reduce(function (a, k) { return a + (cats[k] || []).length; }, 0);
-      const ed = ENGINES[String(s.engine || '').toLowerCase()] || {};
-      const defaultFields = Object.keys(ed.fields || {}).length;
-      const uploadFields = Object.keys((s.publish.upload && s.publish.upload.fields) || {}).length;
-      const pcount = Object.keys(s.publish.catMap || {}).length;
-      const c = cookieMap[s.host];
-      const st = status[s.host];
-      let cookie = { state: 'missing', label: '未导入 cookie' };
-      if (c) {
-        if (!c.readable) cookie = { state: 'bad', label: 'cookie 解不开' };
-        else if (st && st.pass === true) cookie = { state: 'ok', label: '登录已就绪' };
-        else if (st && st.pass === false) cookie = { state: 'bad', label: '登录失败' };
-        else cookie = { state: 'warn', label: '登录待验证' };
-      }
-      const search = groups ? { state: 'ok', label: '搜索 ' + groups + ' 类' } : { state: 'missing', label: '缺搜索分类' };
-      const publish = pcount ? { state: 'ok', label: '发布 ' + pcount + ' 类' } : { state: 'missing', label: '缺发布分类' };
-      const upload = uploadFields ? { state: 'ok', label: '上传 ' + uploadFields + ' 字段' }
-        : (defaultFields ? { state: 'warn', label: '引擎默认 ' + defaultFields + ' 字段' } : { state: 'missing', label: '缺上传字段' });
-      const enabled = s.settings.enabled !== false;
-      const engineOk = !!s.engine && s.engine !== '?';
       out[s.host] = { engine: s.engine || '', base: s.url.base || '', groups: groups, ids: ids, cats: cats,
-        ready: { cookie: cookie, search: search, publish: publish, upload: upload,
-          crawlReady: enabled && engineOk && cookie.state !== 'missing' && cookie.state !== 'bad' && search.state === 'ok',
-          publishReady: enabled && engineOk && cookie.state !== 'missing' && cookie.state !== 'bad' && publish.state === 'ok' && upload.state !== 'missing' } };
+        ready: readinessOf(s, cookieMap[s.host], status[s.host]) };
     });
     return ok(out);
+  });
+  app.get('/api/sites/readiness', async () => {
+    const cookieMap = {};
+    cookieStore.list().forEach(function (c) { cookieMap[c.host] = c; });
+    const status = readStatus();
+    const sites = {};
+    siteStore.list().forEach(function (s) { sites[s.host] = readinessOf(s, cookieMap[s.host], status[s.host]); });
+    return ok({ at: new Date().toISOString(), sites: sites });
   });
 };

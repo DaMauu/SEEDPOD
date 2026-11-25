@@ -100,6 +100,7 @@ const defs = ref({})
 const creds = ref({})
 const crawlState = ref({})
 const statusMap = ref({})
+const readiness = ref({})
 const q = ref('')
 const statusFilter = ref('all')
 const archFilter = ref('all')
@@ -120,6 +121,9 @@ let loaded = false
 let loadBusy = false
 let bootTimer = null
 let qTimer = null
+let readyTimer = null
+let readyBusy = false
+let lastReadyAt = 0
 
 const sites = computed(() => baseSites.value
   .filter(x => !hidden.value.includes(x.host))
@@ -156,7 +160,7 @@ const sites = computed(() => baseSites.value
       todayCount: Number(cr.dayCount) || 0,
       preset: presets.value[x.host] || null,
       def: df,
-      ready: df && df.ready ? df.ready : null
+      ready: readiness.value[x.host] || (df && df.ready ? df.ready : null)
     }
   }))
 
@@ -261,6 +265,9 @@ async function loadAll() {
       if (Array.isArray(dj.data)) dj.data.forEach(d => { if (d && d.host) out[d.host] = d })
       else if (dj.data && typeof dj.data === 'object') Object.keys(dj.data).forEach(h => { out[h] = dj.data[h] })
       defs.value = out
+      const rmap = {}
+      Object.keys(out).forEach(h => { if (out[h] && out[h].ready) rmap[h] = out[h].ready })
+      readiness.value = rmap
     }
     if (crj && crj.ok && Array.isArray(crj.data)) {
       const out = {}
@@ -276,6 +283,20 @@ function ensureSites() {
   if (!viewVisible('sites')) { if (sel.value) sel.value = null; return }
   if (loggedIn()) loadAll()
 }
+/* 就绪度只刷本地状态：两分钟最多查一次，页面不可见不发；不自动请求目标站。 */
+async function refreshReadiness() {
+  if (readyBusy || !loggedIn() || !viewVisible('sites')) return
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+  if (Date.now() - lastReadyAt < 15000) return
+  readyBusy = true
+  lastReadyAt = Date.now()
+  try {
+    const j = await fetch('/api/sites/readiness', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).catch(() => null)
+    if (j && j.ok && j.data && j.data.sites) readiness.value = j.data.sites
+  } catch (e) { /* 轮询失败不打扰页面 */ }
+  readyBusy = false
+}
+function onVisible() { if (document.visibilityState === 'visible') refreshReadiness() }
 function openSite(host) {
   if (sel.value === host) { sel.value = null; return }
   sel.value = host
@@ -373,14 +394,18 @@ async function applyBulk() {
 onMounted(() => {
   window.addEventListener('hashchange', ensureSites)
   document.addEventListener('keydown', onKey)
+  document.addEventListener('visibilitychange', onVisible)
   bootTimer = setInterval(() => { if (!loaded) ensureSites() }, 1500)
+  readyTimer = setInterval(refreshReadiness, 120000)
   ensureSites()
 })
 onUnmounted(() => {
   window.removeEventListener('hashchange', ensureSites)
   document.removeEventListener('keydown', onKey)
+  document.removeEventListener('visibilitychange', onVisible)
   if (bootTimer) clearInterval(bootTimer)
   if (qTimer) clearTimeout(qTimer)
+  if (readyTimer) clearInterval(readyTimer)
 })
 function onKey(e) {
   if (e.key !== 'Escape' || !sel.value) return

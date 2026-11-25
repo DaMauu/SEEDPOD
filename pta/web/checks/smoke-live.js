@@ -241,8 +241,8 @@ async function main() {
     await page.waitForTimeout(800);
     need(await page.locator('.site-item').count() === 5, '添加后站点数量不对：' + await page.locator('.site-item').count());
     need(/Added Site/.test(await page.locator('#sites-list').innerText()), '添加的站点没出现');
-    const staleDot = await page.locator('.site-item').filter({ hasText: 'Added Site' }).locator('.st').getAttribute('class');
-    need(!/\bok\b/.test(staleDot || ''), '没有 cookie 却显示绿色状态：' + staleDot);
+    const staleDot = await page.locator('.site-item').filter({ hasText: 'Added Site' }).locator('.si-ready .rd').first().getAttribute('class');
+    need(!/\bok\b/.test(staleDot || '') && /\bmissing\b/.test(staleDot || ''), '没有 cookie 却显示登录就绪：' + staleDot);
     need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
     need(await page.locator('#site-detail textarea').count() >= 1, '上传配置文本域缺失');
     /* 面板保存 cookie：填 → 保存设置 → 接口回 hasCookie → 清掉 */
