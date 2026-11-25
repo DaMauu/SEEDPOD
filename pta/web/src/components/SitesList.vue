@@ -61,10 +61,10 @@ function presetTxt(s) {
 function lastCrawlTxt(s) { return s.lastAt ? fmtWhen(s.lastAt) : '未抓取' }
 function readyChips(r) {
   return [
-    { short: '登', state: r.cookie.state, label: r.cookie.label },
-    { short: '搜', state: r.search.state, label: r.search.label },
-    { short: '发', state: r.publish.state, label: r.publish.label },
-    { short: '传', state: r.upload.state, label: r.upload.label }
+    { short: '登录', state: r.cookie.state, label: r.cookie.label },
+    { short: '搜索', state: r.search.state, label: r.search.label },
+    { short: '发布', state: r.publish.state, label: r.publish.label },
+    { short: '上传', state: r.upload.state, label: r.upload.label }
   ]
 }
 function go(n) {
@@ -123,13 +123,13 @@ function go(n) {
 .si-txt b { display: block; font-size: 12px; font-weight: 600; color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .si-txt span { display: block; font-size: 10.5px; color: var(--muted-2); }
-.si-txt > .si-ready { display: flex; gap: 3px; margin-top: 1px; line-height: 1; }
-.si-ready .rd { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 12px;
-  font-style: normal; font-size: 9px; line-height: 1; border-radius: 3px; border: 1px solid var(--line);
-  background: #fafbfd; color: var(--muted-2); }
-.si-ready .rd.ok { color: #087443; background: #ecfdf3; border-color: #c6efd9; }
-.si-ready .rd.warn { color: #9a6700; background: #fffaeb; border-color: #f2dfae; }
-.si-ready .rd.bad, .si-ready .rd.missing { color: #b42318; background: #fef3f2; border-color: #f4c7c3; }
+.si-txt > .si-ready { display: flex; gap: 7px; margin-top: 2px; line-height: 1; }
+.si-ready .rd { display: inline-flex; align-items: center; gap: 3px; font-style: normal; font-size: 9.5px;
+  line-height: 1; color: var(--muted-2); white-space: nowrap; }
+.si-ready .rd::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #c9cedb; }
+.si-ready .rd.ok::before { background: #12b76a; }
+.si-ready .rd.warn::before { background: #f79009; }
+.si-ready .rd.bad::before, .si-ready .rd.missing::before { background: #f04438; }
 .si-arch .chip { font-size: 10px; }
 .si-login { font-size: 11.5px; color: var(--muted); }
 .si-login.ok { color: var(--green); }
