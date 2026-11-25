@@ -10,6 +10,17 @@ const FORM_FALLBACK = {
   gazelle: ['/upload.php', '/torrents/upload.php']
 };
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
+/* 表单 action 可能是 takeupload.php 这种相对路径；统一成带前导 / 的站点路径 */
+function formActionPath(action, base, formPath) {
+  const a = String(action || '').trim();
+  if (!a) return formPath;
+  try {
+    const u = new URL(a, String(base || '').replace(/\/+$/, '') + '/' + String(formPath || '').replace(/^\/+/, ''));
+    return u.pathname + (u.search || '');
+  } catch (e) {
+    return a.charAt(0) === '/' ? a : '/' + a;
+  }
+}
 
 function makeTargetPages(deps) {
   const resolve = deps.resolve;
@@ -261,12 +272,12 @@ function makeTargetPages(deps) {
       }
       const forms = form.parse(html);
       if (!forms.length) {
-        return { ok: false, code: 'NO_FORM', message: '没识别到上传表单；引擎默认字段仍可用。先确认账号有上传权限，或上传页路径不是引擎默认值', http: 422 };
+        return { ok: false, code: 'NO_FORM', message: '上传页正常返回但没有表单：账号可能没有上传权限，或站点暂未开放上传；引擎默认字段仍可用', http: 422 };
       }
       const withFile = forms.filter(function (x) { return !!x.fileField; })
         .sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; });
       const f = withFile[0] || forms.slice().sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; })[0];
-      return { ok: true, data: { url: url, path: f.action || (i === 0 ? t.upload.path : formPath), formPath: formPath, formCount: forms.length, fileField: f.fileField || '', fields: f.fields, forms: forms } };
+      return { ok: true, data: { url: url, path: formActionPath(f.action, t.base, formPath), formPath: formPath, formCount: forms.length, fileField: f.fileField || '', fields: f.fields, forms: forms } };
     }
     return { ok: false, code: 'NO_FORM', message: '默认和备用上传页路径都没找到表单；先确认站点上传页路径', http: 422 };
   }
