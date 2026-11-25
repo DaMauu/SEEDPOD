@@ -190,6 +190,9 @@ module.exports = async function run(ctx) {
     need(got.data.uploadDefaults && got.data.uploadDefaults.fieldCount === 10, '引擎默认上传字段数不对：' + JSON.stringify(got.data.uploadDefaults));
     const list = await (await fetchA(BASE + '/api/site-defs')).json();
     need(list.ok && list.data[host] && list.data[host].groups === 2 && list.data[host].ids === 2, 'site-defs 分类统计不对：' + JSON.stringify(list.data[host]));
+    const rd = list.data[host].ready;
+    need(rd && rd.search.state === 'ok' && rd.publish.state === 'ok', '就绪度搜索/发布不对：' + JSON.stringify(rd));
+    need(rd.upload.state === 'warn' && rd.cookie.state === 'missing', '就绪度上传/登录不对：' + JSON.stringify(rd));
     const obj = { engine: 'nexusphp', base: 'https://map.example', catMap: { movie: '401', tv: '402' } };
     const put2 = await fetchA(BASE + '/api/site-def/' + host, {
       method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(obj)

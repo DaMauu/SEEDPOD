@@ -9,7 +9,12 @@
         <div v-for="s in pageRows" :key="s.name" class="site-item" :class="{ on: sel === s.name }" @click="emit('open', s.name)">
           <input type="checkbox" class="site-pick" :checked="picks.includes(s.name)" @click.stop @change="emit('pick', s.name)">
           <span class="si-arch"><em class="chip" :class="archCls(s)">{{ archLabel(s) }}</em></span>
-          <span class="si-txt"><b>{{ s.title }}</b></span>
+          <span class="si-txt">
+            <b>{{ s.title }}</b>
+            <span v-if="s.ready" class="si-ready">
+              <em v-for="r in readyChips(s.ready)" :key="r.short" class="rd" :class="r.state" :title="r.label">{{ r.short }}</em>
+            </span>
+          </span>
           <span class="st" :class="dotCls(s)"><i></i></span>
           <span class="si-mode">{{ modeTxt(s) }}</span>
           <span class="si-last">{{ lastCrawlTxt(s) }}</span>
@@ -54,6 +59,14 @@ function presetTxt(s) {
   return code + (s.preset.groups ? ' ' + s.preset.groups + '组' : '') + (s.preset.confirmed ? '' : ' · 待确认')
 }
 function lastCrawlTxt(s) { return s.lastAt ? fmtWhen(s.lastAt) : '未抓取' }
+function readyChips(r) {
+  return [
+    { short: '登', state: r.cookie.state, label: r.cookie.label },
+    { short: '搜', state: r.search.state, label: r.search.label },
+    { short: '发', state: r.publish.state, label: r.publish.label },
+    { short: '传', state: r.upload.state, label: r.upload.label }
+  ]
+}
 function go(n) {
   const p = Number(props.pages) || 1
   if (n < 1 || n > p || n === Number(props.page)) return
@@ -110,6 +123,13 @@ function go(n) {
 .si-txt b { display: block; font-size: 12px; font-weight: 600; color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .si-txt span { display: block; font-size: 10.5px; color: var(--muted-2); }
+.si-txt > .si-ready { display: flex; gap: 3px; margin-top: 1px; line-height: 1; }
+.si-ready .rd { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 12px;
+  font-style: normal; font-size: 9px; line-height: 1; border-radius: 3px; border: 1px solid var(--line);
+  background: #fafbfd; color: var(--muted-2); }
+.si-ready .rd.ok { color: #087443; background: #ecfdf3; border-color: #c6efd9; }
+.si-ready .rd.warn { color: #9a6700; background: #fffaeb; border-color: #f2dfae; }
+.si-ready .rd.bad, .si-ready .rd.missing { color: #b42318; background: #fef3f2; border-color: #f4c7c3; }
 .si-arch .chip { font-size: 10px; }
 .si-login { font-size: 11.5px; color: var(--muted); }
 .si-login.ok { color: var(--green); }

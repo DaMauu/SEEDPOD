@@ -128,6 +128,7 @@ const sites = computed(() => baseSites.value
     const st = statusMap.value[x.host] || null
     const cr = crawlState.value[x.host] || {}
     const cd = creds.value[x.host] || null
+    const df = defs.value[x.host] || null
     return {
       name: x.host,
       title: x.title || x.host,
@@ -154,7 +155,8 @@ const sites = computed(() => baseSites.value
       lastAt: Number(cr.lastAt) || 0,
       todayCount: Number(cr.dayCount) || 0,
       preset: presets.value[x.host] || null,
-      def: defs.value[x.host] || null
+      def: df,
+      ready: df && df.ready ? df.ready : null
     }
   }))
 

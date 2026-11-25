@@ -221,6 +221,7 @@ async function main() {
     need(ui.buttons === 0 && ui.links === 2, '分页不该再用按钮：' + JSON.stringify(ui));
     need(ui.listRight <= ui.paneLeft + 1, '列表和详情没有左右分栏：' + JSON.stringify(ui));
     need(ui.listH > 200 && ui.paneH > 200 && Math.abs(ui.listH - ui.workH) < 2, '两栏没有布满卡片：' + JSON.stringify(ui));
+    need(await page.locator('#sites-list .si-ready .rd').count() >= 4, '站点列表没显示就绪度标记');
     need(ui.listBottom - ui.pagerBottom < 24, '分页没贴在列表底部：' + JSON.stringify(ui));
   });
 
