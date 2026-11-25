@@ -4,6 +4,13 @@ const form = require('../../infra/form');
 const { textOf, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
 const urlGuard = require('../../infra/url-guard');
 
+const FORM_FALLBACK = {
+  nexusphp: ['/upload.php', '/takeupload.php'],
+  unit3d: ['/torrents/create', '/torrents/upload', '/upload'],
+  gazelle: ['/upload.php', '/torrents/upload.php']
+};
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
+
 function makeTargetPages(deps) {
   const resolve = deps.resolve;
   const cookieOf = deps.cookieOf;
@@ -219,36 +226,49 @@ function makeTargetPages(deps) {
       return { ok: false, code: 'BAD_BASE', message: '上传页域名和站点域名不一致，为免 cookie 外泄先停下', http: 400 };
     }
     if (!/^https?:/i.test(t.base)) return { ok: false, code: 'BAD_BASE', message: '站点 base 必须是 http/https', http: 400 };
-    const formPath = t.upload.formPath || t.upload.path;
-    const url = t.base + formPath;
-    let res;
-    try {
-      const dg = await dnsErr(url);
-      if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
-      res = await fetch(url, {
-        headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(20000)
-      });
-    } catch (e) {
-      return { ok: false, code: 'DETECT_FAILED', message: e && e.name === 'TimeoutError' ? '上传页请求超时' : '上传页请求失败', http: 502 };
+    const firstPath = t.upload.formPath || t.upload.path;
+    const engine = String(t.engine || '').toLowerCase();
+    const paths = [firstPath].concat(FORM_FALLBACK[engine] || []).filter(function (p, i, a) { return p && a.indexOf(p) === i; }).slice(0, 3);
+    for (let i = 0; i < paths.length; i++) {
+      const formPath = paths[i];
+      const url = t.base + formPath;
+      if (i > 0) await sleep(800);
+      let res;
+      try {
+        const dg = await dnsErr(url);
+        if (dg) return { ok: false, code: 'DNS_BLOCKED', message: dg, http: 422 };
+        res = await fetch(url, {
+          headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          redirect: 'manual',
+          signal: AbortSignal.timeout(20000)
+        });
+      } catch (e) {
+        return { ok: false, code: 'DETECT_FAILED', message: e && e.name === 'TimeoutError' ? '上传页请求超时' : '上传页请求失败', http: 502 };
+      }
+      if (res.status >= 300 && res.status < 400) {
+        return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页跳转了，cookie 可能已失效', http: 401 };
+      }
+      if (res.status === 429 || res.status === 403 || res.status === 503) {
+        return { ok: false, code: 'RATE_LIMITED', message: '上传页返回 ' + res.status + '，先停下', http: 429 };
+      }
+      if (res.status === 404 || res.status === 405) continue;
+      if (res.status !== 200) return { ok: false, code: 'HTTP_' + res.status, message: '上传页返回 ' + res.status, http: 502 };
+      const html = await res.text().catch(function () { return ''; });
+      if (!html) return { ok: false, code: 'EMPTY_PAGE', message: '上传页是空的', http: 502 };
+      if (html.length > 2 * 1024 * 1024) return { ok: false, code: 'TOO_LARGE', message: '上传页超过 2MB，先截取表单部分', http: 413 };
+      if (/takelogin\.php|login\.php|请先登录|sign in/i.test(html)) {
+        return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页看起来是登录页，cookie 可能已失效', http: 401 };
+      }
+      const forms = form.parse(html);
+      if (!forms.length) {
+        return { ok: false, code: 'NO_FORM', message: '没识别到上传表单；引擎默认字段仍可用。先确认账号有上传权限，或上传页路径不是引擎默认值', http: 422 };
+      }
+      const withFile = forms.filter(function (x) { return !!x.fileField; })
+        .sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; });
+      const f = withFile[0] || forms.slice().sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; })[0];
+      return { ok: true, data: { url: url, path: f.action || (i === 0 ? t.upload.path : formPath), formPath: formPath, formCount: forms.length, fileField: f.fileField || '', fields: f.fields, forms: forms } };
     }
-    if (res.status >= 300 && res.status < 400) {
-      return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页跳转了，cookie 可能已失效', http: 401 };
-    }
-    if (res.status !== 200) return { ok: false, code: 'HTTP_' + res.status, message: '上传页返回 ' + res.status, http: 502 };
-    const html = await res.text().catch(function () { return ''; });
-    if (!html) return { ok: false, code: 'EMPTY_PAGE', message: '上传页是空的', http: 502 };
-    if (html.length > 2 * 1024 * 1024) return { ok: false, code: 'TOO_LARGE', message: '上传页超过 2MB，先截取表单部分', http: 413 };
-    if (/takelogin\.php|login\.php|请先登录|sign in/i.test(html)) {
-      return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页看起来是登录页，cookie 可能已失效', http: 401 };
-    }
-    const forms = form.parse(html);
-    if (!forms.length) return { ok: false, code: 'NO_FORM', message: '没识别到上传表单；先确认账号有上传权限，或上传页路径不是引擎默认值', http: 422 };
-    const withFile = forms.filter(function (x) { return !!x.fileField; })
-      .sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; });
-    const f = withFile[0] || forms.slice().sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; })[0];
-    return { ok: true, data: { url: url, path: t.upload.path, formPath: formPath, formCount: forms.length, fileField: f.fileField || '', fields: f.fields, forms: forms } };
+    return { ok: false, code: 'NO_FORM', message: '默认和备用上传页路径都没找到表单；先确认站点上传页路径', http: 422 };
   }
 
   return { torrentMeta, deleteTorrent, fetchDetailsInfo, fetchDetailsTorrent, detectUploadForm };

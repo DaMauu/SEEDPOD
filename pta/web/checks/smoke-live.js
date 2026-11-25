@@ -290,6 +290,7 @@ async function main() {
     const upBlock = page.locator('#site-detail .cm-block').filter({ hasText: '上传表单' });
     need(await upBlock.count() === 1, '上传表单状态块缺失');
     need(await upBlock.locator('.cm-actions button').filter({ hasText: '识别上传表单' }).count() === 1, '识别上传表单按钮缺失');
+    need(/引擎默认 10 个字段/.test(await upBlock.innerText()), '没显示引擎默认上传字段：' + JSON.stringify((await upBlock.innerText()).slice(0, 160)));
     need(await page.locator('#site-detail .up-pair').count() === 0, '上传参数输入框还在前端');
     need(await page.locator('#site-detail').getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');
   });

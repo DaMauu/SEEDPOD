@@ -21,6 +21,7 @@ const uploadHtml = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'uploa
 const defs = {
   'rebind.example': { base: 'https://rebind.example', upload: { formPath: '/upload.php' } },
   'target.example': { base: 'https://target.example', upload: { formPath: '/upload.php' } },
+  'fallback.example': { engine: 'unit3d', base: 'https://fallback.example', upload: { path: '/torrents/create', formPath: '/torrents/create' } },
   'local.example': { base: 'http://127.0.0.1:9999', upload: { formPath: '/upload.php' } }
 };
 const pages = makeTargetPages({
@@ -38,12 +39,14 @@ dns.promises.lookup = async function (h) {
   const host = String(h || '').toLowerCase();
   if (host === 'rebind.example') return [{ address: '10.0.0.7', family: 4 }];
   if (host === 'target.example') return [{ address: '203.0.113.10', family: 4 }];
+  if (host === 'fallback.example') return [{ address: '203.0.113.11', family: 4 }];
   const e = new Error('mock ENOTFOUND'); e.code = 'ENOTFOUND'; throw e;
 };
 global.fetch = async function (url) {
   calls.push(String(url));
   const u = String(url);
-  const html = /upload\.php/i.test(u) ? uploadHtml : detailHtml;
+  if (/fallback\.example/.test(u) && /\/torrents\/create/.test(u)) return new Response('not found', { status: 404 });
+  const html = /upload\.php/i.test(u) || (/fallback\.example/.test(u) && /\/torrents\/upload/.test(u)) ? uploadHtml : detailHtml;
   return new Response(html, { status: 200, headers: { 'content-type': 'text/html' } });
 };
 
@@ -92,6 +95,14 @@ global.fetch = async function (url) {
       const u = await pages.detectUploadForm('target.example');
       need(u && u.ok === true, '公网上传页被误拦：' + JSON.stringify(u));
       need(calls.length === 2, '公网请求次数不对：' + calls.join(' , '));
+    });
+
+    await check('上传页默认路径 404 时按引擎候选路径匹配', async function () {
+      calls = [];
+      const r = await pages.detectUploadForm('fallback.example');
+      need(r && r.ok === true, '候选路径没识别到：' + JSON.stringify(r));
+      need(r.data && r.data.formPath === '/torrents/upload', '候选路径没保存：' + JSON.stringify(r.data));
+      need(calls.length === 2, '候选路径请求次数不对：' + calls.length);
     });
 
     await check('字面回环地址按显式配置放行', async function () {

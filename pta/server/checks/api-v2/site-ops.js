@@ -187,6 +187,7 @@ module.exports = async function run(ctx) {
     need(got.ok && Array.isArray(got.data.catMap) && got.data.catMap.length === 2, '数组映射没读回');
     need(got.data.catMap[0].purpose === 'movie' && got.data.catMap[1].id === '402', '数组映射内容不对');
     need(got.data.publishCatMap && got.data.publishCatMap.movie === '401', '发布映射没单独回读：' + JSON.stringify(got.data.publishCatMap));
+    need(got.data.uploadDefaults && got.data.uploadDefaults.fieldCount === 10, '引擎默认上传字段数不对：' + JSON.stringify(got.data.uploadDefaults));
     const list = await (await fetchA(BASE + '/api/site-defs')).json();
     need(list.ok && list.data[host] && list.data[host].groups === 2 && list.data[host].ids === 2, 'site-defs 分类统计不对：' + JSON.stringify(list.data[host]));
     const obj = { engine: 'nexusphp', base: 'https://map.example', catMap: { movie: '401', tv: '402' } };

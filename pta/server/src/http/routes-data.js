@@ -4,6 +4,7 @@ const fs = require('fs');
 const siteHidden = require('../features/sites/hidden');
 const jsonFile = require('../infra/json-file');
 const { buildSiteSearchUrl } = require('../features/sites/search-url');
+const { ENGINES } = require('../features/publish/target');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -30,6 +31,7 @@ module.exports = function (app, ctx) {
     });
     /* cats 给界面看中文；catMap 保留 key，编辑时直接写 movie -> 401 */
     const catMap = list.length ? list : Object.assign({}, rec.publish.catMap || {});
+    const ed = ENGINES[String(rec.engine || '').toLowerCase()] || {};
     const previewUrls = Object.keys(cats).map(function (key) {
       const id = (cats[key] || [])[0];
       if (id == null) return null;
@@ -40,6 +42,7 @@ module.exports = function (app, ctx) {
       publishCatMap: Object.assign({}, rec.publish.catMap || {}),
       filters: rec.search.filters || {}, detect: rec.search.detect || {}, previewUrls: previewUrls,
       upload: rec.publish.upload || {}, uploadMap: rec.publish.upload || {}, verify: rec.publish.verify || {},
+      uploadDefaults: { fieldCount: Object.keys(ed.fields || {}).length, path: ed.uploadPath || '', formPath: ed.formPath || '', fileField: ed.fileField || '' },
       tagMap: rec.publish.tagMap || {}, tagValue: rec.publish.tagValue || 'yes' };
   }
   const SSE = new Set();
