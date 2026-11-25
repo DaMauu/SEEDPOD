@@ -116,6 +116,26 @@ check('搜索 URL 带媒介/编码/音频/分辨率/制作组', function () {
   need(url.indexOf('team1=1') >= 0, '缺制作组：' + url);
 });
 
+check('同一单选参数多选时不拼重复值', function () {
+  const site = {
+    url: { base: 'https://x.example' },
+    search: {
+      path: '/torrents.php', params: { search: '{q}', cat: '{cats}' }, catMode: 'single', catSlot: '',
+      cats: { movie: ['401'] },
+      filters: {
+        values: { discount: { normal: '1', free: '2', thirty: '7' } },
+        params: { discount: { normal: 'spstate', free: 'spstate', thirty: 'spstate' } },
+        selected: { discount: ['normal', 'free', 'thirty'] }
+      }
+    }
+  };
+  const url = buildSiteSearchUrl(site, ['401'], '', presets);
+  need(url.indexOf('spstate=') < 0, '多选 spstate 不该拼成单选：' + url);
+  site.search.filters.selected.discount = ['free'];
+  const one = buildSiteSearchUrl(site, ['401'], '', presets);
+  need(one.indexOf('spstate=2') >= 0, '单选 spstate 应保留：' + one);
+});
+
 const pass = results.filter(function (r) { return r[0]; }).length;
 results.forEach(function (r) { console.log((r[0] ? 'PASS  ' : 'FAIL  ') + r[1] + (r[2] ? '  → ' + r[2] : '')); });
 console.log('\n' + pass + '/' + results.length + ' 通过');

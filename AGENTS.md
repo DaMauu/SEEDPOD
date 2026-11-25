@@ -62,6 +62,7 @@ git add -A && git commit -m "0.7.xx 一句话说清改了什么" && git push ori
 git pull --ff-only && bash deploy.sh
 ```
 
+- 每一次修正都要发：修完立即升版本、跑检查、提交、推送、部署、探活；不许只留本地、只提交不部署、也不许攒一批再发。
 - 只有 Windows 推送 GitHub 才要带代理：`git -c http.proxy=http://127.0.0.1:4399 -c https.proxy=http://127.0.0.1:4399 push origin main`
 - VPS 用部署密钥（`~/.ssh/github_seedpod`，origin 为 git@github.com:DaMauu/SEEDPOD.git），可直接 pull / push
 - `deploy.sh` 用 rsync 把 pta/ 同步到 `$DEPLOY_DIR` 并重启服务，排除 `data/`、`*.log`；package.json 与 CHANGELOG.md 单独 rsync

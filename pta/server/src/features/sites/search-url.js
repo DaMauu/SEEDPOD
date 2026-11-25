@@ -17,13 +17,26 @@ function buildSiteSearchUrl(site, ids, q, presets) {
   const PARAM = { medium: 'medium', codec: 'codec', audio: 'audiocodec', resolution: 'standard', discount: 'spstate', team: 'team' };
   try {
     const u = new URL(url0);
+    /* 同一参数只保留一个值；多选落到单选参数时（如 spstate）不拼，
+       避免后一个值覆盖前一个，把“全选”变成只筛最后一项。 */
+    const added = {};
     Object.keys(PARAM).forEach(function (dim) {
       presets.expandDims(dim, sel[dim]).forEach(function (key) {
         const v = (vals[dim] || {})[key];
         if (v == null || v === '') return;
         const pv = names[dim];
         const pname = pv && typeof pv === 'object' && !Array.isArray(pv) ? (pv[key] || pv['*']) : pv;
-        u.searchParams.append(pname || PARAM[dim], String(v));
+        const param = String(pname || PARAM[dim]);
+        if (added[param] === '__skip__') return;
+        if (added[param] != null) {
+          if (added[param] !== String(v)) {
+            u.searchParams.delete(param);
+            added[param] = '__skip__';
+          }
+          return;
+        }
+        u.searchParams.append(param, String(v));
+        added[param] = String(v);
       });
     });
     return u.toString();
