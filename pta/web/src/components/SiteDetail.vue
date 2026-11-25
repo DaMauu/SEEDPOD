@@ -208,26 +208,17 @@ const host = computed(function () { return (props.site && props.site.name) || ''
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
 const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDetail: false, priority: 'normal' })
 const defText = ref('')
-const defSaving = ref(false)
 const defReady = ref(true)
-const defMsg = ref('')
 const catKind = ref('object')
 const catRows = ref([])
 const catSaving = ref(false)
 const catMsg = ref('')
-const upForm = reactive({ path: '', formPath: '', fileField: '', fields: [] })
-const upSaving = ref(false)
-const upMsg = ref('')
 const detectBusy = ref(false)
-const detectMsg = ref('')
 const catDetectBusy = ref(false)
 const uploadMsg = ref('')
 const searchPresetBusy = ref(false)
 const searchPresetMsg = ref('')
 const presetPreview = ref(null)
-const overrideText = ref('')
-const overrideMsg = ref('')
-const overrideBusy = ref(false)
 const busy = reactive({ selfcheck: false, crawl: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
@@ -391,27 +382,12 @@ function syncCatRows(def) {
   catRows.value = r.rows
   catMsg.value = ''
 }
-function syncUpForm(def) {
-  const um = (def && def.uploadMap) || {}
-  upForm.path = String(um.path || '')
-  upForm.formPath = String(um.formPath || '')
-  upForm.fileField = String(um.fileField || '')
-  upForm.fields = Object.keys(um.fields || {}).map(function (k) {
-    return { name: k, template: String(um.fields[k] == null ? '' : um.fields[k]) }
-  })
-  upMsg.value = ''
-  detectMsg.value = ''
-}
-function addUpField() { upForm.fields.push({ name: '', template: '' }) }
-function removeUpField(i) { upForm.fields.splice(i, 1) }
-
 function loadDefFallback(h) {
   const site = s.value
   const tpl = { engine: (site && site.def && site.def.engine) || 'nexusphp', base: (site && site.url) || ('https://' + h),
     uploadMap: { path: '/takeupload.php', formPath: '/upload.php', fileField: 'file', fields: { name: '{title}', descr: '{description}', type: '{catId}', anon: '{anonymous}' } },
     verify: { path: '/torrents.php?search={title}' }, catMap: {} }
   defText.value = JSON.stringify(tpl, null, 2)
-  defMsg.value = '还没有站点定义，这是模板；按站修改后保存'
 }
 async function loadDetail(target) {
   const h = String(target || host.value || '')
@@ -421,9 +397,6 @@ async function loadDetail(target) {
   detail.preset = null
   detail.catalog = null
   detail.items = []
-  defMsg.value = ''
-  overrideText.value = ''
-  overrideMsg.value = ''
   presetPreview.value = null
   try {
     const rs = await Promise.all([
@@ -441,16 +414,13 @@ async function loadDetail(target) {
     if (dj && dj.body && dj.body.ok && dj.body.data) {
       detail.def = dj.body.data
       defText.value = JSON.stringify(dj.body.data, null, 2)
-      overrideText.value = dj.body.data.detect && Object.keys(dj.body.data.detect).length ? JSON.stringify(dj.body.data.detect, null, 2) : ''
       syncCatRows(dj.body.data)
-      syncUpForm(dj.body.data)
       defReady.value = true
     } else if (dj && dj.status === 404) {
       loadDefFallback(h)
       defReady.value = true
     } else {
       defText.value = ''
-      defMsg.value = '站点定义加载失败；先不要保存，刷新重试'
     }
     if (pj && pj.ok) detail.preset = (pj.data && pj.data.preset) || null
     if (cj && cj.ok) {
@@ -583,27 +553,6 @@ async function crawlOne(site) {
   } catch (e) { toast('抓取请求发不出去') }
   busy.crawl = false
 }
-async function saveDef() {
-  if (!host.value || defSaving.value) return
-  if (!defReady.value) { toast('站点定义没加载成功，先刷新重试'); return }
-  let def
-  try { def = JSON.parse(defText.value) } catch (e) { toast('JSON 格式不对'); return }
-  defSaving.value = true
-  try {
-    const j = await (await fetch('/api/site-def/' + encodeURIComponent(host.value), {
-      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
-    })).json()
-    if (j && j.ok) {
-      detail.def = def
-      syncCatRows(def)
-      syncUpForm(def)
-      defMsg.value = '已保存'
-      toast('站点定义已保存')
-      emit('changed')
-    } else { defMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(defMsg.value) }
-  } catch (e) { toast('保存请求发不出去') }
-  defSaving.value = false
-}
 async function saveCatMap() {
   if (!host.value || catSaving.value) return
   if (!defReady.value) { catMsg.value = '站点定义没加载成功，先刷新重试'; return }
@@ -657,42 +606,6 @@ async function saveCatMap() {
   } catch (e) { catMsg.value = '保存请求发不出去'; toast(catMsg.value) }
   catSaving.value = false
 }
-async function saveUpForm() {
-  if (!defReady.value) { toast('站点定义没加载成功，先刷新重试'); return }
-  if (!host.value || upSaving.value) return
-  let def
-  try { def = JSON.parse(defText.value) } catch (e) { upMsg.value = '上面的 JSON 格式不对，先修好再保存上传映射'; return }
-  if (!def || typeof def !== 'object' || Array.isArray(def)) { upMsg.value = '站点定义必须是 JSON 对象'; return }
-  const fields = {}
-  for (const f of upForm.fields) {
-    const name = String(f.name || '').trim()
-    if (!name) { upMsg.value = '每个字段都要填字段名'; return }
-    if (fields[name] !== undefined) { upMsg.value = '字段名重复：' + name; return }
-    fields[name] = String(f.template || '')
-  }
-  def.uploadMap = Object.assign({}, def.uploadMap || {}, {
-    path: String(upForm.path || '').trim(),
-    formPath: String(upForm.formPath || '').trim(),
-    fileField: String(upForm.fileField || '').trim(),
-    fields: fields
-  })
-  upSaving.value = true
-  try {
-    const j = await (await fetch('/api/site-def/' + encodeURIComponent(host.value), {
-      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
-    })).json()
-    if (j && j.ok) {
-      const saved = (j.data && j.data.def) || def
-      detail.def = saved
-      defText.value = JSON.stringify(saved, null, 2)
-      syncUpForm(saved)
-      upMsg.value = '已保存 · ' + Object.keys(fields).length + ' 个字段'
-      toast('上传映射已保存')
-      emit('changed')
-    } else { upMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(upMsg.value) }
-  } catch (e) { upMsg.value = '保存请求发不出去'; toast(upMsg.value) }
-  upSaving.value = false
-}
 function typeLabelOf(key) {
   const t = runtimePresets.value && runtimePresets.value.types
   return (t && t[key]) || key
@@ -744,28 +657,6 @@ async function detectSearchPreset() {
     })
   } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
   finally { searchPresetBusy.value = false }
-}
-
-async function saveOverride() {
-  if (!host.value || overrideBusy.value) return
-  let detect = {}
-  const text = String(overrideText.value || '').trim()
-  if (text) {
-    try { detect = JSON.parse(text) } catch (e) { overrideMsg.value = 'JSON 格式不对'; return }
-  }
-  if (!detect || typeof detect !== 'object' || Array.isArray(detect)) { overrideMsg.value = '覆盖必须是 JSON 对象'; return }
-  overrideBusy.value = true
-  overrideMsg.value = '保存中…'
-  try {
-    const j = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/override', {
-      method: 'PUT', credentials: 'same-origin',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ detect: detect })
-    })).json()
-    if (j && j.ok) { overrideMsg.value = '已保存'; toast('识别覆盖已保存') }
-    else overrideMsg.value = (j && j.error && j.error.message) || '保存失败'
-  } catch (e) { overrideMsg.value = '保存请求发不出去' }
-  finally { overrideBusy.value = false }
 }
 
 function detectRemote() {

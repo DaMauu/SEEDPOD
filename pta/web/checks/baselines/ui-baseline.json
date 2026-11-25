@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-25T14:26:40.062Z",
+  "at": "2026-11-25T15:03:45.911Z",
   "files": {
     "App.vue": "053200a5aab1fe81",
     "components/CrawlCard.vue": "7a23304c538747c5",
@@ -10,7 +10,7 @@
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "ea5e921926989002",
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
-    "components/SiteDetail.vue": "21ad8ccf5283f078",
+    "components/SiteDetail.vue": "ee045dc444304cdc",
     "components/SiteMapModal.vue": "f40fcd6586728036",
     "components/SitesList.vue": "e9877741718ad13f",
     "components/SitesModals.vue": "edb19f29bcccb0ff",
