@@ -6,8 +6,8 @@
 
 - 预览展开大分类 → 站点 ID + 原始标签，附未识别标签和冲突 ID。
 - 确认前可判断分类对不对；全量 `run.sh` 通过。
-- Unit3D 真页（用户新增 cookie）识别 high 4 类（movie/tv/ebook/music），列表烟测 HTTP 200、25 条；未写入，等面板预览确认。
-- Unit3D 上传分类识别：`category_id` 6 个选项，映射 电影/剧集/音乐/有声书/电子书 → 1/2/4/5/3；未写库，等面板“站点映射”保存。
+- Unit3D 真页：DreadVault 搜索 high 4 类（movie/tv/ebook/music）、列表 25 条、上传 5 类（电影/剧集/音乐/有声书/电子书）；DarkLand 搜索 high 5 类（anime/documentary/music/other/tv）、上传 7 类（剧集/动漫/纪录片/音乐/短剧/成人/其他）。均未写库，等面板确认。
+- Unit3D 上传分类识别：DreadVault `category_id` 6 选项映射 5 类；DarkLand `category_id` 24 选项映射 7 类；两边制作组选项都是 0。
 - 已部署 v0.7.685；GitHub push 已用 `/root/.ssh/github_seedpod` 显式推送成功，local/origin 同步。
 
 ## 2026-11-25 识别预览差异（v0.7.684）
