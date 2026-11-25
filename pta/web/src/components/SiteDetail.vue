@@ -137,6 +137,7 @@
                       <h4>上传表单</h4>
                       <p class="set-desc">参数存在站点 JSON；这里只显示状态和识别入口，识别后自动保存。</p>
                       <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : '未配置' }}</b></div>
+                      <p class="set-desc">识别失败先确认账号有上传权限；上传页路径由引擎默认或站点包提供。</p>
                       <div class="cm-actions">
                         <button class="btn ghost slim" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
                         <span class="sd-cookie-res">{{ uploadMsg }}</span>
@@ -783,8 +784,7 @@ function detectRemote() {
         method: 'POST', credentials: 'same-origin'
       })).json()
       if (!j || !j.ok) {
-        const why = String((j && j.error && j.error.message) || '识别失败')
-        uploadMsg.value = /手工编辑|继续手工/.test(why) ? why : why + '；可以继续手工编辑字段表'
+        uploadMsg.value = String((j && j.error && j.error.message) || '识别失败')
         return
       }
       const d = j.data || {}
@@ -819,7 +819,8 @@ async function detectTargetCats() {
     if (!rows.length) { catMsg.value = '没识别到目标站分类'; return }
     catKind.value = 'object'
     catRows.value = rows
-    catMsg.value = '识别到 ' + rows.length + ' 项，确认后保存映射'
+    catMsg.value = '识别到 ' + rows.length + ' 项，正在保存…'
+    await saveCatMap()
   } catch (e) { catMsg.value = '识别请求发不出去' }
   finally { catDetectBusy.value = false }
 }

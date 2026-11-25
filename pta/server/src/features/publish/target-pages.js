@@ -244,7 +244,7 @@ function makeTargetPages(deps) {
       return { ok: false, code: 'LOGIN_REQUIRED', message: '上传页看起来是登录页，cookie 可能已失效', http: 401 };
     }
     const forms = form.parse(html);
-    if (!forms.length) return { ok: false, code: 'NO_FORM', message: '没识别到上传表单，可以继续手工编辑字段表', http: 422 };
+    if (!forms.length) return { ok: false, code: 'NO_FORM', message: '没识别到上传表单；先确认账号有上传权限，或上传页路径不是引擎默认值', http: 422 };
     const withFile = forms.filter(function (x) { return !!x.fileField; })
       .sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; });
     const f = withFile[0] || forms.slice().sort(function (a, b) { return (b.fields || []).length - (a.fields || []).length; })[0];
