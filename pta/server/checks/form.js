@@ -41,6 +41,14 @@ check('默认值模板猜对', function () {
   need(by.torrent === '', '文件字段不该有值模板：' + by.torrent);
 });
 
+check('外部 ID 和存在标记不乱套模板', function () {
+  need(form.guessTemplate('imdb', 'hidden', 'IMDb ID', '') === '{imdb}', 'imdb 应保留 ID 模板');
+  need(form.guessTemplate('igdb', 'text', 'IGDB ID (游戏类别需要)', '') === '', 'igdb 不该当分类');
+  need(form.guessTemplate('tmdb_movie_id', 'hidden', 'TMDB ID', '') === '', 'tmdb 不该有模板');
+  need(form.guessTemplate('title_exists_on_imdb', 'checkbox', 'IMDb exists', '') === '', '存在标记不该复用 ID 模板');
+  need(form.guessTemplate('category_id', 'select', '类别', '') === '{catId}', 'category_id 仍应识别');
+});
+
 check('select 选项保留', function () {
   const f = form.parse(HTML)[0].fields.filter(function (x) { return x.name === 'type' })[0];
   need(f && f.type === 'select', '分类不是 select');

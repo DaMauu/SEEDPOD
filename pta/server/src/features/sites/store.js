@@ -274,8 +274,13 @@ function makeSiteStore(dataDir, opts) {
     try { st = fs.statSync(file); } catch (e) { st = null; }
     if (st && CACHE[key] && CACHE[key].mtime === st.mtimeMs && CACHE[key].size === st.size) return CACHE[key].doc;
     let d = readJson(file, null);
-    if (!d || typeof d !== 'object') d = readJson(presetFile, null);
-    if (!d || typeof d !== 'object') d = { version: VERSION, sites: {} };
+    if (!d || typeof d !== 'object') {
+      d = readJson(presetFile, null);
+      if (!d || typeof d !== 'object') d = { version: VERSION, sites: {} };
+      /* 文件存在但读不到/格式坏：不要把 preset 回退缓存成该文件的快照，
+         否则权限或格式修好后仍会读旧回退。 */
+      if (st) return d;
+    }
     if (st) CACHE[key] = { mtime: st.mtimeMs, size: st.size, doc: d };
     return d;
   }

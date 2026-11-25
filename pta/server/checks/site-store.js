@@ -150,6 +150,35 @@ function need(c, m) { if (!c) throw new Error(m); }
       } finally { fs.rmSync(LEG, { recursive: true, force: true }); }
     });
 
+    await check('文件读坏不缓存 preset 回退', async function () {
+      const D2 = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-sitestore-broken-'));
+      const P2 = path.join(D2, 'preset');
+      fs.mkdirSync(P2, { recursive: true });
+      fs.writeFileSync(path.join(P2, 'sites.preset.json'), JSON.stringify({
+        version: 1, sites: { 'lock.example': { name: 'Preset', engine: 'nexusphp', urlRef: 'site-urls.json#lock.example', search: { cats: {} }, publish: {} } }
+      }));
+      fs.writeFileSync(path.join(P2, 'site-urls.preset.json'), JSON.stringify({
+        version: 1, sites: { 'lock.example': { base: b64('https://lock.example') } }
+      }));
+      const s2 = makeSiteStore(D2, { presetDir: P2 });
+      need(s2.get('lock.example').name === 'Preset', '首次没读到 preset');
+      const file = s2.FILE;
+      const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+      doc.sites['lock.example'].meta.name = 'Real';
+      const valid = JSON.stringify(doc);
+      fs.writeFileSync(file, valid);
+      need(s2.get('lock.example').name === 'Real', '改文件后没重读');
+      fs.writeFileSync(file, 'x' + valid.slice(1));
+      const bst = fs.statSync(file);
+      fs.utimesSync(file, bst.atime, new Date(bst.mtimeMs + 1000));
+      need(s2.get('lock.example').name === 'Preset', '坏文件没回退 preset');
+      const cached = fs.statSync(file);
+      fs.writeFileSync(file, valid);
+      fs.utimesSync(file, cached.atime, cached.mtime);
+      need(s2.get('lock.example').name === 'Real', '修好后仍读 preset 回退');
+      fs.rmSync(D2, { recursive: true, force: true });
+    });
+
   } finally {
     try { db.close(); } catch (e) { /* 已关 */ }
     try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* 忽略 */ }

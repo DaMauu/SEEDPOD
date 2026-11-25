@@ -22,6 +22,11 @@ function labelFor(body, id) {
 }
 function guessTemplate(name, type, label, placeholder) {
   if (String(type || '').toLowerCase() === 'file') return '';
+  const n = String(name || '').toLowerCase();
+  /* 外部 ID 不是内容分类；存在标记也不该复用 ID 模板 */
+  if (/^imdb$/.test(n)) return '{imdb}';
+  if (/^(tmdb|tvdb|mal|igdb)([_-]|$)/.test(n)) return '';
+  if (/^(title|movie|tv|anime|game)_exists_on_/.test(n)) return '';
   const s = [name, label, placeholder].join(' ').toLowerCase();
   if (/小标题|副标题|subtitle|small.?desc|\bsub\b/.test(s)) return '{subtitle}';
   if (/简介|描述|介绍|desc|intro|description|body|content/.test(s)) return '{description}';

@@ -1,6 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-25 06:10（当前 v0.7.689 / 发布分类只读；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-25 16:40（当前 v0.7.690 / 识别与缓存修复；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-25 识别与缓存修复（v0.7.690）
+
+- DreadVault 真实识别并写入生产 data：搜索 4 类（movie/tv/ebook/music）、上传 29 字段；3 次只读请求（搜索 1、上传页 2，间隔 10 秒）。
+- 修 `sites.json` 读坏后缓存 preset 回退；根因是临时写入后权限变 root，服务读不到，回退被缓存。
+- 上传模板不再把 IGDB/TMDB/TVDB/MAL 外部 ID 当分类；IMDb 保留 `{imdb}`。
+- 检查补 form/site-store 回归；全量 `run.sh` 通过。
 
 ## 2026-11-25 发布分类只读（v0.7.689）
 
