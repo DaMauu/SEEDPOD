@@ -23,41 +23,23 @@
             <div class="sd-scroll">
               <div class="sd-ov">
                 <div class="sd-compact">
-                  <div class="sd-col">
-                    <div class="sd-block">
-                      <h4>登录</h4>
-                      <div class="sd-row"><span>状态</span><b :class="dotCls(s) + '-t'">{{ loginTxt(s) }}</b></div>
-                      <div class="sd-row"><span>方式</span><b>Cookie</b></div>
-                      <div class="sd-row"><span>登录凭据</span><b :class="s.cookieSaved && s.cookieReadable === false ? 'bad-t' : ''">{{ s.cookieSaved ? (s.cookieReadable ? '已保存' : '已保存但解不开，请重新导入') : '未保存' }}</b></div>
-                      <div class="sd-row"><span>引擎</span><b>{{ engineTxt(s) }}</b></div>
-                      <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
-                      <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
-                    </div>
-                    <div class="sd-block">
-                      <h4>抓取参数</h4>
-                      <div class="sd-row"><span>预设来源</span><b>{{ kindTxt(s) }}</b></div>
-                      <div class="sd-row"><span>分类参数</span><b>{{ catRangeTxt(s) }}</b></div>
-                      <div class="sd-row"><span>抓取状态</span><b :class="s.enabled ? (s.lastAt ? 'ok-t' : 'idle-t') : 'idle-t'">{{ s.enabled ? (s.lastAt ? '正常' : '待抓取') : '已停用' }}</b></div>
-                      <div class="sd-row"><span>词条</span><b>{{ detail.catalog ? detail.catalog.total : '—' }}</b></div>
-                      <div class="sd-test">
-                        <button class="btn ghost slim" id="sd-try-crawl" type="button" :disabled="busy.crawl || !s.enabled" title="验证配置：按搜索预设只抓这一站一页；会真实请求，受真抓取开关约束" @click.stop="crawlOne(s)">试抓一页</button>
-                        <span class="sd-test-note">验证配置，只抓这一站一页</span>
-                      </div>
-                    </div>
-                    <div class="sd-block">
-                      <h4>抓取</h4>
-                      <div class="sd-row"><span>上次结果</span><b :class="(s.lastAt ? 'ok' : 'idle') + '-t'">{{ s.lastAt ? '已抓取' : '未抓取' }}</b></div>
-                      <div class="sd-row"><span>今日已跑</span><b>{{ s.todayCount }} 次</b></div>
-                      <div class="sd-row"><span>方式</span><b>{{ modeTxt(s) }}</b></div>
-                    </div>
+                  <div class="sd-block">
+                    <h4>登录</h4>
+                    <div class="sd-row"><span>状态</span><b :class="dotCls(s) + '-t'">{{ loginTxt(s) }}</b></div>
+                    <div class="sd-row"><span>方式</span><b>Cookie</b></div>
+                    <div class="sd-row"><span>登录凭据</span><b :class="s.cookieSaved && s.cookieReadable === false ? 'bad-t' : ''">{{ s.cookieSaved ? (s.cookieReadable ? '已保存' : '已保存但解不开，请重新导入') : '未保存' }}</b></div>
+                    <div class="sd-row"><span>引擎</span><b>{{ engineTxt(s) }}</b></div>
+                    <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
+                    <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
                   </div>
-                  <div class="sd-recent-wrap">
-                    <h4>最近收录</h4>
-                    <div v-if="!detail.items.length" class="sd-row"><span>状态</span><b>这个站还没有词条</b></div>
-                    <div v-for="r in detail.items" :key="r.id" class="sd-recent">
-                      <span class="t-main">{{ r.title }}</span>
-                      <span class="soft">{{ r.size }}</span>
-                      <span class="soft">{{ String(r.createdAt || '').slice(5, 16).replace('T', ' ') }}</span>
+                  <div class="sd-block">
+                    <h4>抓取</h4>
+                    <div class="sd-row"><span>上次结果</span><b :class="(s.lastAt ? 'ok' : 'idle') + '-t'">{{ s.lastAt ? '已抓取' : '未抓取' }}</b></div>
+                    <div class="sd-row"><span>今日已跑</span><b>{{ s.todayCount }} 次</b></div>
+                    <div class="sd-row"><span>方式</span><b>{{ modeTxt(s) }}</b></div>
+                    <div class="sd-test">
+                      <button class="btn ghost slim" id="sd-try-crawl" type="button" :disabled="busy.crawl || !s.enabled" title="验证配置：按搜索预设只抓这一站一页；会真实请求，受真抓取开关约束" @click.stop="crawlOne(s)">试抓一页</button>
+                      <span class="sd-test-note">验证配置，只抓这一站一页</span>
                     </div>
                   </div>
                 </div>
@@ -87,14 +69,7 @@
                 </div>
 
                 <div class="sd-sec">
-                  <h4 class="sd-sec-ttl">搜索预设</h4>
-                  <div class="set-fields">
-                    <div class="set-field"><div class="lbl"><span>引擎</span></div><div class="ctl"><span class="fixed-val ref">{{ engineTxt(s) }}</span></div></div>
-                    <div class="set-field"><div class="lbl"><span>预设来源</span></div><div class="ctl"><span class="fixed-val ref">{{ sourceTxt(s) }}</span></div></div>
-                    <div class="set-field"><div class="lbl"><span>分类参数</span></div><div class="ctl"><span class="fixed-val ref">{{ paramTxt(s) }}</span></div></div>
-                    <div class="set-field"><div class="lbl"><span>抓取状态</span></div><div class="ctl"><span class="fixed-val ref">{{ crawlTxt(s) }}</span></div></div>
-                    <div class="set-field"><div class="lbl"><span>词条</span></div><div class="ctl"><span class="fixed-val ref">{{ catalogTxt(s) }}</span></div></div>
-                  </div>
+                  <h4 class="sd-sec-ttl">搜索分类</h4>
                   <div class="set-fields">
                     <div class="sd-block">
                       <h4>分类 id</h4>
@@ -102,51 +77,27 @@
                         <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
                       </template>
                       <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
-                    </div>
-                  </div>
-                  <div class="set-fields">
-                    <div class="sd-block">
-                      <h4>搜索预设识别</h4>
-                      <p class="set-desc">从站点搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，保存到站点 JSON。</p>
                       <div class="cm-actions">
                         <button class="btn ghost slim" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
                         <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
                       </div>
-                    </div>
-                  </div>
-                  <div class="set-fields">
-                    <div class="sd-block">
-                      <h4>识别覆盖（可选）</h4>
-                      <p class="set-desc">只在识别不准时用：skip 跳过分类 ID，map 把标签或 ID 固定到大分类，engine 强制架构。</p>
-                      <textarea v-model="overrideText" class="input sd-note" rows="4" placeholder='{"skip":["408"],"map":{"Foo":"music"}}'></textarea>
-                      <div class="cm-actions">
-                        <button class="btn ghost slim" type="button" :disabled="overrideBusy" @click.stop="saveOverride">{{ overrideBusy ? '保存中…' : '保存覆盖' }}</button>
-                        <span class="sd-cookie-res">{{ overrideMsg }}</span>
+                      <p class="set-desc">从搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，确认后保存。</p>
+                      <div v-if="presetPreview">
+                        <h4>识别明细（未保存）</h4>
+                        <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                        <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
+                        <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
+                      </div>
+                      <div v-if="previewUrls.length">
+                        <h4>搜索链接预览</h4>
+                        <a v-for="u in previewUrls" :key="u.url" class="sd-preset-url" :href="u.url" target="_blank" rel="noopener noreferrer">{{ u.tag }} → {{ u.short }}</a>
                       </div>
                     </div>
-                  </div>
-                  <div v-if="presetPreview" class="set-fields">
-                    <div class="sd-block">
-                      <h4>识别明细（未保存）</h4>
-                      <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
-                      <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
-                      <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
-                    </div>
-                  </div>
-                  <div v-if="previewUrls.length" class="set-fields">
-                    <div class="sd-block">
-                      <h4>搜索链接预览</h4>
-                      <a v-for="u in previewUrls" :key="u.url" class="sd-preset-url" :href="u.url" target="_blank" rel="noopener noreferrer">{{ u.tag }} → {{ u.short }}</a>
-                      <div class="sd-row"><span>说明</span><b>点开就是该站真实搜索页，确认分类对不对</b></div>
-                    </div>
-                  </div>
-                  <div class="sd-cookie-bar">
-                    <span class="sd-cookie-res">预设来自当前 sites.json；有分类 ID 即视为已确认，点上面的搜索链接人工核对。</span>
                   </div>
                 </div>
 
                 <div class="sd-sec">
-                  <h4 class="sd-sec-ttl">上传配置</h4>
+                  <h4 class="sd-sec-ttl">发布分类</h4>
                   <div class="set-fields">
                     <div class="sd-block cm-block">
                       <h4>分类映射</h4>
@@ -176,6 +127,7 @@
                       <div class="cm-actions">
                         <button class="btn ghost slim" type="button" @click.stop="addCatRow">加一条</button>
                         <button class="btn primary slim" type="button" :disabled="catSaving" @click.stop="saveCatMap">{{ catSaving ? '保存中…' : '保存映射' }}</button>
+                        <button class="btn ghost slim" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
                         <span class="sd-cookie-res">{{ catMsg }}</span>
                       </div>
                     </div>
@@ -183,38 +135,13 @@
                   <div class="set-fields">
                     <div class="sd-block cm-block">
                       <h4>上传表单</h4>
-                      <p class="set-desc">目标站上传页的字段映射；保存后发种按这张表填。识别只在你点按钮时发一次 GET。</p>
-                      <div class="up-pair">
-                        <label><span>提交路径</span><input v-model="upForm.path" class="input" placeholder="/takeupload.php"></label>
-                        <label><span>识别页路径</span><input v-model="upForm.formPath" class="input" placeholder="/upload.php（留空用提交路径）"></label>
-                        <label><span>文件字段</span><input v-model="upForm.fileField" class="input" placeholder="file"></label>
-                      </div>
-                      <div v-if="upForm.fields.length" class="cm-list">
-                        <div class="cm-row cm-head"><span>目标字段</span><span>值模板</span><span></span></div>
-                        <div v-for="(f, i) in upForm.fields" :key="i" class="cm-row">
-                          <input v-model="f.name" class="input" placeholder="字段名">
-                          <input v-model="f.template" class="input" placeholder="{title}">
-                          <button class="btn ghost slim cm-del" type="button" @click.stop="removeUpField(i)">删除</button>
-                        </div>
-                      </div>
-                      <div v-else class="sites-empty">还没有上传字段；点「从目标站识别」或「加字段」。</div>
+                      <p class="set-desc">参数存在站点 JSON；这里只显示状态和识别入口，识别后自动保存。</p>
+                      <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : '未配置' }}</b></div>
                       <div class="cm-actions">
-                        <button class="btn ghost slim" type="button" @click.stop="addUpField">加字段</button>
-                        <button class="btn primary slim" type="button" :disabled="upSaving" @click.stop="saveUpForm">{{ upSaving ? '保存中…' : '保存上传映射' }}</button>
-                        <button class="btn ghost slim" type="button" :disabled="detectBusy" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '从目标站识别' }}</button>
-                        <span class="sd-cookie-res">{{ upMsg || detectMsg }}</span>
+                        <button class="btn ghost slim" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
+                        <span class="sd-cookie-res">{{ uploadMsg }}</span>
                       </div>
                     </div>
-                  </div>
-                  <div class="set-fields">
-                    <div class="set-field">
-                      <div class="lbl"><span>站点定义 JSON</span><i>高级字段；存 data/site-defs，不进仓库</i></div>
-                      <div class="ctl"><textarea v-model="defText" class="input sd-note" rows="10" placeholder="{}"></textarea></div>
-                    </div>
-                  </div>
-                  <div class="sd-cookie-bar">
-                    <button class="btn primary slim" type="button" :disabled="defSaving" @click.stop="saveDef">{{ defSaving ? '保存中…' : '保存定义' }}</button>
-                    <span class="sd-cookie-res">{{ defMsg }}</span>
                   </div>
                 </div>
 
@@ -312,6 +239,8 @@ const upSaving = ref(false)
 const upMsg = ref('')
 const detectBusy = ref(false)
 const detectMsg = ref('')
+const catDetectBusy = ref(false)
+const uploadMsg = ref('')
 const searchPresetBusy = ref(false)
 const searchPresetMsg = ref('')
 const presetPreview = ref(null)
@@ -333,6 +262,11 @@ const previewGroups = computed(() => {
 const previewUnmatched = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).slice(0, 10).map(function (x) { return x.label }).join('、'))
 const previewAmbiguous = computed(() => ((presetPreview.value && presetPreview.value.ambiguous) || []).join('、'))
 
+const uploadStats = computed(function () {
+  const d = detail.def || {}
+  const u = d.uploadMap || d.upload || {}
+  return { count: Object.keys(u.fields || {}).length }
+})
 const catGroups = computed(function () {
   const d = detail.def || {}
   const p = detail.preset || {}
@@ -843,27 +777,51 @@ function detectRemote() {
   const h = host.value
   confirmBox('识别上传表单', '会向 ' + h + ' 的上传页发一次 GET，只读页面，不提交任何东西。继续？', async function () {
     detectBusy.value = true
-    detectMsg.value = ''
+    uploadMsg.value = '识别中…'
     try {
       const j = await (await fetch('/api/targets/' + encodeURIComponent(h) + '/detect-form', {
         method: 'POST', credentials: 'same-origin'
       })).json()
       if (!j || !j.ok) {
         const why = String((j && j.error && j.error.message) || '识别失败')
-        detectMsg.value = /手工编辑|继续手工/.test(why) ? why : why + '；可以继续手工编辑字段表'
-        detectBusy.value = false
+        uploadMsg.value = /手工编辑|继续手工/.test(why) ? why : why + '；可以继续手工编辑字段表'
         return
       }
       const d = j.data || {}
-      if (d.path) upForm.path = d.path
-      if (d.formPath) upForm.formPath = d.formPath
-      if (d.fileField) upForm.fileField = d.fileField
-      upForm.fields = (d.fields || []).map(function (f) { return { name: f.name, template: f.template || '' } })
-      detectMsg.value = '识别到 ' + upForm.fields.length + ' 个字段 · ' + (d.url || d.path || '')
-      toast('已识别上传表单')
-    } catch (e) { detectMsg.value = '识别请求发不出去' }
-    detectBusy.value = false
+      const def = Object.assign({}, detail.def || {})
+      def.uploadMap = { path: String(d.path || ''), formPath: String(d.formPath || ''), fileField: String(d.fileField || ''), fields: {} }
+      ;(d.fields || []).forEach(function (f) { if (f && f.name) def.uploadMap.fields[String(f.name)] = String(f.template || '') })
+      const saved = await (await fetch('/api/site-def/' + encodeURIComponent(h), {
+        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
+      })).json()
+      if (saved && saved.ok) {
+        uploadMsg.value = '已识别并保存 ' + Object.keys(def.uploadMap.fields).length + ' 个字段'
+        toast('上传表单已识别并保存')
+        await loadDetail(h)
+      } else uploadMsg.value = (saved && saved.error && saved.error.message) || '保存失败'
+    } catch (e) { uploadMsg.value = '识别请求发不出去' }
+    finally { detectBusy.value = false }
   })
+}
+
+async function detectTargetCats() {
+  if (!host.value || catDetectBusy.value) return
+  catDetectBusy.value = true
+  catMsg.value = '识别中…'
+  try {
+    const j = await (await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', {
+      method: 'POST', credentials: 'same-origin'
+    })).json()
+    if (!j || !j.ok) { catMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
+    const d = j.data || {}
+    if (d.fieldKind === 'genre') { catMsg.value = '识别到题材/类型字段，不是内容分类；请手工映射'; return }
+    const rows = Object.keys(d.cat || {}).map(function (k) { return { k: k, v: String(d.cat[k]) } })
+    if (!rows.length) { catMsg.value = '没识别到目标站分类'; return }
+    catKind.value = 'object'
+    catRows.value = rows
+    catMsg.value = '识别到 ' + rows.length + ' 项，确认后保存映射'
+  } catch (e) { catMsg.value = '识别请求发不出去' }
+  finally { catDetectBusy.value = false }
 }
 function closeDetail() { emit('close') }
 

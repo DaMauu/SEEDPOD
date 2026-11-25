@@ -21,6 +21,19 @@ const CAT = [
   ['其他', /其他|其它|other|misc|unknown|待定|uncategorised|all\s*categories|choose|select|^[-—]+$/i]
 ];
 
+/* 题材/类型标签：动作、惊悚、恐怖、喜剧、剧情…… 不是内容分类，不能自动写 publish.catMap */
+const GENRE = /动作|惊悚|恐怖|喜剧|剧情|科幻|战争|犯罪|悬疑|爱情|同性|西部|邪典|文艺|粉红|奇幻|冒险|灾难|武侠|古装|家庭|儿童|歌舞|传记|历史|音乐剧|短片|情色|戈尔|gore|action|thriller|horror|comedy|drama|sci-?fi|war|crime|mystery|romance|gay|western|cult|literary|fantasy|adventure|family|kids|musical|short|erotic/i;
+const CONTENT = /电影|movie|film|剧集|电视剧|tv\s*series|动漫|动画|anime|animation|纪录|documentary|音乐|music|电子书|ebook|有声书|audiobook|体育|sport|游戏|game|软件|software|图片|image|成人|adult|其他|other/i;
+function looksGenre(options) {
+  const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
+  if (list.length < 3) return false;
+  const onlyGenre = list.filter(function (o) {
+    const label = String(o.label || '');
+    return GENRE.test(label) && !CONTENT.test(label);
+  }).length;
+  return onlyGenre >= 2;
+}
+
 function cleanMap(obj, max) {
   const out = {};
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
@@ -114,6 +127,7 @@ module.exports = function (app, ctx) {
     const teamField = pickField(fields, ['team', 'team_id', 'group', 'group_id'], /制作组|制作团队|小组|team|group/i);
     const catOptions = catField ? (catField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const teamOptions = teamField ? (teamField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
+    const genre = looksGenre(catOptions);
     const form = {
       at: new Date().toISOString(),
       catField: catField ? catField.name : '',
@@ -124,7 +138,8 @@ module.exports = function (app, ctx) {
     return ok({
       host: host,
       detected: { catField: form.catField, teamField: form.teamField },
-      cat: matchCats(catOptions),
+      cat: genre ? {} : matchCats(catOptions),
+      fieldKind: genre ? 'genre' : 'category',
       catOptions: catOptions,
       teamOptions: teamOptions,
       form: form
@@ -132,4 +147,4 @@ module.exports = function (app, ctx) {
   });
 };
 
-module.exports._test = { matchCats, squeezeLabel, pickField, CAT };
+module.exports._test = { matchCats, squeezeLabel, pickField, looksGenre, CAT, GENRE, CONTENT };

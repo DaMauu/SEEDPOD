@@ -21,6 +21,21 @@ async function runCatalog(C) {
     need(m['有声书'] === '5' && m['音乐短片'] === '6', '新类型没匹配：' + JSON.stringify(m));
   });
 
+  await check('题材字段不会被当成内容分类', async function () {
+    const maps = require(path.join(ROOT, 'server', 'src', 'http', 'routes-maps.js'));
+    const genre = maps._test.looksGenre([
+      { value: '2', label: '动作 Action' }, { value: '4', label: '惊悚 Thriller' },
+      { value: '18', label: '恐怖 Horror' }, { value: '11', label: '喜剧 Comedy' },
+      { value: '12', label: '动画 Animation' }, { value: '15', label: '纪录 Documentary' }
+    ]);
+    need(genre === true, '题材字段没识别出来');
+    const content = maps._test.looksGenre([
+      { value: '1', label: '电影 Movies' }, { value: '2', label: '剧集 TV' },
+      { value: '3', label: '音乐 Music' }
+    ]);
+    need(content === false, '内容分类被误判成题材');
+  });
+
   await check('私有包目标站列表与 cookie 就绪', async function () {
     const j = await json(BASE + '/api/targets');
     need(j.status === 200 && j.body.ok, '列表失败');

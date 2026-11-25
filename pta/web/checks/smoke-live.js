@@ -224,7 +224,7 @@ async function main() {
     need(ui.listBottom - ui.pagerBottom < 24, '分页没贴在列表底部：' + JSON.stringify(ui));
   });
 
-  await check('面板添加站点与上传配置', async () => {
+  await check('面板添加站点与分类映射', async () => {
     await page.evaluate(() => { location.hash = '#dashboard'; });
     await page.waitForTimeout(200);
     await page.evaluate(() => { location.hash = '#sites'; });
@@ -268,10 +268,6 @@ async function main() {
     await page.waitForTimeout(600);
     const mj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
     need(mj.ok && mj.data.catMap && mj.data.catMap.movie === '401', '分类映射没保存');
-    await page.locator('#site-detail .sd-cookie-bar button').filter({ hasText: '保存定义' }).click();
-    await page.waitForTimeout(500);
-    const j = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
-    need(j.ok && /added\.example/.test(j.data.base || ''), '站点定义没保存');
 
     await page.evaluate(async () => {
       const def = { engine: 'nexusphp', base: 'https://added.example', cats: { movie: ['401'], tv: ['402'] },
@@ -301,19 +297,10 @@ async function main() {
     need(dj.ok && dj.data.catMap.length === 1, '数组映射删除没生效');
 
     const upBlock = page.locator('#site-detail .cm-block').filter({ hasText: '上传表单' });
-    await upBlock.locator('.cm-actions button').filter({ hasText: '加字段' }).click();
-    await page.waitForTimeout(200);
-    const uf = upBlock.locator('.cm-row:not(.cm-head)').last();
-    await uf.locator('input').nth(0).fill('name');
-    await uf.locator('input').nth(1).fill('{title}');
-    await page.locator('#site-detail .up-pair input').nth(0).fill('/takeupload.php');
-    await page.locator('#site-detail .up-pair input').nth(1).fill('/upload.php');
-    await page.locator('#site-detail .up-pair input').nth(2).fill('torrent');
-    await upBlock.locator('.cm-actions button').filter({ hasText: '保存上传映射' }).click();
-    await page.waitForTimeout(600);
-    const uj = await page.evaluate(async () => (await fetch('/api/site-def/added.example')).json());
-    need(uj.ok && uj.data.uploadMap && uj.data.uploadMap.fields && uj.data.uploadMap.fields.name === '{title}', '上传映射没保存');
-    need(uj.data.uploadMap.path === '/takeupload.php' && uj.data.uploadMap.formPath === '/upload.php' && uj.data.uploadMap.fileField === 'torrent', '上传路径/识别页/文件字段没保存');
+    need(await upBlock.count() === 1, '上传表单状态块缺失');
+    need(await upBlock.locator('.cm-actions button').filter({ hasText: '识别上传表单' }).count() === 1, '识别上传表单按钮缺失');
+    need(await page.locator('#site-detail .up-pair').count() === 0, '上传参数输入框还在前端');
+    need(await page.locator('#site-detail').getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');
   });
 
   await check('流程卡与未接规则', async () => {

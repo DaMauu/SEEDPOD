@@ -601,7 +601,7 @@ function seedDb() {
       await page.close();
     });
 
-    await check('SiteDetail 定义加载失败不覆盖保存', async function () {
+    await check('SiteDetail 定义加载失败不覆盖映射', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let puts = 0;
       await page.route('**/api/site-def/**', async function (route) {
@@ -617,11 +617,12 @@ function seedDb() {
       await page.waitForTimeout(700);
       await page.locator('[data-view="sites"] .site-item').first().click();
       await page.waitForTimeout(500);
-      const detail = await page.locator('.sites-detail-pane').innerText();
-      need(detail.indexOf('站点定义加载失败') >= 0, '没显示加载失败：' + detail.slice(0, 120));
-      await page.locator('button').filter({ hasText: '保存定义' }).click();
+      const saveBtn = page.locator('#site-detail .cm-actions button').filter({ hasText: '保存映射' });
+      need(await saveBtn.count() === 1, '分类映射保存按钮缺失');
+      await saveBtn.click();
       await page.waitForTimeout(300);
       need(puts === 0, '加载失败后仍然 PUT 覆盖：' + puts);
+      need(await page.getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');
       await page.close();
     });
 

@@ -75,10 +75,15 @@ async function detect() {
     const r = await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })
     const j = await r.json().catch(() => null)
     if (!j || !j.ok) { msg.value = (j && j.error && j.error.message) || '识别失败'; return }
-    catRows.value = rowsOf(j.data.cat)
     form.value = j.data.form || null
-    const tc = (j.data.teamOptions || []).length
-    msg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
+    if (j.data.fieldKind === 'genre') {
+      catRows.value = []
+      msg.value = '识别到题材/类型字段，不是内容分类；不自动映射，请手工选择或跳过'
+    } else {
+      catRows.value = rowsOf(j.data.cat)
+      const tc = (j.data.teamOptions || []).length
+      msg.value = '识别到分类 ' + Object.keys(j.data.cat || {}).length + ' 项' + (tc ? ' · 制作组选项 ' + tc + ' 个（填组名对应的值）' : '')
+    }
   } catch (e) { msg.value = '识别请求发不出去' } finally { loading.value = false }
 }
 async function saveMap() {
