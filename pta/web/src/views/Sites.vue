@@ -283,7 +283,7 @@ function ensureSites() {
   if (!viewVisible('sites')) { if (sel.value) sel.value = null; return }
   if (loggedIn()) loadAll()
 }
-/* 就绪度只刷本地状态：两分钟最多查一次，页面不可见不发；不自动请求目标站。 */
+/* 就绪度只刷本地状态：五分钟最多查一次，页面不可见不发；不自动请求目标站。 */
 async function refreshReadiness() {
   if (readyBusy || !loggedIn() || !viewVisible('sites')) return
   if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
@@ -396,7 +396,7 @@ onMounted(() => {
   document.addEventListener('keydown', onKey)
   document.addEventListener('visibilitychange', onVisible)
   bootTimer = setInterval(() => { if (!loaded) ensureSites() }, 1500)
-  readyTimer = setInterval(refreshReadiness, 120000)
+  readyTimer = setInterval(refreshReadiness, 300000)
   ensureSites()
 })
 onUnmounted(() => {
