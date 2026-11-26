@@ -1,6 +1,17 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-26 13:20（当前 v0.7.702 / 清理无用示例；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-26 14:05（当前 v0.7.703 / cookie 导入回滚；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-26 cookie 批量导入回滚
+
+- Windows 导出的 204 站文件含二进制前缀，202/204 显示乱码；已隔离到 `data/cookies-corrupt-20261126.json`。
+- 已恢复导入前的 9 个干净 cookie，拒绝继续用坏数据；等正确的明文 `name=value` 导出再导入。
+
+## 2026-11-26 清理旧采集脚本（v0.7.703）
+
+- 删除 5 个 v1 采集脚本：`sample-sites.js`、`analyze-samples.js`、`collect-site-defs.js`、`ingest-manual.js`、`coverage.js`。
+- 现在入口/文档/检查都不引用，v2 不读 `site-defs`；保留 `load-cookies.js`、`sync-check.sh` 等仍在用的脚本。
+- 全量 `run.sh` 通过；已部署，GitHub 同步。
 
 ## 2026-11-26 清理无用示例（v0.7.702）
 
