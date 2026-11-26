@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.703 · 2026-11-26
+
+### 清理旧采集脚本
+- 删除 v1 采样/分析/生成 `site-defs` 的 5 个脚本：`sample-sites.js`、`analyze-samples.js`、`collect-site-defs.js`、`ingest-manual.js`、`coverage.js`。
+- 当前 `package.json`、文档和检查都不引用；v2 也不再读 `site-defs`。
+- 全量 `run.sh` 通过。
+
 ## v0.7.702 · 2026-11-26
 
 ### 清理无用示例
