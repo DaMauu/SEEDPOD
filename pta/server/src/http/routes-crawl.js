@@ -4,6 +4,7 @@ const dupeClassify = require('../features/screen/dupe-classify');
 const { typeOf } = require('../features/crawl/category');
 const configSchema = require('../features/settings/config-schema');
 const urlGuard = require('../infra/url-guard');
+const { setCookieHeaders } = require('../features/sites/cookie-format');
 const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides, diffCats } = require('../features/sites/detect-merge');
 const { detectEngine } = require('../features/sites/detect');
 
@@ -146,6 +147,7 @@ module.exports = function (app, ctx) {
       const r = await fetch(url, { headers: { cookie: c.cookie, 'user-agent': 'Mozilla/5.0' }, redirect: 'manual', signal: AbortSignal.timeout(20000) });
       if (r.status !== 200) return { ok: false, code: 'HTTP_' + r.status, message: '搜索页返回 ' + r.status };
       html = await r.text();
+      try { cookieStore.mergeSetCookie(host, setCookieHeaders(r.headers), db); } catch (e) { /* 续期失败不挡识别 */ }
     } catch (e) { return { ok: false, code: 'FETCH_FAILED', message: '搜索页请求失败' }; }
     const parsed = require('../features/sites/search-preset').parseSearchPreset(html, presets);
     const det = detectEngine(html, url);
@@ -342,6 +344,7 @@ module.exports = function (app, ctx) {
         if (!dnsGate.ok) throw new Error(dnsGate.err);
         const t0 = Date.now();
         const res = await fetch(url, { headers: { cookie: ck.cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, redirect: 'manual', signal: AbortSignal.timeout(15000) });
+        try { cookieStore.mergeSetCookie(host, setCookieHeaders(res.headers), db); } catch (e) { /* 续期失败不挡查重 */ }
         const html = await res.text().catch(function () { return ''; });
         const list = res.status === 200 ? adapters.parseList(html, def.engine || '') : [];
         const srcGB = Number(it.sizeBytes) ? Number(it.sizeBytes) / 1073741824 : 0;

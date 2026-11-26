@@ -196,6 +196,10 @@ async function main() {
     const searchTile = page.locator('#site-detail .watch-tile').filter({ hasText: '搜索分类' });
     need(await searchTile.count() === 1, '搜索分类表盘缺失');
     need(await searchTile.locator('.watch-act').filter({ hasText: '识别搜索预设' }).count() === 1, '识别搜索预设按钮缺失');
+    const cookieTile = page.locator('#site-detail .watch-tile').filter({ hasText: 'Cookie' });
+    need(await cookieTile.count() === 1, 'Cookie 表盘缺失');
+    await cookieTile.locator('.watch-face').click();
+    await page.waitForTimeout(200);
     need(await page.locator('#site-detail textarea').count() >= 1, '设置区 cookie 输入框缺失');
     await items.first().click();
     await page.waitForTimeout(300);
@@ -206,6 +210,24 @@ async function main() {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
     need(await page.locator('#site-detail').count() === 0, 'Escape 没关闭抽屉');
+  });
+
+  await check('批量导入 Cookie 弹窗', async () => {
+    await page.locator('#sites-import-open').click();
+    await page.waitForTimeout(300);
+    need(await page.locator('#cookies-import-modal').isVisible(), '批量导入弹窗没打开');
+    await page.locator('#cookies-import-text').fill('{"import.example":"a=1; b=2; Path=/; HttpOnly"}');
+    await page.locator('#cookies-import-run').click();
+    await page.waitForTimeout(900);
+    const txt = await page.locator('#cookies-import-result').innerText();
+    need(/已导入 1 个/.test(txt), '批量导入结果不对：' + txt);
+    const one = await page.evaluate(async () => (await fetch('/api/credentials/import.example')).json());
+    need(one.ok && one.data.cookie === 'a=1; b=2', '导入没有清洗 Cookie 头：' + JSON.stringify(one));
+    await page.evaluate(async () => {
+      await fetch('/api/credentials/import.example', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: '' }) });
+    });
+    await page.locator('#cookies-import-modal .modal-head button').click();
+    await page.waitForTimeout(200);
   });
 
   await check('站点页两栏、统计卡与分页', async () => {
@@ -255,6 +277,9 @@ async function main() {
     const staleDot = await page.locator('.site-item').filter({ hasText: 'Added Site' }).locator('.si-ready .rd').first().getAttribute('class');
     need(!/\bok\b/.test(staleDot || '') && /\bmissing\b/.test(staleDot || ''), '没有 cookie 却显示登录就绪：' + staleDot);
     need(await page.locator('#site-detail').count() === 1, '添加后没打开抽屉');
+    const cookieTile2 = page.locator('#site-detail .watch-tile').filter({ hasText: 'Cookie' });
+    await cookieTile2.locator('.watch-face').click();
+    await page.waitForTimeout(200);
     need(await page.locator('#site-detail textarea').count() >= 1, '上传配置文本域缺失');
     /* 面板保存 cookie：填 → 保存设置 → 接口回 hasCookie → 清掉 */
     await page.locator('#site-detail textarea[rows="3"]').fill('sid=smoke-cookie');

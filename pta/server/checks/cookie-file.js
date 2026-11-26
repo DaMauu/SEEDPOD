@@ -75,6 +75,25 @@ function need(c, m) { if (!c) throw new Error(m); }
       } finally { fs.rmSync(D2, { recursive: true, force: true }); }
     });
 
+    await check('Cookie 头清洗：Set-Cookie/cURL 只留 name=value', async function () {
+      const r = store.set('clean.example', "Set-Cookie: a=1; Path=/; HttpOnly; SameSite=Lax\nCookie: b=2", db);
+      need(r.ok && r.count === 2, '清洗失败：' + JSON.stringify(r));
+      need(store.get('clean.example').cookie === 'a=1; b=2', '清洗结果不对：' + store.get('clean.example').cookie);
+      const c = store.set('curl.example', "curl 'https://x.example/' -H 'Cookie: c=3; d=4'", db);
+      need(c.ok && store.get('curl.example').cookie === 'c=3; d=4', 'cURL 没提取：' + JSON.stringify(c));
+      const bad = store.set('badcookie.example', 'just-a-value', db);
+      need(bad.ok === false && bad.code === 'BAD_COOKIE', '裸值没拦住：' + JSON.stringify(bad));
+    });
+
+    await check('响应 Set-Cookie 合并，不额外请求', async function () {
+      store.set('merge.example', 'a=1; b=2', db);
+      const m = store.mergeSetCookie('merge.example', ['a=9; Path=/; HttpOnly', 'c=3; Max-Age=3600'], db);
+      need(m.ok && m.changed, '合并失败：' + JSON.stringify(m));
+      need(store.get('merge.example').cookie === 'a=9; b=2; c=3', '合并结果不对：' + store.get('merge.example').cookie);
+      const d = store.mergeSetCookie('merge.example', ['b=; Max-Age=0'], db);
+      need(d.ok && store.get('merge.example').cookie === 'a=9; c=3', '删除合并失败：' + store.get('merge.example').cookie);
+    });
+
     await check('批量导入只保存合法项', async function () {
       const r = store.importMany([
         { host: 'a.example', cookie: 'sid=a' },

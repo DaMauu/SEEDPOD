@@ -24,6 +24,7 @@
       @update:ready-filter="readyFilter = $event"
       @bulk="openBulk"
       @selfcheck="selfcheckAll"
+      @import="importOpen = true"
       @hidden="hiddenOpen = true"
       @add="openAddSite"
     />
@@ -59,6 +60,25 @@
       @close-add="addOpen = false"
       @add="addSite"
     />
+
+    <Teleport to="body">
+      <div v-if="importOpen" class="modal-mask" id="cookies-import-modal">
+        <div class="modal">
+          <div class="modal-head">
+            <h2>批量导入 Cookie</h2>
+            <button class="btn ghost slim" type="button" @click="importOpen = false">关闭</button>
+          </div>
+          <div class="modal-scroll">
+            <p class="soft">支持 JSON：<code>{"host":"name=value; name2=value2"}</code>，或每行 <code>host&lt;Tab&gt;cookie</code>。只留 name=value，Set-Cookie 属性会自动清掉。</p>
+            <textarea id="cookies-import-text" v-model="importText" class="input sd-note" rows="10" placeholder='{"site-a.example":"a=1; b=2"}'></textarea>
+            <p v-if="importResult" class="soft" id="cookies-import-result">{{ importResult }}</p>
+          </div>
+          <div class="modal-foot">
+            <button class="btn primary slim" id="cookies-import-run" type="button" :disabled="importBusy" @click="importCookies">{{ importBusy ? '导入中…' : '导入' }}</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <Teleport to="body">
       <div v-if="hiddenOpen" class="modal-mask" id="hidden-sites-modal">
@@ -115,6 +135,10 @@ const page = ref(1)
 const sel = ref(null)
 const detailNonce = ref(0)
 const hiddenOpen = ref(false)
+const importOpen = ref(false)
+const importText = ref('')
+const importBusy = ref(false)
+const importResult = ref('')
 const addOpen = ref(false)
 const addForm = reactive({ url: '', arch: '?', title: '' })
 const busy = reactive({ selfcheck: false, bulk: false })
@@ -292,6 +316,53 @@ async function loadAll() {
   } catch (e) { reportError('Sites', e) }
   loadBusy = false
 }
+function parseCookieImport(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return []
+  let parsed = null
+  try { parsed = JSON.parse(raw) } catch (e) { parsed = null }
+  if (parsed && Array.isArray(parsed)) return parsed.map(function (x) { return { host: String((x && x.host) || '').trim().toLowerCase(), cookie: String((x && x.cookie) || '').trim() } }).filter(function (x) { return x.host && x.cookie })
+  if (parsed && typeof parsed === 'object') {
+    const src = parsed.sites && typeof parsed.sites === 'object' ? parsed.sites : parsed
+    return Object.keys(src).map(function (h) {
+      const v = src[h]
+      const cookie = typeof v === 'string' ? v : (v && v.cookie)
+      return { host: String(h).trim().toLowerCase().replace(/^www\./, ''), cookie: String(cookie || '').trim() }
+    }).filter(function (x) { return x.host && x.cookie })
+  }
+  return raw.split(/\r?\n/).map(function (line) {
+    const i = line.indexOf('\t') >= 0 ? line.indexOf('\t') : line.indexOf('|')
+    if (i < 1) return null
+    return { host: line.slice(0, i).trim().toLowerCase().replace(/^www\./, ''), cookie: line.slice(i + 1).trim() }
+  }).filter(function (x) { return x && x.host && x.cookie })
+}
+
+async function importCookies() {
+  if (importBusy.value) return
+  const items = parseCookieImport(importText.value)
+  if (!items.length) { importResult.value = '没解析到 host + cookie'; return }
+  importBusy.value = true
+  importResult.value = '导入中…'
+  let saved = 0
+  let skipped = 0
+  try {
+    for (let i = 0; i < items.length; i += 200) {
+      const r = await fetch('/api/credentials/import', {
+        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ items: items.slice(i, i + 200) })
+      })
+      const j = await r.json().catch(() => null)
+      if (!j || !j.ok) { importResult.value = (j && j.error && j.error.message) || '导入失败'; importBusy.value = false; return }
+      saved += Number(j.data.saved) || 0
+      skipped += Number(j.data.skipped) || 0
+    }
+    importResult.value = '已导入 ' + saved + ' 个' + (skipped ? ' · 跳过 ' + skipped + ' 个' : '')
+    await loadAll()
+    toast(importResult.value)
+  } catch (e) { importResult.value = '导入请求发不出去' }
+  importBusy.value = false
+}
+
 function ensureSites() {
   if (!viewVisible('sites')) { if (sel.value) sel.value = null; return }
   if (loggedIn()) loadAll()

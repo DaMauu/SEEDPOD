@@ -475,7 +475,7 @@ async function runUpload(C) {
     need(hits[0].fields.name === 'Target Upload 2024 1080p Blu-ray', '目标站收到的标题不对');
     need(hits[0].fields.small_desc === '目标站测试', '目标站收到的副标题不对：' + hits[0].fields.small_desc);
     need(hits[0].file && hits[0].file.field === 'file' && hits[0].file.bytes > 0, '种子文件没到目标站');
-    need(hits[0].cookie === 'mock-cookie', 'cookie 没带上');
+    need(hits[0].cookie === 'mock=1', 'cookie 没带上');
     const g = await json(BASE + '/api/queue/' + encodeURIComponent(qid));
     need(g.body.data.targetUpload && g.body.data.targetUpload.host === '127.0.0.1', '队列没记 targetUpload');
     need(g.body.data.targetVerify && g.body.data.targetVerify.found === true, '队列没记 targetVerify');

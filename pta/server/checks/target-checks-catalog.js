@@ -43,7 +43,7 @@ async function runCatalog(C) {
     need(t && t.engine === 'nexusphp', '没读到私有包里的目标站');
     need(t.hasCookie === false && t.ready === false, '未导入 cookie 时应为未就绪');
     const put = await json(BASE + '/api/credentials/127.0.0.1', {
-      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'mock-cookie' })
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cookie: 'mock=1' })
     });
     need(put.status === 200 && put.body.ok, 'cookie 没存上');
     const j2 = await json(BASE + '/api/targets');

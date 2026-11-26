@@ -41,8 +41,8 @@
 | GET | `/api/site-config` | 站点配置 |
 | PUT | `/api/site-config/:host` | 保存站点配置 |
 | GET | `/api/credentials` | 凭据状态，只回 `hasCookie` |
-| PUT | `/api/credentials/:host` | 保存 cookie 密文 |
-| PUT | `/api/credentials/import` | 批量导入 cookie |
+| PUT | `/api/credentials/:host` | 保存 cookie 密文；自动清洗 Cookie/Set-Cookie/cURL，只留 name=value |
+| PUT | `/api/credentials/import` | 批量导入 cookie，最多 200 条，自动清洗 |
 
 ## 抓取
 

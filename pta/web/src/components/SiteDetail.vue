@@ -45,18 +45,25 @@
                     </div>
                   </div>
                   <div class="set-fields">
-                    <div class="set-field">
-                      <div class="lbl"><span>Cookie（{{ s.cookieSaved ? (s.cookieReadable ? '已保存' + cookieWhen(s) : '已保存但解不开') : '未保存' }}）</span></div>
-                      <div class="ctl">
-                        <textarea id="sd-cookie-input" v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 直接显示；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
+                    <div class="watch-tile" :class="{ open: watchOpen === 'cookie' }">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cookie')" @keydown.enter.prevent="toggleWatch('cookie')">
+                        <span class="wf-num">{{ cookieStats.num }}</span>
+                        <span class="wf-label">Cookie</span>
+                        <span class="wf-sub">{{ cookieStats.text }}</span>
                       </div>
+                      <button class="btn ghost slim watch-act" type="button" @click.stop="toggleWatch('cookie')">{{ watchOpen === 'cookie' ? '收起' : '编辑 Cookie' }}</button>
                     </div>
                   </div>
-                  <div class="sd-cookie-bar">
-                    <button class="btn ghost slim danger" id="sd-cookie-clear" type="button" :disabled="busy.cookie || !s.cookieSaved" title="只删除已保存的 cookie，站点配置和其他设置保留" @click.stop="clearCookie(s)">{{ busy.cookie ? '删除中…' : '删除 Cookie' }}</button>
-                    <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
+                  <div v-if="watchOpen === 'cookie'" class="watch-detail">
+                    <textarea id="sd-cookie-input" v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 直接显示；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
+                    <div class="sd-cookie-bar">
+                      <button class="btn ghost slim danger" id="sd-cookie-clear" type="button" :disabled="busy.cookie || !s.cookieSaved" title="只删除已保存的 cookie，站点配置和其他设置保留" @click.stop="clearCookie(s)">{{ busy.cookie ? '删除中…' : '删除 Cookie' }}</button>
+                      <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
+                    </div>
                   </div>
                 </div>
+
+                <div class="sd-sec" id="sd-sec-search">                </div>
 
                 <div class="sd-sec" id="sd-sec-search">
                   <h4 class="sd-sec-ttl">搜索分类</h4>
@@ -231,6 +238,20 @@ const previewGroups = computed(() => {
 const previewUnmatched = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).slice(0, 10).map(function (x) { return x.label }).join('、'))
 const previewAmbiguous = computed(() => ((presetPreview.value && presetPreview.value.ambiguous) || []).join('、'))
 
+const cookieStats = computed(function () {
+  const site = s.value || {}
+  const raw = String(form.cookie || '')
+  const count = raw.split(';').map(function (x) { return x.trim() }).filter(function (x) { return x.indexOf('=') > 0 }).length
+  let state = 'bad'
+  let text = '未保存'
+  let num = count || '—'
+  if (site.cookieSaved && site.cookieReadable !== false) {
+    if (site.login === 'ok') { state = 'ok'; text = '已登录' }
+    else if (site.login === 'fail') { state = 'bad'; text = '登录失败' }
+    else { state = 'warn'; text = '待验证' }
+  } else if (site.cookieSaved) { state = 'bad'; text = '解不开'; num = '—' }
+  return { count: count, state: state, text: text, num: num }
+})
 const publishGroups = computed(function () {
   const d = detail.def || {}
   const cm = Object.prototype.hasOwnProperty.call(d, 'publishCatMap') ? d.publishCatMap : d.catMap

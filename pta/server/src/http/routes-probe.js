@@ -4,6 +4,7 @@ const path = require('path');
 const adapters = require('../infra/adapters/index');
 const jsonFile = require('../infra/json-file');
 const urlGuard = require('../infra/url-guard');
+const { setCookieHeaders } = require('../features/sites/cookie-format');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -39,6 +40,7 @@ module.exports = function (app, ctx) {
         redirect: 'manual', signal: AbortSignal.timeout(15000)
       });
       const html = await res.text().catch(function () { return ''; });
+      try { cookieStore.mergeSetCookie(host, setCookieHeaders(res.headers), db); } catch (e) { /* 续期失败不挡自检 */ }
       const verdict = adapters.isLoggedIn(html);
       const pass = res.status === 200 && verdict === true;
       writeStatus(host, { at: now(), pass: pass, engine: engine, status: res.status });

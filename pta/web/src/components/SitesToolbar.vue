@@ -49,6 +49,7 @@
       {{ picksCount ? '批量 ' + picksCount : '批量' }}
     </button>
     <button v-if="hiddenCount" class="btn ghost slim" id="sites-hidden-open" type="button" @click="emit('hidden')">已移除 {{ hiddenCount }}</button>
+    <button class="btn ghost slim" id="sites-import-open" type="button" title="批量粘贴 Cookie 请求头或 JSON，一次导入多个站" @click="emit('import')">导入</button>
     <button class="btn ghost slim" id="site-selfcheck" :disabled="busySelfcheck || !cookieCount" title="对有 cookie 的站点逐个跑一次会话自检；每个站只发一次 GET" @click="emit('selfcheck')">
       {{ busySelfcheck ? '自检中…' : '自检' }}
     </button>
@@ -71,7 +72,7 @@ defineProps({
   busySelfcheck: Boolean,
   hiddenCount: { type: Number, default: 0 }
 })
-const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'update:readyFilter', 'bulk', 'selfcheck', 'add', 'hidden'])
+const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'update:readyFilter', 'bulk', 'selfcheck', 'add', 'hidden', 'import'])
 </script>
 
 <style scoped>

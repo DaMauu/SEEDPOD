@@ -7,6 +7,7 @@ const secretbox = require('../../infra/secretbox');
 const jsonFile = require('../../infra/json-file');
 const uploadLock = require('../../infra/upload-lock');
 const { openDB } = require('../../infra/db');
+const { normalizeCookie, mergeSetCookies } = require('./cookie-format');
 
 const VERSION = 1;
 
@@ -115,8 +116,10 @@ function makeCookieStore(dataDir) {
   function set(host, cookie, db) {
     const h = String(host || '').toLowerCase();
     if (!validHost(h)) return { ok: false, code: 'BAD_HOST', message: '站点域名不合法' };
-    const val = String(cookie == null ? '' : cookie).trim();
-    if (val.length > 4096) return { ok: false, code: 'BAD_REQUEST', message: 'cookie 太长' };
+    const raw = String(cookie == null ? '' : cookie).trim();
+    if (raw.length > 4096) return { ok: false, code: 'BAD_REQUEST', message: 'cookie 太长' };
+    const val = raw ? normalizeCookie(raw) : '';
+    if (raw && !val) return { ok: false, code: 'BAD_COOKIE', message: '没识别到 name=value；请粘贴 Cookie 请求头，不要只粘值或 Set-Cookie 属性' };
     if (val && KEYRING.ok === false) return { ok: false, code: 'CRYPTO_UNAVAILABLE', message: '凭据密钥不可用：检查 SECRET_FILE/SECRET' };
     const lock = db ? uploadLock.acquire('cookies', db) : true;
     if (!lock) return { ok: false, code: 'COOKIE_BUSY', message: 'cookie 正在写入，稍后再试' };
@@ -127,14 +130,27 @@ function makeCookieStore(dataDir) {
         delete doc.cookies[h];
         writeDoc(doc);
         mirror(db, h, '');
-        return { ok: true, hasCookie: false };
+        return { ok: true, hasCookie: false, count: 0 };
       }
       const enc = secretbox.encrypt(val, KEYRING.key);
       doc.cookies[h] = { cookie: enc, updatedAt: now() };
       writeDoc(doc);
       mirror(db, h, enc);
-      return { ok: true, hasCookie: true };
+      return { ok: true, hasCookie: true, count: val.split(';').filter(Boolean).length };
     } finally { if (db) uploadLock.release('cookies', db); }
+  }
+  function mergeSetCookie(host, setCookies, db) {
+    const h = String(host || '').toLowerCase();
+    if (!validHost(h)) return { ok: false, code: 'BAD_HOST' };
+    const arr = Array.isArray(setCookies) ? setCookies.filter(Boolean) : [];
+    if (!arr.length) return { ok: true, changed: false };
+    const cur = get(h);
+    if (cur.err) return { ok: false, code: cur.err };
+    const before = normalizeCookie(cur.cookie);
+    const merged = mergeSetCookies(before, arr);
+    if (!merged || merged === before) return { ok: true, changed: false };
+    const r = set(h, merged, db);
+    return r.ok ? Object.assign({}, r, { changed: true }) : r;
   }
   function remove(host, db) { return set(host, '', db); }
   function importMany(items, db) {
@@ -149,7 +165,7 @@ function makeCookieStore(dataDir) {
     });
     return { saved: saved, skipped: skipped };
   }
-  return { FILE: FILE, get: get, has: has, list: list, set: set, remove: remove, importMany: importMany, migrateFromDB: migrateFromDB, keyId: keyId };
+  return { FILE: FILE, get: get, has: has, list: list, set: set, remove: remove, importMany: importMany, mergeSetCookie: mergeSetCookie, migrateFromDB: migrateFromDB, keyId: keyId };
 }
 
 module.exports = makeCookieStore;

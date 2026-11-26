@@ -114,6 +114,8 @@ function seedDb() {
       await page.waitForTimeout(700);
       await page.locator('[data-view="sites"] .site-item').first().click();
       await page.waitForTimeout(500);
+      await page.locator('#site-detail .watch-tile').filter({ hasText: 'Cookie' }).locator('.watch-face').click();
+      await page.waitForTimeout(200);
       const ta = page.locator('#site-detail textarea').first();
       await ta.fill('sid=ui-cookie-test');
       await page.locator('#site-detail .sd-form-actions button').filter({ hasText: '保存设置' }).click();

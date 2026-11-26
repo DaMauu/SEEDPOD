@@ -8,6 +8,7 @@ const flowConfig = require('../settings/flow-config');
 const { typeOf, selectedTypesOf } = require('./category');
 const makePresets = require('../presets/store');
 const { buildSiteSearchUrl } = require('../sites/search-url');
+const { setCookieHeaders } = require('../sites/cookie-format');
 const configSchema = require('../settings/config-schema');
 const log = require('../../infra/log');
 const { makeMetaFill } = require('../media/meta-fill');
@@ -160,6 +161,7 @@ function makeCrawl(ctx) {
       });
       status = res.status;
       html = await res.text().catch(function () { return ''; });
+      try { cookieStore.mergeSetCookie(host, setCookieHeaders(res.headers), db); } catch (e) { /* 续期失败不挡抓取 */ }
     } catch (e) {
       rec.dayCount += 1; rec.lastAt = nowMs; rec.lastListAt = nowMs; rec.lastError = 'CRAWL_FAILED'; state[host] = rec; saveState(state);
       if (ctx.logEvent) ctx.logEvent('warn', '抓取', host + ' · CRAWL_FAILED · ' + (e && e.name === 'TimeoutError' ? '请求超时' : String(e && e.message || e).slice(0, 120)));
@@ -325,6 +327,7 @@ function makeCrawl(ctx) {
             headers: { cookie: cookie, 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
             redirect: 'manual', signal: AbortSignal.timeout(15000)
           });
+          try { cookieStore.mergeSetCookie(host, setCookieHeaders(res2.headers), db); } catch (e) { /* 续期失败不挡详情 */ }
           rec.lastDetailAt = Date.now(); rec.lastAt = rec.lastDetailAt; lastReqAt = rec.lastAt;
           rec.times.push(rec.lastAt);
           rec.dayCount += 1;
