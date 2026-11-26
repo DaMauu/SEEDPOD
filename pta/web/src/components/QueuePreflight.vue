@@ -2,10 +2,12 @@
   <section class="sd-card qd-preflight">
     <div class="qd-preflight-head">
       <h3>发布前检查</h3>
-      <span class="badge" :class="preflight.ready ? 'green' : 'amber'">{{ preflight.ready ? '可提交' : '有缺项' }}</span>
+      <span class="badge" :class="preflight.ready ? (preflight.realPublish ? 'green' : 'amber') : 'amber'">{{ preflight.ready ? (preflight.realPublish ? '可提交' : '可演练') : '有缺项' }}</span>
     </div>
     <div class="qd-check-grid">
       <div class="qd-check-item"><span>目标站</span><b>{{ preflight.host }}</b></div>
+      <div class="qd-check-item"><span>发布方式</span><b :class="preflight.realPublish ? 'qd-ok' : ''">{{ preflight.realPublish ? '真发布' : '演练，不会提交' }}</b></div>
+      <div class="qd-check-item"><span>字段</span><b>{{ preflight.fieldCount == null ? '—' : preflight.fieldCount + ' 个' }}</b></div>
       <div class="qd-check-item"><span>分类</span><b>{{ preflight.labels.type || preflight.fields.type || '未映射' }}</b></div>
       <div class="qd-check-item"><span>制作组</span><b>{{ preflight.labels.team_sel || preflight.fields.team_sel || '未映射' }}</b></div>
       <div class="qd-check-item"><span>媒介</span><b>{{ preflight.labels.medium_sel || preflight.labels.source_sel || preflight.fields.medium_sel || preflight.fields.source_sel || '—' }}</b></div>

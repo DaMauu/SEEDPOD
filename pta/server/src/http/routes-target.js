@@ -311,6 +311,8 @@ module.exports = function (app, ctx) {
     return ok(reply, {
       host: host,
       ready: !!plan.ready,
+      realPublish: !!ctx.allowReal('realPublish'),
+      fieldCount: Object.keys(f).length,
       dupe: dupe,
       retry: retry,
       media: media,

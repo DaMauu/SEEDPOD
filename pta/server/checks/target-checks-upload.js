@@ -85,6 +85,7 @@ async function runUpload(C) {
     need(pv.status === 200 && pv.body.ok, '预览失败：' + pv.status + ' ' + JSON.stringify(pv.body && pv.body.error));
     const d = pv.body.data;
     need(d.host === '127.0.0.1' && d.ready === true, '预览计划没就绪：' + JSON.stringify(d));
+    need(typeof d.realPublish === 'boolean' && d.fieldCount > 0, '预览缺发布方式/字段数：' + JSON.stringify(d));
     need(typeof d.trackerNote === 'string' && d.trackerNote.length > 0, '预览缺 tracker 说明');
     need(d.dupe && d.dupe.state === 'unchecked' && /发布时自动查/.test(d.dupe.label), '目标站查重默认状态不对：' + JSON.stringify(d.dupe));
     need(d.torrent && d.torrent.hash === '', '没有源种时不该编 hash：' + JSON.stringify(d.torrent));
