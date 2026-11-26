@@ -179,6 +179,14 @@ async function main() {
     need(await items.count() === 1, '架构筛选不对：' + await items.count());
     await page.selectOption('#site-arch', 'all');
     await page.waitForTimeout(250);
+    await page.selectOption('#site-ready', 'publish-ready');
+    await page.waitForTimeout(250);
+    need(await items.count() === 0, '可发布筛选不该有站：' + await items.count());
+    await page.selectOption('#site-ready', 'missing-cookie');
+    await page.waitForTimeout(250);
+    need(await items.count() === 4, '缺登录筛选数量不对：' + await items.count());
+    await page.selectOption('#site-ready', 'all');
+    await page.waitForTimeout(250);
     await items.first().click();
     await page.waitForTimeout(500);
     need(await page.locator('#site-detail').count() === 1, '详情 id 重复或缺失');

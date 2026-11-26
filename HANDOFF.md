@@ -1,6 +1,18 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-26 02:45（当前 v0.7.699 / 就绪度刷新降频；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-26 12:20（当前 v0.7.701 / 批量导入 cookie 脚本；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-26 批量导入 cookie 脚本（v0.7.701）
+
+- `scripts/load-cookies.js` 原本还引用已删除的 v1 模块；改用 v2 `credentials` + `openDB`，写 `data/cookies.json`。
+- 支持 `{host: cookie}` 和 `[{host, cookie}]`，最多 200 条；不打印 cookie。
+- 检查补真实子进程导入；全量 `run.sh` 通过。
+
+## 2026-11-26 就绪度筛选（v0.7.700）
+
+- 站点页加“全部就绪”筛选：缺登录/搜索/发布/上传、可抓取、可发布。
+- 纯本地数据，不发请求；和现有筛选叠加。
+- 全量 `run.sh` 通过；已部署，GitHub 同步。
 
 ## 2026-11-26 就绪度刷新降频（v0.7.699）
 

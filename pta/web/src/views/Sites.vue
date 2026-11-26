@@ -9,6 +9,7 @@
       :login-filter="loginFilter"
       :preset-filter="presetFilter"
       :crawl-filter="crawlFilter"
+      :ready-filter="readyFilter"
       :status-tabs="statusTabs"
       :picks-count="picks.length"
       :cookie-count="cookieCount"
@@ -20,6 +21,7 @@
       @update:login-filter="loginFilter = $event"
       @update:preset-filter="presetFilter = $event"
       @update:crawl-filter="crawlFilter = $event"
+      @update:ready-filter="readyFilter = $event"
       @bulk="openBulk"
       @selfcheck="selfcheckAll"
       @hidden="hiddenOpen = true"
@@ -107,6 +109,7 @@ const archFilter = ref('all')
 const loginFilter = ref('all')
 const presetFilter = ref('all')
 const crawlFilter = ref('all')
+const readyFilter = ref('all')
 const picks = ref([])
 const page = ref(1)
 const sel = ref(null)
@@ -182,6 +185,16 @@ const filtered = computed(() => sites.value.filter(s => {
     if (crawlFilter.value === 'never' && s.lastAt) return false
     if (crawlFilter.value === 'today' && !s.todayCount) return false
   }
+  if (readyFilter.value !== 'all') {
+    const r = s.ready
+    if (!r) return false
+    if (readyFilter.value === 'missing-cookie' && r.cookie.state !== 'missing' && r.cookie.state !== 'bad') return false
+    if (readyFilter.value === 'missing-search' && r.search.state !== 'missing') return false
+    if (readyFilter.value === 'missing-publish' && r.publish.state !== 'missing') return false
+    if (readyFilter.value === 'missing-upload' && r.upload.state !== 'missing') return false
+    if (readyFilter.value === 'crawl-ready' && !r.crawlReady) return false
+    if (readyFilter.value === 'publish-ready' && !r.publishReady) return false
+  }
   const needle = q.value.trim().toLowerCase()
   if (needle && (s.title + ' ' + s.name + ' ' + s.url).toLowerCase().includes(needle) === false) return false
   return true
@@ -219,7 +232,7 @@ const stats = computed(() => {
     segs, legend
   }
 })
-watch([q, statusFilter, archFilter, loginFilter, presetFilter, crawlFilter], () => { page.value = 1 })
+watch([q, statusFilter, archFilter, loginFilter, presetFilter, crawlFilter, readyFilter], () => { page.value = 1 })
 watch(pages, p => { if (page.value > p) page.value = p })
 watch(filtered, list => { if (sel.value && !list.some(s => s.name === sel.value)) sel.value = null })
 watch(q, () => {

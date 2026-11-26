@@ -2,6 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { openDB } = require('../src/infra/db');
 const secretbox = require('../src/infra/secretbox');
 const makeCookieStore = require('../src/features/sites/credentials');
@@ -55,6 +56,23 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(a.ok === false && a.code === 'BAD_HOST', '非法 host 没拦住：' + JSON.stringify(a));
       const b = store.set('ok.example', 'x'.repeat(5000), db);
       need(b.ok === false && b.code === 'BAD_REQUEST', '超长 cookie 没拦住：' + JSON.stringify(b));
+    });
+
+    await check('命令行批量导入脚本写 cookies.json', async function () {
+      const D2 = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-cookie-cli-'));
+      try {
+        const input = path.join(D2, 'in.json');
+        fs.writeFileSync(input, JSON.stringify({ 'cli-a.example': 'sid=cli-a', 'cli-b.example': 'sid=cli-b' }));
+        const out = execFileSync(process.execPath, [path.join(__dirname, '..', '..', '..', 'scripts', 'load-cookies.js'), input], {
+          env: Object.assign({}, process.env, { PTA_DATA: D2, PTA_SECRET: key.key.toString('hex') }),
+          encoding: 'utf8'
+        });
+        need(/imported 2 hosts/.test(out), '脚本输出不对：' + out);
+        const text = fs.readFileSync(path.join(D2, 'cookies.json'), 'utf8');
+        const doc = JSON.parse(text);
+        need(Object.keys(doc.cookies || {}).length === 2, '没写入 2 个 host：' + text.slice(0, 80));
+        need(text.indexOf('sid=cli-a') < 0, 'cookies.json 出现明文');
+      } finally { fs.rmSync(D2, { recursive: true, force: true }); }
     });
 
     await check('批量导入只保存合法项', async function () {

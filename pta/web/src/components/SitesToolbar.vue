@@ -36,6 +36,15 @@
       <option value="today">今日抓过</option>
       <option value="never">还没抓过</option>
     </select>
+    <select :value="readyFilter" class="select slim" id="site-ready" @change="emit('update:readyFilter', $event.target.value)">
+      <option value="all">全部就绪</option>
+      <option value="missing-cookie">缺登录</option>
+      <option value="missing-search">缺搜索</option>
+      <option value="missing-publish">缺发布</option>
+      <option value="missing-upload">缺上传</option>
+      <option value="crawl-ready">可抓取</option>
+      <option value="publish-ready">可发布</option>
+    </select>
     <button class="btn ghost slim" id="bulk-open" :disabled="!picksCount" title="批量设置选中的站点" @click="emit('bulk')">
       {{ picksCount ? '批量 ' + picksCount : '批量' }}
     </button>
@@ -55,13 +64,14 @@ defineProps({
   loginFilter: { type: String, default: 'all' },
   presetFilter: { type: String, default: 'all' },
   crawlFilter: { type: String, default: 'all' },
+  readyFilter: { type: String, default: 'all' },
   statusTabs: { type: Array, default: function () { return [] } },
   picksCount: { type: Number, default: 0 },
   cookieCount: { type: Number, default: 0 },
   busySelfcheck: Boolean,
   hiddenCount: { type: Number, default: 0 }
 })
-const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'bulk', 'selfcheck', 'add', 'hidden'])
+const emit = defineEmits(['update:q', 'update:statusFilter', 'update:archFilter', 'update:loginFilter', 'update:presetFilter', 'update:crawlFilter', 'update:readyFilter', 'bulk', 'selfcheck', 'add', 'hidden'])
 </script>
 
 <style scoped>
