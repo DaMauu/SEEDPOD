@@ -59,6 +59,7 @@ run dupe-policy dupe-policy.js
 run collage collage.js
 run flow-config flow-config.js
 run security security.js
+run auth-store auth-store.js
 run cookie-file cookie-file.js
 run site-json-preset site-json-preset.js
 run site-store site-store.js

@@ -852,6 +852,41 @@ async function main() {
 
   await require('./api-v2/site-ops')({ BASE: BASE, DATA: DATA, ROOT: ROOT, fetchA: fetchA, check: check, need: need });
 
+  await check('面板账号可在面板内改密码并强制重登', async () => {
+    cookie = '';
+    const login = await fetch(BASE + '/api/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: USER, pass: PASS })
+    });
+    cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    need(login.status === 200 && !!cookie, '账号检查登录失败');
+    const ac = await (await fetchA(BASE + '/api/account')).json();
+    need(ac.ok && ac.data.user === USER, '账号接口没返回用户名：' + JSON.stringify(ac));
+    const wrong = await fetchA(BASE + '/api/account', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: USER, currentPass: 'wrong-pass', newPass: '' })
+    });
+    need(wrong.status === 401, '错误当前密码没拦住：' + wrong.status);
+    const changed = await fetchA(BASE + '/api/account', {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: USER, currentPass: PASS, newPass: 'new-check-pass' })
+    });
+    const cj = await changed.json();
+    need(changed.status === 200 && cj.ok && cj.data.relogin === true, '改密码没要求重登：' + changed.status + ' ' + JSON.stringify(cj));
+    cookie = '';
+    const oldLogin = await fetch(BASE + '/api/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: USER, pass: PASS })
+    });
+    need(oldLogin.status === 401, '旧密码还能登录：' + oldLogin.status);
+    const newLogin = await fetch(BASE + '/api/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: USER, pass: 'new-check-pass' })
+    });
+    cookie = (newLogin.headers.get('set-cookie') || '').split(';')[0];
+    need(newLogin.status === 200 && !!cookie, '新密码登录失败：' + newLogin.status);
+  });
+
   child.kill();
   imageServer.close();
   const pass = results.filter(r => r[0]).length;

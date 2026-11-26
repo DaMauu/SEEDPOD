@@ -418,6 +418,9 @@ async function main() {
     need(!/调度/.test(txt), '设置页不该有调度卡');
     need(/当前版本/.test(txt), '没有版本信息');
     need(/凭据密钥/.test(txt), '没有凭据密钥状态');
+    need(await page.locator('#set-account-user').count() === 1, '面板账号用户名输入缺失');
+    need(await page.locator('#set-account-current').count() === 1, '面板当前密码输入缺失');
+    need(await page.locator('#set-account-save').count() === 1, '面板账号保存按钮缺失');
     need(!/站点包|站点覆盖/.test(txt), '设置页不该出现站点包/覆盖卡');
     await page.evaluate(() => { location.hash = '#crawl'; });
     await page.waitForTimeout(500);

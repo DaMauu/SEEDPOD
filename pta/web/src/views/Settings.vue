@@ -5,21 +5,34 @@
         <div class="set-card-head">
           <div class="set-card-t">
             <h2 class="set-h2">面板账号</h2>
-            <p class="set-desc">面板账号由服务器环境变量决定，面板里不改密码，也不存明文。</p>
+            <p class="set-desc">账号和密码在面板内管理；密码只存 scrypt 哈希，不存明文。</p>
           </div>
+          <button class="btn primary slim set-save" id="set-account-save" type="button" :disabled="account.saving" @click="saveAccount">{{ account.saving ? '保存中…' : '保存' }}</button>
         </div>
         <div class="set-fields">
           <div class="set-field">
             <div class="lbl"><span>面板用户名</span></div>
-            <div class="ctl"><span class="fixed-val ref">{{ user }}</span></div>
+            <div class="ctl"><input id="set-account-user" v-model="account.user" class="input" autocomplete="username" maxlength="64"></div>
           </div>
           <div class="set-field">
-            <div class="lbl"><span>面板密码</span></div>
-            <div class="ctl"><span class="fixed-val ref">只放在测试机的 systemd 环境变量 PTA_PASS，面板读不到也不回显；要改就去测试机改环境变量后重启服务</span></div>
+            <div class="lbl"><span>当前密码</span><i>改用户名或密码都要填</i></div>
+            <div class="ctl"><input id="set-account-current" v-model="account.current" class="input" type="password" autocomplete="current-password"></div>
+          </div>
+          <div class="set-field">
+            <div class="lbl"><span>新密码</span><i>留空表示不改；至少 8 位</i></div>
+            <div class="ctl"><input id="set-account-next" v-model="account.next" class="input" type="password" autocomplete="new-password"></div>
+          </div>
+          <div class="set-field">
+            <div class="lbl"><span>确认新密码</span></div>
+            <div class="ctl"><input id="set-account-confirm" v-model="account.confirm" class="input" type="password" autocomplete="new-password"></div>
+          </div>
+          <div v-if="account.msg" class="set-field">
+            <div class="lbl"><span>上次操作</span></div>
+            <div class="ctl"><span class="fixed-val ref">{{ account.msg }}</span></div>
           </div>
           <div class="set-field">
             <div class="lbl"><span>会话</span></div>
-            <div class="ctl"><span class="fixed-val ref">HttpOnly cookie，已落 SQLite，重启服务不需要重新登录</span></div>
+            <div class="ctl"><span class="fixed-val ref">HttpOnly cookie；改密码会清所有会话</span></div>
           </div>
           <div class="set-field">
             <div class="lbl"><span>退出登录</span><i>清掉当前浏览器的会话 cookie</i></div>
@@ -27,8 +40,6 @@
           </div>
         </div>
       </section>
-
-      
 
       <section class="set-card">
         <div class="set-card-head">
@@ -114,6 +125,7 @@ import { toast, confirmBox, loggedIn, viewVisible } from '../utils/ui'
 
 const version = ref('读取中…')
 const user = ref('读取中…')
+const account = reactive({ user: '', current: '', next: '', confirm: '', saving: false, msg: '' })
 const notify = reactive({ telegram: false, webhook: false, source: '', chat: '', token: '', events: 'error', saving: false, testing: false, testMsg: '' })
 const keyState = reactive({ ok: null, source: '', reason: '' })
 let timer = null
@@ -132,19 +144,55 @@ const keyText = computed(() => {
 async function loadSettings() {
   if (loaded || !loggedIn()) return
   try {
-    const [h, s, nt, dv] = await Promise.all([
+    const [h, s, nt, dv, ac] = await Promise.all([
       fetch('/api/health', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/session', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
       fetch('/api/notify', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
-      fetch('/api/dev', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
+      fetch('/api/dev', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null),
+      fetch('/api/account', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null)
     ])
     if (h && h.ok) version.value = 'v' + h.data.version
     if (s && s.ok) user.value = s.data.user || '—'
+    if (ac && ac.ok) { account.user = ac.data.user || ''; if (!user.value || user.value === '读取中…') user.value = account.user }
     if (nt && nt.ok) applyNotify(nt.data)
     if (dv && dv.ok && dv.data && dv.data.crypto) Object.assign(keyState, dv.data.crypto)
     loaded = !!(h && h.ok || s && s.ok || nt && nt.ok || dv && dv.ok)
   } catch (e) { reportError('Settings', e); loaded = false }
 }
+async function saveAccount() {
+  if (account.saving) return
+  if (!String(account.current || '').trim()) { toast('先填当前密码'); return }
+  if (account.next !== account.confirm) { toast('两次新密码不一致'); return }
+  if (account.next && String(account.next).length < 8) { toast('新密码至少 8 位'); return }
+  account.saving = true
+  account.msg = ''
+  try {
+    const j = await (await fetch('/api/account', {
+      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ user: account.user, currentPass: account.current, newPass: account.next })
+    })).json()
+    if (j && j.ok) {
+      user.value = j.data.user || account.user
+      account.user = j.data.user || account.user
+      account.current = ''
+      account.next = ''
+      account.confirm = ''
+      if (j.data.relogin) {
+        account.msg = '密码已改，所有会话已失效，请重新登录'
+        toast(account.msg)
+        setTimeout(() => location.reload(), 800)
+      } else {
+        account.msg = '账号已保存'
+        toast(account.msg)
+      }
+    } else {
+      account.msg = (j && j.error && j.error.message) || '保存失败'
+      toast(account.msg)
+    }
+  } catch (e) { account.msg = '保存请求发不出去'; toast(account.msg) }
+  account.saving = false
+}
+
 function applyNotify(d) {
   if (!d) return
   notify.telegram = !!d.telegram

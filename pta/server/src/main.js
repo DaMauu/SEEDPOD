@@ -31,6 +31,9 @@ const FRONT_STACK = 'Vue ' + trimVer(DEP.vue) + ' + Vite ' + trimVer(DEV_DEP.vit
 const BACK_STACK = 'Node ' + process.version.replace(/^v/, '') + ' + Fastify ' + trimVer(DEP.fastify) + ' + SQLite';
 const PTA_USER = require('./infra/env').read('PANEL_USER','PTA_USER') || '';
 const PTA_PASS = require('./infra/env').read('PANEL_PASS','PTA_PASS') || '';
+const auth = require('./features/auth/store')(DATA_DIR);
+/* 环境变量只用于首次初始化 data/auth.json；文件存在后以面板账号为准。 */
+try { auth.ensureBootstrap(PTA_USER, PTA_PASS); } catch (e) { console.warn('[seedpod] 面板账号初始化失败:', e && e.message ? e.message : e); }
 /* 七个页面固定（dashboard/sites/crawl/queue/sources/logs/settings）；接口数按实际注册的路由算 */
 const PAGE_COUNT = 7;
 let ENDPOINT_COUNT = 0;
@@ -43,6 +46,7 @@ catch (e) { console.warn('[seedpod] cookie 文件迁移失败:', e && e.message 
 try { require('./features/presets/store')(DATA_DIR).ensure(); }
 catch (e) { console.warn('[seedpod] 全局预设初始化失败:', e && e.message ? e.message : e); }
 const LOGIN_FAILS = new Map();
+const ACCOUNT_FAILS = new Map();
 const SESSION_TTL = 12 * 3600 * 1000;
 
 function one(sql, ...args) { try { return db.prepare(sql).get(...args); } catch (e) { return null; } }
@@ -113,7 +117,12 @@ async function build() {
 
   /* ---- 认证 ---- */
   app.post('/api/login', async (req, reply) => {
-    if (!PTA_USER || !PTA_PASS) return bad(reply, 'NO_ACCOUNT', '服务端还没有设置面板账号', 503);
+    const st = auth.status();
+    if (!st.ok) {
+      const msg = st.reason === 'AUTH_BROKEN' ? '面板账号文件损坏，检查 data/auth.json' : '面板账号还没初始化：先设置 PTA_USER / PTA_PASS 或 data/auth.json';
+      return bad(reply, st.reason === 'AUTH_BROKEN' ? 'AUTH_BROKEN' : 'NO_ACCOUNT', msg, 503);
+    }
+    const a = auth.get();
     const b = body(req);
     const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || '').trim();
     const key = ip + '|' + String((b && b.user) || '').slice(0, 60);
@@ -122,7 +131,7 @@ async function build() {
     if (rec && rec.lockUntil > nowMs) {
       return bad(reply, 'RATE_LIMITED', '尝试太多，' + Math.ceil((rec.lockUntil - nowMs) / 1000) + ' 秒后再试', 429);
     }
-    if (!b || b.user !== PTA_USER || b.pass !== PTA_PASS) {
+    if (!b || b.user !== a.user || !auth.verify(b.pass, a)) {
       if (LOGIN_FAILS.size >= 5000) {
         for (const k of LOGIN_FAILS.keys()) {
           const x = LOGIN_FAILS.get(k);
@@ -141,13 +150,17 @@ async function build() {
     LOGIN_FAILS.delete(key);
     const tok = crypto.randomBytes(24).toString('hex');
     db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(nowMs);
-    db.prepare('INSERT INTO sessions(token, user, expires_at) VALUES(?, ?, ?)').run(tok, PTA_USER, nowMs + SESSION_TTL);
+    db.prepare('INSERT INTO sessions(token, user, expires_at) VALUES(?, ?, ?)').run(tok, a.user, nowMs + SESSION_TTL);
     const secure = cookieSecure(req) ? '; Secure' : '';
     reply.header('set-cookie', 'pta_sid=' + tok + '; Path=/; HttpOnly; SameSite=Lax' + secure + '; Max-Age=' + (SESSION_TTL / 1000));
-    if (logEvent) logEvent('info', '登录', '登录成功 · 用户 ' + PTA_USER);
-    return ok(reply, { user: PTA_USER });
+    if (logEvent) logEvent('info', '登录', '登录成功 · 用户 ' + a.user);
+    return ok(reply, { user: a.user });
   });
-  app.get('/api/session', async (req, reply) => (sessionOk(req) ? ok(reply, { user: PTA_USER }) : reply.code(401).send({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } })));
+  app.get('/api/session', async (req, reply) => {
+    const a = auth.get();
+    if (!a) return reply.code(503).send({ ok: false, error: { code: 'NO_ACCOUNT', message: '面板账号还没初始化' } });
+    return sessionOk(req) ? ok(reply, { user: a.user }) : reply.code(401).send({ ok: false, error: { code: 'UNAUTHORIZED', message: '需要登录' } });
+  });
   app.post('/api/logout', async (req, reply) => {
     const tok = parseCookies(req).pta_sid;
     if (tok) db.prepare('DELETE FROM sessions WHERE token = ?').run(tok);
@@ -191,7 +204,49 @@ async function build() {
       if (!oh || (oh !== hh && oh !== fh)) return bad(reply, 'BAD_ORIGIN', '跨站请求被拒绝', 403);
     }
     if (p === '/api/health' || p === '/api/login' || p === '/api/hooks/run') return;
+    const a = auth.get();
+    if (!a) return bad(reply, 'NO_ACCOUNT', '面板账号还没初始化', 503);
     if (!sessionOk(req)) return bad(reply, 'UNAUTHORIZED', '需要登录', 401);
+  });
+
+  app.get('/api/account', async () => {
+    const a = auth.get();
+    return ok({ user: a ? a.user : '', updatedAt: a ? a.updatedAt || '' : '', source: 'panel' });
+  });
+  app.put('/api/account', async (req, reply) => {
+    const a = auth.get();
+    if (!a) return bad(reply, 'NO_ACCOUNT', '面板账号还没初始化', 503);
+    const b = body(req);
+    const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || '').trim();
+    const nowMs = Date.now();
+    const rec = ACCOUNT_FAILS.get(ip);
+    if (rec && rec.lockUntil > nowMs) return bad(reply, 'RATE_LIMITED', '尝试太多，' + Math.ceil((rec.lockUntil - nowMs) / 1000) + ' 秒后再试', 429);
+    if (!auth.verify(b.currentPass, a)) {
+      const r = rec && nowMs - rec.firstAt < 10 * 60000 ? rec : { count: 0, firstAt: nowMs, lockUntil: 0 };
+      r.count += 1;
+      if (r.count >= 5) { r.lockUntil = nowMs + 10 * 60000; r.count = 0; }
+      ACCOUNT_FAILS.set(ip, r);
+      if (r.lockUntil > nowMs) return bad(reply, 'RATE_LIMITED', '尝试太多，10 分钟后再试', 429);
+      return bad(reply, 'BAD_CURRENT', '当前密码不对', 401);
+    }
+    ACCOUNT_FAILS.delete(ip);
+    const user = b.user == null ? a.user : String(b.user).trim();
+    const newPass = b.newPass == null ? '' : String(b.newPass);
+    if (!auth.validUser(user)) return bad(reply, 'BAD_USER', '用户名不能为空、不能有空格，最多 64 字');
+    if (newPass && (newPass.length < 8 || newPass.length > 200)) return bad(reply, 'BAD_PASS', '新密码至少 8 位，最多 200 位');
+    if (user === a.user && !newPass) return bad(reply, 'NO_CHANGE', '用户名和密码都没改');
+    const r = auth.update({ user: user, newPass: newPass || null });
+    if (!r.ok) return bad(reply, r.code || 'ACCOUNT_FAILED', r.message || '账号更新失败', 400);
+    if (newPass) {
+      db.prepare('DELETE FROM sessions').run();
+      const secure = cookieSecure(req) ? '; Secure' : '';
+      reply.header('set-cookie', 'pta_sid=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax' + secure);
+      if (logEvent) logEvent('info', '账号', '面板密码已更新，所有会话已失效');
+      return ok(reply, { user: r.user, relogin: true });
+    }
+    db.prepare('UPDATE sessions SET user = ?').run(r.user);
+    if (logEvent) logEvent('info', '账号', '面板用户名已更新');
+    return ok(reply, { user: r.user, relogin: false });
   });
 
   app.get('/api/dev', async () => ({

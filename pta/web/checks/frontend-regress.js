@@ -772,7 +772,8 @@ function seedDb() {
       await page.waitForTimeout(900);
       const text = await page.locator('#set-panel').innerText();
       need(text.indexOf('读取中…') < 0, '设置页仍停在读取中：' + text.slice(0, 80));
-      need(text.indexOf(USER) >= 0 || text.indexOf('admin') >= 0, '登录用户名没加载：' + text.slice(0, 80));
+      const accountUser = await page.locator('#set-account-user').inputValue();
+      need(accountUser === USER || accountUser === 'admin', '登录用户名没加载：' + accountUser);
       await page.close();
     });
   } catch (e) {

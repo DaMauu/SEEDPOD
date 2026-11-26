@@ -108,6 +108,10 @@ function collectScript(args) {
       for (const view of VIEWS) {
         await page.evaluate(function (v) { location.hash = '#' + v; }, view);
         await page.waitForTimeout(450);
+        if (view === 'settings') {
+          await page.waitForFunction(function () { const el = document.querySelector('#set-account-user'); return !!(el && el.value); }, null, { timeout: 3000 }).catch(function () {});
+          await page.waitForTimeout(250);
+        }
         current[width + '|' + view] = await page.evaluate(collectScript(), { view: view, selectors: SELECTORS[view], props: PROPS });
         const shot = path.join(SHOTS, view + '-' + width + '.png');
         await page.screenshot({ path: UPDATE ? shot : path.join(TMP, view + '-' + width + '.png'), fullPage: true });

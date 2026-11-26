@@ -1393,7 +1393,7 @@
       "display": "block",
       "position": "static",
       "width": "336px",
-      "height": "1234.09px",
+      "height": "1349.53px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -1413,14 +1413,14 @@
         12,
         89,
         336,
-        1234
+        1350
       ]
     },
     ".set-card": {
       "display": "block",
       "position": "static",
       "width": "336px",
-      "height": "393.297px",
+      "height": "508.734px",
       "paddingTop": "16px",
       "paddingBottom": "6px",
       "paddingLeft": "22px",
@@ -1440,14 +1440,14 @@
         12,
         89,
         336,
-        393
+        509
       ]
     },
     ".set-fields": {
       "display": "block",
       "position": "static",
       "width": "292px",
-      "height": "277.125px",
+      "height": "348.562px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -1465,16 +1465,16 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         34,
-        199,
+        243,
         292,
-        277
+        349
       ]
     },
     ".set-field": {
       "display": "flex",
       "position": "static",
       "width": "292px",
-      "height": "66.5938px",
+      "height": "60.5938px",
       "paddingTop": "4px",
       "paddingBottom": "0px",
       "paddingLeft": "22px",
@@ -1492,16 +1492,16 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         34,
-        199,
+        243,
         292,
-        67
+        61
       ]
     },
     ".main": {
       "display": "flex",
       "position": "static",
       "width": "360px",
-      "height": "1482.89px",
+      "height": "1598.33px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -1521,7 +1521,7 @@
         0,
         0,
         360,
-        1483
+        1598
       ]
     },
     ".dock": {
@@ -2973,7 +2973,7 @@
       "display": "block",
       "position": "static",
       "width": "366px",
-      "height": "1234.09px",
+      "height": "1349.53px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -2993,14 +2993,14 @@
         12,
         89,
         366,
-        1234
+        1350
       ]
     },
     ".set-card": {
       "display": "block",
       "position": "static",
       "width": "366px",
-      "height": "393.297px",
+      "height": "508.734px",
       "paddingTop": "16px",
       "paddingBottom": "6px",
       "paddingLeft": "22px",
@@ -3020,14 +3020,14 @@
         12,
         89,
         366,
-        393
+        509
       ]
     },
     ".set-fields": {
       "display": "block",
       "position": "static",
       "width": "322px",
-      "height": "277.125px",
+      "height": "348.562px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -3045,16 +3045,16 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         34,
-        199,
+        243,
         322,
-        277
+        349
       ]
     },
     ".set-field": {
       "display": "flex",
       "position": "static",
       "width": "322px",
-      "height": "66.5938px",
+      "height": "60.5938px",
       "paddingTop": "4px",
       "paddingBottom": "0px",
       "paddingLeft": "22px",
@@ -3072,16 +3072,16 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         34,
-        199,
+        243,
         322,
-        67
+        61
       ]
     },
     ".main": {
       "display": "flex",
       "position": "static",
       "width": "390px",
-      "height": "1482.89px",
+      "height": "1598.33px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -3101,7 +3101,7 @@
         0,
         0,
         390,
-        1483
+        1598
       ]
     },
     ".dock": {
@@ -4553,7 +4553,7 @@
       "display": "block",
       "position": "static",
       "width": "744px",
-      "height": "1162.06px",
+      "height": "1307.25px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -4573,14 +4573,14 @@
         12,
         89,
         744,
-        1162
+        1307
       ]
     },
     ".set-card": {
       "display": "block",
       "position": "static",
       "width": "744px",
-      "height": "345.156px",
+      "height": "490.344px",
       "paddingTop": "16px",
       "paddingBottom": "6px",
       "paddingLeft": "22px",
@@ -4600,14 +4600,14 @@
         12,
         89,
         744,
-        345
+        490
       ]
     },
     ".set-fields": {
       "display": "block",
       "position": "static",
       "width": "700px",
-      "height": "247.375px",
+      "height": "348.562px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -4625,16 +4625,16 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         34,
-        181,
+        225,
         700,
-        247
+        349
       ]
     },
     ".set-field": {
       "display": "flex",
       "position": "static",
       "width": "700px",
-      "height": "66.5938px",
+      "height": "60.5938px",
       "paddingTop": "4px",
       "paddingBottom": "0px",
       "paddingLeft": "22px",
@@ -4652,16 +4652,16 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         34,
-        181,
+        225,
         700,
-        67
+        61
       ]
     },
     ".main": {
       "display": "flex",
       "position": "static",
       "width": "768px",
-      "height": "1410.86px",
+      "height": "1556.05px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -4681,7 +4681,7 @@
         0,
         0,
         768,
-        1411
+        1556
       ]
     },
     ".dock": {
@@ -6133,7 +6133,7 @@
       "display": "block",
       "position": "static",
       "width": "1166px",
-      "height": "889.344px",
+      "height": "977.344px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -6153,14 +6153,14 @@
         57,
         74,
         1166,
-        889
+        977
       ]
     },
     ".set-card": {
       "display": "block",
       "position": "static",
       "width": "1166px",
-      "height": "273.781px",
+      "height": "361.781px",
       "paddingTop": "16px",
       "paddingBottom": "6px",
       "paddingLeft": "22px",
@@ -6180,14 +6180,14 @@
         57,
         74,
         1166,
-        274
+        362
       ]
     },
     ".set-fields": {
       "display": "block",
       "position": "static",
       "width": "1122px",
-      "height": "176px",
+      "height": "264px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -6207,7 +6207,7 @@
         79,
         166,
         1122,
-        176
+        264
       ]
     },
     ".set-field": {
@@ -6241,7 +6241,7 @@
       "display": "flex",
       "position": "static",
       "width": "1230px",
-      "height": "1063.34px",
+      "height": "1151.34px",
       "paddingTop": "30px",
       "paddingBottom": "36px",
       "paddingLeft": "32px",
@@ -6261,7 +6261,7 @@
         25,
         0,
         1230,
-        1063
+        1151
       ]
     },
     ".dock": {

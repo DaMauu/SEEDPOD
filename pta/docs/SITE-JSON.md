@@ -14,6 +14,7 @@ pta/server/pack/cookies.example.json    入库：host → 空 cookie 模板
 /data/sites.json                 本地：站点定义 + settings
 /data/site-urls.json             本地：网址，Base64
 /data/cookies.json               本地：cookie，AES-GCM 密文
+/data/auth.json                  本地：面板账号，scrypt 哈希，0600
 ```
 
 - `data/presets.json` 是运行时唯一的全局预设；首次启动从 `pta/server/pack/presets.preset.json` 复制，之后用户改的是 data 这份。
@@ -265,7 +266,7 @@ node pta/server/scripts/gen-presets.js
 
 ## 升级合并（待接）
 
-1. 备份 `/data/sites.json`、`/data/site-urls.json`、`/data/cookies.json`。
+1. 备份 `/data/sites.json`、`/data/site-urls.json`、`/data/cookies.json`、`/data/auth.json`。
 2. 按 host 合并：
    - 新站：加入，默认停用。
    - `localEdited: false`：定义字段可用 preset 更新。

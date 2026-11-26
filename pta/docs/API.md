@@ -21,6 +21,8 @@
 | POST | `/api/login` | `{user, pass}` 换会话 cookie |
 | POST | `/api/logout` | 注销 |
 | GET | `/api/session` | 当前登录状态 |
+| GET | `/api/account` | 面板账号（只回用户名/更新时间） |
+| PUT | `/api/account` | 改用户名/密码：`{user, currentPass, newPass}`；改密码强制重登 |
 | GET | `/api/dev` | 版本、技术栈、计数 |
 | GET | `/api/changelog` | 更新日志 |
 

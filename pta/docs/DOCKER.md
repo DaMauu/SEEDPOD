@@ -30,6 +30,8 @@ EOF
 docker compose up -d --build
 ```
 
+`PANEL_USER` / `PANEL_PASS` 只用于首次初始化 `/data/auth.json`；启动后到面板“设置 → 面板账号”改用户名/密码，文件存在后环境变量不再覆盖。
+
 默认只绑定 `127.0.0.1`；要对外再设 `PANEL_BIND=0.0.0.0`，前面务必有 HTTPS 反代。
 
 ## 数据与密钥

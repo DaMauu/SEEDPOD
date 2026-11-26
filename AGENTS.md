@@ -27,10 +27,10 @@ pta 的开发文件只能放在 main/pta 下，不许跳出 pta 落到仓库根�
 
 1. 真实站点只读探测按下方《真实站点探测规则》执行；仍不得自己找 cookie、不得复用别人的 cookie 登录、不得压测或绕过限制。抓取默认先干跑或本地夹具，真实探测必须先有计划。旧规则里“不对真实站点做探测”的绝对表述由该规则取代，其余限制继续有效。
 2. 真实站点网址用 Base64 存 `pta/server/pack/site-urls.preset.json` / 运行时 `data/site-urls.json`，可随仓库和镜像分发；站点显示名、中英文名、分类标签/ID、禁转/限转/HR 明文放 `sites.preset.json` / `sites.json`；中文类型/媒介/分辨率/优惠/限制和站点字段模板只放 `presets.preset.json` / `data/presets.json`。Base64 只是遮挡，不是加密。cookie、密码、passkey、上传 token 仍只存 AES-256-GCM 密文，绝不入仓库、不进提交、不写进回复；聊天回复仍不写网址。示例一律用占位符（`example.org`、`pta/docs/*.example.json`）。
-3. 面板账号密码不入库：只配在测试机 systemd 环境变量 `PTA_USER` / `PTA_PASS`。
+3. 面板账号存 `data/auth.json`（scrypt 哈希，0600）；`PTA_USER` / `PTA_PASS` 只在首次没有 auth.json 时初始化，之后在面板设置页修改，不再去测试机改环境变量。
 4. 站点凭据只存密文：`data/cookies.json` + AES-256-GCM；凭据列表只回 `hasCookie`，单站详情按用户要求回显明文（需登录、`no-store`、不写日志）；SQLite `credentials` 表只作迁移/测试镜像，不再作为运行时事实源。
 5. 提交前必须 `pta/server/checks/run.sh` 全绿（Linux；Windows 用 WSL / Git Bash）。没绿不提交；连续两轮修不绿就回滚并停手。
-6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`PTA_USER`/`PTA_PASS`）是另一回事，别混。
+6. 站点登录只有 cookie，不要重新引入账号密码或 2FA；面板自己的登录（`data/auth.json` + HttpOnly 会话）是另一回事，别混。
 7. 生产后端只有 v2：入口 `src/main.js`，路由 `src/http/routes-*.js`，数据层 `src/infra/db.js`；旧 `app.js` 已删除，避免同一功能两套实现。
 8. 站点与预设随程序发布：镜像带 `pta/server/pack/sites.preset.json` / `site-urls.preset.json` / `presets.preset.json` / `cookies.example.json`，首次启动复制到 `/data`；运行时只读写 `data/sites.json`、`site-urls.json`、`presets.json`、`cookies.json`。旧 `site-defs` / `site-pack` 流程已删除。详见 `pta/docs/SITE-JSON.md`。
 9. 质量审计固定进 `pta/server/checks/run.sh`：全库看 `pta/server/checks/baselines/quality.json` 防回退；单文件/单功能先跑对应 scope；有「D」先修，不能带「D」提交。详见 `pta/docs/QUALITY.md`。
@@ -82,7 +82,7 @@ git pull --ff-only && bash deploy.sh
 
 ## 数据与不入库的东西
 
-数据目录 `data/`（0600）：`seedpod.db`（SQLite：队列/词条/日志/配置）、`sites.json`（站点定义）、`site-urls.json`（Base64 网址）、`presets.json`（全局预设，首次从 pack 复制）、`cookies.json`（密文 cookie）、`library.json` / `site-status.json`（文件数据）、`.secret`（凭据密钥）、`events.log`；`_v1-backup-*` 只作迁移备份，v2 不读。
+数据目录 `data/`（0600）：`seedpod.db`（SQLite：队列/词条/日志/配置）、`auth.json`（面板账号 scrypt 哈希）、`sites.json`（站点定义）、`site-urls.json`（Base64 网址）、`presets.json`（全局预设，首次从 pack 复制）、`cookies.json`（密文 cookie）、`library.json` / `site-status.json`（文件数据）、`.secret`（凭据密钥）、`events.log`；`_v1-backup-*` 只作迁移备份，v2 不读。
 
 只在本地/测试机、已被 gitignore：`data/site-defs/`、`data/samples/`、`cookies.tmp.json`、`pta/data/*.local.*`、`pta/data/site-arch.local.csv`；`docs` 里只有 example。
 
