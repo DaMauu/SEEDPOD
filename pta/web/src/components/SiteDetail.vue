@@ -14,7 +14,7 @@
                 <select class="select slim sd-arch-sel" id="sd-arch" :value="s.arch" title="站点架构" @click.stop @change="setArch(s, $event)">
                   <option v-for="a in archOptions" :key="a.v" :value="a.v">{{ a.label }}</option>
                 </select>
-                <button v-if="s.cookieSaved && s.cookieReadable !== false" class="btn slim" type="button" :disabled="busy.selfcheck" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
+                <button v-if="s.cookieSaved && s.cookieReadable !== false" id="sd-selfcheck-btn" class="btn slim" type="button" :disabled="busy.selfcheck" title="用已保存的 cookie 做一次会话自检；只发一次 GET" @click.stop="selfcheckOne(s)">连接自检</button>
               </div>
               <button class="sheet-x" type="button" aria-label="关闭" @click.stop="closeDetail">✕</button>
             </div>
@@ -32,6 +32,14 @@
                     <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
                     <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
                   </div>
+                  <div class="sd-block sd-next-block">
+                    <h4>下一步</h4>
+                    <div class="sd-next">
+                      <button v-for="n in nextSteps" :key="n.key" class="sd-next-item" :class="n.state" type="button" @click.stop="goStep(n.key)">
+                        <i></i><b>{{ n.label }}</b><em>{{ n.action }}</em>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -48,7 +56,7 @@
                     <div class="set-field">
                       <div class="lbl"><span>Cookie（{{ s.cookieSaved ? (s.cookieReadable ? '已保存' + cookieWhen(s) : '已保存但解不开') : '未保存' }}）</span></div>
                       <div class="ctl">
-                        <textarea v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 直接显示；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
+                        <textarea id="sd-cookie-input" v-model="form.cookie" class="input sd-note" rows="3" :placeholder="s.cookieSaved && s.cookieReadable === false ? '旧 cookie 用当前密钥解不开，请整段重新粘贴' : (s.cookieSaved ? '已保存的 cookie 直接显示；要换就整段粘贴覆盖再保存' : '粘贴 name1=value1; name2=value2')"></textarea>
                       </div>
                     </div>
                   </div>
@@ -58,7 +66,7 @@
                   </div>
                 </div>
 
-                <div class="sd-sec">
+                <div class="sd-sec" id="sd-sec-search">
                   <h4 class="sd-sec-ttl">搜索分类</h4>
                   <div class="set-fields">
                     <div class="sd-block">
@@ -82,7 +90,7 @@
                   </div>
                 </div>
 
-                <div class="sd-sec">
+                <div class="sd-sec" id="sd-sec-publish">
                   <h4 class="sd-sec-ttl">发布分类</h4>
                   <div class="watch-grid">
                     <div class="watch-tile" :class="{ open: watchOpen === 'cat' }">
@@ -251,6 +259,22 @@ const uploadStats = computed(function () {
   const u = d.uploadMap || d.upload || {}
   const ed = d.uploadDefaults || {}
   return { count: Object.keys(u.fields || {}).length, defaultCount: Number(ed.fieldCount) || 0 }
+})
+const nextSteps = computed(function () {
+  const site = s.value || {}
+  let ck = 'bad'
+  let ckAction = '导入 cookie'
+  if (site.cookieSaved && site.cookieReadable !== false) {
+    if (site.login === 'ok') { ck = 'ok'; ckAction = '已就绪' }
+    else if (site.login === 'fail') { ck = 'bad'; ckAction = '重新导入' }
+    else { ck = 'warn'; ckAction = '点自检' }
+  }
+  return [
+    { key: 'cookie', label: '登录', state: ck, action: ckAction },
+    { key: 'search', label: '搜索', state: catGroups.value.length ? 'ok' : 'bad', action: catGroups.value.length ? '已识别' : '去识别' },
+    { key: 'publish', label: '发布', state: publishGroups.value.length ? 'ok' : 'bad', action: publishGroups.value.length ? '已映射' : '去识别' },
+    { key: 'upload', label: '上传', state: uploadStats.value.count ? 'ok' : (uploadStats.value.defaultCount ? 'warn' : 'bad'), action: uploadStats.value.count ? '已配置' : (uploadStats.value.defaultCount ? '引擎默认' : '去识别') }
+  ]
 })
 const catGroups = computed(function () {
   const d = detail.def || {}
@@ -607,6 +631,18 @@ async function detectSearchPreset() {
     })
   } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
   finally { searchPresetBusy.value = false }
+}
+
+function goStep(key) {
+  if (key === 'cookie') {
+    const site = s.value || {}
+    if (site.cookieSaved && site.cookieReadable !== false && site.login !== 'ok') { selfcheckOne(site); return }
+    const input = document.getElementById('sd-cookie-input')
+    if (input) { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(function () { input.focus() }, 250) }
+    return
+  }
+  const el = document.getElementById(key === 'search' ? 'sd-sec-search' : 'sd-sec-publish')
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 function toggleWatch(kind) { watchOpen.value = watchOpen.value === kind ? '' : kind }
@@ -1055,4 +1091,16 @@ watch(host, function (h, old) {
 .watch-detail .sd-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid #f1f3f7; font-size: 11.5px; }
 .watch-detail .sd-row:first-child { border-top: 0; }
 @media (max-width: 600px) { .watch-grid { gap: 10px; } .watch-tile { width: 132px; flex-basis: 132px; } .watch-face { width: 132px; height: 132px; border-radius: 66px 66px 20px 20px; } .wf-num { font-size: 26px; } }
+.sd-next-block { margin-top: 12px; }
+.sd-next { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 2px; }
+.sd-next-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; text-align: left; font: inherit; }
+.sd-next-item:hover { border-color: var(--accent); }
+.sd-next-item i { width: 6px; height: 6px; border-radius: 50%; background: #c9cedb; }
+.sd-next-item b { font-size: 11.5px; color: var(--ink); }
+.sd-next-item em { font-style: normal; font-size: 10px; color: var(--muted-2); }
+.sd-next-item.ok i { background: #12b76a; }
+.sd-next-item.warn i { background: #f79009; }
+.sd-next-item.bad i { background: #f04438; }
+@media (max-width: 600px) { .sd-next { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

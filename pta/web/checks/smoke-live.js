@@ -193,6 +193,8 @@ async function main() {
     need(await page.locator('#site-detail').isVisible(), '详情没打开');
     const dtxt = await page.locator('#site-detail').innerText();
     need(/登录/.test(dtxt) && /抓取/.test(dtxt), '抽屉概览没渲染：' + dtxt.slice(0, 80));
+    need(await page.locator('#site-detail .sd-next-item').count() === 4, '下一步按钮不是 4 个');
+    need(/登录/.test(await page.locator('#site-detail .sd-next').innerText()), '下一步缺登录项');
     need(await page.locator('#site-detail textarea').count() >= 1, '设置区 cookie 输入框缺失');
     await items.first().click();
     await page.waitForTimeout(300);
