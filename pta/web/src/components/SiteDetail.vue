@@ -22,7 +22,7 @@
 
             <div class="sd-scroll">
               <div class="sd-ov">
-                <div class="sd-compact">
+                <div class="sd-compact sd-single">
                   <div class="sd-block">
                     <h4>登录</h4>
                     <div class="sd-row"><span>状态</span><b :class="dotCls(s) + '-t'">{{ loginTxt(s) }}</b></div>
@@ -31,16 +31,6 @@
                     <div class="sd-row"><span>引擎</span><b>{{ engineTxt(s) }}</b></div>
                     <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
                     <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
-                  </div>
-                  <div class="sd-block">
-                    <h4>抓取</h4>
-                    <div class="sd-row"><span>上次结果</span><b :class="(s.lastAt ? 'ok' : 'idle') + '-t'">{{ s.lastAt ? '已抓取' : '未抓取' }}</b></div>
-                    <div class="sd-row"><span>今日已跑</span><b>{{ s.todayCount }} 次</b></div>
-                    <div class="sd-row"><span>方式</span><b>{{ modeTxt(s) }}</b></div>
-                    <div class="sd-test">
-                      <button class="btn ghost slim" id="sd-try-crawl" type="button" :disabled="busy.crawl || !s.enabled" title="验证配置：按搜索预设只抓这一站一页；会真实请求，受真抓取开关约束" @click.stop="crawlOne(s)">试抓一页</button>
-                      <span class="sd-test-note">验证配置，只抓这一站一页</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -88,41 +78,43 @@
                         <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
                         <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
                       </div>
-                      <div v-if="previewUrls.length">
-                        <h4>搜索链接预览</h4>
-                        <a v-for="u in previewUrls" :key="u.url" class="sd-preset-url" :href="u.url" target="_blank" rel="noopener noreferrer">{{ u.tag }} → {{ u.short }}</a>
-                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="sd-sec">
                   <h4 class="sd-sec-ttl">发布分类</h4>
-                  <div class="set-fields">
-                    <div class="sd-block cm-block">
-                      <h4>分类映射</h4>
-                      <p class="set-desc">库内分类 → 目标站分类 ID；识别后自动保存，发种按这张表填分类。</p>
-                      <template v-if="publishGroups.length">
-                        <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
-                      </template>
-                      <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
-                      <div class="cm-actions">
-                        <button class="btn ghost slim" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
-                        <span class="sd-cookie-res">{{ catMsg }}</span>
+                  <div class="watch-grid">
+                    <div class="watch-tile" :class="{ open: watchOpen === 'cat' }">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cat')" @keydown.enter.prevent="toggleWatch('cat')">
+                        <span class="wf-num">{{ publishGroups.length || '—' }}</span>
+                        <span class="wf-label">分类映射</span>
+                        <span class="wf-sub">{{ publishGroups.length ? '库内 → 目标站' : '未识别' }}</span>
                       </div>
+                      <button class="btn ghost slim watch-act" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
+                    </div>
+                    <div class="watch-tile" :class="{ open: watchOpen === 'upload' }">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('upload')" @keydown.enter.prevent="toggleWatch('upload')">
+                        <span class="wf-num">{{ uploadStats.count || uploadStats.defaultCount || '—' }}</span>
+                        <span class="wf-label">上传表单</span>
+                        <span class="wf-sub">{{ uploadStats.count ? '已配置字段' : (uploadStats.defaultCount ? '引擎默认字段' : '未识别') }}</span>
+                      </div>
+                      <button class="btn ghost slim watch-act" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
                     </div>
                   </div>
-                  <div class="set-fields">
-                    <div class="sd-block cm-block">
-                      <h4>上传表单</h4>
-                      <p class="set-desc">参数存在站点 JSON；这里只显示状态和识别入口，识别后自动保存。</p>
-                      <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
-                      <p class="set-desc">引擎默认字段可直接用；识别只补站点差异，失败先确认上传权限。</p>
-                      <div class="cm-actions">
-                        <button class="btn ghost slim" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
-                        <span class="sd-cookie-res">{{ uploadMsg }}</span>
-                      </div>
-                    </div>
+                  <div v-if="watchOpen === 'cat'" class="watch-detail">
+                    <template v-if="publishGroups.length">
+                      <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                    </template>
+                    <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
+                    <p class="set-desc">库内分类 → 目标站分类 ID；识别后自动保存，发种按这张表填分类。</p>
+                    <span class="sd-cookie-res">{{ catMsg }}</span>
+                  </div>
+                  <div v-if="watchOpen === 'upload'" class="watch-detail">
+                    <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
+                    <p class="set-desc">参数存在站点 JSON；这里只显示状态和识别入口，识别后自动保存。</p>
+                    <p class="set-desc">引擎默认字段可直接用；识别只补站点差异，失败先确认上传权限。</p>
+                    <span class="sd-cookie-res">{{ uploadMsg }}</span>
                   </div>
                 </div>
 
@@ -187,7 +179,7 @@
 </template>
 
 <script setup>
-import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt, modeTxt } from '../utils/siteFormat'
+import { ARCH, fmtWhen, archOf, archCls, archLabel, dotCls, loginTxt } from '../utils/siteFormat'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, initialsOf } from '../utils/ui'
@@ -216,10 +208,11 @@ const catMsg = ref('')
 const detectBusy = ref(false)
 const catDetectBusy = ref(false)
 const uploadMsg = ref('')
+const watchOpen = ref('')
 const searchPresetBusy = ref(false)
 const searchPresetMsg = ref('')
 const presetPreview = ref(null)
-const busy = reactive({ selfcheck: false, crawl: false, save: false, cookie: false })
+const busy = reactive({ selfcheck: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
 
@@ -265,32 +258,7 @@ const catGroups = computed(function () {
   const groups = (p.cats && Object.keys(p.cats).length ? p.cats : d.cats) || {}
   return Object.keys(groups).map(function (name) { return { name: runtimePresets.value.types[name] || name, ids: (groups[name] || []).join(', ') || '—' } })
 })
-const previewUrls = computed(function () {
-  const d = detail.def || {}
-  if (Array.isArray(d.previewUrls) && d.previewUrls.length) {
-    return d.previewUrls.slice(0, 6).map(function (u) {
-      return { tag: u.label || u.key, url: u.url, short: String(u.url || '').replace(/^https?:\/\//, '') }
-    })
-  }
-  const p = detail.preset || {}
-  const groups = (p.cats && Object.keys(p.cats).length ? p.cats : d.cats) || {}
-  const params = d.params || {}
-  const sp = d.searchPath || ''
-  const base = String(d.base || '').replace(/\/+$/, '')
-  if (!base || !sp || !Object.keys(params).length) return []
-  const out = []
-  Object.keys(groups).slice(0, 8).forEach(function (g) {
-    const first = (groups[g] || [])[0]
-    if (first === undefined || first === '') return
-    const qs = Object.keys(params).map(function (k) {
-      const v = String(params[k]).split('{cats}').join(String(first)).split('{q}').join('')
-      return encodeURIComponent(k) + '=' + encodeURIComponent(v)
-    }).join('&')
-    const url = base + sp + '?' + qs
-    out.push({ tag: g, url: url, short: url.replace(/^https?:\/\//, '') })
-  })
-  return out.slice(0, 6)
-})
+
 
 function engineTxt(site) {
   const raw = (detail.preset && detail.preset.engine) || (detail.def && detail.def.engine) || (site.def && site.def.engine) || ''
@@ -310,10 +278,6 @@ function paramTxt() {
   const param = Object.keys(d.params || {}).find(function (k) { return String(d.params[k]).indexOf('{cats}') >= 0 }) || ''
   if (!mode && !param) return Object.keys(catGroups.value).length ? 'cat（按分类 id 筛）' : '—'
   return (mode || '—') + (param ? ' · ' + param : '')
-}
-function crawlTxt(site) {
-  if (!site.lastAt) return '还没抓过'
-  return '上次 ' + fmtWhen(site.lastAt) + ' · 今日 ' + site.todayCount + ' 次'
 }
 function catalogTxt() {
   const c = detail.catalog
@@ -539,21 +503,6 @@ async function selfcheckOne(site) {
   await selfcheckHost(site.name)
   busy.selfcheck = false
 }
-async function crawlOne(site) {
-  if (busy.crawl) return
-  busy.crawl = true
-  try {
-    const j = await (await fetch('/api/crawl/run', {
-      method: 'POST', credentials: 'same-origin',
-      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ siteHost: site.name, dryRun: false })
-    })).json()
-    if (j && j.ok) toast('抓取完成：第 ' + (j.data.page || 0) + ' 页 · 新增 ' + (j.data.added || 0) + ' 条')
-    else toast((j && j.error && j.error.message) || '抓取失败')
-    emit('changed')
-    await loadDetail(site.name)
-  } catch (e) { toast('抓取请求发不出去') }
-  busy.crawl = false
-}
 async function saveCatMap() {
   if (!host.value || catSaving.value) return
   if (!defReady.value) { catMsg.value = '站点定义没加载成功，先刷新重试'; return }
@@ -660,8 +609,11 @@ async function detectSearchPreset() {
   finally { searchPresetBusy.value = false }
 }
 
+function toggleWatch(kind) { watchOpen.value = watchOpen.value === kind ? '' : kind }
+
 function detectRemote() {
   if (!host.value || detectBusy.value) return
+  watchOpen.value = 'upload'
   const h = host.value
   confirmBox('识别上传表单', '会向 ' + h + ' 的上传页发一次 GET，只读页面，不提交任何东西。继续？', async function () {
     detectBusy.value = true
@@ -693,6 +645,7 @@ function detectRemote() {
 
 async function detectTargetCats() {
   if (!host.value || catDetectBusy.value) return
+  watchOpen.value = 'cat'
   catDetectBusy.value = true
   catMsg.value = '识别中…'
   try {
@@ -1012,8 +965,6 @@ watch(host, function (h, old) {
   width: auto; max-width: none; justify-self: stretch; }
 .site-expand .sd-block .sd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .site-expand .sd-block .sd-row + .sd-row { border-top: 1px solid #f2f4f8; }
-.sd-test { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; margin-top: 4px; border-top: 1px solid #f2f4f8; }
-.sd-test-note { font-size: 10.5px; color: var(--muted-2); }
 .st-all { display: flex; align-items: center; }
 .st-all input { width: 14px; height: 14px; accent-color: var(--accent); }
 .site-expand .sd-compact { align-items: stretch; }
@@ -1025,8 +976,6 @@ watch(host, function (h, old) {
 .site-item .st i{width:7px;height:7px}
 .st-head, .site-item{grid-template-columns:26px 10px minmax(0,1fr) 96px 84px 58px 56px 92px;gap:12px}
 .site-item .st{justify-self:start}
-.sd-preset-url{display:block;font-size:11px;color:var(--accent);word-break:break-all;margin:5px 0;text-decoration:none}
-.sd-preset-url:hover{text-decoration:underline}
 .sd-actions { flex-wrap: nowrap; }
 .sd-arch-sel { width: 96px; height: 26px; font-size: 11px; padding: 0 4px; flex: 0 0 auto; }
 .sd-actions > button.switch.sm i { width: 30px; height: 17px; }
@@ -1090,4 +1039,20 @@ watch(host, function (h, old) {
 @media (max-width: 1000px) {
   .site-expand .sd-scroll { display: block; overflow-y: auto; }
 }
+.site-expand .sd-compact.sd-single { grid-template-columns: minmax(0, 1fr); }
+.watch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 10px; }
+.watch-tile { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.watch-face { width: 100%; min-height: 118px; padding: 16px 10px 12px; border: 1px solid #e5e8f5;
+  border-radius: 999px 999px 22px 22px; background: linear-gradient(180deg, #f5f6ff, #fff);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.watch-face:hover, .watch-tile.open .watch-face { border-color: var(--accent); box-shadow: 0 6px 18px rgba(79,70,229,.08); }
+.wf-num { font-size: 30px; font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.wf-label { font-size: 12px; font-weight: 600; color: var(--ink); }
+.wf-sub { font-size: 10px; color: var(--muted-2); }
+.watch-act { width: 100%; }
+.watch-detail { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fcfcfd; }
+.watch-detail .sd-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid #f1f3f7; font-size: 11.5px; }
+.watch-detail .sd-row:first-child { border-top: 0; }
+@media (max-width: 600px) { .watch-grid { gap: 10px; } .watch-face { min-height: 108px; padding-top: 14px; } .wf-num { font-size: 26px; } }
 </style>

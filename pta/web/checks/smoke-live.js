@@ -268,13 +268,15 @@ async function main() {
     const ck2 = await page.evaluate(async () => (await fetch('/api/credentials')).json());
     const ckRow2 = (ck2.data || []).find(function (x) { return x.host === 'added.example'; });
     need(!ckRow2 || ckRow2.hasCookie !== true, 'cookie 没清掉：' + JSON.stringify(ck2));
-    const pubBlock = page.locator('#site-detail .cm-block').filter({ hasText: '分类映射' });
-    need(await pubBlock.count() === 1, '分类映射块缺失');
-    need(await pubBlock.locator('input, select').count() === 0, '分类映射还有输入框/下拉框');
-    need(await pubBlock.locator('.cm-actions button').filter({ hasText: '加一条' }).count() === 0, '加一条还在');
-    need(await pubBlock.locator('.cm-actions button').filter({ hasText: '保存映射' }).count() === 0, '保存映射还在');
-    need(await pubBlock.locator('.cm-actions button').filter({ hasText: '识别目标站分类' }).count() === 1, '识别目标站分类按钮缺失');
-    need(/还没有分类映射/.test(await pubBlock.innerText()), '没有映射时没显示空状态');
+    const pubTile = page.locator('#site-detail .watch-tile').filter({ hasText: '分类映射' });
+    need(await pubTile.count() === 1, '分类映射表盘缺失');
+    need(await pubTile.locator('input, select').count() === 0, '分类映射还有输入框/下拉框');
+    need(await pubTile.locator('.watch-act').filter({ hasText: '加一条' }).count() === 0, '加一条还在');
+    need(await pubTile.locator('.watch-act').filter({ hasText: '保存映射' }).count() === 0, '保存映射还在');
+    need(await pubTile.locator('.watch-act').filter({ hasText: '识别目标站分类' }).count() === 1, '识别目标站分类按钮缺失');
+    await pubTile.locator('.watch-face').click();
+    await page.waitForTimeout(200);
+    need(/还没有分类映射/.test(await page.locator('#site-detail .watch-detail').innerText()), '没有映射时没显示空状态');
 
     await page.evaluate(async () => {
       const def = { engine: 'nexusphp', base: 'https://added.example', cats: { movie: ['401'], tv: ['402'] },
@@ -289,17 +291,21 @@ async function main() {
     await page.waitForTimeout(500);
     await page.locator('.site-item').first().click();
     await page.waitForTimeout(600);
-    const pubRows = pubBlock.locator('.sd-row');
+    await pubTile.locator('.watch-face').click();
+    await page.waitForTimeout(200);
+    const pubRows = page.locator('#site-detail .watch-detail .sd-row');
     need(await pubRows.count() === 2, '只读分类映射行数不对：' + await pubRows.count());
-    const pubText = await pubBlock.innerText();
+    const pubText = await page.locator('#site-detail .watch-detail').innerText();
     need(/401/.test(pubText) && /402/.test(pubText), '只读分类映射没显示目标站 ID：' + JSON.stringify(pubText.slice(0, 160)));
     need(/电影|movie/i.test(pubText), '只读分类映射没显示库内分类：' + JSON.stringify(pubText.slice(0, 160)));
-    need(await pubBlock.locator('input, select').count() === 0, '数组映射又出现输入框/下拉框');
+    need(await pubTile.locator('input, select').count() === 0, '数组映射又出现输入框/下拉框');
 
-    const upBlock = page.locator('#site-detail .cm-block').filter({ hasText: '上传表单' });
-    need(await upBlock.count() === 1, '上传表单状态块缺失');
-    need(await upBlock.locator('.cm-actions button').filter({ hasText: '识别上传表单' }).count() === 1, '识别上传表单按钮缺失');
-    need(/引擎默认 10 个字段/.test(await upBlock.innerText()), '没显示引擎默认上传字段：' + JSON.stringify((await upBlock.innerText()).slice(0, 160)));
+    const upTile = page.locator('#site-detail .watch-tile').filter({ hasText: '上传表单' });
+    need(await upTile.count() === 1, '上传表单表盘缺失');
+    need(await upTile.locator('.watch-act').filter({ hasText: '识别上传表单' }).count() === 1, '识别上传表单按钮缺失');
+    await upTile.locator('.watch-face').click();
+    await page.waitForTimeout(200);
+    need(/引擎默认 10 个字段/.test(await page.locator('#site-detail .watch-detail').innerText()), '没显示引擎默认上传字段');
     need(await page.locator('#site-detail .up-pair').count() === 0, '上传参数输入框还在前端');
     need(await page.locator('#site-detail').getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');
   });

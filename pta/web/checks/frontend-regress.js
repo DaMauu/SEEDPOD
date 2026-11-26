@@ -617,9 +617,9 @@ function seedDb() {
       await page.waitForTimeout(700);
       await page.locator('[data-view="sites"] .site-item').first().click();
       await page.waitForTimeout(500);
-      const saveBtn = page.locator('#site-detail .cm-actions button').filter({ hasText: '保存映射' });
+      const saveBtn = page.locator('#site-detail .watch-act').filter({ hasText: '保存映射' });
       need(await saveBtn.count() === 0, '分类映射保存按钮还在');
-      const detectBtn = page.locator('#site-detail .cm-actions button').filter({ hasText: '识别目标站分类' });
+      const detectBtn = page.locator('#site-detail .watch-act').filter({ hasText: '识别目标站分类' });
       need(await detectBtn.isDisabled(), '定义没加载时识别按钮应禁用');
       need(puts === 0, '加载失败后仍然 PUT 覆盖：' + puts);
       need(await page.getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');
