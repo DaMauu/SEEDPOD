@@ -32,14 +32,6 @@
                     <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
                     <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
                   </div>
-                  <div class="sd-block sd-next-block">
-                    <h4>下一步</h4>
-                    <div class="sd-next">
-                      <button v-for="n in nextSteps" :key="n.key" class="sd-next-item" :class="n.state" type="button" @click.stop="goStep(n.key)">
-                        <i></i><b>{{ n.label }}</b><em>{{ n.action }}</em>
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -68,25 +60,29 @@
 
                 <div class="sd-sec" id="sd-sec-search">
                   <h4 class="sd-sec-ttl">搜索分类</h4>
-                  <div class="set-fields">
-                    <div class="sd-block">
-                      <h4>分类 id</h4>
-                      <template v-if="catGroups.length">
-                        <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
-                      </template>
-                      <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
-                      <div class="cm-actions">
-                        <button class="btn ghost slim" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
-                        <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
+                  <div class="watch-grid">
+                    <div class="watch-tile" :class="{ open: watchOpen === 'search' }">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('search')" @keydown.enter.prevent="toggleWatch('search')">
+                        <span class="wf-num">{{ catGroups.length || '—' }}</span>
+                        <span class="wf-label">搜索分类</span>
+                        <span class="wf-sub">{{ catGroups.length ? '站点分类 ID' : '未识别' }}</span>
                       </div>
-                      <p class="set-desc">从搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，确认后保存。</p>
-                      <div v-if="presetPreview">
-                        <h4>识别明细（未保存）</h4>
-                        <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
-                        <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
-                        <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
-                      </div>
+                      <button class="btn ghost slim watch-act" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
                     </div>
+                  </div>
+                  <div v-if="watchOpen === 'search'" class="watch-detail">
+                    <template v-if="catGroups.length">
+                      <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                    </template>
+                    <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
+                    <p class="set-desc">从搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，确认后保存。</p>
+                    <div v-if="presetPreview">
+                      <h4>识别明细（未保存）</h4>
+                      <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                      <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
+                      <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
+                    </div>
+                    <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
                   </div>
                 </div>
 
@@ -259,22 +255,6 @@ const uploadStats = computed(function () {
   const u = d.uploadMap || d.upload || {}
   const ed = d.uploadDefaults || {}
   return { count: Object.keys(u.fields || {}).length, defaultCount: Number(ed.fieldCount) || 0 }
-})
-const nextSteps = computed(function () {
-  const site = s.value || {}
-  let ck = 'bad'
-  let ckAction = '导入 cookie'
-  if (site.cookieSaved && site.cookieReadable !== false) {
-    if (site.login === 'ok') { ck = 'ok'; ckAction = '已就绪' }
-    else if (site.login === 'fail') { ck = 'bad'; ckAction = '重新导入' }
-    else { ck = 'warn'; ckAction = '点自检' }
-  }
-  return [
-    { key: 'cookie', label: '登录', state: ck, action: ckAction },
-    { key: 'search', label: '搜索', state: catGroups.value.length ? 'ok' : 'bad', action: catGroups.value.length ? '已识别' : '去识别' },
-    { key: 'publish', label: '发布', state: publishGroups.value.length ? 'ok' : 'bad', action: publishGroups.value.length ? '已映射' : '去识别' },
-    { key: 'upload', label: '上传', state: uploadStats.value.count ? 'ok' : (uploadStats.value.defaultCount ? 'warn' : 'bad'), action: uploadStats.value.count ? '已配置' : (uploadStats.value.defaultCount ? '引擎默认' : '去识别') }
-  ]
 })
 const catGroups = computed(function () {
   const d = detail.def || {}
@@ -592,6 +572,7 @@ function diffText(diff) {
 }
 async function detectSearchPreset() {
   if (!host.value || searchPresetBusy.value) return
+  watchOpen.value = 'search'
   searchPresetBusy.value = true
   searchPresetMsg.value = '识别中…'
   try {
@@ -631,18 +612,6 @@ async function detectSearchPreset() {
     })
   } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
   finally { searchPresetBusy.value = false }
-}
-
-function goStep(key) {
-  if (key === 'cookie') {
-    const site = s.value || {}
-    if (site.cookieSaved && site.cookieReadable !== false && site.login !== 'ok') { selfcheckOne(site); return }
-    const input = document.getElementById('sd-cookie-input')
-    if (input) { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(function () { input.focus() }, 250) }
-    return
-  }
-  const el = document.getElementById(key === 'search' ? 'sd-sec-search' : 'sd-sec-publish')
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 function toggleWatch(kind) { watchOpen.value = watchOpen.value === kind ? '' : kind }
@@ -1091,16 +1060,4 @@ watch(host, function (h, old) {
 .watch-detail .sd-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid #f1f3f7; font-size: 11.5px; }
 .watch-detail .sd-row:first-child { border-top: 0; }
 @media (max-width: 600px) { .watch-grid { gap: 10px; } .watch-tile { width: 132px; flex-basis: 132px; } .watch-face { width: 132px; height: 132px; border-radius: 66px 66px 20px 20px; } .wf-num { font-size: 26px; } }
-.sd-next-block { margin-top: 12px; }
-.sd-next { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 2px; }
-.sd-next-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px;
-  border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; text-align: left; font: inherit; }
-.sd-next-item:hover { border-color: var(--accent); }
-.sd-next-item i { width: 6px; height: 6px; border-radius: 50%; background: #c9cedb; }
-.sd-next-item b { font-size: 11.5px; color: var(--ink); }
-.sd-next-item em { font-style: normal; font-size: 10px; color: var(--muted-2); }
-.sd-next-item.ok i { background: #12b76a; }
-.sd-next-item.warn i { background: #f79009; }
-.sd-next-item.bad i { background: #f04438; }
-@media (max-width: 600px) { .sd-next { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
