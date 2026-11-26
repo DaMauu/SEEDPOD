@@ -1040,10 +1040,10 @@ watch(host, function (h, old) {
   .site-expand .sd-scroll { display: block; overflow-y: auto; }
 }
 .site-expand .sd-compact.sd-single { grid-template-columns: minmax(0, 1fr); }
-.watch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 10px; }
-.watch-tile { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.watch-face { width: 100%; min-height: 118px; padding: 16px 10px 12px; border: 1px solid #e5e8f5;
-  border-radius: 999px 999px 22px 22px; background: linear-gradient(180deg, #f5f6ff, #fff);
+.watch-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.watch-tile { display: flex; flex-direction: column; gap: 8px; width: 148px; flex: 0 0 148px; }
+.watch-face { width: 148px; height: 148px; padding: 16px 10px 12px; border: 1px solid #e5e8f5;
+  border-radius: 74px 74px 22px 22px; background: linear-gradient(180deg, #f5f6ff, #fff);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .watch-face:hover, .watch-tile.open .watch-face { border-color: var(--accent); box-shadow: 0 6px 18px rgba(79,70,229,.08); }
@@ -1054,5 +1054,5 @@ watch(host, function (h, old) {
 .watch-detail { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fcfcfd; }
 .watch-detail .sd-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid #f1f3f7; font-size: 11.5px; }
 .watch-detail .sd-row:first-child { border-top: 0; }
-@media (max-width: 600px) { .watch-grid { gap: 10px; } .watch-face { min-height: 108px; padding-top: 14px; } .wf-num { font-size: 26px; } }
+@media (max-width: 600px) { .watch-grid { gap: 10px; } .watch-tile { width: 132px; flex-basis: 132px; } .watch-face { width: 132px; height: 132px; border-radius: 66px 66px 20px 20px; } .wf-num { font-size: 26px; } }
 </style>
