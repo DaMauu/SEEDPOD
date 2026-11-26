@@ -1,5 +1,12 @@
 # 更新日志
 
+## v0.7.702 · 2026-11-26
+
+### 清理无用示例
+- 删除 `pta/server/data/site-arch.csv`：306 行占位站，当前代码不读，容易误认成真实站点清单。
+- 真实旧清单只在本机 `pta/data/site-arch.local.csv`，已被 gitignore。
+- 全量 `run.sh` 通过。
+
 ## v0.7.701 · 2026-11-26
 
 ### 批量导入 cookie 脚本修复

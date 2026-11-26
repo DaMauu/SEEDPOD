@@ -1,6 +1,12 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-26 12:50（当前 v0.7.701 / BTSCHOOL 抓取回归；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-26 13:20（当前 v0.7.702 / 清理无用示例；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-26 清理无用示例（v0.7.702）
+
+- 删除 `pta/server/data/site-arch.csv`；306 行占位 host，当前 v2 没代码读。
+- 真实旧清单 `pta/data/site-arch.local.csv` 仍只在本机，gitignore。
+- 全量 `run.sh` 通过；已部署，GitHub 同步。
 
 ## 2026-11-26 BTSCHOOL 抓取回归（无代码变更）
 
