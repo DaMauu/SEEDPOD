@@ -555,9 +555,13 @@ function seedDb() {
 
     await check('SiteDetail 统一识别预览与保存', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-      let applyBody = null, mapBody = null, defBody = null;
+      let applyBody = null, mapBody = null, defBody = null, overrideBody = null;
       await page.route('**/api/crawl/preset/**/detect?preview=1', async function (route) {
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { search: { cats: { movie: ['401'] } }, detected: { cats: { movie: ['401'] }, catLabels: { 401: 'Movies' } }, ambiguous: [], unmatched: [], diff: {} } }) });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { search: { cats: { movie: ['401'] } }, detected: { cats: { movie: ['401'] }, catLabels: { 401: 'Movies', 9: 'Mystery', 411: 'Puzzle' } }, ambiguous: ['411'], unmatched: [{ dim: 'type', label: 'Mystery', value: '9' }], diff: {} } }) });
+      });
+      await page.route('**/api/crawl/preset/**/override', async function (route) {
+        overrideBody = JSON.parse(route.request().postData() || '{}');
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { detect: overrideBody.detect || {} } }) });
       });
       await page.route('**/api/crawl/preset/**/apply', async function (route) {
         applyBody = JSON.parse(route.request().postData() || '{}');
@@ -591,9 +595,16 @@ function seedDb() {
       await page.waitForTimeout(800);
       const preview = await page.locator('#site-detail .watch-detail').innerText();
       need(/搜索分类/.test(preview) && /发布分类/.test(preview) && /上传表单/.test(preview), '统一识别预览缺段：' + preview.slice(0, 200));
-      await page.locator('#site-detail .alias-row select').first().selectOption('电影');
+      const searchAlias = page.locator('#site-detail .search-alias-row select').first();
+      need(await searchAlias.count() === 1, '未识别搜索分类没有手动映射入口');
+      await searchAlias.selectOption('movie');
+      await page.waitForTimeout(150);
+      const mapped = await page.locator('#site-detail .detect-col').first().innerText();
+      need(mapped.indexOf('9 Mystery') >= 0, '手动映射后预览没更新：' + mapped);
+      await page.locator('#site-detail .publish-alias-row select').first().selectOption('电影');
       await page.locator('#site-detail .watch-detail button').filter({ hasText: '保存识别结果' }).click();
       await page.waitForTimeout(900);
+      need(overrideBody && overrideBody.detect && overrideBody.detect.map && overrideBody.detect.map.Mystery === 'movie', '搜索手动映射没写覆盖：' + JSON.stringify(overrideBody));
       need(applyBody && applyBody.detected && applyBody.detected.cats && applyBody.detected.cats.movie[0] === '401', '搜索识别没保存：' + JSON.stringify(applyBody));
       need(mapBody && mapBody.cat && mapBody.cat.movie === '1' && mapBody.cat['电影'] === '9', '发布识别/别名没保存：' + JSON.stringify(mapBody));
       need(mapBody.labels && mapBody.labels.Mystery === '电影', '每站别名没保存：' + JSON.stringify(mapBody.labels));

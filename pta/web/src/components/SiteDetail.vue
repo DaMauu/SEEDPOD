@@ -92,6 +92,21 @@
                         <h4>搜索分类 <b>{{ searchCount }}</b></h4>
                         <template v-if="detectResult && detectResult.search">
                           <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                          <div v-for="u in searchUnmatchedTypes" :key="'su' + u.label" class="sd-row alias-row search-alias-row">
+                            <span>{{ u.label }}</span>
+                            <select v-model="searchAlias[u.label]" class="select slim">
+                              <option value="">不映射</option>
+                              <option v-for="t in searchTypeChoices" :key="t.key" :value="t.key">{{ t.label }}</option>
+                            </select>
+                          </div>
+                          <div v-for="id in searchAmbiguousIds" :key="'sa' + id" class="sd-row alias-row search-alias-row">
+                            <span>{{ id }} {{ searchCatLabel(id) }}</span>
+                            <select v-model="searchAmbiguousType[id]" class="select slim">
+                              <option value="">不写</option>
+                              <option value="__skip__">跳过旧数据</option>
+                              <option v-for="t in searchTypeChoices" :key="t.key" :value="t.key">{{ t.label }}</option>
+                            </select>
+                          </div>
                           <div v-if="previewUnmatchedCount" class="sd-row"><span>未识别</span><b>{{ previewUnmatchedSummary }}</b></div>
                           <details v-if="previewUnmatchedCount" class="sd-unmatched">
                             <summary>展开未识别标签（{{ previewUnmatchedCount }}）</summary>
@@ -112,14 +127,14 @@
                           <div v-if="detectResult.publish.fieldKind === 'genre'" class="sd-row"><span>状态</span><b>题材/类型字段，不自动映射</b></div>
                           <div v-if="detectResult.publish.notes && detectResult.publish.notes.length" class="sd-row"><span>组合标签</span><b>{{ detectResult.publish.notes.join('、') }}</b></div>
                           <div v-if="detectResult.publish.unmatched && detectResult.publish.unmatched.length" class="sd-row"><span>未匹配</span><b>{{ detectResult.publish.unmatched.slice(0, 10).join('、') }}</b></div>
-                          <div v-for="label in detectResult.publish.unmatched" :key="'u' + label" class="sd-row alias-row">
+                          <div v-for="label in detectResult.publish.unmatched" :key="'u' + label" class="sd-row alias-row publish-alias-row">
                             <span>{{ label }}</span>
                             <select v-model="publishAlias[label]" class="select slim">
                               <option value="">不映射</option>
                               <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
                             </select>
                           </div>
-                          <div v-for="c in detectResult.publish.choices || []" :key="'c' + c.label" class="sd-row alias-row">
+                          <div v-for="c in detectResult.publish.choices || []" :key="'c' + c.label" class="sd-row alias-row publish-alias-row">
                             <span>{{ c.label }}</span>
                             <select v-model="publishAlias[c.label]" class="select slim">
                               <option value="">按优先级：{{ c.chosen }}</option>
@@ -234,6 +249,8 @@ const detectAllBusy = ref(false)
 const detectAllMsg = ref('')
 const detectResult = ref(null)
 const publishAlias = ref({})
+const searchAlias = ref({})
+const searchAmbiguousType = ref({})
 const detectSaving = ref(false)
 const detectSaveMsg = ref('')
 const presetPreview = ref(null)
@@ -241,24 +258,89 @@ const busy = reactive({ selfcheck: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
 
+const searchTypeChoices = computed(function () {
+  const types = runtimePresets.value.types || {}
+  return Object.keys(types).map(function (key) { return { key: key, label: types[key] } })
+})
+function searchCatLabel(id) {
+  const labels = (presetPreview.value && presetPreview.value.labels) || {}
+  return labels[String(id)] || String(id)
+}
+const searchAmbiguousIds = computed(function () {
+  const r = detectResult.value
+  const ids = (r && r.search && r.search.ambiguous) || []
+  return ids.map(String)
+})
+const searchUnmatchedTypes = computed(function () {
+  const list = (presetPreview.value && presetPreview.value.unmatched) || []
+  return list.filter(function (x) { return x && x.dim === 'type' && x.label })
+})
+const pendingSearchUnmatched = computed(function () {
+  return searchUnmatchedTypes.value.filter(function (x) { return !searchAlias.value[x.label] })
+})
+const pendingSearchAmbiguous = computed(function () {
+  return searchAmbiguousIds.value.filter(function (id) { return !searchAmbiguousType.value[id] })
+})
+/* 预览里把人工选择的类型合并进来；保存时后端会用同一套覆盖重算。 */
+const effectiveSearchCats = computed(function () {
+  const p = presetPreview.value
+  const base = (p && p.cats) || {}
+  const labels = (p && p.labels) || {}
+  const out = {}
+  Object.keys(base).forEach(function (k) {
+    const list = (base[k] || []).map(String)
+    if (list.length) out[k] = list
+  })
+  function removeId(id) {
+    Object.keys(out).forEach(function (k) {
+      out[k] = out[k].filter(function (x) { return x !== String(id) })
+      if (!out[k].length) delete out[k]
+    })
+  }
+  function addId(type, id) {
+    if (!type || type === '__skip__') return
+    const list = out[type] || (out[type] = [])
+    if (list.indexOf(String(id)) < 0) list.push(String(id))
+  }
+  Object.keys(searchAlias.value).forEach(function (label) {
+    const type = String(searchAlias.value[label] || '')
+    if (!type) return
+    Object.keys(labels).forEach(function (id) {
+      if (String(labels[id]) !== String(label)) return
+      removeId(id)
+      addId(type, id)
+    })
+  })
+  Object.keys(searchAmbiguousType.value).forEach(function (id) {
+    const type = String(searchAmbiguousType.value[id] || '')
+    if (!type) return
+    removeId(id)
+    addId(type, id)
+  })
+  return out
+})
 const previewGroups = computed(() => {
   const p = presetPreview.value
   if (!p) return []
   const labels = p.labels || {}
-  return Object.keys(p.cats || {}).map(function (k) {
-    return { key: k, name: typeLabelOf(k), ids: (p.cats[k] || []).map(function (id) { return id + (labels[id] ? ' ' + labels[id] : '') }).join('、') }
+  const cats = effectiveSearchCats.value
+  return Object.keys(cats).map(function (k) {
+    return { key: k, name: typeLabelOf(k), ids: (cats[k] || []).map(function (id) { return id + (labels[id] ? ' ' + labels[id] : '') }).join('、') }
   })
 })
-const previewUnmatchedGroups = computed(() => {
+const previewUnmatchedList = computed(function () {
   const list = (presetPreview.value && presetPreview.value.unmatched) || []
+  return list.filter(function (x) { return !(x.dim === 'type' && searchAlias.value[x.label]) })
+})
+const previewUnmatchedGroups = computed(() => {
+  const list = previewUnmatchedList.value
   const names = { type: '分类', medium: '媒介', resolution: '分辨率', codec: '编码', audio: '音频', discount: '优惠', team: '制作组', restriction: '限制' }
   const groups = {}
   list.forEach(function (x) { const d = names[x.dim] || x.dim || '其它'; (groups[d] = groups[d] || []).push(x.label) })
   return Object.keys(groups).map(function (d) { return { dim: d, labels: groups[d].join('、'), count: groups[d].length } })
 })
-const previewUnmatchedCount = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).length)
+const previewUnmatchedCount = computed(() => previewUnmatchedList.value.length)
 const previewUnmatchedSummary = computed(() => previewUnmatchedGroups.value.map(function (g) { return g.dim + ' ' + g.count }).join(' · '))
-const previewAmbiguous = computed(() => ((presetPreview.value && presetPreview.value.ambiguous) || []).join('、'))
 
 const cookieStats = computed(function () {
   const site = s.value || {}
@@ -291,7 +373,7 @@ const coverStats = computed(function () {
   return form.override ? { state: 'warn', num: 'ON', text: '单独设置' } : { state: 'ok', num: 'OFF', text: '跟随全局' }
 })
 const searchCount = computed(function () {
-  if (detectResult.value && detectResult.value.search) return Object.keys((detectResult.value.search.search && detectResult.value.search.search.cats) || {}).length
+  if (detectResult.value && detectResult.value.search) return Object.keys(effectiveSearchCats.value).length
   return catGroups.value.length
 })
 const publishCount = computed(function () {
@@ -308,11 +390,11 @@ const detectValidation = computed(function () {
   const errors = []
   const warnings = []
   const search = r.search
-  const searchCats = (search && search.search && search.search.cats) || {}
+  const searchCats = effectiveSearchCats.value
   if (!search) errors.push('搜索页识别失败')
   else if (!Object.keys(searchCats).length) errors.push('搜索分类 0 类')
-  if (search && search.ambiguous && search.ambiguous.length) warnings.push('搜索冲突 ID ' + search.ambiguous.length + ' 个未写')
-  if (search && search.unmatched && search.unmatched.length) warnings.push('未识别标签 ' + search.unmatched.length + ' 个')
+  if (search && pendingSearchAmbiguous.value.length) warnings.push('搜索冲突 ID ' + pendingSearchAmbiguous.value.length + ' 个未处理')
+  if (search && previewUnmatchedCount.value) warnings.push('未识别标签 ' + previewUnmatchedCount.value + ' 个')
   const pub = r.publish
   const upload = (pub && pub.upload) || {}
   const fields = upload.fields || {}
@@ -332,7 +414,7 @@ const detectSaveParts = computed(function () {
   const r = detectResult.value
   if (!r) return []
   const parts = []
-  if (r.search && Object.keys((r.search.search && r.search.search.cats) || {}).length) parts.push('搜索')
+  if (r.search && Object.keys(effectiveSearchCats.value).length) parts.push('搜索')
   const pub = r.publish
   if (pub && pub.fieldKind !== 'genre' && Object.keys(effectivePublishCat.value).length) parts.push('发布')
   if (pub && pub.upload && Object.keys(pub.upload.fields || {}).length && pub.upload.fileField && pub.upload.path) parts.push('上传')
@@ -636,6 +718,8 @@ async function detectAll() {
   detectAllMsg.value = '识别中…'
   detectResult.value = null
   publishAlias.value = {}
+  searchAlias.value = {}
+  searchAmbiguousType.value = {}
   presetPreview.value = null
   const out = { search: null, publish: null, publishError: null, errors: [] }
   try {
@@ -659,11 +743,35 @@ async function detectAll() {
     }
   } catch (e) { out.errors.push('上传请求发不出去') }
   detectResult.value = out
-  const n = Object.keys((out.search && out.search.search && out.search.search.cats) || {}).length
+  const n = Object.keys(effectiveSearchCats.value).length
   const p = Object.keys((out.publish && out.publish.cat) || {}).length
   const u = Object.keys((out.publish && out.publish.upload && out.publish.upload.fields) || {}).length
   detectAllMsg.value = '搜索 ' + n + ' 类 · 发布 ' + p + ' 类 · 上传 ' + u + ' 字段' + (out.errors.length ? ' · ' + out.errors.length + ' 段失败' : '')
   detectAllBusy.value = false
+}
+
+function searchDetectPayload(r) {
+  const base = (r && r.search && r.search.search && r.search.search.detect) || {}
+  const map = Object.assign({}, base.map || {})
+  const skipSet = new Set((Array.isArray(base.skip) ? base.skip : []).map(String))
+  Object.keys(searchAlias.value).forEach(function (label) {
+    const type = String(searchAlias.value[label] || '')
+    if (type) map[label] = type
+    else delete map[label]
+  })
+  Object.keys(searchAmbiguousType.value).forEach(function (id) {
+    const type = String(searchAmbiguousType.value[id] || '')
+    if (!type) { delete map[id]; skipSet.delete(String(id)); return }
+    if (type === '__skip__') { delete map[id]; skipSet.add(String(id)); return }
+    map[id] = type
+    skipSet.delete(String(id))
+  })
+  const detect = Object.assign({}, base)
+  if (Object.keys(map).length) detect.map = map
+  else delete detect.map
+  if (skipSet.size) detect.skip = Array.from(skipSet)
+  else delete detect.skip
+  return detect
 }
 
 async function saveDetected() {
@@ -673,13 +781,27 @@ async function saveDetected() {
   detectSaveMsg.value = '保存中…'
   const errors = []
   if (r.search && r.search.detected) {
-    try {
-      const a = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/apply', {
-        method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ detected: r.search.detected })
-      })).json()
-      if (!a || !a.ok) errors.push('搜索：' + String((a && a.error && a.error.message) || '保存失败'))
-    } catch (e) { errors.push('搜索保存请求发不出去') }
+    const base = (r.search.search && r.search.search.detect) || {}
+    const detect = searchDetectPayload(r)
+    let overrideOk = true
+    if (JSON.stringify(detect) !== JSON.stringify(base)) {
+      try {
+        const o = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/override', {
+          method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ detect: detect })
+        })).json()
+        if (!o || !o.ok) { errors.push('搜索覆盖：' + String((o && o.error && o.error.message) || '保存失败')); overrideOk = false }
+      } catch (e) { errors.push('搜索覆盖请求发不出去'); overrideOk = false }
+    }
+    if (overrideOk) {
+      try {
+        const a = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/apply', {
+          method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ detected: r.search.detected })
+        })).json()
+        if (!a || !a.ok) errors.push('搜索：' + String((a && a.error && a.error.message) || '保存失败'))
+      } catch (e) { errors.push('搜索保存请求发不出去') }
+    }
   }
   if (r.publish) {
     const genre = r.publish.fieldKind === 'genre'

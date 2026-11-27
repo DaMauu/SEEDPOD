@@ -70,6 +70,11 @@ check('站点覆盖：skip / map / engine', function () {
   const cleaned = mergeWithOverrides({ cats: { music: ['408'] }, filters: {} }, d, { skip: ['408'] }, { keyOf: presets.keyOf });
   need(!(cleaned.merged.search.cats.music || []).length, 'skip 没清掉已保存的旧分类：' + JSON.stringify(cleaned.merged.search.cats));
   need(!(cleaned.merged.search.catLabels || {})['408'], 'skip 没清掉分类原文标签：' + JSON.stringify(cleaned.merged.search.catLabels));
+  const manual = { cats: {}, catLabels: { '9': 'Mystery' }, unmatched: [{ dim: 'type', label: 'Mystery', value: '9' }], catMode: 'key', values: {}, params: {}, labels: {} };
+  const mappedLabel = applyOverrides(manual, { map: { Mystery: 'movie' } }, { keyOf: presets.keyOf });
+  need(JSON.stringify(mappedLabel.cats.movie) === JSON.stringify(['9']) && mappedLabel.unmatched.length === 0, '按标签映射没生效：' + JSON.stringify(mappedLabel));
+  const skippedUn = applyOverrides(manual, { skip: ['9'] }, { keyOf: presets.keyOf });
+  need(!skippedUn.cats.movie && skippedUn.unmatched.length === 0, '跳过未识别 ID 没生效：' + JSON.stringify(skippedUn));
 });
 
 check('识别前后差异能报新增/移除', function () {

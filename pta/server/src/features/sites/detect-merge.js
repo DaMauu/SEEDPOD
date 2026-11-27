@@ -106,6 +106,15 @@ function applyOverrides(detected, overrides, opts) {
   const labels = {};
   Object.keys(d.catLabels || {}).forEach(function (id) { if (keep[String(id)]) labels[String(id)] = String(d.catLabels[id] || ''); });
   d.catLabels = labels;
+  /* 已经通过 map/skip 处理过的分类，不再挂在「未识别」里。 */
+  const mapKeys = Object.keys(map);
+  d.unmatched = (Array.isArray(d.unmatched) ? d.unmatched : []).filter(function (x) {
+    if (!x || x.dim !== 'type') return true;
+    const id = String(x.value || '');
+    if (id && (skipSet[id] || keep[id])) return false;
+    if (mapKeys.some(function (k) { return String(k) === String(x.label || ''); })) return false;
+    return true;
+  });
   return d;
 }
 
