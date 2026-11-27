@@ -33,13 +33,15 @@ function guessTemplate(name, type, label, placeholder) {
   if (/分类|类别|类型|category|cat|\btype\b/.test(s)) return '{catId}';
   if (/匿名|anonymous|\banon\b/.test(s)) return '{anonymous}';
   if (/来源|媒介|source|medium/.test(s)) return '{source}';
-  if (/编码|视频编码|codec|video.?code/.test(s)) return '{codec}';
+  /* 音频字段优先于视频编码：audiocodec_sel 同时含 audio 和 codec，
+     不能因为先命中 codec 就被写成视频编码模板。 */
+  if (/音轨|音频|audiocodec|audio[\s_-]?codec|audio[\s_-]?(format|sel|quality)?(?!book)/.test(s)) return '{audio}';
+  if (/视频编码|编码|codec|video.?code/.test(s)) return '{codec}';
   if (/分辨率|resolution|\bres\b/.test(s)) return '{resolution}';
   if (/制作组|压制组|team|group/.test(s)) return '{team}';
   if (/年份|year/.test(s)) return '{year}';
   if (/imdb/i.test(s)) return '{imdb}';
   if (/截图|图片|shots?|image|poster/.test(s)) return '{shots}';
-  if (/音轨|audio/.test(s)) return '{audio}';
   if (/标题|片名|title|\bname\b/.test(s)) return '{title}';
   return '';
 }

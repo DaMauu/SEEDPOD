@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.722 · 2026-11-27
+
+### 音频编码不再被当成视频编码
+- 上传表单解析时先判断音轨/音频，再判断视频编码；`audiocodec_sel` 不再被写成 `{codec}`。
+- 蟹黄堡真实上传页复测：30 个字段，只有 `audiocodec_sel[4]`、`audiocodec_sel[6]` 从 `{codec}` 修正为 `{audio}`。
+- 补表单夹具：`audiocodec_sel` → `{audio}`，`codec_sel` → `{codec}`，`audiobook` 不误判。
+- 全量 `run.sh` 通过。
+
 ## v0.7.721 · 2026-11-27
 
 ### 搜索分类支持 WebUI 手动映射

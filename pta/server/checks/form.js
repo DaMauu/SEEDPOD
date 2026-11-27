@@ -47,6 +47,10 @@ check('外部 ID 和存在标记不乱套模板', function () {
   need(form.guessTemplate('tmdb_movie_id', 'hidden', 'TMDB ID', '') === '', 'tmdb 不该有模板');
   need(form.guessTemplate('title_exists_on_imdb', 'checkbox', 'IMDb exists', '') === '', '存在标记不该复用 ID 模板');
   need(form.guessTemplate('category_id', 'select', '类别', '') === '{catId}', 'category_id 仍应识别');
+  need(form.guessTemplate('audiocodec_sel[4]', 'select', '音频编码', '') === '{audio}', 'audiocodec 应映射到音频');
+  need(form.guessTemplate('audio_sel', 'select', '音轨', '') === '{audio}', 'audio_sel 应映射到音频');
+  need(form.guessTemplate('codec_sel[4]', 'select', '视频编码', '') === '{codec}', 'codec_sel 应映射到视频编码');
+  need(form.guessTemplate('audiobook', 'text', '有声书', '') === '', 'audiobook 不该当音频编码');
 });
 
 check('select 选项保留', function () {
