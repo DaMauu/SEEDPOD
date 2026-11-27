@@ -21,6 +21,13 @@ check('分类 ID 和分类模式能识别', function () {
   need(r.catMode === 'key', '分类模式应为 key：' + r.catMode);
 });
 
+check('参数名不当成未识别标签', function () {
+  const html = '<a href="?cat401=1">Movies/电影</a><input type="checkbox" name="cat401" value="1"><select name="medium"><option value="1">medium1</option><option value="2">Blu-ray</option></select>';
+  const r = parseSearchPreset(html, presets);
+  need(r.cats.movie && r.cats.movie[0] === '401', '分类没识别：' + JSON.stringify(r.cats));
+  need(!r.unmatched.some(function (x) { return /^(cat|medium)\d+$/.test(x.label) }), '参数名进了未识别：' + JSON.stringify(r.unmatched));
+});
+
 check('原盘/Remux 不再当内容类型', function () {
   need(mapType('原盘', presets) === '', '原盘不该是内容类型：' + mapType('原盘', presets));
   need(mapType('Remux', presets) === '', 'Remux 不该是内容类型：' + mapType('Remux', presets));

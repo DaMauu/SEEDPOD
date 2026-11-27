@@ -107,13 +107,17 @@ function parseSearchPreset(html, presets) {
   const labels = {};
   const unmatched = [];
   let catMode = '';
+  function isParamLabel(label) {
+    return /^(?:cat|medium|standard|resolution|codec|audio|team|source|spstate|discount|restriction)[-_]?\d+$/i.test(String(label || '').trim());
+  }
   function addUnmatched(dim, label, value) {
     const text = String(label || '').trim();
-    if (!text) return;
+    if (!text || isParamLabel(text)) return;
     if (unmatched.some(function (x) { return x.dim === dim && x.label === text; })) return;
     unmatched.push({ dim: dim, label: text, value: value == null ? '' : String(value) });
   }
   function addCat(label, id) {
+    if (isParamLabel(label)) return;
     const key = mapType(label, presets);
     if (!key) { addUnmatched('type', label, id); return; }
     if (id == null || id === '') return;
@@ -122,6 +126,7 @@ function parseSearchPreset(html, presets) {
     if (catLabels[String(id)] == null) catLabels[String(id)] = String(label || '');
   }
   function addOpt(dim, fieldName, label, val) {
+    if (isParamLabel(label)) return;
     const key = mapDim(dim, label, presets);
     if (!key) { addUnmatched(dim, label, val); return; }
     if (val == null || val === '') return;
