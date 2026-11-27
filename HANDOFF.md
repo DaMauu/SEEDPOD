@@ -1,6 +1,63 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-28 21:10（当前 v0.7.726 / 全站体检完成；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-28 22:10（当前 v0.7.726，已部署；新窗口先读「当前交接」）
+
+## 当前交接（先读这一段）
+
+### 现在的状态
+
+- 版本：`0.7.726`，提交 `626ec726`；本地与 GitHub 一致，工作区干净。
+- 线上：`/api/health` 返回 200；`seedpod`、`opencode-tg` 均为 active。
+- 后台：全站体检已结束，无运行中的检查任务。
+- Telegram：动态进度卡已改为百分比；进度文件 `~/.config/opencode/live-progress.json`，用 `scripts/set-progress.js` 更新，过期自动回退“工作中”。
+
+### 最近做完
+
+1. 搜索/发布/上传识别三合一；搜索分类可手动映射，发布分类可写每站别名，上传字段可手动编辑。
+2. 上传分类支持下拉、复选、单选、多选组；同名 checkbox/radio 合并；繁体标签归一。
+3. 音频编码修正：`audiocodec_sel` 写 `{audio}`，不再被视频 codec 抢走。
+4. 全站体检：306 站、404 次请求；结果和统计在 `pta/docs/SITE-AUDIT-RESULTS-20261128.md`。
+5. Telegram 动态进度百分比，补丁在 `scripts/patch-telegram-bot.sh`，进度写入 `scripts/set-progress.js`。
+
+### 体检结论（只记事实）
+
+- 完全正常 1 个；部分可用 106；登录失效 46；无 cookie 102；限流/403 8；其他错误 43。
+- 上传表单 86 个；分类控件 75 个；复选/单选组 1 个；多分类字段 15 个；无表单 25 个。
+- 发布映射重复 22 个站；新旧映射不同 80 个站。
+- 大头不是解析器：148 个站缺 cookie/登录失效，76 个站路径 404。
+- 共性误判：`medium:CD` 32 站、`resolution:Other` 15 站、音乐 `Release type` 被当内容分类。
+- 原始页面和每站明细在本地 `data/site-audit/`，含敏感信息，不入库、不复制到聊天。
+
+### 下一步（按顺序）
+
+1. 修共性误判：音乐 release type 不再当内容分类；CD/SACD/Vinyl 等音乐媒介补别名或单列；`Other/2K` 等分辨率别名；`Leech Status/Neutral Leech/Either` 不再当优惠。
+2. 修路径：给 Gazelle/Unit3D 补搜索页/上传页默认路径；仍 404 的单站改。
+3. 处理凭据：102 个无 cookie、46 个登录失效先重新导入；不要当解析器问题。
+4. 上传表单：25 个无表单先确认权限；86 个有表单的逐站预览后再写 `publish.upload`。
+5. 单站差异：15 个多分类字段、4 个题材字段、11 个无分类控件。
+
+### 关键文件
+
+- 识别引擎：`pta/server/src/features/sites/search-preset.js`、`pta/server/src/features/sites/detect-merge.js`、`pta/server/src/http/routes-maps.js`
+- 表单解析：`pta/server/src/infra/form.js`
+- 站点详情 UI：`pta/web/src/components/SiteDetail.vue`、`UploadFieldEditor.vue`、`pta/web/src/composables/useSearchMapping.js`
+- 体检工具：`pta/server/scripts/audit-site-detection.js`、`summarize-site-audit.js`
+- 体检说明/结果：`pta/docs/SITE-AUDIT.md`、`pta/docs/SITE-AUDIT-RESULTS-20261128.md`
+- Telegram：`scripts/patch-telegram-bot.sh`、`scripts/set-progress.js`
+
+### 新窗口开场
+
+把下面这段直接发给我：
+
+> 先读 `HANDOFF.md` 的「当前交接」、`pta/docs/SITE-AUDIT-RESULTS-20261128.md` 和当前 `git diff`，按里面的下一步继续。不要重述历史；需要细节时再读对应文件。
+
+### 上下文怎么保
+
+- 事实只认文件：`HANDOFF.md`（状态/下一步）、`DECISIONS.md`（定过的规则）、`CHANGELOG.md`（用户可见变化）、体检结果页（统计）。
+- 每轮结束写三行：做完 / 在做 / 卡住；不要靠聊天记忆。
+- 长任务把中间产物落本地文件，聊天只留路径和结论；原始 HTML、cookie、日志不进仓库。
+- 换窗口前先 `git status`，确保没有未提交改动；有就先提交/写进 HANDOFF。
+- 新窗口先跑 `bash scripts/sync-check.sh` 和 `bash pta/server/checks/run.sh`，确认基线再动代码。
 
 ## 2026-11-28 全站识别体检结果
 
