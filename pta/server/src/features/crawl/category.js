@@ -1,5 +1,6 @@
 /* 分类政策：把站点分类名归一到流程页的「类型」。
    只做纯映射，不发请求；抓取和流程页共用，避免两边规则不一致。 */
+const { toSimplified } = require('../presets/zh');
 const TYPE_RULES = [
   ['电影', /电影|movie|film/i],
   ['剧集', /剧集|电视剧|tv\s*series|series|episode/i],
@@ -25,9 +26,10 @@ const TYPE_RULES = [
 ];
 
 function typeOf(label) {
-  const s = String(label == null ? '' : label).replace(/\s+/g, '');
+  const text = toSimplified(label);
+  const s = text.replace(/\s+/g, '');
   for (const pair of TYPE_RULES) {
-    if (pair[1].test(String(label == null ? '' : label)) || pair[1].test(s)) return pair[0];
+    if (pair[1].test(text) || pair[1].test(s)) return pair[0];
   }
   return '';
 }

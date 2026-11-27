@@ -14,7 +14,7 @@ const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_PRESET = path.join(__dirname, '..', '..', '..', 'pack');
 const SEARCH_DIMS = ['medium', 'resolution', 'discount', 'restriction', 'codec', 'audio', 'team'];
 const ALWAYS_DIM = ['medium', 'resolution', 'discount', 'restriction'];
-const SEARCH_KNOWN = ['path', 'params', 'catMode', 'catSlot', 'type', 'medium', 'codec', 'audio',
+const SEARCH_KNOWN = ['path', 'params', 'catMode', 'catSlot', 'type', 'catLabels', 'medium', 'codec', 'audio',
   'resolution', 'discount', 'restriction', 'team', 'selected', 'labels', 'limits', 'downloadLink', 'refreshCron'];
 const PUBLISH_KNOWN = ['upload', 'verify', 'type', 'medium', 'codec', 'audio', 'resolution', 'discount',
   'restriction', 'team', 'tagMap', 'tagValue', 'form', 'valueMaps', 'baseValueMaps'];
@@ -69,12 +69,14 @@ function makeSiteStore(dataDir, opts) {
   }
   function searchFromPersisted(s0) {
     const s = s0 && typeof s0 === 'object' ? s0 : {};
+    const cats = canonCats(s.type || s.cats);
     const out = {
       path: String(s.path || ''),
       params: s.params && typeof s.params === 'object' && !Array.isArray(s.params) ? clone(s.params) : {},
       catMode: String(s.catMode || 'single'),
       catSlot: String(s.catSlot || ''),
-      cats: canonCats(s.type || s.cats),
+      cats: cats,
+      catLabels: cleanCatLabels(s.catLabels, cats),
       filters: {}
     };
     const values = {}, params = {}, selected = {}, labels = {};
@@ -173,13 +175,16 @@ function makeSiteStore(dataDir, opts) {
     const flt = s.filters || {};
     const values = flt.values || {};
     const params = flt.params || {};
+    const cats = canonCats(s.cats);
     const out = {
       path: String(s.path || ''),
       params: s.params && typeof s.params === 'object' && !Array.isArray(s.params) ? clone(s.params) : {},
       catMode: String(s.catMode || 'single'),
       catSlot: String(s.catSlot || ''),
-      type: canonCats(s.cats)
+      type: cats
     };
+    const catLabels = cleanCatLabels(s.catLabels, cats);
+    if (Object.keys(catLabels).length) out.catLabels = catLabels;
     ALWAYS_DIM.forEach(function (dim) { out[dim] = {}; });
     SEARCH_DIMS.forEach(function (dim) {
       const src = values[dim];
@@ -451,6 +456,19 @@ function makeSiteStore(dataDir, opts) {
     });
     return out;
   }
+  /* 分类 ID 对应的站点原文标签（如「电影 - 中国香港」）；只保留仍存在的 ID。 */
+  function cleanCatLabels(labels, cats) {
+    const out = {};
+    const ids = {};
+    Object.keys(cats || {}).forEach(function (t) { (cats[t] || []).forEach(function (id) { ids[String(id)] = true; }); });
+    if (!labels || typeof labels !== 'object' || Array.isArray(labels)) return out;
+    Object.keys(labels).slice(0, 2000).forEach(function (id) {
+      const key = String(id);
+      const val = String(labels[id] == null ? '' : labels[id]).trim().slice(0, 80);
+      if (ids[key] && val) out[key] = val;
+    });
+    return out;
+  }
   function canonMap(map) {
     const out = {};
     if (!map || typeof map !== 'object' || Array.isArray(map)) return out;
@@ -541,6 +559,7 @@ function makeSiteStore(dataDir, opts) {
   function canonSearch(search) {
     const s0 = clone(search || {});
     s0.cats = canonCats(s0.cats);
+    s0.catLabels = cleanCatLabels(s0.catLabels, s0.cats);
     s0.types = typesOfCats(s0.cats);
     s0.filters = canonFilters(s0.filters);
     return s0;

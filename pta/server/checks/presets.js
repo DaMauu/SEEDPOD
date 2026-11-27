@@ -42,6 +42,13 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   });
 
   await check('中文名/旧 key/英文别名都能归一到同一个 key', async function () {
+    need(presets.keyOf('电影') === 'movie' && presets.keyOf('Movies') === 'movie' && presets.keyOf('film') === 'movie', '电影别名不对');
+    need(presets.keyOf('紀錄片') === 'documentary' && presets.keyOf('動畫') === 'anime', '繁体类型没归一：' + presets.keyOf('紀錄片') + '/' + presets.keyOf('動畫'));
+    need(presets.keyOfDim('discount', '免費') === 'free', '繁体免费没归一：' + presets.keyOfDim('discount', '免費'));
+    need(presets.keyOfDim('discount', '半價') === 'half', '繁体半价没归一：' + presets.keyOfDim('discount', '半價'));
+    need(presets.keyOfDim('discount', '兩倍') === '2x', '繁体两倍没归一：' + presets.keyOfDim('discount', '兩倍'));
+    need(presets.keyOfDim('restriction', '禁轉') === 'no_repost' && presets.keyOfDim('restriction', '限轉') === 'limited_repost', '繁体限制没归一');
+    need(presets.keyOfDim('medium', '藍光') === 'bluray', '繁体蓝光没归一');
     const cases = [['电影', 'movie'], ['电视剧', 'tv'], ['纪录', 'documentary'], ['体育', 'sports'],
       ['电子书', 'ebook'], ['动画', 'anime'], ['演唱', 'concert'], ['其它', 'other'], ['doc', 'documentary'], ['sport', 'sports']];
     cases.forEach(function (c) { need(presets.keyOf(c[0]) === c[1], c[0] + ' 没归一到 ' + c[1] + '：' + presets.keyOf(c[0])); });

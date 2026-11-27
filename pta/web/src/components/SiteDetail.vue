@@ -99,7 +99,10 @@
                           </details>
                         </template>
                         <template v-else-if="catGroups.length">
-                          <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                          <div v-for="g in catGroups" :key="g.name" class="sd-row" :title="g.multi ? '同一类型的多个站点子分类（如地区/语言），搜索时会一起带上' : ''">
+                            <span>{{ g.name }}<i v-if="g.multi" class="sd-count">{{ g.count }}</i></span>
+                            <b>{{ g.ids }}</b>
+                          </div>
                         </template>
                         <div v-else class="sd-row"><span>状态</span><b>还没有搜索分类</b></div>
                       </div>
@@ -400,7 +403,16 @@ const catGroups = computed(function () {
   const d = detail.def || {}
   const p = detail.preset || {}
   const groups = (p.cats && Object.keys(p.cats).length ? p.cats : d.cats) || {}
-  return Object.keys(groups).map(function (name) { return { name: runtimePresets.value.types[name] || name, ids: (groups[name] || []).join(', ') || '—' } })
+  const labels = p.catLabels || {}
+  return Object.keys(groups).map(function (name) {
+    const ids = (groups[name] || []).map(String)
+    return {
+      name: runtimePresets.value.types[name] || name,
+      ids: ids.map(function (id) { return id + (labels[id] ? ' ' + labels[id] : '') }).join('、') || '—',
+      count: ids.length,
+      multi: ids.length > 1
+    }
+  })
 })
 
 
@@ -751,6 +763,7 @@ watch(host, function (h, old) {
 .sd-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12.5px; color: var(--muted); padding: 6px 0; }
 .sd-row + .sd-row { border-top: 1px solid #f5f6f8; }
 .sd-row b { color: var(--ink); font-weight: 500; }
+.sd-count { display: inline-block; margin-left: 5px; padding: 0 5px; border-radius: 8px; background: #eef1f8; color: #6a7183; font-style: normal; font-size: 9.5px; line-height: 16px; vertical-align: 1px; }
 .sd-recent { display: grid; grid-template-columns: 1fr 84px 74px; gap: 12px; align-items: center; padding: 8px 0; font-size: 12.5px; }
 .sd-recent + .sd-recent { border-top: 1px solid #f5f6f8; }
 .sd-recent .t-main { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

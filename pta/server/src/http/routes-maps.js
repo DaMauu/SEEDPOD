@@ -1,4 +1,5 @@
 /* 站点映射总表接口：读/写站点 publish.catMap，按上传表单自动识别大分类。 */
+const { toSimplified } = require('../features/presets/zh');
 
 const CAT = [
   ['电影', /电影|movie|film|影片|影\s*片|cinema/i],
@@ -28,7 +29,7 @@ function looksGenre(options) {
   const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
   if (list.length < 3) return false;
   const onlyGenre = list.filter(function (o) {
-    const label = String(o.label || '');
+    const label = toSimplified(String(o.label || ''));
     return GENRE.test(label) && !CONTENT.test(label);
   }).length;
   return onlyGenre >= 2;
@@ -47,7 +48,7 @@ function pickField(fields, names, labelRe) {
   const list = Array.isArray(fields) ? fields : [];
   return list.filter(function (f) {
     if (names.indexOf(String(f.name || '').toLowerCase()) >= 0) return true;
-    return labelRe && labelRe.test(String(f.label || ''));
+    return labelRe && labelRe.test(toSimplified(String(f.label || '')));
   })[0] || null;
 }
 
@@ -64,9 +65,10 @@ function matchCatsDetailed(options, aliases) {
   const aliasMap = aliases && typeof aliases === 'object' ? aliases : {};
   const typeNames = CAT.map(function (p) { return p[0]; });
   list.forEach(function (o) {
-    const raw = String(o.label || '');
+    const display = String(o.label || '');
+    const raw = toSimplified(display);
     const squeezed = squeezeLabel(raw);
-    const alias = Object.keys(aliasMap).filter(function (k) { return squeezeLabel(k) === squeezed; })[0];
+    const alias = Object.keys(aliasMap).filter(function (k) { return squeezeLabel(toSimplified(k)) === squeezed; })[0];
     const aliasType = alias && typeNames.indexOf(String(aliasMap[alias])) >= 0 ? String(aliasMap[alias]) : '';
     if (aliasType) {
       used[String(o.value)] = true;
@@ -89,8 +91,8 @@ function matchCatsDetailed(options, aliases) {
     const chosen = top[0].type;
     if (out[chosen] == null) out[chosen] = id;
     if (top.length > 1) {
-      notes.push(raw + ' → ' + chosen + '（命中 ' + top.map(function (x) { return x.type }).join('/') + '，按优先级）');
-      choices.push({ label: raw, value: id, chosen: chosen, types: top.map(function (x) { return x.type; }) });
+      notes.push(display + ' → ' + chosen + '（命中 ' + top.map(function (x) { return x.type }).join('/') + '，按优先级）');
+      choices.push({ label: display, value: id, chosen: chosen, types: top.map(function (x) { return x.type; }) });
     }
   });
   const unmatched = list.filter(function (o) { return !used[String(o.value)]; }).map(function (o) { return String(o.label || o.value); });

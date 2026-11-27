@@ -57,6 +57,20 @@ function need(c, m) { if (!c) throw new Error(m); }
       need(again.settings.enabled === true && again.url.base === 'https://new.example', '重新读不对：' + JSON.stringify(again));
     });
 
+    await check('搜索分类原文标签随预设保存', async function () {
+      const cur = store.get('site-a.example');
+      const r = store.save('site-a.example', { search: Object.assign({}, cur.search, {
+        cats: { movie: ['401', '402'] },
+        catLabels: { '401': '电影 - 中国大陆', '402': '电影 - 中国香港', '999': '已删除的旧 ID' }
+      }) }, db);
+      need(r.ok, '保存失败：' + JSON.stringify(r));
+      const again = store.get('site-a.example');
+      need(again.search.catLabels['401'] === '电影 - 中国大陆' && again.search.catLabels['402'] === '电影 - 中国香港', '标签没保存：' + JSON.stringify(again.search.catLabels));
+      need(again.search.catLabels['999'] === undefined, '已删除 ID 的标签还留着：' + JSON.stringify(again.search.catLabels));
+      const doc = JSON.parse(fs.readFileSync(store.FILE, 'utf8'));
+      need(doc.sites['site-a.example'].search.catLabels['401'] === '电影 - 中国大陆', 'sites.json 没写 catLabels');
+    });
+
     await check('sites.json 是新结构且块状排版', async function () {
       const { formatSitesDoc } = require('../src/features/sites/format');
       const text = fs.readFileSync(store.FILE, 'utf8');

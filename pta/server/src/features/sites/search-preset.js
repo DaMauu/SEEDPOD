@@ -2,6 +2,7 @@
    纯函数，不联网；分类标签归一到全局大分类，选项参数名按站点原样保存。 */
 const form = require('../../infra/form');
 const { typeOf } = require('../crawl/category');
+const { toSimplified } = require('../presets/zh');
 
 function textOf(html) {
   return String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
@@ -10,7 +11,7 @@ function token(x) {
   return String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 function dimOf(name) {
-  const n = String(name || '').toLowerCase();
+  const n = toSimplified(String(name || '')).toLowerCase();
   if (/medium|source|media|媒介|片源/.test(n)) return 'medium';
   if (/standard|resolution|分辨/.test(n)) return 'resolution';
   if (/spstate|discount|free|优惠/.test(n)) return 'discount';
@@ -21,7 +22,7 @@ function dimOf(name) {
   return '';
 }
 function isCatField(name) {
-  const n = String(name || '').toLowerCase();
+  const n = toSimplified(String(name || '')).toLowerCase();
   if (/medium|source|standard|resolution|codec|audio|team|spstate|discount|restriction|search|keyword|page|sort/.test(n)) return false;
   return /cat|category|type|分类|类型/.test(n);
 }
@@ -80,12 +81,13 @@ function labelFromNearLink(html, start, len) {
   return a ? textOf(a[1]) : '';
 }
 function mapType(label, presets) {
+  const text = toSimplified(String(label || '').trim());
   /* 样品/预告已不是内容类型，站点分类里出现时并到“其他” */
-  if (/^(?:样品|sample|预告|trailers?)(?:\b|\s|\/|$)/i.test(String(label || '').trim())) return presets.keyOf('其他') || 'other';
+  if (/^(?:样品|sample|预告|trailers?)(?:\b|\s|\/|$)/i.test(text)) return presets.keyOf('其他') || 'other';
   /* Unit3D 的单独 “TV Shows” 是剧集；带中文“综艺”的仍按综艺走 */
-  if (/^tv\s*shows?$/i.test(String(label || '').trim())) return presets.keyOf('剧集') || 'tv';
-  const t = typeOf(label);
-  const key = presets.keyOf(t) || presets.keyOf(label) || '';
+  if (/^tv\s*shows?$/i.test(text)) return presets.keyOf('剧集') || 'tv';
+  const t = typeOf(text);
+  const key = presets.keyOf(t) || presets.keyOf(text) || '';
   return key && presets.types()[key] ? key : '';
 }
 function mapDim(dim, label, presets) {

@@ -530,6 +530,29 @@ function seedDb() {
       await page.close();
     });
 
+    await check('SiteDetail 搜索分类显示子分类原文标签', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.route('**/api/sites/test-1.example/search', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { host: 'test-1.example', preset: { engine: 'nexusphp', cats: { movie: ['401', '404'] }, catLabels: { '401': '电影 - 中国大陆', '404': '电影 - 中国香港' }, types: ['电影'], source: 'site-json', confirmed: true } } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sites'; });
+      await page.waitForTimeout(700);
+      await page.locator('[data-view="sites"] .site-item').first().click();
+      await page.waitForTimeout(500);
+      await page.locator('#site-detail .watch-tile').filter({ hasText: '识别' }).locator('.watch-face').click();
+      await page.waitForTimeout(200);
+      const col = await page.locator('#site-detail .detect-col').first().innerText();
+      need(col.indexOf('401 电影 - 中国大陆') >= 0 && col.indexOf('404 电影 - 中国香港') >= 0, '分类原文标签没显示：' + col);
+      const count = await page.locator('#site-detail .detect-col').first().locator('.sd-count').first().innerText();
+      need(count === '2', '子分类数量没显示：' + count);
+      await page.close();
+    });
+
     await check('SiteDetail 统一识别预览与保存', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       let applyBody = null, mapBody = null, defBody = null;

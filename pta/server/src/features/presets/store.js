@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const jsonFile = require('../../infra/json-file');
+const { toSimplified } = require('./zh');
 
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_FILE = path.join(__dirname, '..', '..', '..', 'pack', 'presets.preset.json');
@@ -43,7 +44,7 @@ const DIM_ALIAS = {
     uhd: 'uhd_full_disc', 'uhd原盘': 'uhd_full_disc', '4k原盘': 'uhd_full_disc', 'blu-rayuhd': 'uhd_full_disc', blurayuhd: 'uhd_full_disc', '4kuhd': 'uhd_full_disc',
     '3d': '3d_full_disc', '3d原盘': '3d_full_disc',
     encode: 'encode', '压制': 'encode',
-    'blu-ray': 'bluray', bluray: 'bluray', bd: 'bluray', bdrip: 'bluray',
+    'blu-ray': 'bluray', bluray: 'bluray', '蓝光': 'bluray', bd: 'bluray', bdrip: 'bluray',
     hddvd: 'hddvd', dvd: 'dvd', dvdrip: 'dvd', hdtv: 'hdtv',
     'web-dl': 'webdl', webdl: 'webdl', web: 'webdl', webrip: 'webrip', tvrip: 'hdtv', vhs: 'vhs', laserdisc: 'other', 'laser disc': 'other', tv: 'hdtv', unknown: 'other', '其他': 'other'
   },
@@ -52,13 +53,13 @@ const DIM_ALIAS = {
   audio: { 'dts-hd/dts': 'dts_hd', dtshd: 'dts_hd', dts: 'dts_hd', dtsma: 'dts_hd', 'dts-hd ma': 'dts_hd', truehd: 'truehd', ac3: 'ac3', eac3: 'eac3', lpcm: 'lpcm', pcm: 'lpcm', flac: 'flac', opus: 'opus', mp3: 'mp3', mp2: 'mp2', mp1: 'mp1', aac: 'aac', ape: 'ape', noaudio: 'noaudio', 'no audio': 'noaudio', '其他': 'other', other: 'other' },
   discount: {
     '2x 50%': '2x_half', '2x50%': '2x_half', '2x50': '2x_half', '2x_half': '2x_half',
-    '2x free': '2x_free', '2x免费': '2x_free', '2x 免费': '2x_free',
-    '2x': '2x',
-    '50%': 'half', '50': 'half', half: 'half',
+    '2x free': '2x_free', '2x免费': '2x_free', '2x 免费': '2x_free', '两倍免费': '2x_free',
+    '2x': '2x', '两倍': '2x',
+    '50%': 'half', '50': 'half', half: 'half', '半价': 'half',
     '30%': 'thirty', '30': 'thirty', thirty: 'thirty',
-    free: 'free', '免费': 'free',
-    normal: 'normal', none: 'normal', '普通': 'normal',
-    featured: 'featured', sticky: 'featured', '置顶精选': 'featured'
+    free: 'free', '免费': 'free', '免费下载': 'free',
+    normal: 'normal', none: 'normal', '普通': 'normal', '正常': 'normal',
+    featured: 'featured', sticky: 'featured', '置顶精选': 'featured', '置顶': 'featured', '精选': 'featured'
   },
   restriction: {
     '禁转': 'no_repost', norepost: 'no_repost',
@@ -113,7 +114,7 @@ function makePresets(dataDir) {
   function types() { return Object.assign({}, doc().types || {}); }
   function typeKeys() { return Object.keys(types()); }
   function keyOf(x) {
-    const raw = norm(x);
+    const raw = norm(toSimplified(x));
     if (!raw) return '';
     const all = types();
     if (all[raw]) return raw;
@@ -143,7 +144,7 @@ function makePresets(dataDir) {
   function searchKeys(dim) { return Object.keys(searchOptions(dim)); }
   function searchLabel(dim, key) { return searchOptions(dim)[key] || norm(key); }
   function keyOfDim(dim, x) {
-    const raw = norm(x);
+    const raw = norm(toSimplified(x));
     if (!raw) return '';
     /* 复合媒介先按最强词判：Blu-ray Remux 归 Remux，不能先被 Blu-ray 抓走 */
     if (dim === 'medium') {

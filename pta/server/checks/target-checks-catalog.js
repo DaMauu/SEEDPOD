@@ -32,6 +32,8 @@ async function runCatalog(C) {
     need(d.ambiguous.length === 0 && d.notes.length === 1, '组合标签没记录：' + JSON.stringify(d));
     const aliased = maps._test.matchCatsDetailed([{ value: '9', label: 'Mystery' }], { Mystery: '电影' });
     need(aliased.cat['电影'] === '9', '每站别名没生效：' + JSON.stringify(aliased));
+    const trad = maps._test.matchCatsDetailed([{ value: '7', label: '紀錄片' }, { value: '8', label: '動畫' }]);
+    need(trad.cat['纪录片'] === '7' && trad.cat['动漫'] === '8', '繁体发布分类没识别：' + JSON.stringify(trad.cat));
   });
 
   await check('题材字段不会被当成内容分类', async function () {

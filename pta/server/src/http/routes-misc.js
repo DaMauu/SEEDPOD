@@ -19,7 +19,7 @@ module.exports = function (app, ctx) {
   const now = () => new Date().toISOString();
   const siteStore = require('../features/sites/store')(DATA_DIR);
   const presets = require('../features/presets/store')(DATA_DIR);
-  const readPreset = () => { const out = {}; siteStore.list().forEach(function (s) { const cats = s.search.cats || {}; const confirmed = Object.keys(cats).some(function (k) { return (cats[k] || []).length > 0; }); out[s.host] = { engine: s.engine, cats: cats, types: s.search.types || [], source: 'site-json', confirmed: confirmed }; }); return out; };
+  const readPreset = () => { const out = {}; siteStore.list().forEach(function (s) { const cats = s.search.cats || {}; const confirmed = Object.keys(cats).some(function (k) { return (cats[k] || []).length > 0; }); out[s.host] = { engine: s.engine, cats: cats, catLabels: s.search.catLabels || {}, types: s.search.types || [], source: 'site-json', confirmed: confirmed }; }); return out; };
   const errorStats = makeErrorStats(ctx);
   const failureQueue = makeFailureQueue(ctx);
   const targetService = makeTargetService(ctx, makeTarget(ctx));

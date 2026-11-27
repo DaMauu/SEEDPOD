@@ -38,6 +38,7 @@ check('默认合并只补缺失，不覆盖手工值，不替用户勾选', func
   need(r.search.catMode === 'key', 'catMode 没升级：' + r.search.catMode);
   need(r.search.filters.values.medium.bluray === '1', '媒介值没补：' + JSON.stringify(r.search.filters.values));
   need(r.search.filters.values.discount.free === '9', '未识别维度被覆盖：' + JSON.stringify(r.search.filters.values));
+  need(r.search.catLabels && r.search.catLabels['401'], '分类原文标签没合并：' + JSON.stringify(r.search.catLabels));
   need(JSON.stringify(r.search.filters.selected.medium) === JSON.stringify(['full_disc']), 'selected 没保留');
   need(r.changed === true, 'changed 应为 true');
 });
@@ -68,6 +69,7 @@ check('站点覆盖：skip / map / engine', function () {
   need(forced.engine === 'unit3d' && forced.engineConfidence === 1, 'engine 没生效：' + JSON.stringify(forced));
   const cleaned = mergeWithOverrides({ cats: { music: ['408'] }, filters: {} }, d, { skip: ['408'] }, { keyOf: presets.keyOf });
   need(!(cleaned.merged.search.cats.music || []).length, 'skip 没清掉已保存的旧分类：' + JSON.stringify(cleaned.merged.search.cats));
+  need(!(cleaned.merged.search.catLabels || {})['408'], 'skip 没清掉分类原文标签：' + JSON.stringify(cleaned.merged.search.catLabels));
 });
 
 check('识别前后差异能报新增/移除', function () {

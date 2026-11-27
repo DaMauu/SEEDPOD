@@ -57,9 +57,15 @@ function mergeDetection(current, detected, opts) {
   filters.selected = clone((cur.filters && cur.filters.selected) || {});
   let catMode = cur.catMode || 'single';
   if (d.catMode && (force || !cur.catMode || cur.catMode === 'single')) catMode = d.catMode;
-  const next = Object.assign({}, cur, { cats: cats, catMode: catMode, filters: filters });
-  const changed = JSON.stringify({ cats: cur.cats || {}, catMode: cur.catMode || '', filters: cur.filters || {} })
-    !== JSON.stringify({ cats: cats, catMode: catMode, filters: filters });
+  /* 保存站点原文标签，界面上「401,404」才不会看起来像重复 ID。 */
+  const labelMap = Object.assign({}, cur.catLabels || {}, d.catLabels || {});
+  const idSet = {};
+  Object.keys(cats).forEach(function (t) { (cats[t] || []).forEach(function (id) { idSet[String(id)] = true; }); });
+  const catLabels = {};
+  Object.keys(labelMap).forEach(function (id) { if (idSet[String(id)]) catLabels[String(id)] = String(labelMap[id] || ''); });
+  const next = Object.assign({}, cur, { cats: cats, catLabels: catLabels, catMode: catMode, filters: filters });
+  const changed = JSON.stringify({ cats: cur.cats || {}, catLabels: cur.catLabels || {}, catMode: cur.catMode || '', filters: cur.filters || {} })
+    !== JSON.stringify({ cats: cats, catLabels: catLabels, catMode: catMode, filters: filters });
   return { search: next, changed: changed };
 }
 
@@ -94,6 +100,12 @@ function applyOverrides(detected, overrides, opts) {
     });
   });
   if (o.engine) { d.engine = String(o.engine); d.engineConfidence = 1; }
+  /* 分类被 skip/map 后，对应原文标签也一起清掉，避免界面显示不存在的 ID。 */
+  const keep = {};
+  Object.keys(d.cats).forEach(function (t) { (d.cats[t] || []).forEach(function (id) { keep[String(id)] = true; }); });
+  const labels = {};
+  Object.keys(d.catLabels || {}).forEach(function (id) { if (keep[String(id)]) labels[String(id)] = String(d.catLabels[id] || ''); });
+  d.catLabels = labels;
   return d;
 }
 
@@ -119,8 +131,9 @@ function diffCats(current, next) {
 function mergeWithOverrides(current, detected, overrides, opts) {
   const d = applyOverrides(detected, overrides, opts);
   const merged = mergeDetection(current, d, { force: !!(opts && opts.force) });
-  const cleaned = applyOverrides({ cats: merged.search.cats || {}, catLabels: d.catLabels || {} }, overrides, opts);
+  const cleaned = applyOverrides({ cats: merged.search.cats || {}, catLabels: Object.assign({}, merged.search.catLabels || {}, d.catLabels || {}) }, overrides, opts);
   merged.search.cats = cleaned.cats || {};
+  merged.search.catLabels = cleaned.catLabels || {};
   if (JSON.stringify((current && current.cats) || {}) !== JSON.stringify(merged.search.cats)) merged.changed = true;
   return { merged: merged, detected: d };
 }
