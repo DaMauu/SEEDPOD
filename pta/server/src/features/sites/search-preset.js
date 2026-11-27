@@ -21,10 +21,26 @@ function dimOf(name) {
   if (/team|group|制作组|小组/.test(n)) return 'team';
   return '';
 }
+/* 音乐站的 release type、标签/搜索类型、容量/文件类型不是内容分类。
+   这些字段名里带 type，但选项是 Album/EP/KB/MB/GB/TB 之类，不能写进 cats。 */
+function isReleaseTypeField(text) {
+  const n = toSimplified(String(text || '')).toLowerCase().replace(/[\s_.-]+/g, '');
+  return /releasetype|tags?type|searchtype|sizetype|filetype|bitrate|filesize|torrentsize/.test(n);
+}
 function isCatField(name) {
   const n = toSimplified(String(name || '')).toLowerCase();
+  if (isReleaseTypeField(n)) return false;
   if (/medium|source|standard|resolution|codec|audio|team|spstate|discount|restriction|search|keyword|page|sort/.test(n)) return false;
   return /cat|category|type|分类|类型/.test(n);
+}
+/* 下拉框第一个选项常是字段名/中文提示（Media、Release type、媒介、片源），不是真实值 */
+function isPlaceholderOption(label, fieldName) {
+  const text = String(label || '').trim();
+  if (!text) return true;
+  if (/^(?:请选择|全部|不限|选择|格式|媒介|片源|分辨率|类型|种类|容量|单位|choose|select|all|any|none|leech status)$/i.test(text)) return true;
+  const t = text.toLowerCase().replace(/[\s_.-]+/g, '');
+  const n = String(fieldName || '').toLowerCase().replace(/[\s_.-]+/g, '');
+  return !!n && t === n;
 }
 function inputLabel(html, name) {
   const n = String(name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -129,6 +145,9 @@ function parseSearchPreset(html, presets) {
   }
   function addOpt(dim, fieldName, label, val) {
     if (isParamLabel(label)) return;
+    if (isPlaceholderOption(label, fieldName)) return;
+    /* Gazelle 的 freetorrent 下拉把 leech 状态也放在一起；这些不是优惠，别硬映射 */
+    if (dim === 'discount' && /^(?:leech status|neutral leech|either)$/i.test(String(label || '').trim())) return;
     const key = mapDim(dim, label, presets);
     if (!key) { addUnmatched(dim, label, val); return; }
     if (val == null || val === '') return;

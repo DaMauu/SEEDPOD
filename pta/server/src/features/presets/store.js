@@ -46,9 +46,11 @@ const DIM_ALIAS = {
     encode: 'encode', '压制': 'encode',
     'blu-ray': 'bluray', bluray: 'bluray', '蓝光': 'bluray', bd: 'bluray', bdrip: 'bluray',
     hddvd: 'hddvd', dvd: 'dvd', dvdrip: 'dvd', hdtv: 'hdtv',
-    'web-dl': 'webdl', webdl: 'webdl', web: 'webdl', webrip: 'webrip', tvrip: 'hdtv', vhs: 'vhs', laserdisc: 'other', 'laser disc': 'other', tv: 'hdtv', unknown: 'other', '其他': 'other'
+    'web-dl': 'webdl', webdl: 'webdl', web: 'webdl', webrip: 'webrip', tvrip: 'hdtv', vhs: 'vhs', laserdisc: 'other', 'laser disc': 'other', tv: 'hdtv', unknown: 'other', '其他': 'other',
+    cd: 'cd', 'cd/hdcd': 'cd', hdcd: 'cd', sacd: 'sacd', vinyl: 'vinyl', lp: 'vinyl',
+    cassette: 'cassette', tape: 'cassette', dat: 'dat', soundboard: 'soundboard', track: 'track'
   },
-  resolution: { '4k': '2160p', '8k': '4320p', sd: '480p' },
+  resolution: { '4k': '2160p', '8k': '4320p', '2k': '2k', sd: '480p', other: 'other', '其他': 'other' },
   codec: { h264: 'h264', 'h.264/avc/x264': 'h264', 'h264/avc/x264': 'h264', 'h.265/hevc/x265': 'h265', h265: 'h265', 'mpeg-2': 'mpeg2', mpeg2: 'mpeg2', mpeg1: 'mpeg1', 'mpeg-1': 'mpeg1', av1: 'av1', 'vc-1': 'vc1', vc1: 'vc1', xvid: 'xvid', '其他': 'other', other: 'other' },
   audio: { 'dts-hd/dts': 'dts_hd', dtshd: 'dts_hd', dts: 'dts_hd', dtsma: 'dts_hd', 'dts-hd ma': 'dts_hd', truehd: 'truehd', ac3: 'ac3', eac3: 'eac3', lpcm: 'lpcm', pcm: 'lpcm', flac: 'flac', opus: 'opus', mp3: 'mp3', mp2: 'mp2', mp1: 'mp1', aac: 'aac', ape: 'ape', noaudio: 'noaudio', 'no audio': 'noaudio', '其他': 'other', other: 'other' },
   discount: {
@@ -99,6 +101,21 @@ function makePresets(dataDir) {
     try { jsonFile.writeAtomic(runtimeFile, base, 0o600); cache = null; return true; }
     catch (e) { return false; }
   }
+  /* 旧版 data/presets.json 没有后补的媒介/分辨率 key；只合并搜索维度里缺的默认项，
+     已有 key 和用户自定义项保持原样，不覆盖用户文件。 */
+  function mergeSearchDefaults(runtime, pack) {
+    const out = Object.assign({}, runtime);
+    const rs = runtime && runtime.search && typeof runtime.search === 'object' ? runtime.search : {};
+    const ps = pack && pack.search && typeof pack.search === 'object' ? pack.search : {};
+    out.search = {};
+    Object.keys(ps).forEach(function (dim) {
+      out.search[dim] = Object.assign({}, ps[dim] || {}, rs[dim] || {});
+    });
+    Object.keys(rs).forEach(function (dim) {
+      if (!out.search[dim]) out.search[dim] = Object.assign({}, rs[dim] || {});
+    });
+    return out;
+  }
   function doc() {
     ensure();
     const file = runtimeFile && fs.existsSync(runtimeFile) ? runtimeFile : DEFAULT_FILE;
@@ -106,7 +123,8 @@ function makePresets(dataDir) {
     try { st = fs.statSync(file); } catch (e) { st = null; }
     if (cache && st && cache.file === file && cache.mtime === st.mtimeMs && cache.size === st.size) return cache.doc;
     const parsed = readJson(file);
-    const base = parsed && typeof parsed === 'object' && parsed.types ? parsed : (readJson(DEFAULT_FILE) || {});
+    const pack = readJson(DEFAULT_FILE) || {};
+    const base = parsed && typeof parsed === 'object' && parsed.types ? mergeSearchDefaults(parsed, pack) : pack;
     cache = { file: file, mtime: st ? st.mtimeMs : 0, size: st ? st.size : 0, doc: base };
     return base;
   }

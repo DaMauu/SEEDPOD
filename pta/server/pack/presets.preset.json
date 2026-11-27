@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-24",
+  "updatedAt": "2026-11-28",
   "types": {
     "movie": "电影",
     "tv": "剧集",
@@ -32,6 +32,13 @@
       "dvd": "DVD",
       "hddvd": "HDDVD",
       "vhs": "VHS",
+      "cd": "CD",
+      "sacd": "SACD",
+      "vinyl": "Vinyl",
+      "cassette": "Cassette",
+      "dat": "DAT",
+      "soundboard": "Soundboard",
+      "track": "Track",
       "other": "其他"
     },
     "resolution": {
@@ -40,8 +47,10 @@
       "720p": "720p",
       "1080i": "1080i",
       "1080p": "1080p",
+      "2k": "2K",
       "2160p": "2160p",
-      "4320p": "4320p/8K"
+      "4320p": "4320p/8K",
+      "other": "其他"
     },
     "discount": {
       "free": "免费",

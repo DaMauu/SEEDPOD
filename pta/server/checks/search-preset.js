@@ -118,6 +118,25 @@ check('Gazelle 搜索表单 media/codec/audioformat 能识别', function () {
   need(r.values.resolution['1080p'] === '1080p' && r.values.resolution['2160p'] === '2160p', 'resolution 没识别');
 });
 
+check('音乐 release type 不当分类，音乐媒介/Other/2K/Leech 状态能分开', function () {
+  const html = '<form>' +
+    '<select name="releasetype"><option value="Release type">Release type</option><option value="1">Album</option><option value="5">EP</option><option value="21">Unknown</option></select>' +
+    '<select name="media"><option value="Media">Media</option><option value="CD">CD</option><option value="SACD">SACD</option><option value="Vinyl">Vinyl</option><option value="Cassette">Cassette</option><option value="DAT">DAT</option><option value="Soundboard">Soundboard</option><option value="Other">Other</option></select>' +
+    '<select name="resolution"><option value="Resolution">Resolution</option><option value="Other">Other</option><option value="2K">2K</option></select>' +
+    '<select name="freetorrent"><option value="Leech Status">Leech Status</option><option value="1">Freeleech</option><option value="2">Neutral Leech</option><option value="3">Either</option><option value="0">Normal</option></select>' +
+    '</form>';
+  const r = parseSearchPreset(html, presets);
+  need(Object.keys(r.cats).length === 0, 'release type 进了分类：' + JSON.stringify(r.cats));
+  need(!r.unmatched.some(function (x) { return x.dim === 'type'; }), 'release type 进了未识别分类：' + JSON.stringify(r.unmatched));
+  need(r.values.medium.cd === 'CD' && r.values.medium.sacd === 'SACD' && r.values.medium.vinyl === 'Vinyl', '音乐媒介没识别：' + JSON.stringify(r.values.medium));
+  need(r.values.medium.cassette === 'Cassette' && r.values.medium.dat === 'DAT' && r.values.medium.soundboard === 'Soundboard', '音乐媒介没识别：' + JSON.stringify(r.values.medium));
+  need(r.values.medium.other === 'Other', 'Other 媒介没识别：' + JSON.stringify(r.values.medium));
+  need(r.values.resolution.other === 'Other' && r.values.resolution['2k'] === '2K', '分辨率 Other/2K 没识别：' + JSON.stringify(r.values.resolution));
+  need(r.values.discount.free === '1', 'Freeleech 没识别：' + JSON.stringify(r.values.discount));
+  need(!r.unmatched.some(function (x) { return x.dim === 'discount'; }), 'Leech 状态进了优惠未识别：' + JSON.stringify(r.unmatched));
+  need(!r.unmatched.some(function (x) { return /^(media|resolution|release type|leech status)$/i.test(x.label); }), '占位选项进了未识别：' + JSON.stringify(r.unmatched));
+});
+
 check('搜索 URL 带媒介/编码/音频/分辨率/制作组', function () {
   const site = {
     url: { base: 'https://x.example' },

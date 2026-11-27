@@ -31,11 +31,13 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 
   await check('搜索维度齐全：媒介/分辨率/优惠/限制', async function () {
     const s = doc.search || {};
-    need(Object.keys(s.medium || {}).length === 10, '媒介数量不对');
-    need(Object.keys(s.resolution || {}).length === 7, '分辨率数量不对');
+    need(Object.keys(s.medium || {}).length === 17, '媒介数量不对');
+    need(Object.keys(s.resolution || {}).length === 9, '分辨率数量不对');
     need(Object.keys(s.discount || {}).length === 8, '优惠数量不对');
     need(Object.keys(s.restriction || {}).length === 5, '限制数量不对');
     need(s.medium.bluray === 'Blu-ray', '媒介缺少 Blu-ray');
+    need(s.medium.cd === 'CD' && s.medium.sacd === 'SACD' && s.medium.vinyl === 'Vinyl', '媒介缺少音乐介质');
+    need(s.resolution['2k'] === '2K' && s.resolution.other === '其他', '分辨率缺少 2K/其他');
     need(s.resolution['4320p'] === '4320p/8K', '分辨率缺少 4320p/8K');
     need(s.discount['2x_free'] === '2x 免费', '优惠缺少 2x 免费');
     need(s.restriction.hr === 'HR', '限制缺少 HR');
@@ -62,6 +64,10 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
     need(presets.keyOfDim('medium', '4K UHD Remux') === 'remux', '4K UHD Remux 应归 Remux：' + presets.keyOfDim('medium', '4K UHD Remux'));
     need(presets.keyOfDim('medium', 'Blu-ray DIY') === 'bluray', 'Blu-ray DIY 应归 Blu-ray：' + presets.keyOfDim('medium', 'Blu-ray DIY'));
     need(presets.keyOfDim('medium', '2K原盘中字（国粤语）') === 'full_disc', '2K原盘中字应归原盘：' + presets.keyOfDim('medium', '2K原盘中字（国粤语）'));
+    need(presets.keyOfDim('medium', 'CD/HDCD') === 'cd', 'CD 应归 CD：' + presets.keyOfDim('medium', 'CD/HDCD'));
+    need(presets.keyOfDim('medium', 'SACD') === 'sacd' && presets.keyOfDim('medium', 'Vinyl') === 'vinyl', 'SACD/Vinyl 没归一');
+    need(presets.keyOfDim('medium', 'DAT') === 'dat' && presets.keyOfDim('medium', 'Soundboard') === 'soundboard', 'DAT/Soundboard 没归一');
+    need(presets.keyOfDim('resolution', 'Other') === 'other' && presets.keyOfDim('resolution', '2K') === '2k', 'Other/2K 没归一');
   });
 
   await check('站点只存 key：读取时中文自动补齐，保存时中文自动归一', async function () {
@@ -138,6 +144,23 @@ function read(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
       p2.ensure();
       const after = JSON.parse(fs.readFileSync(file, 'utf8'));
       need(after.types.custom === '自定义', 'ensure 覆盖了用户文件');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  await check('旧 data/presets.json 自动补新媒介/分辨率 key，已有值不被覆盖', async function () {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pta-preset-merge-'));
+    try {
+      const pack = read(PRESETS);
+      const old = JSON.parse(JSON.stringify(pack));
+      delete old.search.medium.cd;
+      delete old.search.resolution['2k'];
+      old.search.medium.bluray = '自定义蓝光';
+      fs.writeFileSync(path.join(dir, 'presets.json'), JSON.stringify(old, null, 2));
+      const p = makePresets(dir);
+      const doc = p.doc();
+      need(p.searchLabel('medium', 'cd') === 'CD', '旧预设没补 CD：' + p.searchLabel('medium', 'cd'));
+      need(p.searchLabel('resolution', '2k') === '2K', '旧预设没补 2K');
+      need(p.searchLabel('medium', 'bluray') === '自定义蓝光', '已有值被覆盖');
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   });
 

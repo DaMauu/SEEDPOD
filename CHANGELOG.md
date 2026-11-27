@@ -1,5 +1,14 @@
 # 更新日志
 
+## v0.7.727 · 2026-11-28
+
+### 搜索识别共性误判
+- 音乐站的 `releasetype`、`tags_type` 等字段不再当内容分类，Album/EP/Single 等 release type 不再写进分类。
+- 媒介补充音乐介质：CD、SACD、Vinyl、Cassette、DAT、Soundboard、Track；分辨率补充 2K、Other。
+- Gazelle 的 Leech Status、Neutral Leech、Either 不再当优惠；Freeleech 仍保留。
+- 下拉框占位项（Media、Release type、媒介、片源等）不再进未识别列表。
+- 旧 `data/presets.json` 只补缺失的新 key，不覆盖用户已有值；相关检查通过。
+
 ## v0.7.726 · 2026-11-28
 
 ### Telegram 动态进度显示百分比
