@@ -21,10 +21,54 @@
 
 
             <div class="sd-scroll">
-              <div class="sd-ov">
-                <div class="sd-compact sd-single">
-                  <div class="sd-block">
-                    <h4>登录</h4>
+              <div class="sd-form">
+                <div class="sd-sec">
+                  <h4 class="sd-sec-ttl">站点</h4>
+                  <div class="watch-grid watch-all">
+                    <div class="watch-tile" :class="[loginStats.state, { open: watchOpen === 'login' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('login')" @keydown.enter.prevent="toggleWatch('login')">
+                        <span class="wf-num">{{ loginStats.num }}</span>
+                        <span class="wf-label">登录</span>
+                        <span class="wf-sub">{{ loginStats.text }}</span>
+                      </div>
+                    </div>
+                    <div class="watch-tile" :class="[addressStats.state, { open: watchOpen === 'address' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('address')" @keydown.enter.prevent="toggleWatch('address')">
+                        <span class="wf-num small">URL</span>
+                        <span class="wf-label">站点</span>
+                        <span class="wf-sub">{{ addressStats.text }}</span>
+                      </div>
+                    </div>
+                    <div class="watch-tile" :class="[cookieStats.state, { open: watchOpen === 'cookie' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cookie')" @keydown.enter.prevent="toggleWatch('cookie')">
+                        <span class="wf-num">{{ cookieStats.num }}</span>
+                        <span class="wf-label">Cookie</span>
+                        <span class="wf-sub">{{ cookieStats.text }}</span>
+                      </div>
+                    </div>
+                    <div class="watch-tile" :class="[catGroups.length ? 'ok' : 'bad', { open: watchOpen === 'search' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('search')" @keydown.enter.prevent="toggleWatch('search')">
+                        <span class="wf-num">{{ catGroups.length || '—' }}</span>
+                        <span class="wf-label">搜索</span>
+                        <span class="wf-sub">{{ catGroups.length ? '站点分类 ID' : '未识别' }}</span>
+                      </div>
+                    </div>
+                    <div class="watch-tile" :class="[publishGroups.length ? 'ok' : 'bad', { open: watchOpen === 'cat' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cat')" @keydown.enter.prevent="toggleWatch('cat')">
+                        <span class="wf-num">{{ publishGroups.length || '—' }}</span>
+                        <span class="wf-label">发布</span>
+                        <span class="wf-sub">{{ publishGroups.length ? '库内 → 目标站' : '未识别' }}</span>
+                      </div>
+                    </div>
+                    <div class="watch-tile" :class="[uploadStats.count ? 'ok' : (uploadStats.defaultCount ? 'warn' : 'bad'), { open: watchOpen === 'upload' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('upload')" @keydown.enter.prevent="toggleWatch('upload')">
+                        <span class="wf-num">{{ uploadStats.count || uploadStats.defaultCount || '—' }}</span>
+                        <span class="wf-label">上传</span>
+                        <span class="wf-sub">{{ uploadStats.count ? '已配置字段' : (uploadStats.defaultCount ? '引擎默认字段' : '未识别') }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-if="watchOpen === 'login'" class="watch-detail">
                     <div class="sd-row"><span>状态</span><b :class="dotCls(s) + '-t'">{{ loginTxt(s) }}</b></div>
                     <div class="sd-row"><span>方式</span><b>Cookie</b></div>
                     <div class="sd-row"><span>登录凭据</span><b :class="s.cookieSaved && s.cookieReadable === false ? 'bad-t' : ''">{{ s.cookieSaved ? (s.cookieReadable ? '已保存' : '已保存但解不开，请重新导入') : '未保存' }}</b></div>
@@ -32,26 +76,10 @@
                     <div class="sd-row"><span>采样</span><b>{{ sampleTxt(s) }}</b></div>
                     <div class="sd-row"><span>来源</span><b>{{ kindTxt(s) }}</b></div>
                   </div>
-                </div>
-              </div>
-
-              <div class="sd-form">
-                <div class="sd-sec">
-                  <h4 class="sd-sec-ttl">概览</h4>
-                  <div class="set-fields">
+                  <div v-if="watchOpen === 'address'" class="watch-detail">
                     <div class="set-field">
                       <div class="lbl"><span>站点地址</span></div>
                       <div class="ctl"><input v-model="form.url" class="input" placeholder="https://站点域名/index.php"></div>
-                    </div>
-                  </div>
-                  <div class="set-fields">
-                    <div class="watch-tile" :class="{ open: watchOpen === 'cookie' }">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cookie')" @keydown.enter.prevent="toggleWatch('cookie')">
-                        <span class="wf-num">{{ cookieStats.num }}</span>
-                        <span class="wf-label">Cookie</span>
-                        <span class="wf-sub">{{ cookieStats.text }}</span>
-                      </div>
-                      <button class="btn ghost slim watch-act" type="button" @click.stop="toggleWatch('cookie')">{{ watchOpen === 'cookie' ? '收起' : '编辑 Cookie' }}</button>
                     </div>
                   </div>
                   <div v-if="watchOpen === 'cookie'" class="watch-detail">
@@ -61,56 +89,21 @@
                       <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
                     </div>
                   </div>
-                </div>
-
-                <div class="sd-sec" id="sd-sec-search">                </div>
-
-                <div class="sd-sec" id="sd-sec-search">
-                  <h4 class="sd-sec-ttl">搜索分类</h4>
-                  <div class="watch-grid">
-                    <div class="watch-tile" :class="{ open: watchOpen === 'search' }">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('search')" @keydown.enter.prevent="toggleWatch('search')">
-                        <span class="wf-num">{{ catGroups.length || '—' }}</span>
-                        <span class="wf-label">搜索分类</span>
-                        <span class="wf-sub">{{ catGroups.length ? '站点分类 ID' : '未识别' }}</span>
-                      </div>
-                      <button class="btn ghost slim watch-act" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
-                    </div>
-                  </div>
                   <div v-if="watchOpen === 'search'" class="watch-detail">
                     <template v-if="catGroups.length">
                       <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
                     </template>
                     <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
                     <p class="set-desc">从搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，确认后保存。</p>
+                    <div class="cm-actions">
+                      <button class="btn ghost slim" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
+                      <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
+                    </div>
                     <div v-if="presetPreview">
                       <h4>识别明细（未保存）</h4>
                       <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
                       <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
                       <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
-                    </div>
-                    <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
-                  </div>
-                </div>
-
-                <div class="sd-sec" id="sd-sec-publish">
-                  <h4 class="sd-sec-ttl">发布分类</h4>
-                  <div class="watch-grid">
-                    <div class="watch-tile" :class="{ open: watchOpen === 'cat' }">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cat')" @keydown.enter.prevent="toggleWatch('cat')">
-                        <span class="wf-num">{{ publishGroups.length || '—' }}</span>
-                        <span class="wf-label">分类映射</span>
-                        <span class="wf-sub">{{ publishGroups.length ? '库内 → 目标站' : '未识别' }}</span>
-                      </div>
-                      <button class="btn ghost slim watch-act" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
-                    </div>
-                    <div class="watch-tile" :class="{ open: watchOpen === 'upload' }">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('upload')" @keydown.enter.prevent="toggleWatch('upload')">
-                        <span class="wf-num">{{ uploadStats.count || uploadStats.defaultCount || '—' }}</span>
-                        <span class="wf-label">上传表单</span>
-                        <span class="wf-sub">{{ uploadStats.count ? '已配置字段' : (uploadStats.defaultCount ? '引擎默认字段' : '未识别') }}</span>
-                      </div>
-                      <button class="btn ghost slim watch-act" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
                     </div>
                   </div>
                   <div v-if="watchOpen === 'cat'" class="watch-detail">
@@ -119,13 +112,19 @@
                     </template>
                     <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
                     <p class="set-desc">库内分类 → 目标站分类 ID；识别后自动保存，发种按这张表填分类。</p>
-                    <span class="sd-cookie-res">{{ catMsg }}</span>
+                    <div class="cm-actions">
+                      <button class="btn ghost slim" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
+                      <span class="sd-cookie-res">{{ catMsg }}</span>
+                    </div>
                   </div>
                   <div v-if="watchOpen === 'upload'" class="watch-detail">
                     <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
                     <p class="set-desc">参数存在站点 JSON；这里只显示状态和识别入口，识别后自动保存。</p>
                     <p class="set-desc">引擎默认字段可直接用；识别只补站点差异，失败先确认上传权限。</p>
-                    <span class="sd-cookie-res">{{ uploadMsg }}</span>
+                    <div class="cm-actions">
+                      <button class="btn ghost slim" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
+                      <span class="sd-cookie-res">{{ uploadMsg }}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -251,6 +250,19 @@ const cookieStats = computed(function () {
     else { state = 'warn'; text = '待验证' }
   } else if (site.cookieSaved) { state = 'bad'; text = '解不开'; num = '—' }
   return { count: count, state: state, text: text, num: num }
+})
+const loginStats = computed(function () {
+  const site = s.value || {}
+  if (!site.cookieSaved) return { state: 'bad', num: '—', text: '未导入' }
+  if (site.cookieReadable === false) return { state: 'bad', num: '×', text: '解不开' }
+  if (site.login === 'ok') return { state: 'ok', num: '✓', text: '已登录' }
+  if (site.login === 'fail') return { state: 'bad', num: '×', text: '登录失败' }
+  return { state: 'warn', num: '!', text: '待验证' }
+})
+const addressStats = computed(function () {
+  const raw = String(form.url || '').trim()
+  const hostText = raw.replace(/^https?:\/\//i, '').split('/')[0]
+  return { state: raw ? 'ok' : 'bad', text: hostText || '未填地址' }
 })
 const publishGroups = computed(function () {
   const d = detail.def || {}
@@ -1066,19 +1078,24 @@ watch(host, function (h, old) {
   .site-expand .sd-scroll { display: block; overflow-y: auto; }
 }
 .site-expand .sd-compact.sd-single { grid-template-columns: minmax(0, 1fr); }
-.watch-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
-.watch-tile { display: flex; flex-direction: column; gap: 8px; width: 148px; flex: 0 0 148px; }
-.watch-face { width: 148px; height: 148px; padding: 16px 10px 12px; border: 1px solid #e5e8f5;
-  border-radius: 74px 74px 22px 22px; background: linear-gradient(180deg, #f5f6ff, #fff);
+.site-expand .sd-scroll { display: block; overflow-y: auto; }
+.site-expand .sd-form { grid-column: 1 / -1; max-width: none; }
+.watch-grid { display: grid; grid-template-columns: repeat(6, minmax(96px, 1fr)); gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
+.watch-tile { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.watch-face { width: 100%; aspect-ratio: 1 / 1; padding: 12px 6px 10px; border: 1px solid #e5e8f5;
+  border-radius: 50% 50% 18px 18px; background: linear-gradient(180deg, #f5f6ff, #fff);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .watch-face:hover, .watch-tile.open .watch-face { border-color: var(--accent); box-shadow: 0 6px 18px rgba(79,70,229,.08); }
-.wf-num { font-size: 30px; font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
-.wf-label { font-size: 12px; font-weight: 600; color: var(--ink); }
-.wf-sub { font-size: 10px; color: var(--muted-2); }
-.watch-act { width: 100%; }
+.wf-num { font-size: 26px; font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.wf-num.small { font-size: 17px; }
+.watch-tile.ok .wf-num { color: #0a7f45; }
+.watch-tile.warn .wf-num { color: #b45309; }
+.watch-tile.bad .wf-num { color: #b42318; }
+.wf-label { font-size: 11px; font-weight: 600; color: var(--ink); }
+.wf-sub { max-width: 100%; font-size: 9px; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .watch-detail { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fcfcfd; }
 .watch-detail .sd-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid #f1f3f7; font-size: 11.5px; }
 .watch-detail .sd-row:first-child { border-top: 0; }
-@media (max-width: 600px) { .watch-grid { gap: 10px; } .watch-tile { width: 132px; flex-basis: 132px; } .watch-face { width: 132px; height: 132px; border-radius: 66px 66px 20px 20px; } .wf-num { font-size: 26px; } }
+@media (max-width: 600px) { .watch-grid { gap: 8px; } .watch-face { padding: 10px 4px 8px; } .wf-num { font-size: 23px; } }
 </style>
