@@ -61,6 +61,15 @@ async function runCatalog(C) {
     need(t3 && t3.enabled === true, '有站点记录时没列出或 enabled 不对');
   });
 
+  await check('上传页识别同时返回分类和字段', async function () {
+    const r = await json(BASE + '/api/maps/127.0.0.1/detect', { method: 'POST' });
+    need(r.status === 200 && r.body.ok, '合并识别失败：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));
+    const d = r.body.data || {};
+    need(d.fieldKind === 'category' && d.cat && d.cat['电影'] === '401', '没识别到发布分类：' + JSON.stringify(d.cat));
+    need(d.upload && d.upload.fields && d.upload.fields.name === '{title}', '没识别到上传字段：' + JSON.stringify(d.upload));
+    need(d.form && d.form.selects && Array.isArray(d.form.selects.type), '没返回下拉选项：' + JSON.stringify(d.form));
+  });
+
   await check('手动识别上传表单与冷却', async function () {
     const r = await json(BASE + '/api/targets/127.0.0.1/detect-form', { method: 'POST' });
     need(r.status === 200 && r.body.ok, '识别失败：' + r.status + ' ' + JSON.stringify(r.body && r.body.error));

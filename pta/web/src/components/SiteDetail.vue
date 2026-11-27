@@ -46,25 +46,11 @@
                         <span class="wf-sub">{{ cookieStats.text }}</span>
                       </div>
                     </div>
-                    <div class="watch-tile" :class="[catGroups.length ? 'ok' : 'bad', { open: watchOpen === 'search' }]">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('search')" @keydown.enter.prevent="toggleWatch('search')">
-                        <span class="wf-num">{{ catGroups.length || '—' }}</span>
-                        <span class="wf-label">搜索</span>
-                        <span class="wf-sub">{{ catGroups.length ? '站点分类 ID' : '未识别' }}</span>
-                      </div>
-                    </div>
-                    <div class="watch-tile" :class="[publishGroups.length ? 'ok' : 'bad', { open: watchOpen === 'cat' }]">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cat')" @keydown.enter.prevent="toggleWatch('cat')">
-                        <span class="wf-num">{{ publishGroups.length || '—' }}</span>
-                        <span class="wf-label">发布</span>
-                        <span class="wf-sub">{{ publishGroups.length ? '库内 → 目标站' : '未识别' }}</span>
-                      </div>
-                    </div>
-                    <div class="watch-tile" :class="[uploadStats.count ? 'ok' : (uploadStats.defaultCount ? 'warn' : 'bad'), { open: watchOpen === 'upload' }]">
-                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('upload')" @keydown.enter.prevent="toggleWatch('upload')">
-                        <span class="wf-num">{{ uploadStats.count || uploadStats.defaultCount || '—' }}</span>
-                        <span class="wf-label">上传</span>
-                        <span class="wf-sub">{{ uploadStats.count ? '已配置字段' : (uploadStats.defaultCount ? '引擎默认字段' : '未识别') }}</span>
+                    <div class="watch-tile" :class="[detectStats.state, { open: watchOpen === 'detect' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('detect')" @keydown.enter.prevent="toggleWatch('detect')">
+                        <span class="wf-num">{{ detectStats.num }}</span>
+                        <span class="wf-label">识别</span>
+                        <span class="wf-sub">{{ detectStats.text }}</span>
                       </div>
                     </div>
                     <div class="watch-tile" :class="[coverStats.state, { open: watchOpen === 'cover' }]">
@@ -96,47 +82,49 @@
                       <span class="sd-cookie-res" id="sd-cookie-res">{{ s.loginAt ? '上次自检 ' + fmtWhen(s.loginAt) + ' · ' + loginTxt(s) : '还没自检' }}</span>
                     </div>
                   </div>
-                  <div v-if="watchOpen === 'search'" class="watch-detail">
-                    <template v-if="catGroups.length">
-                      <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
-                    </template>
-                    <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
-                    <p class="set-desc">从搜索页识别分类 ID、媒介、编码、音频、分辨率、制作组；只发一次 GET，确认后保存。</p>
+                  <div v-if="watchOpen === 'detect'" class="watch-detail">
                     <div class="cm-actions">
-                      <button class="btn ghost slim" type="button" :disabled="searchPresetBusy" @click.stop="detectSearchPreset">{{ searchPresetBusy ? '识别中…' : '识别搜索预设' }}</button>
-                      <span class="sd-cookie-res">{{ searchPresetMsg }}</span>
+                      <button class="btn ghost slim" type="button" :disabled="detectAllBusy || !defReady" @click.stop="detectAll">{{ detectAllBusy ? '识别中…' : '识别全部' }}</button>
+                      <span class="sd-cookie-res">{{ detectAllMsg }}</span>
                     </div>
-                    <div v-if="presetPreview">
-                      <h4>识别明细（未保存）</h4>
-                      <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                    <template v-if="!detectResult">
+                      <div class="sd-row"><span>当前搜索</span><b>{{ catGroups.length }} 类</b></div>
+                      <div v-if="publishGroups.length" class="sd-row"><span>当前发布</span><b>{{ publishGroups.length }} 类</b></div>
+                      <template v-if="publishGroups.length">
+                        <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                      </template>
+                      <div class="sd-row"><span>上传状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
+                      <p class="set-desc">点“识别全部”会各读一次搜索页和上传页，先预览，再点“保存识别结果”。</p>
+                    </template>
+                    <template v-if="detectResult">
+                      <h4>搜索分类</h4>
+                      <template v-if="previewGroups.length">
+                        <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                      </template>
+                      <div v-else class="sd-row"><span>状态</span><b>没识别到搜索分类</b></div>
                       <div v-if="previewUnmatchedCount" class="sd-row"><span>未识别</span><b>{{ previewUnmatchedSummary }}</b></div>
                       <details v-if="previewUnmatchedCount" class="sd-unmatched">
                         <summary>展开未识别标签（{{ previewUnmatchedCount }}）</summary>
                         <div v-for="g in previewUnmatchedGroups" :key="g.dim" class="sd-unmatched-row"><span>{{ g.dim }}</span><b>{{ g.labels }}</b></div>
                         <p class="set-desc">这些标签没匹配到全局预设，不会写入；补预设别名后可再识别。</p>
                       </details>
-                      <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
-                    </div>
-                  </div>
-                  <div v-if="watchOpen === 'cat'" class="watch-detail">
-                    <template v-if="publishGroups.length">
-                      <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                      <div v-for="e in detectResult.errors" :key="e" class="sd-row"><span>失败</span><b>{{ e }}</b></div>
+
+                      <h4>发布分类</h4>
+                      <div v-if="detectResult.publish && detectResult.publish.fieldKind === 'genre'" class="sd-row"><span>状态</span><b>题材/类型字段，不自动映射</b></div>
+                      <template v-else-if="detectedPublishGroups.length">
+                        <div v-for="g in detectedPublishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                      </template>
+                      <div v-else class="sd-row"><span>状态</span><b>没识别到发布分类</b></div>
+
+                      <h4>上传表单</h4>
+                      <div class="sd-row"><span>字段</span><b>{{ detectedUploadCount }} 个</b></div>
+                      <div v-if="detectResult.publish && detectResult.publish.upload" class="sd-row"><span>提交路径</span><b>{{ detectResult.publish.upload.path || '—' }}</b></div>
+                      <div class="cm-actions">
+                        <button class="btn primary slim" type="button" :disabled="detectSaving" @click.stop="saveDetected">{{ detectSaving ? '保存中…' : '保存识别结果' }}</button>
+                        <span class="sd-cookie-res">{{ detectSaveMsg }}</span>
+                      </div>
                     </template>
-                    <div v-else class="sd-row"><span>状态</span><b>还没有分类映射</b></div>
-                    <p class="set-desc">库内分类 → 目标站分类 ID；识别后自动保存，发种按这张表填分类。</p>
-                    <div class="cm-actions">
-                      <button class="btn ghost slim" type="button" :disabled="catDetectBusy || !defReady" @click.stop="detectTargetCats">{{ catDetectBusy ? '识别中…' : '识别目标站分类' }}</button>
-                      <span class="sd-cookie-res">{{ catMsg }}</span>
-                    </div>
-                  </div>
-                  <div v-if="watchOpen === 'upload'" class="watch-detail">
-                    <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
-                    <p class="set-desc">参数存在站点 JSON；这里只显示状态和识别入口，识别后自动保存。</p>
-                    <p class="set-desc">引擎默认字段可直接用；识别只补站点差异，失败先确认上传权限。</p>
-                    <div class="cm-actions">
-                      <button class="btn ghost slim" type="button" :disabled="detectBusy || !defReady" @click.stop="detectRemote">{{ detectBusy ? '识别中…' : '识别上传表单' }}</button>
-                      <span class="sd-cookie-res">{{ uploadMsg }}</span>
-                    </div>
                   </div>
                   <div v-if="watchOpen === 'cover'" class="watch-detail">
                     <div class="set-field">
@@ -202,23 +190,18 @@ const archOptions = [
   { v: 'OTHER', label: '其它' }, { v: '?', label: '未确认' }
 ]
 /* 分类 key/中文名来自全局预设，站点只保存 key 和 ID */
-const catPurposes = computed(function () { return Object.keys(runtimePresets.value.types || {}).map(function (k) { return { v: k, label: runtimePresets.value.types[k] } }) })
 const s = computed(function () { return props.site || {} })
 const host = computed(function () { return (props.site && props.site.name) || '' })
 const detail = reactive({ def: null, preset: null, catalog: null, items: [] })
 const form = reactive({ url: '', cookie: '', override: false, ovInterval: '', ovDetail: false, priority: 'normal' })
 const defText = ref('')
 const defReady = ref(true)
-const catKind = ref('object')
-const catRows = ref([])
-const catSaving = ref(false)
-const catMsg = ref('')
-const detectBusy = ref(false)
-const catDetectBusy = ref(false)
-const uploadMsg = ref('')
 const watchOpen = ref('')
-const searchPresetBusy = ref(false)
-const searchPresetMsg = ref('')
+const detectAllBusy = ref(false)
+const detectAllMsg = ref('')
+const detectResult = ref(null)
+const detectSaving = ref(false)
+const detectSaveMsg = ref('')
 const presetPreview = ref(null)
 const busy = reactive({ selfcheck: false, save: false, cookie: false })
 
@@ -272,6 +255,18 @@ const addressStats = computed(function () {
 })
 const coverStats = computed(function () {
   return form.override ? { state: 'warn', num: 'ON', text: '单独设置' } : { state: 'ok', num: 'OFF', text: '跟随全局' }
+})
+const detectStats = computed(function () {
+  const score = (catGroups.value.length ? 1 : 0) + (publishGroups.value.length ? 1 : 0) + ((uploadStats.value.count || uploadStats.value.defaultCount) ? 1 : 0)
+  return { num: score, text: score + '/3', state: score === 3 ? 'ok' : (score ? 'warn' : 'bad') }
+})
+const detectedPublishGroups = computed(function () {
+  const cat = (detectResult.value && detectResult.value.publish && detectResult.value.publish.cat) || {}
+  return Object.keys(cat).map(function (k) { return { name: runtimePresets.value.types[k] || k, ids: String(cat[k]) } })
+})
+const detectedUploadCount = computed(function () {
+  const u = (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) || {}
+  return Object.keys(u.fields || {}).length
 })
 const publishGroups = computed(function () {
   const d = detail.def || {}
@@ -359,33 +354,6 @@ function fillForm(site) {
   form.ovDetail = site.ovDetail
   form.priority = site.priority
 }
-function catRowsFromDef(def) {
-  if (!def) return { kind: 'object', rows: [] }
-  /* 站点包例外写的是 catList；优先展示它，保存时再统一成 catMap */
-  if (Array.isArray(def.catList) && def.catList.length) {
-    return { kind: 'array', rows: def.catList.map(function (x) {
-      return { id: String((x && x.id) || ''), label: String((x && x.label) || ''), purpose: String((x && x.purpose) || 'other') }
-    }) }
-  }
-  const cm = def.catMap
-  if (Array.isArray(cm)) {
-    return { kind: 'array', rows: cm.map(function (x) {
-      return { id: String((x && x.id) || ''), label: String((x && x.label) || ''), purpose: String((x && x.purpose) || 'other') }
-    }) }
-  }
-  if (cm && typeof cm === 'object') {
-    return { kind: 'object', rows: Object.keys(cm).map(function (k) {
-      return { key: String(k), id: String(cm[k] == null ? '' : cm[k]) }
-    }) }
-  }
-  return { kind: 'object', rows: [] }
-}
-function syncCatRows(def) {
-  const r = catRowsFromDef(def)
-  catKind.value = r.kind
-  catRows.value = r.rows
-  catMsg.value = ''
-}
 function loadDefFallback(h) {
   const site = s.value
   const tpl = { engine: (site && site.def && site.def.engine) || 'nexusphp', base: (site && site.url) || ('https://' + h),
@@ -418,7 +386,6 @@ async function loadDetail(target) {
     if (dj && dj.body && dj.body.ok && dj.body.data) {
       detail.def = dj.body.data
       defText.value = JSON.stringify(dj.body.data, null, 2)
-      syncCatRows(dj.body.data)
       defReady.value = true
     } else if (dj && dj.status === 404) {
       loadDefFallback(h)
@@ -542,186 +509,91 @@ async function selfcheckOne(site) {
   await selfcheckHost(site.name)
   busy.selfcheck = false
 }
-async function saveCatMap() {
-  if (!host.value || catSaving.value) return
-  if (!defReady.value) { catMsg.value = '站点定义没加载成功，先刷新重试'; return }
-  let def
-  try { def = JSON.parse(defText.value) } catch (e) { catMsg.value = '站点定义数据异常，先刷新重试'; return }
-  if (!def || typeof def !== 'object' || Array.isArray(def)) { catMsg.value = '站点定义必须是 JSON 对象'; return }
-  const rows = catRows.value.map(function (r) { return Object.assign({}, r) })
-  if (catKind.value === 'array') {
-    const seen = {}
-    for (const r of rows) {
-      r.id = String(r.id || '').trim()
-      r.label = String(r.label || '').trim()
-      r.purpose = String(r.purpose || 'other')
-      if (!r.id || !r.label) { catMsg.value = '站点分类的名称和 ID 都要填'; return }
-      if (seen[r.id]) { catMsg.value = '分类 ID 重复：' + r.id; return }
-      seen[r.id] = true
-      if (!catPurposes.value.some(function (p) { return p.v === r.purpose })) r.purpose = 'other'
-    }
-    delete def.catList
-    def.catMap = rows
-    const cats = {}
-    rows.forEach(function (r) { (cats[r.purpose] = cats[r.purpose] || []).push(r.id) })
-    def.cats = cats
-  } else {
-    const seen = {}
-    const obj = {}
-    for (const r of rows) {
-      const key = String(r.key || '').trim()
-      const id = String(r.id || '').trim()
-      if (!key || !id) { catMsg.value = '库内分类和目标站分类 ID 都要填'; return }
-      if (seen[key]) { catMsg.value = '库内分类重复：' + key; return }
-      seen[key] = true
-      obj[key] = id
-    }
-    def.catMap = obj
-  }
-  catSaving.value = true
-  try {
-    const j = await (await fetch('/api/site-def/' + encodeURIComponent(host.value), {
-      method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
-    })).json()
-    if (j && j.ok) {
-      const saved = (j.data && j.data.def) || def
-      detail.def = saved
-      defText.value = JSON.stringify(saved, null, 2)
-      syncCatRows(saved)
-      catMsg.value = '已保存 · ' + rows.length + ' 条'
-      toast('分类映射已保存')
-      emit('changed')
-    } else { catMsg.value = (j && j.error && j.error.message) || '保存失败'; toast(catMsg.value) }
-  } catch (e) { catMsg.value = '保存请求发不出去'; toast(catMsg.value) }
-  catSaving.value = false
-}
+function toggleWatch(kind) { watchOpen.value = watchOpen.value === kind ? '' : kind }
 function typeLabelOf(key) {
   const t = runtimePresets.value && runtimePresets.value.types
   return (t && t[key]) || key
 }
-function diffText(diff) {
-  const add = ((diff && diff.added) || []).map(function (x) { return typeLabelOf(x.type) })
-  const rem = ((diff && diff.removed) || []).map(function (x) { return typeLabelOf(x.type) })
-  const fmt = function (label, list) { return list.length ? label + ' ' + list.slice(0, 5).join('/') + (list.length > 5 ? ' 等' : '') : '' }
-  return [fmt('新增', add), fmt('移除', rem)].filter(Boolean).join('；')
-}
-async function detectSearchPreset() {
-  if (!host.value || searchPresetBusy.value) return
-  watchOpen.value = 'search'
-  searchPresetBusy.value = true
-  searchPresetMsg.value = '识别中…'
+async function detectAll() {
+  if (!host.value || detectAllBusy.value) return
+  watchOpen.value = 'detect'
+  detectAllBusy.value = true
+  detectAllMsg.value = '识别中…'
+  detectResult.value = null
+  presetPreview.value = null
+  const out = { search: null, publish: null, errors: [] }
   try {
-    const r = await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect?preview=1', { method: 'POST', credentials: 'same-origin' })
-    const j = await r.json().catch(() => null)
-    if (!j || !j.ok) { searchPresetMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
-    const n = Object.keys((j.data.search && j.data.search.cats) || {}).length
-    const amb = ((j.data && j.data.ambiguous) || []).length
-    const unmatched = (j.data && j.data.unmatched) || []
-    const un = unmatched.length
-    const unCat = unmatched.filter(function (x) { return x.dim === 'type' }).map(function (x) { return x.label })
-    const unSample = unCat.slice(0, 5).join('、') + (unCat.length > 5 ? ' 等' : '')
-    presetPreview.value = { cats: (j.data.search && j.data.search.cats) || {}, labels: (j.data.detected && j.data.detected.catLabels) || {}, ambiguous: (j.data && j.data.ambiguous) || [], unmatched: unmatched }
-    const eng = (j.data && j.data.engine && j.data.engine !== 'generic') ? j.data.engine : '未定'
-    if (!n) { searchPresetMsg.value = '没识别到分类 · 架构 ' + eng + (un ? ' · 未识别 ' + un + ' 个（' + unSample + '）' : ''); return }
-    const warn = (j.data && j.data.confidence && j.data.confidence !== 'high') ? '（置信度 ' + j.data.confidence + '）' : ''
-    const diff = diffText(j.data.diff)
-    const extra = ' · 架构 ' + eng + (diff ? ' · ' + diff : '') + (amb ? ' · ' + amb + ' 个冲突未写' : '') + (un ? ' · 未识别 ' + un + ' 个：' + unSample : '')
-    searchPresetMsg.value = '识别到 ' + n + ' 类' + extra + '，等确认；展开明细可看全部未识别标签'
-    confirmBox('识别搜索预设', '识别到 ' + n + ' 类分类' + extra + warn + '。保存到站点？', async function () {
-      searchPresetBusy.value = true
-      searchPresetMsg.value = '保存中…'
-      try {
-        const a = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/apply', {
-          method: 'POST', credentials: 'same-origin',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ detected: j.data.detected })
-        })).json()
-        if (a && a.ok) {
-          const saved = Object.keys((a.data.search && a.data.search.cats) || {}).length
-          const left = ((a.data && a.data.ambiguous) || []).length
-          const un = ((a.data && a.data.unmatched) || []).length
-          const dTxt = diffText(a.data && a.data.diff)
-          searchPresetMsg.value = '已保存：' + saved + ' 类分类' + (dTxt ? ' · ' + dTxt : '') + (left ? ' · ' + left + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
-          presetPreview.value = null
-          await loadDetail(host.value)
-        } else searchPresetMsg.value = (a && a.error && a.error.message) || '保存失败'
-      } catch (e) { searchPresetMsg.value = '保存请求发不出去' }
-      finally { searchPresetBusy.value = false }
-    })
-  } catch (e) { searchPresetMsg.value = '识别请求发不出去' }
-  finally { searchPresetBusy.value = false }
-}
-
-function toggleWatch(kind) { watchOpen.value = watchOpen.value === kind ? '' : kind }
-
-function detectRemote() {
-  if (!host.value || detectBusy.value) return
-  watchOpen.value = 'upload'
-  const h = host.value
-  confirmBox('识别上传表单', '会向 ' + h + ' 的上传页发一次 GET，只读页面，不提交任何东西。继续？', async function () {
-    detectBusy.value = true
-    uploadMsg.value = '识别中…'
-    try {
-      const j = await (await fetch('/api/targets/' + encodeURIComponent(h) + '/detect-form', {
-        method: 'POST', credentials: 'same-origin'
-      })).json()
-      if (!j || !j.ok) {
-        uploadMsg.value = String((j && j.error && j.error.message) || '识别失败')
-        return
+    const j = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect?preview=1', { method: 'POST', credentials: 'same-origin' })).json()
+    if (j && j.ok) {
+      out.search = j.data
+      presetPreview.value = {
+        cats: (j.data.search && j.data.search.cats) || {},
+        labels: (j.data.detected && j.data.detected.catLabels) || {},
+        ambiguous: (j.data && j.data.ambiguous) || [],
+        unmatched: (j.data && j.data.unmatched) || []
       }
-      const d = j.data || {}
-      const uploadMap = { path: String(d.path || ''), formPath: String(d.formPath || ''), fileField: String(d.fileField || ''), fields: {} }
-      const selects = {}
-      const defaults = {}
-      ;(d.fields || []).forEach(function (f) {
-        if (!f || !f.name) return
-        uploadMap.fields[String(f.name)] = String(f.template || '')
-        if (Array.isArray(f.options) && f.options.length) selects[String(f.name)] = f.options.map(function (o) { return { value: String(o.value), label: String(o.label || o.value) } })
-        if (f.value) defaults[String(f.name)] = String(f.value)
-      })
-      const fieldNames = Object.keys(uploadMap.fields)
-      const catField = ['category_id', 'category', 'type_id', 'type', 'cat'].find(function (x) { return fieldNames.indexOf(x) >= 0 }) || ''
-      const teamField = ['team_sel', 'team', 'group', 'team_id'].find(function (x) { return fieldNames.indexOf(x) >= 0 }) || ''
-      const form = (Object.keys(selects).length || Object.keys(defaults).length)
-        ? { at: new Date().toISOString(), catField: catField, teamField: teamField, selects: selects, defaults: defaults }
-        : null
-      /* 只发上传表单，不带 catMap/cats，避免把发布分类映射覆盖成搜索分类。 */
-      const payload = { engine: (detail.def && detail.def.engine) || '', base: (detail.def && detail.def.base) || '', uploadMap: uploadMap }
-      if (form) payload.form = form
-      const saved = await (await fetch('/api/site-def/' + encodeURIComponent(h), {
-        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload)
-      })).json()
-      if (saved && saved.ok) {
-        uploadMsg.value = '已识别并保存 ' + Object.keys(uploadMap.fields).length + ' 个字段'
-        toast('上传表单已识别并保存')
-        await loadDetail(h)
-      } else uploadMsg.value = (saved && saved.error && saved.error.message) || '保存失败'
-    } catch (e) { uploadMsg.value = '识别请求发不出去' }
-    finally { detectBusy.value = false }
-  })
+    } else out.errors.push('搜索：' + String((j && j.error && j.error.message) || '识别失败'))
+  } catch (e) { out.errors.push('搜索请求发不出去') }
+  try {
+    const j = await (await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })).json()
+    if (j && j.ok) out.publish = j.data
+    else out.errors.push('上传：' + String((j && j.error && j.error.message) || '识别失败'))
+  } catch (e) { out.errors.push('上传请求发不出去') }
+  detectResult.value = out
+  const n = Object.keys((out.search && out.search.search && out.search.search.cats) || {}).length
+  const p = Object.keys((out.publish && out.publish.cat) || {}).length
+  const u = Object.keys((out.publish && out.publish.upload && out.publish.upload.fields) || {}).length
+  detectAllMsg.value = '搜索 ' + n + ' 类 · 发布 ' + p + ' 类 · 上传 ' + u + ' 字段' + (out.errors.length ? ' · ' + out.errors.length + ' 段失败' : '')
+  detectAllBusy.value = false
 }
 
-async function detectTargetCats() {
-  if (!host.value || catDetectBusy.value) return
-  watchOpen.value = 'cat'
-  catDetectBusy.value = true
-  catMsg.value = '识别中…'
-  try {
-    const j = await (await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', {
-      method: 'POST', credentials: 'same-origin'
-    })).json()
-    if (!j || !j.ok) { catMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
-    const d = j.data || {}
-    if (d.fieldKind === 'genre') { catMsg.value = '识别到题材/类型字段，不是内容分类；请手工映射'; return }
-    const rows = Object.keys(d.cat || {}).map(function (k) { return { key: k, id: String(d.cat[k]) } })
-    if (!rows.length) { catMsg.value = '没识别到目标站分类'; return }
-    catKind.value = 'object'
-    catRows.value = rows
-    catMsg.value = '识别到 ' + rows.length + ' 项，正在保存…'
-    await saveCatMap()
-  } catch (e) { catMsg.value = '识别请求发不出去' }
-  finally { catDetectBusy.value = false }
+async function saveDetected() {
+  const r = detectResult.value
+  if (!r || detectSaving.value || !host.value) return
+  detectSaving.value = true
+  detectSaveMsg.value = '保存中…'
+  const errors = []
+  if (r.search && r.search.detected) {
+    try {
+      const a = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/apply', {
+        method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ detected: r.search.detected })
+      })).json()
+      if (!a || !a.ok) errors.push('搜索：' + String((a && a.error && a.error.message) || '保存失败'))
+    } catch (e) { errors.push('搜索保存请求发不出去') }
+  }
+  if (r.publish) {
+    const genre = r.publish.fieldKind === 'genre'
+    const cat = r.publish.cat || {}
+    if (!genre && Object.keys(cat).length) {
+      try {
+        const a = await (await fetch('/api/maps/' + encodeURIComponent(host.value), {
+          method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ cat: cat, form: r.publish.form })
+        })).json()
+        if (!a || !a.ok) errors.push('发布：' + String((a && a.error && a.error.message) || '保存失败'))
+      } catch (e) { errors.push('发布保存请求发不出去') }
+    }
+    if (r.publish.upload) {
+      try {
+        const d = detail.def || {}
+        const a = await (await fetch('/api/site-def/' + encodeURIComponent(host.value), {
+          method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ engine: d.engine || '', base: d.base || '', uploadMap: r.publish.upload })
+        })).json()
+        if (!a || !a.ok) errors.push('上传：' + String((a && a.error && a.error.message) || '保存失败'))
+      } catch (e) { errors.push('上传保存请求发不出去') }
+    }
+  }
+  detectSaving.value = false
+  if (errors.length) { detectSaveMsg.value = errors.join('；'); toast(detectSaveMsg.value); return }
+  detectSaveMsg.value = '已保存'
+  toast('站点配置已保存')
+  detectResult.value = null
+  presetPreview.value = null
+  await loadDetail(host.value)
 }
+
 function closeDetail() { emit('close') }
 
 onMounted(function () {

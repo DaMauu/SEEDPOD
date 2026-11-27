@@ -530,18 +530,28 @@ function seedDb() {
       await page.close();
     });
 
-    await check('SiteDetail 识别发布分类自动保存', async function () {
+    await check('SiteDetail 统一识别预览与保存', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-      let putBody = null;
-      await page.route('**/api/site-def/**', async function (route) {
-        if (route.request().method() === 'PUT') {
-          putBody = JSON.parse(route.request().postData() || '{}');
-          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { def: putBody } }) });
-        }
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { engine: 'nexusphp', base: 'https://test-1.example', cats: { movie: ['401'] }, catMap: { movie: '401' }, publishCatMap: { movie: '401' }, uploadMap: { fields: {} } } }) });
+      let applyBody = null, mapBody = null, defBody = null;
+      await page.route('**/api/crawl/preset/**/detect?preview=1', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { search: { cats: { movie: ['401'] } }, detected: { cats: { movie: ['401'] }, catLabels: { 401: 'Movies' } }, ambiguous: [], unmatched: [], diff: {} } }) });
       });
-      await page.route('**/api/maps/**/detect', async function (route) {
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1', tv: '2' }, catOptions: [] } }) });
+      await page.route('**/api/crawl/preset/**/apply', async function (route) {
+        applyBody = JSON.parse(route.request().postData() || '{}');
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { search: { cats: { movie: ['401'] } }, ambiguous: [], unmatched: [] } }) });
+      });
+      await page.route('**/api/maps/**', async function (route) {
+        if (route.request().url().indexOf('/detect') >= 0) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1' }, form: { selects: { category_id: [{ value: '1', label: 'Movies' }] }, defaults: {} }, upload: { path: '/upload.php', formPath: '/upload.php', fileField: 'file', fields: { category_id: '{catId}' } } } }) });
+        }
+        if (route.request().method() !== 'PUT') return route.continue();
+        mapBody = JSON.parse(route.request().postData() || '{}');
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { host: 'test-1.example' } }) });
+      });
+      await page.route('**/api/site-def/**', async function (route) {
+        if (route.request().method() !== 'PUT') return route.continue();
+        defBody = JSON.parse(route.request().postData() || '{}');
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { def: defBody } }) });
       });
       await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
       await page.evaluate(async function () {
@@ -552,12 +562,17 @@ function seedDb() {
       await page.waitForTimeout(700);
       await page.locator('[data-view="sites"] .site-item').first().click();
       await page.waitForTimeout(500);
-      await page.locator('#site-detail .watch-tile').filter({ hasText: '发布' }).locator('.watch-face').click();
+      await page.locator('#site-detail .watch-tile').filter({ hasText: '识别' }).locator('.watch-face').click();
       await page.waitForTimeout(200);
-      await page.locator('#site-detail .watch-detail button').filter({ hasText: '识别目标站分类' }).click();
-      await page.waitForTimeout(700);
-      need(putBody && putBody.catMap && putBody.catMap.movie === '1' && putBody.catMap.tv === '2', '自动保存分类映射不对：' + JSON.stringify(putBody));
-      need(!/库内分类和目标站分类 ID 都要填/.test(await page.locator('#site-detail').innerText()), '仍提示分类字段必填');
+      await page.locator('#site-detail .watch-detail button').filter({ hasText: '识别全部' }).click();
+      await page.waitForTimeout(800);
+      const preview = await page.locator('#site-detail .watch-detail').innerText();
+      need(/搜索分类/.test(preview) && /发布分类/.test(preview) && /上传表单/.test(preview), '统一识别预览缺段：' + preview.slice(0, 200));
+      await page.locator('#site-detail .watch-detail button').filter({ hasText: '保存识别结果' }).click();
+      await page.waitForTimeout(900);
+      need(applyBody && applyBody.detected && applyBody.detected.cats && applyBody.detected.cats.movie[0] === '401', '搜索识别没保存：' + JSON.stringify(applyBody));
+      need(mapBody && mapBody.cat && mapBody.cat.movie === '1', '发布识别没保存：' + JSON.stringify(mapBody));
+      need(defBody && defBody.uploadMap && defBody.uploadMap.path === '/upload.php', '上传识别没保存：' + JSON.stringify(defBody));
       await page.close();
     });
 
@@ -652,11 +667,11 @@ function seedDb() {
       await page.waitForTimeout(700);
       await page.locator('[data-view="sites"] .site-item').first().click();
       await page.waitForTimeout(500);
-      await page.locator('#site-detail .watch-tile').filter({ hasText: '发布' }).locator('.watch-face').click();
+      await page.locator('#site-detail .watch-tile').filter({ hasText: '识别' }).locator('.watch-face').click();
       await page.waitForTimeout(200);
       const saveBtn = page.locator('#site-detail .watch-detail button').filter({ hasText: '保存映射' });
       need(await saveBtn.count() === 0, '分类映射保存按钮还在');
-      const detectBtn = page.locator('#site-detail .watch-detail button').filter({ hasText: '识别目标站分类' });
+      const detectBtn = page.locator('#site-detail .watch-detail button').filter({ hasText: '识别全部' });
       need(await detectBtn.isDisabled(), '定义没加载时识别按钮应禁用');
       need(puts === 0, '加载失败后仍然 PUT 覆盖：' + puts);
       need(await page.getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');

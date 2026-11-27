@@ -128,12 +128,23 @@ module.exports = function (app, ctx) {
     const catOptions = catField ? (catField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const teamOptions = teamField ? (teamField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const genre = looksGenre(catOptions);
+    const selects = {};
+    const defaults = {};
+    const uploadFields = {};
+    fields.forEach(function (f) {
+      if (!f || !f.name) return;
+      uploadFields[String(f.name)] = String(f.template || '');
+      if (Array.isArray(f.options) && f.options.length) selects[String(f.name)] = f.options.map(function (o) { return { value: String(o.value), label: String(o.label || o.value) } });
+      if (f.value) defaults[String(f.name)] = String(f.value);
+    });
     const form = {
       at: new Date().toISOString(),
       catField: catField ? catField.name : '',
       teamField: teamField ? teamField.name : '',
       catOptions: catOptions,
-      teamOptions: teamOptions
+      teamOptions: teamOptions,
+      selects: selects,
+      defaults: defaults
     };
     return ok({
       host: host,
@@ -142,7 +153,8 @@ module.exports = function (app, ctx) {
       fieldKind: genre ? 'genre' : 'category',
       catOptions: catOptions,
       teamOptions: teamOptions,
-      form: form
+      form: form,
+      upload: { path: String(d.data.path || ''), formPath: String(d.data.formPath || ''), fileField: String(d.data.fileField || ''), fields: uploadFields }
     });
   });
 };
