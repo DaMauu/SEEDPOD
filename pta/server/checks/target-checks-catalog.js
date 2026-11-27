@@ -21,6 +21,17 @@ async function runCatalog(C) {
     need(m['有声书'] === '5' && m['音乐短片'] === '6', '新类型没匹配：' + JSON.stringify(m));
   });
 
+  await check('同一分类 ID 命中多个类型时不写', async function () {
+    const maps = require(path.join(ROOT, 'server', 'src', 'http', 'routes-maps.js'));
+    const d = maps._test.matchCatsDetailed([
+      { value: '1', label: '电影' },
+      { value: '413', label: '音乐/MV' }
+    ]);
+    need(d.cat['电影'] === '1', '电影没匹配：' + JSON.stringify(d));
+    need(d.cat['音乐'] === undefined && d.cat['音乐短片'] === undefined, '冲突 ID 仍写了：' + JSON.stringify(d.cat));
+    need(d.ambiguous.length === 1 && d.ambiguous[0].id === '413', '冲突 ID 没标出：' + JSON.stringify(d.ambiguous));
+  });
+
   await check('题材字段不会被当成内容分类', async function () {
     const maps = require(path.join(ROOT, 'server', 'src', 'http', 'routes-maps.js'));
     const genre = maps._test.looksGenre([

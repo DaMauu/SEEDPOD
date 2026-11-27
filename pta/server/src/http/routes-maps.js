@@ -55,18 +55,36 @@ function squeezeLabel(s) {
   /* 有些站把中文写成「电 影」「综 艺」，去掉汉字之间的空格再匹配 */
   return String(s || '').replace(/([\u4e00-\u9fa5])\s+(?=[\u4e00-\u9fa5])/g, '$1');
 }
-function matchCats(options) {
-  const out = {};
+function matchCatsDetailed(options) {
   const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
-  CAT.forEach(function (pair) {
-    const hit = list.filter(function (o) {
-      const label = String(o.label || '');
-      return pair[1].test(label) || pair[1].test(squeezeLabel(label));
-    })[0];
-    if (hit) out[pair[0]] = String(hit.value);
+  const out = {};
+  const ambiguous = [];
+  const used = {};
+  list.forEach(function (o) {
+    const raw = String(o.label || '');
+    const squeezed = squeezeLabel(raw);
+    const hits = [];
+    CAT.forEach(function (pair) {
+      if (!pair[1].test(raw) && !pair[1].test(squeezed)) return;
+      const exact = raw.trim() === pair[0] || squeezed.trim() === pair[0];
+      hits.push({ type: pair[0], score: exact ? 3 : 1 });
+    });
+    if (!hits.length) return;
+    const max = Math.max.apply(null, hits.map(function (x) { return x.score; }));
+    const top = hits.filter(function (x) { return x.score === max; });
+    const id = String(o.value);
+    if (top.length > 1) {
+      ambiguous.push({ id: id, types: top.map(function (x) { return x.type; }) });
+      used[id] = true;
+      return;
+    }
+    used[id] = true;
+    if (out[top[0].type] == null) out[top[0].type] = id;
   });
-  return out;
+  const unmatched = list.filter(function (o) { return !used[String(o.value)]; }).map(function (o) { return String(o.label || o.value); });
+  return { cat: out, ambiguous: ambiguous, unmatched: unmatched };
 }
+function matchCats(options) { return matchCatsDetailed(options).cat; }
 
 module.exports = function (app, ctx) {
   const { DATA_DIR, ok, bad } = ctx;
@@ -128,6 +146,7 @@ module.exports = function (app, ctx) {
     const catOptions = catField ? (catField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const teamOptions = teamField ? (teamField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const genre = looksGenre(catOptions);
+    const catResult = genre ? { cat: {}, ambiguous: [], unmatched: [] } : matchCatsDetailed(catOptions);
     const selects = {};
     const defaults = {};
     const uploadFields = {};
@@ -149,7 +168,9 @@ module.exports = function (app, ctx) {
     return ok({
       host: host,
       detected: { catField: form.catField, teamField: form.teamField },
-      cat: genre ? {} : matchCats(catOptions),
+      cat: catResult.cat,
+      ambiguous: catResult.ambiguous,
+      unmatched: catResult.unmatched,
       fieldKind: genre ? 'genre' : 'category',
       catOptions: catOptions,
       teamOptions: teamOptions,
@@ -159,4 +180,4 @@ module.exports = function (app, ctx) {
   });
 };
 
-module.exports._test = { matchCats, squeezeLabel, pickField, looksGenre, CAT, GENRE, CONTENT };
+module.exports._test = { matchCats, matchCatsDetailed, squeezeLabel, pickField, looksGenre, CAT, GENRE, CONTENT };

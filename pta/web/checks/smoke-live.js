@@ -319,11 +319,15 @@ async function main() {
     await page.waitForTimeout(600);
     await detectTile2.locator('.watch-face').click();
     await page.waitForTimeout(200);
+    await page.locator('#site-detail .watch-tile.sub').filter({ hasText: '发布分类' }).locator('.watch-face').click();
+    await page.waitForTimeout(200);
     const detailText = await page.locator('#site-detail .watch-detail').innerText();
     need(/401/.test(detailText) && /402/.test(detailText), '只读分类映射没显示目标站 ID：' + JSON.stringify(detailText.slice(0, 160)));
     need(/电影|movie/i.test(detailText), '只读分类映射没显示库内分类：' + JSON.stringify(detailText.slice(0, 160)));
     need(await page.locator('#site-detail .watch-detail input, #site-detail .watch-detail select').count() === 0, '数组映射又出现输入框/下拉框');
-    need(/引擎默认 10 个字段/.test(detailText), '没显示引擎默认上传字段');
+    await page.locator('#site-detail .watch-tile.sub').filter({ hasText: '上传表单' }).locator('.watch-face').click();
+    await page.waitForTimeout(200);
+    need(/引擎默认 10 个字段/.test(await page.locator('#site-detail .watch-detail').innerText()), '没显示引擎默认上传字段');
     need(await page.locator('#site-detail .up-pair').count() === 0, '上传参数输入框还在前端');
     need(await page.locator('#site-detail').getByText('站点定义 JSON').count() === 0, '站点定义 JSON 框还在前端');
   });
