@@ -16,7 +16,7 @@ const DEFAULT_DATA = path.resolve(__dirname, '..', '..', '..', 'data');
 const MAX_HTML = 3 * 1024 * 1024;
 
 function parseArgs(argv) {
-  const out = { data: process.env.PTA_DATA || DEFAULT_DATA, out: '', limit: 5, offset: 0, delay: 10000, raw: true, resume: false, includeNoCookie: false, hosts: [], stopAfterRate: 2 };
+  const out = { data: process.env.PTA_DATA || DEFAULT_DATA, out: '', limit: 5, offset: 0, delay: 10000, raw: true, resume: false, includeNoCookie: false, hosts: [], stopAfterRate: 5 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--data') out.data = argv[++i];
@@ -28,7 +28,7 @@ function parseArgs(argv) {
     else if (a === '--no-raw') out.raw = false;
     else if (a === '--resume') out.resume = true;
     else if (a === '--include-no-cookie') out.includeNoCookie = true;
-    else if (a === '--stop-after-rate') out.stopAfterRate = Math.max(1, Number(argv[++i]) || 2);
+    else if (a === '--stop-after-rate') out.stopAfterRate = Math.max(1, Number(argv[++i]) || 5);
     else if (a === '--help' || a === '-h') { console.log('用法：node pta/server/scripts/audit-site-detection.js --limit 5 --delay 10000 [--out DIR] [--resume]'); process.exit(0); }
   }
   return out;
@@ -205,6 +205,7 @@ async function auditUpload(host, rec, cookie) {
   if (!args.hosts.length) hosts = hosts.slice(args.offset, args.offset + args.limit);
   const run = { at: new Date().toISOString(), data: DATA, out: OUT, delay: args.delay, limit: args.limit, offset: args.offset, total: hosts.length, requests: 0, rateStops: 0, sites: [] };
   let rateStops = 0;
+  let consecutiveRate = 0;
   for (let i = 0; i < hosts.length; i++) {
     const host = hosts[i];
     const file = path.join(SITES, safeHost(host) + '.json');
@@ -219,7 +220,7 @@ async function auditUpload(host, rec, cookie) {
       row.search = search; row.requests += search.requests || 0; run.requests += search.requests || 0;
       if (!search.ok) {
         row.issues.push(issue(search.code, search.message || ''));
-        if (search.stop) { row.status = 'BLOCKED_RATE'; rateStops++; run.rateStops = rateStops; }
+        if (search.stop) { row.status = 'BLOCKED_RATE'; rateStops++; consecutiveRate++; run.rateStops = rateStops; }
         else if (/LOGIN|HTTP_401|HTTP_302/.test(search.code)) row.status = 'BLOCKED_LOGIN';
         else row.status = 'ERROR';
       } else {
@@ -244,7 +245,7 @@ async function auditUpload(host, rec, cookie) {
         row.upload = upload; row.requests += upload.requests || 0; run.requests += upload.requests || 0;
         if (!upload.ok) {
           row.issues.push(issue(upload.code, upload.message || ''));
-          if (upload.stop) { row.status = 'BLOCKED_RATE'; rateStops++; run.rateStops = rateStops; }
+          if (upload.stop) { row.status = 'BLOCKED_RATE'; rateStops++; consecutiveRate++; run.rateStops = rateStops; }
           else if (upload.code === 'NO_FORM') row.status = row.status === 'ERROR' ? 'PARTIAL' : (row.status === 'BLOCKED_RATE' ? row.status : 'PARTIAL');
           else if (upload.code === 'LOGIN_REQUIRED' || upload.code === 'HTTP_401') row.status = 'BLOCKED_LOGIN';
           else if (upload.code === 'HTTP_404' || upload.code === 'HTTP_405') row.issues.push(issue('UPLOAD_PATH_MISSING'));
@@ -264,10 +265,11 @@ async function auditUpload(host, rec, cookie) {
       row.status = 'ERROR';
       row.issues.push(issue('AUDIT_FAILED', String(e && e.message || e).slice(0, 160)));
     }
+    if (row.status !== 'BLOCKED_RATE') consecutiveRate = 0;
     writeJson(file, row);
     run.sites.push(row);
     console.log((row.status + '    ').slice(0, 8) + row.name + '  ' + row.host + '  ' + row.issues.map(function (x) { return x.code; }).join(','));
-    if (rateStops >= args.stopAfterRate) { run.stopped = '连续限流，停止本次批次'; break; }
+    if (consecutiveRate >= args.stopAfterRate) { run.stopped = '连续限流，停止本次批次'; break; }
     if (i < hosts.length - 1) await sleep(args.delay);
   }
   writeJson(path.join(OUT, 'last-run.json'), run);

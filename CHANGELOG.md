@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.7.726 · 2026-11-28
+
+### Telegram 动态进度显示百分比
+- Telegram bot 的动态进度卡从“工作中”改为读取当前进度，例如 `⏳ 35%`。
+- 进度由 `scripts/set-progress.js` 写入 `~/.config/opencode/live-progress.json`，带更新时间/过期时间；过期自动回退“工作中”。
+- `scripts/patch-telegram-bot.sh` 集成该补丁，bot 升级后 ExecStartPre 自动重打。
+- 全量 `run.sh` 通过。
+
 ## v0.7.725 · 2026-11-28
 
 ### 全站识别体检工具

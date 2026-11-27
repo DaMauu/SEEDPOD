@@ -1,6 +1,21 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-28 12:00（当前 v0.7.725 / 全站识别体检工具；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+最后更新：2026-11-28 21:10（当前 v0.7.726 / 全站体检完成；开发清单见 `pta/docs/ROADMAP.md` 顶部）
+
+## 2026-11-28 全站识别体检结果
+
+- 306 站、404 次请求：完全正常 1、部分可用 106、登录失效 46、无 cookie 102、限流/403 8、其他错误 43。
+- 上传表单 86 个；分类控件 75 个；复选/单选组 1 个；多分类字段 15 个；无表单 25 个。
+- 发布映射重复 22 个站；新旧映射不同 80 个站。
+- 共性问题：`medium:CD` 32 站、`resolution:Other` 15 站、`type:Release type` 等音乐 release type 被误当内容分类。
+- 大头是 cookie/登录（148）和路径 404（76），不是解析器。
+- 详见 `pta/docs/SITE-AUDIT-RESULTS-20261128.md`；原始页在本地 `data/site-audit/`，不入库。
+
+## 2026-11-28 Telegram 动态进度百分比（v0.7.726）
+
+- 动态进度卡读 `~/.config/opencode/live-progress.json`，显示 `⏳ 35%`；过期自动回退“工作中”。
+- 新增 `scripts/set-progress.js` 写进度；`scripts/patch-telegram-bot.sh` 负责 bot 升级后重打。
+- 全量 `run.sh` 通过；已部署，GitHub 同步。
 
 ## 2026-11-28 全站识别体检工具（v0.7.725）
 

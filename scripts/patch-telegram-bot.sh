@@ -8,13 +8,15 @@ RESTART=1
 BOT_DIR="${BOT_DIR:-/usr/lib/node_modules/@grinev/opencode-telegram-bot/dist/bot}"
 FILE="$BOT_DIR/handlers/rich-message-handler.js"
 KB="$BOT_DIR/keyboards/main-reply-keyboard.js"
+STREAM="$BOT_DIR/streaming/compact-progress-streamer.js"
 
 [ -f "$FILE" ] || { echo "找不到 $FILE"; exit 1; }
 [ -f "$KB" ] || { echo "找不到 $KB"; exit 1; }
+[ -f "$STREAM" ] || { echo "找不到 $STREAM"; exit 1; }
 
-python3 - "$FILE" "$KB" <<'PY'
+python3 - "$FILE" "$KB" "$STREAM" <<'PY'
 import io, sys
-file, kb = sys.argv[1], sys.argv[2]
+file, kb, stream = sys.argv[1], sys.argv[2], sys.argv[3]
 
 s = io.open(file, encoding='utf-8').read()
 if '[引用]' not in s:
@@ -76,6 +78,43 @@ if '// no fixed buttons' not in k:
     print('已加空键盘兜底')
 else:
     print('空键盘兜底已存在')
+
+# 动态进度卡：把“工作中”改成当前进度百分比；读 ~/.config/opencode/live-progress.json，过期回退。
+s2 = io.open(stream, encoding='utf-8').read()
+if 'readLiveProgressPercent' not in s2:
+    imp = 'import { resolveStreamThrottleMs, } from "./stream-throttle.js";\n'
+    add = imp + 'import fs from "node:fs";\nimport path from "node:path";\n'
+    if imp not in s2:
+        raise SystemExit('进度补丁：找不到 import 位置')
+    s2 = s2.replace(imp, add, 1)
+    anchor = 'function createInitialState(sessionId) {'
+    helper = '''function readLiveProgressPercent() {
+    try {
+        const file = process.env.TELEGRAM_PROGRESS_FILE || path.join(process.env.HOME || "", ".config/opencode/live-progress.json");
+        const data = JSON.parse(fs.readFileSync(file, "utf8"));
+        const pct = Number(data && data.percent);
+        const updated = Number(data && data.updatedAt);
+        const ttl = Number(data && data.ttlSec) || 900;
+        if (!Number.isFinite(pct) || !Number.isFinite(updated)) return null;
+        if (Date.now() - updated > ttl * 1000) return null;
+        return Math.max(0, Math.min(100, Math.round(pct)));
+    } catch (e) {
+        return null;
+    }
+}
+function progressHeader() {
+    const pct = readLiveProgressPercent();
+    return pct === null ? t("progress.compact.working_header") : `⏳ ${pct}%`;
+}
+'''
+    if anchor not in s2:
+        raise SystemExit('进度补丁：找不到插入位置')
+    s2 = s2.replace(anchor, helper + anchor, 1)
+    s2 = s2.replace('header: t("progress.compact.working_header"),', 'header: progressHeader(),')
+    io.open(stream, 'w', encoding='utf-8').write(s2)
+    print('已改进度卡：工作中 -> 百分比')
+else:
+    print('进度卡补丁已存在')
 PY
 
 if [ "$RESTART" = "1" ]; then

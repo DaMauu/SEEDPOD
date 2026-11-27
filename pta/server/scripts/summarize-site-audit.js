@@ -16,6 +16,38 @@ const rows = fs.readdirSync(sitesDir).filter(function (f) { return /\.json$/.tes
 
 function add(map, key, n) { map[key] = (map[key] || 0) + (n == null ? 1 : n); }
 function top(map, limit) { return Object.keys(map).sort(function (a, b) { return map[b] - map[a]; }).slice(0, limit || 20).map(function (k) { return { key: k, count: map[k] }; }); }
+const ACTIONS = {
+  NO_COOKIE: '重新导入 cookie',
+  LOGIN_REQUIRED: 'cookie 过期/登录失效，重新导入',
+  HTTP_401: 'cookie 失效，重新登录',
+  HTTP_403: '可能被 Cloudflare 拦或权限不足，单站复核',
+  HTTP_404: '搜索/上传路径不对，单站改路径',
+  HTTP_530: '站点异常，稍后重试',
+  TIMEOUT: '请求超时，单站重试',
+  FETCH_FAILED: '网络失败，单站重试',
+  NO_FORM: '没有上传权限或站点未开放，先确认账号',
+  UPLOAD_PATH_MISSING: '上传路径不对，单站改路径',
+  UPLOAD_NO_CAT_FIELD: '没识别到分类控件，单站看 HTML',
+  UPLOAD_GENRE_FIELD: '分类字段是题材，不能自动写，单站人工',
+  UPLOAD_MULTI_CAT_FIELD: '主分类/子分类混在一起，单站拆分',
+  UPLOAD_CHOICE_GROUP: '复选/单选组，检查选项合并',
+  UPLOAD_UNMATCHED: '上传未匹配标签，按站补别名',
+  SEARCH_EMPTY: '搜索分类为空，单站重识别',
+  SEARCH_UNMATCHED: '搜索未识别标签，先看是否共性别名',
+  SEARCH_TYPE_UNMATCHED: '搜索分类类型未识别，单站映射',
+  PUBLISH_DUP: '旧发布映射重复，重识别后覆盖',
+  PUBLISH_DIFF: '新旧发布映射不同，预览后写回',
+  NO_BASE: '缺站点地址，单站补',
+  BAD_BASE: '站点地址和域名不一致，单站修',
+  PARSE_FAILED: '页面解析失败，单站看原始 HTML',
+  NO_RECORD: '站点记录不存在',
+  AUDIT_FAILED: '体检脚本异常，单站重跑'
+};
+function actionsOf(row) {
+  const seen = {};
+  (row.issues || []).forEach(function (x) { if (x && x.code) seen[x.code] = true; });
+  return Object.keys(seen).map(function (k) { return { code: k, action: ACTIONS[k] || '单站复核' }; });
+}
 const status = {}, engines = {}, issueCount = {}, searchUnmatched = {}, uploadUnmatched = {};
 let requests = 0, forms = 0, catForms = 0, choiceForms = 0, multiCat = 0, noForm = 0, noCat = 0, dupSites = 0, diffSites = 0;
 rows.forEach(function (r) {
@@ -40,6 +72,21 @@ rows.forEach(function (r) {
   if (u.ok && (!u.catFields || !u.catFields.length)) noCat++;
 });
 
+const actionCount = {};
+const sharedSearch = {}, uniqueSearch = {}, searchSites = {};
+rows.forEach(function (r) {
+  actionsOf(r).forEach(function (a) { add(actionCount, a.action); });
+  const s = r.search || {};
+  if (!s.ok) return;
+  const labels = {};
+  (s.unmatched || []).forEach(function (x) {
+    const key = (x.dim || '?') + ':' + (x.label || '');
+    labels[key] = true;
+    (searchSites[key] = searchSites[key] || []).push(r.name || r.host || '');
+  });
+  Object.keys(labels).forEach(function (k) { (searchSites[k].length >= 3 ? sharedSearch : uniqueSearch)[k] = (searchSites[k] || []).length; });
+});
+
 const summary = {
   at: new Date().toISOString(),
   sites: rows.length,
@@ -49,7 +96,10 @@ const summary = {
   issues: issueCount,
   upload: { forms: forms, catForms: catForms, choiceForms: choiceForms, multiCat: multiCat, noForm: noForm, noCat: noCat, savedDuplicateSites: dupSites, diffSites: diffSites },
   searchUnmatchedTop: top(searchUnmatched, 30),
-  uploadUnmatchedTop: top(uploadUnmatched, 30)
+  uploadUnmatchedTop: top(uploadUnmatched, 30),
+  actions: top(actionCount, 30),
+  sharedSearchUnmatched: top(sharedSearch, 30),
+  uniqueSearchUnmatched: top(uniqueSearch, 50)
 };
 fs.writeFileSync(path.join(dir, 'summary.json'), JSON.stringify(summary, null, 1), { mode: 0o600 });
 
@@ -76,6 +126,15 @@ lines.push('## 问题代码');
 lines.push('');
 Object.keys(issueCount).sort(function (a, b) { return issueCount[b] - issueCount[a]; }).forEach(function (k) { lines.push('- ' + k + '：' + issueCount[k]); });
 lines.push('');
+lines.push('## 建议动作');
+lines.push('');
+top(actionCount, 30).forEach(function (x) { lines.push('- ' + x.key + '：' + x.count); });
+lines.push('');
+lines.push('## 共性别名候选（≥3 个站）');
+lines.push('');
+top(sharedSearch, 30).forEach(function (x) { lines.push('- ' + x.key + ' × ' + x.count + ' 个站'); });
+if (!Object.keys(sharedSearch).length) lines.push('- 暂无');
+lines.push('');
 lines.push('## 搜索未识别 TOP');
 lines.push('');
 top(searchUnmatched, 30).forEach(function (x) { lines.push('- ' + x.key + ' × ' + x.count); });
@@ -86,13 +145,13 @@ top(uploadUnmatched, 30).forEach(function (x) { lines.push('- ' + x.key + ' × '
 lines.push('');
 lines.push('## 站点明细');
 lines.push('');
-lines.push('| 状态 | 站点 | 引擎 | 搜索类/未识别 | 上传字段/分类选项/未匹配 | 问题 |');
-lines.push('| --- | --- | --- | --- | --- | --- |');
+lines.push('| 状态 | 站点 | 引擎 | 搜索类/未识别 | 上传字段/分类选项/未匹配 | 建议动作 | 问题 |');
+lines.push('| --- | --- | --- | --- | --- | --- | --- |');
 sorted.forEach(function (r) {
   const s = r.search || {}; const u = r.upload || {};
   const st = s.ok && s.parsed ? s.parsed.typeCount + '/' + (s.unmatched || []).length : '-';
   const up = u.ok ? (u.fieldCount || 0) + '/' + (u.catOptions || 0) + '/' + ((u.unmatched || []).length) : '-';
-  lines.push('| ' + (r.status || '') + ' | ' + String(r.name || r.host || '').replace(/\|/g, '/') + ' | ' + (r.engine || '') + ' | ' + st + ' | ' + up + ' | ' + (r.issues || []).map(function (x) { return x.code; }).join(',') + ' |');
+  lines.push('| ' + (r.status || '') + ' | ' + String(r.name || r.host || '').replace(/\|/g, '/') + ' | ' + (r.engine || '') + ' | ' + st + ' | ' + up + ' | ' + actionsOf(r).map(function (x) { return x.action; }).join('；') + ' | ' + (r.issues || []).map(function (x) { return x.code; }).join(',') + ' |');
 });
 fs.writeFileSync(path.join(dir, 'summary.md'), lines.join('\n') + '\n', { mode: 0o600 });
 
@@ -118,6 +177,15 @@ notes.push('- 先处理 BLOCKED_LOGIN / BLOCKED_RATE / NO_FORM，避免把权限
 notes.push('- 再处理 UPLOAD_NO_CAT_FIELD / UPLOAD_UNMATCHED，按引擎和标签归类补别名。');
 notes.push('- 最后处理 PUBLISH_DUP / PUBLISH_DIFF，逐站预览后写回。');
 notes.push('- 原始 HTML 在 raw/ 下，只用于人工复核，不复制到仓库、不打印 cookie。');
+notes.push('');
+notes.push('## 本次数据');
+notes.push('');
+notes.push('- 请求数：' + summary.requests + '；站点数：' + summary.sites);
+Object.keys(summary.status).sort(function (a, b) { return summary.status[b] - summary.status[a]; }).forEach(function (k) { notes.push('- ' + k + '：' + summary.status[k]); });
+notes.push('');
+notes.push('共性别名候选（≥3 个站）：');
+top(sharedSearch, 20).forEach(function (x) { notes.push('- ' + x.key + ' × ' + x.count + ' 个站'); });
+if (!Object.keys(sharedSearch).length) notes.push('- 暂无');
 fs.writeFileSync(path.join(dir, 'notes.md'), notes.join('\n') + '\n', { mode: 0o600 });
 
 console.log(JSON.stringify({ sites: summary.sites, requests: summary.requests, status: summary.status, out: dir }, null, 1));
