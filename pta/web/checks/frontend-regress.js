@@ -542,7 +542,7 @@ function seedDb() {
       });
       await page.route('**/api/maps/**', async function (route) {
         if (route.request().url().indexOf('/detect') >= 0) {
-          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1' }, form: { selects: { category_id: [{ value: '1', label: 'Movies' }] }, defaults: {} }, upload: { path: '/upload.php', formPath: '/upload.php', fileField: 'file', fields: { category_id: '{catId}' } } } }) });
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1' }, catOptions: [{ value: '1', label: 'Movies' }, { value: '9', label: 'Mystery' }], unmatched: ['Mystery'], form: { selects: { category_id: [{ value: '1', label: 'Movies' }] }, defaults: {} }, upload: { path: '/upload.php', formPath: '/upload.php', fileField: 'file', fields: { category_id: '{catId}' } } } }) });
         }
         if (route.request().method() !== 'PUT') return route.continue();
         mapBody = JSON.parse(route.request().postData() || '{}');
@@ -568,10 +568,12 @@ function seedDb() {
       await page.waitForTimeout(800);
       const preview = await page.locator('#site-detail .watch-detail').innerText();
       need(/搜索分类/.test(preview) && /发布分类/.test(preview) && /上传表单/.test(preview), '统一识别预览缺段：' + preview.slice(0, 200));
+      await page.locator('#site-detail .alias-row select').first().selectOption('电影');
       await page.locator('#site-detail .watch-detail button').filter({ hasText: '保存识别结果' }).click();
       await page.waitForTimeout(900);
       need(applyBody && applyBody.detected && applyBody.detected.cats && applyBody.detected.cats.movie[0] === '401', '搜索识别没保存：' + JSON.stringify(applyBody));
-      need(mapBody && mapBody.cat && mapBody.cat.movie === '1', '发布识别没保存：' + JSON.stringify(mapBody));
+      need(mapBody && mapBody.cat && mapBody.cat.movie === '1' && mapBody.cat['电影'] === '9', '发布识别/别名没保存：' + JSON.stringify(mapBody));
+      need(mapBody.labels && mapBody.labels.Mystery === '电影', '每站别名没保存：' + JSON.stringify(mapBody.labels));
       need(defBody && defBody.uploadMap && defBody.uploadMap.path === '/upload.php', '上传识别没保存：' + JSON.stringify(defBody));
       await page.close();
     });

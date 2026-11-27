@@ -55,14 +55,24 @@ function squeezeLabel(s) {
   /* 有些站把中文写成「电 影」「综 艺」，去掉汉字之间的空格再匹配 */
   return String(s || '').replace(/([\u4e00-\u9fa5])\s+(?=[\u4e00-\u9fa5])/g, '$1');
 }
-function matchCatsDetailed(options) {
+function matchCatsDetailed(options, aliases) {
   const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
   const out = {};
-  const ambiguous = [];
+  const notes = [];
+  const choices = [];
   const used = {};
+  const aliasMap = aliases && typeof aliases === 'object' ? aliases : {};
+  const typeNames = CAT.map(function (p) { return p[0]; });
   list.forEach(function (o) {
     const raw = String(o.label || '');
     const squeezed = squeezeLabel(raw);
+    const alias = Object.keys(aliasMap).filter(function (k) { return squeezeLabel(k) === squeezed; })[0];
+    const aliasType = alias && typeNames.indexOf(String(aliasMap[alias])) >= 0 ? String(aliasMap[alias]) : '';
+    if (aliasType) {
+      used[String(o.value)] = true;
+      if (out[aliasType] == null) out[aliasType] = String(o.value);
+      return;
+    }
     const hits = [];
     CAT.forEach(function (pair) {
       if (!pair[1].test(raw) && !pair[1].test(squeezed)) return;
@@ -73,16 +83,18 @@ function matchCatsDetailed(options) {
     const max = Math.max.apply(null, hits.map(function (x) { return x.score; }));
     const top = hits.filter(function (x) { return x.score === max; });
     const id = String(o.value);
-    if (top.length > 1) {
-      ambiguous.push({ id: id, types: top.map(function (x) { return x.type; }) });
-      used[id] = true;
-      return;
-    }
     used[id] = true;
-    if (out[top[0].type] == null) out[top[0].type] = id;
+    /* 一个上传页 option 只落一个库内类型；组合标签按 CAT 顺序取更具体的那个，
+       不把同一个目标站 ID 复制到多个库内类型（搜索分类 ID 和发布分类 ID 是两套命名空间）。 */
+    const chosen = top[0].type;
+    if (out[chosen] == null) out[chosen] = id;
+    if (top.length > 1) {
+      notes.push(raw + ' → ' + chosen + '（命中 ' + top.map(function (x) { return x.type }).join('/') + '，按优先级）');
+      choices.push({ label: raw, value: id, chosen: chosen, types: top.map(function (x) { return x.type; }) });
+    }
   });
   const unmatched = list.filter(function (o) { return !used[String(o.value)]; }).map(function (o) { return String(o.label || o.value); });
-  return { cat: out, ambiguous: ambiguous, unmatched: unmatched };
+  return { cat: out, ambiguous: [], notes: notes, choices: choices, unmatched: unmatched };
 }
 function matchCats(options) { return matchCatsDetailed(options).cat; }
 
@@ -128,6 +140,13 @@ module.exports = function (app, ctx) {
           catMap[key] = saved.cat[k];
         });
         publish.catMap = catMap;
+        if (body.labels && typeof body.labels === 'object' && !Array.isArray(body.labels)) {
+          const allowed = {};
+          CAT.forEach(function (p) { allowed[p[0]] = true; });
+          const labels = Object.assign({}, (publish.detect && publish.detect.labels) || {});
+          Object.keys(body.labels).slice(0, 200).forEach(function (k) { const t = String(body.labels[k] || ''); if (allowed[t]) labels[String(k).slice(0, 80)] = t; });
+          publish.detect = Object.assign({}, publish.detect || {}, { labels: labels });
+        }
         siteStore.save(host, { publish: publish }, ctx.db);
       }
       return ok({ host: host, map: saved });
@@ -145,8 +164,10 @@ module.exports = function (app, ctx) {
     const teamField = pickField(fields, ['team', 'team_id', 'group', 'group_id'], /制作组|制作团队|小组|team|group/i);
     const catOptions = catField ? (catField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const teamOptions = teamField ? (teamField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
+    const rec = siteStore.get(host);
+    const siteAliases = (rec && rec.publish && rec.publish.detect && rec.publish.detect.labels) || {};
     const genre = looksGenre(catOptions);
-    const catResult = genre ? { cat: {}, ambiguous: [], unmatched: [] } : matchCatsDetailed(catOptions);
+    const catResult = genre ? { cat: {}, ambiguous: [], notes: [], choices: [], unmatched: [] } : matchCatsDetailed(catOptions, siteAliases);
     const selects = {};
     const defaults = {};
     const uploadFields = {};
@@ -170,6 +191,9 @@ module.exports = function (app, ctx) {
       detected: { catField: form.catField, teamField: form.teamField },
       cat: catResult.cat,
       ambiguous: catResult.ambiguous,
+      notes: catResult.notes || [],
+      choices: catResult.choices || [],
+      siteAliases: siteAliases,
       unmatched: catResult.unmatched,
       fieldKind: genre ? 'genre' : 'category',
       catOptions: catOptions,

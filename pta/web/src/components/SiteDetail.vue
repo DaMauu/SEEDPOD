@@ -87,75 +87,63 @@
                       <button class="btn ghost slim" type="button" :disabled="detectAllBusy || !defReady" @click.stop="detectAll">{{ detectAllBusy ? '识别中…' : '识别全部' }}</button>
                       <span class="sd-cookie-res">{{ detectAllMsg }}</span>
                     </div>
-                    <div class="watch-subgrid">
-                      <div class="watch-tile sub" :class="[searchSubState, { open: detectSub === 'search' }]">
-                        <div class="watch-face" role="button" tabindex="0" @click.stop="detectSub = detectSub === 'search' ? '' : 'search'" @keydown.enter.prevent="detectSub = detectSub === 'search' ? '' : 'search'">
-                          <span class="wf-num">{{ searchCount }}</span>
-                          <span class="wf-label">搜索分类</span>
-                          <span class="wf-sub">{{ detectResult ? '识别结果' : '当前配置' }}</span>
-                        </div>
+                    <div class="detect-cols">
+                      <div class="detect-col">
+                        <h4>搜索分类 <b>{{ searchCount }}</b></h4>
+                        <template v-if="detectResult && detectResult.search">
+                          <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
+                          <div v-if="previewUnmatchedCount" class="sd-row"><span>未识别</span><b>{{ previewUnmatchedSummary }}</b></div>
+                          <details v-if="previewUnmatchedCount" class="sd-unmatched">
+                            <summary>展开未识别标签（{{ previewUnmatchedCount }}）</summary>
+                            <div v-for="g in previewUnmatchedGroups" :key="g.dim" class="sd-unmatched-row"><span>{{ g.dim }}</span><b>{{ g.labels }}</b></div>
+                          </details>
+                        </template>
+                        <template v-else-if="catGroups.length">
+                          <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                        </template>
+                        <div v-else class="sd-row"><span>状态</span><b>还没有搜索分类</b></div>
                       </div>
-                      <div class="watch-tile sub" :class="[publishSubState, { open: detectSub === 'publish' }]">
-                        <div class="watch-face" role="button" tabindex="0" @click.stop="detectSub = detectSub === 'publish' ? '' : 'publish'" @keydown.enter.prevent="detectSub = detectSub === 'publish' ? '' : 'publish'">
-                          <span class="wf-num">{{ publishCount }}</span>
-                          <span class="wf-label">发布分类</span>
-                          <span class="wf-sub">{{ detectResult ? '识别结果' : '当前配置' }}</span>
-                        </div>
-                      </div>
-                      <div class="watch-tile sub" :class="[uploadSubState, { open: detectSub === 'upload' }]">
-                        <div class="watch-face" role="button" tabindex="0" @click.stop="detectSub = detectSub === 'upload' ? '' : 'upload'" @keydown.enter.prevent="detectSub = detectSub === 'upload' ? '' : 'upload'">
-                          <span class="wf-num">{{ uploadCount }}</span>
-                          <span class="wf-label">上传表单</span>
-                          <span class="wf-sub">{{ detectResult ? '识别结果' : '当前配置' }}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-if="detectResult && detectResult.errors.length" class="sd-row"><span>失败</span><b>{{ detectResult.errors.join('；') }}</b></div>
-
-                    <div v-if="detectSub === 'search'" class="detect-subdetail">
-                      <template v-if="detectResult && detectResult.search">
-                        <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
-                        <div v-if="previewUnmatchedCount" class="sd-row"><span>未识别</span><b>{{ previewUnmatchedSummary }}</b></div>
-                        <details v-if="previewUnmatchedCount" class="sd-unmatched">
-                          <summary>展开未识别标签（{{ previewUnmatchedCount }}）</summary>
-                          <div v-for="g in previewUnmatchedGroups" :key="g.dim" class="sd-unmatched-row"><span>{{ g.dim }}</span><b>{{ g.labels }}</b></div>
-                          <p class="set-desc">这些标签没匹配到全局预设，不会写入；补预设别名后可再识别。</p>
-                        </details>
-                      </template>
-                      <template v-else-if="catGroups.length">
-                        <div v-for="g in catGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
-                      </template>
-                      <div v-else class="sd-row"><span>状态</span><b>还没有搜索分类</b></div>
-                    </div>
-
-                    <div v-if="detectSub === 'publish'" class="detect-subdetail">
-                      <template v-if="detectResult && detectResult.publish">
-                        <div v-if="detectResult.publish.fieldKind === 'genre'" class="sd-row"><span>状态</span><b>题材/类型字段，不自动映射</b></div>
-                        <div v-if="detectResult.publish.ambiguous && detectResult.publish.ambiguous.length" class="sd-row"><span>冲突 ID</span><b>{{ detectResult.publish.ambiguous.map(function (x) { return x.id + '：' + x.types.join('/') }).join('、') }}</b></div>
-                        <div v-if="detectResult.publish.unmatched && detectResult.publish.unmatched.length" class="sd-row"><span>未匹配</span><b>{{ detectResult.publish.unmatched.slice(0, 10).join('、') }}</b></div>
-                        <template v-else-if="detectedPublishGroups.length">
+                      <div class="detect-col">
+                        <h4>发布分类 <b>{{ publishCount }}</b></h4>
+                        <template v-if="detectResult && detectResult.publish">
+                          <div v-if="detectResult.publish.fieldKind === 'genre'" class="sd-row"><span>状态</span><b>题材/类型字段，不自动映射</b></div>
+                          <div v-if="detectResult.publish.notes && detectResult.publish.notes.length" class="sd-row"><span>组合标签</span><b>{{ detectResult.publish.notes.join('、') }}</b></div>
+                          <div v-if="detectResult.publish.unmatched && detectResult.publish.unmatched.length" class="sd-row"><span>未匹配</span><b>{{ detectResult.publish.unmatched.slice(0, 10).join('、') }}</b></div>
+                          <div v-for="label in detectResult.publish.unmatched" :key="'u' + label" class="sd-row alias-row">
+                            <span>{{ label }}</span>
+                            <select v-model="publishAlias[label]" class="select slim">
+                              <option value="">不映射</option>
+                              <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
+                            </select>
+                          </div>
+                          <div v-for="c in detectResult.publish.choices || []" :key="'c' + c.label" class="sd-row alias-row">
+                            <span>{{ c.label }}</span>
+                            <select v-model="publishAlias[c.label]" class="select slim">
+                              <option value="">按优先级：{{ c.chosen }}</option>
+                              <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
+                            </select>
+                          </div>
                           <div v-for="g in detectedPublishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
                         </template>
-                        <div v-else class="sd-row"><span>状态</span><b>没识别到发布分类</b></div>
-                      </template>
-                      <template v-else-if="publishGroups.length">
-                        <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
-                      </template>
-                      <div v-else class="sd-row"><span>状态</span><b>还没有发布分类</b></div>
+                        <template v-else-if="publishGroups.length">
+                          <div v-for="g in publishGroups" :key="g.name" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids }}</b></div>
+                        </template>
+                        <div v-else class="sd-row"><span>状态</span><b>还没有发布分类</b></div>
+                      </div>
+                      <div class="detect-col">
+                        <h4>上传表单 <b>{{ uploadCount }}</b></h4>
+                        <template v-if="detectResult && detectResult.publish && detectResult.publish.upload">
+                          <div class="sd-row"><span>提交路径</span><b>{{ detectResult.publish.upload.path || '—' }}</b></div>
+                          <div class="sd-row"><span>识别页</span><b>{{ detectResult.publish.upload.formPath || '—' }}</b></div>
+                          <div v-for="f in detectedUploadFields" :key="f.name" class="sd-row"><span>{{ f.name }}</span><b>{{ f.template || '空' }}</b></div>
+                        </template>
+                        <template v-else>
+                          <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
+                          <div class="sd-row"><span>提交路径</span><b>{{ (detail.def && detail.def.uploadMap && detail.def.uploadMap.path) || '—' }}</b></div>
+                          <div v-for="f in currentUploadFields" :key="f.name" class="sd-row"><span>{{ f.name }}</span><b>{{ f.template || '空' }}</b></div>
+                        </template>
+                      </div>
                     </div>
-
-                    <div v-if="detectSub === 'upload'" class="detect-subdetail">
-                      <template v-if="detectResult && detectResult.publish && detectResult.publish.upload">
-                        <div class="sd-row"><span>字段</span><b>{{ Object.keys(detectResult.publish.upload.fields || {}).length }} 个</b></div>
-                        <div class="sd-row"><span>提交路径</span><b>{{ detectResult.publish.upload.path || '—' }}</b></div>
-                        <div class="sd-row"><span>识别页</span><b>{{ detectResult.publish.upload.formPath || '—' }}</b></div>
-                      </template>
-                      <template v-else>
-                        <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
-                        <div class="sd-row"><span>提交路径</span><b>{{ (detail.def && detail.def.uploadMap && detail.def.uploadMap.path) || '—' }}</b></div>
-                      </template>
-                    </div>
-
                     <div v-if="detectResult" class="detect-check" :class="detectValidation.ok ? 'ok' : 'bad'">
                       <b>{{ detectValidation.ok ? '检查通过，可以保存' : '有缺项，先修再保存' }}</b>
                       <span v-for="e in detectValidation.errors" :key="e">{{ e }}</span>
@@ -240,9 +228,9 @@ const watchOpen = ref('')
 const detectAllBusy = ref(false)
 const detectAllMsg = ref('')
 const detectResult = ref(null)
+const publishAlias = ref({})
 const detectSaving = ref(false)
 const detectSaveMsg = ref('')
-const detectSub = ref('')
 const presetPreview = ref(null)
 const busy = reactive({ selfcheck: false, save: false, cookie: false })
 
@@ -302,19 +290,13 @@ const searchCount = computed(function () {
   return catGroups.value.length
 })
 const publishCount = computed(function () {
-  if (detectResult.value && detectResult.value.publish) return Object.keys(detectResult.value.publish.cat || {}).length
+  if (detectResult.value && detectResult.value.publish) return Object.keys(effectivePublishCat.value).length
   return publishGroups.value.length
 })
 const uploadCount = computed(function () {
   if (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) return Object.keys(detectResult.value.publish.upload.fields || {}).length
   return uploadStats.value.count || uploadStats.value.defaultCount || 0
 })
-const searchSubState = computed(() => searchCount.value ? 'ok' : 'bad')
-const publishSubState = computed(() => {
-  if (detectResult.value && detectResult.value.publish && detectResult.value.publish.fieldKind === 'genre') return 'warn'
-  return publishCount.value ? 'ok' : 'bad'
-})
-const uploadSubState = computed(() => detectResult.value && detectResult.value.publish && detectResult.value.publish.upload ? (uploadCount.value ? 'ok' : 'bad') : (uploadStats.value.count ? 'ok' : (uploadStats.value.defaultCount ? 'warn' : 'bad')))
 const detectValidation = computed(function () {
   const r = detectResult.value
   if (!r) return { ok: false, errors: [], warnings: [] }
@@ -331,10 +313,10 @@ const detectValidation = computed(function () {
   const fields = upload.fields || {}
   if (!pub) errors.push('上传页识别失败')
   else {
-    if (pub.ambiguous && pub.ambiguous.length) warnings.push('发布冲突 ID ' + pub.ambiguous.length + ' 个未写')
+    if (pub.notes && pub.notes.length) warnings.push('发布组合标签 ' + pub.notes.length + ' 个已按优先级选一个')
     if (pub.unmatched && pub.unmatched.length) warnings.push('发布未匹配标签 ' + pub.unmatched.length + ' 个')
     if (pub.fieldKind === 'genre') errors.push('发布分类是题材字段，不能自动映射')
-    else if (!Object.keys(pub.cat || {}).length) errors.push('发布分类 0 类')
+    else if (!Object.keys(effectivePublishCat.value).length) errors.push('发布分类 0 类')
     if (!Object.keys(fields).length) errors.push('上传字段 0 个')
     if (!upload.fileField) errors.push('缺少种子文件字段')
     if (!upload.path) errors.push('缺少提交路径')
@@ -345,9 +327,32 @@ const detectStats = computed(function () {
   const score = (searchCount.value ? 1 : 0) + (publishCount.value ? 1 : 0) + (uploadCount.value ? 1 : 0)
   return { num: score, text: score + '/3', state: score === 3 ? 'ok' : (score ? 'warn' : 'bad') }
 })
+const typeOptions = computed(function () { return Object.values(runtimePresets.value.types || {}) })
+const effectivePublishCat = computed(function () {
+  const pub = (detectResult.value && detectResult.value.publish) || {}
+  const cat = Object.assign({}, pub.cat || {})
+  const opts = pub.catOptions || []
+  Object.keys(publishAlias.value || {}).forEach(function (label) {
+    const type = String(publishAlias.value[label] || '')
+    if (!type) return
+    const hit = opts.filter(function (o) { return String(o.label || '') === String(label) })[0]
+    if (hit) cat[type] = String(hit.value)
+  })
+  return cat
+})
 const detectedPublishGroups = computed(function () {
-  const cat = (detectResult.value && detectResult.value.publish && detectResult.value.publish.cat) || {}
+  const cat = effectivePublishCat.value
   return Object.keys(cat).map(function (k) { return { name: runtimePresets.value.types[k] || k, ids: String(cat[k]) } })
+})
+const detectedUploadFields = computed(function () {
+  const u = (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) || {}
+  const f = u.fields || {}
+  return Object.keys(f).map(function (k) { return { name: k, template: String(f[k] || '') } })
+})
+const currentUploadFields = computed(function () {
+  const u = (detail.def && detail.def.uploadMap) || {}
+  const f = u.fields || {}
+  return Object.keys(f).map(function (k) { return { name: k, template: String(f[k] || '') } })
 })
 const detectedUploadCount = computed(function () {
   const u = (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) || {}
@@ -605,6 +610,7 @@ async function detectAll() {
   detectAllBusy.value = true
   detectAllMsg.value = '识别中…'
   detectResult.value = null
+  publishAlias.value = {}
   presetPreview.value = null
   const out = { search: null, publish: null, errors: [] }
   try {
@@ -649,12 +655,12 @@ async function saveDetected() {
   }
   if (r.publish) {
     const genre = r.publish.fieldKind === 'genre'
-    const cat = r.publish.cat || {}
+    const cat = Object.assign({}, effectivePublishCat.value)
     if (!genre && Object.keys(cat).length) {
       try {
         const a = await (await fetch('/api/maps/' + encodeURIComponent(host.value), {
           method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ cat: cat, form: r.publish.form })
+          body: JSON.stringify({ cat: cat, form: r.publish.form, labels: publishAlias.value })
         })).json()
         if (!a || !a.ok) errors.push('发布：' + String((a && a.error && a.error.message) || '保存失败'))
       } catch (e) { errors.push('发布保存请求发不出去') }
@@ -1080,15 +1086,15 @@ watch(host, function (h, old) {
 .sd-unmatched-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid #f1f3f7; }
 .sd-unmatched-row span { flex: 0 0 44px; color: var(--muted-2); }
 .sd-unmatched-row b { font-weight: 500; color: var(--ink); word-break: break-all; }
-.watch-subgrid { display: grid; grid-template-columns: repeat(3, 112px); gap: 10px; margin: 10px 0 8px; }
-.watch-tile.sub .watch-face { width: 112px; height: 112px; border-radius: 56px 56px 14px 14px; }
-.watch-tile.sub .wf-num { font-size: 24px; }
-.detect-subdetail { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
-@media (max-width: 600px) { .watch-subgrid { grid-template-columns: repeat(3, minmax(88px, 1fr)); gap: 8px; } .watch-tile.sub .watch-face { width: 100%; height: auto; aspect-ratio: 1 / 1; } }
-.detect-check { margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
+ .detect-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.detect-col { min-width: 0; max-height: 300px; overflow-y: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.detect-col h4 { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 6px; font-size: 11.5px; color: var(--muted); }
+.detect-col h4 b { color: var(--ink); }
+@media (max-width: 700px) { .detect-cols { grid-template-columns: 1fr; } .detect-col { max-height: none; } }.detect-check { margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
 .detect-check b { font-size: 11.5px; }
 .detect-check span { color: var(--muted); }
 .detect-check span.warn { color: #b45309; }
 .detect-check.ok { background: #f6fef9; border-color: #c6efd9; }
 .detect-check.bad { background: #fff8f7; border-color: #f4c7c3; }
+.alias-row select { max-width: 120px; height: 26px; font-size: 10.5px; padding: 0 6px; }
 </style>
