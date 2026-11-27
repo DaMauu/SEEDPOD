@@ -192,6 +192,18 @@ function parseSearchPreset(html, presets) {
     const href = String(m[1] || '').replace(/&amp;/gi, '&');
     const ids = Array.from(href.matchAll(/[?&]cat(\d+)=1/gi)).map(function (x) { return x[1]; });
     if (ids.length !== 1) continue;
+    /* 只要真正的分类入口；下拉子分类/最近搜索/标签会带 processing、tag_id、special.php 等参数 */
+    try {
+      const u = new URL(href, 'https://site.invalid');
+      if (/special\.php/i.test(u.pathname)) continue;
+      let extra = false;
+      u.searchParams.forEach(function (v, k) {
+        if (/^cat\d+$/.test(k)) return;
+        if (/^(incldead|inclbookmarked|search_area|search_mode)$/i.test(k)) return;
+        extra = true;
+      });
+      if (extra) continue;
+    } catch (e) { continue; }
     const label = textOf(m[2]);
     if (!label) continue;
     addCat(label, ids[0]);

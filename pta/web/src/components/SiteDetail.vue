@@ -138,19 +138,21 @@
                           <div v-for="f in detectedUploadFields" :key="f.name" class="sd-row"><span>{{ f.name }}</span><b>{{ f.template || '空' }}</b></div>
                         </template>
                         <template v-else>
-                          <div class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
+                          <div v-if="detectResult && detectResult.publishError" class="sd-row"><span>失败</span><b>{{ detectResult.publishError.message }}</b></div>
+                          <div v-else class="sd-row"><span>状态</span><b>{{ uploadStats.count ? '已配置 ' + uploadStats.count + ' 个字段' : (uploadStats.defaultCount ? '引擎默认 ' + uploadStats.defaultCount + ' 个字段' : '未配置') }}</b></div>
                           <div class="sd-row"><span>提交路径</span><b>{{ (detail.def && detail.def.uploadMap && detail.def.uploadMap.path) || '—' }}</b></div>
                           <div v-for="f in currentUploadFields" :key="f.name" class="sd-row"><span>{{ f.name }}</span><b>{{ f.template || '空' }}</b></div>
                         </template>
                       </div>
                     </div>
                     <div v-if="detectResult" class="detect-check" :class="detectValidation.ok ? 'ok' : 'bad'">
-                      <b>{{ detectValidation.ok ? '检查通过，可以保存' : '有缺项，先修再保存' }}</b>
+                      <b>{{ detectValidation.ok ? '检查通过，可以保存' : (canSaveAny ? '有缺项；可以只保存可用段' : '有缺项，先修再保存') }}</b>
                       <span v-for="e in detectValidation.errors" :key="e">{{ e }}</span>
                       <span v-for="w in detectValidation.warnings" :key="w" class="warn">{{ w }}</span>
+                      <span v-if="canSaveAny">将保存：{{ detectSaveParts.join(' / ') }}</span>
                     </div>
                     <div v-if="detectResult" class="cm-actions">
-                      <button class="btn primary slim" type="button" :disabled="detectSaving || !detectValidation.ok" @click.stop="saveDetected">{{ detectSaving ? '保存中…' : '保存识别结果' }}</button>
+                      <button class="btn primary slim" type="button" :disabled="detectSaving || !canSaveAny" @click.stop="saveDetected">{{ detectSaving ? '保存中…' : (detectValidation.ok ? '保存识别结果' : '保存可用段') }}</button>
                       <span class="sd-cookie-res">{{ detectSaveMsg }}</span>
                     </div>
                   </div>
@@ -311,7 +313,7 @@ const detectValidation = computed(function () {
   const pub = r.publish
   const upload = (pub && pub.upload) || {}
   const fields = upload.fields || {}
-  if (!pub) errors.push('上传页识别失败')
+  if (!pub) errors.push('上传：' + ((r.publishError && r.publishError.message) || '上传页识别失败'))
   else {
     if (pub.notes && pub.notes.length) warnings.push('发布组合标签 ' + pub.notes.length + ' 个已按优先级选一个')
     if (pub.unmatched && pub.unmatched.length) warnings.push('发布未匹配标签 ' + pub.unmatched.length + ' 个')
@@ -323,6 +325,17 @@ const detectValidation = computed(function () {
   }
   return { ok: errors.length === 0, errors: errors, warnings: warnings }
 })
+const detectSaveParts = computed(function () {
+  const r = detectResult.value
+  if (!r) return []
+  const parts = []
+  if (r.search && Object.keys((r.search.search && r.search.search.cats) || {}).length) parts.push('搜索')
+  const pub = r.publish
+  if (pub && pub.fieldKind !== 'genre' && Object.keys(effectivePublishCat.value).length) parts.push('发布')
+  if (pub && pub.upload && Object.keys(pub.upload.fields || {}).length && pub.upload.fileField && pub.upload.path) parts.push('上传')
+  return parts
+})
+const canSaveAny = computed(() => detectSaveParts.value.length > 0)
 const detectStats = computed(function () {
   const score = (searchCount.value ? 1 : 0) + (publishCount.value ? 1 : 0) + (uploadCount.value ? 1 : 0)
   return { num: score, text: score + '/3', state: score === 3 ? 'ok' : (score ? 'warn' : 'bad') }
@@ -612,7 +625,7 @@ async function detectAll() {
   detectResult.value = null
   publishAlias.value = {}
   presetPreview.value = null
-  const out = { search: null, publish: null, errors: [] }
+  const out = { search: null, publish: null, publishError: null, errors: [] }
   try {
     const j = await (await fetch('/api/crawl/preset/' + encodeURIComponent(host.value) + '/detect?preview=1', { method: 'POST', credentials: 'same-origin' })).json()
     if (j && j.ok) {
@@ -628,7 +641,10 @@ async function detectAll() {
   try {
     const j = await (await fetch('/api/maps/' + encodeURIComponent(host.value) + '/detect', { method: 'POST', credentials: 'same-origin' })).json()
     if (j && j.ok) out.publish = j.data
-    else out.errors.push('上传：' + String((j && j.error && j.error.message) || '识别失败'))
+    else {
+      out.publishError = { code: String((j && j.error && j.error.code) || ''), message: String((j && j.error && j.error.message) || '识别失败') }
+      out.errors.push('上传：' + out.publishError.message)
+    }
   } catch (e) { out.errors.push('上传请求发不出去') }
   detectResult.value = out
   const n = Object.keys((out.search && out.search.search && out.search.search.cats) || {}).length

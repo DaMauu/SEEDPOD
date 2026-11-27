@@ -28,6 +28,14 @@ check('参数名不当成未识别标签', function () {
   need(!r.unmatched.some(function (x) { return /^(cat|medium)\d+$/.test(x.label) }), '参数名进了未识别：' + JSON.stringify(r.unmatched));
 });
 
+check('下拉子分类/标签链接不当分类', function () {
+  const html = '<a href="/torrents.php?cat401=1">电影</a><a href="/torrents.php?cat401=1&processing2=1&incldead=0">中国大陆</a><a href="/special.php?cat411=1&incldead=0&tag_id=62">无限流</a>';
+  const r = parseSearchPreset(html, presets);
+  need(r.cats.movie && r.cats.movie[0] === '401', '父分类没识别：' + JSON.stringify(r.cats));
+  need(!r.cats.ebook && !r.cats.audiobook, '子分类/标签被当分类：' + JSON.stringify(r.cats));
+  need(r.unmatched.length === 0, '子分类/标签进了未识别：' + JSON.stringify(r.unmatched));
+});
+
 check('原盘/Remux 不再当内容类型', function () {
   need(mapType('原盘', presets) === '', '原盘不该是内容类型：' + mapType('原盘', presets));
   need(mapType('Remux', presets) === '', 'Remux 不该是内容类型：' + mapType('Remux', presets));
