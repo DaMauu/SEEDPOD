@@ -218,6 +218,13 @@ module.exports = async function run(ctx) {
     const objOk = Array.isArray(cm2) ? cm2.some(function (x) { return x.id === '401'; }) : (cm2 && cm2.movie === '401' && cm2.tv === '402');
     need(got2.ok && objOk, '对象映射没读回：' + JSON.stringify(cm2));
     need(got2.data.publishCatMap && got2.data.publishCatMap.movie === '401' && got2.data.publishCatMap.tv === '402', '对象发布映射没单独回读：' + JSON.stringify(got2.data.publishCatMap));
+    const onlyUp = await fetchA(BASE + '/api/site-def/' + host, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ uploadMap: { path: '/upload.php', formPath: '/upload.php', fileField: 'file', fields: { name: '{title}' } } })
+    });
+    need(onlyUp.status === 200, '只保存上传映射失败 ' + onlyUp.status);
+    const upRead = await (await fetchA(BASE + '/api/site-def/' + host)).json();
+    need(upRead.data.publishCatMap && upRead.data.publishCatMap.movie === '401' && upRead.data.publishCatMap.tv === '402', '保存上传映射冲掉了发布分类：' + JSON.stringify(upRead.data.publishCatMap));
   });
 
   await check('上传表单 HTML 识别接口', async () => {

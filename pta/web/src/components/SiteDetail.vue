@@ -665,14 +665,15 @@ function detectRemote() {
         return
       }
       const d = j.data || {}
-      const def = Object.assign({}, detail.def || {})
-      def.uploadMap = { path: String(d.path || ''), formPath: String(d.formPath || ''), fileField: String(d.fileField || ''), fields: {} }
-      ;(d.fields || []).forEach(function (f) { if (f && f.name) def.uploadMap.fields[String(f.name)] = String(f.template || '') })
+      const uploadMap = { path: String(d.path || ''), formPath: String(d.formPath || ''), fileField: String(d.fileField || ''), fields: {} }
+      ;(d.fields || []).forEach(function (f) { if (f && f.name) uploadMap.fields[String(f.name)] = String(f.template || '') })
+      /* 只发上传表单，不带 catMap/cats，避免把发布分类映射覆盖成搜索分类。 */
+      const payload = { engine: (detail.def && detail.def.engine) || '', base: (detail.def && detail.def.base) || '', uploadMap: uploadMap }
       const saved = await (await fetch('/api/site-def/' + encodeURIComponent(h), {
-        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(def)
+        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload)
       })).json()
       if (saved && saved.ok) {
-        uploadMsg.value = '已识别并保存 ' + Object.keys(def.uploadMap.fields).length + ' 个字段'
+        uploadMsg.value = '已识别并保存 ' + Object.keys(uploadMap.fields).length + ' 个字段'
         toast('上传表单已识别并保存')
         await loadDetail(h)
       } else uploadMsg.value = (saved && saved.error && saved.error.message) || '保存失败'
