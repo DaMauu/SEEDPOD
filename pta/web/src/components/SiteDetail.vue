@@ -67,6 +67,13 @@
                         <span class="wf-sub">{{ uploadStats.count ? '已配置字段' : (uploadStats.defaultCount ? '引擎默认字段' : '未识别') }}</span>
                       </div>
                     </div>
+                    <div class="watch-tile" :class="[coverStats.state, { open: watchOpen === 'cover' }]">
+                      <div class="watch-face" role="button" tabindex="0" @click.stop="toggleWatch('cover')" @keydown.enter.prevent="toggleWatch('cover')">
+                        <span class="wf-num small">{{ coverStats.num }}</span>
+                        <span class="wf-label">覆盖</span>
+                        <span class="wf-sub">{{ coverStats.text }}</span>
+                      </div>
+                    </div>
                   </div>
                   <div v-if="watchOpen === 'login'" class="watch-detail">
                     <div class="sd-row"><span>状态</span><b :class="dotCls(s) + '-t'">{{ loginTxt(s) }}</b></div>
@@ -102,7 +109,12 @@
                     <div v-if="presetPreview">
                       <h4>识别明细（未保存）</h4>
                       <div v-for="g in previewGroups" :key="g.key" class="sd-row"><span>{{ g.name }}</span><b>{{ g.ids || '空' }}</b></div>
-                      <div v-if="previewUnmatched" class="sd-row"><span>未识别</span><b>{{ previewUnmatched }}</b></div>
+                      <div v-if="previewUnmatchedCount" class="sd-row"><span>未识别</span><b>{{ previewUnmatchedSummary }}</b></div>
+                      <details v-if="previewUnmatchedCount" class="sd-unmatched">
+                        <summary>展开未识别标签（{{ previewUnmatchedCount }}）</summary>
+                        <div v-for="g in previewUnmatchedGroups" :key="g.dim" class="sd-unmatched-row"><span>{{ g.dim }}</span><b>{{ g.labels }}</b></div>
+                        <p class="set-desc">这些标签没匹配到全局预设，不会写入；补预设别名后可再识别。</p>
+                      </details>
                       <div v-if="previewAmbiguous" class="sd-row"><span>冲突 ID</span><b>{{ previewAmbiguous }}</b></div>
                     </div>
                   </div>
@@ -126,53 +138,39 @@
                       <span class="sd-cookie-res">{{ uploadMsg }}</span>
                     </div>
                   </div>
-                </div>
-
-                <div class="sd-sec">
-                  <h4 class="sd-sec-ttl">站点覆盖</h4>
-                  <div class="set-fields">
+                  <div v-if="watchOpen === 'cover'" class="watch-detail">
                     <div class="set-field">
                       <div class="lbl"><span>单独设置本站</span></div>
-                      <div class="ctl">
-                        <button class="switch" :class="{ on: form.override }" type="button" @click.stop="form.override = !form.override"><i></i></button>
-                      </div>
+                      <div class="ctl"><button class="switch" :class="{ on: form.override }" type="button" @click.stop="form.override = !form.override"><i></i></button></div>
                     </div>
-                  </div>
-                  <div class="set-fields" :class="{ 'is-off': !form.override }">
-                    <div class="set-field">
-                      <div class="lbl"><span>抓取间隔</span></div>
-                      <div class="ctl">
-                        <select v-model="form.ovInterval" class="select">
-                          <option value="">跟随全局</option>
-                          <option value="1">1 分钟</option>
-                          <option value="5">5 分钟</option>
-                          <option value="15">15 分钟</option>
-                          <option value="60">1 小时</option>
-                          <option value="180">3 小时</option>
-                        </select>
+                    <div :class="{ 'is-off': !form.override }">
+                      <div class="set-field">
+                        <div class="lbl"><span>抓取间隔</span></div>
+                        <div class="ctl">
+                          <select v-model="form.ovInterval" class="select">
+                            <option value="">跟随全局</option>
+                            <option value="1">1 分钟</option>
+                            <option value="5">5 分钟</option>
+                            <option value="15">15 分钟</option>
+                            <option value="60">1 小时</option>
+                            <option value="180">3 小时</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                    <div class="set-field">
-                      <div class="lbl"><span>抓详情页</span></div>
-                      <div class="ctl">
-                        <button class="switch" :class="{ on: form.ovDetail }" type="button" @click.stop="form.ovDetail = !form.ovDetail"><i></i></button>
+                      <div class="set-field">
+                        <div class="lbl"><span>抓详情页</span></div>
+                        <div class="ctl"><button class="switch" :class="{ on: form.ovDetail }" type="button" @click.stop="form.ovDetail = !form.ovDetail"><i></i></button></div>
                       </div>
-                    </div>
-                    <div class="set-field">
-                      <div class="lbl"><span>优先级</span></div>
-                      <div class="ctl">
-                        <select v-model="form.priority" class="select">
-                          <option value="high">高（先抓）</option>
-                          <option value="normal">普通</option>
-                          <option value="low">低（最后抓）</option>
-                        </select>
+                      <div class="set-field">
+                        <div class="lbl"><span>优先级</span></div>
+                        <div class="ctl">
+                          <select v-model="form.priority" class="select">
+                            <option value="high">高（先抓）</option>
+                            <option value="normal">普通</option>
+                            <option value="low">低（最后抓）</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div class="set-fields">
-                    <div class="set-field">
-                      <div class="lbl"><span>分类映射</span></div>
-                      <div class="ctl"><span class="fixed-val ref">{{ catMapTxt(s) }}</span></div>
                     </div>
                   </div>
                 </div>
@@ -234,7 +232,15 @@ const previewGroups = computed(() => {
     return { key: k, name: typeLabelOf(k), ids: (p.cats[k] || []).map(function (id) { return id + (labels[id] ? ' ' + labels[id] : '') }).join('、') }
   })
 })
-const previewUnmatched = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).slice(0, 10).map(function (x) { return x.label }).join('、'))
+const previewUnmatchedGroups = computed(() => {
+  const list = (presetPreview.value && presetPreview.value.unmatched) || []
+  const names = { type: '分类', medium: '媒介', resolution: '分辨率', codec: '编码', audio: '音频', discount: '优惠', team: '制作组', restriction: '限制' }
+  const groups = {}
+  list.forEach(function (x) { const d = names[x.dim] || x.dim || '其它'; (groups[d] = groups[d] || []).push(x.label) })
+  return Object.keys(groups).map(function (d) { return { dim: d, labels: groups[d].join('、'), count: groups[d].length } })
+})
+const previewUnmatchedCount = computed(() => ((presetPreview.value && presetPreview.value.unmatched) || []).length)
+const previewUnmatchedSummary = computed(() => previewUnmatchedGroups.value.map(function (g) { return g.dim + ' ' + g.count }).join(' · '))
 const previewAmbiguous = computed(() => ((presetPreview.value && presetPreview.value.ambiguous) || []).join('、'))
 
 const cookieStats = computed(function () {
@@ -263,6 +269,9 @@ const addressStats = computed(function () {
   const raw = String(form.url || '').trim()
   const hostText = raw.replace(/^https?:\/\//i, '').split('/')[0]
   return { state: raw ? 'ok' : 'bad', text: hostText || '未填地址' }
+})
+const coverStats = computed(function () {
+  return form.override ? { state: 'warn', num: 'ON', text: '单独设置' } : { state: 'ok', num: 'OFF', text: '跟随全局' }
 })
 const publishGroups = computed(function () {
   const d = detail.def || {}
@@ -342,13 +351,6 @@ function catRangeTxt(site) {
   const groups = (detail.preset && detail.preset.groups) || (site.def && site.def.groups) || 0
   return groups ? groups + ' 组分类' : '还没有分类'
 }
-function catMapTxt() {
-  const d = detail.def || {}
-  const cm = Object.prototype.hasOwnProperty.call(d, 'publishCatMap') ? d.publishCatMap : d.catMap
-  const n = Array.isArray(cm) ? cm.length : (cm && typeof cm === 'object' ? Object.keys(cm).length : 0)
-  return n ? '已配 ' + n + ' 条' : '未配置'
-}
-
 function fillForm(site) {
   if (!site) return
   form.url = site.url
@@ -614,14 +616,17 @@ async function detectSearchPreset() {
     if (!j || !j.ok) { searchPresetMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
     const n = Object.keys((j.data.search && j.data.search.cats) || {}).length
     const amb = ((j.data && j.data.ambiguous) || []).length
-    const un = ((j.data && j.data.unmatched) || []).length
-    presetPreview.value = { cats: (j.data.search && j.data.search.cats) || {}, labels: (j.data.detected && j.data.detected.catLabels) || {}, ambiguous: (j.data && j.data.ambiguous) || [], unmatched: (j.data && j.data.unmatched) || [] }
+    const unmatched = (j.data && j.data.unmatched) || []
+    const un = unmatched.length
+    const unCat = unmatched.filter(function (x) { return x.dim === 'type' }).map(function (x) { return x.label })
+    const unSample = unCat.slice(0, 5).join('、') + (unCat.length > 5 ? ' 等' : '')
+    presetPreview.value = { cats: (j.data.search && j.data.search.cats) || {}, labels: (j.data.detected && j.data.detected.catLabels) || {}, ambiguous: (j.data && j.data.ambiguous) || [], unmatched: unmatched }
     const eng = (j.data && j.data.engine && j.data.engine !== 'generic') ? j.data.engine : '未定'
-    if (!n) { searchPresetMsg.value = '没识别到分类 · 架构 ' + eng + (un ? ' · ' + un + ' 个未识别标签' : ''); return }
+    if (!n) { searchPresetMsg.value = '没识别到分类 · 架构 ' + eng + (un ? ' · 未识别 ' + un + ' 个（' + unSample + '）' : ''); return }
     const warn = (j.data && j.data.confidence && j.data.confidence !== 'high') ? '（置信度 ' + j.data.confidence + '）' : ''
     const diff = diffText(j.data.diff)
-    const extra = ' · 架构 ' + eng + (diff ? ' · ' + diff : '') + (amb ? ' · ' + amb + ' 个冲突未写' : '') + (un ? ' · ' + un + ' 个未识别标签' : '')
-    searchPresetMsg.value = '识别到 ' + n + ' 类' + extra + '，等确认'
+    const extra = ' · 架构 ' + eng + (diff ? ' · ' + diff : '') + (amb ? ' · ' + amb + ' 个冲突未写' : '') + (un ? ' · 未识别 ' + un + ' 个：' + unSample : '')
+    searchPresetMsg.value = '识别到 ' + n + ' 类' + extra + '，等确认；展开明细可看全部未识别标签'
     confirmBox('识别搜索预设', '识别到 ' + n + ' 类分类' + extra + warn + '。保存到站点？', async function () {
       searchPresetBusy.value = true
       searchPresetMsg.value = '保存中…'
@@ -708,7 +713,7 @@ async function detectTargetCats() {
     if (!j || !j.ok) { catMsg.value = (j && j.error && j.error.message) || '识别失败'; return }
     const d = j.data || {}
     if (d.fieldKind === 'genre') { catMsg.value = '识别到题材/类型字段，不是内容分类；请手工映射'; return }
-    const rows = Object.keys(d.cat || {}).map(function (k) { return { k: k, v: String(d.cat[k]) } })
+    const rows = Object.keys(d.cat || {}).map(function (k) { return { key: k, id: String(d.cat[k]) } })
     if (!rows.length) { catMsg.value = '没识别到目标站分类'; return }
     catKind.value = 'object'
     catRows.value = rows
@@ -1095,7 +1100,7 @@ watch(host, function (h, old) {
 .site-expand .sd-compact.sd-single { grid-template-columns: minmax(0, 1fr); }
 .site-expand .sd-scroll { display: block; overflow-y: auto; }
 .site-expand .sd-form { grid-column: 1 / -1; max-width: none; }
-.watch-grid { display: grid; grid-template-columns: repeat(6, minmax(96px, 1fr)); gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
+.watch-grid { display: grid; grid-template-columns: repeat(7, minmax(88px, 1fr)); gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
 .watch-tile { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .watch-face { width: 100%; aspect-ratio: 1 / 1; padding: 12px 6px 10px; border: 1px solid #e5e8f5;
   border-radius: 50% 50% 18px 18px; background: linear-gradient(180deg, #f5f6ff, #fff);
@@ -1113,4 +1118,9 @@ watch(host, function (h, old) {
 .watch-detail .sd-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid #f1f3f7; font-size: 11.5px; }
 .watch-detail .sd-row:first-child { border-top: 0; }
 @media (max-width: 600px) { .watch-grid { gap: 8px; } .watch-face { padding: 10px 4px 8px; } .wf-num { font-size: 23px; } }
+.sd-unmatched { margin-top: 6px; font-size: 11px; color: var(--muted); }
+.sd-unmatched summary { cursor: pointer; color: var(--accent); }
+.sd-unmatched-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid #f1f3f7; }
+.sd-unmatched-row span { flex: 0 0 44px; color: var(--muted-2); }
+.sd-unmatched-row b { font-weight: 500; color: var(--ink); word-break: break-all; }
 </style>

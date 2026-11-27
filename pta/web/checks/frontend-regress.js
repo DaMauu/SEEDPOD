@@ -530,6 +530,37 @@ function seedDb() {
       await page.close();
     });
 
+    await check('SiteDetail 识别发布分类自动保存', async function () {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      let putBody = null;
+      await page.route('**/api/site-def/**', async function (route) {
+        if (route.request().method() === 'PUT') {
+          putBody = JSON.parse(route.request().postData() || '{}');
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { def: putBody } }) });
+        }
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { engine: 'nexusphp', base: 'https://test-1.example', cats: { movie: ['401'] }, catMap: { movie: '401' }, publishCatMap: { movie: '401' }, uploadMap: { fields: {} } } }) });
+      });
+      await page.route('**/api/maps/**/detect', async function (route) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1', tv: '2' }, catOptions: [] } }) });
+      });
+      await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async function () {
+        await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'admin', pass: 'demo-pass' }) });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.evaluate(function () { location.hash = '#sites'; });
+      await page.waitForTimeout(700);
+      await page.locator('[data-view="sites"] .site-item').first().click();
+      await page.waitForTimeout(500);
+      await page.locator('#site-detail .watch-tile').filter({ hasText: '发布' }).locator('.watch-face').click();
+      await page.waitForTimeout(200);
+      await page.locator('#site-detail .watch-detail button').filter({ hasText: '识别目标站分类' }).click();
+      await page.waitForTimeout(700);
+      need(putBody && putBody.catMap && putBody.catMap.movie === '1' && putBody.catMap.tv === '2', '自动保存分类映射不对：' + JSON.stringify(putBody));
+      need(!/库内分类和目标站分类 ID 都要填/.test(await page.locator('#site-detail').innerText()), '仍提示分类字段必填');
+      await page.close();
+    });
+
     await check('Sources 外链只渲染安全协议', async function () {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.route('**/api/catalog?**', async function (route) {

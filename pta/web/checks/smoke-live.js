@@ -192,7 +192,7 @@ async function main() {
     need(await page.locator('#site-detail').count() === 1, '详情 id 重复或缺失');
     need(await page.locator('#site-detail').isVisible(), '详情没打开');
     const dtxt = await page.locator('#site-detail').innerText();
-    need(/登录/.test(dtxt) && /抓取/.test(dtxt), '抽屉概览没渲染：' + dtxt.slice(0, 80));
+    need(/登录/.test(dtxt) && /Cookie/.test(dtxt), '抽屉概览没渲染：' + dtxt.slice(0, 80));
     const searchTile = page.locator('#site-detail .watch-tile').filter({ hasText: '搜索' });
     need(await searchTile.count() === 1, '搜索分类表盘缺失');
     await searchTile.locator('.watch-face').click();
