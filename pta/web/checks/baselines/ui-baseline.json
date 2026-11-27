@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-27T13:17:02.099Z",
+  "at": "2026-11-27T14:43:10.172Z",
   "files": {
     "App.vue": "053200a5aab1fe81",
     "components/CrawlCard.vue": "7a23304c538747c5",
@@ -10,13 +10,14 @@
     "components/RuleControl.vue": "4a48cdc5813374dc",
     "components/SchedulerBar.vue": "ea5e921926989002",
     "components/ScreenDedupeCard.vue": "252b64d5b1dcd102",
-    "components/SiteDetail.vue": "b47559b0d5123324",
+    "components/SiteDetail.vue": "6a701b00bda3e723",
     "components/SiteMapModal.vue": "f40fcd6586728036",
     "components/SitesList.vue": "39ead7aa6311c71a",
     "components/SitesModals.vue": "edb19f29bcccb0ff",
     "components/SitesStats.vue": "de6b60ac622f3fdd",
     "components/SitesToolbar.vue": "244c88048a074386",
     "components/TargetPickerModal.vue": "7553c808796e7707",
+    "components/UploadFieldEditor.vue": "9536b08c595de52b",
     "styles/00-base.css": "aa3f1b3c06d06d0e",
     "styles/01-shell.css": "1b08a80168bef1f7",
     "styles/02-shell-layout.css": "1846bf4cb1b17227",

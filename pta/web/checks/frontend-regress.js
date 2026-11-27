@@ -569,7 +569,7 @@ function seedDb() {
       });
       await page.route('**/api/maps/**', async function (route) {
         if (route.request().url().indexOf('/detect') >= 0) {
-          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1' }, catOptions: [{ value: '1', label: 'Movies' }, { value: '9', label: 'Mystery' }], unmatched: ['Mystery'], form: { selects: { category_id: [{ value: '1', label: 'Movies' }] }, defaults: {} }, upload: { path: '/upload.php', formPath: '/upload.php', fileField: 'file', fields: { category_id: '{catId}' } } } }) });
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, data: { fieldKind: 'category', cat: { movie: '1' }, catOptions: [{ value: '1', label: 'Movies' }, { value: '9', label: 'Mystery' }], unmatched: ['Mystery'], form: { selects: { category_id: [{ value: '1', label: 'Movies' }] }, defaults: {} }, upload: { path: '/upload.php', formPath: '/upload.php', fileField: 'file', fields: { category_id: '{catId}', team_sel: '{team}' } } } }) });
         }
         if (route.request().method() !== 'PUT') return route.continue();
         mapBody = JSON.parse(route.request().postData() || '{}');
@@ -602,6 +602,10 @@ function seedDb() {
       const mapped = await page.locator('#site-detail .detect-col').first().innerText();
       need(mapped.indexOf('9 Mystery') >= 0, '手动映射后预览没更新：' + mapped);
       await page.locator('#site-detail .publish-alias-row select').first().selectOption('电影');
+      await page.locator('#site-detail .upload-edit-bar button').filter({ hasText: '编辑字段' }).click();
+      const firstField = page.locator('#site-detail .upload-edit-row').first();
+      await firstField.locator('input').nth(0).fill('category_id2');
+      await firstField.locator('input').nth(1).fill('{catId}');
       await page.locator('#site-detail .watch-detail button').filter({ hasText: '保存识别结果' }).click();
       await page.waitForTimeout(900);
       need(overrideBody && overrideBody.detect && overrideBody.detect.map && overrideBody.detect.map.Mystery === 'movie', '搜索手动映射没写覆盖：' + JSON.stringify(overrideBody));
@@ -609,6 +613,7 @@ function seedDb() {
       need(mapBody && mapBody.cat && mapBody.cat.movie === '1' && mapBody.cat['电影'] === '9', '发布识别/别名没保存：' + JSON.stringify(mapBody));
       need(mapBody.labels && mapBody.labels.Mystery === '电影', '每站别名没保存：' + JSON.stringify(mapBody.labels));
       need(defBody && defBody.uploadMap && defBody.uploadMap.path === '/upload.php', '上传识别没保存：' + JSON.stringify(defBody));
+      need(defBody.uploadMap.fields && defBody.uploadMap.fields.category_id2 === '{catId}' && defBody.uploadMap.fields.team_sel === '{team}', '上传字段编辑没保存：' + JSON.stringify(defBody.uploadMap));
       await page.close();
     });
 

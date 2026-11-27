@@ -153,7 +153,7 @@
                         <template v-if="detectResult && detectResult.publish && detectResult.publish.upload">
                           <div class="sd-row"><span>提交路径</span><b>{{ detectResult.publish.upload.path || '—' }}</b></div>
                           <div class="sd-row"><span>识别页</span><b>{{ detectResult.publish.upload.formPath || '—' }}</b></div>
-                          <div v-for="f in detectedUploadFields" :key="f.name" class="sd-row"><span>{{ f.name }}</span><b>{{ f.template || '空' }}</b></div>
+                          <UploadFieldEditor :upload="detectResult.publish.upload" @change="onUploadEdit" />
                         </template>
                         <template v-else>
                           <div v-if="detectResult && detectResult.publishError" class="sd-row"><span>失败</span><b>{{ detectResult.publishError.message }}</b></div>
@@ -228,6 +228,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { reportError } from '../utils/errors'
 import { toast, confirmBox, initialsOf } from '../utils/ui'
 import { loadRuntimePresets, runtimePresets } from '../utils/presets-runtime'
+import UploadFieldEditor from './UploadFieldEditor.vue'
+import { useSearchMapping } from '../composables/useSearchMapping'
 
 const props = defineProps({ site: { type: Object, required: true } })
 const emit = defineEmits(['close', 'changed', 'removed'])
@@ -249,8 +251,7 @@ const detectAllBusy = ref(false)
 const detectAllMsg = ref('')
 const detectResult = ref(null)
 const publishAlias = ref({})
-const searchAlias = ref({})
-const searchAmbiguousType = ref({})
+const uploadEdit = ref(null)
 const detectSaving = ref(false)
 const detectSaveMsg = ref('')
 const presetPreview = ref(null)
@@ -258,89 +259,12 @@ const busy = reactive({ selfcheck: false, save: false, cookie: false })
 
 function cookieWhen(site) { return site.cookieUpdatedAt ? ' · ' + fmtWhen(site.cookieUpdatedAt) : '' }
 
-const searchTypeChoices = computed(function () {
-  const types = runtimePresets.value.types || {}
-  return Object.keys(types).map(function (key) { return { key: key, label: types[key] } })
-})
-function searchCatLabel(id) {
-  const labels = (presetPreview.value && presetPreview.value.labels) || {}
-  return labels[String(id)] || String(id)
-}
-const searchAmbiguousIds = computed(function () {
-  const r = detectResult.value
-  const ids = (r && r.search && r.search.ambiguous) || []
-  return ids.map(String)
-})
-const searchUnmatchedTypes = computed(function () {
-  const list = (presetPreview.value && presetPreview.value.unmatched) || []
-  return list.filter(function (x) { return x && x.dim === 'type' && x.label })
-})
-const pendingSearchUnmatched = computed(function () {
-  return searchUnmatchedTypes.value.filter(function (x) { return !searchAlias.value[x.label] })
-})
-const pendingSearchAmbiguous = computed(function () {
-  return searchAmbiguousIds.value.filter(function (id) { return !searchAmbiguousType.value[id] })
-})
-/* 预览里把人工选择的类型合并进来；保存时后端会用同一套覆盖重算。 */
-const effectiveSearchCats = computed(function () {
-  const p = presetPreview.value
-  const base = (p && p.cats) || {}
-  const labels = (p && p.labels) || {}
-  const out = {}
-  Object.keys(base).forEach(function (k) {
-    const list = (base[k] || []).map(String)
-    if (list.length) out[k] = list
-  })
-  function removeId(id) {
-    Object.keys(out).forEach(function (k) {
-      out[k] = out[k].filter(function (x) { return x !== String(id) })
-      if (!out[k].length) delete out[k]
-    })
-  }
-  function addId(type, id) {
-    if (!type || type === '__skip__') return
-    const list = out[type] || (out[type] = [])
-    if (list.indexOf(String(id)) < 0) list.push(String(id))
-  }
-  Object.keys(searchAlias.value).forEach(function (label) {
-    const type = String(searchAlias.value[label] || '')
-    if (!type) return
-    Object.keys(labels).forEach(function (id) {
-      if (String(labels[id]) !== String(label)) return
-      removeId(id)
-      addId(type, id)
-    })
-  })
-  Object.keys(searchAmbiguousType.value).forEach(function (id) {
-    const type = String(searchAmbiguousType.value[id] || '')
-    if (!type) return
-    removeId(id)
-    addId(type, id)
-  })
-  return out
-})
-const previewGroups = computed(() => {
-  const p = presetPreview.value
-  if (!p) return []
-  const labels = p.labels || {}
-  const cats = effectiveSearchCats.value
-  return Object.keys(cats).map(function (k) {
-    return { key: k, name: typeLabelOf(k), ids: (cats[k] || []).map(function (id) { return id + (labels[id] ? ' ' + labels[id] : '') }).join('、') }
-  })
-})
-const previewUnmatchedList = computed(function () {
-  const list = (presetPreview.value && presetPreview.value.unmatched) || []
-  return list.filter(function (x) { return !(x.dim === 'type' && searchAlias.value[x.label]) })
-})
-const previewUnmatchedGroups = computed(() => {
-  const list = previewUnmatchedList.value
-  const names = { type: '分类', medium: '媒介', resolution: '分辨率', codec: '编码', audio: '音频', discount: '优惠', team: '制作组', restriction: '限制' }
-  const groups = {}
-  list.forEach(function (x) { const d = names[x.dim] || x.dim || '其它'; (groups[d] = groups[d] || []).push(x.label) })
-  return Object.keys(groups).map(function (d) { return { dim: d, labels: groups[d].join('、'), count: groups[d].length } })
-})
-const previewUnmatchedCount = computed(() => previewUnmatchedList.value.length)
-const previewUnmatchedSummary = computed(() => previewUnmatchedGroups.value.map(function (g) { return g.dim + ' ' + g.count }).join(' · '))
+const {
+  searchAlias, searchAmbiguousType, searchTypeChoices, searchCatLabel,
+  searchAmbiguousIds, searchUnmatchedTypes, pendingSearchUnmatched, pendingSearchAmbiguous,
+  effectiveSearchCats, previewGroups, previewUnmatchedGroups, previewUnmatchedCount, previewUnmatchedSummary,
+  searchDetectPayload
+} = useSearchMapping(presetPreview, detectResult, runtimePresets)
 
 const cookieStats = computed(function () {
   const site = s.value || {}
@@ -381,7 +305,7 @@ const publishCount = computed(function () {
   return publishGroups.value.length
 })
 const uploadCount = computed(function () {
-  if (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) return Object.keys(detectResult.value.publish.upload.fields || {}).length
+  if (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) return Object.keys(effectiveUpload.value.fields || {}).length
   return uploadStats.value.count || uploadStats.value.defaultCount || 0
 })
 const detectValidation = computed(function () {
@@ -396,7 +320,7 @@ const detectValidation = computed(function () {
   if (search && pendingSearchAmbiguous.value.length) warnings.push('搜索冲突 ID ' + pendingSearchAmbiguous.value.length + ' 个未处理')
   if (search && previewUnmatchedCount.value) warnings.push('未识别标签 ' + previewUnmatchedCount.value + ' 个')
   const pub = r.publish
-  const upload = (pub && pub.upload) || {}
+  const upload = (pub && pub.upload) ? effectiveUpload.value : {}
   const fields = upload.fields || {}
   if (!pub) errors.push('上传：' + ((r.publishError && r.publishError.message) || '上传页识别失败'))
   else {
@@ -404,6 +328,7 @@ const detectValidation = computed(function () {
     if (pub.unmatched && pub.unmatched.length) warnings.push('发布未匹配标签 ' + pub.unmatched.length + ' 个')
     if (pub.fieldKind === 'genre') errors.push('发布分类是题材字段，不能自动映射')
     else if (!Object.keys(effectivePublishCat.value).length) errors.push('发布分类 0 类')
+    if (uploadEditIssues.value.length) errors.push.apply(errors, uploadEditIssues.value)
     if (!Object.keys(fields).length) errors.push('上传字段 0 个')
     if (!upload.fileField) errors.push('缺少种子文件字段')
     if (!upload.path) errors.push('缺少提交路径')
@@ -417,7 +342,7 @@ const detectSaveParts = computed(function () {
   if (r.search && Object.keys(effectiveSearchCats.value).length) parts.push('搜索')
   const pub = r.publish
   if (pub && pub.fieldKind !== 'genre' && Object.keys(effectivePublishCat.value).length) parts.push('发布')
-  if (pub && pub.upload && Object.keys(pub.upload.fields || {}).length && pub.upload.fileField && pub.upload.path) parts.push('上传')
+  if (pub && pub.upload && !uploadEditIssues.value.length && Object.keys(effectiveUpload.value.fields || {}).length && effectiveUpload.value.fileField && effectiveUpload.value.path) parts.push('上传')
   return parts
 })
 const canSaveAny = computed(() => detectSaveParts.value.length > 0)
@@ -442,20 +367,19 @@ const detectedPublishGroups = computed(function () {
   const cat = effectivePublishCat.value
   return Object.keys(cat).map(function (k) { return { name: runtimePresets.value.types[k] || k, ids: String(cat[k]) } })
 })
-const detectedUploadFields = computed(function () {
-  const u = (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) || {}
-  const f = u.fields || {}
-  return Object.keys(f).map(function (k) { return { name: k, template: String(f[k] || '') } })
-})
 const currentUploadFields = computed(function () {
   const u = (detail.def && detail.def.uploadMap) || {}
   const f = u.fields || {}
   return Object.keys(f).map(function (k) { return { name: k, template: String(f[k] || '') } })
 })
-const detectedUploadCount = computed(function () {
+const effectiveUpload = computed(function () {
   const u = (detectResult.value && detectResult.value.publish && detectResult.value.publish.upload) || {}
-  return Object.keys(u.fields || {}).length
+  return (uploadEdit.value && uploadEdit.value.upload) || u
 })
+const uploadEditIssues = computed(function () {
+  return (uploadEdit.value && uploadEdit.value.issues) || []
+})
+function onUploadEdit(payload) { uploadEdit.value = payload }
 const publishGroups = computed(function () {
   const d = detail.def || {}
   const cm = Object.prototype.hasOwnProperty.call(d, 'publishCatMap') ? d.publishCatMap : d.catMap
@@ -707,10 +631,6 @@ async function selfcheckOne(site) {
   busy.selfcheck = false
 }
 function toggleWatch(kind) { watchOpen.value = watchOpen.value === kind ? '' : kind }
-function typeLabelOf(key) {
-  const t = runtimePresets.value && runtimePresets.value.types
-  return (t && t[key]) || key
-}
 async function detectAll() {
   if (!host.value || detectAllBusy.value) return
   watchOpen.value = 'detect'
@@ -720,6 +640,7 @@ async function detectAll() {
   publishAlias.value = {}
   searchAlias.value = {}
   searchAmbiguousType.value = {}
+  uploadEdit.value = null
   presetPreview.value = null
   const out = { search: null, publish: null, publishError: null, errors: [] }
   try {
@@ -750,29 +671,6 @@ async function detectAll() {
   detectAllBusy.value = false
 }
 
-function searchDetectPayload(r) {
-  const base = (r && r.search && r.search.search && r.search.search.detect) || {}
-  const map = Object.assign({}, base.map || {})
-  const skipSet = new Set((Array.isArray(base.skip) ? base.skip : []).map(String))
-  Object.keys(searchAlias.value).forEach(function (label) {
-    const type = String(searchAlias.value[label] || '')
-    if (type) map[label] = type
-    else delete map[label]
-  })
-  Object.keys(searchAmbiguousType.value).forEach(function (id) {
-    const type = String(searchAmbiguousType.value[id] || '')
-    if (!type) { delete map[id]; skipSet.delete(String(id)); return }
-    if (type === '__skip__') { delete map[id]; skipSet.add(String(id)); return }
-    map[id] = type
-    skipSet.delete(String(id))
-  })
-  const detect = Object.assign({}, base)
-  if (Object.keys(map).length) detect.map = map
-  else delete detect.map
-  if (skipSet.size) detect.skip = Array.from(skipSet)
-  else delete detect.skip
-  return detect
-}
 
 async function saveDetected() {
   const r = detectResult.value
@@ -815,12 +713,12 @@ async function saveDetected() {
         if (!a || !a.ok) errors.push('发布：' + String((a && a.error && a.error.message) || '保存失败'))
       } catch (e) { errors.push('发布保存请求发不出去') }
     }
-    if (r.publish.upload) {
+    if (r.publish.upload && !uploadEditIssues.value.length && Object.keys(effectiveUpload.value.fields || {}).length && effectiveUpload.value.fileField && effectiveUpload.value.path) {
       try {
         const d = detail.def || {}
         const a = await (await fetch('/api/site-def/' + encodeURIComponent(host.value), {
           method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ engine: d.engine || '', base: d.base || '', uploadMap: r.publish.upload })
+          body: JSON.stringify({ engine: d.engine || '', base: d.base || '', uploadMap: effectiveUpload.value })
         })).json()
         if (!a || !a.ok) errors.push('上传：' + String((a && a.error && a.error.message) || '保存失败'))
       } catch (e) { errors.push('上传保存请求发不出去') }
