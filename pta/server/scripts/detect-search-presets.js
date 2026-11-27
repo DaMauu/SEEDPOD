@@ -11,6 +11,7 @@ const makeCookieStore = require('../src/features/sites/credentials');
 const makePresets = require('../src/features/presets/store');
 const { parseSearchPreset } = require('../src/features/sites/search-preset');
 const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides } = require('../src/features/sites/detect-merge');
+const { searchPath } = require('../src/features/sites/defaults');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const argv = process.argv.slice(2);
@@ -38,7 +39,7 @@ function eligibleHosts(store, cookies) {
 
 function pageUrl(def) {
   const base = String(def.base || '').replace(/\/+$/, '');
-  const p = String(def.searchPath || '/torrents.php');
+  const p = searchPath(def.engine, def.searchPath);
   try { return new URL(p, base + '/').toString(); } catch (e) { return ''; }
 }
 

@@ -7,6 +7,7 @@ const urlGuard = require('../infra/url-guard');
 const { setCookieHeaders } = require('../features/sites/cookie-format');
 const { summarizeDetection, mergeDetection, applyOverrides, mergeWithOverrides, diffCats } = require('../features/sites/detect-merge');
 const { detectEngine } = require('../features/sites/detect');
+const { searchPath } = require('../features/sites/defaults');
 
 function keyword(title) {
   let s = String(title || '').replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -138,7 +139,7 @@ module.exports = function (app, ctx) {
     if (!def.base) return { ok: false, code: 'NO_DEF', message: '没有站点定义' };
     const c = readCookie(host);
     if (c.err) return { ok: false, code: 'NO_COOKIE', message: c.err.message };
-    const path0 = String(def.searchPath || '/torrents.php');
+    const path0 = searchPath(rec.engine, def.searchPath);
     const url = def.base.replace(/\/+$/, '') + path0;
     let html = '';
     try {

@@ -113,7 +113,7 @@ lines.push('');
 lines.push('## 总览');
 lines.push('');
 lines.push('- 站点：' + summary.sites);
-lines.push('- 请求：' + summary.requests + '（每站搜索页 1 次 + 上传页 1 次，未重试）');
+lines.push('- 请求：' + summary.requests + '（每站搜索页 1 次 + 上传页最多 2 次，404 才试备用路径）');
 lines.push('- 上传表单：' + forms + '；分类控件：' + catForms + '；复选/单选组：' + choiceForms + '；多分类字段：' + multiCat);
 lines.push('- 没有上传表单：' + noForm + '；有表单但没有分类控件：' + noCat);
 lines.push('- 旧发布映射重复：' + dupSites + '；识别结果与旧映射不同：' + diffSites);

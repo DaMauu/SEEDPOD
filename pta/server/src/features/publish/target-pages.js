@@ -3,12 +3,7 @@ const adapters = require('../../infra/adapters/index');
 const form = require('../../infra/form');
 const { textOf, parseDeleteForm, downloadLinksFromDetails } = require('./target-html');
 const urlGuard = require('../../infra/url-guard');
-
-const FORM_FALLBACK = {
-  nexusphp: ['/upload.php', '/takeupload.php'],
-  unit3d: ['/torrents/create', '/torrents/upload', '/upload'],
-  gazelle: ['/upload.php', '/torrents/upload.php']
-};
+const { uploadFormPaths } = require('../sites/defaults');
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, Math.max(0, ms)); }); }
 /* 表单 action 可能是 takeupload.php 这种相对路径；统一成带前导 / 的站点路径 */
 function formActionPath(action, base, formPath) {
@@ -238,8 +233,7 @@ function makeTargetPages(deps) {
     }
     if (!/^https?:/i.test(t.base)) return { ok: false, code: 'BAD_BASE', message: '站点 base 必须是 http/https', http: 400 };
     const firstPath = t.upload.formPath || t.upload.path;
-    const engine = String(t.engine || '').toLowerCase();
-    const paths = [firstPath].concat(FORM_FALLBACK[engine] || []).filter(function (p, i, a) { return p && a.indexOf(p) === i; }).slice(0, 3);
+    const paths = uploadFormPaths(t.engine, firstPath).slice(0, 4);
     for (let i = 0; i < paths.length; i++) {
       const formPath = paths[i];
       const url = t.base + formPath;

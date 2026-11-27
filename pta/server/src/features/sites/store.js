@@ -7,6 +7,7 @@ const jsonFile = require('../../infra/json-file');
 const uploadLock = require('../../infra/upload-lock');
 const { openDB } = require('../../infra/db');
 const makePresets = require('../presets/store');
+const { searchPath } = require('./defaults');
 const fmt = require('./format');
 
 const VERSION = 1;
@@ -372,7 +373,7 @@ function makeSiteStore(dataDir, opts) {
         const base = String(def.base || d.url || '').replace(/\/+$/, '');
         const publish = canonPublish(legacyPublish(def, mp));
         const cats = (se.cats && Object.keys(se.cats).length) ? se.cats : (def.cats || {});
-        const searchRec = canonSearch({ path: String(def.searchPath || '/torrents.php'), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, filters: (mp && mp.filters) || {} });
+        const searchRec = canonSearch({ path: searchPath(def.engine || d.engine, def.searchPath), params: def.params && typeof def.params === 'object' ? def.params : {}, catMode: String(def.catMode || 'single'), catSlot: String(def.catSlot || ''), cats: cats, filters: (mp && mp.filters) || {} });
         delete searchRec.types;
         const rec = normalizeRecord({
           name: String(d.title || def.title || host), nameZh: String(d.titleZh || d.cn || ''),

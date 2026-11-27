@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* 全站识别体检：每站最多 GET 搜索页 1 次 + 上传页 1 次；只读，不写站点配置。
+/* 全站识别体检：每站最多 GET 搜索页 1 次 + 上传页 2 次（404 才试备用路径）；只读，不写站点配置。
    结果放本地目录（默认 data/site-audit），原始 HTML 只给人工复核，不入库。 */
 const fs = require('fs');
 const path = require('path');
@@ -11,6 +11,7 @@ const form = require('../src/infra/form');
 const urlGuard = require('../src/infra/url-guard');
 const maps = require('../src/http/routes-maps');
 const { ENGINES } = require('../src/features/publish/target');
+const { searchPath, uploadFormPaths } = require('../src/features/sites/defaults');
 
 const DEFAULT_DATA = path.resolve(__dirname, '..', '..', '..', 'data');
 const MAX_HTML = 3 * 1024 * 1024;
@@ -131,7 +132,7 @@ async function auditSearch(host, rec, cookie) {
   const base = String(rec.url && rec.url.base || '').replace(/\/+$/, '');
   if (!base) return { ok: false, code: 'NO_BASE', requests: 0 };
   if (!urlGuard.baseOk(host, base)) return { ok: false, code: 'BAD_BASE', requests: 0 };
-  const p = String(rec.search && rec.search.path || '/torrents.php');
+  const p = searchPath(rec.engine, rec.search && rec.search.path);
   const r = await fetchPage(base + p, cookie);
   const out = { path: p, status: r.status || 0, ms: r.ms || 0, bytes: r.bytes || 0, requests: 1 };
   if (!r.ok) return Object.assign(out, { ok: false, code: r.code, message: r.message || '', stop: !!r.stop });
@@ -159,9 +160,23 @@ async function auditUpload(host, rec, cookie) {
   if (!base) return { ok: false, code: 'NO_BASE', requests: 0 };
   const engine = String(rec.engine || '').toLowerCase();
   const def = ENGINES[engine] || {};
-  const p = String(rec.publish && rec.publish.upload && (rec.publish.upload.formPath || rec.publish.upload.path) || def.formPath || '/upload.php');
-  const r = await fetchPage(base + p, cookie);
-  const out = { path: p, status: r.status || 0, ms: r.ms || 0, bytes: r.bytes || 0, requests: 1 };
+  const configured = String(rec.publish && rec.publish.upload && (rec.publish.upload.formPath || rec.publish.upload.path) || def.formPath || '/upload.php');
+  /* 只在上传页 404/405 时试备用路径；403/429 立即停，不绕过限制。 */
+  const paths = uploadFormPaths(engine, configured).slice(0, 2);
+  const out = { path: configured, status: 0, ms: 0, bytes: 0, requests: 0, tried: [] };
+  let r = null;
+  let p = configured;
+  for (let i = 0; i < paths.length; i++) {
+    p = paths[i];
+    r = await fetchPage(base + p, cookie);
+    out.path = p;
+    out.status = r.status || 0;
+    out.ms += r.ms || 0;
+    out.bytes = r.bytes || out.bytes || 0;
+    out.requests++;
+    out.tried.push(p);
+    if (r.ok || (r.code !== 'HTTP_404' && r.code !== 'HTTP_405')) break;
+  }
   if (!r.ok) return Object.assign(out, { ok: false, code: r.code, message: r.message || '', stop: !!r.stop });
   if (args.raw) {
     const dir = path.join(RAW, safeHost(host));

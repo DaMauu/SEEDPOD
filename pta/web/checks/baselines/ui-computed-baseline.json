@@ -467,7 +467,7 @@
       "display": "flex",
       "position": "static",
       "width": "336px",
-      "height": "3542.89px",
+      "height": "3654.89px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -487,14 +487,14 @@
         12,
         89,
         336,
-        3543
+        3655
       ]
     },
     ".crawl-card": {
       "display": "flex",
       "position": "relative",
       "width": "336px",
-      "height": "1272.06px",
+      "height": "1384.06px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -514,7 +514,7 @@
         12,
         437,
         336,
-        1272
+        1384
       ]
     },
     ".screen-card": {
@@ -539,7 +539,7 @@
       "backgroundColor": "rgb(255, 255, 255)",
       "rect": [
         12,
-        1721,
+        1833,
         336,
         674
       ]
@@ -620,7 +620,7 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         35,
-        1677,
+        1789,
         290,
         21
       ]
@@ -629,7 +629,7 @@
       "display": "flex",
       "position": "static",
       "width": "360px",
-      "height": "3791.69px",
+      "height": "3903.69px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -649,7 +649,7 @@
         0,
         0,
         360,
-        3792
+        3904
       ]
     },
     ".dock": {
@@ -2047,7 +2047,7 @@
       "display": "flex",
       "position": "static",
       "width": "366px",
-      "height": "3222.92px",
+      "height": "3334.92px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -2067,14 +2067,14 @@
         12,
         89,
         366,
-        3223
+        3335
       ]
     },
     ".crawl-card": {
       "display": "flex",
       "position": "relative",
       "width": "366px",
-      "height": "1048.06px",
+      "height": "1160.06px",
       "paddingTop": "0px",
       "paddingBottom": "0px",
       "paddingLeft": "0px",
@@ -2094,7 +2094,7 @@
         12,
         437,
         366,
-        1048
+        1160
       ]
     },
     ".screen-card": {
@@ -2119,7 +2119,7 @@
       "backgroundColor": "rgb(255, 255, 255)",
       "rect": [
         12,
-        1497,
+        1609,
         366,
         605
       ]
@@ -2200,7 +2200,7 @@
       "backgroundColor": "rgba(0, 0, 0, 0)",
       "rect": [
         35,
-        1453,
+        1565,
         320,
         21
       ]
@@ -2209,7 +2209,7 @@
       "display": "flex",
       "position": "static",
       "width": "390px",
-      "height": "3471.72px",
+      "height": "3583.72px",
       "paddingTop": "0px",
       "paddingBottom": "96px",
       "paddingLeft": "12px",
@@ -2229,7 +2229,7 @@
         0,
         0,
         390,
-        3472
+        3584
       ]
     },
     ".dock": {

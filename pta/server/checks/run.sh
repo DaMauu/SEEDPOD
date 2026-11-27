@@ -70,6 +70,7 @@ run search-preset-batch search-preset-batch.js
 run recognize-matrix recognize-matrix.js
 run url-guard url-guard.js
 run site-types site-types.js
+run defaults defaults.js
 run secret-rotate secret-rotate.js
 run mock-shape mock-shape.js
 run api api-v2.js

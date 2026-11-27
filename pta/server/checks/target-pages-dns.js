@@ -46,6 +46,7 @@ global.fetch = async function (url) {
   calls.push(String(url));
   const u = String(url);
   if (/fallback\.example/.test(u) && /\/torrents\/create/.test(u)) return new Response('not found', { status: 404 });
+  if (/fallback\.example/.test(u) && /\/upload\/1/.test(u)) return new Response(uploadHtml.replace('action="/takeupload.php"', 'action="takeupload.php"'), { status: 200, headers: { 'content-type': 'text/html' } });
   const html = /upload\.php/i.test(u) || (/fallback\.example/.test(u) && /\/torrents\/upload/.test(u)) ? uploadHtml.replace('action="/takeupload.php"', 'action="takeupload.php"') : detailHtml;
   return new Response(html, { status: 200, headers: { 'content-type': 'text/html' } });
 };
@@ -101,8 +102,8 @@ global.fetch = async function (url) {
       calls = [];
       const r = await pages.detectUploadForm('fallback.example');
       need(r && r.ok === true, '候选路径没识别到：' + JSON.stringify(r));
-      need(r.data && r.data.formPath === '/torrents/upload', '候选路径没保存：' + JSON.stringify(r.data));
-      need(r.data && r.data.path === '/torrents/takeupload.php', '相对 action 没按页面目录解析：' + JSON.stringify(r.data));
+      need(r.data && r.data.formPath === '/upload/1', '新版候选路径没保存：' + JSON.stringify(r.data));
+      need(r.data && r.data.path === '/upload/takeupload.php', '相对 action 没按页面目录解析：' + JSON.stringify(r.data));
       need(calls.length === 2, '候选路径请求次数不对：' + calls.length);
     });
 

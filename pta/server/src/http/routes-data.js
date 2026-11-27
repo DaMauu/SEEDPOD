@@ -4,6 +4,7 @@ const fs = require('fs');
 const siteHidden = require('../features/sites/hidden');
 const jsonFile = require('../infra/json-file');
 const { ENGINES } = require('../features/publish/target');
+const { searchPath } = require('../features/sites/defaults');
 
 module.exports = function (app, ctx) {
   const { db, DATA_DIR, one, all, ok, bad, jparse } = ctx;
@@ -280,7 +281,7 @@ module.exports = function (app, ctx) {
       return bad(reply, 'BAD_DETECT', 'detect 必须是对象');
     }
     const search = Object.assign({}, cur.search || {}, {
-      path: b.searchPath || (cur.search && cur.search.path) || '/torrents.php',
+      path: searchPath(b.engine || cur.engine, b.searchPath || (cur.search && cur.search.path)),
       params: b.params || (cur.search && cur.search.params) || {},
       catMode: b.catMode || (cur.search && cur.search.catMode) || 'single',
       catSlot: b.catSlot != null ? String(b.catSlot) : ((cur.search && cur.search.catSlot) || ''),
