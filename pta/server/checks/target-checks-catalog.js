@@ -34,6 +34,13 @@ async function runCatalog(C) {
     need(aliased.cat['电影'] === '9', '每站别名没生效：' + JSON.stringify(aliased));
     const trad = maps._test.matchCatsDetailed([{ value: '7', label: '紀錄片' }, { value: '8', label: '動畫' }]);
     need(trad.cat['纪录片'] === '7' && trad.cat['动漫'] === '8', '繁体发布分类没识别：' + JSON.stringify(trad.cat));
+    const fields = [
+      { name: 'categories[0][]', label: '分类', options: [{ value: '401', label: '电影' }, { value: '402', label: '剧集' }] },
+      { name: 'genre[]', label: '题材', options: [{ value: '1', label: '动作' }, { value: '2', label: '喜剧' }] },
+      { name: 'type[]', label: '类型', options: [{ value: '3', label: '综艺' }] }
+    ];
+    const picked = maps._test.pickCatFields(fields);
+    need(picked.length === 2 && picked[0].name === 'categories[0][]' && picked[1].name === 'type[]', '复选/下拉分类字段没选对：' + JSON.stringify(picked.map(function (f) { return f.name })));
   });
 
   await check('题材字段不会被当成内容分类', async function () {

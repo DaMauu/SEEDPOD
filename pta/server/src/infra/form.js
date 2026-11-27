@@ -46,13 +46,54 @@ function guessTemplate(name, type, label, placeholder) {
   return '';
 }
 
+function labelNear(body, start, len, id, allowBare) {
+  const direct = labelFor(body, id);
+  if (direct) return direct;
+  const after = String(body || '').slice(start + len, start + len + 300);
+  const next = /^\s*<label\b[^>]*>([\s\S]*?)<\/label>/i.exec(after);
+  if (next && !/<input\b/i.test(next[1])) return plain(next[1]);
+  const before = String(body || '').slice(Math.max(0, start - 300), start);
+  const labels = Array.from(before.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi));
+  if (labels.length) {
+    const last = labels[labels.length - 1];
+    if (!before.slice(last.index + last[0].length).trim()) return plain(last[1]);
+  }
+  const open = String(body || '').lastIndexOf('<label', start);
+  const close = String(body || '').lastIndexOf('</label>', start);
+  if (open > close) {
+    const end = String(body || '').indexOf('</label>', start);
+    if (end > start) return plain(String(body || '').slice(open, end).replace(/<input\b[^>]*>/gi, ' '));
+  }
+  const a = /^\s*<a\b[^>]*>([\s\S]*?)<\/a>/i.exec(after);
+  if (a) return plain(a[1]);
+  /* 有些复选框后面直接跟文本，例如 <input ...> Blu-ray */
+  if (!allowBare) return '';
+  const bare = after.split('<')[0].replace(/\s+/g, ' ').trim();
+  return bare ? plain(bare).slice(0, 80) : '';
+}
+
 function parseFields(body) {
   const fields = [];
-  const seen = {};
+  const byName = {};
   function push(f) {
-    if (!f.name || seen[f.name]) return;
-    seen[f.name] = true;
-    fields.push(f);
+    if (!f.name) return;
+    const cur = byName[f.name];
+    if (!cur) {
+      byName[f.name] = f;
+      fields.push(f);
+      return;
+    }
+    /* 同名 checkbox/radio 是同一组选项；同名 select 也合并选项。 */
+    if ((cur.type === 'checkbox' || cur.type === 'radio') && f.type === cur.type) {
+      (f.options || []).forEach(function (o) {
+        if (!cur.options.some(function (x) { return String(x.value) === String(o.value) })) cur.options.push(o);
+      });
+      if (f.checked) { cur.checked = true; if (f.value) cur.value = f.value; }
+    } else if (cur.type === 'select' && f.type === 'select') {
+      (f.options || []).forEach(function (o) {
+        if (!cur.options.some(function (x) { return String(x.value) === String(o.value) })) cur.options.push(o);
+      });
+    }
   }
   let m;
   const inputRe = /<input\b([^>]*)>/gi;
@@ -62,10 +103,15 @@ function parseFields(body) {
     const name = attr(tag, 'name');
     if (!name || type === 'submit' || type === 'button' || type === 'reset') continue;
     const id = attr(tag, 'id');
-    const label = labelFor(body, id);
+    const isChoice = type === 'checkbox' || type === 'radio';
+    const label = labelNear(body, m.index, m[0].length, id, isChoice);
     const placeholder = attr(tag, 'placeholder');
-    push({ name: name, type: type, label: label || placeholder || name,
-      value: attr(tag, 'value'), placeholder: placeholder, options: [],
+    const value = attr(tag, 'value') || (isChoice ? 'on' : '');
+    const checked = isChoice && /\bchecked\b/i.test(tag);
+    const optionLabel = label || attr(tag, 'title') || placeholder || name;
+    push({ name: name, type: type, label: optionLabel,
+      value: value, checked: checked, placeholder: placeholder,
+      options: isChoice ? [{ value: value, label: optionLabel }] : [],
       template: guessTemplate(name, type, label, placeholder) });
   }
   const areaRe = /<textarea\b([^>]*)>([\s\S]*?)<\/textarea>/gi;

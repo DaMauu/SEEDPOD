@@ -53,6 +53,17 @@ check('外部 ID 和存在标记不乱套模板', function () {
   need(form.guessTemplate('audiobook', 'text', '有声书', '') === '', 'audiobook 不该当音频编码');
 });
 
+check('同名复选/单选合并成选项组', function () {
+  const html = '<form action="/upload.php" method="post"><input type="checkbox" id="c401" name="categories[0][]" value="401"><label for="c401">电影</label><input type="checkbox" id="c402" name="categories[0][]" value="402"><label for="c402">剧集</label><input type="radio" id="r1" name="category_id" value="1"><label for="r1">电影</label><input type="radio" id="r2" name="category_id" value="2"><label for="r2">剧集</label></form>';
+  const fs = form.parse(html)[0].fields;
+  const cb = fs.filter(function (f) { return f.name === 'categories[0][]' })[0];
+  const radio = fs.filter(function (f) { return f.name === 'category_id' })[0];
+  need(cb && cb.type === 'checkbox' && cb.options.length === 2, '复选组没合并：' + JSON.stringify(cb));
+  need(cb.options[0].value === '401' && cb.options[0].label === '电影', '复选选项不对：' + JSON.stringify(cb.options));
+  need(radio && radio.type === 'radio' && radio.options.length === 2, '单选组没合并：' + JSON.stringify(radio));
+  need(radio.options[1].value === '2' && radio.options[1].label === '剧集', '单选选项不对：' + JSON.stringify(radio.options));
+});
+
 check('select 选项保留', function () {
   const f = form.parse(HTML)[0].fields.filter(function (x) { return x.name === 'type' })[0];
   need(f && f.type === 'select', '分类不是 select');

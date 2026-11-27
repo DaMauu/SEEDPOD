@@ -51,6 +51,23 @@ function pickField(fields, names, labelRe) {
     return labelRe && labelRe.test(toSimplified(String(f.label || '')));
   })[0] || null;
 }
+/* 上传分类控件：select / radio / checkbox 组都算；排除题材、标签字段。 */
+function isCatField(f) {
+  if (!f || !f.name) return false;
+  const name = String(f.name || '').toLowerCase();
+  if (/^(?:type|category|category_id|type_id|cat)(?:\[\d*\])?(?:\[\])?$/.test(name)) return true;
+  if (/^(?:categories|category_ids|type_ids)\[\d*\](?:\[\])?$/.test(name)) return true;
+  const label = toSimplified(String(f.label || ''));
+  return /类型|分类|类别|category/i.test(label) && !/题材|genre|标签|tag/i.test(label);
+}
+function pickCatFields(fields) {
+  const list = (Array.isArray(fields) ? fields : []).filter(function (f) {
+    return isCatField(f) && Array.isArray(f.options) && f.options.length;
+  });
+  /* 题材/类型字段不是内容分类，优先选非题材的候选。 */
+  const content = list.filter(function (f) { return !looksGenre(f.options); });
+  return content.length ? content : list;
+}
 
 function squeezeLabel(s) {
   /* 有些站把中文写成「电 影」「综 艺」，去掉汉字之间的空格再匹配 */
@@ -162,9 +179,18 @@ module.exports = function (app, ctx) {
     const d = await target.detectUploadForm(host);
     if (!d.ok) return bad(reply, d.code, d.message, d.http || 400);
     const fields = d.data.fields || [];
-    const catField = pickField(fields, ['type', 'category', 'type_id', 'category_id', 'cat'], /类型|分类|category/i);
+    const catFields = pickCatFields(fields);
+    const catField = catFields[0] || null;
     const teamField = pickField(fields, ['team', 'team_id', 'group', 'group_id'], /制作组|制作团队|小组|team|group/i);
-    const catOptions = catField ? (catField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
+    const catOptions = [];
+    catFields.forEach(function (f) {
+      (f.options || []).forEach(function (o) {
+        const value = String(o.value);
+        if (!catOptions.some(function (x) { return x.value === value && x.label === String(o.label || value) })) {
+          catOptions.push({ value: value, label: String(o.label || value) });
+        }
+      });
+    });
     const teamOptions = teamField ? (teamField.options || []).map(function (o) { return { value: String(o.value), label: o.label }; }) : [];
     const rec = siteStore.get(host);
     const siteAliases = (rec && rec.publish && rec.publish.detect && rec.publish.detect.labels) || {};
@@ -177,11 +203,13 @@ module.exports = function (app, ctx) {
       if (!f || !f.name) return;
       uploadFields[String(f.name)] = String(f.template || '');
       if (Array.isArray(f.options) && f.options.length) selects[String(f.name)] = f.options.map(function (o) { return { value: String(o.value), label: String(o.label || o.value) } });
-      if (f.value) defaults[String(f.name)] = String(f.value);
+      const choice = /checkbox|radio/i.test(String(f.type || ''));
+      if ((choice ? f.checked : f.value) && f.value) defaults[String(f.name)] = String(f.value);
     });
     const form = {
       at: new Date().toISOString(),
       catField: catField ? catField.name : '',
+      catFields: catFields.map(function (f) { return String(f.name); }),
       teamField: teamField ? teamField.name : '',
       catOptions: catOptions,
       teamOptions: teamOptions,
@@ -190,7 +218,7 @@ module.exports = function (app, ctx) {
     };
     return ok({
       host: host,
-      detected: { catField: form.catField, teamField: form.teamField },
+      detected: { catField: form.catField, catFields: form.catFields, teamField: form.teamField },
       cat: catResult.cat,
       ambiguous: catResult.ambiguous,
       notes: catResult.notes || [],
@@ -206,4 +234,4 @@ module.exports = function (app, ctx) {
   });
 };
 
-module.exports._test = { matchCats, matchCatsDetailed, squeezeLabel, pickField, looksGenre, CAT, GENRE, CONTENT };
+module.exports._test = { matchCats, matchCatsDetailed, squeezeLabel, pickField, pickCatFields, isCatField, looksGenre, CAT, GENRE, CONTENT };
