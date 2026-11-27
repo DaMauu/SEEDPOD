@@ -666,9 +666,23 @@ function detectRemote() {
       }
       const d = j.data || {}
       const uploadMap = { path: String(d.path || ''), formPath: String(d.formPath || ''), fileField: String(d.fileField || ''), fields: {} }
-      ;(d.fields || []).forEach(function (f) { if (f && f.name) uploadMap.fields[String(f.name)] = String(f.template || '') })
+      const selects = {}
+      const defaults = {}
+      ;(d.fields || []).forEach(function (f) {
+        if (!f || !f.name) return
+        uploadMap.fields[String(f.name)] = String(f.template || '')
+        if (Array.isArray(f.options) && f.options.length) selects[String(f.name)] = f.options.map(function (o) { return { value: String(o.value), label: String(o.label || o.value) } })
+        if (f.value) defaults[String(f.name)] = String(f.value)
+      })
+      const fieldNames = Object.keys(uploadMap.fields)
+      const catField = ['category_id', 'category', 'type_id', 'type', 'cat'].find(function (x) { return fieldNames.indexOf(x) >= 0 }) || ''
+      const teamField = ['team_sel', 'team', 'group', 'team_id'].find(function (x) { return fieldNames.indexOf(x) >= 0 }) || ''
+      const form = (Object.keys(selects).length || Object.keys(defaults).length)
+        ? { at: new Date().toISOString(), catField: catField, teamField: teamField, selects: selects, defaults: defaults }
+        : null
       /* 只发上传表单，不带 catMap/cats，避免把发布分类映射覆盖成搜索分类。 */
       const payload = { engine: (detail.def && detail.def.engine) || '', base: (detail.def && detail.def.base) || '', uploadMap: uploadMap }
+      if (form) payload.form = form
       const saved = await (await fetch('/api/site-def/' + encodeURIComponent(h), {
         method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload)
       })).json()

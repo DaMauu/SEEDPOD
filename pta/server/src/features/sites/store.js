@@ -546,7 +546,7 @@ function makeSiteStore(dataDir, opts) {
     return s0;
   }
   /* 上传表单只留 target-plan 会读的必填下拉，去掉搜索页/样式类噪声 */
-  const FORM_SELECT = /^(type|category|category_id|type_id|source|source_sel|medium|medium_sel|standard|standard_sel|codec|codec_sel|audiocodec|audiocodec_sel|team|team_sel|processing|processing_sel)(\[\d+\])?$/;
+  const FORM_SELECT = /^(type|category|category_id|type_id|source|source_sel|medium|medium_sel|standard|standard_sel|resolution|resolution_id|codec|codec_sel|audiocodec|audiocodec_sel|team|team_sel|processing|processing_sel)(\[\d+\])?$/;
   function compactForm(form) {
     if (!form || typeof form !== 'object') return null;
     const out = {};
