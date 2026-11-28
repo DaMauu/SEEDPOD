@@ -53,6 +53,11 @@ async function runCatalog(C) {
     need(picked.length === 1 && picked[0].name === 'category_id', 'type_id 还混在分类里：' + JSON.stringify(picked.map(function (f) { return f.name })));
     const only = maps._test.pickCatFields([{ name: 'type_id', label: '分类', options: [{ value: '1', label: '电影' }] }]);
     need(only.length === 1 && only[0].name === 'type_id', '只有 type_id 时不该丢掉');
+    const np = maps._test.pickCatFields([
+      { name: 'type', label: 'type', options: [{ value: '1', label: 'Film' }, { value: '2', label: 'Könyv' }] },
+      { name: 'subcategory', label: 'subcategory', options: [{ value: '1', label: 'Akció' }, { value: '2', label: 'Vígjáték' }] }
+    ]);
+    need(np.length === 1 && np[0].name === 'type', 'subcategory 还混在内容分类里：' + JSON.stringify(np.map(function (f) { return f.name })));
   });
 
   await check('题材字段不会被当成内容分类', async function () {
