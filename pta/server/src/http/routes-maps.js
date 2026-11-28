@@ -9,11 +9,11 @@ const CAT = [
   ['纪录片', /纪录|documentary|docu|\bdoc\b|docs/i],
   ['演唱会', /演唱会|concert/i],
   ['音乐短片', /music\s*video|音乐短片|\bmv\b/i],
+  ['有声书', /有声书|有声读物|有声小说|音频书|audiobook|audio\s*book/i],
   ['音乐', /音乐|music|音频|音轨|专辑|原声|单曲|精选|混音|访谈|样带|重混音|\balbum\b|\bsingle\b|\bremix\b|\bost\b|soundtrack|\blive\s*album\b|bootleg|compilation|interview|\bflac\b|\bmp3\b|mixtape|\bdemo\b|hq\s*audio|\baudio\b|classical|ghazal|instrumental|muzica|manele|videoclip|klipek|lossless|dance/i],
   ['体育', /体育|sport|nba|nfl|mlb|nhl|ufc|mma|f1|formula|soccer|basket|football|tennis|golf|rugby|cricket|hockey|wrestling|boxing|cycling|racing|motogp|nascar|volleyball|handball|snooker|billiard|bowling|chess|darts|gymnastic|athletic|swimming|weightlifting|climbing|crossfit|baseball|softball|sailing|surfing|skate|ski|archery|fencing|rowing|equestrian|league|derby|cup|open/i],
   ['游戏', /游戏|game|playstation|ps[2-5]\b|xbox|nintendo|wii|rom\s*packs?|jocuri|játékok/i],
   ['软件', /软件|software|app|program|programok|programe|linux|mac|windows|android|mobile|0day/i],
-  ['有声书', /有声书|audiobook|audio\s*book/i],
   ['电子书', /电子书|ebook|e-book|book|书籍|小说/i],
   ['短剧', /短剧|short/i],
   ['舞台演出', /舞台|stage|perf\b|戏曲|曲艺|opera/i],
@@ -24,7 +24,7 @@ const CAT = [
 
 /* 题材/类型标签：动作、惊悚、恐怖、喜剧、剧情…… 不是内容分类，不能自动写 publish.catMap */
 const GENRE = /动作|惊悚|恐怖|喜剧|剧情|科幻|战争|犯罪|悬疑|爱情|同性|西部|邪典|文艺|粉红|奇幻|冒险|灾难|武侠|古装|家庭|儿童|歌舞|传记|历史|音乐剧|短片|情色|戈尔|gore|action|thriller|horror|comedy|drama|sci-?fi|war|crime|mystery|romance|gay|western|cult|literary|fantasy|adventure|family|kids|musical|short|erotic/i;
-const CONTENT = /电影|movie|film|剧集|电视剧|tv\s*series|drama|动漫|动画|anime|animation|纪录|documentary|音乐|music|电子书|ebook|有声书|audiobook|体育|sport|游戏|game|软件|software|图片|image|成人|adult|其他|other/i;
+const CONTENT = /电影|movie|film|剧集|电视剧|tv\s*series|drama|动漫|动画|anime|animation|纪录|documentary|音乐|music|电子书|ebook|有声书|有声读物|有声小说|音频书|audiobook|体育|sport|游戏|game|软件|software|图片|image|成人|adult|其他|other/i;
 function looksGenre(options) {
   const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
   if (list.length < 3) return false;

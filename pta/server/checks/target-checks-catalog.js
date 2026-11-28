@@ -19,6 +19,9 @@ async function runCatalog(C) {
     need(m['其他'] === '3', '「其 它」没匹配');
     need(!m['原盘'], 'BDMV 不该再当内容类型：' + JSON.stringify(m));
     need(m['有声书'] === '5' && m['音乐短片'] === '6', '新类型没匹配：' + JSON.stringify(m));
+    const audio = maps._test.matchCats([{ value: '7', label: 'Audio Books/有声读物' }, { value: '8', label: '有声小说' }]);
+    need(audio['有声书'] === '7', '有声读物没归有声书：' + JSON.stringify(audio));
+    need(!audio['其他'], '有声小说不该进其他：' + JSON.stringify(audio));
   });
 
   await check('一个上传分类只落一个库内类型', async function () {
