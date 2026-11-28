@@ -64,9 +64,12 @@ function pickCatFields(fields) {
   const list = (Array.isArray(fields) ? fields : []).filter(function (f) {
     return isCatField(f) && Array.isArray(f.options) && f.options.length;
   });
+  /* Unit3D 的 category_id 是内容分类，type_id 是规格/媒介；同时出现时不要把两者合并。 */
+  const hasCategory = list.some(function (f) { return /^(?:category|category_id|cat\d+|categories\[\d*\]|category_ids\[\d*\])/.test(String(f.name || '').toLowerCase()); });
+  const primary = hasCategory ? list.filter(function (f) { return !/^(?:type_id|type_ids\[\d*\])/.test(String(f.name || '').toLowerCase()); }) : list;
   /* 题材/类型字段不是内容分类，优先选非题材的候选。 */
-  const content = list.filter(function (f) { return !looksGenre(f.options); });
-  return content.length ? content : list;
+  const content = primary.filter(function (f) { return !looksGenre(f.options); });
+  return content.length ? content : primary;
 }
 
 function squeezeLabel(s) {

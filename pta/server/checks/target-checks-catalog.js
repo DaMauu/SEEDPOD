@@ -43,6 +43,18 @@ async function runCatalog(C) {
     need(picked.length === 2 && picked[0].name === 'categories[0][]' && picked[1].name === 'type[]', '复选/下拉分类字段没选对：' + JSON.stringify(picked.map(function (f) { return f.name })));
   });
 
+  await check('Unit3D 的 type_id 不跟 category_id 混成内容分类', async function () {
+    const maps = require(path.join(ROOT, 'server', 'src', 'http', 'routes-maps.js'));
+    const fields = [
+      { name: 'category_id', label: '类别', options: [{ value: '1', label: '电影' }, { value: '2', label: '剧集' }] },
+      { name: 'type_id', label: '规格', options: [{ value: '1', label: 'Full Disc' }, { value: '2', label: 'Remux' }] }
+    ];
+    const picked = maps._test.pickCatFields(fields);
+    need(picked.length === 1 && picked[0].name === 'category_id', 'type_id 还混在分类里：' + JSON.stringify(picked.map(function (f) { return f.name })));
+    const only = maps._test.pickCatFields([{ name: 'type_id', label: '分类', options: [{ value: '1', label: '电影' }] }]);
+    need(only.length === 1 && only[0].name === 'type_id', '只有 type_id 时不该丢掉');
+  });
+
   await check('题材字段不会被当成内容分类', async function () {
     const maps = require(path.join(ROOT, 'server', 'src', 'http', 'routes-maps.js'));
     const genre = maps._test.looksGenre([

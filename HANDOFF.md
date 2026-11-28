@@ -1,13 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-28 07:30（当前 v0.7.728；新窗口先读「当前交接」）
+最后更新：2026-11-28 08:40（当前 v0.7.729；新窗口先读「当前交接」）
 
 ## 当前交接（先读这一段）
 
 ### 现在的状态
 
-- 版本：`0.7.728`，提交 `9184640d`；本地与 GitHub 一致，工作区干净。
-- 线上：`/api/health` 返回 200（0.7.728，306 站）；`seedpod` active。
+- 版本：`0.7.729`，提交待推；本地与 GitHub 一致后补最终提交/探活。
+- 线上：部署后 `/api/health` 返回 200；`seedpod` active。
 - 检查：`pta/server/checks/run.sh` 全绿；UI computed 基线已按新增媒介 chip 更新。
 - 后台：无运行中的检查任务。
 - Telegram：动态进度卡已改为百分比；进度文件 `~/.config/opencode/live-progress.json`，用 `scripts/set-progress.js` 更新，过期自动回退“工作中”。
@@ -17,12 +17,13 @@
 1. 搜索识别共性误判：音乐 `release type` 不再进分类；CD/SACD/Vinyl/Cassette/DAT/Soundboard/Track 和 2K/Other 补 key；`Leech Status/Neutral Leech/Either` 不再当优惠；旧 `data/presets.json` 只补缺不覆盖。
 2. 引擎默认路径：Unit3D 搜索默认 `/torrents`；上传页补 `/torrents/create`、`/upload/1`、`/torrents/upload`、`/upload` 候选，404/405 才换下一个。
 3. 单站：3 个 Unit3D 站写入 `/upload/N` 的 `formPath`；修复运行时 `site-urls.json` 属主问题（已从 `.bak` 恢复，306 站）。
-4. 全站体检：306 站、404 次请求；结果和统计在 `pta/docs/SITE-AUDIT-RESULTS-20261128.md`。
+4. Unit3D 上传分类：`category_id` 和 `type_id` 同时存在时只取 `category_id`，`type_id` 不再混进内容分类；体检 15 个多分类字段中 14 个恢复单分类。
+5. 全站体检：306 站、404 次请求；结果和统计在 `pta/docs/SITE-AUDIT-RESULTS-20261128.md`。
 
 ### 体检结论（只记事实）
 
 - 完全正常 1 个；部分可用 106；登录失效 46；无 cookie 102；限流/403 8；其他错误 43。
-- 上传表单 86 个；分类控件 75 个；复选/单选组 1 个；多分类字段 15 个；无表单 25 个。
+- 上传表单 86 个；分类控件 75 个；复选/单选组 1 个；多分类字段 15 个（14 个 Unit3D 已按主分类收口，剩 1 个 NexusPHP type+subcategory），无表单 25 个。
 - 发布映射重复 22 个站；新旧映射不同 80 个站。
 - 大头不是解析器：148 个站缺 cookie/登录失效，76 个站路径 404。
 - 原始页面和每站明细在本地 `data/site-audit/`，含敏感信息，不入库、不复制到聊天。
@@ -31,7 +32,7 @@
 
 1. 处理凭据：102 个无 cookie、46 个登录失效先重新导入；不要当解析器问题。
 2. 上传表单：25 个无表单先确认权限；86 个有表单的逐站预览后再写 `publish.upload`。
-3. 单站差异：15 个多分类字段、4 个题材字段、11 个无分类控件。
+3. 单站差异：剩余 1 个多分类字段（NexusPHP type+subcategory）、4 个题材字段、11 个无分类控件。
 
 ### 关键文件
 
