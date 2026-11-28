@@ -24,7 +24,7 @@ const CAT = [
 
 /* 题材/类型标签：动作、惊悚、恐怖、喜剧、剧情…… 不是内容分类，不能自动写 publish.catMap */
 const GENRE = /动作|惊悚|恐怖|喜剧|剧情|科幻|战争|犯罪|悬疑|爱情|同性|西部|邪典|文艺|粉红|奇幻|冒险|灾难|武侠|古装|家庭|儿童|歌舞|传记|历史|音乐剧|短片|情色|戈尔|gore|action|thriller|horror|comedy|drama|sci-?fi|war|crime|mystery|romance|gay|western|cult|literary|fantasy|adventure|family|kids|musical|short|erotic/i;
-const CONTENT = /电影|movie|film|剧集|电视剧|tv\s*series|动漫|动画|anime|animation|纪录|documentary|音乐|music|电子书|ebook|有声书|audiobook|体育|sport|游戏|game|软件|software|图片|image|成人|adult|其他|other/i;
+const CONTENT = /电影|movie|film|剧集|电视剧|tv\s*series|drama|动漫|动画|anime|animation|纪录|documentary|音乐|music|电子书|ebook|有声书|audiobook|体育|sport|游戏|game|软件|software|图片|image|成人|adult|其他|other/i;
 function looksGenre(options) {
   const list = (Array.isArray(options) ? options : []).filter(function (o) { return o && String(o.value) !== '' && String(o.value) !== '0'; });
   if (list.length < 3) return false;

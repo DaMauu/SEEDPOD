@@ -1,13 +1,13 @@
 # HANDOFF · SEEDPOD 面板
 
-最后更新：2026-11-28 09:05（当前 v0.7.730；新窗口先读「当前交接」）
+最后更新：2026-11-28 09:30（当前 v0.7.731；新窗口先读「当前交接」）
 
 ## 当前交接（先读这一段）
 
 ### 现在的状态
 
-- 版本：`0.7.730`，提交 `2d9a38b2`；本地与 GitHub 一致，工作区干净。
-- 线上：`/api/health` 返回 200（0.7.730，306 站）；`seedpod` active。
+- 版本：`0.7.731`，提交待推；本地与 GitHub 一致后补最终提交/探活。
+- 线上：部署后 `/api/health` 返回 200；`seedpod` active。
 - 检查：`pta/server/checks/run.sh` 全绿；UI computed 基线已按新增媒介 chip 更新。
 - 后台：无运行中的检查任务。
 - Telegram：动态进度卡已改为百分比；进度文件 `~/.config/opencode/live-progress.json`，用 `scripts/set-progress.js` 更新，过期自动回退“工作中”。
@@ -18,7 +18,8 @@
 2. 引擎默认路径：Unit3D 搜索默认 `/torrents`；上传页补 `/torrents/create`、`/upload/1`、`/torrents/upload`、`/upload` 候选，404/405 才换下一个。
 3. 单站：3 个 Unit3D 站写入 `/upload/N` 的 `formPath`；修复运行时 `site-urls.json` 属主问题（已从 `.bak` 恢复，306 站）。
 4. 上传分类收口：有主分类时只取主分类，`type_id`（Unit3D 规格）和 `subcategory`（NexusPHP 子类/题材）不再混进内容分类；体检 15 个多分类字段全部恢复单分类，子字段仍保留在表单里供人工映射。
-5. 全站体检：306 站、404 次请求；结果和统计在 `pta/docs/SITE-AUDIT-RESULTS-20261128.md`。
+5. 题材误判：`韩剧(Kor Drama)`、`日剧(Jpn Drama)`、`戏剧(Drama)` 归剧集，不再让整张 `type` 表被当成题材跳过；纯题材字段仍会拦住。
+6. 全站体检：306 站、404 次请求；结果和统计在 `pta/docs/SITE-AUDIT-RESULTS-20261128.md`。
 
 ### 体检结论（只记事实）
 
@@ -32,7 +33,7 @@
 
 1. 处理凭据：102 个无 cookie、46 个登录失效先重新导入；不要当解析器问题。
 2. 上传表单：25 个无表单先确认权限；86 个有表单的逐站预览后再写 `publish.upload`。
-3. 单站差异：4 个题材字段、11 个无分类控件（多分类字段已按主分类收口）。
+3. 单站差异：剩余 3 个纯题材字段、11 个无分类控件（多分类字段已按主分类收口）。
 
 ### 关键文件
 

@@ -73,6 +73,12 @@ async function runCatalog(C) {
       { value: '3', label: '音乐 Music' }
     ]);
     need(content === false, '内容分类被误判成题材');
+    const mixed = maps._test.looksGenre([
+      { value: '1', label: '电影Movie(1080p)' }, { value: '2', label: '韩剧(Kor Drama)' },
+      { value: '3', label: '日剧(Jpn Drama)' }, { value: '4', label: '戏剧(Drama)' },
+      { value: '5', label: '纪录片(Documentary)' }, { value: '6', label: '体育节目(Sports)' }
+    ]);
+    need(mixed === false, '韩剧/日剧/戏剧被误判成题材');
   });
 
   await check('私有包目标站列表与 cookie 就绪', async function () {
