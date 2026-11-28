@@ -6,8 +6,8 @@
 
 ### 现在的状态
 
-- 版本：`0.7.731`，提交待推；本地与 GitHub 一致后补最终提交/探活。
-- 线上：部署后 `/api/health` 返回 200；`seedpod` active。
+- 版本：`0.7.731`，提交 `e0b2e9a8`；本地与 GitHub 一致，工作区干净。
+- 线上：`/api/health` 返回 200（0.7.731，306 站）；`seedpod` active。
 - 检查：`pta/server/checks/run.sh` 全绿；UI computed 基线已按新增媒介 chip 更新。
 - 后台：无运行中的检查任务。
 - Telegram：动态进度卡已改为百分比；进度文件 `~/.config/opencode/live-progress.json`，用 `scripts/set-progress.js` 更新，过期自动回退“工作中”。
